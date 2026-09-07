@@ -21,15 +21,29 @@
          value -- and the character says an in-character "feeling
          better" line the moment that happens (VitEffects.SayRecovered),
          capped at one per character per tick.
+      4. Once every 6 game hours, if the character has at least one
+         vitamin currently Critical (and not pause-day-shielded), says
+         ONE random one of their symptom lines (VitEffects.
+         MaybeSaySymptomReminder) -- entirely decoupled from the daily
+         effect application below, specifically so several vitamins
+         crossing into Critical on the same day don't all say their line
+         back to back.
+      5. For A/D/E, keeps their CharacterStat floor/ceiling continuously
+         enforced (VitEffects.MaintainStatEffect) instead of dosed once
+         per day -- PANIC/ENDURANCE/STRESS all naturally regenerate/decay
+         on their own, so a once-a-day nudge could get erased before it
+         was ever felt. Checked every tick, same as everything else here.
 
     Effect APPLICATION timing lives here now, not in
     HARMONIE_VitaminDecay.lua's daily tick -- that file only owns the
     day-based Reserve decay / pauseDays / afflictedDays bookkeeping
     anymore. Each vitamin's own lastEffectDay (HARMONIE_VitaminData.lua)
-    guards against applying the same day's penalty twice just because
-    this runs every 10 seconds: it still only actually fires once per
-    in-game day per vitamin, exactly like before -- it's just checked far
-    more often so it can never lag behind real state for long.
+    guards against applying B/C/K's daily penalty twice just because this
+    runs every 10 seconds: it still only actually fires once per in-game
+    day per vitamin, exactly like before -- it's just checked far more
+    often so it can never lag behind real state for long. A/D/E's stat
+    maintenance has no such gate since it's a continuous enforcement, not
+    a one-shot dose.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -48,7 +62,15 @@ local function getGameDayIndex()
     return math.floor(getGameTime():getWorldAgeHours() / 24)
 end
 
-local function checkCharacter(character, today)
+-- Same idea as getGameDayIndex, but at 6-hour granularity, for the
+-- symptom-reminder dialogue (VitEffects.MaybeSaySymptomReminder) -- lets
+-- the character comment on an ongoing deficiency up to 4x/day instead of
+-- once, without ever saying more than one line in the same block.
+local function getSixHourBlockIndex()
+    return math.floor(getGameTime():getWorldAgeHours() / 6)
+end
+
+local function checkCharacter(character, today, sixHourBlock)
     -- At most one "feeling better" line per character per tick, even if
     -- several vitamins recover in the same 10 seconds (e.g. right after
     -- a big varied meal) -- see VitEffects.SayRecovered.
@@ -67,7 +89,11 @@ local function checkCharacter(character, today)
             HARMONIE_GTP.VitEffects.ApplyCritical(character, vit)
             HARMONIE_GTP.VitData.SetLastEffectDay(character, vit, today)
         end
+
+        HARMONIE_GTP.VitEffects.MaintainStatEffect(character, vit)
     end
+
+    HARMONIE_GTP.VitEffects.MaybeSaySymptomReminder(character, sixHourBlock)
 end
 
 local function onCheckerTick()
@@ -77,11 +103,12 @@ local function onCheckerTick()
 
     HARMONIE_GTP.RefreshFromSandbox()
     local today = getGameDayIndex()
+    local sixHourBlock = getSixHourBlockIndex()
 
     for i = 0, getNumActivePlayers() - 1 do
         local player = getSpecificPlayer(i)
         if player and not player:isDead() then
-            checkCharacter(player, today)
+            checkCharacter(player, today, sixHourBlock)
         end
     end
 end

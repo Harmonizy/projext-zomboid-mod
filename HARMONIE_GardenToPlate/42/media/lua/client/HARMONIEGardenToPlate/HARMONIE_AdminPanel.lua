@@ -1,14 +1,25 @@
 --[[
     HARMONIE - From Garden to Plate
-    Admin-only debug panel: type exact numbers into a target character's 6
-    vitamin Reserve/Pause Days fields (plus a live read-only Critical/Low/
-    Sufficient status line per vitamin), and live sandbox tuning for this
-    mod (decay rate, thresholds, effect severity) written straight into
+    Admin-only debug panel: per vitamin, a live read-only status line
+    (Band/penalty/days critical) and a live read-only "current values"
+    line (actual Reserve + Pause Days right now), plus ONE editable field
+    (set a new Reserve value) -- and live sandbox tuning for this mod
+    (decay rate, thresholds, effect severity) written straight into
     SandboxVars so changes apply immediately without a world restart.
 
-    Every editable field is a plain numeric ISTextEntryBox (no sliders --
-    typing an exact value, including fractions like Reserve=42.5, is more
-    useful for testing than dragging a slider ever was) with its own
+    Pause Days is DISPLAY-ONLY here now, deliberately -- it used to be a
+    second editable field, but it kept changing on its own (checker/
+    decay/eating/pills) while the panel sat open, and there was never a
+    good reason for an admin to hand-set it directly; the only real use
+    case (testing a critical penalty without eating well first) is
+    already covered by setting Reserve. Removing the edit path also
+    removes the whole "delta vs stale snapshot" class of bugs that field
+    had (see VitData.AddPauseDays's history in HARMONIE_VitaminData.lua
+    for what that cost).
+
+    The editable Reserve field is a plain numeric ISTextEntryBox (no
+    sliders -- typing an exact value, including fractions like 42.5, is
+    more useful for testing than dragging a slider ever was) with its own
     getText()-driven tooltip explaining what it does. Typing and pressing
     Enter (or clicking away) only VALIDATES and reformats what's in the
     box -- it does NOT apply anything by itself. Nothing actually changes
@@ -17,6 +28,23 @@
     old "applies the instant you leave the field" behavior, tabbing
     through several fields to review them could silently overwrite values
     you only meant to look at.
+
+    IMPORTANT (dirty tracking): a field is only APPLIED by Save if the
+    admin actually typed into it since the panel opened (or since the
+    last Save) -- see harmonieDirty below, set by onTextChangeFunction on
+    every keystroke and cleared after each Save. Reserve and Pause Days
+    both keep changing live on their own while the panel just sits open
+    (HARMONIE_VitaminChecker.lua's 10-second poll, natural decay, eating,
+    pills...), but a field's displayed text is only ever a snapshot from
+    whenever it was last drawn -- it does NOT track that live drift.
+    Without the dirty check, clicking Save to apply ONE edited field
+    (say, a new Reserve value) would also blindly re-apply every OTHER
+    field's stale snapshot text, silently stomping any Pause Days (or
+    Reserve) change that happened naturally in the background since the
+    panel opened back to whatever number happened to be sitting in the
+    box -- exactly the "editing one thing breaks Pause Days" bug this
+    was reported as. Gating on harmonieDirty means an untouched field is
+    never re-applied, no matter how stale its displayed snapshot is.
 
     Gate: only reachable via its hotkey (default "/", rebindable under
     Options -> Mods) when isAdmin() or getDebug() is true (see
@@ -39,26 +67,11 @@ local ROW_H = 24
 local ROW_GAP = 4
 local SECTION_GAP = 10
 local PAD = 12
-local LABEL_W = 150
-local ENTRY_W = 100
+local LABEL_W = 300
+local ENTRY_W = 200
 local SAVE_BUTTON_H = 28
 
--- Narrower pair used for the per-vitamin Reserve + Pause Days row, which
--- packs two labeled fields side by side instead of one label/field per
--- row. Widened with extra breathing room on both the label and the gap
--- so neither column ever sits flush against the window's edge.
-local PAIR_LABEL_W = 90
-local PAIR_ENTRY_W = 80
-local PAIR_GAP = 20
-
--- The vitamin row (label+entry, twice, side by side) is wider than a
--- single sandbox label+entry row, so the window has to be sized to fit
--- the wider of the two rather than just the sandbox section's own width.
--- The extra +20 is slack so the second column's entry box never ends up
--- flush against (or clipped by) the window's right edge.
-local VITAMIN_ROW_WIDTH = PAD + (PAIR_LABEL_W + PAIR_ENTRY_W) * 2 + PAIR_GAP + PAD + 20
-local SANDBOX_ROW_WIDTH = PAD + LABEL_W + ENTRY_W + PAD
-local WINDOW_WIDTH = math.max(VITAMIN_ROW_WIDTH, SANDBOX_ROW_WIDTH)
+local WINDOW_WIDTH = PAD + LABEL_W + ENTRY_W + PAD
 
 local VitaminLabel = {
     A = "IGUI_HARMONIE_Vitamin_A", B = "IGUI_HARMONIE_Vitamin_B", C = "IGUI_HARMONIE_Vitamin_C",
@@ -84,14 +97,25 @@ end
     -- e.g. typing 500 into a 0-100 field snaps back to "100"). Returns
     the parsed number, or nil (and marks the field invalid via
     ISTextEntryBox:setValid) if the text doesn't parse as a number at all
-    (e.g. left empty, or just "-"). Does NOT call harmonieOnChange --
-    saving is a separate, explicit step now (see the Save button), so
-    this only ever validates/reformats, whether called from
-    onCommandEntered, onLostFocus, or the Save button itself.
+    (e.g. left empty, or just "-"), OR parses to something non-finite.
+    Lua's tonumber happily accepts the literal strings "nan"/"inf" (and
+    enough digits to overflow a double) as real NaN/Infinity values --
+    neither is caught by a plain `not num` check (only nil/false are
+    falsy in Lua; NaN and Infinity are both ordinary truthy numbers), and
+    math.min/math.max don't reliably clamp a NaN back into range either
+    (comparisons against NaN are always false). Once a value like that
+    reaches an accumulator field (confirmed with Pause Days specifically,
+    which had no clamping at all), it poisons that field PERMANENTLY --
+    every later +/- on a NaN stays NaN forever, including across saves,
+    since ModData is what actually gets serialized. So this is rejected
+    right here at the source, before it can ever reach VitData. Does NOT
+    call harmonieOnChange -- saving is a separate, explicit step now (see
+    the Save button), so this only ever validates/reformats, whether
+    called from onCommandEntered, onLostFocus, or the Save button itself.
 ]]--
 local function validateEntry(entry)
     local num = tonumber(entry:getInternalText())
-    if not num then
+    if not num or num ~= num or num == math.huge or num == -math.huge then
         entry:setValid(false)
         return nil
     end
@@ -100,6 +124,18 @@ local function validateEntry(entry)
     entry:setValid(true)
     entry:setText(entry.harmonieIsInt and tostring(num) or string.format("%.2f", num))
     return num
+end
+
+--[[
+    Marks an entry as actually edited by the admin -- wired to
+    ISTextEntryBox's own onTextChangeFunction, which fires on every
+    keystroke (confirmed in ISUI/ISTextEntryBox.lua: onTextChange calls
+    self.onTextChangeFunction(self.target, self)). Only entries with
+    harmonieDirty true are applied by Save -- see the file header and
+    onSaveClick below for why this matters.
+]]--
+local function markDirty(_, entry)
+    entry.harmonieDirty = true
 end
 
 --[[
@@ -124,6 +160,8 @@ function HARMONIE_AdminPanel:addNumberRow(y, titleKey, tooltipKey, min, max, isI
     entry.harmonieMax = max
     entry.harmonieIsInt = isInt
     entry.harmonieOnChange = onChange
+    entry.harmonieDirty = false
+    entry.onTextChangeFunction = markDirty
     entry.onCommandEntered = validateEntry
     entry.onLostFocus = validateEntry
     self:addChild(entry)
@@ -133,13 +171,17 @@ function HARMONIE_AdminPanel:addNumberRow(y, titleKey, tooltipKey, min, max, isI
 end
 
 --[[
-    Reserve + Pause Days side by side for one vitamin, with a live status
-    label above them (Band + whether the critical penalty is currently
-    active + how many consecutive days it's persisted -- refreshed every
-    prerender, same as the rest of this panel). Reserve is deliberately
-    NOT rounded to a whole number here: Reserve is a real float internally
-    (see HARMONIE_VitaminData.lua), so typing e.g. 19.99 to test right at
-    a threshold is genuinely useful, not just cosmetic.
+    Three stacked rows for one vitamin: a live status label (Band +
+    whether the critical penalty is currently active + how many
+    consecutive days it's persisted), a live read-only "current values"
+    line (the real Reserve and Pause Days right now), and one editable
+    Reserve field -- the first two refreshed every prerender, same as the
+    rest of this panel, so they can never go stale while the window sits
+    open. Only Reserve is editable (Pause Days is display-only -- see the
+    file header). Reserve is deliberately NOT rounded to a whole number
+    here: it's a real float internally (see HARMONIE_VitaminData.lua), so
+    typing e.g. 19.99 to test right at a threshold is genuinely useful,
+    not just cosmetic.
 ]]--
 function HARMONIE_AdminPanel:addVitaminRow(y, vit)
     local statusLabel = ISLabel:new(PAD, y, ROW_H, "", 1, 1, 1, 1, UIFont.Small, true)
@@ -148,12 +190,19 @@ function HARMONIE_AdminPanel:addVitaminRow(y, vit)
     self.harmonieStatusLabels[vit] = statusLabel
     y = y + ROW_H
 
+    local currentLabel = ISLabel:new(PAD, y, ROW_H, "", 0.75, 0.85, 1, 1, UIFont.Small, true)
+    currentLabel:initialise()
+    currentLabel:setTooltip(getText("IGUI_HARMONIE_AdminPauseDaysTooltip"))
+    self:addChild(currentLabel)
+    self.harmonieCurrentLabels[vit] = currentLabel
+    y = y + ROW_H
+
     local reserveLabel = ISLabel:new(PAD, y + 4, ROW_H, getText("IGUI_HARMONIE_AdminReserveLabel"), 1, 1, 1, 1, UIFont.Small, true)
     reserveLabel:initialise()
     self:addChild(reserveLabel)
 
     local reserveEntry = ISTextEntryBox:new(string.format("%.2f", HARMONIE_GTP.VitData.Get(self.target, vit)),
-        PAD + PAIR_LABEL_W, y, PAIR_ENTRY_W, ROW_H)
+        PAD + LABEL_W, y, ENTRY_W, ROW_H)
     reserveEntry.font = UIFont.Small
     reserveEntry:initialise()
     reserveEntry:instantiate()
@@ -169,33 +218,13 @@ function HARMONIE_AdminPanel:addVitaminRow(y, vit)
         -- status line above reacts to a saved value right away.
         HARMONIE_GTP.VitData.RefreshAffliction(self.target, vit)
     end
+    reserveEntry.harmonieGetValue = function() return HARMONIE_GTP.VitData.Get(self.target, vit) end
+    reserveEntry.harmonieDirty = false
+    reserveEntry.onTextChangeFunction = markDirty
     reserveEntry.onCommandEntered = validateEntry
     reserveEntry.onLostFocus = validateEntry
     self:addChild(reserveEntry)
     table.insert(self.harmonieEntries, reserveEntry)
-
-    local pauseX = PAD + PAIR_LABEL_W + PAIR_ENTRY_W + PAIR_GAP
-    local pauseLabel = ISLabel:new(pauseX, y + 4, ROW_H, getText("IGUI_HARMONIE_AdminPauseDaysLabel"), 1, 1, 1, 1, UIFont.Small, true)
-    pauseLabel:initialise()
-    self:addChild(pauseLabel)
-
-    local pauseEntry = ISTextEntryBox:new(string.format("%.2f", HARMONIE_GTP.VitData.GetPauseDays(self.target, vit)),
-        pauseX + PAIR_LABEL_W, y, PAIR_ENTRY_W, ROW_H)
-    pauseEntry.font = UIFont.Small
-    pauseEntry:initialise()
-    pauseEntry:instantiate()
-    pauseEntry:setOnlyNumbers(true)
-    pauseEntry:setTooltip(getText("IGUI_HARMONIE_AdminPauseDaysTooltip"))
-    pauseEntry.harmonieMin = 0
-    pauseEntry.harmonieMax = 999999
-    pauseEntry.harmonieIsInt = false
-    pauseEntry.harmonieOnChange = function(v)
-        HARMONIE_GTP.VitData.AddPauseDays(self.target, vit, v - HARMONIE_GTP.VitData.GetPauseDays(self.target, vit))
-    end
-    pauseEntry.onCommandEntered = validateEntry
-    pauseEntry.onLostFocus = validateEntry
-    self:addChild(pauseEntry)
-    table.insert(self.harmonieEntries, pauseEntry)
 
     return y + ROW_H + SECTION_GAP
 end
@@ -218,6 +247,7 @@ function HARMONIE_AdminPanel:createChildren()
     y = y + ROW_H + ROW_GAP
 
     self.harmonieStatusLabels = {}
+    self.harmonieCurrentLabels = {}
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         y = self:addVitaminRow(y, vit)
     end
@@ -277,19 +307,36 @@ function HARMONIE_AdminPanel:onEffectsToggle(optionIndex, selected)
 end
 
 --[[
-    Applies every field on the panel at once: validates/clamps whatever
-    is currently typed into each registered entry (skipping any left in
-    an invalid, unparseable state rather than guessing) and calls its
-    harmonieOnChange with the result, then writes the tickbox's
-    (possibly since-changed) state to SandboxVars. Nothing above this
-    point in the file changes any real value by itself -- this is the
-    only place that does.
+    Applies only the fields the admin actually edited (harmonieDirty --
+    set by markDirty on every keystroke, see addNumberRow/addVitaminRow):
+    validates/clamps whatever is currently typed into each dirty entry
+    (skipping any left in an invalid, unparseable state rather than
+    guessing) and calls its harmonieOnChange with the result, then writes
+    the tickbox's (possibly since-changed) state to SandboxVars. An
+    untouched field is left completely alone, no matter how stale its
+    displayed snapshot has gotten -- see the file header's "IMPORTANT
+    (dirty tracking)" note for why that matters (Reserve and Pause Days
+    both keep changing on their own while the panel just sits open).
+
+    Once applied, a dirty entry's flag is cleared. Vitamin-row fields
+    (harmonieGetValue set) also get their displayed text refreshed to the
+    current live value regardless of whether they were just applied or
+    were left untouched -- so the panel never keeps showing a
+    creation-time snapshot that's since drifted, which is exactly what
+    caused the stomping bug in the first place.
 ]]--
 function HARMONIE_AdminPanel:onSaveClick()
     for _, entry in ipairs(self.harmonieEntries) do
-        local value = validateEntry(entry)
-        if value and entry.harmonieOnChange then
-            entry.harmonieOnChange(value)
+        if entry.harmonieDirty then
+            local value = validateEntry(entry)
+            if value and entry.harmonieOnChange then
+                entry.harmonieOnChange(value)
+            end
+            entry.harmonieDirty = false
+        end
+        if entry.harmonieGetValue then
+            entry:setText(entry.harmonieIsInt and tostring(entry.harmonieGetValue())
+                or string.format("%.2f", entry.harmonieGetValue()))
         end
     end
 
@@ -299,21 +346,24 @@ function HARMONIE_AdminPanel:onSaveClick()
 end
 
 --[[
-    Refreshes every vitamin's status line each frame: Band (Critical/Low/
-    Sufficient, colored the same as HARMONIE_NutritionUI.lua) + whether
-    the critical penalty is actively firing right now (afflicted AND no
-    banked pause days left -- mirrors the exact gate HARMONIE_
-    VitaminChecker.lua / VitEffects.ApplyCritical use) + consecutive days
-    afflicted. Doesn't touch any text entry field -- those only ever
-    change via Save, so the admin can freely type without the field
-    fighting back mid-edit.
+    Refreshes every vitamin's two read-only lines each frame:
+      - status line: Band (Critical/Low/Sufficient, colored the same as
+        HARMONIE_NutritionUI.lua) + whether the critical penalty is
+        actively firing right now (afflicted AND no banked pause days
+        left -- mirrors the exact gate HARMONIE_VitaminChecker.lua /
+        VitEffects.ApplyCritical use) + consecutive days afflicted.
+      - current-values line: the real Reserve and Pause Days right now
+        (see the file header for why Pause Days is display-only).
+    Doesn't touch the Reserve text ENTRY field -- that only ever changes
+    via Save, so the admin can freely type without the field fighting
+    back mid-edit.
 ]]--
 function HARMONIE_AdminPanel:prerender()
     ISCollapsableWindow.prerender(self)
 
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-        local label = self.harmonieStatusLabels[vit]
-        if label then
+        local statusLabel = self.harmonieStatusLabels[vit]
+        if statusLabel then
             local band = HARMONIE_GTP.VitData.GetBand(self.target, vit)
             local penaltyActive = HARMONIE_GTP.VitData.IsAfflicted(self.target, vit)
                     and HARMONIE_GTP.VitData.GetPauseDays(self.target, vit) <= 0
@@ -322,7 +372,14 @@ function HARMONIE_AdminPanel:prerender()
                 getText(BandTextKey[band]),
                 penaltyActive and getText("UI_Yes") or getText("UI_No"),
                 HARMONIE_GTP.VitData.GetAfflictedDays(self.target, vit))
-            label:setName(text)
+            statusLabel:setName(text)
+        end
+
+        local currentLabel = self.harmonieCurrentLabels[vit]
+        if currentLabel then
+            currentLabel:setName(getText("IGUI_HARMONIE_AdminCurrentLine",
+                string.format("%.2f", HARMONIE_GTP.VitData.Get(self.target, vit)),
+                string.format("%.2f", HARMONIE_GTP.VitData.GetPauseDays(self.target, vit))))
         end
     end
 end

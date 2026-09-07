@@ -16,26 +16,69 @@
 
     Affliction model (hysteresis):
       - Crossing below criticalThreshold marks that vitamin "afflicted".
-      - Once afflicted, the critical-band penalty keeps applying every day
-        even if Reserve ticks back above criticalThreshold, right up until
-        it reaches sufficientThreshold ("Sufficient" band) -- not just out
-        of "Critical". This matches a real deficiency: you don't feel better
+      - Once afflicted, the critical-band penalty keeps applying even if
+        Reserve ticks back above criticalThreshold, right up until it
+        reaches sufficientThreshold ("Sufficient" band) -- not just out of
+        "Critical". This matches a real deficiency: you don't feel better
         the moment you're technically no longer in the red.
-      - Every vitamin's penalty is the SAME flat `amount` (scaled only by
-        effectMultiplier) whether it's the first day of affliction or the
-        hundredth -- applied once immediately on the day it becomes
-        Critical, then again every subsequent day it stays that way,
-        stacking without limit for as long as the deficiency persists (no
-        ramp curve, no cap -- staying Critical a long time keeps getting
-        worse forever, deliberately, to discourage ignoring it).
+      - B, C, and K's penalty is a flat `amount` (scaled only by
+        effectMultiplier) applied once per day it's Critical, stacking
+        without limit for as long as the deficiency persists (no ramp, no
+        cap) -- deliberately, to discourage ignoring it.
+      - A, D, and E's penalty is instead a `floor`/`ceiling` on a vanilla
+        CharacterStat, CONTINUOUSLY enforced every 10 seconds by
+        HARMONIE_VitaminChecker.lua (VitEffects.MaintainStatEffect) rather
+        than applied once per day -- because PANIC, ENDURANCE, and STRESS
+        all naturally regenerate/decay back toward their own baseline on
+        their own (confirmed the hard way: Vitamin B originally used
+        ENDURANCE the same one-shot way A/D/E do now, and a once-a-day
+        -0.2 hit was completely invisible in practice because ordinary
+        rest regenerates Endurance faster than that). A single daily dose
+        to any of these three would very likely get fully erased by
+        vanilla's own regen within the same day, making the "penalty"
+        silently do nothing. Maintaining a floor (PANIC/STRESS can't drop
+        below X while afflicted) or a ceiling (ENDURANCE can't rise above
+        X while afflicted) instead means the effect is always genuinely
+        present for as long as the deficiency lasts, and correctly stops
+        fighting the stat the instant the vitamin is no longer afflicted
+        or gets pause-day-shielded (no lingering artificial floor/ceiling
+        after recovery).
 
-    Vitamin A ("Vision Impaired") reuses vanilla's own Panic-driven tunnel
-    vision/screen narrowing rather than any custom overlay -- there's no
-    accessible Lua API to shrink a character's actual sight radius, but
-    pushing CharacterStat.PANIC up triggers the game's real, native panic
-    vision effect, which is exactly the "narrowed field of vision" look
-    without inventing a new rendering hack (an earlier full-screen overlay
-    panel approach was scrapped after it silently ate every mouse click).
+    Per-vitamin mechanisms are custom Lua effects THEMED after a real
+    vanilla Trait's well-known behavior, picked to match how that
+    deficiency actually presents -- but explicitly NOT the real Trait
+    itself (character:getCharacterTraits():add/remove(CharacterTrait.X) is
+    a real, confirmed-working, vanilla-used mechanism -- see XpUpdate.lua's
+    live WEAK/FEEBLE/STOUT/STRONG swaps as the Strength skill levels up --
+    but was deliberately ruled out here to avoid touching the real trait
+    system at all, e.g. traits showing up in the character's own trait
+    list). See HARMONIE_VitaminEffects.lua's header for exactly what each
+    one does and how closely it was possible to match the real trait,
+    given what's actually reachable from Lua:
+      A (Short Sighted): CharacterStat.PANIC (vision narrowing) -- no
+          accessible way to shrink sight radius directly from Lua.
+      B (Disorganized): COULD NOT be replicated at all -- its real effect
+          (reduced bag/world-container capacity, NOT main inventory,
+          confirmed via UI_trait_DisorganizedDesc) has zero Lua exposure;
+          grepped every script for setMaxWeight/setCapacity on a container
+          object and found no usable pattern for a player-worn bag. Kept
+          on the previously-working Arm/Back muscle strain mechanic
+          instead as the least-bad available option -- see effects.B below.
+      C (Thin-Skinned): extends BleedingTime on active wounds -- the real
+          trait raises the CHANCE of being cut/scratched in combat, not a
+          once-a-day stat.
+      D (Asthmatic / "Short of Breath"): drains CharacterStat.ENDURANCE --
+          the real trait triggers periodic panic-driven asthma attacks
+          cured by an Inhaler, which isn't a Lua-triggerable event.
+      E (All Thumbs): CharacterStat.STRESS, PLUS the one case where the
+          real mechanic WAS found in Lua -- ISHandcraftAction.lua checks
+          character:hasTrait(CharacterTrait.ALL_THUMBS) to force
+          stopOnWalk=true during crafting (walking cancels the action).
+          HARMONIE_ClumsyHandsHook.lua reproduces that exact behavior for
+          an afflicted character without touching the trait itself.
+      K (Slow Healer): extends DeepWoundTime/FractureTime/BurnTime on
+          active wounds -- the real trait slows overall healing rate, not
+          something with a direct multiplier exposed to Lua.
 
     All values here are rough real-world-approximate game-balance figures,
     not medical reference data. Vitamin "B" is a single stat standing in for
@@ -90,53 +133,40 @@ HARMONIE_GTP.Config = {
     effectsEnabled = true,
     effectMultiplier = 1,
 
-    -- Flat per-day-of-affliction penalty applied while a vitamin is
-    -- afflicted -- same amount every day, no ramp, no cap (see the
-    -- Affliction model note above). A/B/C/D/E are sized as "20% of that
-    -- vanilla stat's own min-max range per day" uniformly, NOT a flat 20
-    -- in every case: confirmed straight from the game's own
-    -- zombie/characters/CharacterStat.class (register(id, min, max,
-    -- default)) that these stats do NOT all share one 0-100 scale --
-    --   PANIC: 0-100, PAIN: 0-100
-    --   ENDURANCE: 0-1, SICKNESS: 0-1, STRESS: 0-1
-    -- so 20% works out to 20 for the 0-100 stats and 0.2 for the 0-1
-    -- stats -- both are "20 out of the stat's own 100%", just expressed in
-    -- that stat's native units. (The previous flat numbers here -- 0.6 for
-    -- PAIN, 0.08 for ENDURANCE -- had drifted from this: 0.6/100 for PAIN
-    -- was nearly a no-op, while 0.6/1.0 for SICKNESS was already a huge
-    -- 60% jump every single day.)
+    -- A/D/E: floor/ceiling maintained continuously (see the Affliction
+    -- model note above and VitEffects.MaintainStatEffect) -- sized as
+    -- "20% of that vanilla CharacterStat's own min-max range" uniformly:
+    -- confirmed straight from the game's own zombie/characters/
+    -- CharacterStat.class (register(id, min, max, default)) that these
+    -- stats do NOT all share one 0-100 scale -- PANIC is 0-100, ENDURANCE
+    -- and STRESS are 0-1. So PANIC's floor is 20 (out of 100) and
+    -- STRESS's floor is 0.2 (out of 1), both "at least 20% of the stat's
+    -- own range, always, while afflicted". ENDURANCE gets a CEILING
+    -- instead (since the goal is draining it, not raising it) at 1 minus
+    -- that same 20% -- i.e. capped at 0.8, never allowed to fully recover
+    -- to 1.0 while afflicted.
     --
-    -- K is a deliberate exception, kept lower at 5 (not the 20 that 20%-
-    -- of-0-100 would suggest): confirmed by decompiling BodyDamage.class /
-    -- IsoGameCharacter.class that wound body-part health (0-100 scale)
-    -- isn't just cosmetic -- it feeds Overall Body Health
-    -- (BodyDamage.calculateOverallHealth, a weighted average across every
-    -- body part), and IsoGameCharacter.isDead() returns true once that
-    -- reaches 0. So unlike A/B/C/D/E (moodle-level discomfort with no
-    -- death path), an uncapped K penalty across several already-injured
-    -- body parts at once compounds into an actual death spiral -- 5/day
-    -- keeps that possible under sustained neglect without making it a
-    -- near-automatic death sentence the moment Vitamin K goes critical.
-    -- B switched from CharacterStat.ENDURANCE to vanilla's own
-    -- Arm/Back muscle strain (character:addArmMuscleStrain /
-    -- addBackMuscleStrain, the same calls farming/chopping/digging use)
-    -- because Endurance regenerates from ordinary rest/idle time fast
-    -- enough that a once-a-day -0.2 hit was barely noticeable in
-    -- practice. Muscle strain isn't erased by just standing around the
-    -- same way, so it should actually stick. No Lua-exposed getter for
-    -- current muscle strain was found anywhere in vanilla's own scripts
-    -- (only the various add*MuscleStrain writers), so there's no
-    -- reliable way from Lua to enforce a hard floor/minimum on it --
-    -- this relies on the same "flat amount, no cap, applied again every
-    -- day it stays Critical" stacking every other vitamin already uses
-    -- for persistence instead.
+    -- B, C, K: flat per-day amount (see HARMONIE_VitaminEffects.lua and
+    -- the big themed-per-trait note above). B (0.2, Arm+Back muscle
+    -- strain) matches the same magnitude as one farming/chopping action
+    -- -- no Lua-exposed getter for current muscle strain exists anywhere
+    -- in vanilla, so there's no reliable way to enforce a hard floor on
+    -- it directly; the daily stacking is what keeps it persistent
+    -- instead. C and K are on their own different scale entirely (neither
+    -- touches a CharacterStat) -- BleedingTime added on already-bleeding
+    -- body parts for C (vanilla's own debug tools toggle this timer to 10
+    -- as "some bleeding", so a couple units/day is meaningful without
+    -- ending a fight-worthy wound instantly), DeepWoundTime/FractureTime/
+    -- BurnTime added on whichever is already active for K (vanilla's real
+    -- Fracture takes 21 days to heal, so a couple units/day is a
+    -- meaningful delay without being an automatic never-heals wall).
     effects = {
-        A = { amount = 20 },   -- CharacterStat.PANIC added (0-100 scale)
-        B = { amount = 0.2 },  -- Arm + Back muscle strain added (0-1-ish scale, same magnitude as one farming/chopping action)
-        C = { amount = 0.2 },  -- CharacterStat.SICKNESS added (0-1 scale)
-        D = { amount = 20 },   -- CharacterStat.PAIN added (0-100 scale)
-        E = { amount = 0.2 },  -- CharacterStat.STRESS added (0-1 scale)
-        K = { amount = 5 },    -- wound body-part health removed (0-100 scale, deliberately gentler -- see above)
+        A = { floor = 20 },     -- CharacterStat.PANIC maintained >= this (0-100 scale)
+        B = { amount = 0.2 },   -- Arm + Back muscle strain added per day (0-1-ish scale)
+        C = { amount = 2 },     -- BleedingTime added to active wounds per day
+        D = { ceiling = 0.8 },  -- CharacterStat.ENDURANCE maintained <= this (0-1 scale)
+        E = { floor = 0.2 },    -- CharacterStat.STRESS maintained >= this (0-1 scale)
+        K = { amount = 2 },     -- DeepWoundTime/FractureTime/BurnTime added to active wounds per day
     },
 }
 

@@ -37,6 +37,33 @@ HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.VitData = {}
 local VitData = HARMONIE_GTP.VitData
 
+--[[
+    Writing to character:getModData() only changes the LOCAL copy -- it
+    does NOT get sent to the server/other clients by itself. Confirmed
+    against vanilla's own real-world usage: ISWidgetTitleHeader.lua sets
+    a favourite-recipe flag via self.player:getModData()[...] = ... then
+    explicitly calls self.player:transmitModData() right after, the only
+    place in all of vanilla Lua that writes to a PLAYER's own ModData (as
+    opposed to a world object's). Without this, every VitData write in
+    this file would only ever exist on whichever single client made it --
+    fine in singleplayer (isClient() is false there, nothing to sync),
+    but in real multiplayer it means Reserve/pauseDays/etc would never
+    reach the server to be saved correctly, and an admin editing another
+    player's values (HARMONIE_AdminPanel.lua) would silently do nothing
+    beyond the admin's own client. Guarded by isClient() since this file
+    is shared and its write functions are only ever actually invoked from
+    client-side contexts here (the eat/pills hooks and the checker/decay
+    loops are all client-only or only ever see local players -- see
+    HARMONIE_VitaminChecker.lua's header) -- calling transmitModData() in
+    singleplayer would be a harmless no-op either way, but being explicit
+    keeps intent clear.
+]]--
+local function sync(character)
+    if isClient() then
+        character:transmitModData()
+    end
+end
+
 local function ensureStore(character)
     local modData = character:getModData()
     if not modData.HARMONIE_Vitamins then
@@ -50,6 +77,7 @@ local function ensureStore(character)
                 lastEffectDay = -1,
             }
         end
+        sync(character)
     end
     return modData.HARMONIE_Vitamins
 end
@@ -86,6 +114,27 @@ end
 function VitData.SetLastEffectDay(character, vit, day)
     local store = ensureStore(character)
     store[vit].lastEffectDay = day
+    sync(character)
+end
+
+--[[
+    Character-level (not per-vitamin) gate for the symptom-reminder line
+    -- see HARMONIE_VitaminEffects.lua's MaybeSaySymptomReminder and
+    HARMONIE_VitaminChecker.lua, which check this once per 6-game-hour
+    block so a character with several vitamins critical at once only
+    ever says ONE random symptom line per block, instead of every
+    afflicted vitamin's line firing back to back the moment a new day
+    (or several at once) crosses the critical threshold. Lives directly
+    on the character's own ModData rather than inside the per-vitamin
+    store above, since it isn't about any one vitamin.
+]]--
+function VitData.GetLastSymptomBlock(character)
+    return character:getModData().HARMONIE_LastSymptomBlock or -1
+end
+
+function VitData.SetLastSymptomBlock(character, block)
+    character:getModData().HARMONIE_LastSymptomBlock = block
+    sync(character)
 end
 
 --[[
@@ -112,13 +161,32 @@ function VitData.RefreshAffliction(character, vit)
     elseif band == "sufficient" then
         store[vit].afflicted = false
     end
+    -- Only sync on an ACTUAL change -- this is called every 10 seconds
+    -- per vitamin per player by HARMONIE_VitaminChecker.lua, so syncing
+    -- unconditionally would transmit ModData constantly for no reason.
+    if store[vit].afflicted ~= wasAfflicted then
+        sync(character)
+    end
     return wasAfflicted and not store[vit].afflicted
 end
 
+-- Rejects NaN/Infinity outright rather than trusting math.min/max to
+-- clamp them into range -- comparisons against NaN are always false, so
+-- depending on argument order that can return the NaN itself instead of
+-- a bound, silently corrupting store[vit].value permanently (every later
+-- +/- on a NaN stays NaN forever, including across saves). See
+-- AddPauseDays below for the same guard on Pause Days, which had no
+-- clamping at all and is where this was actually observed.
+local function isFiniteNumber(n)
+    return type(n) == "number" and n == n and n ~= math.huge and n ~= -math.huge
+end
+
 function VitData.Set(character, vit, value)
+    if not isFiniteNumber(value) then return end
     local store = ensureStore(character)
     value = math.max(0, math.min(HARMONIE_GTP.Config.maxValue, value))
     store[vit].value = value
+    sync(character)
 end
 
 --[[
@@ -128,14 +196,16 @@ end
     (10 Reserve = 1 pause day at the default).
 ]]--
 function VitData.Add(character, vit, amount)
-    if not amount or amount == 0 then return end
+    if not isFiniteNumber(amount) or amount == 0 then return end
     local store = ensureStore(character)
     local requirement = HARMONIE_GTP.DailyRequirement[vit]
     local percentOfDaily = (amount / requirement) * 100
     local gain = percentOfDaily / HARMONIE_GTP.Config.reserveGainDivisor
+    if not isFiniteNumber(gain) then return end
 
     VitData.Set(character, vit, store[vit].value + gain)
-    store[vit].pauseDays = store[vit].pauseDays + (gain / HARMONIE_GTP.Config.reservePerPauseDay)
+    store[vit].pauseDays = math.max(0, store[vit].pauseDays + (gain / HARMONIE_GTP.Config.reservePerPauseDay))
+    sync(character)
 end
 
 -- Called once per in-game day. Consumes a banked pause day if any are left,
@@ -157,6 +227,7 @@ function VitData.ApplyDailyTick(character, vit)
     else
         store[vit].afflictedDays = 0
     end
+    sync(character)
 end
 
 function VitData.GetAll(character)
@@ -182,6 +253,8 @@ end
     supplements don't retroactively fix a diet.
 ]]--
 function VitData.AddPauseDays(character, vit, days)
+    if not isFiniteNumber(days) then return end
     local store = ensureStore(character)
-    store[vit].pauseDays = store[vit].pauseDays + days
+    store[vit].pauseDays = math.max(0, store[vit].pauseDays + days)
+    sync(character)
 end

@@ -6,8 +6,8 @@
     itself covers for Calories/Carbs/Lipids/Protein, just for our own
     vitamin stat, which vanilla obviously knows nothing about.
 
-    There are two separate vanilla systems, and they need two different
-    techniques:
+    There are two separate vanilla systems, and they're handled very
+    differently on purpose:
 
     1. Evolved recipes (pots/pans -- add ingredients one at a time, e.g.
        Stew, Soup). Driven by ISAddItemInRecipe.lua. Each time an
@@ -16,58 +16,61 @@
        `self.baseItem` is a field on the action, so it's still readable
        after the original function returns -- a plain WRAP is enough:
        read self.usedItem's vitamins before, call through, then add them
-       onto the (possibly reassigned) self.baseItem afterward.
+       onto the (possibly reassigned) self.baseItem afterward. This is a
+       genuinely DYNAMIC calculation -- it measures exactly how much of
+       the real ingredient got used (see the comment above the wrap for
+       why that matters) and writes the result onto the dish's own
+       ModData, since there's no static "this exact combination of
+       ingredients" table that could cover every possible pot of stew.
 
-       IMPORTANT: this does NOT always consume the whole ingredient in
-       one go -- confirmed from vanilla's own scripts (Beef, HungerChange
-       -80, declares "Sandwich:5|Cooked" in its EvolvedRecipe list, so
-       one raw Beef can season 16 separate Sandwiches before it's used
-       up). See the comment above the wrap itself for how the actually-
-       consumed fraction is measured and applied.
+    2. Standard CraftRecipe (canning/jarring -- MakeHomeCannedProduce /
+       OpenHomeCannedProduce). Driven by ISCraftAction.lua. This USED to
+       be a full override of ISCraftAction:complete() (needed because the
+       newly-created item list is a variable local to that function, so a
+       plain wrap couldn't reach it) that dynamically summed the real
+       ingredients' vitamins onto the new jar, the same way evolved
+       recipes do. That was deliberately dropped in favor of a much
+       simpler STATIC approach:
+         - HARMONIE_CannedProduceVitamins.lua registers a fixed vitamin
+           profile for every "Home-Canned <Produce>Open" item type,
+           scaled by PRODUCE_PER_JAR (4, matching the recipe's "item 4
+           [...]" requirement) from the raw ingredient's own DB entry.
+         - HARMONIE_Items.txt gives that same Open item type a real,
+           static, per-type HungerChange (also the produce's own hunger
+           x4) directly in its script.
+         - HARMONIE_FoodVitaminDatabase.lua's normal lookup chain
+           (GetVitaminProfileForItem / GetItemHungerUnits) already checks
+           an item's ModData FIRST and falls back to exactly this kind of
+           static, by-type data when there's none -- so as long as a
+           canned jar is NEVER given per-instance ModData, it automatically
+           resolves through the static tables with the correct rate,
+           with zero extra code needed in this file at all.
+       The trade-off: a jar always counts as "made from 4 fully fresh
+       units" no matter how stale the produce actually was at canning
+       time (the old dynamic version correctly reduced this). Freshness
+       lost to rot AFTER canning still works completely normally though --
+       GetItemCurrentHungerUnits reads the jar's own live getHungerChange(),
+       which vanilla itself keeps reducing as the OPEN jar sits around and
+       ages per its own DaysFresh/DaysTotallyRotten, same as any other
+       food. Only the "how fresh were the ingredients at the moment of
+       canning" nuance is gone. In exchange, ISCraftAction:complete() no
+       longer needs overriding AT ALL for this mod -- see the wrap at the
+       bottom of this file, which now only exists to fire the in-character
+       canning/opening flavor line, and is a plain, safe wrap like #1
+       above, not a full-function copy. That removes a real compatibility
+       risk this mod used to carry: a full override of a function called
+       by EVERY craft recipe in the entire game (all mods, all players)
+       would silently lose if any other mod also fully overrode it, and
+       would silently go stale if a future game update ever changed
+       vanilla's real ISCraftAction:complete() body.
 
-    2. Standard CraftRecipe (canning, jarring, etc). Driven by
-       ISCraftAction.lua. :complete() does
-           local list = RecipeManager.PerformMakeItem(self.recipe, self.item, self.character, self.containers)
-       `list` (the newly created item(s)) is a LOCAL variable inside that
-       function -- nothing outside can see it, so wrapping doesn't work
-       here. This is a full override, copied from the current B42
-       ISCraftAction.lua (shared/TimedActions/ISCraftAction.lua) with one
-       addition (grabbing ingredient vitamins beforehand via
-       RecipeManager.getAvailableItemsNeeded, the same call vanilla's own
-       getDuration() uses, then applying the sum to each result item). If
-       a future game update changes ISCraftAction:complete()'s body, this
-       needs to be re-synced with it.
-
-    SAFETY: ISCraftAction:complete() runs for EVERY standard craft recipe
-    in the whole game -- carpentry, tailoring, metalworking, vehicle
-    repair, other mods' recipes, all of it, not just ours. The extra
-    ingredient-vitamin-summing work is gated behind a check of the
-    recipe's own module name (recipe:getModule():getName() ==
-    "HARMONIEGardenToPlate"), so for every recipe that isn't one of ours
-    this override does exactly what vanilla's own complete() does and
-    nothing more -- the item-placement logic below (fromFloor / AddItem /
-    addOrDropItem) is an unmodified copy of vanilla's, and the vitamin
-    summing itself never even runs for a non-HARMONIE recipe.
-
-    Both paths above scale each ingredient's contribution by its own
+    Both paths scale a raw ingredient's contribution by its own
     HARMONIE_GTP.GetItemCurrentHungerUnits (HARMONIE_FoodVitaminDatabase.lua)
     -- i.e. how much hunger it ACTUALLY has right now, which vanilla
     itself already reduces as food goes stale/rotten -- times its fixed
     vitamin-per-hunger rate. No separate rot/freshness tracking of our
     own: a rotten ingredient naturally contributes less because vanilla
     already reports less current hunger for it.
-
-    RecipeManager.getAvailableItemsNeeded returns one entry per physical
-    item instance, confirmed by vanilla's own use of it: ISCraftAction.lua
-    itself calls it (line ~144) and sums per-item carried weight over the
-    result, which only works if a recipe line like "item 4 [...]" yields 4
-    separate entries -- multi-count ingredient recipes are common in
-    vanilla, so this is relied on elsewhere already. That's what makes
-    MakeHomeCannedProduce's "item 4 [...]" produce requirement sum all of
-    its ingredients' vitamins correctly with no special-casing here, and
-    no hardcoded count anywhere in this file -- change the recipe's
-    required count again in the future and this still sums whatever it
-    actually finds, no code change needed here.
 ]]--
 
 require "TimedActions/ISAddItemInRecipe"
@@ -75,69 +78,6 @@ require "TimedActions/ISCraftAction"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
-
-local OUR_MODULE_NAME = "HARMONIEGardenToPlate"
-
--- MakePillsVitamins (HARMONIE_Recipes.txt) lives in our module but its
--- output (Base.PillsVitamins) is a vanilla FirstAid item, not a food this
--- mod tracks vitamins on -- summing its ingredients' vitamins onto the
--- pill bottle would just be pointless orphaned ModData (and a wasted
--- pcall'd setBaseHunger/setHungChange attempt on a non-Food Drainable
--- item, harmless but sloppy). Excluded explicitly rather than relying on
--- GetVitaminProfileForItem returning nil for the output either way.
-local NON_VITAMIN_RECIPES = { MakePillsVitamins = true }
-
---[[
-    True only for recipes belonging to this mod (excluding the ones in
-    NON_VITAMIN_RECIPES above). Used to skip all of the extra
-    vitamin-summing work (and the extra RecipeManager call it makes) for
-    every other recipe in the game -- see the SAFETY note above.
-]]--
-local function isOurRecipe(recipe)
-    local ok, moduleName = pcall(function() return recipe:getModule():getName() end)
-    if not (ok and moduleName == OUR_MODULE_NAME) then return false end
-    local ok2, name = pcall(function() return recipe:getOriginalname() end)
-    return not (ok2 and NON_VITAMIN_RECIPES[name])
-end
-
---[[
-    Sums the vitamin content AND the hunger-units of every ingredient a
-    recipe is about to consume. Each ingredient contributes
-    rate[vit] * currentHungerUnits -- its fixed vitamin-per-hunger rate
-    (HARMONIE_GTP.GetVitaminRatePerHunger) times however much hunger it
-    ACTUALLY has right now (HARMONIE_GTP.GetItemCurrentHungerUnits, which
-    already reflects any rot -- vanilla's own getHungerChange() does that
-    reduction for us, nothing extra to compute here). Keeping the
-    vitamin sum and the hunger-units sum built from the exact same
-    per-ingredient currentHungerUnits values is what keeps the crafted
-    result's vitamin-per-hunger-point rate matching its ingredients' (see
-    GetItemHungerUnits's comment for why that matters).
-    Returns vitaminSum, hungerUnitsSum -- vitaminSum is nil if none of the
-    ingredients carry any vitamin data.
-]]--
-function HARMONIE_GTP.SumRecipeIngredientVitamins(recipe, character, containers, item)
-    if not isOurRecipe(recipe) then return nil, 0 end
-
-    local ok, items = pcall(RecipeManager.getAvailableItemsNeeded, recipe, character, containers, item, nil)
-    if not ok or not items then return nil, 0 end
-
-    local sum, any, hungerUnitsSum = {}, false, 0
-    for i = 0, items:size() - 1 do
-        local ingredient = items:get(i)
-        local rates = HARMONIE_GTP.GetVitaminRatePerHunger(ingredient)
-        local currentHungerUnits = rates and HARMONIE_GTP.GetItemCurrentHungerUnits(ingredient)
-        if rates and currentHungerUnits then
-            any = true
-            for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-                if rates[vit] then
-                    sum[vit] = (sum[vit] or 0) + rates[vit] * currentHungerUnits
-                end
-            end
-            hungerUnitsSum = hungerUnitsSum + currentHungerUnits
-        end
-    end
-    return any and sum or nil, hungerUnitsSum
-end
 
 -- ============================================
 -- 1. EVOLVED RECIPES (pots/pans) -- wrap, safe
@@ -165,7 +105,12 @@ end
     ingredient's FULL vitamin content regardless of how much was really
     used, AND the leftover portion would still hand out its full
     original vitamin profile again whenever it's later eaten or cooked
-    with -- double-counting.
+    with -- double-counting. (A flat "always credit half" shortcut was
+    considered and rejected for exactly this reason: it would still
+    over-credit anything that only needs a small fraction, like Beef in
+    a Sandwich, while under-crediting anything that needs the whole
+    ingredient, like Carrots in Soup -- there's no single fixed fraction
+    that's correct across every EvolvedRecipe.)
 ]]--
 local function getItemHunger(item)
     if not item then return nil end
@@ -205,24 +150,47 @@ function ISAddItemInRecipe:complete()
             end
         end
         HARMONIE_GTP.AddVitaminsToItem(self.baseItem, scaled, hungerUnitsUsed)
+
+        -- Plain ModData changes on a contained item (not a character, not
+        -- a world object) don't get pushed to other clients on their own.
+        -- The REAL vanilla mechanism for this exact case is sendItemStats
+        -- (a global function, not item:transmitModData() -- that's for
+        -- characters/world objects, confirmed by grep to have zero
+        -- precedent on a plain InventoryItem anywhere in vanilla),
+        -- confirmed via this SAME function's own original body just above
+        -- (original_ISAddItemInRecipe_complete calls
+        -- `if isServer() then sendItemStats(self.baseItem) ... end`
+        -- right after self.recipe:addItem() -- see vanilla's real
+        -- ISAddItemInRecipe.lua) and repeated identically in
+        -- ISConsolidateDrainable.lua and half a dozen other vanilla
+        -- TimedActions. That call already ran (inside the original
+        -- complete() above) BEFORE our vitamin ModData was added, so it
+        -- doesn't cover our addition -- this re-triggers it now that the
+        -- item's real final state (vitamins included) is set.
+        if isServer() then
+            sendItemStats(self.baseItem)
+        end
     end
     return result
 end
 
 -- ============================================
 -- 2. STANDARD CRAFT RECIPES (canning/jars/etc)
---    full override -- see file header for why
+--    plain wrap, just for the flavor line -- the
+--    vitamin numbers themselves are pure static
+--    lookups now (see file header), nothing to
+--    compute or write here at all.
 -- ============================================
 
 --[[
     A small in-character remark on finishing one of our own craft
     recipes -- pure flavor, keyed by the recipe's own name so it never
-    fires for anyone else's recipe (this override runs for every
-    craftRecipe in the whole game, ours included only incidentally).
-    Chance-gated so it doesn't talk over itself on repeat crafts in a
-    session.
+    fires for anyone else's recipe (this wrap's original-function call
+    happens for every craftRecipe in the whole game, ours included only
+    incidentally). Chance-gated so it doesn't talk over itself on repeat
+    crafts in a session.
 ]]--
-local RECIPE_FLAVOR_CHANCE_PERCENT = 100 -- TEMP: bumped from 60 for easy Thai-text testing, dial back down after
+local RECIPE_FLAVOR_CHANCE_PERCENT = 60
 local RecipeFlavorLineKeys = {
     MakeHomeCannedProduce = {"IGUI_HARMONIE_CannedMade_1", "IGUI_HARMONIE_CannedMade_2", "IGUI_HARMONIE_CannedMade_3", "IGUI_HARMONIE_CannedMade_Funny"},
     OpenHomeCannedProduce = {"IGUI_HARMONIE_CannedOpened_1", "IGUI_HARMONIE_CannedOpened_2", "IGUI_HARMONIE_CannedOpened_3", "IGUI_HARMONIE_CannedOpened_Funny"},
@@ -238,56 +206,9 @@ local function maybeSayRecipeFlavor(character, recipe)
     character:Say(getText(keys[ZombRand(#keys) + 1]))
 end
 
+local original_ISCraftAction_complete = ISCraftAction.complete
 function ISCraftAction:complete()
-    local vitaminSum, hungerUnitsSum = HARMONIE_GTP.SumRecipeIngredientVitamins(self.recipe, self.character, self.containers, self.item)
-
-    local fromFloor = false
-    if self.container:getType() == "floor" then
-        fromFloor = true
-    end
-
-    local list = RecipeManager.PerformMakeItem(self.recipe, self.item, self.character, self.containers)
-
-    if list then
-        for i = 0, list:size() - 1 do
-            local newItem = list:get(i)
-            if vitaminSum then
-                HARMONIE_GTP.AddVitaminsToItem(newItem, vitaminSum, hungerUnitsSum)
-                -- Sealed/open home-canned items carry their own static
-                -- reference HungerChange in HARMONIE_Items.txt (e.g.
-                -- HomeCannedCarrots = -32.0, "4 fresh carrots"), needed
-                -- as a fallback for a debug-spawned jar with no ModData.
-                -- But GetItemCurrentHungerUnits (HARMONIE_FoodVitaminDatabase.lua)
-                -- reads the item's own LIVE getHungerChange() first, which
-                -- would otherwise always be that static fresh-reference
-                -- number regardless of how stale the real ingredients
-                -- were -- silently discarding the staleness reduction
-                -- already correctly baked into hungerUnitsSum above (a
-                -- jar canned from half-rotten produce would still eat
-                -- back out as if it were made from fully fresh produce).
-                -- Overwriting the newly-crafted item's OWN hunger to
-                -- match what actually went into it keeps the two systems
-                -- in agreement, and still lets vanilla's normal rot
-                -- reduce it further from there once opened.
-                if hungerUnitsSum and hungerUnitsSum > 0 then
-                    local rawHunger = -hungerUnitsSum / 100
-                    pcall(function() newItem:setBaseHunger(rawHunger) end)
-                    pcall(function() newItem:setHungChange(rawHunger) end)
-                end
-            end
-            if fromFloor then
-                self.character:getCurrentSquare():AddWorldInventoryItem(newItem,
-                        self.character:getX() - math.floor(self.character:getX()) + ZombRandFloat(0.1, 0.5),
-                        self.character:getY() - math.floor(self.character:getY()) + ZombRandFloat(0.1, 0.5),
-                        self.character:getZ() - math.floor(self.character:getZ()))
-                self.container:AddItem(newItem)
-            else
-                Actions.addOrDropItem(self.character, newItem)
-            end
-        end
-    end
-
+    local result = original_ISCraftAction_complete(self)
     maybeSayRecipeFlavor(self.character, self.recipe)
-
-    return true
+    return result
 end

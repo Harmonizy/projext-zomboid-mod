@@ -26,6 +26,25 @@
     (the same threshold HARMONIE_TooltipHook.lua uses to let someone read
     a food's vitamin content) comments on the actual nutrition instead of
     just the taste, since they'd genuinely recognize it.
+
+    IMPORTANT (read BEFORE consuming, not after): both wraps below read
+    everything they need from the item BEFORE calling through to the
+    original complete(), which is what actually invokes vanilla's native
+    character:Eat()/drink call. That native call can fully consume and
+    remove a single-serving item (a whole raw carrot eaten in one action,
+    percentage=1) -- after which the item's own getHungerChange()/ModData
+    reads are no longer trustworthy (confirmed as the actual cause of a
+    reported bug: eating a whole raw item granted ZERO vitamins every
+    time, while some other items over-granted wildly -- both symptoms
+    trace back to reading mutable item state on an item the native call
+    had already consumed out from under this code). An earlier version of
+    this file read AFTER calling through, matching neither of the two
+    safe patterns already used elsewhere in this mod: HARMONIE_
+    RecipeVitamins.lua's ISAddItemInRecipe wrap explicitly reads hunger
+    before/after specifically because of this exact hazard (see its own
+    comments), and its ISCraftAction override reads ingredient data
+    before RecipeManager.PerformMakeItem consumes them. Reading first here
+    just applies that same lesson to eating.
 ]]--
 
 require "TimedActions/ISEatFoodAction"
@@ -33,13 +52,10 @@ require "TimedActions/ISDrinkFluidAction"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 
-local function awardVitamins(character, item, fraction)
-    if not item then return end
-    local gains = HARMONIE_GTP.GetVitaminGains(item, fraction)
-    if gains then
-        for vit, amount in pairs(gains) do
-            HARMONIE_GTP.VitData.Add(character, vit, amount)
-        end
+local function applyGains(character, gains)
+    if not gains then return end
+    for vit, amount in pairs(gains) do
+        HARMONIE_GTP.VitData.Add(character, vit, amount)
     end
 end
 
@@ -70,7 +86,7 @@ end
     is said, picked at random among whichever qualify, so eating one
     thing never talks over itself with two comments back to back.
 ]]--
-local TASTE_CHANCE_PERCENT = 100 -- TEMP: bumped from 35 for easy Thai-text testing, dial back down after
+local TASTE_CHANCE_PERCENT = 35
 local TASTE_THRESHOLDS = {A = 200, B = 3, C = 30, D = 10, E = 2, K = 60}
 local KNOWLEDGEABLE_COOKING_LEVEL = 3
 
@@ -101,10 +117,12 @@ local KnowledgeableLineKeys = {
 local CannedTasteLineKeys = {"IGUI_HARMONIE_TasteCanned_1", "IGUI_HARMONIE_TasteCanned_2", "IGUI_HARMONIE_TasteCanned_Funny"}
 local HOME_CANNED_PREFIX = "HARMONIEGardenToPlate.HomeCanned"
 
-local function maybeSayTasteReaction(character, item)
-    if not item or not character.Say then return end
-    local profile = HARMONIE_GTP.GetVitaminProfileForItem(item)
-    if not profile then return end
+-- Takes the already-resolved profile/fullType (read BEFORE the item was
+-- consumed -- see the file header) rather than the item itself, since by
+-- the time this is called the native eat/drink call may have already
+-- removed or reset it.
+local function maybeSayTasteReaction(character, profile, fullType)
+    if not profile or not character.Say then return end
 
     -- Candidates are stored as the vitamin letter itself (or "CANNED"
     -- for the texture reaction), NOT the resolved line list -- which
@@ -116,8 +134,7 @@ local function maybeSayTasteReaction(character, item)
             table.insert(candidates, vit)
         end
     end
-    local ok, fullType = pcall(function() return item:getFullType() end)
-    if ok and fullType and fullType:find(HOME_CANNED_PREFIX, 1, true) == 1 then
+    if fullType and fullType:find(HOME_CANNED_PREFIX, 1, true) == 1 then
         table.insert(candidates, "CANNED")
     end
     if #candidates == 0 then return end
@@ -140,9 +157,15 @@ local original_ISEatFoodAction_complete = ISEatFoodAction.complete
 function ISEatFoodAction:complete()
     local item = self.item
     local fraction = self.percentage or 1
+    -- Read everything BEFORE calling through -- see file header.
+    local gains = HARMONIE_GTP.GetVitaminGains(item, fraction)
+    local profile = HARMONIE_GTP.GetVitaminProfileForItem(item)
+    local ok, fullType = pcall(function() return item:getFullType() end)
+
     local result = original_ISEatFoodAction_complete(self)
-    awardVitamins(self.character, item, fraction)
-    maybeSayTasteReaction(self.character, item)
+
+    applyGains(self.character, gains)
+    maybeSayTasteReaction(self.character, profile, ok and fullType or nil)
     return result
 end
 
@@ -151,7 +174,11 @@ local original_ISDrinkFluidAction_complete = ISDrinkFluidAction.complete
 function ISDrinkFluidAction:complete()
     local item = self.item
     local fraction = self.percentage or 1
+    -- Read BEFORE calling through -- see file header.
+    local gains = HARMONIE_GTP.GetVitaminGains(item, fraction)
+
     local result = original_ISDrinkFluidAction_complete(self)
-    awardVitamins(self.character, item, fraction)
+
+    applyGains(self.character, gains)
     return result
 end

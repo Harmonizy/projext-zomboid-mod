@@ -91,14 +91,15 @@ end
 local function buildVitaminLines(item)
     if not item then return nil end
 
-    -- Sealed home-canned jars now carry a real HungerChange in their own
-    -- item script (HARMONIE_Items.txt -- e.g. HomeCannedCarrots is
-    -- -32.0, matching 4 fresh carrots' own -8.0 each, exactly the way
-    -- vanilla's own CannedCarrots/CannedTomato/CannedPotato do despite
-    -- also being CantEat=true), so GetVitaminRatePerHunger resolves the
-    -- SAME single way for a raw carrot, a sealed jar, and an opened jar
-    -- alike -- no separate "total" display mode needed for sealed jars
-    -- anymore.
+    -- A legitimately-crafted sealed jar carries its real vitamin content
+    -- as ModData (see HARMONIE_RecipeVitamins.lua), so this resolves for
+    -- it exactly like any other tracked food. A sealed jar carries NO
+    -- native HungerChange of its own though (see HARMONIE_Items.txt --
+    -- deliberately, matching vanilla's own real sealed cans like
+    -- Base.CannedCarrots2, so it can't be eaten around the can-opener
+    -- requirement), so a debug-spawned one with no ModData at all won't
+    -- show anything here until actually opened -- acceptable, since it
+    -- was never eatable in that state either.
     local rates = HARMONIE_GTP.GetVitaminRatePerHunger(item)
     if not rates then return nil end
 
