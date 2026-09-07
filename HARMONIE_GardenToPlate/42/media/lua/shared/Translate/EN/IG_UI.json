@@ -25,6 +25,12 @@
     "IGUI_HARMONIE_AdminSufficientThreshold": "Sufficient threshold",
     "IGUI_HARMONIE_AdminEffectMultiplier": "Effect severity multiplier",
     "IGUI_HARMONIE_AdminEnableEffects": "Enable critical-vitamin effects",
+    "IGUI_HARMONIE_AdminHint": "Type a value and press Enter (or click elsewhere) to apply it. Hover any field for details.",
+    "IGUI_HARMONIE_AdminReserveLabel": "Reserve",
+    "IGUI_HARMONIE_AdminReserveTooltip": "This vitamin's current Reserve, 0-100. Below the Critical threshold the deficiency penalty can fire (unless Pause Days are banked); at or above the Sufficient threshold it counts as fully recovered. Accepts decimals (e.g. 19.99) for testing right at a threshold.",
+    "IGUI_HARMONIE_AdminPauseDaysLabel": "Pause Days",
+    "IGUI_HARMONIE_AdminPauseDaysTooltip": "Banked days that pause BOTH this vitamin's daily Reserve decay AND its critical-deficiency penalty, whichever it's needed for. 1 day is consumed per in-game day. Gained from eating well (reservePerPauseDay Reserve = 1 day), or +1 to every vitamin at once from taking a Vitamin Pill (Base.PillsVitamins).",
+    "IGUI_HARMONIE_AdminStatusLine": "%1: %2  |  Penalty active: %3  |  Days critical: %4",
     "IGUI_HARMONIE_TooltipHeader": "Vitamin content (per 1 hunger point):",
     "IGUI_HARMONIE_PillsTaken": "That should hold off the worst of the vitamin deficiency symptoms for a day."
 }

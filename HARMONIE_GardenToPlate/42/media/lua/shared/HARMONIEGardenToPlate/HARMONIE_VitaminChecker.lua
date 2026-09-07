@@ -10,10 +10,11 @@
          day happens to roll over (which could be a long real-world wait
          at a high game-speed multiplier, or short at 1x -- either way,
          not responsive).
-      2. A vitamin whose Base.PillsVitamins suppression window
-         (HARMONIE_VitaminData.lua's IsEffectsSuppressed) just expired
-         resumes its penalty right away if still afflicted, instead of
-         silently staying quiet until the next day tick.
+      2. A vitamin whose banked pause days (HARMONIE_VitaminData.lua's
+         GetPauseDays -- gained from eating, or from Base.PillsVitamins via
+         HARMONIE_PillsHook.lua) just ran out resumes its penalty right
+         away if still afflicted, instead of silently staying quiet until
+         the next day tick.
       3. The "afflicted" flag itself catches up to Reserve climbing back
          above Sufficient just as quickly (VitData.RefreshAffliction),
          instead of lagging up to a full day behind the real Reserve
@@ -50,7 +51,7 @@ local function checkCharacter(character, today)
         HARMONIE_GTP.VitData.RefreshAffliction(character, vit)
 
         if HARMONIE_GTP.VitData.IsAfflicted(character, vit)
-                and not HARMONIE_GTP.VitData.IsEffectsSuppressed(character)
+                and HARMONIE_GTP.VitData.GetPauseDays(character, vit) <= 0
                 and HARMONIE_GTP.VitData.GetLastEffectDay(character, vit) ~= today then
             HARMONIE_GTP.VitEffects.ApplyCritical(character, vit)
             HARMONIE_GTP.VitData.SetLastEffectDay(character, vit, today)

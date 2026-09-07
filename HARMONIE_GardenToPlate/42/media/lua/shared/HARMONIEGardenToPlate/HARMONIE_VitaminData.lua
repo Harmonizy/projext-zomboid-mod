@@ -4,10 +4,18 @@
 
     Each vitamin tracks:
       value        - the 0-100 Reserve shown in the UI
-      pauseDays    - banked days of decay immunity, gained at
-                     reservePerPauseDay Reserve per day (10 Reserve = 1
-                     pause day at the default -- see
-                     HARMONIE_VitaminConfig.lua)
+      pauseDays    - banked days of decay AND critical-penalty immunity.
+                     Gained at reservePerPauseDay Reserve per day (10
+                     Reserve = 1 pause day at the default -- see
+                     HARMONIE_VitaminConfig.lua) from eating, or +1 per
+                     vitamin from taking Base.PillsVitamins (see
+                     VitData.AddPauseDays below / HARMONIE_PillsHook.lua)
+                     without any Reserve gain. While banked, both the daily
+                     decay (ApplyDailyTick) and the critical-band penalty
+                     itself (HARMONIE_VitaminChecker.lua / VitEffects.
+                     ApplyCritical) are held off; one day is consumed per
+                     in-game day regardless of which of the two purposes
+                     it ends up serving
       afflicted    - true once Reserve has dropped below the critical
                      threshold; stays true (and keeps taking the critical
                      penalty) until Reserve climbs back up to the
@@ -154,24 +162,19 @@ function VitData.GetAll(character)
 end
 
 --[[
-    Effect suppression window (Base.PillsVitamins, see HARMONIE_PillsHook.lua):
-    a plain in-game-hours timestamp on the character's own ModData (deliberately
-    NOT nested under HARMONIE_Vitamins, since it's a whole-character flag, not
-    per-vitamin). Only suppresses the GAMEPLAY PENALTY applied by
-    HARMONIE_VitaminEffects.lua's ApplyCritical -- Reserve itself keeps
-    decaying and the affliction hysteresis keeps tracking normally, so the
-    deficiency is still real and comes back the moment the pills wear off;
-    this is symptom relief, not a cure, matching how real vitamin supplements
-    don't retroactively fix a diet.
+    Grants `days` extra banked pause days to ONE vitamin, directly --
+    unlike VitData.Add(), this never touches Reserve at all (see
+    HARMONIE_PillsHook.lua: Base.PillsVitamins is meant to buy relief from
+    the SYMPTOM, not fix the underlying deficiency, so it must not raise
+    Reserve). Because pauseDays already gates both decay (ApplyDailyTick)
+    and the critical-band penalty itself (see VitData.GetPauseDays's use in
+    HARMONIE_VitaminChecker.lua / HARMONIE_VitaminEffects.lua), a vitamin
+    that's currently Critical stays exactly as low as it was, but its
+    penalty goes quiet until the banked day(s) are consumed by the next
+    daily tick(s) -- symptom relief, not a cure, matching how real vitamin
+    supplements don't retroactively fix a diet.
 ]]--
-function VitData.SuppressEffectsFor(character, hours)
-    local modData = character:getModData()
-    local now = getGameTime():getWorldAgeHours()
-    modData.HARMONIE_EffectSuppressUntil = math.max(modData.HARMONIE_EffectSuppressUntil or 0, now + hours)
-end
-
-function VitData.IsEffectsSuppressed(character)
-    local modData = character:getModData()
-    local until_ = modData.HARMONIE_EffectSuppressUntil
-    return until_ ~= nil and getGameTime():getWorldAgeHours() < until_
+function VitData.AddPauseDays(character, vit, days)
+    local store = ensureStore(character)
+    store[vit].pauseDays = store[vit].pauseDays + days
 end

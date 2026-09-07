@@ -17,12 +17,13 @@
     own native panic-driven tunnel vision / narrowed screen effect -- no
     custom rendering, just leaning on an existing vanilla visual cue.
 
-    ApplyCritical is a no-op while HARMONIE_GTP.VitData.IsEffectsSuppressed
-    is true (Base.PillsVitamins, taken via HARMONIE_PillsHook.lua, blocks
-    this penalty for 24 in-game hours). That only silences the SYMPTOM --
-    Reserve and the affliction flag itself are untouched, so it comes right
-    back once the suppression window ends if the underlying deficiency was
-    never actually fixed by eating.
+    ApplyCritical is a no-op while the vitamin has banked pause days
+    (HARMONIE_GTP.VitData.GetPauseDays > 0) -- gained from eating well, or
+    +1 per vitamin from taking Base.PillsVitamins with no Reserve gain (see
+    HARMONIE_PillsHook.lua). That only silences the SYMPTOM -- Reserve and
+    the affliction flag itself are untouched, so the penalty comes right
+    back once the banked day(s) are consumed by the next daily tick(s) if
+    the underlying deficiency was never actually fixed by eating.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -71,7 +72,7 @@ local Handlers = {
 
 function VitEffects.ApplyCritical(character, vit)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
-    if HARMONIE_GTP.VitData.IsEffectsSuppressed(character) then return end
+    if HARMONIE_GTP.VitData.GetPauseDays(character, vit) > 0 then return end
     local cfg = HARMONIE_GTP.Config.effects[vit]
     local handler = Handlers[vit]
     if cfg and handler then

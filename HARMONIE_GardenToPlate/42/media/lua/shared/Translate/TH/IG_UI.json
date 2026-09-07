@@ -25,6 +25,12 @@
     "IGUI_HARMONIE_AdminSufficientThreshold": "เกณฑ์ระดับเพียงพอ",
     "IGUI_HARMONIE_AdminEffectMultiplier": "ตัวคูณความรุนแรงของผลกระทบ",
     "IGUI_HARMONIE_AdminEnableEffects": "เปิดใช้งานผลกระทบเมื่อวิกฤติ",
+    "IGUI_HARMONIE_AdminHint": "พิมพ์ค่าที่ต้องการแล้วกด Enter (หรือคลิกที่อื่น) เพื่อยืนยัน เอาเมาส์ชี้ที่ช่องกรอกเพื่อดูคำอธิบาย",
+    "IGUI_HARMONIE_AdminReserveLabel": "Reserve",
+    "IGUI_HARMONIE_AdminReserveTooltip": "ค่า Reserve ปัจจุบันของวิตามินนี้ (0-100) ต่ำกว่าเกณฑ์วิกฤติจะเริ่มมีผลเสียได้ (ถ้าไม่มีวันพักกันไว้) ตั้งแต่เกณฑ์เพียงพอขึ้นไปถือว่าฟื้นตัวเต็มที่ ใส่เลขทศนิยมได้ (เช่น 19.99) เพื่อทดสอบตรงขอบเกณฑ์พอดี",
+    "IGUI_HARMONIE_AdminPauseDaysLabel": "วันพัก",
+    "IGUI_HARMONIE_AdminPauseDaysTooltip": "จำนวนวันพักที่สะสมไว้ กันทั้งการลด Reserve รายวันและผลเสียวิกฤติของวิตามินนี้ (ใช้ตามที่จำเป็น) หักออก 1 วันทุกวันเกม ได้จากการกินอาหารสม่ำเสมอ (Reserve ครบ reservePerPauseDay = วันพัก 1 วัน) หรือ +1 ให้ทุกวิตามินพร้อมกันจากการกินยาวิตามิน (Base.PillsVitamins)",
+    "IGUI_HARMONIE_AdminStatusLine": "%1: %2  |  ผลเสียกำลังทำงาน: %3  |  จำนวนวันวิกฤติ: %4",
     "IGUI_HARMONIE_TooltipHeader": "ปริมาณวิตามิน (ต่อความหิว 1 หน่วย):",
     "IGUI_HARMONIE_PillsTaken": "น่าจะช่วยระงับอาการขาดวิตามินที่หนักที่สุดไว้ได้สักวันหนึ่ง"
 }

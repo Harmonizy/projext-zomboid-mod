@@ -90,16 +90,40 @@ HARMONIE_GTP.Config = {
     effectsEnabled = true,
     effectMultiplier = 1,
 
-    -- flat per-day-of-affliction penalty applied while a vitamin is
+    -- Flat per-day-of-affliction penalty applied while a vitamin is
     -- afflicted -- same amount every day, no ramp, no cap (see the
-    -- Affliction model note above)
+    -- Affliction model note above). A/B/C/D/E are sized as "20% of that
+    -- vanilla stat's own min-max range per day" uniformly, NOT a flat 20
+    -- in every case: confirmed straight from the game's own
+    -- zombie/characters/CharacterStat.class (register(id, min, max,
+    -- default)) that these stats do NOT all share one 0-100 scale --
+    --   PANIC: 0-100, PAIN: 0-100
+    --   ENDURANCE: 0-1, SICKNESS: 0-1, STRESS: 0-1
+    -- so 20% works out to 20 for the 0-100 stats and 0.2 for the 0-1
+    -- stats -- both are "20 out of the stat's own 100%", just expressed in
+    -- that stat's native units. (The previous flat numbers here -- 0.6 for
+    -- PAIN, 0.08 for ENDURANCE -- had drifted from this: 0.6/100 for PAIN
+    -- was nearly a no-op, while 0.6/1.0 for SICKNESS was already a huge
+    -- 60% jump every single day.)
+    --
+    -- K is a deliberate exception, kept lower at 5 (not the 20 that 20%-
+    -- of-0-100 would suggest): confirmed by decompiling BodyDamage.class /
+    -- IsoGameCharacter.class that wound body-part health (0-100 scale)
+    -- isn't just cosmetic -- it feeds Overall Body Health
+    -- (BodyDamage.calculateOverallHealth, a weighted average across every
+    -- body part), and IsoGameCharacter.isDead() returns true once that
+    -- reaches 0. So unlike A/B/C/D/E (moodle-level discomfort with no
+    -- death path), an uncapped K penalty across several already-injured
+    -- body parts at once compounds into an actual death spiral -- 5/day
+    -- keeps that possible under sustained neglect without making it a
+    -- near-automatic death sentence the moment Vitamin K goes critical.
     effects = {
-        A = { amount = 40 },   -- CharacterStat.PANIC added
-        B = { amount = 0.08 }, -- CharacterStat.ENDURANCE removed
-        C = { amount = 0.6 },  -- CharacterStat.SICKNESS added
-        D = { amount = 0.6 },  -- CharacterStat.PAIN added
-        E = { amount = 0.8 },  -- CharacterStat.STRESS added
-        K = { amount = 3 },    -- wound body-part health removed
+        A = { amount = 20 },   -- CharacterStat.PANIC added (0-100 scale)
+        B = { amount = 0.2 },  -- CharacterStat.ENDURANCE removed (0-1 scale)
+        C = { amount = 0.2 },  -- CharacterStat.SICKNESS added (0-1 scale)
+        D = { amount = 20 },   -- CharacterStat.PAIN added (0-100 scale)
+        E = { amount = 0.2 },  -- CharacterStat.STRESS added (0-1 scale)
+        K = { amount = 5 },    -- wound body-part health removed (0-100 scale, deliberately gentler -- see above)
     },
 }
 
