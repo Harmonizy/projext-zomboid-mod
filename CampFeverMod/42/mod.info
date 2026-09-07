@@ -1,0 +1,6 @@
+name=Camp Fever (Simple EHR-style)
+id=CampFeverMod
+description=A tiny learning mod inspired by Extensive Health Rework Evolved: one custom disease (Camp Fever, 3 stages) and one herbal item that cures it.
+poster=poster.png
+modversion=1.0
+versionMin=42.0.0

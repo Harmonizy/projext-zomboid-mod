@@ -1,0 +1,6 @@
+Tooltip_EN = {
+    Tooltip_HARMONIE_GingerBugTonic = "A fermented folk tonic of ginger, honey and ground insect protein. <LINE> Settles a rebelling gut when gastroenteritis takes hold.",
+    Tooltip_HARMONIE_GraveAshGarlicPoultice = "Ash, garlic and rendered fat, worked into a poultice the old way. <LINE> Said to draw out the sickness that lingers after too long near the dead.",
+    Tooltip_HARMONIE_WarmingSpicedBitters = "A fiery spiced tonic meant to get the blood moving. <LINE> Eases the worst of the cold, but true warmth still has to come from a fire and dry clothes.",
+    Tooltip_HARMONIE_WillowBarkAntitoxinBooster = "A bitter herbal preparation, thought to help the body fight off lockjaw alongside proper antitoxin. <LINE> Not a substitute for real medicine, but every little bit helps.",
+}

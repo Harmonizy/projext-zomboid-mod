@@ -1,0 +1,6 @@
+name=HARMONIE - Code Detecter
+id=HARMONIE_CodeDetecter
+description=Debug/diagnostic tool. Dumps loaded mods, all item definitions, all crafting recipes, and sandbox settings to plain-text log files (Zomboid\Lua\HARMONIE_*.log) for offline analysis. Triggered manually from the debug console, changes nothing about gameplay.
+poster=poster.png
+modversion=1.0
+versionMin=42.0.0

@@ -1,0 +1,153 @@
+module HARMONIEHomeMedic
+{
+    craftRecipe MakeGingerBugTonic
+    {
+        timedAction = MixingMortarPestle,
+        time = 150,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:5;PlantScavenging:4,
+        OnTest = RecipeCodeOnTest.EHRFreshMedicinalIngredients,
+        inputs
+        {
+            item 1 tags[base:mortarpestle] mode:keep,
+            item 1 [Base.PopBottle;Base.PopBottleRare;Base.WaterBottle] flags[IsEmpty;ItemCount],
+            item 1 [*],
+            -fluid 0.3 categories[Water] mode:mixture,
+            item 1 [Base.Honey] flags[ItemCount],
+            item 1 [Base.GingerRoot] flags[ItemCount],
+            item 1 [Base.Chamomile;Base.CommonMallow] flags[ItemCount],
+            item 2 [Base.Cricket;Base.Grasshopper] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEHomeMedic.GingerBugTonic,
+        }
+    }
+
+    craftRecipe MakeSaltFromInsectAsh
+    {
+        timedAction = MixingMortarPestle,
+        time = 90,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:2;PlantScavenging:2,
+        inputs
+        {
+            item 1 tags[base:mortarpestle] mode:keep,
+            item 1 [Base.Charcoal] flags[ItemCount],
+            item 2 [Base.Cockroach;Base.Centipede;Base.Centipede2;Base.Cricket;Base.Grasshopper] flags[ItemCount],
+        }
+        outputs
+        {
+            item 2 Base.Salt,
+        }
+    }
+
+    craftRecipe MakeGraveAshGarlicPoultice
+    {
+        timedAction = MixingMortarPestle,
+        time = 180,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:5;PlantScavenging:4,
+        OnTest = RecipeCodeOnTest.EHRFreshMedicinalIngredients,
+        inputs
+        {
+            item 1 tags[base:mortarpestle] mode:keep,
+            item 1 [ExtensiveHealth.Tallow;Base.Lard] flags[ItemCount],
+            item 1 [Base.Salt] flags[ItemCount],
+            item 2 [Base.Garlic;Base.WildGarlic2] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEHomeMedic.GraveAshGarlicPoultice,
+        }
+    }
+
+    craftRecipe MakeWarmingSpicedBitters
+    {
+        timedAction = MixingMortarPestle,
+        time = 120,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:4;PlantScavenging:3,
+        OnTest = RecipeCodeOnTest.EHRFreshMedicinalIngredients,
+        inputs
+        {
+            item 1 tags[base:mortarpestle] mode:keep,
+            item 1 [Base.PopBottle;Base.PopBottleRare;Base.WaterBottle] flags[IsEmpty;ItemCount],
+            item 1 [Base.Whiskey;Base.Vodka] flags[ItemCount],
+            item 1 [Base.Honey] flags[ItemCount],
+            item 1 [Base.GingerRoot] flags[ItemCount],
+            item 1 [Base.BlackSage] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEHomeMedic.WarmingSpicedBitters,
+        }
+    }
+
+    craftRecipe MakeWillowBarkAntitoxinBooster
+    {
+        timedAction = MixingMortarPestle,
+        time = 600,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:6;PlantScavenging:5,
+        OnTest = RecipeCodeOnTest.EHRFreshMedicinalIngredients,
+        inputs
+        {
+            item 1 tags[base:mortarpestle] mode:keep,
+            item 1 [Base.Comfrey] flags[ItemCount],
+            item 1 [Base.Ginseng] flags[ItemCount],
+            item 1 [Base.Snail;Base.Worm] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEHomeMedic.WillowBarkAntitoxinBooster,
+        }
+    }
+
+    craftRecipe MakeEmptyBloodBag
+    {
+        time = 90,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:2;Tailoring:3,
+        inputs
+        {
+            item 1 [Base.RippedSheetsSterilizedBundle;Base.RippedSheets] flags[ItemCount],
+            item 1 [Base.DuctTape] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 ExtensiveHealth.EmptyBloodBag,
+        }
+    }
+
+    craftRecipe MakeIVAdministrationKit
+    {
+        time = 120,
+        NeedToBeLearn = true,
+        Tags = AnySurfaceCraft;Health,
+        category = EHRMedicine,
+        AutoLearnAll = Doctor:4;Tailoring:3,
+        inputs
+        {
+            item 1 [ExtensiveHealth.Syringe] flags[ItemCount],
+            item 1 [Base.RippedSheetsSterilizedBundle;Base.RippedSheets] flags[ItemCount],
+            item 1 [Base.DuctTape] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 ExtensiveHealth.IVKit,
+        }
+    }
+}

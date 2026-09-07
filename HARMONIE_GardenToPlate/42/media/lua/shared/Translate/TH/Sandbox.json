@@ -1,0 +1,15 @@
+{
+    "Sandbox_HARMONIE_GardenToPlate": "HARMONIE: From Garden to Plate",
+    "Sandbox_HARMONIE_DecayPerDay": "อัตราลดวิตามินต่อวัน",
+    "Sandbox_HARMONIE_DecayPerDay_tooltip": "จำนวน Reserve ที่ลดลงต่อวันเกม เมื่อวันพักที่สะสมไว้ของวิตามินนั้นหมดแล้ว (ดูกลไก Reserve/Decay/Pause ของมอด)",
+    "Sandbox_HARMONIE_ReserveGainDivisor": "ตัวหารการเพิ่ม Reserve",
+    "Sandbox_HARMONIE_ReserveGainDivisor_tooltip": "Reserve ที่ได้ = (เปอร์เซ็นต์ของความต้องการรายวันที่กิน) หารด้วยค่านี้ ยิ่งค่ามากยิ่งได้ Reserve จากอาหารช้าลง",
+    "Sandbox_HARMONIE_CriticalThreshold": "เกณฑ์ระดับวิกฤติ",
+    "Sandbox_HARMONIE_CriticalThreshold_tooltip": "ค่า Reserve ที่ต่ำกว่านี้จะถือว่าวิตามินนั้นอยู่ในระดับวิกฤติและเริ่มส่งผลเสีย",
+    "Sandbox_HARMONIE_SufficientThreshold": "เกณฑ์ระดับเพียงพอ",
+    "Sandbox_HARMONIE_SufficientThreshold_tooltip": "ค่า Reserve ที่ต้องกลับขึ้นไปให้ถึงก่อนที่ผลกระทบจากภาวะวิกฤติจะหายไป (ไม่ใช่แค่พ้นระดับวิกฤติ)",
+    "Sandbox_HARMONIE_EnableCriticalEffects": "เปิดใช้งานผลกระทบเมื่อวิกฤติ",
+    "Sandbox_HARMONIE_EnableCriticalEffects_tooltip": "ปิดไว้เพื่อติดตามค่า Reserve ของวิตามินโดยไม่มีผลเสียใดๆ ต่อเกมเพลย์",
+    "Sandbox_HARMONIE_EffectMultiplier": "ตัวคูณความรุนแรงของผลกระทบ",
+    "Sandbox_HARMONIE_EffectMultiplier_tooltip": "ปรับความรุนแรงของผลเสียจากการขาดวิตามินแต่ละชนิด 1.0 = ค่าเริ่มต้น, 0 = ปิดผลกระทบ"
+}

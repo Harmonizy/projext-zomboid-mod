@@ -1,0 +1,15 @@
+{
+    "Sandbox_HARMONIE_GardenToPlate": "HARMONIE: Garden to Plate",
+    "Sandbox_HARMONIE_DecayPerDay": "Vitamin decay per day",
+    "Sandbox_HARMONIE_DecayPerDay_tooltip": "Reserve points lost per in-game day once a vitamin's banked pause days run out (see the mod's Reserve/Decay/Pause mechanic).",
+    "Sandbox_HARMONIE_ReserveGainDivisor": "Reserve gain divisor",
+    "Sandbox_HARMONIE_ReserveGainDivisor_tooltip": "Reserve gained = (percent of daily requirement eaten) / this number. Higher = slower gain from food.",
+    "Sandbox_HARMONIE_CriticalThreshold": "Critical threshold",
+    "Sandbox_HARMONIE_CriticalThreshold_tooltip": "Reserve value below which a vitamin is considered Critical and starts causing its deficiency effect.",
+    "Sandbox_HARMONIE_SufficientThreshold": "Sufficient threshold",
+    "Sandbox_HARMONIE_SufficientThreshold_tooltip": "Reserve value a vitamin must climb back up to before a Critical affliction's effect stops (not just leaving Critical).",
+    "Sandbox_HARMONIE_EnableCriticalEffects": "Enable critical-vitamin effects",
+    "Sandbox_HARMONIE_EnableCriticalEffects_tooltip": "Turn off to track vitamin Reserves without any gameplay penalty for deficiency.",
+    "Sandbox_HARMONIE_EffectMultiplier": "Effect severity multiplier",
+    "Sandbox_HARMONIE_EffectMultiplier_tooltip": "Scales how strong each vitamin's deficiency effect is. 1.0 = default, 0 = effectively off."
+}

@@ -1,0 +1,14 @@
+module CampFeverMod
+{
+    item HerbalRemedy
+    {
+        DisplayCategory = FirstAid,
+        ItemType = base:drainable,
+        DisplayName = Herbal Remedy,
+        Icon = Pills,
+        Weight = 0.3,
+        UseDelta = 0.34,
+        Medical = true,
+        Tooltip = Tooltip_CampFeverMod_HerbalRemedy,
+    }
+}

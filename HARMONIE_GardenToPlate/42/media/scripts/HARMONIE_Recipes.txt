@@ -1,0 +1,142 @@
+module HARMONIEGardenToPlate
+{
+    craftRecipe MakeHomeCannedProduce
+    {
+        time = 300,
+        Tags = AnySurfaceCraft;Cooking,
+        category = Cooking,
+        inputs
+        {
+            item 1 [Base.TinCanEmpty] flags[ItemCount],
+            item 4 [Base.Carrots;Base.SweetPotato;Base.Spinach;Base.Broccoli;Base.Cabbage;Base.BrusselSprouts;Base.Cauliflower;Base.BellPepper;Base.Tomato;Base.Cucumber;Base.Zucchini;Base.Eggplant;Base.Corn;Base.Greenpeas;Base.Potato;Base.Onion;Base.Leek;Base.RedRadish;Base.Turnip;Base.Daikon;Base.SugarBeet;Base.Avocado;Base.Olives;Base.Capers;Base.GrapeLeaves;Base.Edamame;Base.MixedVegetables;Base.Orange;Base.Grapefruit;Base.Apple;Base.Pear;Base.Banana;Base.Grapes;Base.Mango;Base.Peach;Base.Pineapple;Base.Watermelon;Base.Cherry;Base.DriedApricots] mappers[produceSort] flags[ItemCount],
+            item 1 [Base.Salt] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 mapper:produceSort,
+        }
+        itemMapper produceSort
+        {
+            HARMONIEGardenToPlate.HomeCannedCarrots = Base.Carrots,
+            HARMONIEGardenToPlate.HomeCannedSweetPotato = Base.SweetPotato,
+            HARMONIEGardenToPlate.HomeCannedSpinach = Base.Spinach,
+            HARMONIEGardenToPlate.HomeCannedBroccoli = Base.Broccoli,
+            HARMONIEGardenToPlate.HomeCannedCabbage = Base.Cabbage,
+            HARMONIEGardenToPlate.HomeCannedBrusselSprouts = Base.BrusselSprouts,
+            HARMONIEGardenToPlate.HomeCannedCauliflower = Base.Cauliflower,
+            HARMONIEGardenToPlate.HomeCannedBellPepper = Base.BellPepper,
+            HARMONIEGardenToPlate.HomeCannedTomato = Base.Tomato,
+            HARMONIEGardenToPlate.HomeCannedCucumber = Base.Cucumber,
+            HARMONIEGardenToPlate.HomeCannedZucchini = Base.Zucchini,
+            HARMONIEGardenToPlate.HomeCannedEggplant = Base.Eggplant,
+            HARMONIEGardenToPlate.HomeCannedCorn = Base.Corn,
+            HARMONIEGardenToPlate.HomeCannedGreenpeas = Base.Greenpeas,
+            HARMONIEGardenToPlate.HomeCannedPotato = Base.Potato,
+            HARMONIEGardenToPlate.HomeCannedOnion = Base.Onion,
+            HARMONIEGardenToPlate.HomeCannedLeek = Base.Leek,
+            HARMONIEGardenToPlate.HomeCannedRedRadish = Base.RedRadish,
+            HARMONIEGardenToPlate.HomeCannedTurnip = Base.Turnip,
+            HARMONIEGardenToPlate.HomeCannedDaikon = Base.Daikon,
+            HARMONIEGardenToPlate.HomeCannedSugarBeet = Base.SugarBeet,
+            HARMONIEGardenToPlate.HomeCannedAvocado = Base.Avocado,
+            HARMONIEGardenToPlate.HomeCannedOlives = Base.Olives,
+            HARMONIEGardenToPlate.HomeCannedCapers = Base.Capers,
+            HARMONIEGardenToPlate.HomeCannedGrapeLeaves = Base.GrapeLeaves,
+            HARMONIEGardenToPlate.HomeCannedEdamame = Base.Edamame,
+            HARMONIEGardenToPlate.HomeCannedMixedVegetables = Base.MixedVegetables,
+            HARMONIEGardenToPlate.HomeCannedOrange = Base.Orange,
+            HARMONIEGardenToPlate.HomeCannedGrapefruit = Base.Grapefruit,
+            HARMONIEGardenToPlate.HomeCannedApple = Base.Apple,
+            HARMONIEGardenToPlate.HomeCannedPear = Base.Pear,
+            HARMONIEGardenToPlate.HomeCannedBanana = Base.Banana,
+            HARMONIEGardenToPlate.HomeCannedGrapes = Base.Grapes,
+            HARMONIEGardenToPlate.HomeCannedMango = Base.Mango,
+            HARMONIEGardenToPlate.HomeCannedPeach = Base.Peach,
+            HARMONIEGardenToPlate.HomeCannedPineapple = Base.Pineapple,
+            HARMONIEGardenToPlate.HomeCannedWatermelon = Base.Watermelon,
+            HARMONIEGardenToPlate.HomeCannedCherry = Base.Cherry,
+            HARMONIEGardenToPlate.HomeCannedDriedApricots = Base.DriedApricots,
+        }
+    }
+
+    craftRecipe OpenHomeCannedProduce
+    {
+        timedAction = OpenTinCan,
+        time = 100,
+        Tags = InHandCraft;CanBeDoneInDark,
+        category = Cooking,
+        inputs
+        {
+            item 1 tags[base:canopener] mode:keep flags[MayDegradeLight],
+            item 1 [HARMONIEGardenToPlate.HomeCannedCarrots;HARMONIEGardenToPlate.HomeCannedSweetPotato;HARMONIEGardenToPlate.HomeCannedSpinach;HARMONIEGardenToPlate.HomeCannedBroccoli;HARMONIEGardenToPlate.HomeCannedCabbage;HARMONIEGardenToPlate.HomeCannedBrusselSprouts;HARMONIEGardenToPlate.HomeCannedCauliflower;HARMONIEGardenToPlate.HomeCannedBellPepper;HARMONIEGardenToPlate.HomeCannedTomato;HARMONIEGardenToPlate.HomeCannedCucumber;HARMONIEGardenToPlate.HomeCannedZucchini;HARMONIEGardenToPlate.HomeCannedEggplant;HARMONIEGardenToPlate.HomeCannedCorn;HARMONIEGardenToPlate.HomeCannedGreenpeas;HARMONIEGardenToPlate.HomeCannedPotato;HARMONIEGardenToPlate.HomeCannedOnion;HARMONIEGardenToPlate.HomeCannedLeek;HARMONIEGardenToPlate.HomeCannedRedRadish;HARMONIEGardenToPlate.HomeCannedTurnip;HARMONIEGardenToPlate.HomeCannedDaikon;HARMONIEGardenToPlate.HomeCannedSugarBeet;HARMONIEGardenToPlate.HomeCannedAvocado;HARMONIEGardenToPlate.HomeCannedOlives;HARMONIEGardenToPlate.HomeCannedCapers;HARMONIEGardenToPlate.HomeCannedGrapeLeaves;HARMONIEGardenToPlate.HomeCannedEdamame;HARMONIEGardenToPlate.HomeCannedMixedVegetables;HARMONIEGardenToPlate.HomeCannedOrange;HARMONIEGardenToPlate.HomeCannedGrapefruit;HARMONIEGardenToPlate.HomeCannedApple;HARMONIEGardenToPlate.HomeCannedPear;HARMONIEGardenToPlate.HomeCannedBanana;HARMONIEGardenToPlate.HomeCannedGrapes;HARMONIEGardenToPlate.HomeCannedMango;HARMONIEGardenToPlate.HomeCannedPeach;HARMONIEGardenToPlate.HomeCannedPineapple;HARMONIEGardenToPlate.HomeCannedWatermelon;HARMONIEGardenToPlate.HomeCannedCherry;HARMONIEGardenToPlate.HomeCannedDriedApricots] mappers[openSort] flags[Prop2;DontPutBack],
+        }
+        outputs
+        {
+            item 1 mapper:openSort,
+        }
+        itemMapper openSort
+        {
+            HARMONIEGardenToPlate.HomeCannedCarrotsOpen = HARMONIEGardenToPlate.HomeCannedCarrots,
+            HARMONIEGardenToPlate.HomeCannedSweetPotatoOpen = HARMONIEGardenToPlate.HomeCannedSweetPotato,
+            HARMONIEGardenToPlate.HomeCannedSpinachOpen = HARMONIEGardenToPlate.HomeCannedSpinach,
+            HARMONIEGardenToPlate.HomeCannedBroccoliOpen = HARMONIEGardenToPlate.HomeCannedBroccoli,
+            HARMONIEGardenToPlate.HomeCannedCabbageOpen = HARMONIEGardenToPlate.HomeCannedCabbage,
+            HARMONIEGardenToPlate.HomeCannedBrusselSproutsOpen = HARMONIEGardenToPlate.HomeCannedBrusselSprouts,
+            HARMONIEGardenToPlate.HomeCannedCauliflowerOpen = HARMONIEGardenToPlate.HomeCannedCauliflower,
+            HARMONIEGardenToPlate.HomeCannedBellPepperOpen = HARMONIEGardenToPlate.HomeCannedBellPepper,
+            HARMONIEGardenToPlate.HomeCannedTomatoOpen = HARMONIEGardenToPlate.HomeCannedTomato,
+            HARMONIEGardenToPlate.HomeCannedCucumberOpen = HARMONIEGardenToPlate.HomeCannedCucumber,
+            HARMONIEGardenToPlate.HomeCannedZucchiniOpen = HARMONIEGardenToPlate.HomeCannedZucchini,
+            HARMONIEGardenToPlate.HomeCannedEggplantOpen = HARMONIEGardenToPlate.HomeCannedEggplant,
+            HARMONIEGardenToPlate.HomeCannedCornOpen = HARMONIEGardenToPlate.HomeCannedCorn,
+            HARMONIEGardenToPlate.HomeCannedGreenpeasOpen = HARMONIEGardenToPlate.HomeCannedGreenpeas,
+            HARMONIEGardenToPlate.HomeCannedPotatoOpen = HARMONIEGardenToPlate.HomeCannedPotato,
+            HARMONIEGardenToPlate.HomeCannedOnionOpen = HARMONIEGardenToPlate.HomeCannedOnion,
+            HARMONIEGardenToPlate.HomeCannedLeekOpen = HARMONIEGardenToPlate.HomeCannedLeek,
+            HARMONIEGardenToPlate.HomeCannedRedRadishOpen = HARMONIEGardenToPlate.HomeCannedRedRadish,
+            HARMONIEGardenToPlate.HomeCannedTurnipOpen = HARMONIEGardenToPlate.HomeCannedTurnip,
+            HARMONIEGardenToPlate.HomeCannedDaikonOpen = HARMONIEGardenToPlate.HomeCannedDaikon,
+            HARMONIEGardenToPlate.HomeCannedSugarBeetOpen = HARMONIEGardenToPlate.HomeCannedSugarBeet,
+            HARMONIEGardenToPlate.HomeCannedAvocadoOpen = HARMONIEGardenToPlate.HomeCannedAvocado,
+            HARMONIEGardenToPlate.HomeCannedOlivesOpen = HARMONIEGardenToPlate.HomeCannedOlives,
+            HARMONIEGardenToPlate.HomeCannedCapersOpen = HARMONIEGardenToPlate.HomeCannedCapers,
+            HARMONIEGardenToPlate.HomeCannedGrapeLeavesOpen = HARMONIEGardenToPlate.HomeCannedGrapeLeaves,
+            HARMONIEGardenToPlate.HomeCannedEdamameOpen = HARMONIEGardenToPlate.HomeCannedEdamame,
+            HARMONIEGardenToPlate.HomeCannedMixedVegetablesOpen = HARMONIEGardenToPlate.HomeCannedMixedVegetables,
+            HARMONIEGardenToPlate.HomeCannedOrangeOpen = HARMONIEGardenToPlate.HomeCannedOrange,
+            HARMONIEGardenToPlate.HomeCannedGrapefruitOpen = HARMONIEGardenToPlate.HomeCannedGrapefruit,
+            HARMONIEGardenToPlate.HomeCannedAppleOpen = HARMONIEGardenToPlate.HomeCannedApple,
+            HARMONIEGardenToPlate.HomeCannedPearOpen = HARMONIEGardenToPlate.HomeCannedPear,
+            HARMONIEGardenToPlate.HomeCannedBananaOpen = HARMONIEGardenToPlate.HomeCannedBanana,
+            HARMONIEGardenToPlate.HomeCannedGrapesOpen = HARMONIEGardenToPlate.HomeCannedGrapes,
+            HARMONIEGardenToPlate.HomeCannedMangoOpen = HARMONIEGardenToPlate.HomeCannedMango,
+            HARMONIEGardenToPlate.HomeCannedPeachOpen = HARMONIEGardenToPlate.HomeCannedPeach,
+            HARMONIEGardenToPlate.HomeCannedPineappleOpen = HARMONIEGardenToPlate.HomeCannedPineapple,
+            HARMONIEGardenToPlate.HomeCannedWatermelonOpen = HARMONIEGardenToPlate.HomeCannedWatermelon,
+            HARMONIEGardenToPlate.HomeCannedCherryOpen = HARMONIEGardenToPlate.HomeCannedCherry,
+            HARMONIEGardenToPlate.HomeCannedDriedApricotsOpen = HARMONIEGardenToPlate.HomeCannedDriedApricots,
+        }
+    }
+
+    craftRecipe MakePillsVitamins
+    {
+        timedAction = MixingMortarPestle,
+        time = 200,
+        Tags = AnySurfaceCraft;Cooking,
+        category = Medical,
+        inputs
+        {
+            item 1 tags[base:mortarpestle] mode:keep,
+            item 1 [Base.EmptyJar] flags[ItemCount],
+            item 1 [Base.Carrots] flags[ItemCount],
+            item 1 [Base.Orange] flags[ItemCount],
+            item 1 [Base.Egg] flags[ItemCount],
+            item 1 [Base.Peanuts] flags[ItemCount],
+            item 1 [Base.Salt] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 Base.PillsVitamins,
+        }
+    }
+}
