@@ -18,6 +18,11 @@
     one, etc) goes through the same vanilla ISTakePillAction, so the wrap
     below checks the item's own full type before doing anything -- it's a
     no-op for every other pill in the game.
+
+    Says one of two different in-character lines depending on whether any
+    vitamin was ACTUALLY afflicted at the moment the pill was taken:
+    genuine relief if so, a "just in case" remark if the pills were taken
+    with nothing actually wrong.
 ]]--
 
 require "TimedActions/ISTakePillAction"
@@ -26,6 +31,30 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 
 local PAUSE_DAYS_GRANTED = 1
 local VITAMIN_PILLS_TYPE = "Base.PillsVitamins"
+
+-- Said when at least one vitamin was actually afflicted at the moment of
+-- taking the pill -- genuine relief.
+local PillsTakenLineKeys = {
+    "IGUI_HARMONIE_PillsTaken_1",
+    "IGUI_HARMONIE_PillsTaken_2",
+    "IGUI_HARMONIE_PillsTaken_3",
+    "IGUI_HARMONIE_PillsTaken_Funny",
+}
+-- Said when nothing was actually wrong -- taken just in case.
+local PillsTakenPrecautionLineKeys = {
+    "IGUI_HARMONIE_PillsTakenPrecaution_1",
+    "IGUI_HARMONIE_PillsTakenPrecaution_2",
+    "IGUI_HARMONIE_PillsTakenPrecaution_Funny",
+}
+
+local function anyVitaminAfflicted(character)
+    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+        if HARMONIE_GTP.VitData.IsAfflicted(character, vit) then
+            return true
+        end
+    end
+    return false
+end
 
 local original_ISTakePillAction_complete = ISTakePillAction.complete
 
@@ -36,10 +65,14 @@ function ISTakePillAction:complete()
 
     local ok, fullType = pcall(function() return item and item:getFullType() end)
     if ok and fullType == VITAMIN_PILLS_TYPE and character then
+        -- Checked BEFORE granting the pause days, since that's what
+        -- decides whether this was genuine relief or just a precaution.
+        local wasAfflicted = anyVitaminAfflicted(character)
         for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
             HARMONIE_GTP.VitData.AddPauseDays(character, vit, PAUSE_DAYS_GRANTED)
         end
-        character:Say(getText("IGUI_HARMONIE_PillsTaken"))
+        local keys = wasAfflicted and PillsTakenLineKeys or PillsTakenPrecautionLineKeys
+        character:Say(getText(keys[ZombRand(#keys) + 1]))
     end
 
     return result

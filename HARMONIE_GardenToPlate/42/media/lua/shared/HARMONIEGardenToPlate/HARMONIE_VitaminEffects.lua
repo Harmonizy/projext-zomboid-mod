@@ -24,6 +24,12 @@
     the affliction flag itself are untouched, so the penalty comes right
     back once the banked day(s) are consumed by the next daily tick(s) if
     the underlying deficiency was never actually fixed by eating.
+
+    Each time the penalty actually fires, the character also says one of a
+    few in-character symptom lines (SymptomLineKeys below) -- worded as
+    something a real person would notice and say about THEMSELVES (dry
+    eyes, sore gums, aching bones...), never naming the vitamin, since a
+    survivor has no lab to tell them that's the actual cause.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -43,6 +49,78 @@ local function reduceHealingOnWounds(character, amount)
     end
 end
 
+--[[
+    Flavor lines the character says to themselves the day a vitamin's
+    penalty actually applies. Two different pools depending on whether
+    the character actually has the medical knowledge to know what's
+    wrong:
+
+      - Below Doctor level (assessmentRequiredFirstAid + 1): worded as a
+        real-world symptom the character just NOTICES (dry eyes, sore
+        gums, aching bones...), never naming the vitamin, since an
+        ordinary survivor has no lab to tell them that's the cause. One
+        of the variants in each list leans a little wry/darkly funny --
+        not every line needs to be grim.
+      - Above that Doctor level (the same threshold that unlocks reading
+        the Nutrition Assessment window, see HARMONIE_VitaminConfig.lua's
+        assessmentRequiredFirstAid): the character has enough medical
+        training to actually recognize and name the deficiency, so these
+        lines say so directly.
+
+    Each list has a few variants so it doesn't feel like the same canned
+    line every time; sayRandomSymptom below picks one at random each
+    time.
+]]--
+local SymptomLineKeys = {
+    A = {"IGUI_HARMONIE_Symptom_A_1", "IGUI_HARMONIE_Symptom_A_2", "IGUI_HARMONIE_Symptom_A_Funny"},
+    B = {"IGUI_HARMONIE_Symptom_B_1", "IGUI_HARMONIE_Symptom_B_2", "IGUI_HARMONIE_Symptom_B_Funny"},
+    C = {"IGUI_HARMONIE_Symptom_C_1", "IGUI_HARMONIE_Symptom_C_2", "IGUI_HARMONIE_Symptom_C_Funny"},
+    D = {"IGUI_HARMONIE_Symptom_D_1", "IGUI_HARMONIE_Symptom_D_2", "IGUI_HARMONIE_Symptom_D_Funny"},
+    E = {"IGUI_HARMONIE_Symptom_E_1", "IGUI_HARMONIE_Symptom_E_2", "IGUI_HARMONIE_Symptom_E_Funny"},
+    K = {"IGUI_HARMONIE_Symptom_K_1", "IGUI_HARMONIE_Symptom_K_2", "IGUI_HARMONIE_Symptom_K_Funny"},
+}
+
+local DoctorSymptomLineKeys = {
+    A = {"IGUI_HARMONIE_DoctorSymptom_A_1", "IGUI_HARMONIE_DoctorSymptom_A_2"},
+    B = {"IGUI_HARMONIE_DoctorSymptom_B_1", "IGUI_HARMONIE_DoctorSymptom_B_2"},
+    C = {"IGUI_HARMONIE_DoctorSymptom_C_1", "IGUI_HARMONIE_DoctorSymptom_C_2"},
+    D = {"IGUI_HARMONIE_DoctorSymptom_D_1", "IGUI_HARMONIE_DoctorSymptom_D_2"},
+    E = {"IGUI_HARMONIE_DoctorSymptom_E_1", "IGUI_HARMONIE_DoctorSymptom_E_2"},
+    K = {"IGUI_HARMONIE_DoctorSymptom_K_1", "IGUI_HARMONIE_DoctorSymptom_K_2"},
+}
+
+local function sayRandomSymptom(character, vit)
+    if not character.Say then return end
+    local isDoctor = character:getPerkLevel(Perks.Doctor) > HARMONIE_GTP.Config.assessmentRequiredFirstAid
+    local pool = isDoctor and DoctorSymptomLineKeys or SymptomLineKeys
+    local keys = pool[vit]
+    if not keys then return end
+    character:Say(getText(keys[ZombRand(#keys) + 1]))
+end
+
+--[[
+    The relief-side counterpart to the symptom lines above -- said once
+    when a vitamin's Reserve climbs back up to Sufficient after having
+    been afflicted (see VitData.RefreshAffliction's return value and
+    HARMONIE_VitaminChecker.lua, which calls this at most once per check
+    even if several vitamins recover in the same 10-second tick, so
+    eating one big varied meal doesn't make the character say three
+    different "feeling better" lines back to back).
+]]--
+local RECOVERY_CHANCE_PERCENT = 100 -- TEMP: bumped from 80 for easy Thai-text testing, dial back down after
+local RecoveryLineKeys = {
+    "IGUI_HARMONIE_Recovered_1",
+    "IGUI_HARMONIE_Recovered_2",
+    "IGUI_HARMONIE_Recovered_3",
+    "IGUI_HARMONIE_Recovered_Funny",
+}
+
+function VitEffects.SayRecovered(character)
+    if not character or not character.Say then return end
+    if ZombRand(100) >= RECOVERY_CHANCE_PERCENT then return end
+    character:Say(getText(RecoveryLineKeys[ZombRand(#RecoveryLineKeys) + 1]))
+end
+
 -- effect handlers keyed by vitamin letter; each receives (character, effectCfg)
 local Handlers = {
     A = function(character, cfg)
@@ -50,7 +128,9 @@ local Handlers = {
     end,
 
     B = function(character, cfg)
-        character:getStats():remove(CharacterStat.ENDURANCE, cfg.amount * HARMONIE_GTP.Config.effectMultiplier)
+        local amount = cfg.amount * HARMONIE_GTP.Config.effectMultiplier
+        character:addArmMuscleStrain(amount)
+        character:addBackMuscleStrain(amount)
     end,
 
     C = function(character, cfg)
@@ -77,5 +157,6 @@ function VitEffects.ApplyCritical(character, vit)
     local handler = Handlers[vit]
     if cfg and handler then
         handler(character, cfg)
+        sayRandomSymptom(character, vit)
     end
 end

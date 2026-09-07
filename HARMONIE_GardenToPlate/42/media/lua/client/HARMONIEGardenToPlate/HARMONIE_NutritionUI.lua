@@ -107,11 +107,35 @@ function HARMONIE_NutritionUI:new(x, y, target, assessor)
     return o
 end
 
+-- Clears the tracked instance on close (title bar X, Escape, etc.), same
+-- as pressing the hotkey a second time does below, so either way of
+-- closing it leaves HARMONIE_NutritionUI.instance accurately reflecting
+-- whether a window is actually open.
+function HARMONIE_NutritionUI:close()
+    ISCollapsableWindow.close(self)
+    if HARMONIE_NutritionUI.instance == self then
+        HARMONIE_NutritionUI.instance = nil
+    end
+end
+
+--[[
+    Pressing the assess hotkey repeatedly used to stack a fresh window on
+    top of the last one every time, since this used to just always
+    create+open a new one. Now it toggles: if a window from this mod is
+    already open, close THAT one and stop (don't also open a new one) --
+    only opens a new window when none is currently up.
+]]--
 function HARMONIE_NutritionUI.Open(target, assessor)
+    if HARMONIE_NutritionUI.instance then
+        HARMONIE_NutritionUI.instance:close()
+        return nil
+    end
+
     local screenW, screenH = getCore():getScreenWidth(), getCore():getScreenHeight()
     local height = 40 + #HARMONIE_GTP.Vitamins * ROW_HEIGHT + PADDING
     local window = HARMONIE_NutritionUI:new(screenW / 2 - WINDOW_WIDTH / 2, screenH / 2 - height / 2, target, assessor)
     window:initialise()
     window:addToUIManager()
+    HARMONIE_NutritionUI.instance = window
     return window
 end

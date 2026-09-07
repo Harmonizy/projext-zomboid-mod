@@ -97,15 +97,22 @@ end
     wanted -- HARMONIE_VitaminChecker.lua calls it every 10 real seconds
     so a Reserve recovering back to Sufficient mid-day doesn't have to
     wait for the next day's tick to stop being treated as afflicted.
+
+    Returns true only on the exact call where it transitions from
+    afflicted to not (i.e. "just recovered"), so a caller can react to
+    that moment once -- see HARMONIE_VitaminChecker.lua /
+    HARMONIE_VitaminEffects.lua's SayRecovered.
 ]]--
 function VitData.RefreshAffliction(character, vit)
     local store = ensureStore(character)
+    local wasAfflicted = store[vit].afflicted
     local band = VitData.GetBand(character, vit)
     if band == "critical" then
         store[vit].afflicted = true
     elseif band == "sufficient" then
         store[vit].afflicted = false
     end
+    return wasAfflicted and not store[vit].afflicted
 end
 
 function VitData.Set(character, vit, value)

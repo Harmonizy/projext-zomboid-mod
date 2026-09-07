@@ -214,6 +214,30 @@ end
 --    full override -- see file header for why
 -- ============================================
 
+--[[
+    A small in-character remark on finishing one of our own craft
+    recipes -- pure flavor, keyed by the recipe's own name so it never
+    fires for anyone else's recipe (this override runs for every
+    craftRecipe in the whole game, ours included only incidentally).
+    Chance-gated so it doesn't talk over itself on repeat crafts in a
+    session.
+]]--
+local RECIPE_FLAVOR_CHANCE_PERCENT = 100 -- TEMP: bumped from 60 for easy Thai-text testing, dial back down after
+local RecipeFlavorLineKeys = {
+    MakeHomeCannedProduce = {"IGUI_HARMONIE_CannedMade_1", "IGUI_HARMONIE_CannedMade_2", "IGUI_HARMONIE_CannedMade_3", "IGUI_HARMONIE_CannedMade_Funny"},
+    OpenHomeCannedProduce = {"IGUI_HARMONIE_CannedOpened_1", "IGUI_HARMONIE_CannedOpened_2", "IGUI_HARMONIE_CannedOpened_3", "IGUI_HARMONIE_CannedOpened_Funny"},
+}
+
+local function maybeSayRecipeFlavor(character, recipe)
+    if not character or not character.Say then return end
+    local ok, name = pcall(function() return recipe:getOriginalname() end)
+    if not ok then return end
+    local keys = RecipeFlavorLineKeys[name]
+    if not keys then return end
+    if ZombRand(100) >= RECIPE_FLAVOR_CHANCE_PERCENT then return end
+    character:Say(getText(keys[ZombRand(#keys) + 1]))
+end
+
 function ISCraftAction:complete()
     local vitaminSum, hungerUnitsSum = HARMONIE_GTP.SumRecipeIngredientVitamins(self.recipe, self.character, self.containers, self.item)
 
@@ -262,6 +286,8 @@ function ISCraftAction:complete()
             end
         end
     end
+
+    maybeSayRecipeFlavor(self.character, self.recipe)
 
     return true
 end

@@ -18,7 +18,9 @@
       3. The "afflicted" flag itself catches up to Reserve climbing back
          above Sufficient just as quickly (VitData.RefreshAffliction),
          instead of lagging up to a full day behind the real Reserve
-         value.
+         value -- and the character says an in-character "feeling
+         better" line the moment that happens (VitEffects.SayRecovered),
+         capped at one per character per tick.
 
     Effect APPLICATION timing lives here now, not in
     HARMONIE_VitaminDecay.lua's daily tick -- that file only owns the
@@ -47,8 +49,17 @@ local function getGameDayIndex()
 end
 
 local function checkCharacter(character, today)
+    -- At most one "feeling better" line per character per tick, even if
+    -- several vitamins recover in the same 10 seconds (e.g. right after
+    -- a big varied meal) -- see VitEffects.SayRecovered.
+    local recoveredAlready = false
+
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-        HARMONIE_GTP.VitData.RefreshAffliction(character, vit)
+        local justRecovered = HARMONIE_GTP.VitData.RefreshAffliction(character, vit)
+        if justRecovered and not recoveredAlready then
+            HARMONIE_GTP.VitEffects.SayRecovered(character)
+            recoveredAlready = true
+        end
 
         if HARMONIE_GTP.VitData.IsAfflicted(character, vit)
                 and HARMONIE_GTP.VitData.GetPauseDays(character, vit) <= 0

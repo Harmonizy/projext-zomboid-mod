@@ -117,9 +117,22 @@ HARMONIE_GTP.Config = {
     -- body parts at once compounds into an actual death spiral -- 5/day
     -- keeps that possible under sustained neglect without making it a
     -- near-automatic death sentence the moment Vitamin K goes critical.
+    -- B switched from CharacterStat.ENDURANCE to vanilla's own
+    -- Arm/Back muscle strain (character:addArmMuscleStrain /
+    -- addBackMuscleStrain, the same calls farming/chopping/digging use)
+    -- because Endurance regenerates from ordinary rest/idle time fast
+    -- enough that a once-a-day -0.2 hit was barely noticeable in
+    -- practice. Muscle strain isn't erased by just standing around the
+    -- same way, so it should actually stick. No Lua-exposed getter for
+    -- current muscle strain was found anywhere in vanilla's own scripts
+    -- (only the various add*MuscleStrain writers), so there's no
+    -- reliable way from Lua to enforce a hard floor/minimum on it --
+    -- this relies on the same "flat amount, no cap, applied again every
+    -- day it stays Critical" stacking every other vitamin already uses
+    -- for persistence instead.
     effects = {
         A = { amount = 20 },   -- CharacterStat.PANIC added (0-100 scale)
-        B = { amount = 0.2 },  -- CharacterStat.ENDURANCE removed (0-1 scale)
+        B = { amount = 0.2 },  -- Arm + Back muscle strain added (0-1-ish scale, same magnitude as one farming/chopping action)
         C = { amount = 0.2 },  -- CharacterStat.SICKNESS added (0-1 scale)
         D = { amount = 20 },   -- CharacterStat.PAIN added (0-100 scale)
         E = { amount = 0.2 },  -- CharacterStat.STRESS added (0-1 scale)
