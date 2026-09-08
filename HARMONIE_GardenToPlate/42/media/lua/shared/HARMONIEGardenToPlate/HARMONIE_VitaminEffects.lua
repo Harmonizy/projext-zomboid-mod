@@ -11,39 +11,56 @@
     from the actual trait system). See HARMONIE_VitaminConfig.lua for the
     full reasoning behind each one's specific mechanism and how closely it
     could match the real trait given what's actually reachable from Lua --
-    summary:
-      A (Short Sighted)  -- CharacterStat.PANIC kept at a floor, every
-                             10 seconds (ApplyCritical below is NOT used
-                             for this one -- see MaintainStatEffect)
-      B (Disorganized)   -- Arm+Back muscle strain, once/day, stacking
-                             (its real effect, reduced bag/container
-                             capacity, has NO Lua hook at all -- see
-                             HARMONIE_VitaminConfig.lua)
-      C (Thin-Skinned)   -- extends BleedingTime on active wounds,
-                             once/day, stacking
-      D (Asthmatic)      -- CharacterStat.ENDURANCE kept at a ceiling,
-                             every 10 seconds (see MaintainStatEffect)
-      E (All Thumbs)     -- CharacterStat.STRESS kept at a floor, every
-                             10 seconds (see MaintainStatEffect), PLUS the
-                             one real mechanic that WAS found in Lua:
+    summary (ALL SIX are now continuously re-enforced every 10 seconds by
+    HARMONIE_VitaminChecker.lua rather than dosed once per day -- see the
+    note below for why the once-a-day approach was retired entirely):
+      A -- CharacterStat.UNHAPPINESS kept at a floor (MaintainStatEffect)
+      B (Disorganized)   -- Arm+Back+Torso Stiffness kept at a floor
+                             (MaintainStiffnessFloor) -- its real effect,
+                             reduced bag/container capacity, has NO Lua
+                             hook at all, see HARMONIE_VitaminConfig.lua
+      C -- CharacterStat.SICKNESS kept at a floor (MaintainStatEffect)
+      D (Asthmatic)      -- CharacterStat.ENDURANCE kept at a ceiling
+                             (MaintainStatEffect)
+      E (All Thumbs)     -- CharacterStat.STRESS kept at a floor
+                             (MaintainStatEffect), PLUS the one real
+                             mechanic that WAS found in Lua:
                              HARMONIE_ClumsyHandsHook.lua forces
                              stopOnWalk=true during crafting while
                              afflicted, exactly mirroring ISHandcraftAction
                              .lua's own character:hasTrait(CharacterTrait.
                              ALL_THUMBS) check, without touching the trait
-      K (Slow Healer)    -- extends DeepWoundTime/FractureTime/BurnTime
-                             on active wounds, once/day, stacking
+      K -- BleedingTime on active wounds kept at a floor
+           (MaintainBleedingFloor) -- a wound never fully closes while
+           afflicted, bandaged or not (this was C's original mechanic;
+           swapped onto K since impaired blood clotting is Vitamin K's
+           actual real-world deficiency symptom, not slow-healing
+           fractures/burns -- see HARMONIE_VitaminConfig.lua), PLUS
+           occasional spontaneous nosebleeds/gum bleeding with no wound
+           required at all (MaybeTriggerNosebleed, checked every 6 game
+           hours) -- added because MaintainBleedingFloor alone only ever
+           prolongs an EXISTING wound, so a character who simply never
+           gets hit would otherwise feel nothing from Critical Vitamin K
 
-    B/C/K use ApplyCritical, a flat per-day dose that stacks without limit
-    for as long as the deficiency persists. A/D/E use MaintainStatEffect
-    instead, continuously re-enforced every 10 seconds rather than dosed
-    once per day -- see that function's own comment for why: PANIC,
-    ENDURANCE, and STRESS all naturally regenerate/decay back toward their
-    own baseline on their own, so a single daily nudge would likely be
-    erased before anyone noticed it.
+    Every vitamin used to split into two families: B/C/K got a flat daily
+    `amount` added once per Critical day via ApplyCritical, stacking
+    without limit; A/D/E got a continuous floor/ceiling instead. That
+    split was retired -- B and C's daily doses turned out to have the
+    exact same "erased before anyone felt it" problem A/D/E were already
+    designed around: B's muscle-strain/Stiffness naturally decays on its
+    own when not exercising, and C's old BleedingTime target drains 10x
+    faster while bandaged (confirmed straight from BodyPart.class), so a
+    bandaged character could heal off an entire day's dose within a
+    couple of real-time hours. Every vitamin now uses the same
+    continuously-re-enforced floor/ceiling pattern: MaintainStatEffect for
+    A/C/D/E's CharacterStat, MaintainStiffnessFloor for B's per-body-part
+    Stiffness, MaintainBleedingFloor for K's per-body-part BleedingTime --
+    see each function's own comment for specifics.
 
-    Both are no-ops while the vitamin has banked pause days (HARMONIE_GTP.
-    VitData.GetPauseDays > 0) -- gained from eating well, or +1 per
+    All of them are no-ops while the vitamin has at least 1 WHOLE banked
+    pause day (HARMONIE_GTP.VitData.GetPauseDays >= 1 -- a leftover
+    fraction below 1 doesn't shield anything yet, just keeps accumulating,
+    see VitData.ApplyDailyTick) -- gained from eating well, or +1 per
     vitamin from taking Base.PillsVitamins with no Reserve gain (see
     HARMONIE_PillsHook.lua). That only silences the SYMPTOM -- Reserve and
     the affliction flag itself are untouched, so the penalty comes right
@@ -65,45 +82,6 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.VitEffects = {}
 local VitEffects = HARMONIE_GTP.VitEffects
-
--- Each accessor is an explicit {get, set} pair of real bodyPart method
--- calls -- NOT built from a string ("get" .. name) and dynamically
--- indexed, since that dynamic-dispatch pattern has zero precedent
--- anywhere in vanilla's own Lua (grepped across the whole game) and
--- isn't a risk worth taking on a Java-bridged object.
-local BleedingTimeAccessor = {
-    get = function(bp) return bp:getBleedingTime() end,
-    set = function(bp, v) bp:setBleedingTime(v) end,
-}
-local DeepWoundTimeAccessor = {
-    get = function(bp) return bp:getDeepWoundTime() end,
-    set = function(bp, v) bp:setDeepWoundTime(v) end,
-}
-local FractureTimeAccessor = {
-    get = function(bp) return bp:getFractureTime() end,
-    set = function(bp, v) bp:setFractureTime(v) end,
-}
-local BurnTimeAccessor = {
-    get = function(bp) return bp:getBurnTime() end,
-    set = function(bp, v) bp:setBurnTime(v) end,
-}
-
--- Extends each accessor's current value by `amount` on every body part
--- where it's already active (> 0) -- a no-op for body parts with nothing
--- of that kind going on. Shared by the C (BleedingTime) and K
--- (DeepWoundTime/FractureTime/BurnTime) handlers.
-local function extendActiveWoundTimers(character, amount, accessors)
-    local bodyParts = character:getBodyDamage():getBodyParts()
-    for i = 0, bodyParts:size() - 1 do
-        local bodyPart = bodyParts:get(i)
-        for _, accessor in ipairs(accessors) do
-            local current = accessor.get(bodyPart)
-            if current and current > 0 then
-                accessor.set(bodyPart, current + amount)
-            end
-        end
-    end
-end
 
 --[[
     Flavor lines the character says to themselves the day a vitamin's
@@ -177,61 +155,30 @@ function VitEffects.SayRecovered(character)
     character:Say(getText(RecoveryLineKeys[ZombRand(#RecoveryLineKeys) + 1]))
 end
 
--- effect handlers keyed by vitamin letter for the DAILY-STACKING vitamins
--- only (B, C, K) -- see the file header and HARMONIE_VitaminConfig.lua
--- for what real trait each one is themed after and why. A/D/E are NOT
--- here: they're maintained continuously by MaintainStatEffect below
--- instead of dosed once per day, since PANIC/ENDURANCE/STRESS all
--- naturally regenerate/decay on their own and a one-shot daily add would
--- likely get erased before it was ever noticed (see HARMONIE_
--- VitaminConfig.lua's Affliction model note for the full reasoning).
-local Handlers = {
-    B = function(character, cfg)
-        local amount = cfg.amount * HARMONIE_GTP.Config.effectMultiplier
-        character:addArmMuscleStrain(amount)
-        character:addBackMuscleStrain(amount)
-    end,
-
-    C = function(character, cfg)
-        extendActiveWoundTimers(character, cfg.amount * HARMONIE_GTP.Config.effectMultiplier, {BleedingTimeAccessor})
-    end,
-
-    K = function(character, cfg)
-        extendActiveWoundTimers(character, cfg.amount * HARMONIE_GTP.Config.effectMultiplier,
-            {DeepWoundTimeAccessor, FractureTimeAccessor, BurnTimeAccessor})
-    end,
-}
-
-function VitEffects.ApplyCritical(character, vit)
-    if not HARMONIE_GTP.Config.effectsEnabled then return end
-    if HARMONIE_GTP.VitData.GetPauseDays(character, vit) > 0 then return end
-    local cfg = HARMONIE_GTP.Config.effects[vit]
-    local handler = Handlers[vit]
-    if cfg and handler then
-        handler(character, cfg)
-    end
-end
-
--- A/D/E's CharacterStat mapping for MaintainStatEffect below -- `kind`
+-- A/C/D/E's CharacterStat mapping for MaintainStatEffect below -- `kind`
 -- says whether cfg.floor or cfg.ceiling applies to that stat.
 local StatEffects = {
-    A = { stat = "PANIC",     kind = "floor" },
+    A = { stat = "UNHAPPINESS", kind = "floor" },
+    C = { stat = "SICKNESS",  kind = "floor" },
     D = { stat = "ENDURANCE", kind = "ceiling" },
     E = { stat = "STRESS",    kind = "floor" },
 }
 
 --[[
-    Checked every 10 seconds by HARMONIE_VitaminChecker.lua for A/D/E
+    Checked every 10 seconds by HARMONIE_VitaminChecker.lua for A/C/D/E
     specifically -- CONTINUOUSLY re-enforces a floor or ceiling on the
     mapped CharacterStat while afflicted-and-not-pause-shielded, instead
-    of ApplyCritical's once-a-day dose. This exists because PANIC,
+    of a once-a-day dose. This exists because UNHAPPINESS, SICKNESS,
     ENDURANCE, and STRESS all naturally regenerate/decay back toward
     their own baseline on their own -- a single daily nudge to any of
-    these would very likely be completely erased by vanilla's own regen
-    within the same day (confirmed the hard way with Vitamin B, which
-    used to drain ENDURANCE the same one-shot way and the -0.2 hit was
-    imperceptible against ordinary rest regen -- that's why B switched to
-    muscle strain instead, which doesn't self-heal from idling).
+    these would
+    very likely be completely erased by vanilla's own regen within the
+    same day (confirmed the hard way with Vitamin B, which used to drain
+    ENDURANCE the same one-shot way and the -0.2 hit was imperceptible
+    against ordinary rest regen -- that's why B switched to muscle
+    strain/Stiffness instead, which is maintained the same continuous way
+    below in MaintainStiffnessFloor since it turned out to have the exact
+    same problem).
     Maintaining the floor/ceiling every tick means the effect is always
     genuinely present for as long as the deficiency lasts, and stops
     touching the stat entirely -- letting vanilla fully take back over --
@@ -245,8 +192,13 @@ function VitEffects.MaintainStatEffect(character, vit)
     local cfg = HARMONIE_GTP.Config.effects[vit]
     if not mapping or not cfg then return end
 
+    -- >= 1, not > 0: a banked pause day only actually shields anything
+    -- once a WHOLE day is banked (see VitData.ApplyDailyTick, which only
+    -- ever consumes exactly 1 at a time) -- a leftover fraction like 0.3
+    -- from a single snack shouldn't cancel the penalty outright, just
+    -- keep accumulating toward the next whole day.
     local afflicted = HARMONIE_GTP.VitData.IsAfflicted(character, vit)
-            and HARMONIE_GTP.VitData.GetPauseDays(character, vit) <= 0
+            and HARMONIE_GTP.VitData.GetPauseDays(character, vit) < 1
     if not afflicted then return end
 
     local stat = CharacterStat[mapping.stat]
@@ -267,11 +219,165 @@ function VitEffects.MaintainStatEffect(character, vit)
 end
 
 --[[
+    Checked every 10 seconds by HARMONIE_VitaminChecker.lua for K
+    specifically (this was C's original mechanic -- swapped onto K, whose
+    real deficiency is impaired blood clotting, a much closer match than
+    K's previous DeepWoundTime/FractureTime/BurnTime theming) -- same
+    continuous-enforcement family as MaintainStatEffect above, just on a
+    per-body-part wound timer instead of a CharacterStat. While
+    afflicted-and-not-pause-shielded, any body part that is CURRENTLY
+    bleeding (BleedingTime > 0) gets its BleedingTime pushed back up to
+    cfg.floor whenever it drops below that -- so the wound never actually
+    finishes closing (vanilla clears it and grants Bandage/Stitch XP once
+    BleedingTime reaches 0) for as long as the deficiency lasts,
+    REGARDLESS of bandaging: confirmed from BodyPart.class that a bandage
+    only makes BleedingTime drain 10x faster, it doesn't stop the drain
+    outright, so re-flooring it every 10 real seconds defeats that
+    speed-up the same way it would defeat any decay rate. Never STARTS a
+    bleed on a part that isn't already bleeding on its own (guarded by the
+    "> 0" check) -- that's MaybeTriggerNosebleed's job below, the only
+    place this file ever starts a NEW bleed rather than prolonging an
+    existing one.
+]]--
+function VitEffects.MaintainBleedingFloor(character)
+    if not HARMONIE_GTP.Config.effectsEnabled then return end
+
+    local cfg = HARMONIE_GTP.Config.effects.K
+    if not cfg or not cfg.floor then return end
+
+    local afflicted = HARMONIE_GTP.VitData.IsAfflicted(character, "K")
+            and HARMONIE_GTP.VitData.GetPauseDays(character, "K") < 1
+    if not afflicted then return end
+
+    local floor = cfg.floor * HARMONIE_GTP.Config.effectMultiplier
+    local bodyParts = character:getBodyDamage():getBodyParts()
+    for i = 0, bodyParts:size() - 1 do
+        local bodyPart = bodyParts:get(i)
+        local current = bodyPart:getBleedingTime()
+        if current and current > 0 and current < floor then
+            bodyPart:setBleedingTime(floor)
+        end
+    end
+end
+
+--[[
+    Checked every 6 GAME hours (same block granularity as
+    MaybeSaySymptomReminder, tracked separately via VitData.
+    GetLastNosebleedBlock so the two don't interfere with each other's
+    once-per-block gating) -- addresses a real gap in K's original design:
+    MaintainBleedingFloor above only ever PROLONGS a wound that's already
+    bleeding from combat/an accident, so a careful character who simply
+    never gets hit would feel literally nothing from a Critical Vitamin K
+    deficiency. Real Vitamin K deficiency's hallmark symptoms include
+    spontaneous bleeding with no injury at all -- easy bruising, bleeding
+    gums, nosebleeds -- so this occasionally starts a small bleed on the
+    Head body part (nosebleed/gum bleed) purely from the deficiency
+    itself, no wound required. NOSEBLEED_CHANCE_PERCENT keeps it from firing
+    literally every single eligible block (feels more like a random
+    "it happens sometimes" symptom, not a metronome); skipped entirely if
+    the Head is already bleeding for any reason, so it never doubles up
+    with a real combat wound MaintainBleedingFloor is already prolonging.
+
+    IMPORTANT (confirmed the hard way -- an earlier version called
+    bodyPart:setBleedingTime() directly, which a real in-game test showed
+    has NO visible effect at all): setBleedingTime() only sets the raw
+    internal timer -- it does NOT mark the body part as an actual wound
+    (scratched()/isCut()/etc all stay false), so nothing shows up on the
+    character model, the Health panel, or the Injured moodle; vanilla's
+    UI has nothing to recognize as "there's a wound here." The correct
+    two-step sequence, confirmed straight from BodyPart.class (this is
+    the exact same path vanilla itself uses when a zombie scratches a
+    player): bodyPart:setScratched(true, true) creates a REAL, visible
+    Scratch wound (rolls a random ScratchTime, clears any stale bandage/
+    stitch state) -- the second `true` skips setScratched's own
+    zombie-infection roll, since a spontaneous nosebleed obviously
+    shouldn't ever be able to infect someone. Then bodyPart:
+    generateBleeding() is vanilla's own real function for deriving a
+    realistic BleedingTime FROM whatever wounds are currently present
+    (scratched, cut, burnt, etc, each contributing their own random
+    range) -- since scratched() is now true, this rolls a genuine
+    bleeding amount off the ScratchTime just set, the same way a real
+    combat scratch would. Once BleedingTime is real and > 0,
+    MaintainBleedingFloor above takes over keeping it going every 10
+    seconds exactly like any other wound.
+]]--
+local NOSEBLEED_CHANCE_PERCENT = 40
+local NosebleedLineKeys = {
+    "IGUI_HARMONIE_NosebleedK_1",
+    "IGUI_HARMONIE_NosebleedK_2",
+}
+
+function VitEffects.MaybeTriggerNosebleed(character, block)
+    if not HARMONIE_GTP.Config.effectsEnabled then return end
+
+    local afflicted = HARMONIE_GTP.VitData.IsAfflicted(character, "K")
+            and HARMONIE_GTP.VitData.GetPauseDays(character, "K") < 1
+    if not afflicted then return end
+
+    if HARMONIE_GTP.VitData.GetLastNosebleedBlock(character) == block then return end
+    HARMONIE_GTP.VitData.SetLastNosebleedBlock(character, block)
+
+    if ZombRand(100) >= NOSEBLEED_CHANCE_PERCENT then return end
+
+    local headPart = character:getBodyDamage():getBodyPart(BodyPartType.Head)
+    if not headPart or headPart:getBleedingTime() > 0 then return end
+
+    headPart:setScratched(true, true)
+    headPart:generateBleeding()
+
+    if character.Say then
+        character:Say(getText(NosebleedLineKeys[ZombRand(#NosebleedLineKeys) + 1]))
+    end
+end
+
+--[[
+    Checked every 10 seconds by HARMONIE_VitaminChecker.lua for B
+    specifically -- same continuous-enforcement family as the two
+    functions above, on the specific body parts vanilla's own
+    addArmMuscleStrain/addBackMuscleStrain/addLeftArmMuscleStrain target
+    (confirmed straight from IsoGameCharacter.class's bytecode: Hand_R/
+    ForeArm_R/UpperArm_R, Hand_L/ForeArm_L/UpperArm_L, and Torso_Upper/
+    Torso_Lower) -- while afflicted-and-not-pause-shielded, any of those
+    parts below cfg.floor gets its Stiffness (0-100 scale, confirmed via
+    BodyPart.class) pushed back up to it. Stiffness decays on its own
+    whenever the character isn't actively exercising (see BodyPart
+    .class's own Update loop), which is exactly the "erased before it's
+    felt" problem this file's header describes -- re-flooring it
+    continuously is what keeps it actually present.
+]]--
+local StiffnessBodyParts = {
+    "Hand_R", "ForeArm_R", "UpperArm_R",
+    "Hand_L", "ForeArm_L", "UpperArm_L",
+    "Torso_Upper", "Torso_Lower",
+}
+
+function VitEffects.MaintainStiffnessFloor(character)
+    if not HARMONIE_GTP.Config.effectsEnabled then return end
+
+    local cfg = HARMONIE_GTP.Config.effects.B
+    if not cfg or not cfg.floor then return end
+
+    local afflicted = HARMONIE_GTP.VitData.IsAfflicted(character, "B")
+            and HARMONIE_GTP.VitData.GetPauseDays(character, "B") < 1
+    if not afflicted then return end
+
+    local floor = cfg.floor * HARMONIE_GTP.Config.effectMultiplier
+    local bodyDamage = character:getBodyDamage()
+    for _, partName in ipairs(StiffnessBodyParts) do
+        local bodyPart = bodyDamage:getBodyPart(BodyPartType[partName])
+        if bodyPart and bodyPart:getStiffness() < floor then
+            bodyPart:setStiffness(floor)
+        end
+    end
+end
+
+--[[
     Checked every 6 GAME hours (see HARMONIE_VitaminChecker.lua's
-    getSixHourBlockIndex) -- completely decoupled from ApplyCritical's own
-    once-a-day timing, since that's what caused several symptom lines to
+    getSixHourBlockIndex) -- completely decoupled from the continuous
+    effect maintenance above, since firing dialogue on the same schedule
+    as the penalty itself is what used to cause several symptom lines to
     fire back to back the moment more than one vitamin crossed into
-    Critical on the same day. Instead: gather every vitamin CURRENTLY
+    Critical at once. Instead: gather every vitamin CURRENTLY
     afflicted and not pause-day-shielded, pick exactly ONE at random, and
     say only that one's line -- so a character with three vitamins
     critical at once still only ever says one thing per 6-hour block, and
@@ -285,7 +391,7 @@ function VitEffects.MaybeSaySymptomReminder(character, block)
     local candidates = {}
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         if HARMONIE_GTP.VitData.IsAfflicted(character, vit)
-                and HARMONIE_GTP.VitData.GetPauseDays(character, vit) <= 0 then
+                and HARMONIE_GTP.VitData.GetPauseDays(character, vit) < 1 then
             table.insert(candidates, vit)
         end
     end

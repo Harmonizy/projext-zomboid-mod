@@ -1,3 +1,0 @@
-IG_UI_TH = {
-    IGUI_CraftCategory_EHRMedicine = "ยา EHR",
-}

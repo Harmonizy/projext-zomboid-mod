@@ -25,6 +25,11 @@
     ever need to eat ten carrots for a single point of Reserve; foods that
     are secondary/minor sources of a vitamin stay noticeably weaker than
     the foods that are rich in it, they just aren't literally negligible.
+
+    Solid Food items only, on purpose -- FluidContainer-based drinks (Milk
+    and anything else consumed the same way) are deliberately NOT tracked
+    here at all, per an explicit decision after a long debugging arc
+    around them. See HARMONIE_EatHook.lua's header for the full reasoning.
 ]]--
 
 HARMONIE_GTP = HARMONIE_GTP or {}
@@ -41,6 +46,9 @@ end
 addGroup({"Carrots", "CannedCarrots_Open", "CannedCarrotsOpen"}, {A = 509, K = 10})
 addGroup({"SweetPotato"}, {A = 961, C = 20, E = 1.5})
 addGroup({"Spinach"}, {A = 140, C = 12, K = 145, E = 1.5})
+addGroup({"Kale"}, {A = 200, C = 50, K = 210})
+addGroup({"Dandelions"}, {A = 180, C = 20, K = 200})
+addGroup({"Lettuce"}, {A = 40, C = 3, K = 15})
 addGroup({"Broccoli", "CannedBroccoli_Open"}, {A = 6, C = 81, K = 92})
 addGroup({"Cabbage", "CannedCabbage_Open"}, {C = 30, K = 67})
 addGroup({"BrusselSprouts"}, {C = 75, K = 137})
@@ -51,9 +59,11 @@ addGroup({"Cucumber"}, {K = 19})
 addGroup({"Zucchini"}, {A = 50, C = 22})
 addGroup({"Eggplant", "CannedEggplant_Open"}, {B = 1})
 addGroup({"Corn", "CornFrozen", "CannedCornOpen"}, {B = 1.5})
-addGroup({"Greenpeas", "CannedPeasOpen"}, {C = 58, K = 36, B = 2})
+addGroup({"Greenpeas", "CannedPeasOpen", "Peas"}, {C = 58, K = 36, B = 2})
 addGroup({"Potato", "CannedPotatoOpen", "CannedPotato_Open"}, {C = 17, B = 3})
+addGroup({"FrenchFries", "TatoDots"}, {C = 5, B = 1})
 addGroup({"Onion"}, {C = 12})
+addGroup({"FriedOnionRings", "FriedOnionRingsCraft"}, {C = 3})
 addGroup({"Leek", "CannedLeek_Open"}, {A = 70, C = 10, K = 47})
 addGroup({"RedRadish", "CannedRedRadish_Open"}, {C = 17})
 addGroup({"Turnip"}, {C = 27})
@@ -69,6 +79,8 @@ addGroup({"MixedVegetables"}, {A = 300, C = 10, K = 20})
 -- ===== Fruits =====
 addGroup({"Orange"}, {C = 70})
 addGroup({"Grapefruit"}, {A = 90, C = 44})
+addGroup({"Lemon"}, {C = 40})
+addGroup({"Lime"}, {C = 25})
 addGroup({"Apple", "Pear"}, {C = 12})
 addGroup({"Banana"}, {C = 10, B = 1})
 addGroup({"Grapes"}, {C = 10, K = 22})
@@ -79,21 +91,47 @@ addGroup({"Watermelon", "WatermelonSliced", "WatermelonSmashed"}, {A = 55, C = 1
 addGroup({"Cherry"}, {C = 10})
 addGroup({"DriedApricots"}, {A = 63})
 addGroup({"CannedFruitCocktailOpen"}, {C = 15})
+-- Wild-foraged berries -- generic real-world berry nutrition (moderate
+-- Vitamin C, trace K); Rosehips are a genuine real-world outlier
+-- (one of the richest natural Vitamin C sources) so kept separate.
+addGroup({"BeautyBerry", "BerryBlack", "BerryBlue", "BerryGeneric1", "BerryGeneric2", "BerryGeneric3", "BerryGeneric4", "BerryGeneric5", "BerryPoisonIvy", "HollyBerry", "Strewberrie", "WinterBerry"}, {C = 12, K = 8})
+addGroup({"Rosehips"}, {C = 60})
 
 -- ===== Meat / poultry / game (B-complex focus) =====
 addGroup({"Beef", "Steak", "MincedMeat", "MeatPatty", "BeefJerky", "CannedCornedBeefOpen"}, {B = 4.5})
 addGroup({"Chicken", "ChickenFillet", "ChickenWhole", "ChickenWings", "ChickenNuggets"}, {B = 3})
-addGroup({"Pork", "Bacon", "BaconBits", "BaconRashers", "Sausage", "Salami", "SalamiSlice", "Pepperoni", "Baloney", "BaloneySlice"}, {B = 2.5})
+addGroup({"Pork", "PorkChop", "MuttonChop", "Ham", "HamSlice", "Bacon", "BaconBits", "BaconRashers", "Sausage", "Salami", "SalamiSlice", "Pepperoni", "Baloney", "BaloneySlice", "Hotdog", "Hotdog_single", "MeatDumpling"}, {B = 2.5})
 addGroup({"TurkeyFillet", "TurkeyLegs", "TurkeyWhole", "TurkeyWings"}, {B = 3})
 addGroup({"Venison", "Rabbitmeat", "FrogMeat", "Smallanimalmeat", "Smallbirdmeat"}, {B = 2})
+addGroup({"CannedBologneseOpen"}, {A = 20, C = 10, B = 2})
+addGroup({"CannedChiliOpen"}, {A = 15, C = 15, B = 2.5})
+addGroup({"TinnedSoupOpen"}, {A = 20, C = 10, B = 1})
 
 -- ===== Fish / seafood (Vitamin D focus) =====
 addGroup({"Salmon"}, {D = 19, B = 4})
 addGroup({"FishFillet", "FishFried", "FishFingers", "CannedSardinesOpen", "TunaTinOpen"}, {D = 10, B = 3})
 addGroup({"Shrimp", "ShrimpFried", "ShrimpDumpling", "ShrimpFriedCraft", "Crayfish", "Lobster", "Oysters", "OystersFried", "Squid", "SquidCalamari"}, {D = 3, B = 2})
 
+-- ===== Mushrooms (some real Vitamin D from sun/UV exposure, plus B) =====
+addGroup({"MushroomsButton", "MushroomGeneric1", "MushroomGeneric2", "MushroomGeneric3", "MushroomGeneric4", "MushroomGeneric5", "MushroomGeneric6", "MushroomGeneric7"}, {D = 1, B = 1})
+addGroup({"CannedMushroomSoupOpen"}, {D = 0.5, B = 1})
+
 -- ===== Dairy / eggs (Vitamin D and A focus) =====
-addGroup({"Milk", "CannedMilkOpen"}, {D = 2.9, A = 112, B = 1})
+-- Fresh/fluid Milk (Base.Milk, Milk_Personalsized, MilkChocolate_
+-- Personalsized) is DELIBERATELY not tracked at all -- per the user's
+-- explicit decision after a long debugging arc around FluidContainer
+-- drinks (missing DB entries, progressive-draining hunger reads, etc):
+-- no vitamins for milk or anything drunk from a container the same way,
+-- full stop. See HARMONIE_EatHook.lua's header for why the entire
+-- ISDrinkFluidAction hook was removed rather than just the DB rows --
+-- CannedMilkOpen below is unaffected since it's sweetened condensed milk
+-- in a solid Food item, not a FluidContainer drink -- a solid Food item
+-- with its own native HungerChange = -10.0 (confirmed via generated/
+-- items/food.txt), nutritionally concentrated/sweetened rather than
+-- fresh, scaled off its own hunger (-10, a fifth of fresh Milk's -50)
+-- applied to condensed milk's real approximate per-100g figures (A
+-- ~18mcg, D ~0 unfortified, B ~1mg per typical whole can).
+addGroup({"CannedMilkOpen"}, {A = 18, B = 1})
 addGroup({"Cheese", "Processedcheese", "cheese_powdered"}, {D = 2, A = 75, B = 1})
 addGroup({"Butter"}, {A = 150, D = 2})
 addGroup({"Egg", "EggBoiled", "EggOmelette", "EggPoached", "EggScrambled", "OmeletteRecipe", "OmeletteRecipeForged", "TurkeyEgg", "WildEggs"}, {D = 1.5, A = 75, B = 1})
@@ -103,7 +141,10 @@ addGroup({"Bread", "BreadSlices", "Baguette", "BunsHamburger_single", "BunsHotdo
 addGroup({"Rice", "WaterPotRice", "WaterPotForgedRice", "WaterSaucepanRice", "WaterSaucepanRiceCopper"}, {B = 1})
 addGroup({"Pasta", "Macaroni", "Ramen"}, {B = 1})
 addGroup({"DriedLentils", "DriedSplitPeas", "Blackbeans", "DriedBlackBeans", "DriedChickpeas", "DriedKidneyBeans", "DriedWhiteBeans", "BeanBowl", "OpenBeans", "RefriedBeans", "Soybeans"}, {B = 3, E = 1.5})
+addGroup({"Tofu", "TofuFried"}, {B = 2, E = 1})
 addGroup({"Peanuts", "PeanutButter", "Acorn"}, {E = 2.5, B = 2})
+addGroup({"OilOlive"}, {E = 8})
+addGroup({"OilVegetable"}, {E = 4})
 
 --[[
     HARMONIE_GTP.GetVitaminProfileForItem(item)
@@ -127,6 +168,25 @@ function HARMONIE_GTP.GetVitaminProfileForItem(item)
     end
     local fullType = item.getFullType and item:getFullType()
     return fullType and DB[fullType] or nil
+end
+
+--[[
+    HARMONIE_GTP.LogMissingProfile(item, context)
+    Permanent (not a temporary debug print -- always left in) one-line
+    warning to console.txt for a genuine Food item that resolves to NO
+    vitamin profile at all (no ModData, and no static DB entry for its
+    fullType), so it silently grants zero vitamins. Only called from
+    HARMONIE_EatHook.lua's ISEatFoodAction wrap, which already gates on
+    being a real eat action -- so this can never fire for the huge
+    majority of non-food tooltips etc, only for something a character
+    actually just ate with nothing to show for it. Cheap and rare enough
+    (only fires on a genuine DB gap, not on every eat) to just always log
+    rather than hiding behind a debug toggle.
+]]--
+function HARMONIE_GTP.LogMissingProfile(item, context)
+    local ok, fullType = pcall(function() return item:getFullType() end)
+    print(string.format("[HARMONIE] %s: no vitamin profile for %s -- either deliberately untracked (candy, herbs, seeds, etc), or a real DB gap worth adding to HARMONIE_FoodVitaminDatabase.lua",
+        tostring(context), tostring(ok and fullType or "?")))
 end
 
 --[[
@@ -165,30 +225,26 @@ end
 
 --[[
     HARMONIE_GTP.GetItemBaseHunger(item)
-    Returns the fresh/baseline hunger-relief value to use for `item`,
-    checking two entirely different vanilla systems (confirmed by reading
-    media/scripts/generated/items/{food,normal}.txt and
-    TimedActions/{ISEatFoodAction,ISDrinkFluidAction}.lua):
-      - Solid food items carry their own getBaseHunger().
-      - FluidContainer-based drinks (Milk carton, etc) don't -- their
-        hunger value lives on the FLUID definition instead
-        (item:getFluidContainer():getProperties():getHungerChange(), e.g.
-        fluids.txt's CowMilk HungerChange = -50), and getBaseHunger() on
-        the item itself is 0/meaningless.
-    Returns nil if neither applies (non-food items).
+    Returns the fresh/baseline hunger-relief value to use for `item`, for
+    genuine solid Food instances only (getBaseHunger()) -- FluidContainer
+    -based drinks (Milk and anything consumed the same way) are
+    deliberately NOT handled here at all, see HARMONIE_EatHook.lua's
+    header for why fluid-container drinks were dropped from this mod
+    entirely rather than supported. Returns nil for anything that isn't a
+    genuine Food instance, INCLUDING fluid containers now -- the
+    instanceof check is what keeps item:getBaseHunger() from ever being
+    attempted on one (confirmed as a real reported bug: calling it on a
+    non-Food item throws a native Java exception, not a harmless 0).
 ]]--
 function HARMONIE_GTP.GetItemBaseHunger(item)
     if not item then return nil end
+
+    local okType, isFood = pcall(function() return instanceof(item, "Food") end)
+    if not (okType and isFood) then return nil end
+
     local ok, baseHunger = pcall(function() return item:getBaseHunger() end)
     if ok and baseHunger and baseHunger ~= 0 then
         return baseHunger
-    end
-    local ok2, fluidHunger = pcall(function()
-        local container = item.getFluidContainer and item:getFluidContainer()
-        return container and container:getProperties():getHungerChange()
-    end)
-    if ok2 and fluidHunger and fluidHunger ~= 0 then
-        return fluidHunger
     end
     return nil
 end
@@ -259,10 +315,23 @@ end
 ]]--
 function HARMONIE_GTP.GetItemCurrentHungerUnits(item)
     if not item then return nil end
-    local ok, currentHunger = pcall(function() return item:getHungerChange() end)
-    if ok and currentHunger and currentHunger ~= 0 then
-        return math.abs(currentHunger * 100)
+
+    -- Same lesson as GetItemBaseHunger above: item:getHungerChange() is
+    -- a Food-specific getter too. Calling it on Milk (a FluidContainer
+    -- item, no rot curve to read anyway per the comment above) is
+    -- exactly what threw the reported error right after finishing a
+    -- drink -- confirmed as the same class of bug, not a new one. Only
+    -- attempted for genuine Food instances; FluidContainer drinks fall
+    -- straight through to the fixed reference below, same as the
+    -- documented "no rot curve" behavior already intended for them.
+    local okType, isFood = pcall(function() return instanceof(item, "Food") end)
+    if okType and isFood then
+        local ok, currentHunger = pcall(function() return item:getHungerChange() end)
+        if ok and currentHunger and currentHunger ~= 0 then
+            return math.abs(currentHunger * 100)
+        end
     end
+
     return HARMONIE_GTP.GetItemHungerUnits(item)
 end
 
@@ -295,6 +364,7 @@ function HARMONIE_GTP.GetVitaminGains(item, fraction)
     end
     return gains
 end
+
 
 --[[
     HARMONIE_GTP.GetVitaminRatePerHunger(item)

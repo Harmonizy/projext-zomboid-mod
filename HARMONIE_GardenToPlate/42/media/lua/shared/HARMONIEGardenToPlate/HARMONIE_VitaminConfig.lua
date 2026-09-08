@@ -21,52 +21,100 @@
         reaches sufficientThreshold ("Sufficient" band) -- not just out of
         "Critical". This matches a real deficiency: you don't feel better
         the moment you're technically no longer in the red.
-      - B, C, and K's penalty is a flat `amount` (scaled only by
-        effectMultiplier) applied once per day it's Critical, stacking
-        without limit for as long as the deficiency persists (no ramp, no
-        cap) -- deliberately, to discourage ignoring it.
-      - A, D, and E's penalty is instead a `floor`/`ceiling` on a vanilla
-        CharacterStat, CONTINUOUSLY enforced every 10 seconds by
-        HARMONIE_VitaminChecker.lua (VitEffects.MaintainStatEffect) rather
-        than applied once per day -- because PANIC, ENDURANCE, and STRESS
-        all naturally regenerate/decay back toward their own baseline on
-        their own (confirmed the hard way: Vitamin B originally used
-        ENDURANCE the same one-shot way A/D/E do now, and a once-a-day
-        -0.2 hit was completely invisible in practice because ordinary
-        rest regenerates Endurance faster than that). A single daily dose
-        to any of these three would very likely get fully erased by
-        vanilla's own regen within the same day, making the "penalty"
-        silently do nothing. Maintaining a floor (PANIC/STRESS can't drop
-        below X while afflicted) or a ceiling (ENDURANCE can't rise above
+      - EVERY vitamin's penalty is a `floor`/`ceiling` maintained
+        CONTINUOUSLY every 10 seconds by HARMONIE_VitaminChecker.lua --
+        VitEffects.MaintainStatEffect for A/C/D/E's CharacterStat,
+        VitEffects.MaintainStiffnessFloor for B's per-body-part Stiffness,
+        VitEffects.MaintainBleedingFloor for K's per-body-part
+        BleedingTime -- rather than applied once per day. This used to be
+        split: B/C/K got a flat `amount` added once per Critical day,
+        stacking without limit. That was retired -- confirmed the hard
+        way that a one-shot daily dose gets erased before anyone notices
+        it whenever the target naturally regenerates/decays on its own:
+        Vitamin B originally drained ENDURANCE the same one-shot way A/D/E
+        did, and a once-a-day -0.2 hit was invisible against ordinary rest
+        regen; B's later Stiffness-based version had the same problem
+        (Stiffness decays on its own whenever not exercising); C's
+        original BleedingTime-once/day version was erased even faster,
+        since BodyPart.class confirms a bandage drains BleedingTime 10x
+        faster than nothing does, healing off an entire day's dose within
+        a couple of real-time hours. Maintaining a floor (the stat/timer
+        can't drop below X while afflicted) or a ceiling (can't rise above
         X while afflicted) instead means the effect is always genuinely
         present for as long as the deficiency lasts, and correctly stops
-        fighting the stat the instant the vitamin is no longer afflicted
-        or gets pause-day-shielded (no lingering artificial floor/ceiling
-        after recovery).
+        fighting the stat/timer the instant the vitamin is no longer
+        afflicted or gets pause-day-shielded (no lingering artificial
+        floor/ceiling after recovery).
+
+      - A/C/D/E's floor/ceiling values are checked against the vanilla
+        Moodle system's own real thresholds (decompiled straight from
+        zombie/characters/Moodles/MoodleStat.class's bytecode, not
+        guessed) so the number picked actually crosses into a visible
+        moodle level instead of sitting under the radar:
+          UNHAPPINESS/"Sad" moodle (0-100 scale): >20=Low, >45=Moderate,
+              >60=High, >80=Max
+          ENDURANCE/"Tired" moodle (0-1 scale, LOWER is worse): <=0.75=Low,
+              <=0.5=Moderate, <=0.25=High, <=0.1=Max
+          STRESS/SICKNESS moodles (0-1 scale, same breakpoints for both):
+              >0.25=Low, >0.5=Moderate, >0.75=High, >0.9=Max
+        Per the user's explicit request, every one of these is now picked
+        to sit comfortably in the MIDDLE of its Low band specifically --
+        annoying enough to always actually show the Low moodle icon, but
+        with margin on both sides so it never edges into Moderate, and
+        isn't sitting exactly on a boundary where it could read as "no
+        moodle at all" depending on float rounding or a stat ticking by a
+        hair from vanilla's own regen: A's floor of 30 (Low band 20-45),
+        D's ceiling of 0.65 (Low band 0.5-0.75, i.e. >0.5 and <=0.75), and
+        C/E's floors of 0.35 (Low band 0.25-0.5) all land solidly in the
+        middle third of their respective Low bands. (Earlier drafts used
+        boundary values -- D=0.75, E/C=0.5 -- that technically land in Low
+        per the exact cutoffs above, but sitting exactly on the line to
+        Moderate/None felt too fragile for "reliably just annoying". A's
+        old floor of 20 was fine for its ORIGINAL mechanism, CharacterStat
+        .PANIC -- but PANIC and UNHAPPINESS have different Low bands
+        (6-30 vs 20-45), so switching A onto UNHAPPINESS meant 20 needed
+        recalculating too, not reused as-is -- it would have sat right at
+        UNHAPPINESS's None/Low edge instead of comfortably inside it.)
 
     Per-vitamin mechanisms are custom Lua effects THEMED after a real
-    vanilla Trait's well-known behavior, picked to match how that
-    deficiency actually presents -- but explicitly NOT the real Trait
-    itself (character:getCharacterTraits():add/remove(CharacterTrait.X) is
-    a real, confirmed-working, vanilla-used mechanism -- see XpUpdate.lua's
-    live WEAK/FEEBLE/STOUT/STRONG swaps as the Strength skill levels up --
-    but was deliberately ruled out here to avoid touching the real trait
-    system at all, e.g. traits showing up in the character's own trait
-    list). See HARMONIE_VitaminEffects.lua's header for exactly what each
-    one does and how closely it was possible to match the real trait,
-    given what's actually reachable from Lua:
-      A (Short Sighted): CharacterStat.PANIC (vision narrowing) -- no
-          accessible way to shrink sight radius directly from Lua.
+    vanilla Trait's or deficiency's well-known behavior, picked to match
+    how that deficiency actually presents -- but explicitly NOT the real
+    Trait itself (character:getCharacterTraits():add/remove(CharacterTrait
+    .X) is a real, confirmed-working, vanilla-used mechanism -- see
+    XpUpdate.lua's live WEAK/FEEBLE/STOUT/STRONG swaps as the Strength
+    skill levels up -- but was deliberately ruled out here to avoid
+    touching the real trait system at all, e.g. traits showing up in the
+    character's own trait list). See HARMONIE_VitaminEffects.lua's header
+    for exactly what each one does and how closely it was possible to
+    match the real trait/deficiency, given what's actually reachable from
+    Lua:
+      A: CharacterStat.UNHAPPINESS as a stand-in for persistent low mood
+          -- moved off its original Short Sighted/PANIC theming (vision
+          narrowing was never a great match to begin with: the REAL
+          Short Sighted blur effect, confirmed in IsoGameCharacter
+          .class's updateVisionEffects() as blurFactorTarget = 1 whenever
+          hasTrait(SHORT_SIGHTED) XOR isWearingGlasses() differ, lives on
+          PRIVATE fields with no exposed Lua setter and no findable render
+          consumer either -- reproducing it for real would mean drawing
+          an entirely independent full-screen overlay, the same category
+          of thing that caused a real problem earlier in this mod, a
+          since-removed full-screen panel that silently ate every mouse
+          click game-wide). UNHAPPINESS/"Sad" is simpler and already
+          fully verified working -- no real vitamin A deficiency symptom
+          it maps to, purely a reliable, felt in-game effect.
       B (Disorganized): COULD NOT be replicated at all -- its real effect
           (reduced bag/world-container capacity, NOT main inventory,
           confirmed via UI_trait_DisorganizedDesc) has zero Lua exposure;
           grepped every script for setMaxWeight/setCapacity on a container
           object and found no usable pattern for a player-worn bag. Kept
-          on the previously-working Arm/Back muscle strain mechanic
+          on the previously-working Arm/Back/Torso Stiffness mechanic
           instead as the least-bad available option -- see effects.B below.
-      C (Thin-Skinned): extends BleedingTime on active wounds -- the real
-          trait raises the CHANCE of being cut/scratched in combat, not a
-          once-a-day stat.
+      C: CharacterStat.SICKNESS as a stand-in for the general fatigue/
+          malaise real scurvy causes -- moved off its original
+          Thin-Skinned/BleedingTime theming, which was reassigned to K
+          below (impaired blood clotting is Vitamin K's real deficiency
+          symptom, a much closer match than C's old theme ever was to
+          either vitamin).
       D (Asthmatic / "Short of Breath"): drains CharacterStat.ENDURANCE --
           the real trait triggers periodic panic-driven asthma attacks
           cured by an Inhaler, which isn't a Lua-triggerable event.
@@ -76,9 +124,23 @@
           stopOnWalk=true during crafting (walking cancels the action).
           HARMONIE_ClumsyHandsHook.lua reproduces that exact behavior for
           an afflicted character without touching the trait itself.
-      K (Slow Healer): extends DeepWoundTime/FractureTime/BurnTime on
-          active wounds -- the real trait slows overall healing rate, not
-          something with a direct multiplier exposed to Lua.
+      K: keeps BleedingTime on active wounds from ever fully closing (see
+          effects.K's floor + VitEffects.MaintainBleedingFloor) -- this
+          was C's original mechanic, moved here since real Vitamin K
+          deficiency is specifically about blood not clotting properly,
+          not slow-healing fractures/burns (K's own previous theme, which
+          had no direct real-trait match either). Also occasionally
+          starts a spontaneous nosebleed/gum bleed with NO wound required
+          (VitEffects.MaybeTriggerNosebleed) -- a genuine real symptom of
+          Vitamin K deficiency, and the only way a character who never
+          gets hit would ever feel this deficiency at all otherwise. Uses
+          bodyPart:setScratched(true, true) + bodyPart:generateBleeding()
+          -- vanilla's own real two-step wound-creation sequence (the
+          exact same one a zombie scratch uses), confirmed necessary
+          after an in-game test showed directly forcing BleedingTime
+          alone creates no visible wound at all (no Scratch icon, nothing
+          in the Health panel) since it never sets scratched()/isCut()
+          true, the flags the game's own UI actually checks for.
 
     All values here are rough real-world-approximate game-balance figures,
     not medical reference data. Vitamin "B" is a single stat standing in for
@@ -133,40 +195,41 @@ HARMONIE_GTP.Config = {
     effectsEnabled = true,
     effectMultiplier = 1,
 
-    -- A/D/E: floor/ceiling maintained continuously (see the Affliction
-    -- model note above and VitEffects.MaintainStatEffect) -- sized as
-    -- "20% of that vanilla CharacterStat's own min-max range" uniformly:
-    -- confirmed straight from the game's own zombie/characters/
-    -- CharacterStat.class (register(id, min, max, default)) that these
-    -- stats do NOT all share one 0-100 scale -- PANIC is 0-100, ENDURANCE
-    -- and STRESS are 0-1. So PANIC's floor is 20 (out of 100) and
-    -- STRESS's floor is 0.2 (out of 1), both "at least 20% of the stat's
-    -- own range, always, while afflicted". ENDURANCE gets a CEILING
-    -- instead (since the goal is draining it, not raising it) at 1 minus
-    -- that same 20% -- i.e. capped at 0.8, never allowed to fully recover
-    -- to 1.0 while afflicted.
+    -- A/C/D/E: CharacterStat floor/ceiling maintained continuously (see
+    -- the Affliction model note above and VitEffects.MaintainStatEffect),
+    -- each picked to sit in the MIDDLE of that stat's own real Moodle Low
+    -- band (decompiled from MoodleStat.class, see above) -- reliably
+    -- "annoying" (the Low icon always actually shows) without ever
+    -- reaching Moderate.
     --
-    -- B, C, K: flat per-day amount (see HARMONIE_VitaminEffects.lua and
-    -- the big themed-per-trait note above). B (0.2, Arm+Back muscle
-    -- strain) matches the same magnitude as one farming/chopping action
-    -- -- no Lua-exposed getter for current muscle strain exists anywhere
-    -- in vanilla, so there's no reliable way to enforce a hard floor on
-    -- it directly; the daily stacking is what keeps it persistent
-    -- instead. C and K are on their own different scale entirely (neither
-    -- touches a CharacterStat) -- BleedingTime added on already-bleeding
-    -- body parts for C (vanilla's own debug tools toggle this timer to 10
-    -- as "some bleeding", so a couple units/day is meaningful without
-    -- ending a fight-worthy wound instantly), DeepWoundTime/FractureTime/
-    -- BurnTime added on whichever is already active for K (vanilla's real
-    -- Fracture takes 21 days to heal, so a couple units/day is a
-    -- meaningful delay without being an automatic never-heals wall).
+    -- B: per-body-part Stiffness floor (VitEffects.MaintainStiffnessFloor)
+    -- on the same Hand/ForeArm/UpperArm/Torso parts vanilla's own
+    -- addArmMuscleStrain/addBackMuscleStrain target -- confirmed via
+    -- BodyPart.class that Stiffness is a real, clamped 0-100 field with no
+    -- documented Moodle tie-in of its own, so there's no exact band to aim
+    -- for here; kept modest (20, a fifth of the scale) to match the same
+    -- "low and annoying, not severe" spirit as the Moodle-linked ones.
+    --
+    -- K: per-body-part BleedingTime floor (VitEffects.
+    -- MaintainBleedingFloor) on whichever body parts are already
+    -- bleeding -- also has no Moodle of its own. Confirmed from
+    -- BodyPart.class that nothing else reads BleedingTime's exact
+    -- magnitude (only whether it's > 0, which gates IsBleeding/
+    -- setBleeding) -- so once MaintainBleedingFloor is re-flooring it
+    -- every 10 seconds anyway, a bigger floor doesn't make the wound any
+    -- "worse", just gives it more numeric cushion between checks. Kept at
+    -- 3 (vanilla's own lowest real reference for this field -- embedded
+    -- glass in a wound forces a minimum of 3) to match the same minimal
+    -- "just annoying" spirit as everything else, rather than 10
+    -- (vanilla's debug-tool idea of "some bleeding", which reads as more
+    -- severe for no actual functional difference here).
     effects = {
-        A = { floor = 20 },     -- CharacterStat.PANIC maintained >= this (0-100 scale)
-        B = { amount = 0.2 },   -- Arm + Back muscle strain added per day (0-1-ish scale)
-        C = { amount = 2 },     -- BleedingTime added to active wounds per day
-        D = { ceiling = 0.8 },  -- CharacterStat.ENDURANCE maintained <= this (0-1 scale)
-        E = { floor = 0.2 },    -- CharacterStat.STRESS maintained >= this (0-1 scale)
-        K = { amount = 2 },     -- DeepWoundTime/FractureTime/BurnTime added to active wounds per day
+        A = { floor = 30 },     -- CharacterStat.UNHAPPINESS maintained >= this (0-100 scale)
+        B = { floor = 20 },     -- Arm/Back/Torso Stiffness maintained >= this (0-100 scale)
+        C = { floor = 0.35 },   -- CharacterStat.SICKNESS maintained >= this (0-1 scale)
+        D = { ceiling = 0.65 }, -- CharacterStat.ENDURANCE maintained <= this (0-1 scale)
+        E = { floor = 0.35 },   -- CharacterStat.STRESS maintained >= this (0-1 scale)
+        K = { floor = 3 },      -- BleedingTime on active wounds maintained >= this (never fully closes)
     },
 }
 

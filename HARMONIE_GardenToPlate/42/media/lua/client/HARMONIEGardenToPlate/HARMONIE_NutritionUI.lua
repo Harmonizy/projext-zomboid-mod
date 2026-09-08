@@ -74,7 +74,7 @@ function HARMONIE_NutritionUI:prerender()
         local value = HARMONIE_GTP.VitData.Get(self.target, vit)
         local band = HARMONIE_GTP.GetBand(value)
         local color = BandColor[band]
-        local hasPauseDays = HARMONIE_GTP.VitData.GetPauseDays(self.target, vit) > 0
+        local hasPauseDays = HARMONIE_GTP.VitData.GetPauseDays(self.target, vit) >= 1
 
         self:drawText(getText(VitaminNameKey[vit]), PADDING, y, 1, 1, 1, 1, UIFont.Small)
         self:drawText(getText(BandTextKey[band]), PADDING + NAME_COL_WIDTH, y, color.r, color.g, color.b, 1, UIFont.Small)

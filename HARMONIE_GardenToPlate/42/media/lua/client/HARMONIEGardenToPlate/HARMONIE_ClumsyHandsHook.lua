@@ -33,7 +33,7 @@ function ISHandcraftAction:new(character, craftRecipe, containers, isoObject, cr
     if character and not o.stopOnWalk then
         local ok, afflicted = pcall(function()
             return HARMONIE_GTP.VitData.IsAfflicted(character, "E")
-                    and HARMONIE_GTP.VitData.GetPauseDays(character, "E") <= 0
+                    and HARMONIE_GTP.VitData.GetPauseDays(character, "E") < 1
         end)
         if ok and afflicted then
             o.stopOnWalk = true

@@ -108,5 +108,10 @@
     "ExtensiveHealth.CommonColdTea": "Herbal Tea (ชาสมุนไพร)",
     "ExtensiveHealth.AntipyreticTea": "Antipyretic Tea (ชาลดไข้)",
     "ExtensiveHealth.RelaxantTea": "Relaxant Tea (ชาผ่อนคลาย)",
-    "ExtensiveHealth.MedicineStorageBox": "Medicine Storage Box (กล่องเก็บยา)"
+    "ExtensiveHealth.MedicineStorageBox": "Medicine Storage Box (กล่องเก็บยา)",
+
+    "HARMONIEHomeMedic.GingerBugTonic": "Fermented Ginger-Bug Tonic (ยาต้มขิงหมักดอง)",
+    "HARMONIEHomeMedic.GraveAshGarlicPoultice": "Grave Ash & Garlic Poultice (ยาพอกขี้เถ้าและกระเทียม)",
+    "HARMONIEHomeMedic.WarmingSpicedBitters": "Warming Spiced Bitters (ยาดองเผ็ดร้อนบำรุงกำลัง)",
+    "HARMONIEHomeMedic.WillowBarkAntitoxinBooster": "Willow Bark & Herb Antitoxin Booster (ยาสมุนไพรเสริมฤทธิ์แก้พิษบาดทะยัก)"
 }

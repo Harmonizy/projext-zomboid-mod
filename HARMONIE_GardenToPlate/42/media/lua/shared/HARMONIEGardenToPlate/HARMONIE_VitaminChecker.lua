@@ -24,26 +24,36 @@
       4. Once every 6 game hours, if the character has at least one
          vitamin currently Critical (and not pause-day-shielded), says
          ONE random one of their symptom lines (VitEffects.
-         MaybeSaySymptomReminder) -- entirely decoupled from the daily
-         effect application below, specifically so several vitamins
-         crossing into Critical on the same day don't all say their line
-         back to back.
-      5. For A/D/E, keeps their CharacterStat floor/ceiling continuously
-         enforced (VitEffects.MaintainStatEffect) instead of dosed once
-         per day -- PANIC/ENDURANCE/STRESS all naturally regenerate/decay
-         on their own, so a once-a-day nudge could get erased before it
-         was ever felt. Checked every tick, same as everything else here.
+         MaybeSaySymptomReminder) -- entirely decoupled from the effect
+         maintenance below, specifically so several vitamins crossing
+         into Critical on the same day don't all say their line back to
+         back.
+      5. Every vitamin's penalty is continuously re-enforced here instead
+         of dosed once per day -- VitEffects.MaintainStatEffect for
+         A/C/D/E's CharacterStat (UNHAPPINESS/SICKNESS/ENDURANCE/STRESS all
+         naturally regenerate/decay on their own), VitEffects.
+         MaintainStiffnessFloor for B's per-body-part Stiffness, VitEffects
+         .MaintainBleedingFloor for K's per-body-part BleedingTime (a
+         bandage drains BleedingTime 10x faster than nothing does) --
+         a once-a-day nudge to any of these would likely get erased
+         before it was ever felt. Checked every tick, same as everything
+         else here.
+      6. Once every 6 game hours (same block granularity as point 4, but
+         tracked separately), K specifically also gets a chance to start a
+         spontaneous nosebleed with no wound required at all (VitEffects.
+         MaybeTriggerNosebleed) -- MaintainBleedingFloor in point 5 only
+         ever prolongs a wound that's already bleeding, so without this a
+         character who never gets hit would feel nothing from a Critical
+         Vitamin K deficiency, unlike every other vitamin here.
 
     Effect APPLICATION timing lives here now, not in
     HARMONIE_VitaminDecay.lua's daily tick -- that file only owns the
-    day-based Reserve decay / pauseDays / afflictedDays bookkeeping
-    anymore. Each vitamin's own lastEffectDay (HARMONIE_VitaminData.lua)
-    guards against applying B/C/K's daily penalty twice just because this
-    runs every 10 seconds: it still only actually fires once per in-game
-    day per vitamin, exactly like before -- it's just checked far more
-    often so it can never lag behind real state for long. A/D/E's stat
-    maintenance has no such gate since it's a continuous enforcement, not
-    a one-shot dose.
+    day-based Reserve decay / pauseDays / afflictedDays bookkeeping.
+    Every vitamin's penalty is a continuous, idempotent re-enforcement now
+    (no once-per-day dose left at all, see HARMONIE_VitaminEffects.lua's
+    header for why the old daily-stacking half of the system was
+    retired), so there's no "already applied today" state to track here
+    anymore -- each Maintain* function is safe to call every single tick.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -54,23 +64,16 @@ local CHECK_INTERVAL_MS = 10000
 local lastCheckMs = 0
 
 -- worldAgeHours is a continuously-running hour count since world start;
--- dividing by 24 gives a number that increments exactly once per in-game
--- day. Only used as a "have I already applied today's dose" key -- it
--- doesn't need to line up with the calendar, just with its own past
--- values.
-local function getGameDayIndex()
-    return math.floor(getGameTime():getWorldAgeHours() / 24)
-end
-
--- Same idea as getGameDayIndex, but at 6-hour granularity, for the
--- symptom-reminder dialogue (VitEffects.MaybeSaySymptomReminder) -- lets
--- the character comment on an ongoing deficiency up to 4x/day instead of
--- once, without ever saying more than one line in the same block.
+-- dividing by 6 gives a number that increments exactly once per 6 game
+-- hours, for the symptom-reminder dialogue (VitEffects.
+-- MaybeSaySymptomReminder) -- lets the character comment on an ongoing
+-- deficiency up to 4x/day instead of once, without ever saying more than
+-- one line in the same block.
 local function getSixHourBlockIndex()
     return math.floor(getGameTime():getWorldAgeHours() / 6)
 end
 
-local function checkCharacter(character, today, sixHourBlock)
+local function checkCharacter(character, sixHourBlock)
     -- At most one "feeling better" line per character per tick, even if
     -- several vitamins recover in the same 10 seconds (e.g. right after
     -- a big varied meal) -- see VitEffects.SayRecovered.
@@ -83,16 +86,12 @@ local function checkCharacter(character, today, sixHourBlock)
             recoveredAlready = true
         end
 
-        if HARMONIE_GTP.VitData.IsAfflicted(character, vit)
-                and HARMONIE_GTP.VitData.GetPauseDays(character, vit) <= 0
-                and HARMONIE_GTP.VitData.GetLastEffectDay(character, vit) ~= today then
-            HARMONIE_GTP.VitEffects.ApplyCritical(character, vit)
-            HARMONIE_GTP.VitData.SetLastEffectDay(character, vit, today)
-        end
-
         HARMONIE_GTP.VitEffects.MaintainStatEffect(character, vit)
     end
 
+    HARMONIE_GTP.VitEffects.MaintainStiffnessFloor(character)
+    HARMONIE_GTP.VitEffects.MaintainBleedingFloor(character)
+    HARMONIE_GTP.VitEffects.MaybeTriggerNosebleed(character, sixHourBlock)
     HARMONIE_GTP.VitEffects.MaybeSaySymptomReminder(character, sixHourBlock)
 end
 
@@ -102,13 +101,12 @@ local function onCheckerTick()
     lastCheckMs = now
 
     HARMONIE_GTP.RefreshFromSandbox()
-    local today = getGameDayIndex()
     local sixHourBlock = getSixHourBlockIndex()
 
     for i = 0, getNumActivePlayers() - 1 do
         local player = getSpecificPlayer(i)
         if player and not player:isDead() then
-            checkCharacter(player, today, sixHourBlock)
+            checkCharacter(player, sixHourBlock)
         end
     end
 end

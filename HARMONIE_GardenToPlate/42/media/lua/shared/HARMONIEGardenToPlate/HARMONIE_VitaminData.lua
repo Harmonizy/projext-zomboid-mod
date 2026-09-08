@@ -12,8 +12,8 @@
                      VitData.AddPauseDays below / HARMONIE_PillsHook.lua)
                      without any Reserve gain. While banked, both the daily
                      decay (ApplyDailyTick) and the critical-band penalty
-                     itself (HARMONIE_VitaminChecker.lua / VitEffects.
-                     ApplyCritical) are held off; one day is consumed per
+                     itself (HARMONIE_VitaminChecker.lua's Maintain*
+                     functions) are held off; one day is consumed per
                      in-game day regardless of which of the two purposes
                      it ends up serving
       afflicted    - true once Reserve has dropped below the critical
@@ -25,10 +25,6 @@
                      regardless of how long it's persisted -- see
                      HARMONIE_VitaminEffects.lua); kept in case something
                      wants to show/use it later
-      lastEffectDay - the game-day index (see HARMONIE_VitaminChecker.lua)
-                     this vitamin's critical penalty was last actually
-                     applied on, so the 10-second checker doesn't apply it
-                     more than once for the same day
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -74,7 +70,6 @@ local function ensureStore(character)
                 pauseDays = 0,
                 afflicted = false,
                 afflictedDays = 0,
-                lastEffectDay = -1,
             }
         end
         sync(character)
@@ -106,17 +101,6 @@ function VitData.GetAfflictedDays(character, vit)
     return store[vit].afflictedDays
 end
 
-function VitData.GetLastEffectDay(character, vit)
-    local store = ensureStore(character)
-    return store[vit].lastEffectDay
-end
-
-function VitData.SetLastEffectDay(character, vit, day)
-    local store = ensureStore(character)
-    store[vit].lastEffectDay = day
-    sync(character)
-end
-
 --[[
     Character-level (not per-vitamin) gate for the symptom-reminder line
     -- see HARMONIE_VitaminEffects.lua's MaybeSaySymptomReminder and
@@ -134,6 +118,20 @@ end
 
 function VitData.SetLastSymptomBlock(character, block)
     character:getModData().HARMONIE_LastSymptomBlock = block
+    sync(character)
+end
+
+-- Same 6-hour-block gate as above, but tracked separately (own ModData
+-- key) since it's not about dialogue -- see VitEffects.
+-- MaybeTriggerNosebleed in HARMONIE_VitaminEffects.lua, which uses this
+-- to attempt at most one spontaneous nosebleed roll per 6-hour block for
+-- Vitamin K specifically.
+function VitData.GetLastNosebleedBlock(character)
+    return character:getModData().HARMONIE_LastNosebleedBlock or -1
+end
+
+function VitData.SetLastNosebleedBlock(character, block)
+    character:getModData().HARMONIE_LastNosebleedBlock = block
     sync(character)
 end
 
@@ -214,8 +212,15 @@ end
 -- part IS strictly once-per-day, unlike RefreshAffliction itself).
 function VitData.ApplyDailyTick(character, vit)
     local store = ensureStore(character)
-    if store[vit].pauseDays > 0 then
-        store[vit].pauseDays = math.max(0, store[vit].pauseDays - 1)
+    -- >= 1, not > 0: a day is only actually "banked" once a WHOLE day's
+    -- worth is saved up -- otherwise a leftover fraction (say 0.3, from a
+    -- single small snack) would both cancel today's decay outright AND
+    -- get wiped to 0 by the -1 below, spending 0.3 to buy a full free
+    -- day. With this threshold, a sub-1 balance just sits there
+    -- accumulating (more snacks/pills can still add to it) until it
+    -- crosses 1 and actually pays for a day.
+    if store[vit].pauseDays >= 1 then
+        store[vit].pauseDays = store[vit].pauseDays - 1
     else
         VitData.Set(character, vit, store[vit].value - HARMONIE_GTP.Config.decayPerDay)
     end

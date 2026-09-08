@@ -2,7 +2,7 @@
     HARMONIE - From Garden to Plate
     Registers a vitamin profile for every "Home-Canned <Produce>" item's
     OPEN form (the only one that's ever actually eaten -- see below) that
-    can come out of the canning recipe (see HARMONIE_Recipes.txt's
+    can come out of the canning recipe (see HARMONIE_GardenToPlate_Recipes.txt's
     MakeHomeCannedProduce / mod.info).
 
     Derives its numbers from the SAME profile table already registered for
@@ -12,7 +12,7 @@
     updates automatically and can never drift out of sync.
 
     Scaled by PRODUCE_PER_JAR (4, matching MakeHomeCannedProduce's
-    "item 4 [...]" produce requirement in HARMONIE_Recipes.txt) so this
+    "item 4 [...]" produce requirement in HARMONIE_GardenToPlate_Recipes.txt) so this
     static fallback matches what an actually-crafted jar contains -- a jar
     is really 4 units of produce, and HARMONIE_RecipeVitamins.lua's
     ModData path already sums 4 real ingredients onto a freshly-crafted
@@ -23,7 +23,7 @@
     the raw ingredient's own DB entry.
 
     ONLY the Open item type is registered here, deliberately -- the SEALED
-    item (CantEat=true) is never eaten directly (see HARMONIE_Items.txt: it
+    item (CantEat=true) is never eaten directly (see HARMONIE_GardenToPlate_Items.txt: it
     carries no HungerChange of its own at all, matching vanilla's own real
     sealed cans like Base.CannedCarrots2, specifically so it can't be eaten
     around its own opening recipe/can-opener requirement) and so has no
@@ -37,8 +37,8 @@
     as a fallback for an Open jar with no ModData of its own.
 
     Every entry here has a matching pair of item definitions in
-    HARMONIE_Items.txt and a matching pair of itemMapper lines (one in each
-    direction) in HARMONIE_Recipes.txt -- the three files must be kept in
+    HARMONIE_GardenToPlate_Items.txt and a matching pair of itemMapper lines (one in each
+    direction) in HARMONIE_GardenToPlate_Recipes.txt -- the three files must be kept in
     sync if the produce list ever changes.
 ]]--
 
@@ -68,7 +68,7 @@ for _, name in ipairs(PRODUCE) do
         end
         DB["HARMONIEGardenToPlate.HomeCanned" .. name .. "Open"] = scaled
     else
-        -- Would mean HARMONIE_Items.txt/Recipes.txt and this list have
+        -- Would mean HARMONIE_GardenToPlate_Items.txt/Recipes.txt and this list have
         -- drifted apart -- surface it instead of silently shipping a
         -- canned item with no vitamin data.
         print("HARMONIE_GardenToPlate: WARNING no base vitamin profile found for Base." .. name)

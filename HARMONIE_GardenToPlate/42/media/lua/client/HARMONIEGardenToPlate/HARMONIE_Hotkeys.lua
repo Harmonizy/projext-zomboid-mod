@@ -54,11 +54,15 @@ end
 -- HOTKEY PATH (self, or nearest other player)
 -- ============================================
 
+-- core:getGameUI() was never a real method (confirmed via Core.class --
+-- it doesn't exist at all), so the old version of this always silently
+-- returned false via the "not core.getGameUI" guard -- meaning the
+-- hotkey below could fire while actively typing in chat. ISChat.focused
+-- is vanilla's own real, plain boolean flag for this exact question
+-- (confirmed via ISChat.lua, used throughout that file for the same
+-- "ignore other input while chat is focused" purpose).
 local function isChatWindowOpen()
-    local core = getCore()
-    if not core or not core.getGameUI then return false end
-    local ok, ui = pcall(function() return core:getGameUI() end)
-    return ok and ui and ui.isChatWindowOpen and ui:isChatWindowOpen()
+    return ISChat and ISChat.focused or false
 end
 
 local function onKeyPressed(key)

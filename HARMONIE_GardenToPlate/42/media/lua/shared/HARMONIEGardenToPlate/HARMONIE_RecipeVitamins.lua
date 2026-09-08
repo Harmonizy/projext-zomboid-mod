@@ -35,7 +35,7 @@
            profile for every "Home-Canned <Produce>Open" item type,
            scaled by PRODUCE_PER_JAR (4, matching the recipe's "item 4
            [...]" requirement) from the raw ingredient's own DB entry.
-         - HARMONIE_Items.txt gives that same Open item type a real,
+         - HARMONIE_GardenToPlate_Items.txt gives that same Open item type a real,
            static, per-type HungerChange (also the produce's own hunger
            x4) directly in its script.
          - HARMONIE_FoodVitaminDatabase.lua's normal lookup chain
@@ -53,16 +53,28 @@
        which vanilla itself keeps reducing as the OPEN jar sits around and
        ages per its own DaysFresh/DaysTotallyRotten, same as any other
        food. Only the "how fresh were the ingredients at the moment of
-       canning" nuance is gone. In exchange, ISCraftAction:complete() no
-       longer needs overriding AT ALL for this mod -- see the wrap at the
-       bottom of this file, which now only exists to fire the in-character
+       canning" nuance is gone. In exchange, no full-function override is
+       needed AT ALL for this mod anymore -- see the wrap at the bottom
+       of this file, which now only exists to fire the in-character
        canning/opening flavor line, and is a plain, safe wrap like #1
        above, not a full-function copy. That removes a real compatibility
        risk this mod used to carry: a full override of a function called
        by EVERY craft recipe in the entire game (all mods, all players)
        would silently lose if any other mod also fully overrode it, and
        would silently go stale if a future game update ever changed
-       vanilla's real ISCraftAction:complete() body.
+       vanilla's real implementation.
+
+       IMPORTANT correction: that plain wrap was originally placed on
+       ISCraftAction:complete(), following the (wrong) assumption that it
+       was still the active class for craftRecipe-based crafting. It
+       isn't in current Build 42 -- confirmed straight from vanilla's own
+       ISHandcraftAction.lua, which is what HandcraftLogic/OnNewCraft
+       actually drives now (self.craftRecipe holds the recipe there, not
+       self.recipe). This was found because the flavor line never fired
+       even after fixing an unrelated getName()/getOriginalname() bug in
+       the same function -- 0% both before and after only made sense if
+       the wrap was on a class that never runs for these recipes at all.
+       The wrap below is now on ISHandcraftAction instead.
 
     Both paths scale a raw ingredient's contribution by its own
     HARMONIE_GTP.GetItemCurrentHungerUnits (HARMONIE_FoodVitaminDatabase.lua)
@@ -74,7 +86,7 @@
 ]]--
 
 require "TimedActions/ISAddItemInRecipe"
-require "TimedActions/ISCraftAction"
+require "Entity/TimedActions/ISHandcraftAction"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
@@ -112,8 +124,16 @@ HARMONIE_GTP = HARMONIE_GTP or {}
     ingredient, like Carrots in Soup -- there's no single fixed fraction
     that's correct across every EvolvedRecipe.)
 ]]--
+-- item:getHungerChange() is a Food-specific getter -- calling it on a
+-- FluidContainer-only ingredient (Milk, if ever used in an evolved
+-- recipe) throws under the hood the same way item:getBaseHunger() did
+-- for Milk's tooltip/eat path (see HARMONIE_FoodVitaminDatabase.lua's
+-- GetItemBaseHunger/GetItemCurrentHungerUnits for the confirmed report).
+-- Only attempted for genuine Food instances for the same reason.
 local function getItemHunger(item)
     if not item then return nil end
+    local okType, isFood = pcall(function() return instanceof(item, "Food") end)
+    if not (okType and isFood) then return nil end
     local ok, hunger = pcall(function() return item:getHungerChange() end)
     return ok and hunger or nil
 end
@@ -189,6 +209,19 @@ end
     happens for every craftRecipe in the whole game, ours included only
     incidentally). Chance-gated so it doesn't talk over itself on repeat
     crafts in a session.
+
+    IMPORTANT: wrapped onto ISHandcraftAction, NOT ISCraftAction. An
+    earlier version wrapped ISCraftAction:complete(), which turns out to
+    never run for these recipes at all in current Build 42 -- confirmed
+    straight from vanilla's own ISHandcraftAction.lua, which is what
+    HandcraftLogic/OnNewCraft actually drives for craftRecipe-based
+    crafting now (ISCraftAction appears to be legacy/unused for player
+    crafting in this build). This was found because the flavor line
+    never fired even after fixing the getName()/getOriginalname() bug
+    below -- 0% both before and after, which only made sense if the wrap
+    was on a class that never runs in the first place. self.craftRecipe
+    (not self.recipe) is ISHandcraftAction's own field for this, per its
+    own :new()/complete() -- confirmed via the same vanilla file.
 ]]--
 local RECIPE_FLAVOR_CHANCE_PERCENT = 60
 local RecipeFlavorLineKeys = {
@@ -198,7 +231,14 @@ local RecipeFlavorLineKeys = {
 
 local function maybeSayRecipeFlavor(character, recipe)
     if not character or not character.Say then return end
-    local ok, name = pcall(function() return recipe:getOriginalname() end)
+    -- getOriginalname() was never a real method on CraftRecipe (confirmed
+    -- via CraftRecipe.class -- it only has getName()/getModName()/
+    -- getTranslationName()/getIconName()), so this call always failed
+    -- silently inside pcall, meaning this flavor line NEVER fired for
+    -- either recipe, not "just rarely" -- getName() is the real accessor
+    -- and returns the plain script-declared name (e.g.
+    -- "MakeHomeCannedProduce"), no module prefix, matching the keys below.
+    local ok, name = pcall(function() return recipe:getName() end)
     if not ok then return end
     local keys = RecipeFlavorLineKeys[name]
     if not keys then return end
@@ -206,9 +246,9 @@ local function maybeSayRecipeFlavor(character, recipe)
     character:Say(getText(keys[ZombRand(#keys) + 1]))
 end
 
-local original_ISCraftAction_complete = ISCraftAction.complete
-function ISCraftAction:complete()
-    local result = original_ISCraftAction_complete(self)
-    maybeSayRecipeFlavor(self.character, self.recipe)
+local original_ISHandcraftAction_complete = ISHandcraftAction.complete
+function ISHandcraftAction:complete()
+    local result = original_ISHandcraftAction_complete(self)
+    maybeSayRecipeFlavor(self.character, self.craftRecipe)
     return result
 end

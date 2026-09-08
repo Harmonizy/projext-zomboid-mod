@@ -1,24 +1,26 @@
 --[[
     HARMONIE - From Garden to Plate
-    Awards vitamins for every eat/drink action.
+    Awards vitamins for every eat action.
 
-    Checked against vanilla's own scripts (media/scripts/generated/items/
-    food.txt and normal.txt): solid food items (getBaseHunger/
-    getHungerChange, everything ISEatFoodAction handles) and
-    FluidContainer-based drinks (Milk carton, etc -- their hunger value
-    lives on the FLUID definition, e.g. fluids.txt's CowMilk
-    HungerChange = -50, not on the item itself) are two entirely separate
-    vanilla systems driven by two different timed actions:
-    ISEatFoodAction (media/lua/shared/TimedActions/ISEatFoodAction.lua)
-    for solid food, ISDrinkFluidAction (.../ISDrinkFluidAction.lua) for
-    anything drunk from a FluidContainer. An earlier version of this file
-    assumed ISEatFoodAction alone covered both -- it doesn't, so Milk (the
-    only current DB entry that's a FluidContainer item rather than a Food
-    item) was silently never granting its vitamins. Both are wrapped here
-    now. Fluid contents have no rot curve in vanilla's fluid data (unlike
-    solid food, which does and is handled automatically -- see
-    HARMONIE_GTP.GetVitaminGains), so a drink's current hunger is always
-    just its fixed reference value.
+    Solid food ONLY -- ISEatFoodAction (media/lua/shared/TimedActions/
+    ISEatFoodAction.lua), driven by getBaseHunger()/getHungerChange() on
+    the item itself. FluidContainer-based drinks (Milk and anything else
+    consumed the same way, via ISDrinkFluidAction) are DELIBERATELY not
+    tracked at all, per an explicit decision after a long debugging arc
+    around them: a vanishingly small FluidContainer-based item list
+    (essentially just the milk family) kept surfacing new edge cases --
+    missing DB entries for item variants (Milk_Personalsized), and fluid
+    content draining progressively throughout the WHOLE timed action via
+    update() rather than at complete() the way solid food's character:
+    Eat() does, which broke the "read hunger before calling through"
+    pattern that works fine below. An ISDrinkFluidAction wrap and a
+    profile-based fraction calculation (HARMONIE_GTP.
+    GetVitaminGainsFromProfile) were built and made to work correctly,
+    but the category was judged not worth the ongoing maintenance/support
+    burden relative to how little of the food database it actually
+    covers -- removed entirely rather than left half-supported. See
+    HARMONIE_FoodVitaminDatabase.lua's Dairy section for where the DB
+    rows used to be.
 
     Also occasionally comments in-character on the taste of food rich in
     any one of the 6 vitamins when eaten -- see maybeSayTasteReaction
@@ -27,10 +29,10 @@
     a food's vitamin content) comments on the actual nutrition instead of
     just the taste, since they'd genuinely recognize it.
 
-    IMPORTANT (read BEFORE consuming, not after): both wraps below read
-    everything they need from the item BEFORE calling through to the
+    IMPORTANT (read BEFORE consuming, not after): the wrap below reads
+    everything it needs from the item BEFORE calling through to the
     original complete(), which is what actually invokes vanilla's native
-    character:Eat()/drink call. That native call can fully consume and
+    character:Eat() call. That native call can fully consume and
     remove a single-serving item (a whole raw carrot eaten in one action,
     percentage=1) -- after which the item's own getHungerChange()/ModData
     reads are no longer trustworthy (confirmed as the actual cause of a
@@ -45,10 +47,16 @@
     comments), and its ISCraftAction override reads ingredient data
     before RecipeManager.PerformMakeItem consumes them. Reading first here
     just applies that same lesson to eating.
+
+    Also calls HARMONIE_GTP.LogMissingProfile (see
+    HARMONIE_FoodVitaminDatabase.lua) whenever the eaten item resolves to
+    no vitamin profile at all -- a permanent, always-on, one-line
+    console.txt warning rather than another round of temporary debug
+    prints, so a real DB gap surfaces immediately instead of needing a
+    dedicated debugging session to notice.
 ]]--
 
 require "TimedActions/ISEatFoodAction"
-require "TimedActions/ISDrinkFluidAction"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 
@@ -161,24 +169,13 @@ function ISEatFoodAction:complete()
     local gains = HARMONIE_GTP.GetVitaminGains(item, fraction)
     local profile = HARMONIE_GTP.GetVitaminProfileForItem(item)
     local ok, fullType = pcall(function() return item:getFullType() end)
+    if not profile then
+        HARMONIE_GTP.LogMissingProfile(item, "eat")
+    end
 
     local result = original_ISEatFoodAction_complete(self)
 
     applyGains(self.character, gains)
     maybeSayTasteReaction(self.character, profile, ok and fullType or nil)
-    return result
-end
-
-local original_ISDrinkFluidAction_complete = ISDrinkFluidAction.complete
-
-function ISDrinkFluidAction:complete()
-    local item = self.item
-    local fraction = self.percentage or 1
-    -- Read BEFORE calling through -- see file header.
-    local gains = HARMONIE_GTP.GetVitaminGains(item, fraction)
-
-    local result = original_ISDrinkFluidAction_complete(self)
-
-    applyGains(self.character, gains)
     return result
 end

@@ -351,7 +351,7 @@ end
         HARMONIE_NutritionUI.lua) + whether the critical penalty is
         actively firing right now (afflicted AND no banked pause days
         left -- mirrors the exact gate HARMONIE_VitaminChecker.lua /
-        VitEffects.ApplyCritical use) + consecutive days afflicted.
+        VitEffects.MaintainStatEffect use) + consecutive days afflicted.
       - current-values line: the real Reserve and Pause Days right now
         (see the file header for why Pause Days is display-only).
     Doesn't touch the Reserve text ENTRY field -- that only ever changes
@@ -366,7 +366,7 @@ function HARMONIE_AdminPanel:prerender()
         if statusLabel then
             local band = HARMONIE_GTP.VitData.GetBand(self.target, vit)
             local penaltyActive = HARMONIE_GTP.VitData.IsAfflicted(self.target, vit)
-                    and HARMONIE_GTP.VitData.GetPauseDays(self.target, vit) <= 0
+                    and HARMONIE_GTP.VitData.GetPauseDays(self.target, vit) < 1
             local text = getText("IGUI_HARMONIE_AdminStatusLine",
                 getText(VitaminLabel[vit]),
                 getText(BandTextKey[band]),

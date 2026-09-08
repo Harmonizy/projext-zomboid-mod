@@ -5,11 +5,11 @@
     vitamin system of its own) grants every one of the 6 vitamins
     +PAUSE_DAYS_GRANTED banked pause day(s) via HARMONIE_VitaminData.lua's
     VitData.AddPauseDays -- and NOTHING else: Reserve itself is untouched,
-    only the pause-day bank grows. Since GetPauseDays > 0 already gates
+    only the pause-day bank grows. Since GetPauseDays >= 1 already gates
     both daily decay (VitData.ApplyDailyTick) and the critical-band penalty
     itself (HARMONIE_VitaminChecker.lua / HARMONIE_VitaminEffects.lua's
-    ApplyCritical), this is enough on its own to quiet an ongoing penalty
-    for about a day without pretending the deficiency was ever fixed --
+    Maintain* functions), this is enough on its own to quiet an ongoing
+    penalty for about a day without pretending the deficiency was ever fixed --
     symptom relief, not a cure, same as before, just implemented as a
     direct grant into the same pause-day bank real food already fills,
     instead of a separate suppression-timestamp system.

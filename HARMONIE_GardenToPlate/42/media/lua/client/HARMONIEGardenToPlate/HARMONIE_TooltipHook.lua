@@ -88,13 +88,40 @@ local function createVitaminTooltip()
     HARMONIE_VitaminTooltip.instance:instantiate()
 end
 
+--[[
+    True only for something worth even TRYING to look up a vitamin
+    profile for -- a real solid Food item. FluidContainer-based drinks
+    (Milk and anything consumed the same way) are deliberately NOT
+    tracked at all in this mod (see HARMONIE_EatHook.lua's header), so
+    they're excluded here too rather than checked for and always coming
+    up empty. ISToolTipInv:render() is overridden below for EVERY tooltip
+    shown anywhere in the game, not just food -- weapons, clothing, tools,
+    light sources (a lit torch/lamp previewed in
+    ISLightSourceRadialMenu.lua), dead-animal/bird-related items, all of
+    it. Without this check, buildVitaminLines would still try
+    item:getBaseHunger() on all of those (GetItemBaseHunger's own pcall
+    keeps that from actually crashing anything, but the underlying native
+    call still throws and gets logged as a console error on every single
+    non-food tooltip in the game -- confirmed as the actual cause of
+    reported errors in both HARMONIE_FoodVitaminDatabase.lua and vanilla's
+    own ISLightSourceRadialMenu.lua, since that radial menu previews light
+    source items -- torches, lamps -- through this exact same tooltip
+    class). Checking the item's real category FIRST means we never even
+    attempt the call for the overwhelming majority of tooltips, instead
+    of attempting-then-catching every time.
+]]--
+local function isPossiblyFood(item)
+    local ok, isFood = pcall(function() return instanceof(item, "Food") end)
+    return ok and isFood
+end
+
 local function buildVitaminLines(item)
-    if not item then return nil end
+    if not item or not isPossiblyFood(item) then return nil end
 
     -- A legitimately-crafted sealed jar carries its real vitamin content
     -- as ModData (see HARMONIE_RecipeVitamins.lua), so this resolves for
     -- it exactly like any other tracked food. A sealed jar carries NO
-    -- native HungerChange of its own though (see HARMONIE_Items.txt --
+    -- native HungerChange of its own though (see HARMONIE_GardenToPlate_Items.txt --
     -- deliberately, matching vanilla's own real sealed cans like
     -- Base.CannedCarrots2, so it can't be eaten around the can-opener
     -- requirement), so a debug-spawned one with no ModData at all won't
@@ -133,10 +160,6 @@ function ISToolTipInv:render()
 
     if not HARMONIE_VitaminTooltip.instance then return end
 
-    -- Not gated on instanceof(self.item, "Food") -- FluidContainer-based
-    -- drinks like Milk carry vitamins too (see HARMONIE_EatHook.lua) but
-    -- aren't a "Food" instance. buildVitaminLines already returns nil for
-    -- anything without a vitamin profile, so that's the real gate.
     local playerObj = getSpecificPlayer(0)
     if not self.item or not playerObj or not playerCanSeeVitamins(playerObj) then
         return
