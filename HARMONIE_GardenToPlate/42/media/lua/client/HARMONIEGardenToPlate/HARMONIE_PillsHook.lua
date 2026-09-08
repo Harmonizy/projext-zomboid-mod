@@ -1,30 +1,23 @@
 --[[
     HARMONIE - From Garden to Plate
-    Taking this mod's own crafted Multivitamin pill
-    (HARMONIEGardenToPlate.Multivitamin -- see HARMONIE_GardenToPlate_
-    Items.txt / HARMONIE_GardenToPlate_Recipes.txt) grants exactly
-    HARMONIE_GTP.DailyRequirement[vit] of Reserve for EVERY vitamin via
-    VitData.Add -- the same real gain formula eating actual food uses.
-    Taking one pill is therefore mechanically identical to eating a
-    perfectly balanced day's worth of every tracked vitamin at once
-    (+10 Reserve per vitamin at the default reserveGainDivisor, banking
-    1 pause day per vitamin too, exactly like real food).
+    Taking vanilla's Base.PillsVitamins (a real vanilla item -- FirstAid
+    category, Drainable, flavor-only in vanilla since the base game has no
+    vitamin system of its own) grants every one of the 6 vitamins
+    +PAUSE_DAYS_GRANTED banked pause day(s) via HARMONIE_VitaminData.lua's
+    VitData.AddPauseDays -- and NOTHING else: Reserve itself is untouched,
+    only the pause-day bank grows. Since GetPauseDays >= 1 already gates
+    both daily decay (VitData.ApplyDailyTick) and the critical-band penalty
+    itself (HARMONIE_VitaminChecker.lua / HARMONIE_VitaminEffects.lua's
+    Maintain* functions), this is enough on its own to quiet an ongoing
+    penalty for about a day without pretending the deficiency was ever fixed --
+    symptom relief, not a cure, same as before, just implemented as a
+    direct grant into the same pause-day bank real food already fills,
+    instead of a separate suppression-timestamp system.
 
-    This REPLACES the mod's earlier design, which hooked vanilla's own
-    Base.PillsVitamins to grant +1 pause day per vitamin with NO Reserve
-    gain -- symptom relief without ever fixing the underlying deficiency.
-    Moved onto this mod's own crafted item instead, per explicit request
-    ("move the effect here INSTEAD") -- vanilla Vitamin Pills go back to
-    being flavor-only now (their original, un-modded behavior), and only
-    this mod's own pill, made by combining one iconic real source of
-    each vitamin (Carrots/Egg/Orange/Salmon/Peanuts/Kale -- see the
-    recipe), actually delivers a full day's nutrition in one dose.
-
-    Every pill/tablet item (painkillers, antibiotics, beta blockers,
-    vanilla Vitamin Pills, this one, etc) goes through the same vanilla
-    ISTakePillAction, so the wrap below checks the item's own full type
-    before doing anything -- it's a no-op for every other pill in the
-    game, vanilla Vitamin Pills included.
+    Every pill/tablet item (painkillers, antibiotics, beta blockers, this
+    one, etc) goes through the same vanilla ISTakePillAction, so the wrap
+    below checks the item's own full type before doing anything -- it's a
+    no-op for every other pill in the game.
 
     Says one of two different in-character lines depending on whether any
     vitamin was ACTUALLY afflicted at the moment the pill was taken:
@@ -36,7 +29,8 @@ require "TimedActions/ISTakePillAction"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 
-local MULTIVITAMIN_TYPE = "HARMONIEGardenToPlate.Multivitamin"
+local PAUSE_DAYS_GRANTED = 1
+local VITAMIN_PILLS_TYPE = "Base.PillsVitamins"
 
 -- Said when at least one vitamin was actually afflicted at the moment of
 -- taking the pill -- genuine relief.
@@ -70,12 +64,12 @@ function ISTakePillAction:complete()
     local result = original_ISTakePillAction_complete(self)
 
     local ok, fullType = pcall(function() return item and item:getFullType() end)
-    if ok and fullType == MULTIVITAMIN_TYPE and character then
-        -- Checked BEFORE granting Reserve, since that's what decides
-        -- whether this was genuine relief or just a precaution.
+    if ok and fullType == VITAMIN_PILLS_TYPE and character then
+        -- Checked BEFORE granting the pause days, since that's what
+        -- decides whether this was genuine relief or just a precaution.
         local wasAfflicted = anyVitaminAfflicted(character)
         for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-            HARMONIE_GTP.VitData.Add(character, vit, HARMONIE_GTP.DailyRequirement[vit])
+            HARMONIE_GTP.VitData.AddPauseDays(character, vit, PAUSE_DAYS_GRANTED)
         end
         local keys = wasAfflicted and PillsTakenLineKeys or PillsTakenPrecautionLineKeys
         character:Say(getText(keys[ZombRand(#keys) + 1]))

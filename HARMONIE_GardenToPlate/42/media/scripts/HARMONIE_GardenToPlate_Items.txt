@@ -1677,34 +1677,4 @@ module HARMONIEGardenToPlate
         Tooltip = Tooltip_HARMONIE_HomeCannedVegFruitOpen,
     }
 
-    -- Single-dose "take one" pill (UseDelta = 1.0 -- drains to 0 and is
-    -- removed after exactly one use, unlike vanilla's own 5-dose Vitamin
-    -- Pills bottle) -- crafted via MakeMultivitamin in
-    -- HARMONIE_GardenToPlate_Recipes.txt from one iconic real source of
-    -- each of the six tracked vitamins. Icon/StaticModel/WorldStaticModel
-    -- deliberately match vanilla's OWN Base.PillsVitamins exactly
-    -- (confirmed from generated/items/drainable.txt: vanilla's own
-    -- Vitamin Pills reuse the Caffeine Pills sprite/model, since there's
-    -- no dedicated vitamin-bottle asset in the base game) -- so this
-    -- looks identical to the real Vitamin Pills item. ItemType=base:
-    -- drainable + Tags=base:consumable together are what make an item
-    -- eligible for the "Take Pills" context option at all (confirmed via
-    -- ISInventoryPaneContextMenu.lua's isAllPills check), so both are
-    -- required, not just copied for looks.
-    item Multivitamin
-    {
-        DisplayCategory = FirstAid,
-        ItemType = base:drainable,
-        DisplayName = Multivitamin Complex,
-        Weight = 0.1,
-        Icon = PillsCaffeine,
-        Medical = true,
-        Tooltip = Tooltip_HARMONIE_Multivitamin,
-        UseDelta = 1.0,
-        UseWhileEquipped = false,
-        StaticModel = CaffeinePills,
-        WorldStaticModel = CaffeinePills,
-        Tags = base:consumable,
-    }
-
 }
