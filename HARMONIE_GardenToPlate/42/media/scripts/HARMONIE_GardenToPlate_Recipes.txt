@@ -118,7 +118,23 @@ module HARMONIEGardenToPlate
         }
     }
 
-    craftRecipe MakePillsVitamins
+    --[[
+        One of each of the six tracked vitamins' own iconic real source
+        (per HARMONIE_FoodVitaminDatabase.lua's own numbers): Carrots
+        (A), Egg (B), Orange (C), Salmon (D), Peanuts (E), Kale (K) --
+        ground together with a mortar and pestle (same tool/timedAction
+        as this recipe always used) and sealed in an empty jar. The
+        crafted Multivitamin pill's own eating effect (HARMONIE_
+        PillsHook.lua) is separately, exactly calibrated to grant a full
+        day's Reserve of every vitamin in one dose -- see that file's own
+        comment for why the recipe's ingredients don't need to
+        mathematically sum to that themselves (the engine doesn't carry
+        nutrient math from inputs to outputs; this basket is the
+        thematic "one source per vitamin" story, the output's own
+        hardcoded amounts are what make the "exactly one day" promise
+        literally true).
+    ]]--
+    craftRecipe MakeMultivitamin
     {
         timedAction = MixingMortarPestle,
         time = 200,
@@ -129,14 +145,16 @@ module HARMONIEGardenToPlate
             item 1 tags[base:mortarpestle] mode:keep,
             item 1 [Base.EmptyJar] flags[ItemCount],
             item 1 [Base.Carrots] flags[ItemCount],
-            item 1 [Base.Orange] flags[ItemCount],
             item 1 [Base.Egg] flags[ItemCount],
+            item 1 [Base.Orange] flags[ItemCount],
+            item 1 [Base.Salmon] flags[ItemCount],
             item 1 [Base.Peanuts] flags[ItemCount],
+            item 1 [Base.Kale] flags[ItemCount],
             item 1 [Base.Salt] flags[ItemCount],
         }
         outputs
         {
-            item 1 Base.PillsVitamins,
+            item 1 HARMONIEGardenToPlate.Multivitamin,
         }
     }
 }

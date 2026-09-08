@@ -7,15 +7,21 @@
       pauseDays    - banked days of decay AND critical-penalty immunity.
                      Gained at reservePerPauseDay Reserve per day (10
                      Reserve = 1 pause day at the default -- see
-                     HARMONIE_VitaminConfig.lua) from eating, or +1 per
-                     vitamin from taking Base.PillsVitamins (see
-                     VitData.AddPauseDays below / HARMONIE_PillsHook.lua)
-                     without any Reserve gain. While banked, both the daily
-                     decay (ApplyDailyTick) and the critical-band penalty
-                     itself (HARMONIE_VitaminChecker.lua's Maintain*
-                     functions) are held off; one day is consumed per
-                     in-game day regardless of which of the two purposes
-                     it ends up serving
+                     HARMONIE_VitaminConfig.lua) from eating -- or from
+                     taking this mod's own crafted Multivitamin pill (see
+                     HARMONIE_PillsHook.lua), which grants a full day's
+                     worth of REAL Reserve via VitData.Add for every
+                     vitamin at once (banking roughly 1 pause day per
+                     vitamin as a side effect of that Reserve gain, same
+                     as eating an equally well-rounded meal would). While
+                     banked, both the daily decay (ApplyDailyTick) and the
+                     critical-band penalty itself (HARMONIE_VitaminChecker
+                     .lua's Maintain* functions) are held off; one day is
+                     consumed per in-game day regardless of which of the
+                     two purposes it ends up serving. VitData.AddPauseDays
+                     below is a separate, still-available utility for
+                     granting bare pause days with NO Reserve gain at all,
+                     but nothing in this mod currently calls it
       afflicted    - true once Reserve has dropped below the critical
                      threshold; stays true (and keeps taking the critical
                      penalty) until Reserve climbs back up to the
@@ -25,6 +31,19 @@
                      regardless of how long it's persisted -- see
                      HARMONIE_VitaminEffects.lua); kept in case something
                      wants to show/use it later
+      traitGranted - true only while THIS mod is the one currently holding
+                     the real vanilla CharacterTrait mapped to this vitamin
+                     (Short Sighted/Disorganized/Thin-Skinned/Short of
+                     Breath/All Thumbs/Slow Healer -- see VitEffects.
+                     MaintainRealTrait). Critical: a character may have
+                     genuinely CHOSEN that same trait at character
+                     creation (all six are real, normally player-
+                     selectable negative traits) -- this flag is what
+                     stops the mod from ever stripping a real, player-
+                     chosen trait back off once Reserve recovers. Only
+                     ever removed if this mod was the one that added it
+                     (see MaintainRealTrait's own comment for the exact
+                     logic).
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -70,6 +89,7 @@ local function ensureStore(character)
                 pauseDays = 0,
                 afflicted = false,
                 afflictedDays = 0,
+                traitGranted = false,
             }
         end
         sync(character)
@@ -101,6 +121,19 @@ function VitData.GetAfflictedDays(character, vit)
     return store[vit].afflictedDays
 end
 
+-- See the field comment at the top of this file -- true only while this
+-- mod is the one currently holding the real trait for this vitamin.
+function VitData.IsTraitGrantedByUs(character, vit)
+    local store = ensureStore(character)
+    return store[vit].traitGranted
+end
+
+function VitData.SetTraitGrantedByUs(character, vit, granted)
+    local store = ensureStore(character)
+    store[vit].traitGranted = granted
+    sync(character)
+end
+
 --[[
     Character-level (not per-vitamin) gate for the symptom-reminder line
     -- see HARMONIE_VitaminEffects.lua's MaybeSaySymptomReminder and
@@ -118,20 +151,6 @@ end
 
 function VitData.SetLastSymptomBlock(character, block)
     character:getModData().HARMONIE_LastSymptomBlock = block
-    sync(character)
-end
-
--- Same 6-hour-block gate as above, but tracked separately (own ModData
--- key) since it's not about dialogue -- see VitEffects.
--- MaybeTriggerNosebleed in HARMONIE_VitaminEffects.lua, which uses this
--- to attempt at most one spontaneous nosebleed roll per 6-hour block for
--- Vitamin K specifically.
-function VitData.GetLastNosebleedBlock(character)
-    return character:getModData().HARMONIE_LastNosebleedBlock or -1
-end
-
-function VitData.SetLastNosebleedBlock(character, block)
-    character:getModData().HARMONIE_LastNosebleedBlock = block
     sync(character)
 end
 
@@ -246,16 +265,19 @@ end
 
 --[[
     Grants `days` extra banked pause days to ONE vitamin, directly --
-    unlike VitData.Add(), this never touches Reserve at all (see
-    HARMONIE_PillsHook.lua: Base.PillsVitamins is meant to buy relief from
-    the SYMPTOM, not fix the underlying deficiency, so it must not raise
-    Reserve). Because pauseDays already gates both decay (ApplyDailyTick)
-    and the critical-band penalty itself (see VitData.GetPauseDays's use in
-    HARMONIE_VitaminChecker.lua / HARMONIE_VitaminEffects.lua), a vitamin
-    that's currently Critical stays exactly as low as it was, but its
-    penalty goes quiet until the banked day(s) are consumed by the next
-    daily tick(s) -- symptom relief, not a cure, matching how real vitamin
-    supplements don't retroactively fix a diet.
+    unlike VitData.Add(), this never touches Reserve at all. Not
+    currently called anywhere in this mod (HARMONIE_PillsHook.lua's
+    Multivitamin pill uses VitData.Add instead, since it's meant to
+    deliver a real day's nutrition, not just quiet the symptom) -- kept
+    as a general-purpose utility for any future feature that wants
+    "symptom relief without fixing the underlying deficiency" (matching
+    how, say, a real-world quick-fix supplement might ease a symptom
+    without actually correcting a poor diet). Because pauseDays already
+    gates both decay (ApplyDailyTick) and the critical-band penalty
+    itself (see VitData.GetPauseDays's use in HARMONIE_VitaminChecker.lua
+    / HARMONIE_VitaminEffects.lua), a vitamin that's currently Critical
+    would stay exactly as low as it was, but its penalty would go quiet
+    until the banked day(s) are consumed by the next daily tick(s).
 ]]--
 function VitData.AddPauseDays(character, vit, days)
     if not isFiniteNumber(days) then return end

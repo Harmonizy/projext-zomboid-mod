@@ -48,12 +48,12 @@ option HARMONIE_GardenToPlate.EnableCriticalEffects
     translation = HARMONIE_EnableCriticalEffects,
 }
 
-option HARMONIE_GardenToPlate.EffectMultiplier
+option HARMONIE_GardenToPlate.SymptomReminderHours
 {
-    type = double,
-    default = 1.0,
-    min = 0.0,
-    max = 5.0,
+    type = integer,
+    default = 6,
+    min = 1,
+    max = 24,
     page = HARMONIE_GardenToPlate,
-    translation = HARMONIE_EffectMultiplier,
+    translation = HARMONIE_SymptomReminderHours,
 }

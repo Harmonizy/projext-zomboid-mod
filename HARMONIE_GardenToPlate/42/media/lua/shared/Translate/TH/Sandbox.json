@@ -10,6 +10,6 @@
     "Sandbox_HARMONIE_SufficientThreshold_tooltip": "ค่า Reserve ที่ต้องกลับขึ้นไปให้ถึงก่อนที่ผลกระทบจากภาวะวิกฤติจะหายไป (ไม่ใช่แค่พ้นระดับวิกฤติ)",
     "Sandbox_HARMONIE_EnableCriticalEffects": "เปิดใช้งานผลกระทบเมื่อวิกฤติ",
     "Sandbox_HARMONIE_EnableCriticalEffects_tooltip": "ปิดไว้เพื่อติดตามค่า Reserve ของวิตามินโดยไม่มีผลเสียใดๆ ต่อเกมเพลย์",
-    "Sandbox_HARMONIE_EffectMultiplier": "ตัวคูณความรุนแรงของผลกระทบ",
-    "Sandbox_HARMONIE_EffectMultiplier_tooltip": "ปรับความรุนแรงของผลเสียจากการขาดวิตามินแต่ละชนิด 1.0 = ค่าเริ่มต้น, 0 = ปิดผลกระทบ"
+    "Sandbox_HARMONIE_SymptomReminderHours": "ความถี่การพูดถึงอาการ (ชั่วโมง)",
+    "Sandbox_HARMONIE_SymptomReminderHours_tooltip": "ทุกกี่ชั่วโมงในเกมที่ตัวละครซึ่งมีวิตามินอยู่ในระดับวิกฤติจะสุ่มพูดถึงอาการของตัวเองอีกครั้ง ยิ่งค่าน้อยยิ่งพูดบ่อยขึ้น (เช่น 6 = พูดได้สูงสุด 4 ครั้งต่อวัน)"
 }

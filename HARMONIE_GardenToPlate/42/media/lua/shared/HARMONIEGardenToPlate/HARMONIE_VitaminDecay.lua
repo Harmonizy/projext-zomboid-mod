@@ -8,9 +8,9 @@
     Does NOT apply the critical-band penalty itself anymore -- that's
     HARMONIE_VitaminChecker.lua's job now, running every 10 real seconds
     instead of waiting for this once-a-day event, so a vitamin that just
-    turned Critical (or whose Base.PillsVitamins suppression window just
-    ran out) doesn't have to wait up to a full in-game day to actually
-    start hurting again.
+    turned Critical (or whose banked pause days just ran out) doesn't
+    have to wait up to a full in-game day to actually start hurting
+    again.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"

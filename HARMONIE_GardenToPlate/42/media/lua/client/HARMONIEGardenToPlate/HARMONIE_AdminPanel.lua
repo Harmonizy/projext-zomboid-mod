@@ -276,9 +276,9 @@ function HARMONIE_AdminPanel:createChildren()
         function() return HARMONIE_GTP.Config.sufficientThreshold end,
         function(v) sb.SufficientThreshold = v; HARMONIE_GTP.RefreshFromSandbox() end)
 
-    y = self:addNumberRow(y, "IGUI_HARMONIE_AdminEffectMultiplier", "Sandbox_HARMONIE_EffectMultiplier_tooltip", 0, 5, false,
-        function() return HARMONIE_GTP.Config.effectMultiplier end,
-        function(v) sb.EffectMultiplier = v; HARMONIE_GTP.RefreshFromSandbox() end)
+    y = self:addNumberRow(y, "IGUI_HARMONIE_AdminSymptomReminderHours", "Sandbox_HARMONIE_SymptomReminderHours_tooltip", 1, 24, true,
+        function() return HARMONIE_GTP.Config.symptomReminderHours end,
+        function(v) sb.SymptomReminderHours = v; HARMONIE_GTP.RefreshFromSandbox() end)
 
     self.effectsTickBox = ISTickBox:new(PAD, y, LABEL_W + ENTRY_W, ROW_H, "", self, HARMONIE_AdminPanel.onEffectsToggle)
     self.effectsTickBox:initialise()
@@ -351,7 +351,7 @@ end
         HARMONIE_NutritionUI.lua) + whether the critical penalty is
         actively firing right now (afflicted AND no banked pause days
         left -- mirrors the exact gate HARMONIE_VitaminChecker.lua /
-        VitEffects.MaintainStatEffect use) + consecutive days afflicted.
+        VitEffects.MaintainRealTrait use) + consecutive days afflicted.
       - current-values line: the real Reserve and Pause Days right now
         (see the file header for why Pause Days is display-only).
     Doesn't touch the Reserve text ENTRY field -- that only ever changes
