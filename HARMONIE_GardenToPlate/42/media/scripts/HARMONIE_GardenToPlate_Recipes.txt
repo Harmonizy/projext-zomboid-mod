@@ -118,6 +118,23 @@ module HARMONIEGardenToPlate
         }
     }
 
+    --[[
+        Six slots, one per tracked vitamin (A/B/C/D/E/K) -- each slot
+        accepts several real alternative ingredients instead of one fixed
+        item, so the recipe stays craftable from whatever's actually on
+        hand instead of demanding one specific rare thing. Every choice
+        offered is something a self-sufficient survivor can realistically
+        keep producing without depending on scavenged/store-bought goods
+        (per explicit request): farmed crops (A/C/K), animal husbandry +
+        hunting/trapping (B), fishing + dairy (D), and farmed legumes (E).
+        Crafting still requires exactly one item from EVERY slot, so all
+        six vitamins are always represented regardless of which
+        alternative was used for each one -- the output item's own
+        effect (HARMONIE_PillsHook.lua) is what actually delivers the
+        vitamin payload, so which specific ingredient filled each slot
+        doesn't change what the crafted pill does; the choice is purely
+        about using what you've actually got.
+    ]]--
     craftRecipe MakePillsVitamins
     {
         timedAction = MixingMortarPestle,
@@ -128,10 +145,12 @@ module HARMONIEGardenToPlate
         {
             item 1 tags[base:mortarpestle] mode:keep,
             item 1 [Base.EmptyJar] flags[ItemCount],
-            item 1 [Base.Carrots] flags[ItemCount],
-            item 1 [Base.Orange] flags[ItemCount],
-            item 1 [Base.Egg] flags[ItemCount],
-            item 1 [Base.Peanuts] flags[ItemCount],
+            item 1 [Base.Carrots;Base.SweetPotato;Base.Pumpkin] flags[ItemCount],
+            item 1 [Base.Egg;Base.Beef;Base.Chicken;Base.Pork;Base.Venison;Base.Rabbitmeat] flags[ItemCount],
+            item 1 [Base.BellPepper;Base.Tomato;Base.Orange;Base.Lemon] flags[ItemCount],
+            item 1 [Base.Salmon;Base.FishFillet;Base.Milk] flags[ItemCount],
+            item 1 [Base.Peanuts;Base.Soybeans] flags[ItemCount],
+            item 1 [Base.Broccoli;Base.Cabbage;Base.Spinach] flags[ItemCount],
             item 1 [Base.Salt] flags[ItemCount],
         }
         outputs

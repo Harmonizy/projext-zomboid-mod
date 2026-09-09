@@ -1,0 +1,73 @@
+{
+	"Lifestyle.PasteGrub": "เพสต์สารอาหาร",
+	"Lifestyle.PasteBurger": "เบอร์เกอร์เพสต์",
+	"Lifestyle.UmbrellaHat": "หมวกร่ม",
+	"Lifestyle.ToothpasteCurio": "เครื่องนูริเพสต์-โอ-แมติก",
+	"Lifestyle.ScrapBushSeed": "เมล็ดพุ่มเศษเหล็ก",
+	"Lifestyle.DemonCore": "แกนปีศาจ",
+
+	"Lifestyle.Harvester": "เครื่องเก็บเกี่ยวพืชผล",
+	"Lifestyle.PowerAxe": "ขวานไฟฟ้า",
+	"Lifestyle.NeuralHat": "หมวกนักคิด",
+
+	"Lifestyle.upgradeElectric": "ชิ้นส่วนอัปเกรดไฟฟ้า",
+	"Lifestyle.upgradeElectricRare": "ชิ้นส่วนอัปเกรดไฟฟ้าหายาก",
+	"Lifestyle.upgradeMechanical": "ชิ้นส่วนอัปเกรดกลไก",
+	"Lifestyle.upgradeMechanicalRare": "ชิ้นส่วนอัปเกรดกลไกหายาก",
+	"Lifestyle.upgradePlumbing": "ชิ้นส่วนอัปเกรดประปา",
+	"Lifestyle.upgradePlumbingRare": "ชิ้นส่วนอัปเกรดประปาหายาก",
+	"Lifestyle.upgradeWood": "ชิ้นส่วนอัปเกรดไม้",
+	"Lifestyle.upgradeWoodRare": "ชิ้นส่วนอัปเกรดไม้หายาก",
+
+	"Lifestyle.BloodSausage": "ไส้กรอกเลือด",
+
+	"Lifestyle.oldPaintBrush": "พู่กันศิลปิน",
+	"Lifestyle.paintPaletteEmpty": "จานสีศิลปะ (เปล่า)",
+	"Lifestyle.paintPalette": "จานสีศิลปะ",
+	"Lifestyle.paintTubs": "อุปกรณ์ศิลปะ",
+	"Lifestyle.Mov_ArtEasel": "ขาตั้งวาดภาพ",
+	"Lifestyle.Mov_SculptingStation": "โต๊ะปั้นดิน",
+
+	"Lifestyle.LSMagazineEdition1": "โฮมสไตล์: ฉบับพิเศษดิสโก้",
+	"Lifestyle.LSMagazineEdition2": "โฮมสไตล์: ความลับแห่งห้องศิลป์",
+
+	"Lifestyle.Harmonica": "ฮาร์โมนิกา",
+	"Lifestyle.SheetMusicBook": "สมุดโน้ตเพลง",
+	"Lifestyle.BucketBleachFull": "ถังน้ำผสมน้ำยาฟอกขาว",
+
+	"Lifestyle.LS_Discoball": "ลูกบอลดิสโก้",
+	"Lifestyle.LS_DJBooth01": "แท่นบูธดีเจ",
+
+	"Lifestyle.BookCleaning1": "งานทำความสะอาด I: \"จัดห้องให้สะอาด\"",
+	"Lifestyle.BookCleaning2": "งานทำความสะอาด II: \"น้ำยาฟอกขาวไม่ใช่น้ำดื่ม\"",
+	"Lifestyle.BookCleaning3": "งานทำความสะอาด III: \"เทคนิคถูพื้นขั้นสูง\"",
+	"Lifestyle.BookCleaning4": "งานทำความสะอาด IV: \"ชีวิตภารโรง: คู่มือฉบับสมบูรณ์\"",
+	"Lifestyle.BookCleaning5": "งานทำความสะอาด V: \"อภิปรัชญาแห่งคราบฝังแน่น\"",
+
+	"Lifestyle.BookMusic1": "ดนตรี I: \"โน้ตพื้นฐานกับเพื่อนบ้านขี้บ่น\"",
+	"Lifestyle.BookMusic2": "ดนตรี II: \"ฝึกฟังจับทำนองเพลง\"",
+	"Lifestyle.BookMusic3": "ดนตรี III: \"ทฤษฎีดนตรีภาคปฏิบัติ\"",
+	"Lifestyle.BookMusic4": "ดนตรี IV: \"การแต่งเพลง เสียงประสาน และการอิมโพรไวส์\"",
+	"Lifestyle.BookMusic5": "ดนตรี V: \"พื้นฐานอะคูสติกของการแสดงดนตรี\"",
+
+	"Lifestyle.BookDancing1": "การเต้น I: \"เท้าซ้ายสองข้างก็เริ่มได้\"",
+	"Lifestyle.BookDancing2": "การเต้น II: \"จังหวะ ท่าเต้น และมารยาททางสังคม\"",
+	"Lifestyle.BookDancing3": "การเต้น III: \"เทคนิคลีลาศและการเต้นสมัยใหม่\"",
+	"Lifestyle.BookDancing4": "การเต้น IV: \"การออกแบบท่าเต้น ฟอร์ม และการเคลื่อนไหวบนเวที\"",
+	"Lifestyle.BookDancing5": "การเต้น V: \"จลนศาสตร์และชีวกลศาสตร์ของการเคลื่อนไหวเชิงศิลป์\"",
+
+	"Lifestyle.ToyChicken": "ไก่ยาง",
+	"Lifestyle.MetalToyRocket": "จรวดของเล่น",
+	"Lifestyle.WoodenToyPlane": "เครื่องบินของเล่น",
+	"Lifestyle.WoodToyPlane": "เครื่องบินของเล่น",
+	"Lifestyle.WoodToyTrain": "รถไฟของเล่น",
+	"Lifestyle.WoodToyTank": "รถถังของเล่น",
+	"Lifestyle.WoodToyHorse": "ม้าของเล่น",
+	"Lifestyle.WoodToyHelicopter": "เฮลิคอปเตอร์ของเล่น",
+	"Lifestyle.WoodToyRabbit": "กระต่ายในหมวก",
+	"Lifestyle.WoodToyShip": "โมเดลเรือไม้",
+	"Lifestyle.ToyNewtonCradle": "ลูกตุ้มนิวตัน",
+	"Lifestyle.ClothToyPenguin": "เพนกวินตุ๊กตา",
+	"Lifestyle.MetalToyRobot": "หุ่นยนต์ของเล่น",
+	"Lifestyle.MetalToyDog": "หมาเศษเหล็ก"
+}

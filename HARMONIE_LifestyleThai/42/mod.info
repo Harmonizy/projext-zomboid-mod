@@ -1,0 +1,9 @@
+name=HARMONIE - Lifestyle Thai Translate
+id=HARMONIE_LifestyleThai
+description=Unofficial Thai translation addon for the "Lifestyle: Hobbies" mod (Workshop ID 3403870858, by Angry). Adds Thai text for dialogue, actions, context menu, tooltips, UI, sandbox options, item names, moodles, and recipes -- pure translation only, does not change any of the original mod's gameplay logic. Requires "Lifestyle: Hobbies" to be enabled.
+require=LifestyleHobbies
+poster=poster.png
+icon=icon.png
+author=HARMONIE
+modversion=1.0
+versionMin=42.0.0
