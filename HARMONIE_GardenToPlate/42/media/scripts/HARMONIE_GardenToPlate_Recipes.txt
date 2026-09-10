@@ -118,7 +118,7 @@ module HARMONIEGardenToPlate
         }
     }
 
-    --[[
+    /*
         Six slots, one per tracked vitamin (A/B/C/D/E/K) -- each slot
         accepts several real alternative ingredients instead of one fixed
         item, so the recipe stays craftable from whatever's actually on
@@ -134,7 +134,7 @@ module HARMONIEGardenToPlate
         vitamin payload, so which specific ingredient filled each slot
         doesn't change what the crafted pill does; the choice is purely
         about using what you've actually got.
-    ]]--
+    */
     craftRecipe MakePillsVitamins
     {
         timedAction = MixingMortarPestle,
