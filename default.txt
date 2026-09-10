@@ -2,11 +2,7 @@ VERSION = 1,
 
 mods
 {
-    mod = HARMONIE_LifestyleThai,
     mod = LifestyleHobbies,
-    mod = HARMONIE_HomeMedic,
-    mod = ExtensiveHealthReworkEvolved,
-    mod = HARMONIE_GardenToPlate,
 }
 
 maps
