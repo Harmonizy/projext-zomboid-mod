@@ -1,0 +1,125 @@
+module HARMONIEMechanicalAdvanced
+{
+    model WindowArmorPlateWorld
+    {
+        mesh = WorldItems/HARMONIE_MA_WindowArmorPlate,
+        texture = WorldItems/HARMONIE_MA_Common_items,
+        scale = 0.014,
+    }
+    item WindowArmorPlate
+    {
+        DisplayCategory = Tuning,
+        Weight = 9.0,
+        Type = Normal,
+        DisplayName = Window Armor Plate,
+        Icon = HARMONIE_MA_WindowArmorPlate,
+        ConditionMax = 100,
+        ChanceToSpawnDamaged = 25,
+        MechanicsItem = TRUE,
+        Tooltip = Tooltip_item_tuning,
+        WorldStaticModel = HARMONIEMechanicalAdvanced.WindowArmorPlateWorld,
+    }
+
+    model CargoRackFrameWorld
+    {
+        mesh = WorldItems/HARMONIE_MA_CargoRackFrame,
+        texture = WorldItems/HARMONIE_MA_Common_items,
+        scale = 0.014,
+    }
+    item CargoRackFrame
+    {
+        DisplayCategory = Tuning,
+        Weight = 12.0,
+        Type = Normal,
+        DisplayName = Cargo Rack Frame,
+        Icon = HARMONIE_MA_CargoRackFrame,
+        ConditionMax = 100,
+        ChanceToSpawnDamaged = 25,
+        MechanicsItem = TRUE,
+        Tooltip = Tooltip_item_tuning,
+        WorldStaticModel = HARMONIEMechanicalAdvanced.CargoRackFrameWorld,
+    }
+
+    model PerformanceExhaustKitWorld
+    {
+        mesh = WorldItems/HARMONIE_MA_PerformanceExhaustKit,
+        texture = WorldItems/HARMONIE_MA_Common_items,
+        scale = 0.014,
+    }
+    item PerformanceExhaustKit
+    {
+        DisplayCategory = Tuning,
+        Weight = 7.0,
+        Type = Normal,
+        DisplayName = Performance Exhaust Kit,
+        Icon = HARMONIE_MA_PerformanceExhaustKit,
+        ConditionMax = 100,
+        ChanceToSpawnDamaged = 15,
+        MechanicsItem = TRUE,
+        Tooltip = Tooltip_item_tuning,
+        WorldStaticModel = HARMONIEMechanicalAdvanced.PerformanceExhaustKitWorld,
+    }
+
+    craftRecipe MakeWindowArmorPlate
+    {
+        timedAction = Welding_Surface,
+        time = 400,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        SkillRequired = MetalWelding:2,
+        xpAward = MetalWelding:6,
+        inputs
+        {
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+            item 2 [Base.SmallSheetMetal] flags[ItemCount],
+            item 1 [Base.MetalPipe] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEMechanicalAdvanced.WindowArmorPlate,
+        }
+    }
+
+    craftRecipe MakeCargoRackFrame
+    {
+        timedAction = Welding_Surface,
+        time = 500,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        SkillRequired = MetalWelding:3,
+        xpAward = MetalWelding:8,
+        inputs
+        {
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+            item 2 [Base.MetalBar] flags[ItemCount],
+            item 2 [Base.MetalPipe] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEMechanicalAdvanced.CargoRackFrame,
+        }
+    }
+
+    craftRecipe MakePerformanceExhaustKit
+    {
+        timedAction = Welding_Surface,
+        time = 600,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        SkillRequired = Mechanics:4;MetalWelding:3,
+        xpAward = Mechanics:10;MetalWelding:6,
+        inputs
+        {
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+            item 2 [Base.MetalPipe] flags[ItemCount],
+            item 4 [Base.Screws] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEMechanicalAdvanced.PerformanceExhaustKit,
+        }
+    }
+}
