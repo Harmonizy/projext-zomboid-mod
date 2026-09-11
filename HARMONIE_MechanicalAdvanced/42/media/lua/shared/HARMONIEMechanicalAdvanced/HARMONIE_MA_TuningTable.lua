@@ -1,10 +1,12 @@
 --[[
-    Registers all 5 HARMONIE Mechanical Advanced upgrades on the vanilla
-    Pick-up Truck -- pure vanilla Build 42 vehicle-part APIs, no
-    third-party mod dependency (previously depended on tsarslib's
-    Tuning2 system; dropped after tsarslib's Workshop upload was
-    removed by Steam for a Content Guidelines violation -- confirmed on
-    the Workshop page directly).
+    Registers all 5 HARMONIE Mechanical Advanced upgrades on every
+    vanilla vehicle confirmed (by reading each one's real Build 42
+    vehicle script directly) to have every area our 4 templates need:
+    Engine, TruckBed, GasTank, SeatFrontLeft, SeatFrontRight. Pure
+    vanilla vehicle-part APIs, no third-party mod dependency (previously
+    depended on tsarslib's Tuning2 system; dropped after tsarslib's
+    Workshop upload was removed by Steam for a Content Guidelines
+    violation -- confirmed on the Workshop page directly).
 
     getScriptManager():getVehicle(name):Load(name, "{template! = X,}")
     is the same native engine call tsarslib itself used internally to
@@ -23,7 +25,10 @@
 local function injectTemplate(vehicleName, templateName)
     local vehicleScript = getScriptManager():getVehicle(vehicleName)
     if not vehicleScript then
-        error("HARMONIE Mechanical Advanced: vehicle script not found: " .. tostring(vehicleName))
+        -- A warning, not error() -- one bad/renamed vehicle id must not
+        -- stop every other registerUpgrades() call after it from running.
+        print("HARMONIE Mechanical Advanced WARNING: vehicle script not found, skipped: " .. tostring(vehicleName))
+        return
     end
     vehicleScript:Load(vehicleName, "{template! = " .. templateName .. ",}")
 end
@@ -35,12 +40,31 @@ local function registerUpgrades(vehicleName)
     injectTemplate(vehicleName, "HARMONIE_MA_PerformanceExhaust")
 end
 
--- Both confirmed (by reading their vanilla vehicle scripts directly) to
--- have every area our 4 templates need: Engine, TruckBed, GasTank,
--- SeatFrontLeft, SeatFrontRight. Other vanilla vehicles (SUV, OffRoad,
--- CarNormal, PickupVan, StepVan) don't declare these areas explicitly
--- in their own script and haven't been verified yet -- add them here
--- only after confirming the same way, since ATA2Tuning_AddNewCars-style
--- area validation isn't something we do ourselves.
-registerUpgrades("PickUpTruck")
-registerUpgrades("Van")
+-- Every vehicle id below was confirmed by reading its actual
+-- media/scripts/generated/vehicles/*_template.txt (or the vehicle's own
+-- .txt when it doesn't use a separate template file) directly -- all of
+-- them declare Engine, TruckBed, GasTank, SeatFrontLeft and
+-- SeatFrontRight. Profession/livery re-skins (mail vans, police
+-- variants, ambulances, dozens of named business vans, etc.) each
+-- declare their own separate vehicle id too and are NOT covered here --
+-- add them individually the same way if wanted, rather than assumed.
+local CONFIRMED_VEHICLES = {
+    "PickUpTruck",
+    "Van",
+    "SUV",
+    "OffRoad",
+    "CarNormal",
+    "PickUpVan",
+    "StepVan",
+    "ModernCar",
+    "ModernCar02",
+    "CarLuxury",
+    "SmallCar",
+    "SmallCar02",
+    "CarStationWagon",
+    "SportsCar",
+}
+
+for _, vehicleName in ipairs(CONFIRMED_VEHICLES) do
+    registerUpgrades(vehicleName)
+end
