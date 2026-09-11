@@ -41,10 +41,6 @@ module Base
                 skills = Mechanics:2,
                 test = Vehicles.UninstallTest.Default,
             }
-            lua
-            {
-                create = Vehicles.Create.Default,
-            }
         }
     }
 }

@@ -41,10 +41,6 @@ module Base
                 skills = MetalWelding:3,
                 test = Vehicles.UninstallTest.Default,
             }
-            lua
-            {
-                create = Vehicles.Create.Default,
-            }
         }
     }
 }

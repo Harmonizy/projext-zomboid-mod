@@ -6,8 +6,8 @@
     with vanilla vehicle-part APIs (see HARMONIE_MA_TuningTable.lua).
 ]]--
 
-require "TimedActions/ISInstallVehiclePart"
-require "TimedActions/ISUninstallVehiclePart"
+require "Vehicles/TimedActions/ISInstallVehiclePart"
+require "Vehicles/TimedActions/ISUninstallVehiclePart"
 require "HARMONIEMechanicalAdvanced/HARMONIE_MA_PartState"
 
 local OUR_PART_IDS = {

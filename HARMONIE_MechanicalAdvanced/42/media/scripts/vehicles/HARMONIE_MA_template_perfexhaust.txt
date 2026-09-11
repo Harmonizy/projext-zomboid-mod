@@ -43,7 +43,6 @@ module Base
             }
             lua
             {
-                create = Vehicles.Create.Default,
                 update = HARMONIE_MA.Update.PerfExhaust,
             }
         }

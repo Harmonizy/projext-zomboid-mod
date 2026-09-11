@@ -41,10 +41,6 @@ module Base
                 skills = MetalWelding:2,
                 test = Vehicles.UninstallTest.Default,
             }
-            lua
-            {
-                create = Vehicles.Create.Default,
-            }
         }
         part HARMONIE_MA_WindowArmorDoorLeft
         {
@@ -85,10 +81,6 @@ module Base
                 skills = MetalWelding:2,
                 test = Vehicles.UninstallTest.Default,
             }
-            lua
-            {
-                create = Vehicles.Create.Default,
-            }
         }
         part HARMONIE_MA_WindowArmorDoorRight
         {
@@ -128,10 +120,6 @@ module Base
                 time = 100,
                 skills = MetalWelding:2,
                 test = Vehicles.UninstallTest.Default,
-            }
-            lua
-            {
-                create = Vehicles.Create.Default,
             }
         }
     }
