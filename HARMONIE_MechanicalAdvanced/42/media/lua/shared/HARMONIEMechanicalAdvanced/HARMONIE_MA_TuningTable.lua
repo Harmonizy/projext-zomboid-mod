@@ -28,11 +28,19 @@ local function injectTemplate(vehicleName, templateName)
     vehicleScript:Load(vehicleName, "{template! = " .. templateName .. ",}")
 end
 
-local function registerPickUpTruck()
-    injectTemplate("PickUpTruck", "HARMONIE_MA_Bullbar")
-    injectTemplate("PickUpTruck", "HARMONIE_MA_WindowArmor")
-    injectTemplate("PickUpTruck", "HARMONIE_MA_CargoRack")
-    injectTemplate("PickUpTruck", "HARMONIE_MA_PerformanceExhaust")
+local function registerUpgrades(vehicleName)
+    injectTemplate(vehicleName, "HARMONIE_MA_Bullbar")
+    injectTemplate(vehicleName, "HARMONIE_MA_WindowArmor")
+    injectTemplate(vehicleName, "HARMONIE_MA_CargoRack")
+    injectTemplate(vehicleName, "HARMONIE_MA_PerformanceExhaust")
 end
 
-registerPickUpTruck()
+-- Both confirmed (by reading their vanilla vehicle scripts directly) to
+-- have every area our 4 templates need: Engine, TruckBed, GasTank,
+-- SeatFrontLeft, SeatFrontRight. Other vanilla vehicles (SUV, OffRoad,
+-- CarNormal, PickupVan, StepVan) don't declare these areas explicitly
+-- in their own script and haven't been verified yet -- add them here
+-- only after confirming the same way, since ATA2Tuning_AddNewCars-style
+-- area validation isn't something we do ourselves.
+registerUpgrades("PickUpTruck")
+registerUpgrades("Van")
