@@ -1,9 +1,9 @@
 --[[
     Wraps the vanilla, shared TimedAction used by EVERY vehicle part
-    install/uninstall in the game -- not tsarslib-specific -- the same
-    wrap-and-call-through idiom HARMONIE_GardenToPlate's
-    HARMONIE_PillsHook.lua uses on ISTakePillAction. This means we never
-    redefine any ATATuning2.* function ourselves (see the SVU3Core study).
+    install/uninstall in the game -- the same wrap-and-call-through
+    idiom HARMONIE_GardenToPlate's HARMONIE_PillsHook.lua uses on
+    ISTakePillAction. All 5 parts below are our own, defined entirely
+    with vanilla vehicle-part APIs (see HARMONIE_MA_TuningTable.lua).
 ]]--
 
 require "TimedActions/ISInstallVehiclePart"
@@ -11,10 +11,10 @@ require "TimedActions/ISUninstallVehiclePart"
 require "HARMONIEMechanicalAdvanced/HARMONIE_MA_PartState"
 
 local OUR_PART_IDS = {
-    ATA2Bullbar = true,
-    ATA2ProtectionWindshield = true,
-    ATA2ProtectionWindowFrontLeft = true,
-    ATA2ProtectionWindowFrontRight = true,
+    HARMONIE_MA_Bullbar = true,
+    HARMONIE_MA_WindowArmorWindshield = true,
+    HARMONIE_MA_WindowArmorDoorLeft = true,
+    HARMONIE_MA_WindowArmorDoorRight = true,
     HARMONIE_MA_CargoRack = true,
     HARMONIE_MA_PerfExhaust = true,
 }

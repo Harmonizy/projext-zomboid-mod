@@ -4,26 +4,46 @@ module Base
     {
         part HARMONIE_MA_CargoRack
         {
+            mechanicArea = TruckBed,
             area = TruckBed,
-            category = nodisplay,
-            specificItem = false,
-            itemType = Base.LightBulb,
-            setAllModelsVisible = false,
-            mechanicRequireKey = false,
+            itemType = HARMONIEMechanicalAdvanced.CargoRackFrame,
+            specificItem = true,
+            durability = 3,
             table install
             {
-                test = ATATuning2.InstallTest.Tuning,
-                complete = ATATuning2.InstallComplete.Tuning,
+                items
+                {
+                    1
+                    {
+                        tags = base:wrench,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 250,
+                skills = MetalWelding:3,
+                test = Vehicles.InstallTest.Default,
             }
             table uninstall
             {
-                test = ATATuning2.UninstallTest.Tuning,
-                complete = ATATuning2.UninstallComplete.Tuning,
+                items
+                {
+                    1
+                    {
+                        tags = base:wrench,
+                        count = 1,
+                        keep = true,
+                        equip = primary,
+                    }
+                }
+                time = 150,
+                skills = MetalWelding:3,
+                test = Vehicles.UninstallTest.Default,
             }
             lua
             {
-                create = ATATuning2.Create.Tuning,
-                init = ATATuning2.Init.Tuning,
+                create = Vehicles.Create.Default,
             }
         }
     }

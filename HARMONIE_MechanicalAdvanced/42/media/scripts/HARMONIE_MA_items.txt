@@ -1,5 +1,25 @@
 module HARMONIEMechanicalAdvanced
 {
+    model BullbarWorld
+    {
+        mesh = WorldItems/HARMONIE_MA_Bullbar,
+        texture = Vehicles/HARMONIE_MA_Bullbar,
+        scale = 0.014,
+    }
+    item Bullbar
+    {
+        DisplayCategory = Tuning,
+        Weight = 10.0,
+        Type = Normal,
+        DisplayName = Bullbar,
+        Icon = HARMONIE_MA_Bullbar,
+        ConditionMax = 100,
+        ChanceToSpawnDamaged = 25,
+        MechanicsItem = TRUE,
+        Tooltip = Tooltip_item_tuning,
+        WorldStaticModel = HARMONIEMechanicalAdvanced.BullbarWorld,
+    }
+
     model WindowArmorPlateWorld
     {
         mesh = WorldItems/HARMONIE_MA_WindowArmorPlate,
@@ -58,6 +78,27 @@ module HARMONIEMechanicalAdvanced
         MechanicsItem = TRUE,
         Tooltip = Tooltip_item_tuning,
         WorldStaticModel = HARMONIEMechanicalAdvanced.PerformanceExhaustKitWorld,
+    }
+
+    craftRecipe MakeBullbar
+    {
+        timedAction = Welding_Surface,
+        time = 450,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        SkillRequired = MetalWelding:2,
+        xpAward = MetalWelding:6,
+        inputs
+        {
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+            item 3 [Base.MetalPipe] flags[ItemCount],
+            item 1 [Base.MetalBar] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEMechanicalAdvanced.Bullbar,
+        }
     }
 
     craftRecipe MakeWindowArmorPlate

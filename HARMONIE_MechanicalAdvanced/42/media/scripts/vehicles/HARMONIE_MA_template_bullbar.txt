@@ -1,14 +1,14 @@
 module Base
 {
-    template vehicle HARMONIE_MA_PerformanceExhaust
+    template vehicle HARMONIE_MA_Bullbar
     {
-        part HARMONIE_MA_PerfExhaust
+        part HARMONIE_MA_Bullbar
         {
             mechanicArea = Engine,
             area = Engine,
-            itemType = HARMONIEMechanicalAdvanced.PerformanceExhaustKit,
+            itemType = HARMONIEMechanicalAdvanced.Bullbar,
             specificItem = true,
-            durability = 3,
+            durability = 4,
             table install
             {
                 items
@@ -21,8 +21,8 @@ module Base
                         equip = primary,
                     }
                 }
-                time = 300,
-                skills = Mechanics:4,
+                time = 200,
+                skills = Mechanics:2,
                 test = Vehicles.InstallTest.Default,
             }
             table uninstall
@@ -37,14 +37,13 @@ module Base
                         equip = primary,
                     }
                 }
-                time = 200,
-                skills = Mechanics:4,
+                time = 150,
+                skills = Mechanics:2,
                 test = Vehicles.UninstallTest.Default,
             }
             lua
             {
                 create = Vehicles.Create.Default,
-                update = HARMONIE_MA.Update.PerfExhaust,
             }
         }
     }
