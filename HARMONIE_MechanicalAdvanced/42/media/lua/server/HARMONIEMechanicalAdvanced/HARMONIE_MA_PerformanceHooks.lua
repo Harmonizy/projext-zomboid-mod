@@ -69,32 +69,47 @@ function HARMONIE_MA.Update.PerfExhaust(vehicle, part, elapsedMinutes)
 end
 
 --[[
-    vehicle:getFrontEndHealth() -- while the method genuinely exists in
-    the game's own compiled BaseVehicle class (confirmed by extracting
-    projectzomboid.jar and grepping the class file) -- is NOT actually
-    exposed to Lua. Confirmed the hard way: console.txt showed
-    "Tried to call nil" inside the pcall wrapping it, every single time,
-    on every vehicle. This is an important lesson, not just for this
-    part: a method existing in the decompiled bytecode does NOT mean
-    PZ's Lua binding exposes it -- only an actual successful call from
-    real Lua code proves that. Extensive searching turned up no
-    Lua-exposed collision event or getter anywhere in vanilla, so
-    there is no verified way to detect a specific real-world collision
-    from Lua at all in this game version.
+    A real, verified protective effect this time -- found by reading
+    vanilla's own Vehicles.Update.Tire (confirmed running code, not
+    decompiled bytecode): tires lose air (getContainerContentAmount)
+    and condition while driving over 10 km/h with the engine running,
+    and can blow out entirely if either gets too low. Every API used
+    below (vehicle:isEngineRunning, vehicle:getCurrentSpeedKmHour,
+    part:getContainerContentAmount/setContainerContentAmount,
+    part:getInventoryItem():getMaxCapacity(), part:getCondition/
+    setCondition) is copied directly from that real function, not
+    guessed -- this is the lesson from the getFrontEndHealth() failure
+    applied properly: only rely on APIs seen actually working in real
+    Lua source.
 
-    Given that, Bullbar no longer tries to react to specific collisions
-    -- it wears down slowly from ordinary use instead (only while the
-    engine is actually running, using vehicle:isEngineRunning(), a real
-    method confirmed already in vanilla's own
-    Vehicles.UninstallTest.Battery), using nothing but APIs already
-    proven working elsewhere in this exact mod: part:getCondition(),
-    part:setCondition(), vehicle:transmitPartCondition(). Small random
-    chance per update call, so it isn't a fixed metronome -- this
-    guarantees it will NOT sit at 100% forever, which was the original
-    complaint, without claiming a collision-specific effect that
-    couldn't be verified.
+    We never touch Vehicles.Update.Tire itself (per the
+    don't-redefine-vanilla-functions rule) -- instead, while installed,
+    the bullbar periodically tops up air and condition on BOTH front
+    tires (TireFrontLeft/TireFrontRight -- real, universal part ids
+    confirmed across every vehicle template read this whole session),
+    partially offsetting vanilla's own wear instead of preventing it
+    outright. Costs the bullbar's own condition each time it helps, so
+    it still wears down from use, just for an actual reason now.
 ]]--
-local BULLBAR_WEAR_CHANCE = 0.01
+local BULLBAR_TIRE_SAVE_CHANCE = 0.05
+local FRONT_TIRE_IDS = { "TireFrontLeft", "TireFrontRight" }
+
+local function topUpTire(vehicle, tirePart)
+    local tireItem = tirePart:getInventoryItem()
+    if not tireItem then return false end
+
+    local helped = false
+    if tirePart:getContainerContentAmount() > 0 and tirePart:getContainerContentAmount() < tireItem:getMaxCapacity() then
+        tirePart:setContainerContentAmount(tirePart:getContainerContentAmount() + 1, false, true)
+        helped = true
+    end
+    if tirePart:getCondition() > 0 and tirePart:getCondition() < 100 then
+        tirePart:setCondition(tirePart:getCondition() + 1)
+        vehicle:transmitPartCondition(tirePart)
+        helped = true
+    end
+    return helped
+end
 
 function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
     if not part:getInventoryItem() then return end
@@ -103,13 +118,23 @@ function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
 
     if part:getCondition() <= 0 then return end
     if not vehicle:isEngineRunning() then return end
+    if vehicle:getCurrentSpeedKmHour() <= 10 then return end
 
-    if ZombRandFloat(0, 1) < BULLBAR_WEAR_CHANCE then
-        part:setCondition(math.max(0, part:getCondition() - 1))
-        vehicle:transmitPartCondition(part)
-        print(string.format(
-            "HARMONIE Mechanical Advanced: Bullbar wore down from use (now %d%%).",
-            part:getCondition()
-        ))
+    if ZombRandFloat(0, 1) < BULLBAR_TIRE_SAVE_CHANCE then
+        local helpedAny = false
+        for _, tireId in ipairs(FRONT_TIRE_IDS) do
+            local tirePart = vehicle:getPartById(tireId)
+            if tirePart and topUpTire(vehicle, tirePart) then
+                helpedAny = true
+            end
+        end
+        if helpedAny then
+            part:setCondition(math.max(0, part:getCondition() - 1))
+            vehicle:transmitPartCondition(part)
+            print(string.format(
+                "HARMONIE Mechanical Advanced: Bullbar deflected debris from the front tires (bullbar now %d%%).",
+                part:getCondition()
+            ))
+        end
     end
 end
