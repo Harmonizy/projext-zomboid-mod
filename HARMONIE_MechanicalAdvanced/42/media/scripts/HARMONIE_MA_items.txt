@@ -10,7 +10,7 @@ module HARMONIEMechanicalAdvanced
     {
         DisplayCategory = Tuning,
         Weight = 10.0,
-        Type = Normal,
+        ItemType = base:normal,
         DisplayName = Bullbar,
         Icon = HARMONIE_MA_Bullbar,
         ConditionMax = 100,
@@ -30,7 +30,7 @@ module HARMONIEMechanicalAdvanced
     {
         DisplayCategory = Tuning,
         Weight = 9.0,
-        Type = Normal,
+        ItemType = base:normal,
         DisplayName = Window Armor Plate,
         Icon = HARMONIE_MA_WindowArmorPlate,
         ConditionMax = 100,
@@ -50,7 +50,7 @@ module HARMONIEMechanicalAdvanced
     {
         DisplayCategory = Tuning,
         Weight = 12.0,
-        Type = Normal,
+        ItemType = base:normal,
         DisplayName = Cargo Rack Frame,
         Icon = HARMONIE_MA_CargoRackFrame,
         ConditionMax = 100,
@@ -70,7 +70,7 @@ module HARMONIEMechanicalAdvanced
     {
         DisplayCategory = Tuning,
         Weight = 7.0,
-        Type = Normal,
+        ItemType = base:normal,
         DisplayName = Performance Exhaust Kit,
         Icon = HARMONIE_MA_PerformanceExhaustKit,
         ConditionMax = 100,
