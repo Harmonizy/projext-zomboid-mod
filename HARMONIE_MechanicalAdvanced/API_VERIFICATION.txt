@@ -1,0 +1,263 @@
+HARMONIE - Mechanical Advanced -- API Verification Report
+===========================================================
+Every distinct API call used across this mod's Lua files, checked
+against REAL vanilla source that actually runs (not decompiled .class
+bytecode -- see the getFrontEndHealth() incident below for why that
+distinction matters). Each entry cites the exact vanilla file:line
+where the same call is used successfully, or notes when confirmation
+instead comes from our own live in-game testing.
+
+Confidence tiers used below:
+  [VANILLA]  Found used in real, shipped vanilla Lua source (strongest).
+  [LIVE]     Not found in vanilla Lua source, but confirmed working by
+             actually playing the mod in-game and observing the effect.
+  [MOD-SRC]  Copied from a third-party mod's real source code (not
+             vanilla), and separately confirmed by our own live testing.
+  [FAILED]   Looked real (existed in the .class file) but is NOT
+             actually callable from Lua -- kept here as a permanent
+             warning, not something we use anymore.
+
+
+VEHICLE OBJECT METHODS
+-----------------------
+vehicle:getPartById(id)
+  [VANILLA] Vehicles.lua:27  local trunkDoor = vehicle:getPartById("TrunkDoor")
+  Used in: HARMONIE_MA_PerformanceHooks.lua (Bullbar, front tires)
+
+vehicle:transmitPartCondition(part)
+  [VANILLA] Vehicles.lua:716, 735
+  Used in: HARMONIE_MA_PerformanceHooks.lua
+
+vehicle:transmitPartModData(part)
+  [VANILLA] Vehicles.lua:502, 556, 623
+  Used in: HARMONIE_MA_PartState.lua
+
+vehicle:getScript()
+  [VANILLA] Vehicles.lua:264  vehicle:setEngineFeature(100, 30, vehicle:getScript():getEngineForce())
+  Used in: HARMONIE_MA_PerformanceHooks.lua (PerfExhaust)
+
+vehicle:setEngineFeature(quality, loudness, force)
+  [VANILLA] Vehicles.lua:264, 287
+  Used in: HARMONIE_MA_PerformanceHooks.lua (PerfExhaust)
+
+vehicle:getEngineQuality()
+  [VANILLA] Vehicles.lua:271, 466
+  Used in: HARMONIE_MA_PerformanceHooks.lua (PerfExhaust)
+
+vehicle:isEngineRunning()
+  [VANILLA] Vehicles.lua:456, 513, 537, 725 (the exact Update.Tire gate
+            we copied our own gate from)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (Bullbar)
+
+vehicle:getCurrentSpeedKmHour()
+  [VANILLA] Vehicles.lua:470, 472, 725 (Update.Tire: "> 10" is the exact
+            threshold vanilla itself uses before tires start wearing --
+            we copied the same number on purpose)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (Bullbar)
+
+vehicle:getId()
+  [VANILLA] Vehicles.lua:554, 621 (Vehicles.elaspedMinutesForEngine[vehicle:getId()])
+  Not currently called directly by us, confirmed for completeness only.
+
+getScriptManager():getVehicle(vehicleName)
+  [MOD-SRC] tsarslib/common/media/lua/shared/ATA2TuningTable.lua:74-91
+            (getScriptManager():getVehicle(vehicleName):Load(...))
+            NOT found anywhere in vanilla Lua (grepped the whole tree,
+            zero matches) -- this is tsarslib's own pattern, a
+            third-party mod, not vanilla. HOWEVER: confirmed working by
+            actually playing this mod -- Bullbar's update hook fired
+            successfully in-game (proving the part existed on the
+            vehicle, which only happens if the template injection
+            worked), across the full vehicle registration run with zero
+            "vehicle script not found" warnings logged. This is our one
+            genuinely unverified-against-vanilla API, kept because it's
+            the only known way to add parts to an existing vehicle
+            script without copying/overwriting it, and it demonstrably
+            works.
+  Used in: HARMONIE_MA_TuningTable.lua (registerUpgrades, all 152 vehicles)
+
+vehicleScript:Load(name, "{template! = X,}")
+  [MOD-SRC] Same citation as above (tsarslib), same live-testing
+            confirmation.
+  Used in: HARMONIE_MA_TuningTable.lua
+
+
+PART OBJECT METHODS
+---------------------
+part:getId()
+  [VANILLA] Vehicles.lua:554, 621 and everywhere else in the file
+  Used in: HARMONIE_MA_InstallDialogueHook.lua, HARMONIE_MA_MechanicTooltipHook.lua,
+            HARMONIE_MA_PerformanceHooks.lua
+
+part:getInventoryItem()
+  [VANILLA] Vehicles.lua:29, 32, 54, 725
+  Used in: HARMONIE_MA_PerformanceHooks.lua
+
+part:getCondition() / part:setCondition(x)
+  [VANILLA] Vehicles.lua:492-493, 546, 715, 733-734 (Update.Protection's
+            own use of a hardcoded 100, not getConditionMax() -- see the
+            FAILED entry below)
+  Used in: HARMONIE_MA_PerformanceHooks.lua
+
+part:getModData()
+  [VANILLA] Vehicles.lua:462, 511, 532
+  Used in: HARMONIE_MA_PartState.lua, HARMONIE_MA_PerformanceHooks.lua
+
+part:getContainerContentAmount() / part:setContainerContentAmount(amount, bool, bool)
+  [VANILLA] Vehicles.lua:221-226, 256-258, 396 (the 3-argument form we
+            copied appears at line 396 exactly:
+            part:setContainerContentAmount(ZombRand(...), false, true))
+  Used in: HARMONIE_MA_PerformanceHooks.lua (Bullbar tire top-up)
+
+
+ITEM OBJECT METHODS
+---------------------
+item:getMaxCapacity()
+  [VANILLA] Vehicles.lua:766  (part:getInventoryItem():getMaxCapacity())
+  Used in: HARMONIE_MA_PerformanceHooks.lua (Bullbar tire top-up)
+
+
+CHARACTER OBJECT METHODS
+--------------------------
+character:getUsername()
+  [VANILLA] ClientCommands.lua:1234, ISBuildIsoEntity.lua:448, others
+  Used in: HARMONIE_MA_PartState.lua
+
+character:getDisplayName()
+  [VANILLA] ISHealthPanel.lua:388  (self.character:getDisplayName())
+  Used in: HARMONIE_MA_PartState.lua
+
+character:getPerkLevel(Perks.X) / character:getPerkLevel(Perks.FromString(name))
+  [VANILLA] Vehicles.lua:1076, 1408, 1444 -- line 1076 is the EXACT
+            pattern we copied: "if chr:getPerkLevel(Perks.FromString(name))
+            < tonumber(level) then return false end"
+  Used in: HARMONIE_MA_InstallDialogueHook.lua, HARMONIE_MA_InstallSkillGate.lua
+
+character:Say(getText(key))
+  [VANILLA] ISLureAnimal.lua, ISResearchRecipe.lua, ISWriteSomething.lua,
+            ISUnlockVehicleDoor.lua, ISEntityUI.lua (multiple real files)
+  Used in: HARMONIE_MA_InstallDialogueHook.lua
+
+
+VEHICLE SCRIPT OBJECT METHODS
+--------------------------------
+script:getEngineForce()
+  [VANILLA] Vehicles.lua:264, 285
+  Used in: HARMONIE_MA_PerformanceHooks.lua
+
+script:getEngineLoudness()
+  [VANILLA] Vehicles.lua:279
+  Used in: HARMONIE_MA_PerformanceHooks.lua
+
+
+GLOBAL FUNCTIONS / TABLES
+----------------------------
+getGameTime():getDay()
+  [VANILLA] WinterIsComing.lua:17, SFarmingSystem.lua:90
+  Used in: HARMONIE_MA_PartState.lua
+  (Replaced our original guess, getGameTime():getCalender():getDayOfMonth(),
+   which crashed every install with "Object tried to call nil")
+
+getText(key)
+  [VANILLA] Used everywhere, e.g. ISInstallVehiclePart.lua:34, 141
+  Used in: throughout
+
+isServer() / isClient()
+  [VANILLA] Vehicles.lua:554, 621 and everywhere else
+  Used in: HARMONIE_MA_InstallDialogueHook.lua, HARMONIE_MA_PartState.lua
+
+ZombRand(n) / ZombRandFloat(a, b)
+  [VANILLA] Vehicles.lua:226, 396, 493, 733 and everywhere else
+  Used in: HARMONIE_MA_InstallDialogueHook.lua, HARMONIE_MA_PerformanceHooks.lua
+
+Perks.FromString(name)
+  [VANILLA] Vehicles.lua:1076, 1477 (exact pattern copied)
+  Used in: HARMONIE_MA_InstallSkillGate.lua
+
+VehicleUtils.split(string, pattern)
+  [VANILLA] Vehicles.lua:1057 (definition), 1075/1296/1475/1493 (usage)
+  Used in: HARMONIE_MA_InstallSkillGate.lua
+
+string:split(separator)  (as in skillSpec:split(";"))
+  [VANILLA] Vehicles.lua:904, 1064, 1074 (perks:split(";"))
+  Used in: HARMONIE_MA_InstallSkillGate.lua
+
+Vehicles.InstallTest.Default(vehicle, part, chr)
+  [VANILLA] Vehicles.lua:896 (definition), used throughout vanilla
+            vehicle part templates (Radio, Seat*, etc.)
+  Used in: HARMONIE_MA_InstallSkillGate.lua (wrapped, not redefined)
+
+Vehicles.UninstallTest.Default(vehicle, part, chr)
+  [VANILLA] Vehicles.lua:934 (definition)
+  Used in: HARMONIE_MA_InstallSkillGate.lua (wrapped, not redefined)
+
+
+WRAPPED VANILLA CLASSES (require + function override pattern)
+-----------------------------------------------------------------
+ISInstallVehiclePart:complete()
+  [VANILLA] shared/Vehicles/TimedActions/ISInstallVehiclePart.lua:60
+  Wrapped in: HARMONIE_MA_InstallDialogueHook.lua
+
+ISUninstallVehiclePart:complete()
+  [VANILLA] shared/Vehicles/TimedActions/ISUninstallVehiclePart.lua:40
+  Wrapped in: HARMONIE_MA_InstallDialogueHook.lua
+
+ISVehicleMechanics:doMenuTooltip(part, option, lua, name)
+  [VANILLA] client/Vehicles/ISUI/ISVehicleMechanics.lua:628
+  Wrapped in: HARMONIE_MA_MechanicTooltipHook.lua
+
+
+CONFIRMED NOT TO WORK -- DO NOT REUSE
+========================================
+part:getConditionMax()
+  [FAILED] Exists on InventoryItem (Vehicles.lua:1182 etc, always on
+           "item", never on "part") but does NOT exist on a vehicle
+           PART object. Calling it on a part throws immediately.
+           Vanilla itself always hardcodes 100 for part condition max
+           (e.g. part:setCondition(100)). We made this mistake twice
+           (PerfExhaust and Bullbar) before catching it from
+           console.txt -- "attempted index: getConditionMax of
+           non-table: null" / "Object tried to call nil".
+  Fix used: replaced with the literal number 100 everywhere.
+
+vehicle:getFrontEndHealth()
+  [FAILED] This is the important one. The method genuinely exists in
+           the compiled zombie/vehicles/BaseVehicle.class (confirmed by
+           extracting projectzomboid.jar and grepping the class file
+           for method name strings) -- but is NOT exposed to Lua at
+           all. Calling it threw "Tried to call nil" every single time,
+           on every vehicle, even wrapped in pcall.
+           LESSON: a method's presence in decompiled bytecode is NOT
+           evidence it's callable from Lua. PZ's Lua binding is an
+           explicit exposure list, not automatic reflection over every
+           public Java method. Only an actual working call site in
+           real, shipped Lua source (or genuine live in-game testing,
+           as with getScriptManager():getVehicle() above) counts as
+           real evidence. Every [VANILLA] entry in this report was
+           found this way on purpose, specifically to avoid repeating
+           this mistake.
+  Fix used: abandoned trying to detect a specific collision from Lua
+           entirely -- there is no Lua-exposed collision event or
+           getter anywhere in vanilla (grepped every file, zero hits).
+           Redesigned Bullbar around vehicle:getCurrentSpeedKmHour() +
+           the real Update.Tire mechanic instead (see above).
+
+calendar:getDayOfMonth() -- i.e. getGameTime():getCalender():getDayOfMonth()
+  [FAILED] getCalender() itself is real and used throughout vanilla,
+           but getDayOfMonth() is not a real method on whatever it
+           returns. Crashed every single part install with "Object
+           tried to call nil in RecordInstaller".
+  Fix used: getGameTime():getDay() instead (see confirmed entry above).
+
+
+HOW THIS WAS BUILT
+====================
+For every API call in the 6 Lua files under 42/media/lua/, searched
+C:\Program Files (x86)\Steam\steamapps\common\ProjectZomboid\media\lua
+for the exact same method/field name actually being called in real,
+shipped vanilla source (not just present somewhere in a string) --
+using Grep on the .lua files directly, never on decompiled .class
+files, per the lesson above. Where vanilla had no equivalent at all
+(the two getScriptManager()/Load lines), fell back to the next-best
+evidence available: a real third-party mod's source (tsarslib, cached
+locally) plus this mod's own actual successful in-game test runs.
