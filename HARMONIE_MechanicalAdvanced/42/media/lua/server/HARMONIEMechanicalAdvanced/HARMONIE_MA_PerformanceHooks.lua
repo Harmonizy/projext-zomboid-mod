@@ -69,55 +69,47 @@ function HARMONIE_MA.Update.PerfExhaust(vehicle, part, elapsedMinutes)
 end
 
 --[[
-    Reacts to REAL front-end collisions, verified against the game's
-    own compiled BaseVehicle class (extracted projectzomboid.jar):
-    confirmed real methods include getFrontEndHealth/getRearEndHealth,
-    addDamageFrontHitAChr, addRandomDamageFromCrash -- collision damage
-    hits the vehicle-level frontEndHealth/rearEndHealth stat, NOT any
-    named part's own getCondition() (there is no Lua-exposed collision
-    event/hook at all -- grepped every vanilla Lua file for
-    frontEndHealth/collision-related names, zero hits, so this has to
-    be detected by polling).
+    vehicle:getFrontEndHealth() -- while the method genuinely exists in
+    the game's own compiled BaseVehicle class (confirmed by extracting
+    projectzomboid.jar and grepping the class file) -- is NOT actually
+    exposed to Lua. Confirmed the hard way: console.txt showed
+    "Tried to call nil" inside the pcall wrapping it, every single time,
+    on every vehicle. This is an important lesson, not just for this
+    part: a method existing in the decompiled bytecode does NOT mean
+    PZ's Lua binding exposes it -- only an actual successful call from
+    real Lua code proves that. Extensive searching turned up no
+    Lua-exposed collision event or getter anywhere in vanilla, so
+    there is no verified way to detect a specific real-world collision
+    from Lua at all in this game version.
 
-    Earlier version watched the "Engine" part's own condition instead,
-    on the wrong assumption that collisions damaged it directly -- that
-    was never actually connected to real impacts, which is why bullbar
-    condition stayed at 100% even after hitting zombies/objects.
-
-    No setter for frontEndHealth was found in the class either, so this
-    cannot actually PREVENT or heal collision damage -- only detect it
-    and visibly wear the bullbar's own condition down in response, so
-    the part is honestly a "takes real hits so you can see it happening"
-    accessory, not a damage-reduction one. wrapped in pcall since this
-    is the first time this mod calls getFrontEndHealth().
+    Given that, Bullbar no longer tries to react to specific collisions
+    -- it wears down slowly from ordinary use instead (only while the
+    engine is actually running, using vehicle:isEngineRunning(), a real
+    method confirmed already in vanilla's own
+    Vehicles.UninstallTest.Battery), using nothing but APIs already
+    proven working elsewhere in this exact mod: part:getCondition(),
+    part:setCondition(), vehicle:transmitPartCondition(). Small random
+    chance per update call, so it isn't a fixed metronome -- this
+    guarantees it will NOT sit at 100% forever, which was the original
+    complaint, without claiming a collision-specific effect that
+    couldn't be verified.
 ]]--
+local BULLBAR_WEAR_CHANCE = 0.01
+
 function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
     if not part:getInventoryItem() then return end
 
     logAliveOnce(part, "Bullbar")
 
     if part:getCondition() <= 0 then return end
+    if not vehicle:isEngineRunning() then return end
 
-    local ok, frontEndHealth = pcall(function() return vehicle:getFrontEndHealth() end)
-    if not ok or frontEndHealth == nil then
-        local data = part:getModData()
-        if not data.HARMONIE_frontEndHealthFailed then
-            data.HARMONIE_frontEndHealthFailed = true
-            print("HARMONIE Mechanical Advanced WARNING: vehicle:getFrontEndHealth() failed or returned nil -- Bullbar cannot detect collisions on this vehicle.")
-        end
-        return
-    end
-
-    local data = part:getModData()
-    local lastHealth = data.HARMONIE_lastFrontEndHealth
-    data.HARMONIE_lastFrontEndHealth = frontEndHealth
-
-    if lastHealth and frontEndHealth < lastHealth then
+    if ZombRandFloat(0, 1) < BULLBAR_WEAR_CHANCE then
         part:setCondition(math.max(0, part:getCondition() - 1))
         vehicle:transmitPartCondition(part)
         print(string.format(
-            "HARMONIE Mechanical Advanced: Bullbar took a real front-end hit (frontEndHealth %d -> %d, bullbar now %d%%).",
-            lastHealth, frontEndHealth, part:getCondition()
+            "HARMONIE Mechanical Advanced: Bullbar wore down from use (now %d%%).",
+            part:getCondition()
         ))
     end
 end

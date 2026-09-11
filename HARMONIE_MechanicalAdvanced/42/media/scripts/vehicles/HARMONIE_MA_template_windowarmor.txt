@@ -23,7 +23,7 @@ module Base
                 }
                 time = 150,
                 skills = MetalWelding:3,
-                test = Vehicles.InstallTest.Default,
+                test = HARMONIE_MA.InstallTest.MetalWelding3,
             }
             table uninstall
             {
@@ -39,7 +39,7 @@ module Base
                 }
                 time = 100,
                 skills = MetalWelding:3,
-                test = Vehicles.UninstallTest.Default,
+                test = HARMONIE_MA.UninstallTest.MetalWelding3,
             }
         }
         part HARMONIE_MA_WindowArmorDoorLeft
@@ -63,7 +63,7 @@ module Base
                 }
                 time = 150,
                 skills = MetalWelding:3,
-                test = Vehicles.InstallTest.Default,
+                test = HARMONIE_MA.InstallTest.MetalWelding3,
             }
             table uninstall
             {
@@ -79,7 +79,7 @@ module Base
                 }
                 time = 100,
                 skills = MetalWelding:3,
-                test = Vehicles.UninstallTest.Default,
+                test = HARMONIE_MA.UninstallTest.MetalWelding3,
             }
         }
         part HARMONIE_MA_WindowArmorDoorRight
@@ -103,7 +103,7 @@ module Base
                 }
                 time = 150,
                 skills = MetalWelding:3,
-                test = Vehicles.InstallTest.Default,
+                test = HARMONIE_MA.InstallTest.MetalWelding3,
             }
             table uninstall
             {
@@ -119,7 +119,7 @@ module Base
                 }
                 time = 100,
                 skills = MetalWelding:3,
-                test = Vehicles.UninstallTest.Default,
+                test = HARMONIE_MA.UninstallTest.MetalWelding3,
             }
         }
     }

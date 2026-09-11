@@ -23,7 +23,7 @@ module Base
                 }
                 time = 200,
                 skills = Mechanics:5,
-                test = Vehicles.InstallTest.Default,
+                test = HARMONIE_MA.InstallTest.Mechanics5,
             }
             table uninstall
             {
@@ -39,7 +39,7 @@ module Base
                 }
                 time = 150,
                 skills = Mechanics:5,
-                test = Vehicles.UninstallTest.Default,
+                test = HARMONIE_MA.UninstallTest.Mechanics5,
             }
             lua
             {
