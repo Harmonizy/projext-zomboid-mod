@@ -25,7 +25,10 @@ function HARMONIE_MA.Update.PerfExhaust(vehicle, part, elapsedMinutes)
     local script = vehicle:getScript()
     if not script then return end
 
-    local conditionRatio = part:getCondition() / part:getConditionMax()
+    -- Vehicle parts have no getConditionMax() (that's an InventoryItem
+    -- method) -- vanilla itself always uses a hardcoded 100 for part
+    -- condition (e.g. part:setCondition(100) in Vehicles.lua).
+    local conditionRatio = part:getCondition() / 100
     local baseForce = script:getEngineForce()
     local loudness = script:getEngineLoudness() or 100
     local quality = vehicle:getEngineQuality()
@@ -53,10 +56,14 @@ function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
 
     local enginePart = vehicle:getPartById("Engine")
     if not enginePart then return end
-    if enginePart:getCondition() >= enginePart:getConditionMax() then return end
+    -- Vehicle parts have no getConditionMax() (that's an InventoryItem
+    -- method) -- vanilla itself always uses a hardcoded 100 for part
+    -- condition (e.g. part:setCondition(100) in Vehicles.lua).
+    local PART_CONDITION_MAX = 100
+    if enginePart:getCondition() >= PART_CONDITION_MAX then return end
 
     if ZombRandFloat(0, 1) < BULLBAR_ABSORB_CHANCE then
-        enginePart:setCondition(math.min(enginePart:getConditionMax(), enginePart:getCondition() + 1))
+        enginePart:setCondition(math.min(PART_CONDITION_MAX, enginePart:getCondition() + 1))
         vehicle:transmitPartCondition(enginePart)
         part:setCondition(part:getCondition() - 1)
         vehicle:transmitPartCondition(part)
