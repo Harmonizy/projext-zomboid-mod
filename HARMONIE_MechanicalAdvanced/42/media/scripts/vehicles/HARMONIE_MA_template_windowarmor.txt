@@ -22,7 +22,7 @@ module Base
                     }
                 }
                 time = 150,
-                skills = MetalWelding:2,
+                skills = MetalWelding:3,
                 test = Vehicles.InstallTest.Default,
             }
             table uninstall
@@ -38,7 +38,7 @@ module Base
                     }
                 }
                 time = 100,
-                skills = MetalWelding:2,
+                skills = MetalWelding:3,
                 test = Vehicles.UninstallTest.Default,
             }
         }
@@ -62,7 +62,7 @@ module Base
                     }
                 }
                 time = 150,
-                skills = MetalWelding:2,
+                skills = MetalWelding:3,
                 test = Vehicles.InstallTest.Default,
             }
             table uninstall
@@ -78,7 +78,7 @@ module Base
                     }
                 }
                 time = 100,
-                skills = MetalWelding:2,
+                skills = MetalWelding:3,
                 test = Vehicles.UninstallTest.Default,
             }
         }
@@ -102,7 +102,7 @@ module Base
                     }
                 }
                 time = 150,
-                skills = MetalWelding:2,
+                skills = MetalWelding:3,
                 test = Vehicles.InstallTest.Default,
             }
             table uninstall
@@ -118,7 +118,7 @@ module Base
                     }
                 }
                 time = 100,
-                skills = MetalWelding:2,
+                skills = MetalWelding:3,
                 test = Vehicles.UninstallTest.Default,
             }
         }

@@ -88,7 +88,7 @@ module HARMONIEMechanicalAdvanced
         time = 450,
         Tags = AnySurfaceCraft,
         category = Metalworking,
-        SkillRequired = MetalWelding:2,
+        SkillRequired = MetalWelding:3,
         xpAward = MetalWelding:6,
         inputs
         {
@@ -109,7 +109,7 @@ module HARMONIEMechanicalAdvanced
         time = 400,
         Tags = AnySurfaceCraft,
         category = Metalworking,
-        SkillRequired = MetalWelding:2,
+        SkillRequired = MetalWelding:3,
         xpAward = MetalWelding:6,
         inputs
         {
@@ -151,7 +151,7 @@ module HARMONIEMechanicalAdvanced
         time = 600,
         Tags = AnySurfaceCraft,
         category = Metalworking,
-        SkillRequired = Mechanics:4;MetalWelding:3,
+        SkillRequired = Mechanics:5;MetalWelding:3,
         xpAward = Mechanics:10;MetalWelding:6,
         inputs
         {

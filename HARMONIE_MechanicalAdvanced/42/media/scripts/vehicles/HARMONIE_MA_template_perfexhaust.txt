@@ -22,7 +22,7 @@ module Base
                     }
                 }
                 time = 300,
-                skills = Mechanics:4,
+                skills = Mechanics:5;MetalWelding:3,
                 test = Vehicles.InstallTest.Default,
             }
             table uninstall
@@ -38,7 +38,7 @@ module Base
                     }
                 }
                 time = 200,
-                skills = Mechanics:4,
+                skills = Mechanics:5;MetalWelding:3,
                 test = Vehicles.UninstallTest.Default,
             }
             lua
