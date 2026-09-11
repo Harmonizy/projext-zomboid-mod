@@ -1,3 +1,21 @@
 {
-    "IGUI_CraftCategory_EHRMedicine": "ยา EHR"
+    "IGUI_CraftCategory_EHRMedicine": "ยา EHR",
+    "IGUI_Yes": "ใช่",
+    "IGUI_No": "ไม่",
+    "IGUI_perks_Amputations": "การตัดแขนขา",
+    "IGUI_perks_Side_R": "ด้านขวา",
+    "IGUI_perks_Side_L": "ด้านซ้าย",
+    "IGUI_perks_Right Side_Description": "ความรู้เรื่องการตัดแขนขาด้านขวาของร่างกาย",
+    "IGUI_perks_Left Side_Description": "ความรู้เรื่องการตัดแขนขาด้านซ้ายของร่างกาย",
+    "IGUI_perks_Prosthesis Familiarity_Description": "ความรู้เรื่องแขนขาเทียม",
+    "IGUI_perks_Prosthesis": "ความชำนาญแขนขาเทียม",
+    "IGUI_ItemCat_Prosthesis": "แขนขาเทียม",
+    "IGUI_ItemCat_Surgery": "ศัลยกรรม",
+    "IGUI_ItemCat_Amputation": "การตัดแขนขา",
+    "IGUI_HealthPanel_Cicatrization": "การเกิดแผลเป็น",
+    "IGUI_HealthPanel_Cicatrized": "เป็นแผลเป็นแล้ว",
+    "IGUI_HealthPanel_Cauterized": "จี้ห้ามเลือดแล้ว",
+    "IGUI_HealthPanel_WoundDirtyness": "ความสกปรกของแผล",
+    "IGUI_HealthPanel_ProstEquipped": "สวมแขนขาเทียมอยู่",
+    "IGUI_Confirmation_Amputate": " <CENTRE> คุณแน่ใจหรือไม่ว่าต้องการตัดแขนขาข้างนั้นทิ้ง?"
 }

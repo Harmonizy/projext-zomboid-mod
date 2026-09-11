@@ -1,8 +1,8 @@
 name=HARMONIE - Home Medic
 id=HARMONIE_HomeMedic
-description=Inspired by Extensive Health Rework Evolved (EHR): adds traditional/folk medicine recipes crafted from herbs, materials and vanilla insects to treat Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, plus crafting recipes for the Empty Blood Bag and IV Administration Kit. Also includes a Thai translation supplement for EHR's own UI/tooltips/item names.
+description=Inspired by Extensive Health Rework Evolved (EHR): adds traditional/folk medicine recipes crafted from herbs, materials and vanilla insects to treat Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, plus crafting recipes for the Empty Blood Bag and IV Administration Kit. Also includes Thai translation supplements for EHR's and The Only Cure's own UI/tooltips/item names/dialogue.
 poster=poster.png
 icon=icon.png
-require=ExtensiveHealthReworkEvolved
+require=ExtensiveHealthReworkEvolved,TheOnlyCure
 modversion=1.0
 versionMin=42.17.0

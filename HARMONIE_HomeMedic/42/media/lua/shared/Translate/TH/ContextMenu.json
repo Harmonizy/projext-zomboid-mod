@@ -1,0 +1,23 @@
+{
+    "ContextMenu_Amputate": "ตัดแขนขา",
+    "ContextMenu_Amputate_Bandage": "ตัดแขนขาและพันผ้าพันแผล",
+    "ContextMenu_Amputate_Stitch": "ตัดแขนขาและเย็บแผล",
+    "ContextMenu_Amputate_Stitch_Bandage": "ตัดแขนขา เย็บแผล และพันผ้าพันแผล",
+    "ContextMenu_Cauterize": "จี้ห้ามเลือด",
+    "ContextMenu_Limb_Hand_L": "มือซ้าย",
+    "ContextMenu_Limb_ForeArm_L": "แขนท่อนล่างซ้าย",
+    "ContextMenu_Limb_UpperArm_L": "แขนท่อนบนซ้าย",
+    "ContextMenu_Limb_Hand_R": "มือขวา",
+    "ContextMenu_Limb_ForeArm_R": "แขนท่อนล่างขวา",
+    "ContextMenu_Limb_UpperArm_R": "แขนท่อนบนขวา",
+    "ContextMenu_InstallProstRight": "ติดตั้งแขนเทียมข้างขวา",
+    "ContextMenu_InstallProstLeft": "ติดตั้งแขนเทียมข้างซ้าย",
+    "ContextMenu_PutTourniquetArmLeft": "รัดสายห้ามเลือดที่แขนซ้าย",
+    "ContextMenu_PutTourniquetLegL": "รัดสายห้ามเลือดที่ขาซ้าย",
+    "ContextMenu_PutTourniquetArmRight": "รัดสายห้ามเลือดที่แขนขวา",
+    "ContextMenu_PutTourniquetLegR": "รัดสายห้ามเลือดที่ขาขวา",
+    "ContextMenu_CleanWound": "ทำความสะอาดแผล",
+    "ContextMenu_Admin_TOC": "TOC",
+    "ContextMenu_Admin_ResetTOC": "รีเซ็ตการตัดแขนขา (Admin)",
+    "ContextMenu_Admin_ForceAmputation": "บังคับตัดแขนขา (Admin)"
+}

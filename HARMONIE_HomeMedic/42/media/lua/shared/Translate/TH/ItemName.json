@@ -109,9 +109,14 @@
     "ExtensiveHealth.AntipyreticTea": "Antipyretic Tea (ชาลดไข้)",
     "ExtensiveHealth.RelaxantTea": "Relaxant Tea (ชาผ่อนคลาย)",
     "ExtensiveHealth.MedicineStorageBox": "Medicine Storage Box (กล่องเก็บยา)",
-
     "HARMONIEHomeMedic.GingerBugTonic": "Fermented Ginger-Bug Tonic (ยาต้มขิงหมักดอง)",
     "HARMONIEHomeMedic.GraveAshGarlicPoultice": "Grave Ash & Garlic Poultice (ยาพอกขี้เถ้าและกระเทียม)",
     "HARMONIEHomeMedic.WarmingSpicedBitters": "Warming Spiced Bitters (ยาดองเผ็ดร้อนบำรุงกำลัง)",
-    "HARMONIEHomeMedic.WillowBarkAntitoxinBooster": "Willow Bark & Herb Antitoxin Booster (ยาสมุนไพรเสริมฤทธิ์แก้พิษบาดทะยัก)"
+    "HARMONIEHomeMedic.WillowBarkAntitoxinBooster": "Willow Bark & Herb Antitoxin Booster (ยาสมุนไพรเสริมฤทธิ์แก้พิษบาดทะยัก)",
+    "TOC.Surg_Arm_Tourniquet_L": "สายรัดห้ามเลือด",
+    "TOC.Surg_Arm_Tourniquet_R": "สายรัดห้ามเลือด",
+    "TOC.Prost_NormalArm_L": "แขนเทียม",
+    "TOC.Prost_NormalArm_R": "แขนเทียม",
+    "TOC.Prost_HookArm_L": "แขนเทียม - ตะขอ",
+    "TOC.Prost_HookArm_R": "แขนเทียม - ตะขอ"
 }

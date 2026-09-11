@@ -1823,9 +1823,17 @@
     "UI_EHR_MPMedication_Route_iv": "ทางหลอดเลือด",
     "UI_EHR_MPMedication_Route_emergency": "ฉุกเฉิน",
     "UI_EHR_MPMedication_Route_default": "อื่นๆ",
-
     "UI_EHR_Line_4A50134E": "กลืนยาต้มขิงหมักลงคอ ท้องที่ปั่นป่วนเริ่มสงบลงหน่อย",
     "UI_EHR_Line_9D74A6FD": "พอกยาลงตัว อาการคลื่นไส้กับอ่อนแรงเริ่มทุเลาลง",
     "UI_EHR_Line_ED48363C": "กระดกยาดองรสเผ็ดร้อนเข้าไป ความร้อนวาบพลุ่งไปทั่วตัว แต่ถ้าไม่มีกองไฟกับที่กำบังจริงๆ ก็คงเอาตัวไม่รอด",
-    "UI_EHR_Line_0D41BDD6": "กินยาสมุนไพรเสริมควบคู่กับยาแก้พิษบาดทะยัก หวังว่าจะช่วยให้ร่างกายสู้กับพิษบาดทะยักได้ดีขึ้นบ้าง"
+    "UI_EHR_Line_0D41BDD6": "กินยาสมุนไพรเสริมควบคู่กับยาแก้พิษบาดทะยัก หวังว่าจะช่วยให้ร่างกายสู้กับพิษบาดทะยักได้ดีขึ้นบ้าง",
+    "UI_trait_Amputee_Hand": "ถูกตัดมือซ้าย",
+    "UI_trait_Amputee_Hand_desc": "",
+    "UI_trait_Amputee_ForeArm": "ถูกตัดแขนท่อนล่างซ้าย",
+    "UI_trait_Amputee_ForeArm_desc": "",
+    "UI_trait_Amputee_UpperArm": "ถูกตัดแขนท่อนบนซ้าย",
+    "UI_trait_Amputee_UpperArm_desc": "",
+    "UI_trait_Insensitive": "ไร้ความรู้สึก",
+    "UI_trait_Insensitive_desc": "",
+    "UI_Say_CantEquip": "ใส่แบบนี้ไม่ได้..."
 }

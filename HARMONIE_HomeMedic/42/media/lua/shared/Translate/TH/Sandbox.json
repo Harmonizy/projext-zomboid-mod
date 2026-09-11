@@ -214,5 +214,12 @@
     "Sandbox_EHR_ImmunityRecoveryRate": "อัตราการฟื้นตัวของภูมิคุ้มกัน",
     "Sandbox_EHR_ImmunityRecoveryRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันเพิ่มขึ้นสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น",
     "Sandbox_EHR_ImmunityDeclineRate": "อัตราการลดลงของภูมิคุ้มกัน",
-    "Sandbox_EHR_ImmunityDeclineRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันลดลงสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น"
+    "Sandbox_EHR_ImmunityDeclineRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันลดลงสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น",
+    "Sandbox_TOC": "The Only Cure",
+    "Sandbox_TOC_CicatrizationSpeed": "ความเร็วการเกิดแผลเป็น",
+    "Sandbox_TOC_WoundDirtynessMultiplier": "ตัวคูณความสกปรกของแผล",
+    "Sandbox_TOC_SurgeonAbilityImportance": "ความสำคัญของทักษะศัลยแพทย์",
+    "Sandbox_TOC_EnableZombieAmputations": "เปิดใช้การตัดแขนขาจากซอมบี้",
+    "Sandbox_TOC_ZombieAmputationDamageThreshold": "เกณฑ์ความเสียหายสำหรับการตัดแขนขาจากซอมบี้",
+    "Sandbox_TOC_ZombieAmputationDamageChance": "โอกาสความเสียหายสำหรับการตัดแขนขาจากซอมบี้"
 }
