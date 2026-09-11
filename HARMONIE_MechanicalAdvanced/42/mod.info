@@ -1,6 +1,6 @@
 name=HARMONIE - Mechanical Advanced
 id=HARMONIE_MechanicalAdvanced
-description=Adds a bullbar (soaks some engine wear), window/door armor, a truck-bed cargo rack (a real extra 30-capacity storage container) and a performance exhaust upgrade (+15% engine power) across 152 vanilla vehicles -- essentially every drivable car, van, truck and profession/livery variant in the base game. Built entirely on vanilla Build 42 vehicle-part APIs, no third-party mod dependency. English and Thai supported, with flavor dialogue when installing/removing parts.
+description=Adds a bullbar (visibly wears from real front-end collisions instead of staying pristine), window/door armor, a truck-bed cargo rack (a real extra 30-capacity storage container) and a performance exhaust upgrade (+15% engine power) across 152 vanilla vehicles -- essentially every drivable car, van, truck and profession/livery variant in the base game. Built entirely on vanilla Build 42 vehicle-part APIs, no third-party mod dependency. English and Thai supported, with flavor dialogue when installing/removing parts.
 poster=poster.png
 icon=icon.png
 modversion=1.0

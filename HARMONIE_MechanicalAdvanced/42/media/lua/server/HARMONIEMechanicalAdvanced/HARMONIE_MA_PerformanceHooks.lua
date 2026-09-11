@@ -69,18 +69,28 @@ function HARMONIE_MA.Update.PerfExhaust(vehicle, part, elapsedMinutes)
 end
 
 --[[
-    A real protective effect, not just a decorative accessory: while
-    installed and in decent shape, occasionally absorbs a point of wear
-    that would otherwise go to the real "Engine" part (a confirmed real
-    vanilla part id, used throughout Vehicles.lua), taking the damage
-    onto its own condition instead. Small, randomized chance per call
-    (not guaranteed every tick) so it reads as "soaking some hits," not
-    a hard damage-immunity switch. Once the bullbar itself is worn out
-    (condition 0) it stops protecting anything, same as a real bumper
-    that's been battered to scrap.
-]]--
-local BULLBAR_ABSORB_CHANCE = 0.02
+    Reacts to REAL front-end collisions, verified against the game's
+    own compiled BaseVehicle class (extracted projectzomboid.jar):
+    confirmed real methods include getFrontEndHealth/getRearEndHealth,
+    addDamageFrontHitAChr, addRandomDamageFromCrash -- collision damage
+    hits the vehicle-level frontEndHealth/rearEndHealth stat, NOT any
+    named part's own getCondition() (there is no Lua-exposed collision
+    event/hook at all -- grepped every vanilla Lua file for
+    frontEndHealth/collision-related names, zero hits, so this has to
+    be detected by polling).
 
+    Earlier version watched the "Engine" part's own condition instead,
+    on the wrong assumption that collisions damaged it directly -- that
+    was never actually connected to real impacts, which is why bullbar
+    condition stayed at 100% even after hitting zombies/objects.
+
+    No setter for frontEndHealth was found in the class either, so this
+    cannot actually PREVENT or heal collision damage -- only detect it
+    and visibly wear the bullbar's own condition down in response, so
+    the part is honestly a "takes real hits so you can see it happening"
+    accessory, not a damage-reduction one. wrapped in pcall since this
+    is the first time this mod calls getFrontEndHealth().
+]]--
 function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
     if not part:getInventoryItem() then return end
 
@@ -88,22 +98,26 @@ function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
 
     if part:getCondition() <= 0 then return end
 
-    local enginePart = vehicle:getPartById("Engine")
-    if not enginePart then return end
-    -- Vehicle parts have no getConditionMax() (that's an InventoryItem
-    -- method) -- vanilla itself always uses a hardcoded 100 for part
-    -- condition (e.g. part:setCondition(100) in Vehicles.lua).
-    local PART_CONDITION_MAX = 100
-    if enginePart:getCondition() >= PART_CONDITION_MAX then return end
+    local ok, frontEndHealth = pcall(function() return vehicle:getFrontEndHealth() end)
+    if not ok or frontEndHealth == nil then
+        local data = part:getModData()
+        if not data.HARMONIE_frontEndHealthFailed then
+            data.HARMONIE_frontEndHealthFailed = true
+            print("HARMONIE Mechanical Advanced WARNING: vehicle:getFrontEndHealth() failed or returned nil -- Bullbar cannot detect collisions on this vehicle.")
+        end
+        return
+    end
 
-    if ZombRandFloat(0, 1) < BULLBAR_ABSORB_CHANCE then
-        enginePart:setCondition(math.min(PART_CONDITION_MAX, enginePart:getCondition() + 1))
-        vehicle:transmitPartCondition(enginePart)
-        part:setCondition(part:getCondition() - 1)
+    local data = part:getModData()
+    local lastHealth = data.HARMONIE_lastFrontEndHealth
+    data.HARMONIE_lastFrontEndHealth = frontEndHealth
+
+    if lastHealth and frontEndHealth < lastHealth then
+        part:setCondition(math.max(0, part:getCondition() - 1))
         vehicle:transmitPartCondition(part)
         print(string.format(
-            "HARMONIE Mechanical Advanced: Bullbar absorbed 1 wear (bullbar now %d%%, engine now %d%%).",
-            part:getCondition(), enginePart:getCondition()
+            "HARMONIE Mechanical Advanced: Bullbar took a real front-end hit (frontEndHealth %d -> %d, bullbar now %d%%).",
+            lastHealth, frontEndHealth, part:getCondition()
         ))
     end
 end
