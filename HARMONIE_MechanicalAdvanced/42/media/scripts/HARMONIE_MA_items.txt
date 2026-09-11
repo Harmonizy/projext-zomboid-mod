@@ -82,6 +82,34 @@ module HARMONIEMechanicalAdvanced
         WorldStaticModel = HARMONIEMechanicalAdvanced.PerformanceExhaustKitWorld,
     }
 
+    item StealthExhaustKit
+    {
+        DisplayCategory = Tuning,
+        Weight = 7.0,
+        ItemType = base:normal,
+        DisplayName = Stealth Exhaust Kit,
+        Icon = HARMONIE_MA_PerformanceExhaustKit,
+        ConditionMax = 100,
+        ChanceToSpawnDamaged = 15,
+        MechanicsItem = TRUE,
+        Tooltip = Tooltip_HARMONIE_MA_StealthExhaustKit,
+        WorldStaticModel = HARMONIEMechanicalAdvanced.PerformanceExhaustKitWorld,
+    }
+
+    item FuelEfficientTuneKit
+    {
+        DisplayCategory = Tuning,
+        Weight = 7.0,
+        ItemType = base:normal,
+        DisplayName = Fuel-Efficient Tune Kit,
+        Icon = HARMONIE_MA_PerformanceExhaustKit,
+        ConditionMax = 100,
+        ChanceToSpawnDamaged = 15,
+        MechanicsItem = TRUE,
+        Tooltip = Tooltip_HARMONIE_MA_FuelEfficientTuneKit,
+        WorldStaticModel = HARMONIEMechanicalAdvanced.PerformanceExhaustKitWorld,
+    }
+
     craftRecipe MakeBullbar
     {
         timedAction = Welding_Surface,
@@ -163,6 +191,48 @@ module HARMONIEMechanicalAdvanced
         outputs
         {
             item 1 HARMONIEMechanicalAdvanced.PerformanceExhaustKit,
+        }
+    }
+
+    craftRecipe MakeStealthExhaustKit
+    {
+        timedAction = Welding_Surface,
+        time = 600,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        SkillRequired = Mechanics:5;MetalWelding:3,
+        xpAward = Mechanics:10;MetalWelding:6,
+        inputs
+        {
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+            item 2 [Base.MetalPipe] flags[ItemCount],
+            item 2 [Base.RippedSheets] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEMechanicalAdvanced.StealthExhaustKit,
+        }
+    }
+
+    craftRecipe MakeFuelEfficientTuneKit
+    {
+        timedAction = Welding_Surface,
+        time = 600,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        SkillRequired = Mechanics:5;MetalWelding:3,
+        xpAward = Mechanics:10;MetalWelding:6,
+        inputs
+        {
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+            item 2 [Base.MetalPipe] flags[ItemCount],
+            item 4 [Base.Screws] flags[ItemCount],
+        }
+        outputs
+        {
+            item 1 HARMONIEMechanicalAdvanced.FuelEfficientTuneKit,
         }
     }
 }

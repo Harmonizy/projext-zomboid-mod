@@ -6,8 +6,8 @@ module Base
         {
             mechanicArea = Engine,
             area = Engine,
-            itemType = HARMONIEMechanicalAdvanced.PerformanceExhaustKit,
-            specificItem = true,
+            itemType = HARMONIEMechanicalAdvanced.PerformanceExhaustKit;HARMONIEMechanicalAdvanced.StealthExhaustKit;HARMONIEMechanicalAdvanced.FuelEfficientTuneKit,
+            specificItem = false,
             durability = 3,
             table install
             {
@@ -43,7 +43,7 @@ module Base
             }
             lua
             {
-                update = HARMONIE_MA.Update.PerfExhaust,
+                update = HARMONIE_MA.Update.EngineTune,
             }
         }
     }

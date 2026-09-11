@@ -34,15 +34,15 @@ vehicle:transmitPartModData(part)
 
 vehicle:getScript()
   [VANILLA] Vehicles.lua:264  vehicle:setEngineFeature(100, 30, vehicle:getScript():getEngineForce())
-  Used in: HARMONIE_MA_PerformanceHooks.lua (PerfExhaust)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune)
 
 vehicle:setEngineFeature(quality, loudness, force)
   [VANILLA] Vehicles.lua:264, 287
-  Used in: HARMONIE_MA_PerformanceHooks.lua (PerfExhaust)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune)
 
 vehicle:getEngineQuality()
   [VANILLA] Vehicles.lua:271, 466
-  Used in: HARMONIE_MA_PerformanceHooks.lua (PerfExhaust)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune)
 
 vehicle:isEngineRunning()
   [VANILLA] Vehicles.lua:456, 513, 537, 725 (the exact Update.Tire gate
@@ -116,6 +116,28 @@ item:getMaxCapacity()
   [VANILLA] Vehicles.lua:766  (part:getInventoryItem():getMaxCapacity())
   Used in: HARMONIE_MA_PerformanceHooks.lua (Bullbar tire top-up)
 
+item:getFullType()
+  [VANILLA] Vehicles.lua:1036-1046 (VehicleUtils.getItems iterates
+            typeToItem keyed by item:getFullType())
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune, to tell which
+            of the 3 alternative kits is installed in the shared slot),
+            HARMONIE_MA_MechanicTooltipHook.lua, HARMONIE_MA_InstallDialogueHook.lua
+
+
+VEHICLE SCRIPT / TEMPLATE SYNTAX PATTERNS
+--------------------------------------------
+itemType = A;B;C, specificItem = false  (one part, several alternative items)
+  [VANILLA] scripts/vehicles/*Radio* templates (e.g. the base game's
+            Radio part definitions) use exactly this pattern: a single
+            part slot listing several acceptable itemTypes separated by
+            ";" with specificItem = false, letting the player choose
+            ONE of them to install. ISVehicleMechanics.lua:251-267
+            iterates part:getItemType():get(i) to build the install
+            submenu, confirming the engine reads it as a list.
+  Used in: HARMONIE_MA_template_perfexhaust.txt (HARMONIE_MA_PerfExhaust
+            part -- PerformanceExhaustKit;StealthExhaustKit;
+            FuelEfficientTuneKit, mutually exclusive "Engine Tune" choice)
+
 
 CHARACTER OBJECT METHODS
 --------------------------
@@ -148,6 +170,16 @@ script:getEngineForce()
 script:getEngineLoudness()
   [VANILLA] Vehicles.lua:279
   Used in: HARMONIE_MA_PerformanceHooks.lua
+
+script:getEngineQuality()
+  [VANILLA] Vehicles.lua:271  (vehicle:getScript():getEngineQuality() *
+            type:getBaseVehicleQuality(), inside Vehicles.Create.Engine)
+  Not currently called directly by us -- confirmed for completeness
+            only; our own Fuel-Efficient Tune bonus instead captures
+            vehicle:getEngineQuality() (the live, already-randomized
+            value) once on first install as its base, since this
+            script-level value is pre-randomization and only used at
+            vehicle creation time, not a stable live baseline to add to.
 
 
 GLOBAL FUNCTIONS / TABLES
@@ -191,6 +223,26 @@ Vehicles.UninstallTest.Default(vehicle, part, chr)
   [VANILLA] Vehicles.lua:934 (definition)
   Used in: HARMONIE_MA_InstallSkillGate.lua (wrapped, not redefined)
 
+SandboxVars.ZombieAttractionMultiplier
+  [VANILLA] Vehicles.lua:280  (engineLoudness = engineLoudness *
+            (SandboxVars.ZombieAttractionMultiplier or 1), inside
+            Vehicles.Create.Engine -- confirms engine loudness feeds
+            zombie attraction directly, not just flavor text)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune, Stealth
+            Exhaust branch, to keep our loudness bonus consistent with
+            vanilla's own live-loudness scaling instead of just cutting
+            the raw script value)
+
+Vehicles.Update.GasTank's qualityMultiplier
+  [VANILLA] Vehicles.lua:466  qualityMultiplier = ((100 -
+            vehicle:getEngineQuality()) / 200) + 1 -- higher engine
+            quality means a SMALLER multiplier means less gas burned.
+            Not called directly by us (it's internal to vanilla's own
+            GasTank update, never redefined) -- cited here as the
+            grounding for why Fuel-Efficient Tune raises engine quality
+            rather than touching fuel consumption directly.
+  Used in: (grounding only, no direct call) HARMONIE_MA_PerformanceHooks.lua
+
 
 WRAPPED VANILLA CLASSES (require + function override pattern)
 -----------------------------------------------------------------
@@ -204,7 +256,17 @@ ISUninstallVehiclePart:complete()
 
 ISVehicleMechanics:doMenuTooltip(part, option, lua, name)
   [VANILLA] client/Vehicles/ISUI/ISVehicleMechanics.lua:628
-  Wrapped in: HARMONIE_MA_MechanicTooltipHook.lua
+  [VANILLA] The 4th arg "name" is only ever passed as the specific
+            alternative item's full type, and only for the install
+            submenu of a multi-item part (ISVehicleMechanics.lua:
+            251-267: for i=0,part:getItemType():size()-1 do ...
+            self:doMenuTooltip(part, itemOpt, "install",
+            part:getItemType():get(i)) end) -- for the uninstall option
+            it's always nil (line 235: self:doMenuTooltip(part, option,
+            "uninstall")), so our hook falls back to
+            part:getInventoryItem():getFullType() in that case.
+  Wrapped in: HARMONIE_MA_MechanicTooltipHook.lua (EngineTune per-item
+            tooltip lookup)
 
 
 CONFIRMED NOT TO WORK -- DO NOT REUSE
