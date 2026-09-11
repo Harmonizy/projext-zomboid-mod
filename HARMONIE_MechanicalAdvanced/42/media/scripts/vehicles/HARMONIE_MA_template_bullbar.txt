@@ -41,6 +41,10 @@ module Base
                 skills = Mechanics:2,
                 test = Vehicles.UninstallTest.Default,
             }
+            lua
+            {
+                update = HARMONIE_MA.Update.Bullbar,
+            }
         }
     }
 }

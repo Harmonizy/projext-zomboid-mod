@@ -1,4 +1,11 @@
 {
+    "IGUI_VehiclePartHARMONIE_MA_Bullbar": "กันชนหน้าเสริม",
+    "IGUI_VehiclePartHARMONIE_MA_WindowArmorWindshield": "เกราะกันกระจกหน้า",
+    "IGUI_VehiclePartHARMONIE_MA_WindowArmorDoorLeft": "เกราะกันประตูซ้าย",
+    "IGUI_VehiclePartHARMONIE_MA_WindowArmorDoorRight": "เกราะกันประตูขวา",
+    "IGUI_VehiclePartHARMONIE_MA_CargoRack": "แร็คสัมภาระท้ายรถ",
+    "IGUI_VehiclePartHARMONIE_MA_PerfExhaust": "ท่อไอเสียปรับแต่งสมรรถนะ",
+
     "IGUI_HARMONIEMA_Install_1": "โอเค แน่นหนาดีแล้ว",
     "IGUI_HARMONIEMA_Install_2": "ยึดแน่นเรียบร้อย ไม่มีหลุดง่ายๆแน่",
     "IGUI_HARMONIEMA_Install_Funny": "มาเลยซอมบี้ คราวนี้ข้าพร้อมกว่าเดิม",

@@ -1,4 +1,11 @@
 {
+    "IGUI_VehiclePartHARMONIE_MA_Bullbar": "Bullbar",
+    "IGUI_VehiclePartHARMONIE_MA_WindowArmorWindshield": "Windshield Armor",
+    "IGUI_VehiclePartHARMONIE_MA_WindowArmorDoorLeft": "Door Armor (Left)",
+    "IGUI_VehiclePartHARMONIE_MA_WindowArmorDoorRight": "Door Armor (Right)",
+    "IGUI_VehiclePartHARMONIE_MA_CargoRack": "Cargo Rack",
+    "IGUI_VehiclePartHARMONIE_MA_PerfExhaust": "Performance Exhaust",
+
     "IGUI_HARMONIEMA_Install_1": "There, that should hold.",
     "IGUI_HARMONIEMA_Install_2": "Bolted on nice and tight.",
     "IGUI_HARMONIEMA_Install_Funny": "Eat my dust, walkers.",

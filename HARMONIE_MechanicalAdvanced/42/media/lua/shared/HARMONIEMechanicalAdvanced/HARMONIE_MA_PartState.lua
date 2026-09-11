@@ -21,7 +21,6 @@ function PartState.RecordInstaller(vehicle, part, character)
     if not (vehicle and part and character) then return end
     local data = part:getModData()
     data.HARMONIE_installedBy = character:getUsername() or character:getDisplayName()
-    local calendar = getGameTime() and getGameTime():getCalender()
-    data.HARMONIE_installedDay = calendar and calendar:getDayOfMonth() or nil
+    data.HARMONIE_installedDay = getGameTime() and getGameTime():getDay() or nil
     sync(vehicle, part)
 end

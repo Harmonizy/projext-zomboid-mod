@@ -16,7 +16,7 @@ module HARMONIEMechanicalAdvanced
         ConditionMax = 100,
         ChanceToSpawnDamaged = 25,
         MechanicsItem = TRUE,
-        Tooltip = Tooltip_item_tuning,
+        Tooltip = Tooltip_HARMONIE_MA_Bullbar,
         WorldStaticModel = HARMONIEMechanicalAdvanced.BullbarWorld,
     }
 
@@ -36,7 +36,7 @@ module HARMONIEMechanicalAdvanced
         ConditionMax = 100,
         ChanceToSpawnDamaged = 25,
         MechanicsItem = TRUE,
-        Tooltip = Tooltip_item_tuning,
+        Tooltip = Tooltip_HARMONIE_MA_WindowArmorPlate,
         WorldStaticModel = HARMONIEMechanicalAdvanced.WindowArmorPlateWorld,
     }
 
@@ -56,8 +56,10 @@ module HARMONIEMechanicalAdvanced
         ConditionMax = 100,
         ChanceToSpawnDamaged = 25,
         MechanicsItem = TRUE,
-        Tooltip = Tooltip_item_tuning,
+        Tooltip = Tooltip_HARMONIE_MA_CargoRack,
         WorldStaticModel = HARMONIEMechanicalAdvanced.CargoRackFrameWorld,
+        MaxCapacity = 30,
+        ConditionAffectsCapacity = false,
     }
 
     model PerformanceExhaustKitWorld
@@ -76,7 +78,7 @@ module HARMONIEMechanicalAdvanced
         ConditionMax = 100,
         ChanceToSpawnDamaged = 15,
         MechanicsItem = TRUE,
-        Tooltip = Tooltip_item_tuning,
+        Tooltip = Tooltip_HARMONIE_MA_PerformanceExhaustKit,
         WorldStaticModel = HARMONIEMechanicalAdvanced.PerformanceExhaustKitWorld,
     }
 
