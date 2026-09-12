@@ -1,3 +1,0 @@
-Tooltip_EN = {
-    Tooltip_CampFeverMod_HerbalRemedy = "A simple herbal remedy, boiled down from camp scraps. <LINE> Cures Camp Fever when drunk. <LINE> 3-dose bottle.",
-}
