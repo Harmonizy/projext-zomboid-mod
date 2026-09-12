@@ -41,6 +41,10 @@ module Base
                 skills = MetalWelding:3,
                 test = HARMONIE_MA.UninstallTest.MetalWelding3,
             }
+            lua
+            {
+                update = HARMONIE_MA.Update.PartsChecker,
+            }
         }
         part HARMONIE_MA_WindowArmorDoorLeft
         {
@@ -81,6 +85,10 @@ module Base
                 skills = MetalWelding:3,
                 test = HARMONIE_MA.UninstallTest.MetalWelding3,
             }
+            lua
+            {
+                update = HARMONIE_MA.Update.PartsChecker,
+            }
         }
         part HARMONIE_MA_WindowArmorDoorRight
         {
@@ -120,6 +128,10 @@ module Base
                 time = 100,
                 skills = MetalWelding:3,
                 test = HARMONIE_MA.UninstallTest.MetalWelding3,
+            }
+            lua
+            {
+                update = HARMONIE_MA.Update.PartsChecker,
             }
         }
     }

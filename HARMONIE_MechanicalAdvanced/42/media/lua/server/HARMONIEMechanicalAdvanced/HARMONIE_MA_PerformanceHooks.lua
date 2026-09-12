@@ -12,6 +12,8 @@
     driving/waiting a bit.
 ]]--
 
+require "HARMONIEMechanicalAdvanced/HARMONIE_MA_PartsChecker"
+
 if not HARMONIE_MA then HARMONIE_MA = {} end
 if not HARMONIE_MA.Update then HARMONIE_MA.Update = {} end
 
@@ -112,7 +114,27 @@ function HARMONIE_MA.Update.EngineTune(vehicle, part, elapsedMinutes)
             "HARMONIE Mechanical Advanced: EngineTune (%s) set engine to quality %.0f, loudness %.0f, force %.0f (condition %d%%).",
             fullType, newQuality, newLoudness, newForce, part:getCondition()
         ))
+
+        -- Genuine correctness check, not just "did the call not crash":
+        -- read the 3 stats straight back off the vehicle (vehicle:
+        -- getEngineQuality/getEngineLoudness/getEnginePower -- the same
+        -- 3 live getters the real mechanic panel itself displays, see
+        -- ISVehicleMechanics.lua:1178, 1325, 1327) and confirm they
+        -- actually landed, instead of trusting setEngineFeature blindly.
+        local liveQuality = vehicle:getEngineQuality()
+        local liveLoudness = vehicle:getEngineLoudness()
+        local liveForce = vehicle:getEnginePower()
+        if math.abs(liveQuality - newQuality) > 0.5
+        or math.abs(liveLoudness - newLoudness) > 0.5
+        or math.abs(liveForce - newForce) > 0.5 then
+            HARMONIE_MA.WarnOnce(part, "enginetune_mismatch_" .. signature, string.format(
+                "EngineTune applied quality %.0f/loudness %.0f/force %.0f but the vehicle now reports %.0f/%.0f/%.0f -- setEngineFeature did not land as expected.",
+                newQuality, newLoudness, newForce, liveQuality, liveLoudness, liveForce
+            ))
+        end
     end
+
+    HARMONIE_MA.CheckPartBasics(vehicle, part)
 end
 
 --[[
@@ -159,9 +181,22 @@ local function topUpTire(vehicle, tirePart)
 end
 
 function HARMONIE_MA.Update.Bullbar(vehicle, part, elapsedMinutes)
-    if not part:getInventoryItem() then return end
+    local item = HARMONIE_MA.CheckPartBasics(vehicle, part)
+    if not item then return end
 
     logAliveOnce(part, "Bullbar")
+
+    -- Checked unconditionally (not just while driving fast) since this
+    -- is about whether the mechanic CAN ever work on this particular
+    -- vehicle at all, not about a specific tick's conditions.
+    for _, tireId in ipairs(FRONT_TIRE_IDS) do
+        if not vehicle:getPartById(tireId) then
+            HARMONIE_MA.WarnOnce(part, "notire_" .. tireId, string.format(
+                "Bullbar is installed but this vehicle has no %s part -- tire protection cannot function here.",
+                tireId
+            ))
+        end
+    end
 
     if part:getCondition() <= 0 then return end
     if not vehicle:isEngineRunning() then return end

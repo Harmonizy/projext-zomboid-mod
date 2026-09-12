@@ -44,6 +44,35 @@ vehicle:getEngineQuality()
   [VANILLA] Vehicles.lua:271, 466
   Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune)
 
+vehicle:getEngineLoudness()
+  [VANILLA] client/Vehicles/ISUI/ISVehicleMechanics.lua:1325
+            (part:getVehicle():getEngineLoudness(), shown on the
+            Engine part's own mechanic panel right next to
+            getEngineQuality() -- confirms this is a real, live getter
+            for the vehicle's CURRENT applied loudness, not just the
+            script's static base)
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune, PartsChecker
+            read-back verification)
+
+vehicle:getEnginePower()
+  [LIVE] client/Vehicles/ISUI/ISVehicleMechanics.lua:1178
+            (self.vehicle:getEnginePower()/10 .. " hp" -- confirmed
+            real and callable). NOT verified against vanilla source
+            that it holds exactly the same field as the "force"
+            argument of setEngineFeature(quality, loudness, force) --
+            inferred from the 1:1 naming symmetry with
+            getEngineQuality/getEngineLoudness (each is a bare getter
+            for one of setEngineFeature's 3 arguments) and from the
+            fact vanilla's own UI shows it right next to those two on
+            the Engine part panel. The PartsChecker read-back in
+            EngineTune is exactly the live test that confirms or
+            disproves this the first time this mod is actually played
+            -- if the WARNING "did not land as expected" ever appears
+            in console.txt for a force mismatch specifically, this
+            entry is wrong and getEnginePower() is NOT the same field.
+  Used in: HARMONIE_MA_PerformanceHooks.lua (EngineTune, PartsChecker
+            read-back verification)
+
 vehicle:isEngineRunning()
   [VANILLA] Vehicles.lua:456, 513, 537, 725 (the exact Update.Tire gate
             we copied our own gate from)
@@ -267,6 +296,45 @@ ISVehicleMechanics:doMenuTooltip(part, option, lua, name)
             part:getInventoryItem():getFullType() in that case.
   Wrapped in: HARMONIE_MA_MechanicTooltipHook.lua (EngineTune per-item
             tooltip lookup)
+
+
+HARMONIE_MA_PartsChecker.lua -- automatic periodic correctness checking
+--------------------------------------------------------------------------
+Every other update hook in this mod only ever proved "did the hook
+run" (logAliveOnce) -- it never proved the resulting vehicle state was
+actually correct. PartsChecker closes that gap: HARMONIE_MA.
+CheckPartBasics(vehicle, part) is called from inside every one of our
+own update hooks (EngineTune, Bullbar) and is also wired directly as
+the lua { update = ... } for the 3 parts that have no functional
+effect of their own (CargoRack, and all 3 WindowArmorPlate slots), so
+it runs periodically and automatically -- no player action needed,
+same as every other hook in this mod.
+
+What it actually verifies, all using only APIs already confirmed
+above:
+  - The installed item is genuinely one of this mod's own kits for
+    that specific slot (item:getFullType() against a lookup table) --
+    catches anything unexpected ending up in one of our parts.
+  - part:getCondition() is a real, in-range number (0-100).
+  - CargoRack specifically: item:getMaxCapacity() == 30, matching the
+    item script's MaxCapacity field (catches the two ever drifting
+    apart if items.txt is edited later).
+  - EngineTune specifically: after every setEngineFeature() call, reads
+    vehicle:getEngineQuality()/getEngineLoudness()/getEnginePower()
+    straight back and confirms they match what we just tried to set --
+    this is the check that will actually prove or disprove whether
+    getEnginePower() really is the same field as setEngineFeature's
+    "force" argument (see the [LIVE] entry above).
+  - Bullbar specifically: confirms TireFrontLeft/TireFrontRight exist
+    on this vehicle at all (some non-standard vehicle could lack them,
+    which would silently make the bullbar's whole mechanic a no-op).
+
+Any problem found prints "HARMONIE Mechanical Advanced: WARNING -- ..."
+to console.txt, once per distinct problem per part instance (tracked
+in part:getModData(), the same idiom logAliveOnce already uses) so it
+can never spam -- and the warning flag is cleared again the next time
+the check passes, so a fixed problem doesn't leave a stale warning
+sitting in the log forever.
 
 
 CONFIRMED NOT TO WORK -- DO NOT REUSE
