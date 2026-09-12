@@ -1,0 +1,11 @@
+VERSION = 1,
+
+option HARMONIE_SVU3PartWear.ProtectionDamageMultiplier
+{
+    type = double,
+    default = 1.0,
+    min = 1.0,
+    max = 10.0,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_ProtectionDamageMultiplier,
+}
