@@ -1,7 +1,0 @@
-name=HARMONIE - SVU3 Thai Translation
-id=HARMONIE_SVU3Thai
-description=Adds Thai translations for the parts, protection/armor tiers, and UI text added by Standardized Vehicle Upgrades 3 (Vanilla + Core) and its dependency tsarslib. Phase 1: item names and in-game UI/part labels (the most commonly seen text). Sandbox option labels, recipe names, context menus, and item tooltips are planned for a later update. Add-on only -- does not modify the original mods, just adds Thai text alongside their existing English.
-poster=poster.png
-modversion=1.0
-versionMin=42.0.0
-require=tsarslib,StandardizedVehicleUpgrades3V,StandardizedVehicleUpgrades3Core
