@@ -138,11 +138,28 @@ local function getItemHunger(item)
     return ok and hunger or nil
 end
 
+local function snapshotVitaminTotal(item)
+    if not item then return nil, nil end
+    local ok, modData = pcall(function() return item:getModData() end)
+    if ok and modData and modData.HARMONIE_Vitamins then
+        return modData.HARMONIE_Vitamins, modData.HARMONIE_HungerUnits
+    end
+    return nil, nil
+end
+
 local original_ISAddItemInRecipe_complete = ISAddItemInRecipe.complete
 function ISAddItemInRecipe:complete()
     local usedItem = self.usedItem
     local usedRates = HARMONIE_GTP.GetVitaminRatePerHunger(usedItem)
     local hungerBefore = usedRates and getItemHunger(usedItem)
+
+    -- Snapshot whatever running total the dish already has BEFORE this
+    -- addition, from the object we're about to hand into the vanilla
+    -- native call -- see the note below on why this is read defensively
+    -- instead of just trusting self.baseItem to still carry it after.
+    local oldBaseItem = self.baseItem
+    local oldBaseId = oldBaseItem and oldBaseItem.getID and oldBaseItem:getID()
+    local oldVitamins, oldHunger = snapshotVitaminTotal(oldBaseItem)
 
     local result = original_ISAddItemInRecipe_complete(self)
 
@@ -163,6 +180,29 @@ function ISAddItemInRecipe:complete()
             end
         end
 
+        -- Defensive re-seed: self.recipe:addItem() is a native call, and
+        -- there is no confirmed guarantee it always mutates baseItem in
+        -- place rather than occasionally handing back a different
+        -- item instance once the dish changes name/type (e.g. an empty
+        -- pot becoming a named Stew). If that ever happens, the running
+        -- total recorded on the OLD object would otherwise be silently
+        -- dropped and only THIS addition's vitamins would survive on the
+        -- new one -- exactly the "latest ingredient replaces the total"
+        -- symptom reported in-game. Cheap to guard against unconditionally:
+        -- only actually does anything on the rare tick where identity or
+        -- the stored total genuinely changed underneath us.
+        local newBaseId = self.baseItem and self.baseItem.getID and self.baseItem:getID()
+        if oldVitamins and self.baseItem ~= oldBaseItem then
+            local _, currentHunger = snapshotVitaminTotal(self.baseItem)
+            if not currentHunger then
+                print(string.format(
+                    "HARMONIE Garden to Plate: baseItem identity changed while adding an ingredient (id %s -> %s) -- restoring the running vitamin total that would otherwise have been lost.",
+                    tostring(oldBaseId), tostring(newBaseId)
+                ))
+                HARMONIE_GTP.AddVitaminsToItem(self.baseItem, oldVitamins, oldHunger)
+            end
+        end
+
         local scaled = {}
         for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
             if usedRates[vit] then
@@ -170,6 +210,25 @@ function ISAddItemInRecipe:complete()
             end
         end
         HARMONIE_GTP.AddVitaminsToItem(self.baseItem, scaled, hungerUnitsUsed)
+
+        -- Always-on diagnostic (not a debug toggle -- this fires once per
+        -- ingredient addition, the same rate the action itself already
+        -- runs at, so it's cheap): proves from console.txt alone whether
+        -- the running total is genuinely accumulating across additions or
+        -- resetting. Search "HARMONIE Garden to Plate: added ingredient".
+        do
+            local finalVitamins = select(1, snapshotVitaminTotal(self.baseItem)) or {}
+            local parts = {}
+            for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+                if finalVitamins[vit] then
+                    table.insert(parts, string.format("%s=%.1f", vit, finalVitamins[vit]))
+                end
+            end
+            print(string.format(
+                "HARMONIE Garden to Plate: added ingredient (baseItem id %s) -- running total now {%s}.",
+                tostring(newBaseId), table.concat(parts, ", ")
+            ))
+        end
 
         -- Plain ModData changes on a contained item (not a character, not
         -- a world object) don't get pushed to other clients on their own.
