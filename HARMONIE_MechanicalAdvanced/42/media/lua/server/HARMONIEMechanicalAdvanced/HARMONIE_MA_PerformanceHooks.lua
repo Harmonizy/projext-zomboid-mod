@@ -127,10 +127,18 @@ function HARMONIE_MA.Update.EngineTune(vehicle, part, elapsedMinutes)
         if math.abs(liveQuality - newQuality) > 0.5
         or math.abs(liveLoudness - newLoudness) > 0.5
         or math.abs(liveForce - newForce) > 0.5 then
-            HARMONIE_MA.WarnOnce(part, "enginetune_mismatch_" .. signature, string.format(
+            -- Deliberately NOT keyed by signature -- a real mismatch
+            -- here would be systemic (e.g. getEnginePower() not being
+            -- the same field as "force"), not tied to one specific
+            -- value combination, so warn about it once ever per part
+            -- instead of re-warning every time condition shifts the
+            -- signature.
+            HARMONIE_MA.WarnOnce(part, "enginetune_mismatch", string.format(
                 "EngineTune applied quality %.0f/loudness %.0f/force %.0f but the vehicle now reports %.0f/%.0f/%.0f -- setEngineFeature did not land as expected.",
                 newQuality, newLoudness, newForce, liveQuality, liveLoudness, liveForce
             ))
+        else
+            HARMONIE_MA.ClearWarning(part, "enginetune_mismatch")
         end
     end
 
