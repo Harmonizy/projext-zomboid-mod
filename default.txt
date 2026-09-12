@@ -2,7 +2,6 @@ VERSION = 1,
 
 mods
 {
-    mod = HARMONIE_MechanicalAdvanced,
 }
 
 maps
