@@ -14,6 +14,8 @@
     "Sandbox_AutoAll_EnableMechanics_tooltip": "-1 ให้แต่ละผู้เล่นตัดสินใจเอง, 0 บังคับปิดให้ทุกคน, 1 บังคับเปิด ค่าเริ่มต้นคือ -1 ซึ่งไม่เปลี่ยนแปลงอะไร",
     "Sandbox_AutoAll_EnableMedicine": "รักษาแผลอัตโนมัติ",
     "Sandbox_AutoAll_EnableMedicine_tooltip": "-1 ให้แต่ละผู้เล่นตัดสินใจเอง, 0 บังคับปิดให้ทุกคน, 1 บังคับเปิด ค่าเริ่มต้นคือ -1 ซึ่งไม่เปลี่ยนแปลงอะไร",
+    "Sandbox_AutoAll_EnableOpen": "เปิดกระป๋อง/ขวดอัตโนมัติ",
+    "Sandbox_AutoAll_EnableOpen_tooltip": "-1 ให้แต่ละผู้เล่นตัดสินใจเอง, 0 บังคับปิดให้ทุกคน, 1 บังคับเปิด ค่าเริ่มต้นคือ -1 ซึ่งไม่เปลี่ยนแปลงอะไร",
     "Sandbox_AutoAll_EnableRead": "อ่านอัตโนมัติ",
     "Sandbox_AutoAll_EnableRead_tooltip": "-1 ให้แต่ละผู้เล่นตัดสินใจเอง, 0 บังคับปิดให้ทุกคน, 1 บังคับเปิด ค่าเริ่มต้นคือ -1 ซึ่งไม่เปลี่ยนแปลงอะไร",
     "Sandbox_AutoAll_EnableReload": "ฝึกบรรจุกระสุน",
