@@ -1,7 +1,7 @@
 name=HARMONIE - Lifestyle Audio Tune
 id=HARMONIE_LifestyleAudioTune
-description=Turns down "Lifestyle: Hobbies" (Workshop ID 3403870858) music and sound effects, which ship very loud and audible from very far away. Overrides the mod's disco/jukebox/DJ booth music, playable instruments (guitar, harmonica, etc.) and other equipment SFX (turn on/off, button presses, etc.) to half their original volume and a shared 25-tile max hearing distance (down from 75-100 tiles). Pure sound-script override -- no new content, no gameplay changes. Must load after Lifestyle: Hobbies.
+description=Turns down "Lifestyle: Hobbies" (Workshop ID 3403870858) music and sound effects, which ship very loud and audible from very far away. Overrides the mod's disco/jukebox/DJ booth music, playable instruments (guitar, harmonica, etc.) and other equipment SFX (turn on/off, button presses, etc.) to half their original volume and a shared 25-tile max hearing distance (down from 75-100 tiles). Also adds a sandbox option (HARMONIE: Lifestyle Audio Tune -> Music/instrument volume multiplier) that lives-adjusts the DJ Booth song and instrument-playing/training volume on top of the static reduction. Must load after Lifestyle: Hobbies.
 require=LifestyleHobbies
 author=HARMONIE
-modversion=1.0
+modversion=1.1
 versionMin=42.0.0
