@@ -1,0 +1,12 @@
+version=1
+id=3800389360
+title=HARMONIE - SVU3 Sandbox
+description=Adds a sandbox multiplier for how much condition Standardized Vehicle Upgrades 3's own protection/armor add-on parts (bullbars, window/door/trunk armor, wheel chains) lose each time they absorb damage for the vehicle part they protect.
+description=
+description=SVU3 ships fixed per-tier values with no overall multiplier -- this adds one, so those parts can be made to break down faster (or slower) than SVU3's own defaults.
+description=
+description=Requires tsarslib and Standardized Vehicle Upgrades 3 (Core) to be enabled. Load order does not matter.
+description=
+description=Mod ID: HARMONIE_SVU3Sandbox
+tags=Build 42;Balance;Realistic;Vehicles
+visibility=public

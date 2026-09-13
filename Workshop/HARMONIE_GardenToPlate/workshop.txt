@@ -1,0 +1,15 @@
+version=1
+id=3797403022
+title=HARMONIE - From Garden to Plate
+description=Adds a vitamin (A, B, C, D, E, K) micronutrient system on top of the food you eat. Every vanilla food item across all food groups (vegetables, fruits, meat, fish, dairy, grains) contributes toward one or more vitamins.
+description=
+description=Press N (rebindable) to check your own or a nearby survivor's nutritional status -- interpreting the result requires First Aid level 5. Neglect your diet and critical vitamin deficiencies will start to hurt you for real: vision impairment, endurance loss, sickness, pain, stress, and slower wound recovery, depending on which vitamin runs out.
+description=
+description=Also adds home canning (preserve vegetables and fruit indefinitely in empty tin cans, vitamins carry over into the jar) and a craftable vitamin supplement pill made from real vanilla ingredients.
+description=
+description=Singleplayer-focused; see the mod's README for the full mechanics writeup.
+description=
+description=Workshop ID: 3797403022
+description=Mod ID: HARMONIE_GardenToPlate
+tags=Build 42;Balance;Food;Items;Multiplayer;Realistic
+visibility=public

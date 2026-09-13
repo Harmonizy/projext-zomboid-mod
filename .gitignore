@@ -1,0 +1,6 @@
+# Only track mods/ and Workshop/ -- everything else in the Zomboid user
+# data folder is game state, logs, or saves, not mod source/staging.
+/*
+!/mods/
+!/Workshop/
+!/.gitignore

@@ -1,0 +1,54 @@
+module HARMONIEHomeMedic
+{
+    item GingerBugTonic
+    {
+        DisplayCategory = FirstAid,
+        ItemType = base:drainable,
+        DisplayName = Fermented Ginger-Bug Tonic,
+        Icon = HomemadeCoughSyrup,
+        Weight = 0.3,
+        Tooltip = Tooltip_HARMONIE_GingerBugTonic,
+        UseDelta = 0.1666667,
+        UseWhileEquipped = false,
+        Medical = true,
+        WorldStaticModel = MedicalParcel_Green,
+    }
+
+    item GraveAshGarlicPoultice
+    {
+        DisplayCategory = FirstAid,
+        ItemType = base:normal,
+        DisplayName = Grave Ash & Garlic Poultice,
+        Icon = HomemadeAntisepticCream,
+        Weight = 0.2,
+        Tooltip = Tooltip_HARMONIE_GraveAshGarlicPoultice,
+        Medical = true,
+        WorldStaticModel = MedicalParcel_Green,
+    }
+
+    item WarmingSpicedBitters
+    {
+        DisplayCategory = FirstAid,
+        ItemType = base:drainable,
+        DisplayName = Warming Spiced Bitters,
+        Icon = HomeMadeActivatedCharcoal,
+        Weight = 0.3,
+        Tooltip = Tooltip_HARMONIE_WarmingSpicedBitters,
+        UseDelta = 0.34,
+        UseWhileEquipped = false,
+        Medical = true,
+        WorldStaticModel = MedicalParcel_Green,
+    }
+
+    item WillowBarkAntitoxinBooster
+    {
+        DisplayCategory = FirstAid,
+        ItemType = base:normal,
+        DisplayName = Willow Bark & Herb Antitoxin Booster,
+        Icon = PlantBasedAntibiotics,
+        Weight = 0.2,
+        Tooltip = Tooltip_HARMONIE_WillowBarkAntitoxinBooster,
+        Medical = true,
+        WorldStaticModel = MedicalParcel_Green,
+    }
+}

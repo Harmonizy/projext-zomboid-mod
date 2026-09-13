@@ -1,0 +1,59 @@
+VERSION = 1,
+
+option HARMONIE_GardenToPlate.DecayPerDay
+{
+    type = double,
+    default = 5.0,
+    min = 0.0,
+    max = 20.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_DecayPerDay,
+}
+
+option HARMONIE_GardenToPlate.ReserveGainDivisor
+{
+    type = double,
+    default = 10.0,
+    min = 1.0,
+    max = 50.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_ReserveGainDivisor,
+}
+
+option HARMONIE_GardenToPlate.CriticalThreshold
+{
+    type = integer,
+    default = 20,
+    min = 0,
+    max = 99,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CriticalThreshold,
+}
+
+option HARMONIE_GardenToPlate.SufficientThreshold
+{
+    type = integer,
+    default = 50,
+    min = 1,
+    max = 100,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SufficientThreshold,
+}
+
+option HARMONIE_GardenToPlate.EnableCriticalEffects
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_EnableCriticalEffects,
+}
+
+option HARMONIE_GardenToPlate.SymptomReminderHours
+{
+    type = integer,
+    default = 6,
+    min = 1,
+    max = 24,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SymptomReminderHours,
+}

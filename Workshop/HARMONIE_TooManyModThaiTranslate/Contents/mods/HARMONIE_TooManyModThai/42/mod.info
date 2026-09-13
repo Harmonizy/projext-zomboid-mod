@@ -1,0 +1,8 @@
+name=HARMONIE - Too Many Mod Thai Translate (แปลไทย)
+id=HARMONIE_TooManyModThai
+description=A single, always-on Thai translation pack covering every mod HARMONIE has made or patched so far: "Lifestyle: Hobbies" (by Angry, Workshop ID 3403870858), Standardized Vehicle Upgrades 3 (Vanilla + Core) with tsarslib, Extensive Health Rework Evolved with The Only Cure, plus HARMONIE's own From Garden to Plate, Home Medic and SVU3 Part Wear. Pure translation only -- never changes gameplay logic. Deliberately ships with NO require= dependency on any of the mods above, so it's safe to just leave enabled all the time: each section of text only ever shows once its matching mod is also enabled, and sits harmlessly unused otherwise.
+poster=poster.png
+icon=icon.png
+author=HARMONIE
+modversion=1.0
+versionMin=42.0.0
