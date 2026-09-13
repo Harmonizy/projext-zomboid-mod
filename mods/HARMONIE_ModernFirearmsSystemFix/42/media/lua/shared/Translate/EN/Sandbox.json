@@ -1,0 +1,5 @@
+{
+    "Sandbox_HARMONIE_ModernFirearmsSystemFix": "HARMONIE: ModernFirearmsSystem Fix",
+    "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier": "Gun/ammo drop rate multiplier",
+    "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier_tooltip": "Multiplies how often ModernFirearmsSystem's own ~230 guns and ammo items appear in loot, on top of the mod's own hardcoded weights (it ships with no rate control of its own, only per-gun on/off toggles). 1.0 = the mod's own unmodified rate. 0 = never spawns (same as disabling every per-gun toggle). Does not affect vanilla loot or this mod's weapon attachments/parts."
+}

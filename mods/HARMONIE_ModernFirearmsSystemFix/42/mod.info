@@ -1,0 +1,7 @@
+name=HARMONIE - ModernFirearmsSystem Fix
+id=HARMONIE_ModernFirearmsSystemFix
+description=Two fixes for "ModernFirearmsSystem" (Workshop ID 3633421539). (1) Adds a sandbox option (HARMONIE: ModernFirearmsSystem Fix -> Gun/ammo drop rate multiplier) since the mod ships its ~230 guns and ammo items at hardcoded loot weights with no rate control of its own -- only per-gun on/off toggles. Scales all of them together (0-5x, default 1.0 = unchanged) without touching vanilla loot or the mod's weapon attachments/parts. (2) A defensive guard against a possible ammo-not-depleting race in the mod's own magazine-refresh system (ChangeMagazineType.lua), which can swap the held weapon for a fresh item mid-action; the guard defers that resync while the player has a timed action queued. Requires ModernFirearmsSystem and must load after it.
+require=ModernFirearmsSystem
+author=HARMONIE
+modversion=1.0
+versionMin=42.0.0
