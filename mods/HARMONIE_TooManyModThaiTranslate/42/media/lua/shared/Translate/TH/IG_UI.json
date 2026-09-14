@@ -1548,5 +1548,7 @@
     "IGUI_AWCWF_SLOT_BARREL": "ลำกล้อง",
     "IGUI_AWCWF_SLOT_TAC": "ยุทธวิธี",
     "IGUI_AWCWF_SLOT_STOCK": "พานท้าย",
-    "IGUI_IGUI_L_Scope": "ศูนย์เล็งใช้งานได้จริง"
+    "IGUI_IGUI_L_Scope": "ศูนย์เล็งใช้งานได้จริง",
+    "IGUI_CraftCategory_现代枪械系统ModernFirearmsSystem": "ระบบอาวุธปืนสมัยใหม่",
+    "IGUI_CraftingCategories_Ammunition": "กระสุน"
 }

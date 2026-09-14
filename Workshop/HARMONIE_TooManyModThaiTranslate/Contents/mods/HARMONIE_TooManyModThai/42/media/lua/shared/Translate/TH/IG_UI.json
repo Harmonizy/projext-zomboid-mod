@@ -1535,5 +1535,20 @@
     "IGUI_perks_Yoga": "โยคะ",
     "IGUI_playerCanSwim": "คุณว่ายน้ำได้",
     "IGUI_playerCantSwim": "คุณว่ายน้ำไม่ได้",
-    "IGUI_sayWindInfo": "ตรวจสอบทิศทางลม"
+    "IGUI_sayWindInfo": "ตรวจสอบทิศทางลม",
+
+    "IGUI_WeaponUI_DamageMax": "ความเสียหายสูงสุด",
+    "IGUI_WeaponUI_HitChance": "โอกาสโดน",
+    "IGUI_WeaponUI_DamageMin": "ความเสียหายต่ำสุด",
+    "IGUI_ItemCat_R_SCOPE": "อุปกรณ์เสริมอาวุธ - ศูนย์เล็งขวา",
+    "IGUI_ItemCat_L_SCOPE": "อุปกรณ์เสริมอาวุธ - ศูนย์เล็งซ้าย",
+    "IGUI_AWCWF_DEBUG_ALL_ATTACHMENTS": "ดีบัก: อุปกรณ์เสริมทั้งหมด",
+    "IGUI_AWCWF_QUICK_PANEL_TITLE": "คำสั่งด่วน",
+    "IGUI_AWCWF_SLOT_SCOPE": "กล้องเล็ง",
+    "IGUI_AWCWF_SLOT_BARREL": "ลำกล้อง",
+    "IGUI_AWCWF_SLOT_TAC": "ยุทธวิธี",
+    "IGUI_AWCWF_SLOT_STOCK": "พานท้าย",
+    "IGUI_IGUI_L_Scope": "ศูนย์เล็งใช้งานได้จริง",
+    "IGUI_CraftCategory_现代枪械系统ModernFirearmsSystem": "ระบบอาวุธปืนสมัยใหม่",
+    "IGUI_CraftingCategories_Ammunition": "กระสุน"
 }
