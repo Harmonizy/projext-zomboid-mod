@@ -1,0 +1,301 @@
+HARMONIE Zomboid Mod Workflow — Reference (สำหรับ Claude อ่านก่อนเริ่มงานทุกครั้ง)
+=====================================================================================
+ไฟล์นี้คือ living document — ทุกครั้งที่เจอความรู้ใหม่ (API ใหม่, ข้อจำกัดใหม่, บั๊ก/กับดักใหม่)
+ให้กลับมาอัปเดตไฟล์นี้เพิ่มเสมอ ห้ามลบของเก่าทิ้งเว้นแต่พิสูจน์แล้วว่าผิด ให้แก้ไขแทน
+อัปเดตล่าสุด: 2026-09-15
+
+
+0. โครงสร้าง repo นี้
+======================
+Root ของ git repo = C:\Users\User\Zomboid\ เอง (คือโฟลเดอร์ข้อมูลเกมจริงของ Project Zomboid)
+  - mods/                  = โฟลเดอร์ mods จริงที่เกมโหลดใช้ (ทดสอบที่นี่ก่อนเสมอ)
+  - Workshop/               = โฟลเดอร์ staging สำหรับอัปโหลดขึ้น Steam Workshop ผ่านเครื่องมือในเกม
+  - Saves/, Server/, Logs/, options.ini, version.txt ฯลฯ = ข้อมูลเกมจริงของผู้ใช้ (อย่าไปยุ่ง
+    เว้นแต่จำเป็นต้องอ่านเพื่อ debug เช่น Logs/ สำหรับหา error)
+Git remote: GitLab https://gitlab.com/got.jittakorn.2/projext-zomboid-mod.git, branch main
+  ผู้ใช้บางทีก็ commit เองนอกเซสชัน (ผ่าน VSCode ฯลฯ) -- ก่อนเริ่มงานทุกครั้งให้ `git fetch` +
+  `git status`/`git log --oneline -5` เช็คก่อนเสมอ อย่าสมมติว่า state ที่เห็นล่าสุดยังตรงอยู่
+Build เกมของผู้ใช้: เช็คที่ C:\Users\User\Zomboid\version.txt เสมอ (เคยเจอ 42.20.4 แต่ไฟล์นี้
+  เปลี่ยนได้เรื่อยๆ ตามที่เกมอัปเดต)
+
+
+1. โครงสร้างโฟลเดอร์ของแต่ละ mod (สำคัญมาก ต้องแยกให้ถูก)
+===========================================================
+mods/<ModId>/<version>/...
+  = โฟลเดอร์ "ใช้งานจริง" ที่เกมโหลดตรงๆ ทดสอบ/แก้ไฟล์ที่นี่ก่อนเสมอ
+  <version> ปกติคือ "42" (ตรง versionMin ใน mod.info) บางม็อดเก่าใช้ "common" (แปลว่าใช้ได้ทุก
+  เวอร์ชัน ไม่ได้แยกตาม build) ทั้งสองแบบใช้ได้ ให้ดูว่า mod อื่นที่เกี่ยวข้อง (เช่น mod ที่จะไป
+  patch) ใช้แบบไหนแล้วทำตาม (เช่น Lifestyle: Hobbies ใช้ "common" ล้วน ไม่มีโฟลเดอร์ "42" ที่มี
+  เนื้อหาจริงเลย -- แต่ HARMONIE_* ส่วนใหญ่ใช้ "42")
+
+Workshop/<ModId>/Contents/mods/<ModId>/<version>/...
+  = สำเนาสำหรับอัปโหลด Steam Workshop (โครงสร้างต้องมี "Contents/mods/<ModId>/" ครอบอีกชั้น
+  ตาม convention ของ PZ Workshop uploader — เทียบ Workshop/ModTemplate/Contents/mods/ModTemplate/
+  ซึ่งเป็น template ทางการ)
+Workshop/<ModId>/preview.png
+  = รูป preview ของ Workshop item (ส่วนใหญ่ก็อปจาก poster.png ในตัว mod เลย)
+Workshop/<ModId>/workshop.txt
+  = metadata สำหรับอัปโหลด: version=1, id=<เลข Workshop item ตอนเผยแพร่แล้ว -- ถ้ายังไม่เคย
+  publish ห้ามใส่ id= เอง เกมจะเติมให้อัตโนมัติตอนอัปโหลดครั้งแรก>, title=, description= (ซ้ำได้
+  หลายบรรทัดสำหรับย่อหน้าใหม่), tags=, visibility=public
+  *** ไฟล์นี้เกมแก้กลับมาเองได้ (เช่นเติม id= หลัง publish) ระวัง "changed on disk since you last
+  read" ให้ถือเป็นของจริง อย่า revert เอง อ่านใหม่ก่อนแก้ทับเสมอ ***
+
+ขั้นตอนมาตรฐานตอนสร้าง mod ใหม่ที่จะไป publish:
+  1. เขียน/ทดสอบใน mods/<ModId>/42/ ให้เสร็จก่อน (รวม mod.info, sandbox-options.txt, lua, scripts)
+  2. ถ้าไม่มีรูป: สร้าง placeholder ง่ายๆ ด้วย PowerShell System.Drawing (ดูหัวข้อ 6) --
+     poster.png ขนาด 256x256, icon.png ขนาด 64x64 (เช็คขนาดจาก mod อื่นที่มีอยู่แล้วด้วย
+     PowerShell Add-Type System.Drawing + [System.Drawing.Image]::FromFile ถ้าไม่มี ImageMagick)
+  3. เพิ่ม `poster=poster.png` และ `icon=icon.png` ใน mod.info
+  4. คัดลอกทั้งโฟลเดอร์ 42/ ไปที่ Workshop/<ModId>/Contents/mods/<ModId>/42/ (ใช้ cp -r ทับทั้งอัน
+     ง่ายสุด อย่าคัดลอกทีละไฟล์เดี๋ยวตกหล่น)
+  5. คัดลอก poster.png ไปเป็น Workshop/<ModId>/preview.png
+  6. เขียน Workshop/<ModId>/workshop.txt (ไม่ใส่ id= ถ้ายังไม่เคย publish)
+  7. *** ขั้นตอนอัปโหลดจริงทำแทนไม่ได้ *** ต้องให้ผู้ใช้กดเองในเกม (Mods/Workshop menu ->
+     ชี้ไปที่โฟลเดอร์ Workshop/<ModId>/) เพราะต้อง login Steam ของผู้ใช้เอง Claude Code ไม่มีทาง
+     เข้าถึง Steam ได้เลย
+  8. ทุกครั้งที่แก้ mod หลัง publish แล้ว ต้อง sync ทั้งสองชุด (mods/ กับ Workshop/.../Contents/
+     mods/) ให้ตรงกันเสมอ ไม่งั้นรอบอัปโหลดถัดไปจะหลุดของที่เพิ่งแก้
+
+
+2. Sandbox Options vs PZAPI.ModOptions — เลือกให้ถูก (จุดที่เคยพลาดมาก่อน)
+============================================================================
+สองระบบนี้ทำงานคนละแบบ ห้ามสับสน — เคยเจอเคสจริง: ทำ volume slider ด้วย sandbox option
+แล้วผู้ใช้ปรับกลางเกมแล้ว "ไม่มีผล" ต้องออกเข้าใหม่ถึงจะเห็นผล → ไม่ใช่บั๊ก แต่เลือกกลไกผิด
+ตั้งแต่แรก แก้โดยเปลี่ยนไปใช้ PZAPI.ModOptions แทน
+
+(ก) Sandbox Options (media/sandbox-options.txt + Translate/{EN,TH}/Sandbox.json)
+  - อ่านค่าจาก SandboxVars.<Category>.<OptionName> ใน Lua
+  - ค่าถูก "snapshot" ตอนโหลดโลก/เซฟเข้ามาครั้งเดียว เปลี่ยนกลางเซสชันไม่มีผลจนกว่าจะสร้างโลก
+    ใหม่หรือโหลดเซฟใหม่ (พฤติกรรมมาตรฐานของเกม ไม่ใช่เฉพาะ mod เรา)
+  - ใช้เหมาะกับ: ค่าคงที่ระดับโลก/เซิร์ฟเวอร์ ที่ไม่จำเป็นต้องเปลี่ยนกลางเกม เช่น drop rate
+    multiplier, damage multiplier
+  - format ตัวอย่าง:
+      option HARMONIE_ModName.OptionName
+      {
+          type = double,
+          default = 1.0,
+          min = 0.0,
+          max = 5.0,
+          page = HARMONIE_ModName,
+          translation = HARMONIE_ModNameOptionName,
+      }
+    แปล label ที่ Translate/EN(TH)/Sandbox.json ด้วย key แบบ:
+      "Sandbox_HARMONIE_ModName": "ชื่อหน้า page"
+      "Sandbox_HARMONIE_ModNameOptionName": "ชื่อ option"
+      "Sandbox_HARMONIE_ModNameOptionName_tooltip": "คำอธิบาย"
+  - *** ข้อจำกัดเด็ดขาด: ไฟล์ .txt สคริปต์เสียง/ไอเทม (media/scripts/*.txt) ถูก parse ก่อน
+    Lua/SandboxVars จะมีตัวตนด้วยซ้ำ (ตอน engine boot) เพราะฉะนั้น "ระยะเสียง (distanceMax)"
+    หรือค่าคงที่อื่นในสคริปต์พวกนี้ *ไม่มีทาง* เชื่อมกับ sandbox var ได้เลยไม่ว่าจะยอมรีสตาร์ท
+    แค่ไหนก็ตาม ต้องแก้ไฟล์ .txt ตรงๆ แล้วรีสตาร์ทเกมให้ parse ใหม่เท่านั้น ***
+
+(ข) PZAPI.ModOptions (Lua, client-side, ไฟล์ .lua ธรรมดา ไม่ต้องมี .txt แยก)
+  - สร้างหน้าตั้งค่าจริงใน Options -> Mods -> <ชื่อที่ตั้ง> มี slider/tickbox/keybind ปรับสดได้
+    ทันที ไม่ต้องรีสตาร์ท ต่อผู้เล่นแยกกัน (per-player)
+  - ใช้เหมาะกับ: อะไรก็ตามที่อยากให้ผู้เล่นปรับ "ระหว่างเล่น" แล้วเห็นผลทันที (เสียง, keybind,
+    toggle ฟีเจอร์)
+  - โค้ดตัวอย่างจริงที่ยืนยันแล้วว่าใช้ได้ (อ้างอิงจาก ModernFirearmsSystem เอง,
+    media/lua/client/EFK_Mod_Options.lua):
+      local options = PZAPI.ModOptions:create("UniqueModOptionsId", getText("UI_options_X_title"))
+      options:addTitle(getText("..."))
+      options:addDescription(getText("..."))
+      options:addKeyBind("keybind_id", getText("..."), Keyboard.KEY_G, getText("...tooltip"))
+      options:addTickBox("tickbox_id", getText("..."), true, getText("...tooltip"))
+      local slider = options:addSlider("slider_id", getText("..."), 0, 2, 0.01, currentValue, getText("...tooltip"))
+      slider.onChange = function(_, value) ... end       -- ยิงสดขณะลาก
+      slider.onChangeApply = function(_, value) ... end  -- ยิงตอนปล่อย/ยืนยัน
+  - *** สำคัญ: ต้องเรียก Init()/create() "ทันทีตอนไฟล์โหลด" (ท้ายไฟล์เลย) ห้ามห่อด้วย
+    Events.OnGameStart.Add(...) แบบที่ทำกับ hook อื่น -- ระบบ options menu สแกนหาไว้ตั้งแต่ตอน
+    เกมเริ่ม ถ้าห่อ OnGameStart อาจไม่ทันหรือไม่โผล่ (ยึดตาม pattern จริงของ
+    EFK_Mod_Options.lua ที่เรียก AWCWF_Options.Init() ทันทีบรรทัดสุดท้ายของไฟล์) ***
+  - ต้องมี key getText(...) ใน Translate/{EN,TH}/UI.json ด้วย ใช้ prefix
+    "UI_options_<something>_..." (สังเกตจาก ModernFirearmsSystem เอง และของที่เราทำเองใน
+    HARMONIE_LifestyleAudioTune ก็ใช้ "UI_options_HARMONIE_LAT_...")
+
+กฎง่ายๆ: ถ้าผู้ใช้บอกว่า "ปรับแล้วไม่เห็นผลจนกว่าจะรีสตาร์ท" ให้สงสัยว่ากำลังใช้ sandbox option
+ผิดที่ผิดทาง (ควรเป็น ModOptions) ก่อน อย่าเพิ่งอธิบายว่า "sandbox ต้องรีสตาร์ทเป็นปกติ" เฉยๆ
+ถ้าจริงๆ requirement คือ "ปรับสดได้" -- ให้เสนอย้ายไปใช้ ModOptions แทนเลย
+
+
+3. ระบบเสียง (sound script) — กลไก override และข้อจำกัด
+==========================================================
+- Sound script (.txt ใต้ media/scripts) ถูก parse ก่อน Lua ทั้งหมด (ตอน engine boot) ดังนั้น
+  เขียนค่าแบบ SandboxVars.xxx ในไฟล์นี้ไม่ได้เด็ดขาด (ดูข้อ 2)
+- Override เสียงข้าม mod: ถ้า mod สองตัวประกาศ `sound <ชื่อเดียวกัน> {...}` ชื่อซ้ำกัน
+  mod ที่โหลด "ทีหลัง" ชนะ (ยืนยันด้วย web search + ทดสอบจริงแล้วใช้ได้) การบังคับลำดับโหลด
+  ใช้ `require=<ModId>` ใน mod.info ของตัวที่ต้องโหลดทีหลัง (ยืนยันจาก mods.txt จริงของเซฟ
+  ที่ mod ที่ require เรียงอยู่หลัง mod ที่ถูก require เสมอ)
+- *** กับดักสำคัญที่สุด: ค่า volume/distanceMax ในสคริปต์ .txt เป็นแค่ "ค่าตั้งต้น" เท่านั้น
+  ต้องเช็คโค้ด Lua จริงของ mod ก่อนเสมอว่ามันเรียก playSound/playSoundImpl แบบเฉยๆ (เคารพค่า
+  จากสคริปต์) หรือมีการเรียก emitter:setVolume(handle, ค่าตายตัว) ทับทีหลัง (ซึ่งจะ override
+  ค่าจากสคริปต์ทั้งหมด ทำให้แก้ .txt ไปก็ไม่มีผล) -- เจอเคสจริงกับ Lifestyle: Hobbies' Jukebox
+  ที่มีปุ่ม "Jukebox Volume" ของตัวเองอยู่แล้ว เซ็ต emitter:setVolume() ทับค่าสคริปต์ตรงๆ ***
+- *** ไม่มี Lua API ให้เปลี่ยน "ระยะที่ได้ยิน" (distanceMax/distanceMin) ของเสียงที่กำลังเล่นอยู่
+  หลังจากเริ่มเล่นแล้ว (ค้นหาทั่ว vanilla lua แล้วไม่เจอ setMaxRange หรือเทียบเท่าเลย มีแค่
+  setVolume/setPitch) ต้องแก้ไฟล์ .txt แล้วรีสตาร์ทเท่านั้น ไม่มีทางทำให้ live ได้ ***
+
+3.1 GameSounds category volume system (สำหรับทำ volume ปรับสดได้จริงแบบปลอดภัย)
+  - `GameSounds.getSoundsInCategory("ชื่อ category")` คืนเสียงทุกตัวที่ประกาศ `category = X`
+    ในสคริปต์ (ของ mod ไหนก็ได้ ไม่จำกัดแค่ mod เดียว)
+  - `sound:setUserVolume(x)` / `sound:getUserVolume()` ตั้ง/อ่านตัวคูณ volume ต่อผู้เล่น ถาวร
+    (เก็บผ่าน `GameSounds.saveINI()`)
+  - *** ต้องเช็คก่อนใช้เสมอ: grep vanilla media/scripts ทั้งหมดหาว่า category ชื่อนี้ vanilla
+    ใช้เยอะแค่ไหน (เคยเจอ "Item" ใช้ 1521 ครั้ง, "Object" ใช้ 351 ครั้ง ถ้าไปปรับ category
+    พวกนี้จะกระทบเสียงทั้งเกม ไม่ใช่แค่ของ mod เป้าหมาย) ใช้เทคนิคนี้ได้เฉพาะ category ที่
+    ไม่ซ้ำกับ vanilla เท่านั้น (เช่น "DJ"/"Oldies"/"SFX" ของ Lifestyle: Hobbies ไม่มี vanilla
+    ใช้เลยสักครั้ง -- ปลอดภัย) ***
+  - ถ้า category ที่ต้องการปรับดันใช้ร่วมกับ vanilla (เช่นเครื่องดนตรีของ Lifestyle ใช้
+    category "Item" เหมือน vanilla ส่วนใหญ่) ต้องใช้เทคนิคข้อ 3.2 (hook รายจุด) แทน ใช้
+    GameSounds category ไม่ได้เลย
+
+
+4. Hook Lua ข้าม mod แบบปลอดภัย (เมื่อ GameSounds category ใช้ไม่ได้)
+========================================================================
+- เขียนทับ "ทั้งไฟล์" (ชื่อ path เดียวกันข้าม mod) ใช้ไม่ได้กับ Lua เหมือนที่ใช้ได้กับ sound/item
+  script -- ไฟล์ Lua ของทุก mod ที่ path ไหนก็ตามจะถูกรันหมดทุกไฟล์ ไม่มีกลไก "อันหลังทับอันแรก"
+  แบบสคริปต์เลย
+- วิธีที่ถูกต้อง: หา "global function" หรือ "table method" (ไม่ใช่ `local function`) ที่ mod
+  เป้าหมายประกาศไว้ แล้วเขียนทับแบบ wrap-and-call-through:
+    local original_X = SomeGlobalTable.someMethod
+    function SomeGlobalTable.someMethod(...)
+        original_X(...)
+        -- โค้ดเพิ่มเติมของเรา
+    end
+  ปลอดภัยเพราะ method ของ class ใน Lua ก็แค่ entry ใน table ธรรมดา เขียนทับได้จาก mod อื่น
+  ตราบใดที่โหลดทีหลัง (บังคับด้วย require=)
+- *** ข้อจำกัด: `local function` ใน Lua มองไม่เห็นจากไฟล์อื่นเลย เขียนทับ/ลบ/เรียกจากข้างนอก
+  ไม่ได้เด็ดขาด ถ้าฟังก์ชันที่อยากดักเป็น local ให้หาว่ามันเรียก global function/table method
+  อะไรข้างในอีกที แล้วไป wrap ตัวนั้นแทน (เคยเจอเคสจริง: ChangeMagazineType.lua ของ
+  ModernFirearmsSystem มี `local function NeedRefresh()` ที่ wrap ไม่ได้ แต่มันเรียก global
+  `function ChangeMagzine(...)` ข้างใน เลย wrap ChangeMagzine แทน) ***
+- เวลาจะอ่าน instance field (self.xxx) จาก object ที่ method ต้นฉบับ set ไว้เอง (เช่น
+  self.gameSound, self.soundFile) ทำได้เลยหลัง original(...) return กลับมา เพราะเป็น field
+  บน object เดียวกัน ไม่ต้องแก้ไฟล์ต้นฉบับเลย (เจอ pattern นี้ซ้ำๆ ใน TimedAction classes
+  ของทั้ง Lifestyle: Hobbies และ ModernFirearmsSystem)
+- เวลา wrap ให้ครอบด้วย `Events.OnGameStart.Add(function() ... end)` เสมอ (ยกเว้น
+  PZAPI.ModOptions ที่ต้องเรียกทันที ดูข้อ 2) เพื่อรับประกันว่า mod เป้าหมายโหลด class จริง
+  เสร็จแล้วก่อนเราไปแก้ ไม่สนใจว่าไฟล์ mod ไหนโหลดก่อน-หลังกันภายในติ๊กเดียวกัน
+- เช็คเสมอว่า global/class ที่จะ wrap มีอยู่จริงก่อน (`if not X or not X.method then print(...);
+  return end`) แล้ว print แจ้งเตือนถ้าไม่เจอ เผื่อ mod เป้าหมายอัปเดต/เปลี่ยนโครงสร้างในอนาคต
+  จะได้รู้ทันทีจาก DebugLog ไม่ใช่เงียบๆ พังลึกๆ
+
+
+5. Thai translation workflow
+==============================
+- คำแปลไทยของทุก mod ที่ HARMONIE ทำ/แพตช์ (ทั้งของ HARMONIE เองและที่แพตช์ mod คนอื่น) รวมไว้
+  ที่เดียว: mods/HARMONIE_TooManyModThaiTranslate/42/media/lua/shared/Translate/TH/*.json
+  ไม่ต้อง bundle คำแปลแยกไปกับแต่ละ mod เอง (แม้แต่ mod ของ HARMONIE เองก็ตาม)
+  mod นี้ตั้งใจไม่มี require= dependency เลยสักตัว เพื่อให้เปิดค้างไว้ได้ตลอดอย่างปลอดภัย
+  (ข้อความจะโชว์เองเมื่อ mod เจ้าของ key นั้นเปิดใช้งานอยู่ ไม่งั้นก็เงียบไม่มีผลอะไร)
+- ไฟล์แยกตาม category (PZ translation format มาตรฐาน): ContextMenu.json, IG_UI.json,
+  ItemName.json, Recipes.json, Sandbox.json, Tooltip.json, UI.json (+ เพิ่มได้ตามต้องการ เช่น
+  Farming.json, Moodles.json, Moveables.json, Recorded_Media.json) เป็น flat key-value JSON
+  รวมกันได้จากหลาย mod ในไฟล์เดียว (เกมรวม key จากทุก mod ที่เปิดใช้เป็น namespace เดียวต่อภาษา)
+- *** ห้ามเขียนทับไฟล์ทั้งไฟล์เด็ดขาด (เคยพลาดมาแล้วจริง: cp ทับ Sandbox.json ของ
+  HARMONIE_ModernFirearmsSystemFix จนคำแปล key เดิมหาย ต้อง merge กลับ) ต้อง "เติมต่อท้าย" เสมอ:
+    1. อ่านท้ายไฟล์ก่อน (entry สุดท้ายไม่มี comma ต่อท้าย)
+    2. Edit เปลี่ยน entry สุดท้ายเดิม -> entry เดิม + comma + entry ใหม่ๆ + closing brace
+    3. ห้ามลบ/แก้ entry เดิมที่ไม่เกี่ยวกับงานที่ทำอยู่เลย ***
+- วิธีหา "ข้อความจีน/ภาษาอื่นที่หลุดมาโชว์ในเกมภาษาอังกฤษ": อย่าเทียบแค่ "จำนวน key" ระหว่าง
+  EN vs CN (ไฟล์ EN อาจมี key รวมเยอะกว่า CN ในภาพรวมได้ แต่ยังขาด key สำคัญบางตัวอยู่ดี) ให้:
+    1. หา DisplayName field ในสคริปต์ item/recipe จริงที่มีตัวอักษรจีน (CJK) ฝังอยู่ตรงๆ
+       (นี่คือค่า fallback ที่เกมโชว์เมื่อไม่มี key แปลตรงกับภาษาปัจจุบันเป๊ะๆ)
+    2. เทียบ key แต่ละตัวที่เจอ กับ CN translation file ว่ามี key ตรงกันไหม (ชื่อ key ที่ถูกต้อง
+       คือ "ItemName_" + FullType เช่น item AK103_cat ในโมดูล Base -> key "Base.AK103_cat"
+       ใน ItemName.json)
+    3. ถ้ามี key ใน CN -> แปล CN เป็นอังกฤษ/ไทยแล้วเติมเข้า EN/TH
+    4. ถ้าไม่มี key ใน CN เลย (orphan จริง) -> ตั้งชื่อเองจาก context/ชื่อ item ข้างเคียงที่มี
+       pattern คล้ายกัน (เช่นของตกแต่งแม็กกาซีนกระบอกอื่นๆ ที่มี pattern เดียวกันอยู่แล้ว)
+- ชื่อรุ่นปืน/โมเดลอาวุธ (เช่น "AK103", "M4A1", "HK416") ธรรมเนียมคือคงเป็นภาษาอังกฤษ/รหัส
+  เดิมไว้แม้แปลไทยแล้ว แปลแค่คำขยายความเป็นไทย (สอดคล้องกับที่คลังคำแปลเดิมทำกับชื่อรุ่น/เลข
+  ชิ้นส่วนรถ เช่น "ถัง 1000" ที่คงเลข 1000 ไว้)
+- Validate JSON ที่แก้เสร็จแล้วด้วย Node.js เท่านั้น (ดูข้อ 6 เรื่องทำไมห้ามใช้ PowerShell
+  ConvertFrom-Json หรือ grep -P)
+
+
+6. ข้อจำกัด/กับดักของ environment (Windows + Git Bash + PowerShell)
+======================================================================
+- ไม่มี Python ใช้งานได้ (python/python3 ชี้ไปที่ Windows Store stub ที่ error ทันที) --
+  ใช้ PowerShell (System.Drawing สำหรับรูป, ConvertFrom-Json สำหรับเช็คคร่าวๆ) หรือ Node.js
+  แทน (ยืนยันแล้วว่ามี Node.js ติดตั้งจริงที่ C:\Program Files\nodejs\node เวอร์ชัน 24.19.0)
+- ไม่มี `lua`/`luac` ให้ syntax-check ไฟล์ .lua ตรงๆ -- ต้องอ่านตรวจเองอย่างละเอียด + เช็ค
+  brace/paren สมดุล (grep นับ "{" กับ "}" คร่าวๆ ได้ แต่ระวัง: Lua ใช้ do/end ไม่ใช่ {} สำหรับ
+  if/for/function ตัว {} ใน Lua มีแค่ table constructor เท่านั้น อย่านับผิด)
+- ไม่มี ImageMagick (`identify`) -- เช็คขนาดภาพด้วย PowerShell:
+    Add-Type -AssemblyName System.Drawing
+    $img = [System.Drawing.Image]::FromFile($path); "$($img.Width)x$($img.Height)"; $img.Dispose()
+  สร้างรูป placeholder ด้วย System.Drawing เหมือนกัน (Bitmap + Graphics + Font + Pen/Brush)
+- *** `grep -P` (PCRE) กับ regex ที่มี unicode range เช่น [\x{4e00}-\x{9fff}] (ตรวจอักษรจีน)
+  ใน Git Bash ของเครื่องนี้ "fail แบบเงียบ" -- บางทีขึ้น error "supports only unibyte and UTF-8
+  locales" ชัดเจน แต่บางทีก็คืนค่าว่างเปล่าเฉยๆ ทำให้เข้าใจผิดว่า "ไม่เจอ" (false negative
+  อันตรายมาก เคยพลาดมาแล้วจริง สรุปผิดว่า "ไม่มีอักษรจีนในสคริปต์เลย" ทั้งที่จริงมี 144 ไฟล์)
+  *** ห้ามใช้ bash grep -P กับ unicode range เด็ดขาด ใช้ Grep tool (ripgrep-based) แทนเสมอ
+  ซึ่งรองรับ unicode ถูกต้อง ***
+- PowerShell `New-Object Type(a, b, c)` แบบใส่ argument ในวงเล็บตรงๆ (โดยเฉพาะถ้ามี expression
+  ที่มี comma หรือ operator อย่าง `/` อยู่ข้างในด้วย) จะถูก parse ผิดเป็น array argument เดียว
+  แทนที่จะเป็น constructor args หลายตัว -- error แบบ "positional parameter cannot be found"
+  หรือ "does not contain a method named 'op_Division'" *** ต้องใช้ฟอร์ม
+  `New-Object -TypeName X -ArgumentList a, b, c` เสมอ และถ้ามี expression ซับซ้อน (เช่นหาร)
+  ให้แยกคำนวณเก็บตัวแปรไว้ก่อนแล้วค่อยส่งเข้า -ArgumentList ***
+- PowerShell `ConvertFrom-Json` แปลงเป็น object/hashtable ที่ key เป็น case-INsensitive ทำให้
+  เจอ error "duplicate keys" ปลอมๆ เวลา JSON มี key ที่สะกดต่างกันแค่ตัวพิมพ์ใหญ่-เล็ก (เช่น
+  "IGUI_VehiclePartCounter" vs "IGUI_VehiclePartcounter" ซึ่งเป็น key ที่ถูกต้องและแยกกันจริง
+  ตาม JSON spec) *** อย่าเชื่อ error นี้ทันที เช็คก่อนว่า key ที่ชนกันสะกดต่างกันแค่ตัวพิมพ์
+  หรือเปล่า ถ้าใช่แปลว่า JSON ถูกต้องจริง ให้ validate ด้วย Node.js `JSON.parse` แทน (case-
+  sensitive ถูกต้องตาม JSON spec จริงๆ) ***
+- เรียก `node -e "..."` จาก bash ระวังปัญหา path escaping ระหว่าง git-bash-style (/c/Users/...)
+  กับ Windows-style (C:\Users\...) ที่ node ต้องการ -- วิธีชัวร์สุดคือเขียนเป็นไฟล์ .js แยก
+  (ใช้ forward slash ข้างใน เช่น "C:/Users/User/...") แล้วรันด้วย `node path/to/script.js`
+  แทนการยัด -e string ยาวๆ ผ่าน bash
+
+
+7. Steam Workshop content cache — หาไฟล์ต้นฉบับของ mod คนอื่นก่อน patch เสมอ
+================================================================================
+ก่อน patch mod คนอื่น ต้องหาไฟล์จริงของเขาก่อนเสมอ อย่าเดา — อยู่ที่:
+  C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\<WorkshopItemID>\mods\<โฟลเดอร์>\
+  (108600 = AppID ของ Project Zomboid)
+*** ชื่อโฟลเดอร์ใต้ mods/ ในนั้นอาจไม่ตรงกับชื่อ mod จริงเลย (เจอเคสจริง: Workshop item
+"ModernFirearmsSystem" อยู่ในโฟลเดอร์ชื่อ "Escape from Kentucky4215" ซึ่งเป็นชื่อ mod อื่น
+คนละตัว) *** ต้องเปิด mod.info ข้างในเช็ค id=/name= จริงเสมอ ห้ามเชื่อชื่อโฟลเดอร์
+1 Workshop item อาจรวมหลาย mod ไว้ด้วยกันก็ได้ (เจอเคสจริงเช่นกัน: item เดียวมี
+BackpackSystem, BladesmithSystem, ModernFirearmsSystem รวมกัน 3 mod)
+
+เทียบกับ vanilla เกมจริงเพื่อเช็คว่า category/keyword ไหนซ้ำ/ชนกับ vanilla หรือเปล่า
+(เช่นตอนหา category เสียงที่ปลอดภัยจะใช้กับ GameSounds, ข้อ 3.1) อยู่ที่:
+  C:\Program Files (x86)\Steam\steamapps\common\ProjectZomboid\media\...
+ห้ามสมมติ (assume) ว่า keyword ไหนซ้ำ/ไม่ซ้ำกับ vanilla โดยไม่ grep เช็คจริงก่อน
+
+
+8. บั๊ก/กับดัก multi-version mod ที่เคยเจอจริง (ต้องระวังเวลา debug อาการ "โหลด script ไม่ผ่าน")
+===================================================================================================
+บาง author publish Workshop item แยกสำหรับ build เกมเก่ากว่าด้วย (คนละ Workshop ID, คนละ
+internal mod id) นอกเหนือจากตัวหลัก/ตัวปัจจุบัน เช่น "Lifestyle: Hobbies 42.12" (mod id
+LifestyleHobbies4212, แยกจากตัวหลัก LifestyleHobbies) ระบุชัดในคำอธิบายว่า "For 42.12 version
+saves only!"
+
+ถ้าเปิดทั้งตัวหลักกับตัว legacy พร้อมกันโดยไม่ตั้งใจ (เช่นมาจาก modlist/collection เก่า) จะได้
+เนื้อหาที่พังจากตัว legacy (เช่น recipe อ้างถึง timedAction ที่ไม่มีอยู่แล้วใน build ปัจจุบัน)
+มาชนกัน ทำให้เกม error ตอน parse script:
+  ScriptManager.loadScripts > Exception thrown ... IOException: Script load errors
+
+วิธี debug:
+  1. เช็ค Logs/<วันที่>_DebugLog.txt หา error message ตรงๆ (ค้นคำว่า "no such sound", "could not
+     be found in recipe", "Exception thrown" เป็นต้น)
+  2. grep หา reference ที่พังนั้นทั่ว Workshop content cache ทั้งหมด (steamapps/workshop/content/
+     108600/*/) อย่าสมมติว่ามันอยู่ใน mod ที่ชื่อตรงกับที่คิด (ดูข้อ 7 เรื่องชื่อโฟลเดอร์หลอกได้)
+  3. เช็ค version เกมจริง (version.txt) เทียบกับที่ mod แต่ละตัวรองรับ
+  4. แก้โดยปิด mod เวอร์ชันเก่าที่ไม่ตรงกับ build ปัจจุบันทิ้ง (ผ่านเมนู MODS ในเกม ไม่ใช่ Options
+     -- Options ไม่มีแท็บ mod เลย ปุ่ม MODS อยู่แยกที่หน้าเมนูหลักต่างหาก)
+
+
+9. Checklist ก่อนเริ่มงานใหม่ทุกครั้ง
+=======================================
+[ ] อ่านไฟล์นี้ (mods/workflow.txt) ก่อนเสมอ
+[ ] `git fetch` + `git status` + `git log --oneline -5` เช็ค state ล่าสุดของ repo
+[ ] ถ้าจะ patch mod คนอื่น: หาไฟล์จริงใน Steam Workshop content cache ก่อน (ข้อ 7) อย่าเดา
+[ ] ถ้าจะทำ "ปรับได้ระหว่างเล่น": เลือก PZAPI.ModOptions ไม่ใช่ sandbox option (ข้อ 2)
+[ ] ถ้าจะทำ volume ปรับสด: เช็ค category ก่อนว่าซ้ำ vanilla ไหม (ข้อ 3.1) ถ้าซ้ำใช้ hook แทน
+[ ] ถ้าจะ hook Lua ข้าม mod: หา global function/table method ไม่ใช่ local function (ข้อ 4)
+[ ] ถ้าจะแก้ไฟล์แปล JSON: เติมต่อท้าย ห้ามเขียนทับทั้งไฟล์ (ข้อ 5) แล้ว validate ด้วย Node.js
+[ ] ถ้าจะสร้าง mod ใหม่ที่จะ publish: ทำครบ 8 ขั้นตอนในข้อ 1 รวม Workshop staging + รูป
+[ ] เจอความรู้ใหม่ระหว่างทาง -> กลับมาอัปเดตไฟล์นี้ก่อนจบงานเสมอ
