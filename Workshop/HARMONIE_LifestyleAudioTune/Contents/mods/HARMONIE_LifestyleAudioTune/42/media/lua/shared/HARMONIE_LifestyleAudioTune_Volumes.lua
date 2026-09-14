@@ -1319,6 +1319,19 @@ HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes = {
     ["HarmonicaFailstate01"] = 0.5,
     ["HarmonicaFailstate02"] = 0.5,
     ["HarmonicaFailstate03"] = 0.5,
+
+    -- JoJo's Bizarre Adventure OP addon tracks (HARMONIE_AudioTune_JoJo_sounds_item.txt) --
+    -- matches that file's own volume = 0.4 default so the live slider's baseline (1.0 =
+    -- unchanged from this value) lines up with what's actually declared in the script.
+    ["JoJo_SonoChiNoSadame"] = 0.4,
+    ["JoJo_BloodyStream"] = 0.4,
+    ["JoJo_StandProud"] = 0.4,
+    ["JoJo_CrazyNoisyBizarreTown"] = 0.4,
+    ["JoJo_Chase"] = 0.4,
+    ["JoJo_FightingGold"] = 0.4,
+    ["JoJo_TraitorsRequiem"] = 0.4,
+    ["JoJo_GreatDays"] = 0.4,
+    ["JoJo_StoneOcean"] = 0.4,
 }
 
 -- Live, per-player multiplier driven by the mod's PZAPI.ModOptions slider

@@ -7,7 +7,9 @@ description=Overrides the mod's disco/jukebox/DJ booth music, playable instrumen
 description=
 description=Also adds a real in-game settings page (Options -> Mods -> "HARMONIE: Lifestyle Audio Tune") with a live volume slider that applies instantly, no restart needed -- covering the DJ Booth, Jukebox idle/chime sounds, instruments and equipment SFX. The Jukebox's actual song already has its own native right-click "Jukebox Volume" menu in Lifestyle itself, so it's left untouched. Hearing distance/range is not live-adjustable (Project Zomboid has no API for that); it stays fixed at this mod's 25-tile override.
 description=
-description=Pure sound-script override -- no new content, no gameplay changes. Requires Lifestyle: Hobbies to be enabled, and must load after it (enforced automatically via require=).
+description=Also wires up 9 JoJo's Bizarre Adventure opening themes as playable instrument tracks (Electric Guitar, Bass, Saxophone, Trumpet) via Lifestyle's own song-addon extension point. Audio files are NOT included -- they're copyrighted; drop your own legally-obtained .ogg files into media/sound/JoJo/ yourself (see the README.txt in that folder for exact filenames).
+description=
+description=Requires Lifestyle: Hobbies to be enabled, and must load after it (enforced automatically via require=).
 description=
 description=Mod ID: HARMONIE_LifestyleAudioTune
 tags=Build 42;Audio

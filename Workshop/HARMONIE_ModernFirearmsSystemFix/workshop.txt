@@ -1,4 +1,5 @@
 version=1
+id=3801634449
 title=HARMONIE - ModernFirearmsSystem Fix
 description=Four fixes for "ModernFirearmsSystem" (Workshop ID 3633421539).
 description=
@@ -13,5 +14,5 @@ description=
 description=Requires ModernFirearmsSystem and must load after it (enforced automatically via require=). Thai translation for these same strings lives in the separate "HARMONIE - Too Many Mod Thai Translate" pack, not bundled here.
 description=
 description=Mod ID: HARMONIE_ModernFirearmsSystemFix
-tags=Build 42;Balance;Bugfix;Weapons
+tags=Build 42;Balance;Weapons
 visibility=public

@@ -1,0 +1,112 @@
+/*
+    Custom instrument tracks -- JoJo's Bizarre Adventure openings.
+
+    NOT bundled with any audio: these songs are commercially copyrighted
+    (Yugo Kanno / Coda / respective labels). This file only declares the
+    sound clips; you must supply your own legally-obtained .ogg files at
+    the paths below yourself. See AddMoreTracks_HARMONIE_JoJo.lua for the
+    matching instrument registration and README notes on exact filenames
+    and correcting each track's real length.
+
+    distanceMax = 25 / volume = 0.4 matches this mod's own reduced-audio
+    convention for the rest of Lifestyle: Hobbies (see the other
+    HARMONIE_AudioTune_*.txt files) so these new tracks stay consistent
+    and are covered by the same live volume slider (Options -> Mods ->
+    HARMONIE: Lifestyle Audio Tune) as everything else, via the
+    HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes entries added
+    in HARMONIE_LifestyleAudioTune_Volumes.lua.
+*/
+
+module Base {
+
+    sound JoJo_SonoChiNoSadame
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_SonoChiNoSadame.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_BloodyStream
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_BloodyStream.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_StandProud
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_StandProud.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_CrazyNoisyBizarreTown
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_CrazyNoisyBizarreTown.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_Chase
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_Chase.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_FightingGold
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_FightingGold.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_TraitorsRequiem
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_TraitorsRequiem.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_GreatDays
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_GreatDays.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound JoJo_StoneOcean
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/JoJo/JoJo_StoneOcean.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+}
