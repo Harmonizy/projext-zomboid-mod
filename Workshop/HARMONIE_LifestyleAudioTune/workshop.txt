@@ -5,7 +5,7 @@ description=Turns down "Lifestyle: Hobbies" (Workshop ID 3403870858) music and s
 description=
 description=Overrides the mod's disco/jukebox/DJ booth music, playable instruments (guitar, harmonica, etc.) and other equipment SFX (turn on/off, button presses, etc.) to half their original volume and a shared 25-tile max hearing distance (down from 75-100 tiles).
 description=
-description=Also adds a sandbox option, under "HARMONIE: Lifestyle Audio Tune" -> "Music/instrument volume multiplier", that live-adjusts the DJ Booth song and instrument-playing/training volume on top of the static reduction (0.05-1.0, default 0.5). The Jukebox song already has its own native right-click "Jukebox Volume" menu in Lifestyle itself, so it's left untouched.
+description=Also adds a real in-game settings page (Options -> Mods -> "HARMONIE: Lifestyle Audio Tune") with a live volume slider that applies instantly, no restart needed -- covering the DJ Booth, Jukebox idle/chime sounds, instruments and equipment SFX. The Jukebox's actual song already has its own native right-click "Jukebox Volume" menu in Lifestyle itself, so it's left untouched. Hearing distance/range is not live-adjustable (Project Zomboid has no API for that); it stays fixed at this mod's 25-tile override.
 description=
 description=Pure sound-script override -- no new content, no gameplay changes. Requires Lifestyle: Hobbies to be enabled, and must load after it (enforced automatically via require=).
 description=

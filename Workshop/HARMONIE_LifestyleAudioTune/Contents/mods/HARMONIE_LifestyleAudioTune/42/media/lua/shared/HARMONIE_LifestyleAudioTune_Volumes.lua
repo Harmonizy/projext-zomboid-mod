@@ -1321,16 +1321,21 @@ HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes = {
     ["HarmonicaFailstate03"] = 0.5,
 }
 
+-- Live, per-player multiplier driven by the mod's PZAPI.ModOptions slider
+-- (see HARMONIE_LifestyleAudioTune_ModOptions.lua) instead of a sandbox
+-- var, so it applies instantly with no world reload. Instruments use this
+-- function because their sound scripts share the vanilla "Item" category
+-- (1521 other vanilla sounds also use it), so GameSounds.getSoundsInCategory
+-- can't safely be used for them the way it is for DJ/Oldies/SFX.
+if HARMONIE_LifestyleAudioTune_LiveMultiplier == nil then
+    HARMONIE_LifestyleAudioTune_LiveMultiplier = 1.0
+end
+
 function HARMONIE_LifestyleAudioTune_ScaledVolume(soundName, fallback)
     if not soundName then return fallback end
     local base = HARMONIE_LifestyleAudioTune_OriginalVolumes[soundName]
     if not base then base = HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes[soundName]; end
     if not base then return fallback end
 
-    local multiplier = 0.5
-    if SandboxVars.HARMONIE_LifestyleAudioTune and SandboxVars.HARMONIE_LifestyleAudioTune.VolumeMultiplier then
-        multiplier = SandboxVars.HARMONIE_LifestyleAudioTune.VolumeMultiplier
-    end
-
-    return base * multiplier
+    return base * HARMONIE_LifestyleAudioTune_LiveMultiplier
 end

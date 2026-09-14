@@ -1,0 +1,7 @@
+{
+    "UI_options_HARMONIE_LAT_title": "HARMONIE: Lifestyle Audio Tune",
+    "UI_options_HARMONIE_LAT_section": "Volume",
+    "UI_options_HARMONIE_LAT_desc": "Live volume control for Lifestyle: Hobbies' DJ Booth, Jukebox idle/chime sounds, instruments and equipment SFX. Applies instantly, no restart needed. Does not affect the Jukebox's actual song (use Lifestyle's own right-click Jukebox Volume menu for that) or hearing distance/range, which is fixed and can only be changed by editing this mod's sound script files directly.",
+    "UI_options_HARMONIE_LAT_volume": "Volume Multiplier",
+    "UI_options_HARMONIE_LAT_volume_tooltip": "1.0 = this mod's already-halved default. 0 = silent. 2 = double that (still half of Lifestyle's original)."
+}
