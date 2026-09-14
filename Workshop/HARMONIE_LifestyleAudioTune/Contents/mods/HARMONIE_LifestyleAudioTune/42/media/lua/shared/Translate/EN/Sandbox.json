@@ -1,0 +1,5 @@
+{
+    "Sandbox_HARMONIE_LifestyleAudioTune": "HARMONIE: Lifestyle Audio Tune",
+    "Sandbox_HARMONIE_LifestyleAudioTuneVolumeMultiplier": "Music/instrument volume multiplier",
+    "Sandbox_HARMONIE_LifestyleAudioTuneVolumeMultiplier_tooltip": "Multiplies the volume of Lifestyle: Hobbies' DJ Booth song and instrument-playing/training sounds, live, while playing. 1.0 = the mod's own original volume, lower = quieter. Does not affect the Jukebox song (right-click the Jukebox -> Jukebox Volume for that) or the Disco Ball, which are not hooked live and stay at this mod's static reduced volume."
+}
