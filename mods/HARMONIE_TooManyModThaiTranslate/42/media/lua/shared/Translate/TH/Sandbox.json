@@ -505,5 +505,10 @@
     "Sandbox_Yoga_StrengthMultiplier_option2": "ปกติ",
     "Sandbox_Yoga_StrengthMultiplier_option3": "สูง",
     "Sandbox_Yoga_StrengthMultiplier_option4": "สูงมาก",
-    "Sandbox_Yoga_StrengthMultiplier_tooltip": "ควบคุมความรุนแรงของผลโยคะ ค่ายิ่งสูงยิ่งเพิ่มประสิทธิภาพของประโยชน์ที่ได้รับ"
+    "Sandbox_Yoga_StrengthMultiplier_tooltip": "ควบคุมความรุนแรงของผลโยคะ ค่ายิ่งสูงยิ่งเพิ่มประสิทธิภาพของประโยชน์ที่ได้รับ",
+
+    "Sandbox_HARMONIE_ModernFirearmsSystemFix": "HARMONIE: แก้ไข ModernFirearmsSystem",
+    "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier": "ตัวคูณอัตราดรอปปืน/กระสุน",
+    "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier_tooltip": "คูณความถี่ที่ปืนและกระสุนราว 230 ชิ้นของ ModernFirearmsSystem จะปรากฏใน loot เพิ่มเติมจากค่าน้ำหนักที่ตั้งตายตัวของ mod เอง (mod ต้นฉบับไม่มีตัวปรับอัตรา มีแค่สวิตช์เปิด-ปิดรายกระบอก) 1.0 = อัตราเดิมของ mod ไม่เปลี่ยนแปลง 0 = ไม่ดรอปเลย (เหมือนปิดสวิตช์ทุกกระบอก) ไม่มีผลกับ loot ของ vanilla หรืออุปกรณ์เสริม/part ของ mod นี้",
+    "Sandbox_ModernFirearmsSystemSandboxGun_M1918_Spawn": "อัตราการเกิด M1918"
 }
