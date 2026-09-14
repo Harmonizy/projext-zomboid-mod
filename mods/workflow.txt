@@ -249,6 +249,32 @@ Workshop/<ModId>/workshop.txt
   แทนการยัด -e string ยาวๆ ผ่าน bash
 
 
+6.1 Lifestyle: Hobbies — ช่องเสียบเพลงเครื่องดนตรีสำหรับ addon (ยืนยันจาก 3 mod อ้างอิงจริง:
+    Workshop 3783028777 "LifestyleRedemptionB42", 3016221184 "Hazy Lifestyle",
+    3782768673 "UndertaleOnGuitar" — ทั้ง 3 ใช้ pattern เดียวกันเป๊ะ)
+  Lifestyle เปิด extension point ไว้ให้เพิ่มเพลงเครื่องดนตรีได้โดยไม่ต้องแก้ไฟล์ของ Lifestyle เอง
+  ต้องมี 3 ไฟล์ในมอด addon ใหม่:
+    (1) media/sound/<name>.ogg -- ไฟล์เพลงจริง
+    (2) media/scripts/<AddonName>_sounds_item.txt --
+          module Base { sound <name> { category = Item, loop = false, is3D = true,
+            clip { file = media/sound/<name>.ogg, distanceMin = 10, distanceMax = 100,
+            reverbFactor = 0.1, volume = 0.4, } } }
+    (3) media/lua/client/TimedActions/AddMoreTracks_<AddonName>.lua --
+          local XTracks = require "TimedActions/Play<Instrument>Tracks"
+          table.insert(XTracks, {level=N, sound="<name>", length=<วินาทีจริง>, name="<ชื่อโชว์ในเกม>"})
+        (รันทันทีตอนโหลดไฟล์ ไม่ต้องห่อ Events.OnGameStart)
+  รายชื่อ instrument table ที่ require ได้: PlayTrumpetTracks, PlayGuitarAcousticTracks,
+  PlayBanjoTracks, PlayFluteTracks, PlayGuitarElectricBassTracks, PlayGuitarElectricTracks,
+  PlayKeytarTracks, PlaySaxophoneTracks, PlayHarmonicaTracks (ตัวหลังต้องมี addon ฮาร์โมนิกา
+  แยกลงไว้ก่อนถึงจะมีโมดูลนี้ให้ require)
+  เป็น extension point สำหรับ "เพลงที่เล่นผ่านเครื่องดนตรี" เท่านั้น ไม่ใช่เพลง Jukebox/DJ Booth
+  (นั่นเป็นระบบคนละตัว ดูข้อ 3 เรื่อง sound script override ทั่วไปแทน)
+  *** ข้อสังเกต: 2 ใน 3 มอดตัวอย่าง (Hazy Lifestyle, UndertaleOnGuitar) ไม่ใส่
+  require=LifestyleHobbies ใน mod.info เลย (มีแต่ LifestyleRedemptionB42 ใส่ไว้) ทั้งที่พึ่งพา
+  module ของ Lifestyle โดยตรงผ่าน require "TimedActions/PlayXTracks" -- ควรใส่ require= เสมอ
+  เวลาทำ addon แบบนี้เอง อย่าทำตามแบบที่ขาดไป ***
+
+
 7. Steam Workshop content cache — หาไฟล์ต้นฉบับของ mod คนอื่นก่อน patch เสมอ
 ================================================================================
 ก่อน patch mod คนอื่น ต้องหาไฟล์จริงของเขาก่อนเสมอ อย่าเดา — อยู่ที่:
