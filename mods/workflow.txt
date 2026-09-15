@@ -28,6 +28,25 @@ mods/<ModId>/<version>/...
   patch) ใช้แบบไหนแล้วทำตาม (เช่น Lifestyle: Hobbies ใช้ "common" ล้วน ไม่มีโฟลเดอร์ "42" ที่มี
   เนื้อหาจริงเลย -- แต่ HARMONIE_* ส่วนใหญ่ใช้ "42")
 
+  *** แก้แล้วยืนยันจริง (2026-09-16, กรณี JoJo_FightingGold เสียงเงียบสนิทถาวร): ห้ามสมมติเด็ดขาด
+  ว่าเกมโหลด mods/ เสมอ! ตรวจสอบจริงด้วย debug console แล้วพบว่า mod ที่ผู้ใช้ enable อยู่ตอนนี้
+  ("HARMONIE_LifestyleAudioTune") เกมกลับโหลดจาก Workshop/<ModId>/Contents/mods/<ModId>/<version>/
+  (โฟลเดอร์ staging สำหรับอัปโหลด) แทน! เช็คได้ด้วยการ require ตาราง Lua ตรงๆ ผ่าน debug console
+  แล้วเทียบค่ากับไฟล์บนดิสก์ทั้งสองที่ -- ถ้าไม่ตรงกับ mods/ แต่ตรงกับ Workshop/ แปลว่าผู้ใช้
+  เลือก mod ตัวที่มาจาก Workshop staging ในหน้าเลือก mods ของเกม (มี 2 entry ให้เลือกเพราะมี
+  mod.info ID เดียวกันอยู่ 2 จุดบนดิสก์ -- เรื่องง่ายมากที่จะพลาดเลือกผิด) ผลคือ:
+  1) แก้โค้ด/ค่าใน mods/ อย่างเดียวจะ "ดูเหมือนไม่มีผล" ทั้งที่จริงๆ แค่เกมไม่ได้อ่านจากตรงนั้น
+  2) ไฟล์เสียง .ogg (gitignore ไว้ ไม่เคย sync อัตโนมัติ) ถ้าไม่ได้ copy ไปไว้ใน Workshop/ ด้วยมือ
+  จะทำให้ playSound() หา asset ไม่เจอแล้ว fail แบบเงียบสนิท (ไม่มี error, ไม่มี GAMESOUND-SET
+  handle เลยตลอดทั้งเพลง) -- อาการนี้แยกยากจากบั๊ก cache ของหัวข้อ 6.1 มาก ต้องแยกให้ออก:
+  ใช้ debug console สั่ง `require "TimedActions/Play<Instrument>Tracks"` ตรงๆ เทียบค่ากับทั้ง
+  cache ของตัวละครและไฟล์บนดิสก์ทั้งสองที่ ถ้า LIVE (จาก require) กับ CACHED (จาก
+  learnedTracksData) ตรงกันทั้งคู่แต่ "ผิด" เมื่อเทียบกับไฟล์ mods/ -- ไม่ใช่บั๊ก cache แล้ว
+  แปลว่าเกมโหลดคนละไฟล์กับที่แก้ไปเลย ให้ไปเช็ค Workshop/ staging copy ทันที
+  วิธีป้องกัน: sync ทุกไฟล์ที่แก้ (Lua/txt/json ก็อป, .ogg ก็อปด้วยมือเพราะ gitignore) ไปที่
+  Workshop/<ModId>/Contents/mods/<ModId>/<version>/ ควบคู่กับ mods/ เสมอทุกครั้งที่แก้ ห้ามลืม
+  ไฟล์ .ogg เพราะ git ไม่ track ให้ ***
+
 Workshop/<ModId>/Contents/mods/<ModId>/<version>/...
   = สำเนาสำหรับอัปโหลด Steam Workshop (โครงสร้างต้องมี "Contents/mods/<ModId>/" ครอบอีกชั้น
   ตาม convention ของ PZ Workshop uploader — เทียบ Workshop/ModTemplate/Contents/mods/ModTemplate/
