@@ -24,7 +24,7 @@
 ]]--
 
 local GuitarElectricTracks = require "TimedActions/PlayGuitarElectricTracks"
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=90, name="Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
+table.insert(GuitarElectricTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
 table.insert(GuitarElectricTracks, {level=0, sound="JoJo_BloodyStream", length=90, name="Bloody Stream (Stardust Crusaders OP1)"})
 table.insert(GuitarElectricTracks, {level=0, sound="JoJo_FightingGold", length=90, name="Fighting Gold (Golden Wind OP1)"})
 table.insert(GuitarElectricTracks, {level=0, sound="JoJo_GreatDays", length=90, name="Great Days (Golden Wind OP3)"})

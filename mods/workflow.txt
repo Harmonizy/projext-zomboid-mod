@@ -274,6 +274,27 @@ Workshop/<ModId>/workshop.txt
   module ของ Lifestyle โดยตรงผ่าน require "TimedActions/PlayXTracks" -- ควรใส่ require= เสมอ
   เวลาทำ addon แบบนี้เอง อย่าทำตามแบบที่ขาดไป ***
 
+  *** ตรวจสอบ Steam Workshop จริงแล้ว (2026-09-15): ทั้ง 3 มอดอ้างอิงนี้ใช้งานไม่ได้แล้วทั้งหมด --
+  Hazy Lifestyle เป็นมอด B41.78+ เท่านั้น ไม่เคยอัปเดตเป็น B42 เลย ส่วน LifestyleRedemptionB42
+  กับ UndertaleOnGuitar แม้ประกาศรองรับ B42 จริง แต่ถูกลบออกจาก Workshop ไปแล้ว (ผิด Content
+  Guidelines -- แทบชัวร์ว่าเพราะลิขสิทธิ์เพลงที่แปะมาด้วย, ตรงกับที่เตือนผู้ใช้ไว้เรื่องเพลง
+  ลิขสิทธิ์) ก่อนอ้างอิง mod ไหนจาก Workshop เสมอ ให้เช็คหน้า Steam จริงด้วย WebFetch ว่ายัง
+  publish อยู่ไหม/ยังไม่ถูกแจ้งว่า incompatible ไหม อย่าเชื่อแค่ไฟล์ cache ในเครื่อง ***
+
+  *** กับดักใหญ่ที่เจอจริงและเสียเวลามาก: เพลงที่โชว์ในเมนูเครื่องดนตรี **ไม่ได้อ่านจากตาราง
+  PlayXTracks (live) ทุกครั้งที่เปิดเมนู** -- Lifestyle ทำ "snapshot" ครั้งเดียวตอนตัวละครเปิด
+  เมนูเพลงครั้งแรก (หรือกด "Debug - Learn All") แล้วเก็บถาวรลง
+  player:getModData().<Instrument>LearnedTracks (เช่น GuitarELearnedTracks สำหรับกีตาร์ไฟฟ้า,
+  ดู NewInstrumentsContextMenu.lua: `learnedTracksData = playerdata.GuitarELearnedTracks` แล้ว
+  `if #learnedTracksData == 0 then doLearnAllSongsFull(...) end`) -- พอ snapshot ไม่ว่างแล้ว
+  จะไม่ refresh อัตโนมัติอีกเลย ต่อให้แก้ไฟล์ table.insert ของเราแล้ว restart เกมกี่รอบก็ตาม
+  ทำให้ debug เสียเวลามากเพราะเข้าใจผิดว่าโค้ด/ไฟล์เสียงมีปัญหา ทั้งที่จริงแค่ตัวละครที่ทดสอบมี
+  snapshot เก่าค้างอยู่ *** ก่อนเชื่อว่า table.insert ใหม่ "ไม่มีผล" ให้ล้าง snapshot ก่อนเสมอ
+  ด้วย debug console: `getPlayer():getModData().<Instrument>LearnedTracks = {}` (เปลี่ยน
+  <Instrument> ตามจริง เช่น GuitarELearnedTracks/GuitarALearnedTracks/BanjoLearnedTracks/
+  HarmonicaLearnedTracks ฯลฯ ดู field name เต็มได้จาก NewInstrumentsContextMenu.lua บรรทัด
+  ~41-62) แล้วเปิดเมนูเพลงใหม่อีกครั้งถึงจะ sync จากตาราง live จริงๆ ***
+
 
 7. Steam Workshop content cache — หาไฟล์ต้นฉบับของ mod คนอื่นก่อน patch เสมอ
 ================================================================================

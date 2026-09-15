@@ -4,3 +4,10 @@
 !/mods/
 !/Workshop/
 !/.gitignore
+
+# Never commit copyrighted audio the user supplies locally for personal-use
+# addons (e.g. HARMONIE_LifestyleAudioTune's JoJo instrument tracks) -- this
+# repo pushes to a public-ish GitLab remote, and these files are explicitly
+# NOT meant to be redistributed. See media/sound/JoJo/README.txt in that mod.
+mods/HARMONIE_LifestyleAudioTune/42/media/sound/JoJo/*.ogg
+Workshop/HARMONIE_LifestyleAudioTune/Contents/mods/HARMONIE_LifestyleAudioTune/42/media/sound/JoJo/*.ogg
