@@ -24,18 +24,18 @@
 ]]--
 
 local GuitarElectricTracks = require "TimedActions/PlayGuitarElectricTracks"
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_BloodyStream", length=90, name="Bloody Stream (Stardust Crusaders OP1)"})
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_FightingGold", length=90, name="Fighting Gold (Golden Wind OP1)"})
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_GreatDays", length=90, name="Great Days (Golden Wind OP3)"})
+table.insert(GuitarElectricTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="JoJo: Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
+table.insert(GuitarElectricTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+table.insert(GuitarElectricTracks, {level=0, sound="JoJo_FightingGold", length=90, name="JoJo: Fighting Gold (Golden Wind OP1)"})
+table.insert(GuitarElectricTracks, {level=0, sound="JoJo_GreatDays", length=90, name="JoJo: Great Days (Golden Wind OP3)"})
 
 local GuitarElectricBassTracks = require "TimedActions/PlayGuitarElectricBassTracks"
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_StandProud", length=90, name="Stand Proud (Stardust Crusaders OP2)"})
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_TraitorsRequiem", length=90, name="Traitor's Requiem (Golden Wind OP2)"})
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_StoneOcean", length=90, name="STONE OCEAN (Stone Ocean OP1)"})
+table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_StandProud", length=90, name="JoJo: Stand Proud (Stardust Crusaders OP2)"})
+table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_TraitorsRequiem", length=90, name="JoJo: Traitor's Requiem (Golden Wind OP2)"})
+table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_StoneOcean", length=90, name="JoJo: STONE OCEAN (Stone Ocean OP1)"})
 
 local SaxophoneTracks = require "TimedActions/PlaySaxophoneTracks"
-table.insert(SaxophoneTracks, {level=0, sound="JoJo_CrazyNoisyBizarreTown", length=90, name="Crazy Noisy Bizarre Town (Diamond is Unbreakable OP1)"})
+table.insert(SaxophoneTracks, {level=0, sound="JoJo_CrazyNoisyBizarreTown", length=90, name="JoJo: Crazy Noisy Bizarre Town (Diamond is Unbreakable OP1)"})
 
 local TrumpetTracks = require "TimedActions/PlayTrumpetTracks"
-table.insert(TrumpetTracks, {level=0, sound="JoJo_Chase", length=90, name="Chase (Diamond is Unbreakable OP2)"})
+table.insert(TrumpetTracks, {level=0, sound="JoJo_Chase", length=90, name="JoJo: Chase (Diamond is Unbreakable OP2)"})
