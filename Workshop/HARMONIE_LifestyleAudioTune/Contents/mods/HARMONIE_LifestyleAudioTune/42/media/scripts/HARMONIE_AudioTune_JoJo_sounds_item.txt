@@ -39,36 +39,6 @@ module Base {
         }
     }
 
-    sound JoJo_StandProud
-    {
-        category = Item, loop = false, is3D = true,
-        clip {
-        file = media/sound/JoJo/JoJo_StandProud.ogg,
-        distanceMin = 10, distanceMax = 25,
-        reverbFactor = 0.1, volume = 0.4,
-        }
-    }
-
-    sound JoJo_CrazyNoisyBizarreTown
-    {
-        category = Item, loop = false, is3D = true,
-        clip {
-        file = media/sound/JoJo/JoJo_CrazyNoisyBizarreTown.ogg,
-        distanceMin = 10, distanceMax = 25,
-        reverbFactor = 0.1, volume = 0.4,
-        }
-    }
-
-    sound JoJo_Chase
-    {
-        category = Item, loop = false, is3D = true,
-        clip {
-        file = media/sound/JoJo/JoJo_Chase.ogg,
-        distanceMin = 10, distanceMax = 25,
-        reverbFactor = 0.1, volume = 0.4,
-        }
-    }
-
     sound JoJo_FightingGold
     {
         category = Item, loop = false, is3D = true,
@@ -79,31 +49,11 @@ module Base {
         }
     }
 
-    sound JoJo_TraitorsRequiem
+    sound JoJo_GiornosTheme
     {
         category = Item, loop = false, is3D = true,
         clip {
-        file = media/sound/JoJo/JoJo_TraitorsRequiem.ogg,
-        distanceMin = 10, distanceMax = 25,
-        reverbFactor = 0.1, volume = 0.4,
-        }
-    }
-
-    sound JoJo_GreatDays
-    {
-        category = Item, loop = false, is3D = true,
-        clip {
-        file = media/sound/JoJo/JoJo_GreatDays.ogg,
-        distanceMin = 10, distanceMax = 25,
-        reverbFactor = 0.1, volume = 0.4,
-        }
-    }
-
-    sound JoJo_StoneOcean
-    {
-        category = Item, loop = false, is3D = true,
-        clip {
-        file = media/sound/JoJo/JoJo_StoneOcean.ogg,
+        file = media/sound/JoJo/JoJo_GiornosTheme.ogg,
         distanceMin = 10, distanceMax = 25,
         reverbFactor = 0.1, volume = 0.4,
         }

@@ -6,36 +6,56 @@
     "TimedActions/Play<Instrument>Tracks" then table.insert a
     {level, sound, length, name} entry, no changes to Lifestyle's own files.
 
-    *** length below is a PLACEHOLDER (90 = a typical TV-size OP length) for
-    every track -- replace it with the real duration in seconds of whichever
-    .ogg file you actually drop in, or the song will cut off early / leave
-    dead air. Sound file paths expected (not included -- see
-    HARMONIE_AudioTune_JoJo_sounds_item.txt for why): ***
+    Each song is registered into MULTIPLE instrument tables on purpose (same
+    sound= name reused across several table.insert calls) to match the real
+    instrumentation described for each track -- a song isn't tied to a single
+    instrument, it can be played on any of the instruments that suit it. Only
+    the 9 instrument tables Lifestyle's addon extension point actually
+    supports are used (see workflow.txt section 6.1): PlayTrumpetTracks,
+    PlayGuitarAcousticTracks, PlayBanjoTracks, PlayFluteTracks,
+    PlayGuitarElectricBassTracks, PlayGuitarElectricTracks, PlayKeytarTracks,
+    PlaySaxophoneTracks, PlayHarmonicaTracks. Piano/Violin/Drums are NOT in
+    this set (different, unconfirmed registration mechanism) -- Keytar is
+    used as the closest available stand-in wherever a song calls for
+    keyboard/piano/synth/orchestral textures.
 
-        media/sound/JoJo/JoJo_SonoChiNoSadame.ogg
-        media/sound/JoJo/JoJo_BloodyStream.ogg
-        media/sound/JoJo/JoJo_StandProud.ogg
-        media/sound/JoJo/JoJo_CrazyNoisyBizarreTown.ogg
-        media/sound/JoJo/JoJo_Chase.ogg
-        media/sound/JoJo/JoJo_FightingGold.ogg
-        media/sound/JoJo/JoJo_TraitorsRequiem.ogg
-        media/sound/JoJo/JoJo_GreatDays.ogg
-        media/sound/JoJo/JoJo_StoneOcean.ogg
+    All 4 songs already have real .ogg files in place with confirmed lengths:
+        media/sound/JoJo/JoJo_SonoChiNoSadame.ogg   (92s)
+        media/sound/JoJo/JoJo_BloodyStream.ogg      (89s)
+        media/sound/JoJo/JoJo_FightingGold.ogg      (253s)
+        media/sound/JoJo/JoJo_GiornosTheme.ogg      (296s)
+    (He-Man's HEYYEYAAEYAAAEYAEYAA is a separate franchise -- registered in
+    AddMoreTracks_HARMONIE_HeMan.lua instead, not here.)
 ]]--
 
 local GuitarElectricTracks = require "TimedActions/PlayGuitarElectricTracks"
+-- Sono Chi no Sadame: brass + heavy electric guitar
 table.insert(GuitarElectricTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="JoJo: Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+-- Fighting Gold: rock mixed with orchestral hits
 table.insert(GuitarElectricTracks, {level=0, sound="JoJo_FightingGold", length=253, name="JoJo: Fighting Gold (Golden Wind OP1)"})
-table.insert(GuitarElectricTracks, {level=0, sound="JoJo_GreatDays", length=90, name="JoJo: Great Days (Golden Wind OP3)"})
 
 local GuitarElectricBassTracks = require "TimedActions/PlayGuitarElectricBassTracks"
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_StandProud", length=90, name="JoJo: Stand Proud (Stardust Crusaders OP2)"})
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_TraitorsRequiem", length=90, name="JoJo: Traitor's Requiem (Golden Wind OP2)"})
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_StoneOcean", length=90, name="JoJo: STONE OCEAN (Stone Ocean OP1)"})
+-- Bloody Stream: bassline-driven disco groove
+table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+-- Fighting Gold: rock mixed with orchestral hits
+table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_FightingGold", length=253, name="JoJo: Fighting Gold (Golden Wind OP1)"})
 
 local SaxophoneTracks = require "TimedActions/PlaySaxophoneTracks"
-table.insert(SaxophoneTracks, {level=0, sound="JoJo_CrazyNoisyBizarreTown", length=90, name="JoJo: Crazy Noisy Bizarre Town (Diamond is Unbreakable OP1)"})
+-- Sono Chi no Sadame: brass section
+table.insert(SaxophoneTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="JoJo: Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
+-- Bloody Stream: disco horn stabs
+table.insert(SaxophoneTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+-- Giorno's Theme: scat/saxophone build-up
+table.insert(SaxophoneTracks, {level=0, sound="JoJo_GiornosTheme", length=296, name="JoJo: Giorno's Theme (Golden Wind OP2)"})
 
 local TrumpetTracks = require "TimedActions/PlayTrumpetTracks"
-table.insert(TrumpetTracks, {level=0, sound="JoJo_Chase", length=90, name="JoJo: Chase (Diamond is Unbreakable OP2)"})
+-- Sono Chi no Sadame: brass section
+table.insert(TrumpetTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="JoJo: Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
+-- Bloody Stream: disco horn stabs
+table.insert(TrumpetTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+
+local KeytarTracks = require "TimedActions/PlayKeytarTracks"
+-- Fighting Gold: orchestral synth textures (Keytar stands in for orchestra/keys)
+table.insert(KeytarTracks, {level=0, sound="JoJo_FightingGold", length=253, name="JoJo: Fighting Gold (Golden Wind OP1)"})
+-- Giorno's Theme: piano breakdown (Keytar stands in for piano)
+table.insert(KeytarTracks, {level=0, sound="JoJo_GiornosTheme", length=296, name="JoJo: Giorno's Theme (Golden Wind OP2)"})

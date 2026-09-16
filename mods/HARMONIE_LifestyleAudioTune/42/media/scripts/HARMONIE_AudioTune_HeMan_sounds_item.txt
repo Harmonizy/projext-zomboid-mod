@@ -1,0 +1,31 @@
+/*
+    Custom instrument track -- "He-Man / HEYYEYAAEYAAAEYAEYAA" meme song.
+
+    NOT bundled with any audio: this is commercially released music (not
+    HARMONIE's own work). This file only declares the sound clip; you must
+    supply your own legally-obtained .ogg file at the path below yourself.
+    See AddMoreTracks_HARMONIE_HeMan.lua for the matching instrument
+    registration and media/sound/HeMan/README.txt for filename/length notes.
+
+    distanceMax = 25 / volume = 0.4 matches this mod's own reduced-audio
+    convention for the rest of Lifestyle: Hobbies (see the other
+    HARMONIE_AudioTune_*.txt files) so this track stays consistent and is
+    covered by the same live volume slider (Options -> Mods -> HARMONIE:
+    Lifestyle Audio Tune) as everything else, via the
+    HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes entry added in
+    HARMONIE_LifestyleAudioTune_Volumes.lua.
+*/
+
+module Base {
+
+    sound HeMan_HEYYEYAAEYAAAEYAEYAA
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/HeMan/HeMan_HEYYEYAAEYAAAEYAEYAA.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+}

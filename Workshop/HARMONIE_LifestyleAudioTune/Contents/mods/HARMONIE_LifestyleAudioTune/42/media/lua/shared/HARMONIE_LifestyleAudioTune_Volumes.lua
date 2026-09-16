@@ -1325,13 +1325,11 @@ HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes = {
     -- unchanged from this value) lines up with what's actually declared in the script.
     ["JoJo_SonoChiNoSadame"] = 0.4,
     ["JoJo_BloodyStream"] = 0.4,
-    ["JoJo_StandProud"] = 0.4,
-    ["JoJo_CrazyNoisyBizarreTown"] = 0.4,
-    ["JoJo_Chase"] = 0.4,
     ["JoJo_FightingGold"] = 0.4,
-    ["JoJo_TraitorsRequiem"] = 0.4,
-    ["JoJo_GreatDays"] = 0.4,
-    ["JoJo_StoneOcean"] = 0.4,
+    ["JoJo_GiornosTheme"] = 0.4,
+
+    -- He-Man meme song addon track (HARMONIE_AudioTune_HeMan_sounds_item.txt) --
+    ["HeMan_HEYYEYAAEYAAAEYAEYAA"] = 0.4,
 }
 
 -- Live, per-player multiplier driven by the mod's PZAPI.ModOptions slider
