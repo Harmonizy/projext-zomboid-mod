@@ -23,7 +23,7 @@ module Base {
     {
         category = Item, loop = false, is3D = true,
         clip {
-        file = media/sound/JoJo/JoJo_SonoChiNoSadame.ogg,
+        file = media/sound/JoJo_SonoChiNoSadame.ogg,
         distanceMin = 10, distanceMax = 25,
         reverbFactor = 0.1, volume = 0.4,
         }
@@ -33,7 +33,7 @@ module Base {
     {
         category = Item, loop = false, is3D = true,
         clip {
-        file = media/sound/JoJo/JoJo_BloodyStream.ogg,
+        file = media/sound/JoJo_BloodyStream.ogg,
         distanceMin = 10, distanceMax = 25,
         reverbFactor = 0.1, volume = 0.4,
         }
@@ -43,7 +43,7 @@ module Base {
     {
         category = Item, loop = false, is3D = true,
         clip {
-        file = media/sound/JoJo/JoJo_FightingGold.ogg,
+        file = media/sound/JoJo_FightingGold.ogg,
         distanceMin = 10, distanceMax = 25,
         reverbFactor = 0.1, volume = 0.4,
         }
@@ -53,7 +53,7 @@ module Base {
     {
         category = Item, loop = false, is3D = true,
         clip {
-        file = media/sound/JoJo/JoJo_GiornosTheme.ogg,
+        file = media/sound/JoJo_GiornosTheme.ogg,
         distanceMin = 10, distanceMax = 25,
         reverbFactor = 0.1, volume = 0.4,
         }

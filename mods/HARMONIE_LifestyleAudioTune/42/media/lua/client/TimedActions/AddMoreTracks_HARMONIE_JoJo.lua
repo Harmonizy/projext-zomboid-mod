@@ -20,10 +20,10 @@
     keyboard/piano/synth/orchestral textures.
 
     All 4 songs already have real .ogg files in place with confirmed lengths:
-        media/sound/JoJo/JoJo_SonoChiNoSadame.ogg   (92s)
-        media/sound/JoJo/JoJo_BloodyStream.ogg      (89s)
-        media/sound/JoJo/JoJo_FightingGold.ogg      (253s)
-        media/sound/JoJo/JoJo_GiornosTheme.ogg      (296s)
+        media/sound/JoJo_SonoChiNoSadame.ogg   (92s)
+        media/sound/JoJo_BloodyStream.ogg      (89s)
+        media/sound/JoJo_FightingGold.ogg      (253s)
+        media/sound/JoJo_GiornosTheme.ogg      (296s)
     (He-Man's HEYYEYAAEYAAAEYAEYAA is a separate franchise -- registered in
     AddMoreTracks_HARMONIE_HeMan.lua instead, not here.)
 ]]--

@@ -8,7 +8,7 @@
     instrumentation (harmonica, keyboard, flute).
 
     Real .ogg file already in place with confirmed length:
-        media/sound/HeMan/HeMan_HEYYEYAAEYAAAEYAEYAA.ogg   (127s)
+        media/sound/HeMan_HEYYEYAAEYAAAEYAEYAA.ogg   (127s)
 ]]--
 
 local HarmonicaTracks = require "TimedActions/PlayHarmonicaTracks"

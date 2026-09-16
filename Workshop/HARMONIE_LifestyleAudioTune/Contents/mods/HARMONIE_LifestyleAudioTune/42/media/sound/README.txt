@@ -1,27 +1,28 @@
-ไฟล์เพลง JoJo's Bizarre Adventure ที่ใช้ในม็อดนี้ (ไฟล์ .ogg ไม่รวมมาให้เพราะเป็นเพลงลิขสิทธิ์)
+ไฟล์เพลงที่ใช้ในม็อดนี้ (ไฟล์ .ogg ไม่รวมมาให้เพราะเป็นเพลงมีลิขสิทธิ์)
 ================================================================================
 
-ตอนนี้เหลือ 4 เพลง (ตัดออก 5 เพลงเดิมแล้วตามที่ขอ) ครบไฟล์แล้วทั้ง 4:
+เก็บไฟล์เพลงทั้งหมดไว้แบบแฟลตในโฟลเดอร์นี้เลย ไม่แยกโฟลเดอร์ย่อยต่อแฟรนไชส์แล้ว:
 
-  JoJo_SonoChiNoSadame.ogg   -- Sono Chi no Sadame (Phantom Blood/Battle Tendency OP) -- 92s
-  JoJo_BloodyStream.ogg      -- Bloody Stream (Stardust Crusaders OP1) -- 89s
-  JoJo_FightingGold.ogg      -- Fighting Gold (Golden Wind OP1) -- 253s
-  JoJo_GiornosTheme.ogg      -- Giorno's Theme (Golden Wind OP2) -- 296s
+  JoJo_SonoChiNoSadame.ogg      -- Sono Chi no Sadame (Phantom Blood/Battle Tendency OP) -- 92s
+  JoJo_BloodyStream.ogg         -- Bloody Stream (Stardust Crusaders OP1) -- 89s
+  JoJo_FightingGold.ogg         -- Fighting Gold (Golden Wind OP1) -- 253s
+  JoJo_GiornosTheme.ogg         -- Giorno's Theme (Golden Wind OP2) -- 296s
+  HeMan_HEYYEYAAEYAAAEYAEYAA.ogg -- HEYYEYAAEYAAAEYAEYAA -- 127s
+
+มีไฟล์ครบทั้ง 5 แล้ว
 
 เพลงแต่ละเพลงลงทะเบียนไว้ในหลายเครื่องดนตรีตามลักษณะดนตรีจริง ไม่ได้ผูกกับเครื่องดนตรีเดียว
-(ดูรายละเอียดที่ ../../lua/client/TimedActions/AddMoreTracks_HARMONIE_JoJo.lua):
+(ดูรายละเอียดที่ ../lua/client/TimedActions/AddMoreTracks_HARMONIE_JoJo.lua และ
+AddMoreTracks_HARMONIE_HeMan.lua):
 
   Sono Chi no Sadame -> กีตาร์ไฟฟ้า, แซกโซโฟน, ทรัมเป็ต (brass + กีตาร์ไฟฟ้าหนักๆ)
   Bloody Stream      -> เบสไฟฟ้า, แซกโซโฟน, ทรัมเป็ต (เบสไลน์ดิสโก้ + brass)
   Fighting Gold      -> กีตาร์ไฟฟ้า, เบสไฟฟ้า, คีย์ทาร์ (ร็อกผสมออร์เคสตรา -- คีย์ทาร์แทนเสียง
                          ออร์เคสตรา/คีย์บอร์ด เพราะเปียโน/ไวโอลินไม่อยู่ในระบบ addon ที่ Lifestyle
                          รองรับ)
-  Giorno's Theme      -> แซกโซโฟน, คีย์ทาร์ (สแกต/แซกโซโฟน ไปสู่ piano breakdown -- คีย์ทาร์
+  Giorno's Theme     -> แซกโซโฟน, คีย์ทาร์ (สแกต/แซกโซโฟน ไปสู่ piano breakdown -- คีย์ทาร์
                          แทนเปียโนด้วยเหตุผลเดียวกัน)
-
-เพลง He-Man "HEYYEYAAEYAAAEYAEYAA" ไม่ได้อยู่ในโฟลเดอร์นี้ -- แยกไปเก็บที่
-../HeMan/HeMan_HEYYEYAAEYAAAEYAEYAA.ogg และลงทะเบียนแยกไฟล์ที่
-AddMoreTracks_HARMONIE_HeMan.lua เพราะเป็นเพลงคนละแฟรนไชส์
+  HEYYEYAAEYAAAEYAEYAA -> ฮาโมนิกา, คีย์ทาร์ (แทนคีย์บอร์ด), ขลุ่ย
 
 หลังเพิ่ม/แก้ไฟล์เพลงใหม่แล้วเข้าเกมไปเปิดเมนูเครื่องดนตรี แล้วไม่เห็นเพลงใหม่ในรายการ หรือเห็น
 แต่กดเล่นแล้วเงียบไม่มีเสียงออกเลย (กด play เหมือนเริ่มเล่นได้ปกติ แต่ไม่มีเสียง) -- มี 2 สาเหตุ
@@ -53,7 +54,8 @@ mods/sync_to_workshop.sh HARMONIE_LifestyleAudioTune 42 ถ้าเจอ DRIFT
 
 รายละเอียดเพิ่มเติมดูได้ที่ mods/workflow.txt หัวข้อ 1 และ 6.1
 
-ทำไมไม่มีไฟล์เพลงมาให้ (สำหรับใครที่ยังไม่มีไฟล์): เพลง JoJo's Bizarre Adventure เป็นเพลง
-ประกอบอนิเมะที่มีลิขสิทธิ์ (Yugo Kanno / Coda และค่ายเพลงญี่ปุ่นที่เกี่ยวข้อง) Claude ไม่สามารถ
-หา/ดาวน์โหลดไฟล์เสียงลิขสิทธิ์มาฝังใน mod ให้ได้ ต้องเป็นไฟล์ที่พี่มีสิทธิ์ใช้เองเท่านั้น
-ถ้าตั้งใจจะเอา mod นี้ขึ้น Steam Workshop สาธารณะ ควรพิจารณาเรื่องลิขสิทธิ์ให้รอบคอบก่อนด้วย
+ทำไมไม่มีไฟล์เพลงมาให้ (สำหรับใครที่ยังไม่มีไฟล์): เพลงพวกนี้เป็นเพลงมีลิขสิทธิ์ (JoJo's Bizarre
+Adventure -- Yugo Kanno / Coda และค่ายเพลงญี่ปุ่นที่เกี่ยวข้อง / HEYYEYAAEYAAAEYAEYAA -- ค่ายเพลง
+ที่เกี่ยวข้อง) Claude ไม่สามารถหา/ดาวน์โหลดไฟล์เสียงลิขสิทธิ์มาฝังใน mod ให้ได้ ต้องเป็นไฟล์ที่พี่มี
+สิทธิ์ใช้เองเท่านั้น ถ้าตั้งใจจะเอา mod นี้ขึ้น Steam Workshop สาธารณะ ควรพิจารณาเรื่องลิขสิทธิ์ให้
+รอบคอบก่อนด้วย
