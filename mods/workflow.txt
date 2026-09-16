@@ -335,25 +335,31 @@ Workshop/<ModId>/workshop.txt
   ลิขสิทธิ์) ก่อนอ้างอิง mod ไหนจาก Workshop เสมอ ให้เช็คหน้า Steam จริงด้วย WebFetch ว่ายัง
   publish อยู่ไหม/ยังไม่ถูกแจ้งว่า incompatible ไหม อย่าเชื่อแค่ไฟล์ cache ในเครื่อง ***
 
-  *** กับดักใหญ่ที่เจอจริงและเสียเวลามาก (ยืนยันแล้วว่าเป็นสาเหตุจริง 100% -- ทดสอบแก้แล้วเสียง
-  ออกจริง 2026-09-15): เพลงที่โชว์ในเมนูเครื่องดนตรี **ไม่ได้อ่านจากตาราง PlayXTracks (live)
-  ทุกครั้งที่เปิดเมนู** -- Lifestyle ทำ "snapshot" ครั้งเดียวตอนตัวละครเปิดเมนูเพลงครั้งแรก
-  (หรือกด "Debug - Learn All") แล้วเก็บถาวรลง player:getModData().<Instrument>LearnedTracks
-  (เช่น GuitarELearnedTracks สำหรับกีตาร์ไฟฟ้า, ดู NewInstrumentsContextMenu.lua:
-  `learnedTracksData = playerdata.GuitarELearnedTracks` แล้ว
-  `if #learnedTracksData == 0 then doLearnAllSongsFull(...) end`) -- พอ snapshot ไม่ว่างแล้ว
-  จะไม่ refresh อัตโนมัติอีกเลย ต่อให้แก้ไฟล์ table.insert ของเราแล้ว restart เกมกี่รอบก็ตาม
-  ทำให้ debug เสียเวลามากเพราะเข้าใจผิดว่าโค้ด/ไฟล์เสียงมีปัญหา ทั้งที่จริงแค่ตัวละครที่ทดสอบมี
-  snapshot เก่าค้างอยู่
+  *** กับดักใหญ่ที่เจอจริงและเสียเวลามาก -- แก้ไขคำอธิบายเดิมที่เข้าใจผิด (2026-09-17): เพลงที่โชว์
+  ในเมนูเครื่องดนตรี **ไม่ได้อ่านจากตาราง PlayXTracks (live) ทุกครั้งที่เปิดเมนู** แต่อ่านจาก
+  player:getModData().<Instrument>LearnedTracks (เช่น GuitarELearnedTracks) ที่ persist ต่อ
+  ตัวละคร -- ข้อความเดิมที่เขียนไว้ว่า "แค่เปิดเมนูเครื่องดนตรีครั้งแรกก็ auto-learn ให้เอง" นั้น
+  ผิด! ไปเช็คโค้ดจริงของ Lifestyle ละเอียดอีกรอบ (NewInstrumentsContextMenu.lua,
+  VanillaInstrumentsContextMenu.lua, InstrumentPianoContextMenu.lua) แล้วพบว่า
+  `doLearnAllSongsFull`/`doLearnAllSongsPartial` (ฟังก์ชันที่เติม learnedTracksData จากตาราง
+  live ทั้งหมด) **ถูกเรียกจากปุ่ม "Debug - Learn All" ในเมนูเท่านั้น** (เงื่อนไข
+  `if isAdmin() or isDebugEnabled() then` -- โชว์ปุ่มนี้ก็ต่อเมื่อเป็น admin/debug mode, ใน
+  singleplayer ตัวละครเป็น admin โดยปริยายเลยเห็นปุ่มนี้เสมอ) ไม่มี auto-learn จากการเปิดเมนู
+  เฉยๆ เลยในทุกระบบ (New/Vanilla/Piano) -- ทางเดียวที่เพลงจะเข้า learnedTracksData แบบปกติ
+  (ไม่ใช้ debug) คือเล่น "Practice" (PlayInstrumentTraining.lua) แล้วมีโอกาสสุ่มได้เรียนรู้ทีละเพลง
+  เท่านั้น ต่อให้โหลดเซฟใหม่เอี่ยม (ตัวละครใหม่ ไม่เคยเล่นอะไรเลย) ก็จะไม่มีเพลงโชว์ในเมนู "Play
+  a song by name" เลยสักเพลงเดียว ไม่ใช่แค่เพลง addon ของเรา -- **นี่คือพฤติกรรมปกติของม็อดหลัก
+  ไม่ใช่บั๊ก**
 
-  *** วิธีแก้ที่ยืนยันแล้วว่าได้ผลจริง: ก่อนเชื่อว่า table.insert ใหม่ "ไม่มีผล" ให้ล้าง snapshot
-  ก่อนเสมอ ด้วย debug console: `getPlayer():getModData().<Instrument>LearnedTracks = {}`
-  (เปลี่ยน <Instrument> ตามจริง เช่น GuitarELearnedTracks/GuitarALearnedTracks/
-  BanjoLearnedTracks/HarmonicaLearnedTracks ฯลฯ ดู field name เต็มได้จาก
-  NewInstrumentsContextMenu.lua บรรทัด ~41-62) แล้วเปิดเมนูเพลงใหม่อีกครั้งถึงจะ sync จากตาราง
-  live จริงๆ *** ต้องทำซ้ำทุกครั้งที่เพิ่มเพลงใหม่เข้าตารางอีกในอนาคต ถ้าทดสอบด้วยตัวละคร/เซฟ
-  ที่เคยเปิดเมนูเครื่องดนตรีนั้นมาก่อนแล้ว (snapshot จะค้างเป็น "เก่า" ทุกรอบที่เพิ่มเพลงใหม่
-  ไม่ใช่แค่ครั้งแรก) ***
+  *** วิธีทดสอบที่ถูกต้อง: ถือเครื่องดนตรี เปิดเมนู (คลิกขวาที่ตัวเอง หรือคลิกขวาไอเทมเครื่องดนตรี
+  ในมือ) แล้วกด **"Debug - Learn All"** (มีไอคอนแมลง/bug อยู่ใกล้ด้านบนเมนู) หนึ่งครั้ง -- จะดึง
+  เพลงทั้งหมดที่มีอยู่ตอนนี้ (ของ vanilla Lifestyle + ของ addon ที่เราเพิ่มเข้าไปด้วย ถ้า require
+  ถูกต้อง) เข้า learnedTracksData ทันที แล้วค่อยเปิดเมนูใหม่อีกรอบเพื่อดูรายชื่อเพลง -- นี่คือ
+  ขั้นตอนที่ขาดหายไปเวลาบอกผู้ใช้ให้ทดสอบ อย่าบอกแค่ "เคลียร์ getModData().XLearnedTracks = {}"
+  เฉยๆ เพราะการเคลียร์ให้ว่างอย่างเดียวไม่ทำให้มันเติมกลับมาเอง (ต้องกด Debug - Learn All ต่อ
+  หรือ Practice เอาเอง) -- ถ้าตัวละครมีเพลงเก่าค้าง (จากที่เคย Debug - Learn All ไปแล้วก่อนเรา
+  แก้ field ของเพลง เช่น length) การเคลียร์ {} แล้วกด Debug - Learn All ใหม่คือวิธีรีเฟรชที่ถูกต้อง
+  ครบวงจร ***
 
   *** ส่วนขยายที่เจอเพิ่ม (ยืนยันแล้ว 2026-09-16, กรณี JoJo_FightingGold): บั๊กนี้ไม่ได้เกิดแค่ตอน
   "เพิ่มเพลงใหม่" เท่านั้น -- ถ้า**แก้ field ของเพลงที่ตัวละครเคย learn ไปแล้ว** (เช่น แก้ length
