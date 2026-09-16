@@ -8,12 +8,14 @@
   JoJo_FightingGold.ogg         -- Fighting Gold (Golden Wind OP1) -- 253s
   JoJo_GiornosTheme.ogg         -- Giorno's Theme (Golden Wind OP2) -- 296s
   HeMan_HEYYEYAAEYAAAEYAEYAA.ogg -- HEYYEYAAEYAAAEYAEYAA -- 127s
+  Bothnia_SomedayIllWait.ogg    -- Bothnia - Someday I'll Wait -- 193s
+  VioletteWautier_WannaBeYours.ogg -- Violette Wautier - Wanna Be Yours -- 230s
 
-มีไฟล์ครบทั้ง 5 แล้ว
+มีไฟล์ครบทั้ง 7 แล้ว
 
 เพลงแต่ละเพลงลงทะเบียนไว้ในหลายเครื่องดนตรีตามลักษณะดนตรีจริง ไม่ได้ผูกกับเครื่องดนตรีเดียว
-(ดูรายละเอียดที่ ../lua/client/TimedActions/AddMoreTracks_HARMONIE_JoJo.lua และ
-AddMoreTracks_HARMONIE_HeMan.lua):
+(ดูรายละเอียดที่ ../lua/client/TimedActions/AddMoreTracks_HARMONIE_JoJo.lua,
+AddMoreTracks_HARMONIE_HeMan.lua และ AddMoreTracks_HARMONIE_Misc.lua):
 
   Sono Chi no Sadame -> กีตาร์ไฟฟ้า, แซกโซโฟน, ทรัมเป็ต (brass + กีตาร์ไฟฟ้าหนักๆ)
   Bloody Stream      -> เบสไฟฟ้า, แซกโซโฟน, ทรัมเป็ต (เบสไลน์ดิสโก้ + brass)
@@ -23,6 +25,11 @@ AddMoreTracks_HARMONIE_HeMan.lua):
   Giorno's Theme     -> แซกโซโฟน, คีย์ทาร์ (สแกต/แซกโซโฟน ไปสู่ piano breakdown -- คีย์ทาร์
                          แทนเปียโนด้วยเหตุผลเดียวกัน)
   HEYYEYAAEYAAAEYAEYAA -> ฮาโมนิกา, คีย์ทาร์ (แทนคีย์บอร์ด), ขลุ่ย
+  Bothnia - Someday I'll Wait -> กีตาร์โปร่ง (acoustic) เท่านั้น -- ขอ ukulele ไว้ด้วยถ้ามี แต่
+                         Lifestyle ไม่มีโมดูล PlayUkuleleTracks ในระบบ addon นี้ (ไม่ใช่ 1 ใน 9
+                         เครื่องดนตรีที่รองรับ) เลยใช้กีตาร์โปร่งแทน
+  Violette Wautier - Wanna Be Yours -> คีย์ทาร์ (แทนเปียโน ด้วยเหตุผลเดียวกับ Fighting
+                         Gold/Giorno's Theme -- เปียโนไม่อยู่ในระบบ addon นี้)
 
 หลังเพิ่ม/แก้ไฟล์เพลงใหม่แล้วเข้าเกมไปเปิดเมนูเครื่องดนตรี แล้วไม่เห็นเพลงใหม่ในรายการ หรือเห็น
 แต่กดเล่นแล้วเงียบไม่มีเสียงออกเลย (กด play เหมือนเริ่มเล่นได้ปกติ แต่ไม่มีเสียง) -- มี 2 สาเหตุ

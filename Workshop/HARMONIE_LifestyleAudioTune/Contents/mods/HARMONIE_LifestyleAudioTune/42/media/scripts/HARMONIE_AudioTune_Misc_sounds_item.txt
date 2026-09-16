@@ -1,0 +1,41 @@
+/*
+    Extra instrument tracks that aren't part of the JoJo or He-Man batches --
+    one-off songs added on request. NOT bundled with any audio: this is
+    commercially released music (not HARMONIE's own work). This file only
+    declares the sound clips; you must supply your own legally-obtained .ogg
+    files at the paths below yourself. See AddMoreTracks_HARMONIE_Misc.lua
+    for the matching instrument registration and media/sound/README.txt for
+    filename/length notes.
+
+    distanceMax = 25 / volume = 0.4 matches this mod's own reduced-audio
+    convention for the rest of Lifestyle: Hobbies (see the other
+    HARMONIE_AudioTune_*.txt files) so these tracks stay consistent and are
+    covered by the same live volume slider (Options -> Mods -> HARMONIE:
+    Lifestyle Audio Tune) as everything else, via the
+    HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes entries added in
+    HARMONIE_LifestyleAudioTune_Volumes.lua.
+*/
+
+module Base {
+
+    sound Bothnia_SomedayIllWait
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/Bothnia_SomedayIllWait.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound VioletteWautier_WannaBeYours
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/VioletteWautier_WannaBeYours.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+}
