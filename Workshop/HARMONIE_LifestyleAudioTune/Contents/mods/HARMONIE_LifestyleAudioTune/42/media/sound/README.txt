@@ -10,26 +10,28 @@
   HeMan_HEYYEYAAEYAAAEYAEYAA.ogg -- HEYYEYAAEYAAAEYAEYAA -- 127s
   Bothnia_SomedayIllWait.ogg    -- Bothnia - Someday I'll Wait -- 193s
   VioletteWautier_WannaBeYours.ogg -- Violette Wautier - Wanna Be Yours -- 230s
+  HSR_WhattheRippleSees.ogg     -- Honkai: Star Rail - What the Ripple Sees -- 259s
 
-มีไฟล์ครบทั้ง 7 แล้ว
+มีไฟล์ครบทั้ง 8 แล้ว
 
 เพลงแต่ละเพลงลงทะเบียนไว้ในหลายเครื่องดนตรีตามลักษณะดนตรีจริง ไม่ได้ผูกกับเครื่องดนตรีเดียว
-(ดูรายละเอียดที่ ../lua/client/TimedActions/AddMoreTracks_HARMONIE_JoJo.lua,
-AddMoreTracks_HARMONIE_HeMan.lua และ AddMoreTracks_HARMONIE_Misc.lua):
+(ดูรายละเอียดที่ ../lua/client/TimedActions/AddMoreTracks_HARMONIE.lua -- ไฟล์เดียวรวมทุกเพลง
+ไม่แยกไฟล์ตามแฟรนไชส์แล้ว):
 
   Sono Chi no Sadame -> กีตาร์ไฟฟ้า, แซกโซโฟน, ทรัมเป็ต (brass + กีตาร์ไฟฟ้าหนักๆ)
   Bloody Stream      -> เบสไฟฟ้า, แซกโซโฟน, ทรัมเป็ต (เบสไลน์ดิสโก้ + brass)
   Fighting Gold      -> กีตาร์ไฟฟ้า, เบสไฟฟ้า, คีย์ทาร์ (ร็อกผสมออร์เคสตรา -- คีย์ทาร์แทนเสียง
-                         ออร์เคสตรา/คีย์บอร์ด เพราะเปียโน/ไวโอลินไม่อยู่ในระบบ addon ที่ Lifestyle
-                         รองรับ)
+                         ออร์เคสตรา/คีย์บอร์ด เพราะเปียโนไม่อยู่ในระบบ addon ที่ Lifestyle รองรับ)
   Giorno's Theme     -> แซกโซโฟน, คีย์ทาร์ (สแกต/แซกโซโฟน ไปสู่ piano breakdown -- คีย์ทาร์
                          แทนเปียโนด้วยเหตุผลเดียวกัน)
   HEYYEYAAEYAAAEYAEYAA -> ฮาโมนิกา, คีย์ทาร์ (แทนคีย์บอร์ด), ขลุ่ย
   Bothnia - Someday I'll Wait -> กีตาร์โปร่ง (acoustic) เท่านั้น -- ขอ ukulele ไว้ด้วยถ้ามี แต่
-                         Lifestyle ไม่มีโมดูล PlayUkuleleTracks ในระบบ addon นี้ (ไม่ใช่ 1 ใน 9
+                         Lifestyle ไม่มีโมดูล PlayUkuleleTracks ในระบบ addon นี้ (ไม่ใช่ 1 ใน 10
                          เครื่องดนตรีที่รองรับ) เลยใช้กีตาร์โปร่งแทน
   Violette Wautier - Wanna Be Yours -> คีย์ทาร์ (แทนเปียโน ด้วยเหตุผลเดียวกับ Fighting
                          Gold/Giorno's Theme -- เปียโนไม่อยู่ในระบบ addon นี้)
+  Honkai: Star Rail - What the Ripple Sees -> ไวโอลิน (เครื่องดนตรีที่ 10 ที่เพิ่งยืนยันว่า
+                         Lifestyle รองรับ)
 
 หลังเพิ่ม/แก้ไฟล์เพลงใหม่แล้วเข้าเกมไปเปิดเมนูเครื่องดนตรี แล้วไม่เห็นเพลงใหม่ในรายการ หรือเห็น
 แต่กดเล่นแล้วเงียบไม่มีเสียงออกเลย (กด play เหมือนเริ่มเล่นได้ปกติ แต่ไม่มีเสียง) -- มี 2 สาเหตุ

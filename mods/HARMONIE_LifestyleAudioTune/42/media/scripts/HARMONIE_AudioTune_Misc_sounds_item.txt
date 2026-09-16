@@ -3,8 +3,8 @@
     one-off songs added on request. NOT bundled with any audio: this is
     commercially released music (not HARMONIE's own work). This file only
     declares the sound clips; you must supply your own legally-obtained .ogg
-    files at the paths below yourself. See AddMoreTracks_HARMONIE_Misc.lua
-    for the matching instrument registration and media/sound/README.txt for
+    files at the paths below yourself. See AddMoreTracks_HARMONIE.lua for
+    the matching instrument registration and media/sound/README.txt for
     filename/length notes.
 
     distanceMax = 25 / volume = 0.4 matches this mod's own reduced-audio
@@ -33,6 +33,16 @@ module Base {
         category = Item, loop = false, is3D = true,
         clip {
         file = media/sound/VioletteWautier_WannaBeYours.ogg,
+        distanceMin = 10, distanceMax = 25,
+        reverbFactor = 0.1, volume = 0.4,
+        }
+    }
+
+    sound HSR_WhattheRippleSees
+    {
+        category = Item, loop = false, is3D = true,
+        clip {
+        file = media/sound/HSR_WhattheRippleSees.ogg,
         distanceMin = 10, distanceMax = 25,
         reverbFactor = 0.1, volume = 0.4,
         }

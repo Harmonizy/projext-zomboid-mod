@@ -1334,6 +1334,7 @@ HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes = {
     -- Extra one-off addon tracks (HARMONIE_AudioTune_Misc_sounds_item.txt) --
     ["Bothnia_SomedayIllWait"] = 0.4,
     ["VioletteWautier_WannaBeYours"] = 0.4,
+    ["HSR_WhattheRippleSees"] = 0.4,
 }
 
 -- Live, per-player multiplier driven by the mod's PZAPI.ModOptions slider

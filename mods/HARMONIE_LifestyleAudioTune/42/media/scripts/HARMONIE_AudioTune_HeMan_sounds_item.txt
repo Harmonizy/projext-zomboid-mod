@@ -4,7 +4,7 @@
     NOT bundled with any audio: this is commercially released music (not
     HARMONIE's own work). This file only declares the sound clip; you must
     supply your own legally-obtained .ogg file at the path below yourself.
-    See AddMoreTracks_HARMONIE_HeMan.lua for the matching instrument
+    See AddMoreTracks_HARMONIE.lua for the matching instrument
     registration and media/sound/README.txt for filename/length notes.
 
     distanceMax = 25 / volume = 0.4 matches this mod's own reduced-audio

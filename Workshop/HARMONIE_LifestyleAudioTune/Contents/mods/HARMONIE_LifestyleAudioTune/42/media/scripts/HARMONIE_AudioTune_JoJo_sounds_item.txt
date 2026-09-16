@@ -4,7 +4,7 @@
     NOT bundled with any audio: these songs are commercially copyrighted
     (Yugo Kanno / Coda / respective labels). This file only declares the
     sound clips; you must supply your own legally-obtained .ogg files at
-    the paths below yourself. See AddMoreTracks_HARMONIE_JoJo.lua for the
+    the paths below yourself. See AddMoreTracks_HARMONIE.lua for the
     matching instrument registration and README notes on exact filenames
     and correcting each track's real length.
 
