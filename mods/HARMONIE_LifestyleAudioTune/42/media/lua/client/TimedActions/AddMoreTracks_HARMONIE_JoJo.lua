@@ -10,14 +10,16 @@
     sound= name reused across several table.insert calls) to match the real
     instrumentation described for each track -- a song isn't tied to a single
     instrument, it can be played on any of the instruments that suit it. Only
-    the 9 instrument tables Lifestyle's addon extension point actually
-    supports are used (see workflow.txt section 6.1): PlayTrumpetTracks,
-    PlayGuitarAcousticTracks, PlayBanjoTracks, PlayFluteTracks,
-    PlayGuitarElectricBassTracks, PlayGuitarElectricTracks, PlayKeytarTracks,
-    PlaySaxophoneTracks, PlayHarmonicaTracks. Piano/Violin/Drums are NOT in
-    this set (different, unconfirmed registration mechanism) -- Keytar is
-    used as the closest available stand-in wherever a song calls for
-    keyboard/piano/synth/orchestral textures.
+    the 10 instrument tables Lifestyle's addon extension point actually
+    supports are used (confirmed straight from Lifestyle's own
+    zInstrumentsUtil.lua getSongsLib(), see workflow.txt section 6.1):
+    PlayTrumpetTracks, PlayGuitarAcousticTracks, PlayBanjoTracks,
+    PlayFluteTracks, PlayGuitarElectricBassTracks, PlayGuitarElectricTracks,
+    PlayKeytarTracks, PlaySaxophoneTracks, PlayViolinTracks,
+    PlayHarmonicaTracks. Piano/Drums are NOT in this set (different,
+    world-object-based registration mechanism, unconfirmed safe to extend) --
+    Keytar is used as the closest available stand-in wherever a song calls
+    for keyboard/piano/synth/orchestral textures.
 
     All 4 songs already have real .ogg files in place with confirmed lengths:
         media/sound/JoJo_SonoChiNoSadame.ogg   (92s)

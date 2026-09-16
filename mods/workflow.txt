@@ -303,10 +303,24 @@ Workshop/<ModId>/workshop.txt
           local XTracks = require "TimedActions/Play<Instrument>Tracks"
           table.insert(XTracks, {level=N, sound="<name>", length=<วินาทีจริง>, name="<ชื่อโชว์ในเกม>"})
         (รันทันทีตอนโหลดไฟล์ ไม่ต้องห่อ Events.OnGameStart)
-  รายชื่อ instrument table ที่ require ได้: PlayTrumpetTracks, PlayGuitarAcousticTracks,
-  PlayBanjoTracks, PlayFluteTracks, PlayGuitarElectricBassTracks, PlayGuitarElectricTracks,
-  PlayKeytarTracks, PlaySaxophoneTracks, PlayHarmonicaTracks (ตัวหลังต้องมี addon ฮาร์โมนิกา
-  แยกลงไว้ก่อนถึงจะมีโมดูลนี้ให้ require)
+  รายชื่อ instrument table ที่ require ได้ (ยืนยันแล้ว 2026-09-16 จากต้นฉบับจริง --
+  zInstrumentsUtil.lua ฟังก์ชัน getSongsLib() ในตัวม็อด Lifestyle เอง คือ list ทางการที่ใช้ใน
+  checkLearnedSongs/chooseInstruments -- ครบ 10 ตัว ไม่ใช่ 9 ตามที่เคยจดผิดไว้ ตัวที่พลาดไปคือ
+  Violin): PlayTrumpetTracks, PlayGuitarAcousticTracks, PlayBanjoTracks, PlayFluteTracks,
+  PlayGuitarElectricBassTracks, PlayGuitarElectricTracks, PlayKeytarTracks, PlaySaxophoneTracks,
+  PlayViolinTracks, PlayHarmonicaTracks (ตัวหลังต้องมี addon ฮาร์โมนิกาแยกลงไว้ก่อนถึงจะมีโมดูลนี้
+  ให้ require) -- ฟิลด์ learnedTracks ที่ตรงกัน: TrumpetLearnedTracks, GuitarALearnedTracks,
+  BanjoLearnedTracks, FluteLearnedTracks, GuitarEBLearnedTracks, GuitarELearnedTracks,
+  KeytarLearnedTracks, SaxophoneLearnedTracks, ViolinLearnedTracks, HarmonicaLearnedTracks
+
+  *** Piano ("Instruments/Tracks/PlayPianoTracks", field PianoLearnedTracks) มีอยู่จริงเหมือนกัน
+  แต่ "ไม่นับ" อยู่ในชุด 10 ตัวข้างบน เพราะใช้ระบบคนละแบบ: เป็นเปียโนที่วางเป็นเฟอร์นิเจอร์ในโลก
+  (world object) ไม่ใช่ไอเทมถือ, มี context menu ของตัวเอง (InstrumentPianoContextMenu.lua)
+  และ action (PlayInstrumentPiano.lua) ต้องเช็ค adjacency ของชิ้นเปียโนหลายชิ้นประกอบกัน
+  (getAdjObj/checkObj ใน PlayInstrumentActionNew.lua เช็ค self.instrumentType == "Piano" เป็น
+  พิเศษ) -- ยังไม่ยืนยันว่า pattern table.insert ธรรมดาแบบเดียวกับ 10 ตัวข้างบนจะใช้ได้ปลอดภัย
+  ห้ามเดาทำโดยไม่ทดสอบก่อน มี Drums ก็มีร่องรอยคล้ายกัน (เช็ค == "Drums" ในโค้ดเดียวกัน) แต่หา
+  PlayDrumsTracks.lua ไม่เจอเลย ไม่มีหลักฐานว่ามีระบบเพลงเรียนรู้ได้แบบนี้ให้ Drums
   เป็น extension point สำหรับ "เพลงที่เล่นผ่านเครื่องดนตรี" เท่านั้น ไม่ใช่เพลง Jukebox/DJ Booth
   (นั่นเป็นระบบคนละตัว ดูข้อ 3 เรื่อง sound script override ทั่วไปแทน)
   *** ข้อสังเกต: 2 ใน 3 มอดตัวอย่าง (Hazy Lifestyle, UndertaleOnGuitar) ไม่ใส่
