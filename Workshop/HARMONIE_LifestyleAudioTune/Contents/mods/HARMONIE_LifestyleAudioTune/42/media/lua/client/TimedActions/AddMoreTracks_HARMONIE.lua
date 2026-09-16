@@ -3,7 +3,7 @@ table.insert(GuitarElectricTracks, {level=0, sound="JoJo_SonoChiNoSadame", lengt
 table.insert(GuitarElectricTracks, {level=0, sound="JoJo_FightingGold", length=253, name="JoJo: Fighting Gold (Golden Wind OP1)"})
 
 local GuitarElectricBassTracks = require "TimedActions/PlayGuitarElectricBassTracks"
-table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_BloodyStream", length=90, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
 table.insert(GuitarElectricBassTracks, {level=0, sound="JoJo_FightingGold", length=253, name="JoJo: Fighting Gold (Golden Wind OP1)"})
 
 local GuitarAcousticTracks = require "TimedActions/PlayGuitarAcousticTracks"
@@ -11,12 +11,12 @@ table.insert(GuitarAcousticTracks, {level=0, sound="Bothnia_SomedayIllWait", len
 
 local SaxophoneTracks = require "TimedActions/PlaySaxophoneTracks"
 table.insert(SaxophoneTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="JoJo: Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
-table.insert(SaxophoneTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+table.insert(SaxophoneTracks, {level=0, sound="JoJo_BloodyStream", length=90, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
 table.insert(SaxophoneTracks, {level=0, sound="JoJo_GiornosTheme", length=296, name="JoJo: Giorno's Theme (Golden Wind OP2)"})
 
 local TrumpetTracks = require "TimedActions/PlayTrumpetTracks"
 table.insert(TrumpetTracks, {level=0, sound="JoJo_SonoChiNoSadame", length=92, name="JoJo: Sono Chi no Sadame (Phantom Blood/Battle Tendency OP)"})
-table.insert(TrumpetTracks, {level=0, sound="JoJo_BloodyStream", length=89, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
+table.insert(TrumpetTracks, {level=0, sound="JoJo_BloodyStream", length=90, name="JoJo: Bloody Stream (Stardust Crusaders OP1)"})
 
 local KeytarTracks = require "TimedActions/PlayKeytarTracks"
 table.insert(KeytarTracks, {level=0, sound="JoJo_FightingGold", length=253, name="JoJo: Fighting Gold (Golden Wind OP1)"})

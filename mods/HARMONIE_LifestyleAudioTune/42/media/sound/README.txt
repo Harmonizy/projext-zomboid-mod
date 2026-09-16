@@ -4,7 +4,7 @@
 เก็บไฟล์เพลงทั้งหมดไว้แบบแฟลตในโฟลเดอร์นี้เลย ไม่แยกโฟลเดอร์ย่อยต่อแฟรนไชส์แล้ว:
 
   JoJo_SonoChiNoSadame.ogg      -- Sono Chi no Sadame (Phantom Blood/Battle Tendency OP) -- 92s
-  JoJo_BloodyStream.ogg         -- Bloody Stream (Stardust Crusaders OP1) -- 89s
+  JoJo_BloodyStream.ogg         -- Bloody Stream (Stardust Crusaders OP1) -- 90s
   JoJo_FightingGold.ogg         -- Fighting Gold (Golden Wind OP1) -- 253s
   JoJo_GiornosTheme.ogg         -- Giorno's Theme (Golden Wind OP2) -- 296s
   HeMan_HEYYEYAAEYAAAEYAEYAA.ogg -- HEYYEYAAEYAAAEYAEYAA -- 127s
