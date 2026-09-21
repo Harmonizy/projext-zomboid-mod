@@ -4,20 +4,3 @@
 !/mods/
 !/Workshop/
 !/.gitignore
-
-# Never commit copyrighted audio the user supplies locally for personal-use
-# addons (e.g. HARMONIE_LifestyleAudioTune's JoJo/He-Man instrument tracks) --
-# this repo pushes to a public-ish GitLab remote, and these files are
-# explicitly NOT meant to be redistributed. See media/sound/README.txt in
-# that mod. Named explicitly (not a wildcard folder) since these songs now
-# live flat alongside any other, non-copyrighted sound assets in that folder.
-mods/HARMONIE_LifestyleAudioTune/42/media/sound/JoJo_*.ogg
-mods/HARMONIE_LifestyleAudioTune/42/media/sound/HeMan_*.ogg
-mods/HARMONIE_LifestyleAudioTune/42/media/sound/Bothnia_*.ogg
-mods/HARMONIE_LifestyleAudioTune/42/media/sound/VioletteWautier_*.ogg
-mods/HARMONIE_LifestyleAudioTune/42/media/sound/HSR_*.ogg
-Workshop/HARMONIE_LifestyleAudioTune/Contents/mods/HARMONIE_LifestyleAudioTune/42/media/sound/JoJo_*.ogg
-Workshop/HARMONIE_LifestyleAudioTune/Contents/mods/HARMONIE_LifestyleAudioTune/42/media/sound/HeMan_*.ogg
-Workshop/HARMONIE_LifestyleAudioTune/Contents/mods/HARMONIE_LifestyleAudioTune/42/media/sound/Bothnia_*.ogg
-Workshop/HARMONIE_LifestyleAudioTune/Contents/mods/HARMONIE_LifestyleAudioTune/42/media/sound/VioletteWautier_*.ogg
-Workshop/HARMONIE_LifestyleAudioTune/Contents/mods/HARMONIE_LifestyleAudioTune/42/media/sound/HSR_*.ogg
