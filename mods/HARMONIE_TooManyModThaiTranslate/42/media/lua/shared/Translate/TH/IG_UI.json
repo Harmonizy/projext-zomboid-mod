@@ -1550,5 +1550,9 @@
     "IGUI_AWCWF_SLOT_STOCK": "พานท้าย",
     "IGUI_IGUI_L_Scope": "ศูนย์เล็งใช้งานได้จริง",
     "IGUI_CraftCategory_现代枪械系统ModernFirearmsSystem": "ระบบอาวุธปืนสมัยใหม่",
-    "IGUI_CraftingCategories_Ammunition": "กระสุน"
+    "IGUI_CraftingCategories_Ammunition": "กระสุน",
+    "IGUI_SearchMode_Categories_FishBait": "เหยื่อตกปลา",
+    "IGUI_SearchMode_Categories_ForestRarities": "ของหายากในป่า",
+    "IGUI_SearchMode_Categories_WildHerbs": "สมุนไพรป่า",
+    "IGUI_SearchMode_Categories_DeadAnimals": "ซากสัตว์"
 }
