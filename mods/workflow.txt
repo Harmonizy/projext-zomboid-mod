@@ -453,6 +453,118 @@ saves only!"
     ผู้ใช้เข้าใจผิดว่า push ขึ้น git แล้ว Workshop จะอัปเดตตามเองอัตโนมัติ
 
 
+8.2 Custom Moodles (MoodleFramework) และการสร้าง Trait ใหม่ — อ้างอิงสำหรับงานในอนาคต
+  (ศึกษาจากต้นฉบับจริง 2026-09-22: MoodleFramework Workshop 3396446795/id=MoodleFramework โดย
+  Tchernobill เวอร์ชัน 42.20/modversion 2.8, และ More Traits Workshop 1299328280 เป็นตัวอย่าง
+  mod ที่ใช้งานจริง — ทั้งคู่ subscribe อยู่ในเครื่องแล้ว อ่านซอร์สได้ตรงที่
+  C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\<ID>\mods\...)
+
+  === MoodleFramework (MF) — สร้าง moodle เองแบบไม่ต้องยุ่ง Java ===
+  ไฟล์จริง: media/lua/client/MF_ISMoodle.lua (เกือบ 700 บรรทัด, อ่านมาทั้งไฟล์แล้ว) +
+  MF_Config.lua (ตัวเลือกสี ผ่าน PZAPI.ModOptions ปกติ)
+
+  วิธีใช้จากมอดของเราเอง (4 ขั้นตอนตามคู่มือทางการ ตรงกับโค้ดจริงที่เช็คแล้ว):
+    1. ใส่ require=MoodleFramework ใน mod.info ของเรา (มอดนี้ optional-dependency แบบมี Workshop
+       item จริง ต้องประกาศ require ปกติ ไม่ใช่แบบ HARMONIE_TooManyModThaiTranslate ที่ตั้งใจไม่
+       ใส่ require)
+    2. ไอคอน: วาง <ชื่อMoodle>.png (30x30, มี alpha) ที่ media/ui/ -- รองรับไอคอนแยกตาม level ได้
+       ด้วย เช่น <ชื่อ>_Good_2.png / <ชื่อ>_Bad_4.png (level 1-4) ถ้าไม่ใส่จะ fallback ไปใช้ไฟล์
+       ไม่มี suffix
+    3. ข้อความ: เติม media/lua/shared/Translate/EN/Moodles.json (และ TH ถ้าจะแปลเองเลย) คีย์
+       รูปแบบตายตัว: Moodles_<ชื่อ>_Good_lvl1..4, Moodles_<ชื่อ>_Good_desc_lvl1..4,
+       Moodles_<ชื่อ>_Bad_lvl1..4, Moodles_<ชื่อ>_Bad_desc_lvl1..4 -- ใส่แค่บางระดับที่ใช้จริงก็ได้
+       ไม่ต้องครบ 8 คู่เสมอไป (getText คืนค่าว่างเฉยๆ ถ้าไม่เจอ key ไม่ error)
+    4. สร้าง object: `require "MF_ISMoodle"` แล้ว `MF.createMoodle("ชื่อ")` -- เรียกตรงๆ ตอนไฟล์
+       โหลด (มันไป hook Events.OnCreatePlayer เองข้างในแล้ว ไม่ต้องห่อ event เพิ่ม)
+    5. ปรับค่า: `require "MF_ISMoodle"` แล้ว `MF.getMoodle("ชื่อ",playerNum):setValue(x)` โดย
+       0.0 <= x <= 1.0 (float) -- **ไม่ใส่ playerNum จะพังกับ splitscreen** (ค่า default fallback
+       เป็น 0 ซึ่งเป็นผู้เล่นคนแรกเท่านั้น) เอา playerNum จาก player:getPlayerNum()
+
+  กลไกภายในที่ควรรู้ก่อนใช้งานจริง (จากโค้ดจริง ไม่ใช่แค่คู่มือ):
+    - ค่า value แปลงเป็น "ระดับ" (0-4) และ "ทิศทาง" (Good/Bad/Neutral) อัตโนมัติผ่าน threshold
+      8 ค่า default: bad4..bad1 = 0.1/0.2/0.3/0.4, good1..good4 = 0.6/0.7/0.8/0.9 (0.5 = neutral
+      พอดีกลาง) เปลี่ยนได้เองด้วย `moodle:setThresholds(bad4,bad3,bad2,bad1,good1,good2,good3,good4)`
+      (ส่ง nil ตัวไหนจะ fallback ไปใช้ค่าถัดไปในทิศทางเดียวกัน)
+    - เก็บค่าไว้ที่ `character:getModData().Moodles[ชื่อ] = {Level=, GoodBadNeutral=, Value=}` --
+      persist ต่อตัวละครแบบเดียวกับ moddata อื่นๆ ที่เราคุ้นเคยอยู่แล้ว (ข้อ 6.1 เรื่อง cache
+      ก็ใช้หลักการเดียวกัน แต่ moodle framework ออกแบบให้ defensive คืนค่า default ถ้าตารางหาย
+      ไม่ต้อง manual clear เองแบบ Lifestyle)
+    - UI element ต่อ moodle ต่อผู้เล่นเก็บใน `MF.MoodlesStorage[playerNum][ชื่อ]` -- นี่คือจุดที่
+      ทำให้ splitscreen ใช้ playerNum แยกกันได้ถูกต้อง
+    - มี custom title/desc/background/picture override ต่อ level ได้ผ่าน
+      `moodle:setTitle/setDescription/setBackground/setPicture(goodBadNeutral, level, ...)`
+      (goodBadNeutral: 1=Good, 2=Bad) เผื่อไม่อยากพึ่งแค่ Translate JSON + ไฟล์ภาพชื่อตายตัว
+    - ตัวอย่างการใช้งานจริง (จาก More Traits, MoreTraits .lua บรรทัด ~13-31, 2087, 5196-5300 --
+      แม้ในเวอร์ชันที่อ่านตอนนี้ท่อน createMoodle จะถูกคอมเมนต์ปิดไว้อยู่ แต่ pattern ยังตรงกับ
+      คู่มือทางการ ใช้เป็นตัวอย่างโครงสร้างได้):
+      ```
+      if getActivatedMods():contains("MoodleFramework") == true then
+          local status, MFModule = pcall(require, "MF_ISMoodle")
+          if status and MFModule and MFModule.createMoodle then
+              MFModule.createMoodle("MTAlcoholism")
+          end
+      end
+      -- ที่อื่นในโค้ด:
+      MF.getMoodle("MTAlcoholism"):getValue()
+      MF.getMoodle("MTAlcoholism"):setValue(Alcoholism - percent)
+      ```
+      *** เทคนิคที่ควรลอกตาม: เช็ค `getActivatedMods():contains("MoodleFramework")` +
+      `pcall(require, ...)` ก่อนเรียกจริงเสมอ กัน error ถ้าผู้เล่นปิดมอด MoodleFramework ไว้
+      (ทำให้ MF เป็น soft-dependency ที่ปิดได้โดยไม่ crash มอดเรา ต่างจาก require= ปกติที่เป็น
+      hard-dependency) -- ถ้าจะทำ moodle ของ HARMONIE เองในอนาคต ให้พิจารณาว่าอยากบังคับ
+      require=MoodleFramework ตรงๆ (ง่ายกว่า, แต่ผู้เล่นต้อง subscribe เพิ่ม) หรือทำ soft-dependency
+      แบบนี้ (ซับซ้อนกว่านิดหน่อย แต่ไม่บังคับ) ***
+
+  === การสร้าง Trait ใหม่ (ศึกษาจาก More Traits/ToadTraits) ===
+  Trait ใหม่ประกาศผ่าน sound-script-style .txt เหมือน item/sound (module ... { ... }) ไม่ใช่ Lua
+  ล้วนๆ -- อยู่ที่ media/scripts/<ชื่อไฟล์>.txt ของ mod เอง (More Traits ใช้ ToadTraits.txt):
+    ```
+    module ToadTraits {
+        character_trait_definition ToadTraits:albino
+        {
+            IsProfessionTrait = false,
+            DisabledInMultiplayer = false,
+            CharacterTrait = ToadTraits:albino,
+            Cost = -5,
+            UIName = UI_trait_albino,
+            UIDescription = UI_trait_albinodesc,
+            MutuallyExclusiveTraits = ToadTraits:badteeth,
+        }
+    }
+    ```
+  ฟิลด์หลักที่เจอใช้จริง (มี field มากกว่านี้ใน vanilla แต่นี่คือชุดที่ More Traits ใช้ครบ):
+    - Cost: ตัวเลขแต้มตอนสร้างตัวละคร บวก = เสียแต้ม (ข้อดี), ลบ = ได้แต้มคืน (ข้อเสีย)
+    - UIName / UIDescription: translation key (ไปเติมค่าจริงใน Translate/EN/UI.json ปกติ ไม่ใช่
+      Tooltip.json)
+    - MutuallyExclusiveTraits: กันเลือกพร้อมกัน คั่นด้วย ; หรือ , ได้ (เจอทั้งสองแบบในไฟล์จริง)
+    - XPBoosts: เพิ่ม XP skill ทันทีแบบ declarative เช่น `XPBoosts = Scavenging=1,` ไม่ต้องเขียน
+      Lua เลยถ้าผลแค่นี้พอ
+    - GrantedRecipes: ให้สูตรคราฟฟรีทันทีแบบ declarative เหมือนกัน
+    - IsProfessionTrait: false = trait ปกติเลือกได้อิสระ, true = ผูกกับอาชีพ
+  ผลลัพธ์ที่ซับซ้อนกว่า field พวกนี้ทำเองไม่ได้ (stat modifier ระหว่างเล่น, ผูกกับ moodle,
+  เงื่อนไขพิเศษ ฯลฯ) ต้องเขียน Lua เช็คเอง -- API ที่ยืนยันจากซอร์สจริง (MoreTraits .lua บรรทัด
+  33-45 และ 235+):
+    ```
+    -- ลงทะเบียน object ของ trait ไว้ล่วงหน้า (ทำครั้งเดียวตอนโหลด ปกติแยกไฟล์ registries.lua)
+    MyModRegistries = MyModRegistries or {}
+    MyModRegistries.mytrait = CharacterTrait.register("MyMod:mytrait")
+
+    -- เช็คว่าตัวละครมี trait นี้ไหม (lowercase hasTrait ตาม IsoGameCharacter API จริง ไม่ใช่ HasTrait)
+    if player:hasTrait(MyModRegistries.mytrait) then
+        -- ใส่ผลของ trait เอง ตรงนี้
+    end
+    ```
+    *** สังเกต: `player:hasTrait(...)` รับทั้ง trait object ที่ลงทะเบียนผ่าน
+    `CharacterTrait.register("Module:name")` (ตามตัวอย่างข้างบน, ยืนยันจากซอร์สจริงของ More
+    Traits) และน่าจะรับ string literal ตรงๆ ได้ด้วย (`player:hasTrait("Module:name")`,
+    พบใช้แบบนี้ในโค้ดฝั่ง Lifestyle/อื่นๆ มาก่อนหน้านี้ในเซสชัน) -- แบบ register ปลอดภัยกว่าเพราะ
+    พิมพ์ชื่อผิดจะ error ตอนโหลดทันทีแทนที่จะเงียบๆ คืน false ตลอดไป ควรใช้แบบ register เวลาทำ
+    mod ของ HARMONIE เอง ***
+  Hook จริงต้องหาจุดที่เกมเรียกทุก tick/ทุกการกระทำที่เกี่ยวข้องเอง (เช่น
+  Events.OnPlayerUpdate, หรือ TimedAction เฉพาะทาง) ไม่มี field script ให้ "ผลกระทบต่อ stat
+  ระหว่างเล่น" ตรงๆ แบบ auto -- ต้องดูตัวอย่างจาก mod อื่นที่ทำเอฟเฟกต์คล้ายกันเป็นรายกรณีไป
+
+
 9. Checklist ก่อนเริ่มงานใหม่ทุกครั้ง
 =======================================
 [ ] อ่านไฟล์นี้ (mods/workflow.txt) ก่อนเสมอ
@@ -467,6 +579,8 @@ saves only!"
     `mods/check_workshop_sync.sh` ก่อนบอกผู้ใช้ให้ไปทดสอบในเกมเสมอ ถ้าเจอ DRIFT รัน
     `mods/sync_to_workshop.sh <ModId> [version]` ทันที (ข้อ 1 -- ป้องกันบั๊ก JoJo_FightingGold
     ซ้ำ ที่เกมโหลดจาก Workshop staging คนละไฟล์กับที่แก้ใน mods/)
+[ ] ถ้าจะทำ moodle เอง: ใช้ MoodleFramework (ข้อ 8.2) ไม่ต้องเขียน UI/render เอง
+[ ] ถ้าจะสร้าง trait ใหม่: ประกาศผ่าน character_trait_definition script (ข้อ 8.2) ไม่ใช่ Lua ล้วน
 [ ] อาการ "แก้แล้วในเกมเหมือนไม่มีผล" -> รัน `mods/check_workshop_sync.sh` ก่อนสงสัยเรื่อง cache
     (ข้อ 6.1) หรือทฤษฎีอื่นเสมอ เช็คถูกที่ก่อนจะประหยัดเวลาดีบั๊กได้มาก
 [ ] เจอความรู้ใหม่ระหว่างทาง -> กลับมาอัปเดตไฟล์นี้ก่อนจบงานเสมอ
