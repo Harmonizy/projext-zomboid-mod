@@ -565,6 +565,96 @@ saves only!"
   ระหว่างเล่น" ตรงๆ แบบ auto -- ต้องดูตัวอย่างจาก mod อื่นที่ทำเอฟเฟกต์คล้ายกันเป็นรายกรณีไป
 
 
+8.3 NeatUI Framework — ทำ custom UI widget โดยไม่ต้องเขียน render เองทั้งหมด
+  (ศึกษาจากต้นฉบับจริง 2026-09-22: NeatUI_Framework Workshop 3508537032/id=NeatUI_Framework
+  โดย Rocco/Afyrmo และ Modern Status Workshop 3451167732/id=ModernStatus เป็นตัวอย่างจริงที่ใช้
+  งาน ทั้งคู่ subscribe อยู่ในเครื่องแล้ว อ่านไฟล์ Lua ของ NeatUI ครบทุกไฟล์แล้ว (compat 1,
+  neattool 5, scrollview 4, ui 1) และไล่ดู Modern Status จริงว่าเรียกใช้ยังไง)
+
+  วิธีพึ่งพา NeatUI จาก mod ของเราเอง:
+    - ใส่ `require=NeatUI_Framework` ใน mod.info เพื่อบังคับ load order (ต้องโหลดก่อนมอดเราเสมอ)
+      *** สังเกต: mod.info จริงของ Modern Status (เวอร์ชัน 42.13+) เขียนว่า
+      `require=\NeatUI_Framework` มี backslash นำหน้าจริงๆ -- ไม่ใช่ syntax มาตรฐานที่เคยเจอที่ไหน
+      มาก่อนในเซสชันนี้ ไม่แน่ใจว่าตั้งใจหรือพิมพ์ผิดของผู้เขียน ห้ามลอกตามโดยไม่ทดสอบ ใช้แบบ
+      `require=NeatUI_Framework` ธรรมดา (ไม่มี backslash) ตามที่ mod อื่นๆ ในเซสชันนี้ใช้กันมา
+      ตลอดจะปลอดภัยกว่า ***
+    - **ไม่ต้อง `require "neatui_framework/..."` ในไฟล์ Lua ของเราเลย** -- ยืนยันจากการ grep
+      ทั่ว Modern Status ทั้งมอดแล้วไม่เจอการ require path ของ neatui_framework จุดไหนเลยสักที่
+      เพราะไฟล์ NeatTool.*.lua ประกาศเป็น GLOBAL table ตรงๆ ตอนโหลด (ไม่ใช่ module แบบ
+      `return X` ที่ต้อง require ถึงจะได้ค่า) พอ require=NeatUI_Framework บังคับ load order
+      ถูกแล้ว เรียก `NeatTool.ThreePatch.drawHorizontal(...)` ฯลฯ เป็น global ได้ตรงๆ เลย
+
+  เครื่องมือที่มีให้ใช้จริง (ยืนยันจากซอร์ส พร้อม signature จริง):
+    - `NeatTool.NinePatch.draw(panel, x, y, width, height, textures, alpha, r, g, b)` --
+      textures เป็น table 9 คีย์ (topLeft, topRight, bottomLeft, bottomRight, top, bottom,
+      left, right, middle) ใช้กับพาเนล/กรอบที่ขยายได้ทุกทิศทาง
+    - `NeatTool.ThreePatch.drawHorizontal(panel, x, y, width, height, leftTex, midTex, rightTex,
+      alpha, r, g, b)` และ `.drawVertical(panel, x, y, width, height, topTex, midTex, bottomTex,
+      alpha, r, g, b)` -- ใช้กับปุ่ม/แถบยาวที่ขยายแค่แกนเดียว (ซ้าย-ขวา ปลายคงสัดส่วนเดิม, ตรงกลาง
+      stretch) ตัวอย่างการใช้จริงดูข้างล่าง
+    - `NeatTool.truncateText(text, maxWidth, font, suffix)` -- ตัดข้อความยาวเกิน + "..." พร้อม
+      cache ในตัว (FIFO 512 entries, กันช้าเวลามี list ยาวๆ), ปลอดภัยกับ UTF-16 surrogate pair
+      (ภาษาที่ใช้ emoji/อักขระนอก BMP) กับ `NeatTool.fitLabelText(label, text, maxWidth, font,
+      suffix, showTooltip)` ตัวช่วยระดับสูงกว่าที่ตัด label โดยตรงพร้อมใส่ tooltip เต็มให้เอง
+    - `NeatTool.renderText(panel, text, x, y, size, alpha, r, g, b, useOutline)` +
+      `NeatTool.measureTextWidth(text, size, useOutline)` -- render ตัวเลข/สัญลักษณ์บางตัว
+      (0-9, M, L, /, ?, :, ., S) ด้วยภาพ bitmap แทนฟอนต์ปกติ เพราะฟอนต์ตัวเลขบางภาษา (เช่นจีน)
+      เพี้ยนใน PZ -- ใช้เฉพาะจุดที่โชว์ตัวเลขสำคัญๆ (เช่น HP/ค่า stat ตัวใหญ่ๆ) ไม่ต้องใช้ทุกที่
+    - `NeatTool.drawTexturePercentage(self, texture, percentage, x, y, w, h, a, r, g, b)` /
+      `.drawTexturePercentageBottomUp(...)` -- **ไฟล์นี้บอกไว้ในคอมเมนต์เองว่าให้คัดลอกโค้ดไปใส่
+      ในมอดตัวเอง ไม่ใช่เรียกผ่าน require เหมือนตัวอื่น** (of เตรียมไว้ชั่วคราวรอ ISUIElement
+      วนิลลารองรับเอง) ต้องอ่าน comment ในไฟล์ต้นฉบับก่อนใช้เครื่องมือไหนเสมอ อย่าสมมติว่าทุกตัว
+      ใช้แบบเดียวกันหมด
+    - `NI_SquareButton` (extends ISButton) -- ปุ่มสี่เหลี่ยมมีไอคอน พร้อม state hover/pressed/
+      active ในตัว: `NI_SquareButton:new(x,y,size,iconTexture,target,onclick)` แล้วปรับแต่งด้วย
+      `:setIcon/:setIconSizeRatio/:setActive/:setActiveColor(r,g,b)`
+    - `NIVirtualScrollView` (extends ISUIElement, มี grid variant NIGridVirtualScrollView ด้วย)
+      -- scroll list แบบ virtualized/object-pool (สร้าง UI element เท่าที่เห็นบนจอจริงแล้ว
+      recycle ซ้ำ ไม่สร้างทั้งลิสต์รวดเดียว) เหมาะกับลิสต์ยาวๆ เช่นรายการไอเทม/สูตรคราฟ:
+      `NIVirtualScrollView:new(x,y,w,h)` แล้วตั้งค่าด้วย `:setDataSource(dataSource,
+      forceRefresh)`, `:setConfig(itemHeight, padding)`, `:setOnCreateItem(callback)`,
+      `:setOnUpdateItem(callback)`, `:setPoolSize(size)`/`:setPoolSizeBuffer(buffer)` (ยังไม่ได้
+      ไล่อ่านทุกบรรทัดละเอียดเท่าไฟล์อื่น แค่ดู public method signature เพราะไฟล์ยาว 384-496
+      บรรทัด -- ถ้าจะใช้จริงควรกลับไปอ่านเต็มไฟล์อีกรอบก่อน)
+    - `ISUIElement` compat shim (nui_isuielement_compat.lua): เติม getCentreX/Y,
+      getSelfCenterX/Y, getCenterX/Y, getAbsoluteCenterX/Y, setCenterX/Y ให้ ISUIElement แบบ
+      `if not ISUIElement.xxx then function ISUIElement:xxx() ... end end` -- เทคนิคที่ควรลอก
+      เวลาต้อง patch API วนิลลาที่เปลี่ยนเบอร์ build: เช็คว่ามีอยู่แล้วหรือยังก่อนเสมอ ไม่งั้นจะ
+      ไปทับพฤติกรรมจริงของ build ใหม่ที่มันมีอยู่แล้ว
+
+  ตัวอย่างการสร้าง widget แบบเต็ม (คัดลอกโครงจริงจาก Modern Status MS_LongButton.lua มา ยืนยัน
+  ว่าใช้งานได้จริงเพราะเป็นมอด published ที่คนใช้กันเยอะ):
+    ```
+    require "ISUI/ISButton"
+    MyLongButton = ISButton:derive("MyLongButton")
+
+    function MyLongButton:initialise()
+        ISButton.initialise(self)
+    end
+
+    function MyLongButton:new(x, y, width, height, title, target, onclick)
+        local o = ISButton:new(x, y, width, height, title, target, onclick)
+        setmetatable(o, self)
+        self.__index = self
+        o:setDisplayBackground(false)  -- ปิด background เดิมของ ISButton เพราะเราวาดเอง
+        o.bg = {L=getTexture("..._L.png"), M=getTexture("..._M.png"), R=getTexture("..._R.png")}
+        return o
+    end
+
+    function MyLongButton:render()
+        NeatTool.ThreePatch.drawHorizontal(self, 0, 0, self.width, self.height,
+            self.bg.L, self.bg.M, self.bg.R, 0.8, 1, 1, 1)
+        if self.title and self.title ~= "" then
+            local textW = getTextManager():MeasureStringX(self.font, self.title)
+            self:drawText(self.title, self.width/2 - textW/2, 4, 1,1,1,1, self.font)
+        end
+    end
+    ```
+    แพทเทิร์นหลัก: derive จาก ISButton/ISUIElement วนิลลาปกติ, override แค่ `:new()` (ตั้งค่า
+    texture/สี) กับ `:render()` (วาดเอง) -- ใช้ `self:isMouseOver()` / `self.pressed` เช็ค state
+    ปุ่มได้ตรงๆ เพราะ ISButton จัดการให้แล้ว ไม่ต้องเขียน mouse handling เอง
+
+
 9. Checklist ก่อนเริ่มงานใหม่ทุกครั้ง
 =======================================
 [ ] อ่านไฟล์นี้ (mods/workflow.txt) ก่อนเสมอ
@@ -581,6 +671,8 @@ saves only!"
     ซ้ำ ที่เกมโหลดจาก Workshop staging คนละไฟล์กับที่แก้ใน mods/)
 [ ] ถ้าจะทำ moodle เอง: ใช้ MoodleFramework (ข้อ 8.2) ไม่ต้องเขียน UI/render เอง
 [ ] ถ้าจะสร้าง trait ใหม่: ประกาศผ่าน character_trait_definition script (ข้อ 8.2) ไม่ใช่ Lua ล้วน
+[ ] ถ้าจะทำ custom UI widget (ปุ่ม/แถบ/scroll list): เช็ค NeatTool ก่อน (ข้อ 8.3) ไม่ต้องเขียน
+    9-patch/3-patch/virtualized list เองใหม่
 [ ] อาการ "แก้แล้วในเกมเหมือนไม่มีผล" -> รัน `mods/check_workshop_sync.sh` ก่อนสงสัยเรื่อง cache
     (ข้อ 6.1) หรือทฤษฎีอื่นเสมอ เช็คถูกที่ก่อนจะประหยัดเวลาดีบั๊กได้มาก
 [ ] เจอความรู้ใหม่ระหว่างทาง -> กลับมาอัปเดตไฟล์นี้ก่อนจบงานเสมอ
