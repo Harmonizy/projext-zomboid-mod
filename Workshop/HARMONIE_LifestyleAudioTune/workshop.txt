@@ -1,13 +1,13 @@
 version=1
 id=3800990276
 title=HARMONIE - Lifestyle Audio Tune
-description=Turns down "Lifestyle: Hobbies" (Workshop ID 3403870858) music and sound effects, which ship very loud and audible from very far away.
+description=Turns down "Lifestyle: Hobbies" (Workshop ID 3403870858) music and sound effects -- they ship very loud and can be heard from way too far away.
 description=
-description=Overrides the mod's disco/jukebox/DJ booth music, playable instruments (guitar, harmonica, etc.) and other equipment SFX (turn on/off, button presses, etc.) to half their original volume and a shared 25-tile max hearing distance (down from 75-100 tiles).
+description=Cuts the disco/jukebox/DJ booth music, playable instruments (guitar, harmonica, etc.) and other equipment sounds (button presses, turning things on/off) to half volume, with a shared 25-tile max hearing range (down from the original 75-100 tiles). The Jukebox's actual song already has its own right-click "Jukebox Volume" menu in Lifestyle itself, so that one's left alone.
 description=
-description=Also adds a real in-game settings page (Options -> Mods -> "HARMONIE: Lifestyle Audio Tune") with a live volume slider that applies instantly, no restart needed -- covering the DJ Booth, Jukebox idle/chime sounds, instruments and equipment SFX. The Jukebox's actual song already has its own native right-click "Jukebox Volume" menu in Lifestyle itself, so it's left untouched. Hearing distance/range is not live-adjustable (Project Zomboid has no API for that); it stays fixed at this mod's 25-tile override.
+description=Also adds a real settings page (Options -> Mods -> "HARMONIE: Lifestyle Audio Tune") with a live volume slider -- changes apply instantly, no restart needed. Hearing range isn't live-adjustable (the game has no API for that), so it stays fixed at 25 tiles.
 description=
-description=Also wires up 9 JoJo's Bizarre Adventure opening themes as playable instrument tracks (Electric Guitar, Bass, Saxophone, Trumpet) via Lifestyle's own song-addon extension point. Audio files are NOT included -- they're copyrighted; drop your own legally-obtained .ogg files into media/sound/JoJo/ yourself (see the README.txt in that folder for exact filenames).
+description=Also wires up 4 JoJo's Bizarre Adventure openings (Sono Chi no Sadame, Bloody Stream, Fighting Gold, Giorno's Theme), the "HEYYEYAAEYAAAEYAEYAA" meme song, and three more requested tracks (Bothnia - Someday I'll Wait, Violette Wautier - Wanna Be Yours, Honkai: Star Rail - What the Ripple Sees) as playable instrument tracks -- each song shows up on every real instrument that fits it (Electric Guitar, Bass, Acoustic Guitar, Saxophone, Trumpet, Keytar, Harmonica, Flute, Violin). Audio files are NOT included -- they're copyrighted; drop your own legally-obtained .ogg files into media/sound/ yourself (see the README there for exact filenames).
 description=
 description=Requires Lifestyle: Hobbies to be enabled, and must load after it (enforced automatically via require=).
 description=

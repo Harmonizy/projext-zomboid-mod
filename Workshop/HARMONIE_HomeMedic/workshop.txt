@@ -1,9 +1,9 @@
 version=1
 id=3797963650
 title=HARMONIE - Home Medic
-description=Addon for Extensive Health Rework Evolved (EHR): adds traditional/folk medicine crafted from herbs, materials and vanilla insects to treat Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, plus recipes for the Empty Blood Bag and IV Administration Kit.
+description=Adds traditional/folk medicine to Extensive Health Rework Evolved (EHR) -- craft real remedies from herbs, everyday materials and even vanilla insects to treat Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus. Also adds recipes for the Empty Blood Bag and IV Administration Kit.
 description=
-description=Thai translation for this mod and for EHR/The Only Cure themselves now lives in the separate "HARMONIE - Too Many Mod Thai Translate" pack, not bundled here.
+description=Thai translation for this mod (and for EHR/The Only Cure themselves) lives in the separate "HARMONIE - Too Many Mod Thai Translate" pack, not bundled here.
 description=
 description=Requires Extensive Health Rework Evolved to be enabled. Singleplayer-focused; see the mod's README for details.
 description=
