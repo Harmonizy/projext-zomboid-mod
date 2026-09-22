@@ -1088,6 +1088,25 @@ How to debug:
     appears automatically once content exceeds the visible area — gets
     scroll/clip/mouse-wheel for free from the existing widget, no need to write
     it yourself.
+  - *** A custom :doDrawItem()/tooltip inside an ISScrollingListBox must clamp
+    its own Y position against the CONTENT-SPACE visible window, not
+    [0, getHeight()] *** — real bug, found from a user report AFTER the
+    height-auto-fit trap above was fixed: a hand-drawn floating tooltip (own
+    drawRect/drawText, positioned near the mouse) rendered completely
+    invisible whenever hovering any row below the first one. Root cause:
+    ISScrollingListBox's own :prerender() sets a stencil clip rect in LOCAL
+    element space (0,0)-(width,height) confirmed from vanilla source, and its
+    own background fill is drawn at content-space y = `-self:getYScroll()`
+    to line up with that rect's local y = 0 — meaning the actual VISIBLE
+    content-space window is [-self:getYScroll(), -self:getYScroll() +
+    self:getHeight()], not [0, self:getHeight()] (content-space is scroll-
+    invariant, the viewport moves). This bug can lie dormant for a long time
+    if the element's height happens to always be larger than needed (e.g.
+    before an unrelated auto-height fix like the one above shrinks it down),
+    since a tall-enough height never clips anything — always clamp any
+    custom-drawn overlay/tooltip against the real visible window formula
+    above, not a naive [0, height] assumption, even if it currently "looks
+    fine" while the element happens to be oversized. ***
   - *** Real reference for a nice-looking debug/status panel UI:
     EHR_DebugMenuV2.lua *** (Extensive Health Rework Evolved, Workshop
     3726328119, already subscribed + already a soft dependency of
@@ -1213,6 +1232,11 @@ How to debug:
     (section 8.6).
 [ ] Drawing a texture yourself? Call getTexture(path) and store the result first
     — never pass a path string directly into drawTextureScaled (section 8.6).
+[ ] Drawing a custom tooltip/overlay inside an ISScrollingListBox? Clamp its Y
+    position against [-self:getYScroll(), -self:getYScroll()+self:getHeight()]
+    (content-space visible window), never a naive [0, getHeight()] — this can
+    look fine for a long time and only break once the element's height
+    shrinks to actually fit its content (section 8.6).
 [ ] Writing new text into getText()/a translation JSON? Never include a bare "%"
     character (spell it out as "percent"/"เปอร์เซ็นต์" instead, or use "%%" if a
     literal symbol is truly needed) (section 8.6).
