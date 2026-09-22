@@ -13,13 +13,16 @@
         HARMONIE_NutritionUI.lua's own isLocked() for the same renaming note)
         level 3+: adds the exact Reserve number (0-100) and this vitamin's Daily
         Requirement.
-      - Cooking level 3+: adds a "Vitamin Ingredient Index" section at the very
-        bottom of the tab, one consolidated list for all 6 vitamins (not a
-        per-row hover tooltip anymore, per explicit request) -- each vitamin's
-        own top 10 richest ingredients (HARMONIE_GTP.GetTopFoods, see
-        HARMONIE_TopFoods.lua; canned items already excluded there), sorted
-        richest first, with each amount shown in parentheses, always visible
-        (scrolls with the rest of the tab, no hover needed).
+      - Cooking level 3+ OR First Aid level FIRST_AID_DETAIL_LEVEL+ (a cook
+        knows what's rich in vitamins from experience; a nutritionist/doctor
+        knows the same thing medically -- either skill unlocks it, per
+        explicit request): adds a "Vitamin Ingredient Index" section at the
+        very bottom of the tab, one consolidated list for all 6 vitamins (not
+        a per-row hover tooltip anymore, per explicit request) -- each
+        vitamin's own top 10 richest ingredients (HARMONIE_GTP.GetTopFoods,
+        see HARMONIE_TopFoods.lua; canned items already excluded there),
+        sorted richest first, with each amount shown in parentheses, always
+        visible (scrolls with the rest of the tab, no hover needed).
 
     BandTextKey is intentionally duplicated from HARMONIE_NutritionUI.lua
     rather than shared, per this feature's own plan: that file is explicitly
@@ -297,17 +300,19 @@ end
 
 --[[
     Builds the consolidated "Vitamin Ingredient Index" section shown once at
-    the very bottom of the tab (Cooking COOKING_FOOD_LEVEL+ only) -- replaces
-    the old per-row "hover to see top 10" line/tooltip per explicit request:
-    one list covering all 6 vitamins at once, always visible, no hover
-    needed. Each vitamin's own HARMONIE_GTP.GetTopFoods(vit, 10) already
-    excludes this mod's own canned items and sorts richest-first -- this
-    function just formats that into per-vitamin text lines with the amount
-    in parentheses (unit via VitaminUnit, same convention
-    HARMONIE_TooltipHook.lua's own item-tooltip vitamin breakdown uses).
+    the very bottom of the tab (Cooking COOKING_FOOD_LEVEL+ OR First Aid
+    FIRST_AID_DETAIL_LEVEL+ -- either skill unlocks it, see refreshLayout's
+    canSeeFoodIndex) -- replaces the old per-row "hover to see top 10"
+    line/tooltip per explicit request: one list covering all 6 vitamins at
+    once, always visible, no hover needed. Each vitamin's own
+    HARMONIE_GTP.GetTopFoods(vit, 10) already excludes this mod's own canned
+    items and sorts richest-first -- this function just formats that into
+    per-vitamin text lines with the amount in parentheses (unit via
+    VitaminUnit, same convention HARMONIE_TooltipHook.lua's own item-tooltip
+    vitamin breakdown uses).
 ]]--
-function HARMONIE_VitaminPanel:buildFoodIndexData(hasCookingFoodList)
-    if not hasCookingFoodList then
+function HARMONIE_VitaminPanel:buildFoodIndexData(canSeeFoodIndex)
+    if not canSeeFoodIndex then
         return { visible = false }
     end
 
@@ -341,6 +346,9 @@ function HARMONIE_VitaminPanel:refreshLayout()
 
     local hasFirstAidDetail = player:getPerkLevel(Perks.Doctor) >= FIRST_AID_DETAIL_LEVEL
     local hasCookingFoodList = player:getPerkLevel(Perks.Cooking) >= COOKING_FOOD_LEVEL
+    -- Either a cook (knows from experience) or a nutritionist/doctor (knows
+    -- medically) can see the food index -- either skill unlocks it.
+    local canSeeFoodIndex = hasCookingFoodList or hasFirstAidDetail
     -- Must match doDrawItem's own textX exactly (PADDING + STRIPE_WIDTH +
     -- ICON_SIZE + 14) or wrapped lines can overflow the row by a few px.
     local textWidth = self:getWidth() - (PADDING + STRIPE_WIDTH + ICON_SIZE + 14) - PADDING
@@ -351,7 +359,7 @@ function HARMONIE_VitaminPanel:refreshLayout()
     local totalHeight = 0
     for _, item in ipairs(self.items) do
         if item.item == FOOD_INDEX_KEY then
-            local data = self:buildFoodIndexData(hasCookingFoodList)
+            local data = self:buildFoodIndexData(canSeeFoodIndex)
             item.data = data
             if data.visible then
                 -- Must match doDrawFoodIndex's own increments exactly (top
