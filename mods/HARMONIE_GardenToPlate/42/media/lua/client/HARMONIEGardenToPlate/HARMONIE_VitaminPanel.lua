@@ -64,13 +64,20 @@ local VitaminNameKey = {
     K = "IGUI_HARMONIE_Vitamin_K",
 }
 
+-- ISUIElement:drawTextureScaled ultimately hands its texture argument to a
+-- native Java call that requires an actual Texture object -- unlike some
+-- other draw* wrappers, ISUITextureGetter.checkGetTexture() does NOT resolve
+-- a plain path string for it (confirmed via a real crash: "expected argument
+-- of type Texture, got String", console.txt stack trace through
+-- HARMONIE_VitaminPanel.lua:doDrawItem). Resolve each icon once via
+-- getTexture() at file-load time instead of passing the path every frame.
 local VitaminIcon = {
-    A = "media/ui/VitaminA.png",
-    B = "media/ui/VitaminB.png",
-    C = "media/ui/VitaminC.png",
-    D = "media/ui/VitaminD.png",
-    E = "media/ui/VitaminE.png",
-    K = "media/ui/VitaminK.png",
+    A = getTexture("media/ui/VitaminA.png"),
+    B = getTexture("media/ui/VitaminB.png"),
+    C = getTexture("media/ui/VitaminC.png"),
+    D = getTexture("media/ui/VitaminD.png"),
+    E = getTexture("media/ui/VitaminE.png"),
+    K = getTexture("media/ui/VitaminK.png"),
 }
 
 -- What goes wrong at Critical, in plain player-facing language -- same real
