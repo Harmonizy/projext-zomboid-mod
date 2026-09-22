@@ -776,6 +776,99 @@ saves only!"
   ต้องถามผู้ใช้ก่อนเหมือนที่ทำกับ GardenToPlate (เพราะเลขลดลงมาจากเดิมอาจดูแปลกถ้าไม่ได้ตั้งใจ)
 
 
+8.6 บั๊กจริงที่เจอระหว่างทำ custom scrollable tab (HARMONIE_VitaminPanel, 2026-09-22) —
+    อ้างอิงสำหรับงาน UI ในอนาคต
+  - *** drawTextureScaled ต้องการ Texture object จริง ไม่รับ string path เฉยๆ *** --
+    ISUITextureGetter.checkGetTexture() แปลง string เป็น Texture ให้เฉพาะ draw function
+    บางตัวเท่านั้น ตัวนี้ไม่ทำ -- ยืนยันจาก error จริง "expected argument of type Texture, got
+    String" (console.txt) ตอนส่ง path string ตรงๆ เข้า self:drawTextureScaled() แก้โดยเรียก
+    getTexture(path) เก็บผลลัพธ์ไว้ที่ top-level ของไฟล์ครั้งเดียว (ครั้งเดียวตอนโหลดไฟล์ ไม่ใช่ทุกเฟรม)
+    แล้วส่ง Texture object ที่ resolve แล้วเข้า draw function แทน
+  - *** getText()/moodle description ห้ามมีเครื่องหมาย "%" เปล่าๆ *** -- PZ ส่งข้อความผ่าน
+    java.util.Formatter จริง (ยืนยันจาก error จริง "UnknownFormatConversionException ...
+    Message: ERROR: Formatting") เครื่องหมาย % ตัวเดียวที่ไม่ตามด้วยตัวเลข (เช่น "%1") หรือไม่ใช่
+    "%%" จะทำให้ Formatter throw แล้วข้อความนั้นแสดงผลเพี้ยน/หายไปเงียบๆ ไม่มี error โผล่ในเกม เจอ
+    จริงกับ "80%" ในข้อความ Vitamin B ทั้ง Downside/Moodle description ทั้งไทย+อังกฤษ วิธีแก้ที่
+    ปลอดภัยกว่าใช้ "%%": เขียนเลี่ยงเป็นคำ (เช่น "80 percent"/"80 เปอร์เซ็นต์") แทนตัวเลข+% ตรงๆ
+    เพื่อกันคนแก้ทีหลังลืมดับเบิล % (ยืนยันว่า "%%" ใช้ได้จริงจาก mod อื่นในแพ็คแปล เช่น
+    IGUI_LSAmbitions_* ที่เขียน "+15%%" ไว้แล้วไม่มีปัญหา)
+  - *** ระวัง boundary comparison ไม่ตรงกันระหว่างระบบสองตัวที่อ่านค่า threshold เดียวกัน *** --
+    MoodleFramework เอง (MF_ISMoodle.lua:getLevel()) เทียบแบบ "value <= threasholdBadN"
+    (inclusive) แต่ HARMONIE_GTP.GetBand เทียบแบบ "value < criticalThreshold" (exclusive) ทั้งคู่
+    อ่านค่า Config.criticalThreshold ตัวเดียวกันจริง (ไม่ได้ hardcode คนละที่) แต่ผลต่างกันตรงค่า
+    ที่ตรง threshold พอดีเป๊ะ (เช่น ตั้ง Reserve = 20 เป๊ะ ตอน threshold = 20) -- แก้โดยลบ epsilon
+    เล็กๆ (0.0001 ของสเกล ratio) ออกจากค่าที่ส่งให้ MoodleFramework ก่อนตั้ง threshold เพื่อให้ "<="
+    ของมันทำงานตรงกับ "<" ของเราทุกกรณีที่มีความหมายจริง (ดู HARMONIE_VitaminMoodles.lua's
+    applyThresholds) -- บทเรียน: เวลาเอา threshold ตัวเดียวกันไปป้อนให้ระบบสองตัว ต้องเช็คว่าแต่ละ
+    ตัวเทียบแบบ inclusive หรือ exclusive ก่อนเสมอ อย่าสมมติว่าเหมือนกัน
+  - *** เพิ่ม tab เองใน ISCharacterInfoWindow ห้ามอ่านความกว้างจาก self.characterView ทันทีหลัง
+    createChildren *** -- self.characterView (แท็บ Skills) ถูกสร้างด้วยความกว้างเริ่มต้นแคบๆ
+    (แค่พอใส่ป้ายชื่อ 5 แท็บ, "tabTotalWidth" ในคอมเมนต์ vanilla เอง) แล้วค่อยขยายทีหลังตอน
+    ISCharacterInfo:render() เรียก self:setWidthAndParentWidth(math.max(self.width, ...)) เอง --
+    ถ้าไปอ่าน self.characterView:getWidth() ทันทีตอน createChildren จะได้ค่าแคบตัวเดิมติดไปตลอด
+    วิธีแก้: ให้ tab ใหม่ทำ setWidthAndParentWidth(math.max(self:getWidth(), desiredWidth)) เอง
+    ทุกเฟรมใน :prerender() (เลียนแบบ vanilla เป๊ะ ไม่พึ่งพาแท็บอื่น) แทนที่จะยืมความกว้างจากแท็บอื่น
+  - *** ISScrollingListBox คือ widget ที่ถูกต้องสำหรับ custom scrollable tab *** -- ไม่ใช่ ISPanel
+    เปล่าๆ: derive จาก ISScrollingListBox, override :doDrawItem(y, item, alt) สำหรับวาดแต่ละแถว,
+    เก็บ layout/ความสูงต่อแถวไว้ใน item.height (คำนวณจาก wrapped text จริงจำนวนบรรทัด ไม่ใช่ค่าคงที่)
+    แล้วเรียก self:setScrollHeight(totalHeight) ให้ scrollbar โผล่เองอัตโนมัติเมื่อเนื้อหาสูงเกิน
+    พื้นที่ที่มองเห็น -- ได้ scroll/clip/mouse-wheel ฟรีจาก widget เดิม ไม่ต้องเขียนเอง
+  - *** อ้างอิง UI สวยจริงสำหรับ debug/status panel: EHR_DebugMenuV2.lua *** (Extensive Health
+    Rework Evolved, Workshop 3726328119, subscribe อยู่แล้ว + เป็น soft-dependency ของ
+    HARMONIE_HomeMedic อยู่แล้ว) -- เทคนิคที่ลอกมาใช้จริงใน HARMONIE_VitaminPanel.lua: แถบสี status
+    ข้างซ้ายของแต่ละแถว (accent stripe), badge/chip พื้นหลังโปร่งหลังคำ status, fill bar
+    (drawRect พื้นหลังเข้ม + drawRect เติมสีตามสัดส่วน + drawRectBorder ขอบ) และเส้นแบ่งบางๆ 1px
+    ระหว่างแถวแทนพื้นหลังสลับสี ยังมี pattern จริงเรื่อง body damage ที่ยืมมาใช้ด้วย:
+    bodyDamage:getOverallBodyHealth()/bodyDamage:ReduceGeneralHealth(amount) สำหรับลด/จำกัด
+    ค่าสุขภาพโดยรวมแบบปลอดภัย (ดู EHR_EnvironmentalClampBodyHealth ใน
+    EHR_EnvironmentalDiseases.lua) -- กลับมาดู mod นี้อีกถ้าจะทำอะไรเกี่ยวกับ body damage/UI สวยๆ
+    ในอนาคต
+
+
+8.7 Multiplayer — หลักการที่ต้องยึดเสมอทุกครั้งที่เขียน hook/loop ใหม่ (2026-09-22)
+  งานวิจัยจริงจากซอร์ส vanilla (ไม่ใช่เดา) ระหว่างพยายามเช็คว่า HARMONIE_VitaminChecker.lua
+  เหมาะกับ MP แค่ไหน:
+
+  - *** getNumActivePlayers()/getSpecificPlayer(i) คือ "ผู้เล่น local บนเครื่องนี้เท่านั้น" ***
+    (แนวคิดสำหรับ split-screen เป็นหลัก -- ยืนยันจาก client/XpSystem/ISUI/ISCharacterInfo.lua
+    ที่ใช้คู่นี้วนแค่ local player slots) -- บนเครื่อง client แต่ละเครื่องใน MP จริง คู่นี้จะคืนแค่
+    ตัวละครของผู้เล่นคนนั้นเอง ไม่เห็นผู้เล่นคนอื่นเลย
+  - *** getOnlinePlayers() คือฟังก์ชันจริงสำหรับวนผู้เล่น "ทุกคนที่ต่ออยู่" แบบ server-side ***
+    (ยืนยันจาก server/ClientCommands.lua ที่ admin command ใช้ตัวนี้จริงเวลาต้องทำอะไรกับทุกคน)
+  - *** isClient()/isServer() เป็น idiom มาตรฐานของ vanilla สำหรับกันโค้ดที่มีผลข้างเคียง
+    (world-mutating) ไม่ให้รันซ้ำบน remote client ที่ไม่ใช่ authoritative *** -- แพทเทิร์นจริงที่
+    เจอซ้ำๆ ในซอร์ส vanilla: `if isClient() then return end` หรือ `if not isClient() then ... end`
+    คลุมเฉพาะส่วนที่ต้องรันแค่ที่เดียว (singleplayer, dedicated server, หรือ host's embedded
+    server -- ทุกกรณีนี้ isClient() เป็น false) ส่วน remote client (isClient() เป็น true) จะข้าม
+    แล้วรอรับผลจาก sync แทน
+
+  *** ช่องโหว่จริงที่เจอและยังไม่ได้แก้ -- ต้องถามผู้ใช้ก่อนว่าจะแก้ตอนนี้เลยไหม ***:
+  HARMONIE_VitaminChecker.lua (และไฟล์ Decay/Effects ที่เกี่ยวข้อง) อยู่ใน media/lua/shared/ และ
+  ใช้ getNumActivePlayers()/getSpecificPlayer() วนผู้เล่น -- ตามที่ยืนยันข้างบน คู่ฟังก์ชันนี้เห็น
+  แค่ผู้เล่น local เท่านั้น หมายความว่า:
+    1. บน dedicated server แท้ๆ (ไม่มีใคร host บนเครื่องนั้น ไม่มี local player) checker นี้อาจไม่
+       ทำงานเลย (getNumActivePlayers() = 0) เพราะไม่ใช่ฟังก์ชันที่ออกแบบมาให้ใช้ฝั่ง server
+    2. ในเกม MP จริง (host + remote clients) ระบบผลเสียวิตามินตอนนี้ทำงานแบบ "แต่ละ client คำนวณ
+       เอง" (client-trusted) ไม่ใช่ server-authoritative -- ผู้เล่นที่แก้ไฟล์มอดตัวเองสามารถปิด
+       ผลเสียของตัวเองได้ ไม่ต่างจาก single-player mod ทั่วไปที่ไม่ได้ออกแบบมาป้องกันโกง แต่ถ้าเล่น
+       ปกติไม่โกงจะยังเห็นผลเสียตามปกติ เพราะ client ของแต่ละคนคำนวณให้ตัวเองอยู่แล้ว (ModData sync
+       ผ่าน transmitModData() ที่มีอยู่แล้วทำให้ client อื่น/host เห็นค่า Reserve ที่ถูกต้อง แค่ตัว
+       "คำนวณผลเสีย" เองไม่ได้ผ่าน server)
+  ยังไม่ได้แก้เพราะเป็นการเปลี่ยนสถาปัตยกรรมที่มีนัยสำคัญ (ต้องเปลี่ยนมาใช้ getOnlinePlayers() +
+  isClient() gate + ทดสอบบน dedicated server จริงซึ่งตอนนี้ไม่มีให้ทดสอบ) และ pattern เดิมมาจาก
+  commit "multiplayer vitamin sync character/item" ของผู้ใช้เองที่อาจตั้งใจออกแบบมาแบบนี้แล้ว --
+  ต้องถามผู้ใช้ก่อนว่าต้องการให้ทำ server-authoritative จริงไหม หรือยอมรับ client-trusted model นี้
+  ต่อไป (ใช้ได้ปกติสำหรับ host+remote clients เล่นด้วยกัน แค่ไม่รองรับ dedicated server เปล่าๆ
+  และไม่กันโกงจากผู้เล่นที่ตั้งใจแก้ไฟล์ตัวเอง)
+
+  *** กฎที่ต้องทำทุกครั้งจากนี้ไป: ก่อนเขียน hook/loop ใหม่ที่มีผลข้างเคียง (เปลี่ยนค่า stat, สร้าง
+  item, สร้างแผล, ฯลฯ) ถามตัวเองก่อนเสมอ: (1) ต้องการวนผู้เล่น local หรือทุกคนที่ต่ออยู่? เลือก
+  getNumActivePlayers()/getSpecificPlayer() หรือ getOnlinePlayers() ให้ตรง (2) โค้ดนี้ควรรันที่
+  เดียว (authoritative) หรือรันได้ทุกเครื่อง (idempotent, ไม่มีผลข้างเคียงที่สุ่ม/สร้างของใหม่)?
+  ถ้าไม่ idempotent (เช่น สุ่ม dice หรือสร้าง item/wound ใหม่) ต้องคลุมด้วย isClient()/isServer()
+  gate เสมอ ***
+
+
 9. Checklist ก่อนเริ่มงานใหม่ทุกครั้ง
 =======================================
 [ ] อ่านไฟล์นี้ (mods/workflow.txt) ก่อนเสมอ
@@ -799,4 +892,15 @@ saves only!"
     (ข้อ 6.1) หรือทฤษฎีอื่นเสมอ เช็คถูกที่ก่อนจะประหยัดเวลาดีบั๊กได้มาก
 [ ] เจอความรู้ใหม่ระหว่างทาง -> กลับมาอัปเดตไฟล์นี้ก่อนจบงานเสมอ
 [ ] แก้ไฟล์จริงของ mod ไหนก็ตาม -> ขยับ modversion ใน mod.info ของ mod นั้นด้วยเสมอ (ข้อ 8.5)
+[ ] ถ้าจะทำ custom scrollable tab/panel: ใช้ ISScrollingListBox ไม่ใช่ ISPanel เปล่าๆ (ข้อ 8.6)
+    และถ้าอยากได้ UI สวยแบบ status panel ดู EHR_DebugMenuV2.lua เป็นตัวอย่างก่อน (ข้อ 8.6)
+[ ] จะวาด texture เอง -> เรียก getTexture(path) เก็บผลลัพธ์ไว้ก่อน อย่าส่ง path string ตรงเข้า
+    drawTextureScaled (ข้อ 8.6)
+[ ] จะเขียนข้อความใหม่ลง getText()/translation JSON -> ห้ามมีเครื่องหมาย "%" เปล่าๆ (เขียนเป็นคำ
+    "percent"/"เปอร์เซ็นต์" แทน หรือใช้ "%%" ถ้าจำเป็นต้องใช้สัญลักษณ์จริง) (ข้อ 8.6)
+[ ] จะป้อน threshold ตัวเดียวกันให้ระบบสองตัว (เช่น mod เราเอง + MoodleFramework) -> เช็คก่อนว่า
+    แต่ละฝั่งเทียบแบบ inclusive (`<=`) หรือ exclusive (`<`) อย่าสมมติว่าเหมือนกัน (ข้อ 8.6)
+[ ] จะเขียน hook/loop ใหม่ที่มีผลข้างเคียง -> เช็คก่อนเสมอว่าต้องการผู้เล่น local
+    (getNumActivePlayers/getSpecificPlayer) หรือทุกคนที่ต่ออยู่ (getOnlinePlayers) และถ้าไม่
+    idempotent (สุ่ม dice/สร้างของใหม่) ต้องคลุมด้วย isClient()/isServer() gate เสมอ (ข้อ 8.7)
 [ ] จบงานแล้ว commit+push (ข้อ 8.1) และแจ้งผู้ใช้รายชื่อ mod ที่ต้อง publish ใหม่บน Workshop
