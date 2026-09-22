@@ -86,11 +86,11 @@
            own earlier VitaminConfig.lua research citing MoodleStat.class).
            "unhappy ทำให้ย้ายของหรือทำอะไรช้าลง จำลองการทำงานผิดปกติของ
            ระบบประสาทและกล้ามเนื้ออ่อนแรง"
-      K -> CharacterStat.FOOD_SICKNESS floor 30 (0-100 scale -- switched
-           from CharacterStat.SICKNESS, which sounded right but was
-           CONFIRMED to drive no visible "Sick" moodle at all; see
-           MaintainSicknessFloor below for the confirmation). "อาการของ
-           sick ทำให้การรักษาช้าลง เลยเหมือนอาการเลือดแข็งตัวยาก"
+      K -> CharacterStat.SICKNESS floor 0.55 (0-1 scale, guarantees at
+           least the "Nauseous" tier of vanilla's real Sick moodle --
+           confirmed by decompiling Moodle.class/MoodleStat.class, see
+           MaintainSicknessFloor below). "อาการของ sick ทำให้การรักษาช้าลง
+           เลยเหมือนอาการเลือดแข็งตัวยาก"
 
     Universal effect (new this design, independent of which specific
     vitamins): every vitamin currently afflicted-and-not-pause-shielded
@@ -325,31 +325,32 @@ function VitEffects.MaintainUnhappinessFloor(character)
 end
 
 -- ---------------------------------------------------------------------
--- K: CharacterStat.FOOD_SICKNESS floor 30 (0-100 scale -- general
--- malaise slowing recovery, standing in for blood not clotting properly).
--- NOTE: CharacterStat.SICKNESS (0-1 scale) was tried first since it reads
--- as the more "generic" sickness stat, but CONFIRMED to drive nothing
--- visible -- vanilla's own Tutorial/Steps.lua (InventoryLootingStep)
--- proves the actual "Sick" moodle is driven by FOOD_SICKNESS, not
--- SICKNESS: it sets CharacterStat.FOOD_SICKNESS to 40 immediately before
--- calling getCore():setBlinkingMoodle("Sick"). The two stats are
--- confirmed genuinely separate (both independently exposed in vanilla's
--- own DebugUIs/DebugMenu/General/ISStatsAndBody.lua, and both read
--- independently in forageSystem.lua's getBodyPenalty). Same class of trap
--- as the BleedingTime lesson in this file's own header -- writing a
--- plausible-sounding stat is not the same as writing the one that's
--- actually wired to a visible symptom.
+-- K: CharacterStat.SICKNESS floor 0.55 (0-1 scale). CONFIRMED via
+-- decompiling vanilla's own Moodle.class + MoodleStat.class (javap -p -c
+-- on projectzomboid.jar, 2026-09-22 -- see workflow.txt section 8.4 for
+-- the full bytecode trail): the real "Sick" moodle (Queasy/Nauseous/Sick/
+-- Fever) is computed as
+-- `getBodyDamage():getApparentInfectionLevel()/100 + getStats():get(SICKNESS)`,
+-- compared (strictly >) against MoodleStat.SICK's own registered
+-- thresholds 0.25/0.5/0.75/0.9 for Queasy/Nauseous/Sick/Fever. So
+-- CharacterStat.SICKNESS genuinely IS the right stat (an earlier version
+-- of this function switched to FOOD_SICKNESS based on a red herring in
+-- Tutorial/Steps.lua and was WRONG -- reverted). The real bug was the
+-- floor VALUE: 0.30 only barely clears the lowest (Queasy) threshold,
+-- easy to miss entirely. 0.55 comfortably clears the Nauseous threshold
+-- (0.5) with margin for float precision, matching what the user actually
+-- wants visible ("the Nauseous status").
 -- ---------------------------------------------------------------------
-local FOOD_SICKNESS_FLOOR = 30
+local SICKNESS_FLOOR = 0.55
 
 function VitEffects.MaintainSicknessFloor(character)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
     if not isActive(character, "K") then return end
 
     local stats = character:getStats()
-    local current = stats:get(CharacterStat.FOOD_SICKNESS)
-    if current < FOOD_SICKNESS_FLOOR then
-        stats:set(CharacterStat.FOOD_SICKNESS, FOOD_SICKNESS_FLOOR)
+    local current = stats:get(CharacterStat.SICKNESS)
+    if current < SICKNESS_FLOOR then
+        stats:set(CharacterStat.SICKNESS, SICKNESS_FLOOR)
     end
 end
 
@@ -404,7 +405,7 @@ local EffectDescription = {
     C = "random Head scratch, 1 game hour / 5% chance (nosebleed/bleeding gums)",
     D = "per-body-part Stiffness floor 20, all body parts (muscle strain)",
     E = "CharacterStat.UNHAPPINESS floor 30 (slower item handling)",
-    K = "CharacterStat.FOOD_SICKNESS floor 30 (slower recovery)",
+    K = "CharacterStat.SICKNESS floor 0.55 -- at least Nauseous (slower recovery)",
 }
 
 --[[
