@@ -434,6 +434,21 @@ local LAYOUT_REFRESH_INTERVAL_MS = 2000
 -- full explanation of why that starting width is too narrow here).
 local PANEL_DESIRED_WIDTH = 480
 
+-- Real user report: the panel was stretched to whatever height the OUTER
+-- character info window already happened to be (inherited via
+-- HARMONIE_VitaminPanelHook.lua's `self.height - 8`, matching the Skills
+-- tab's own initial sizing), leaving a big dead black area below our actual
+-- content whenever the window was already tall (e.g. from a character with
+-- many perks on the Skills tab). Fix: mirror vanilla's OWN Skills tab
+-- pattern for HEIGHT too, not just width -- ISCharacterInfo:render() ends
+-- with `self:setHeightAndParentHeight(math.min(y, 800))`, i.e. height
+-- always shrinks/grows to match actual content (capped, not maxed against
+-- the current height the way width is). PANEL_MAX_HEIGHT is much smaller
+-- than vanilla's 800 since our content is inherently shorter -- content
+-- taller than this still scrolls normally via the existing scrollbar.
+local PANEL_MAX_HEIGHT = 650
+local PANEL_MIN_HEIGHT = 200
+
 function HARMONIE_VitaminPanel:prerender()
     self.pendingTooltip = nil
 
@@ -444,6 +459,9 @@ function HARMONIE_VitaminPanel:prerender()
         self.lastLayoutRefreshMs = now
         self:refreshLayout()
     end
+
+    local desiredHeight = math.min(self:getScrollHeight() + PADDING * 2, PANEL_MAX_HEIGHT)
+    self:setHeightAndParentHeight(math.max(desiredHeight, PANEL_MIN_HEIGHT))
 
     ISScrollingListBox.prerender(self)
 
