@@ -308,6 +308,7 @@
     "IGUI_HARMONIE_TooltipHeader": "ปริมาณวิตามิน (ต่อความหิว 1 หน่วย):",
     "IGUI_HARMONIE_TopFoodsInline": "แนะนำ: %1 (เอาเมาส์ชี้เพื่อดู 10 อันดับ)",
     "IGUI_HARMONIE_TopFoodsNone": "ยังไม่มีข้อมูลแหล่งอาหารที่ทราบ",
+    "IGUI_HARMONIE_FoodIndexTitle": "สารบัญวิตามินในวัตถุดิบ",
     "IGUI_HARMONIE_VitaminTabTitle": "วิตามิน",
     "IGUI_HARMONIE_Vitamin_A": "วิตามิน A",
     "IGUI_HARMONIE_Vitamin_B": "วิตามิน B",

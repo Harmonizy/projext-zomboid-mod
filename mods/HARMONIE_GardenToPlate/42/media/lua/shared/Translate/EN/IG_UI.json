@@ -152,6 +152,7 @@
     "IGUI_HARMONIE_ExactNumbers": "Reserve: %1 / 100   Daily need: %2",
     "IGUI_HARMONIE_TopFoodsInline": "Recommended: %1 (hover for top 10)",
     "IGUI_HARMONIE_TopFoodsNone": "No known food sources tracked.",
+    "IGUI_HARMONIE_FoodIndexTitle": "Vitamin Ingredient Index",
     "IGUI_HARMONIE_ModernStatus_VitaminA": "Vitamin A",
     "IGUI_HARMONIE_ModernStatus_VitaminB": "Vitamin B",
     "IGUI_HARMONIE_ModernStatus_VitaminC": "Vitamin C",

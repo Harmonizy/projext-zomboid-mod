@@ -13,8 +13,13 @@
         HARMONIE_NutritionUI.lua's own isLocked() for the same renaming note)
         level 3+: adds the exact Reserve number (0-100) and this vitamin's Daily
         Requirement.
-      - Cooking level 3+: adds the top 10 foods richest in this vitamin
-        (HARMONIE_GTP.GetTopFoods, see HARMONIE_TopFoods.lua).
+      - Cooking level 3+: adds a "Vitamin Ingredient Index" section at the very
+        bottom of the tab, one consolidated list for all 6 vitamins (not a
+        per-row hover tooltip anymore, per explicit request) -- each vitamin's
+        own top 10 richest ingredients (HARMONIE_GTP.GetTopFoods, see
+        HARMONIE_TopFoods.lua; canned items already excluded there), sorted
+        richest first, with each amount shown in parentheses, always visible
+        (scrolls with the rest of the tab, no hover needed).
 
     BandTextKey is intentionally duplicated from HARMONIE_NutritionUI.lua
     rather than shared, per this feature's own plan: that file is explicitly
@@ -150,6 +155,12 @@ local VitaminUnit = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "m
 local FIRST_AID_DETAIL_LEVEL = 3
 local COOKING_FOOD_LEVEL = 3
 
+-- Sentinel item key for the consolidated food-index section added after the
+-- 6 real vitamin rows in :initialise() -- never a real vitamin letter, so
+-- refreshLayout/doDrawItem can tell it apart with a simple equality check.
+local FOOD_INDEX_KEY = "foodindex"
+local SECTION_ICON_SIZE = 18
+
 function HARMONIE_VitaminPanel:getPlayer()
     return getSpecificPlayer(self.playerNum)
 end
@@ -235,7 +246,7 @@ end
     in perfect sync -- always computed from the same function instead of two
     copies that could drift apart.
 ]]--
-function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAidDetail, hasCookingFoodList)
+function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAidDetail)
     local value = HARMONIE_GTP.VitData.Get(player, vit)
     local band = HARMONIE_GTP.GetBand(value)
     local pauseDays = HARMONIE_GTP.VitData.GetPauseDays(player, vit)
@@ -271,17 +282,6 @@ function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAid
         numbersText = getText("IGUI_HARMONIE_ExactNumbers", string.format("%.1f", value), requirement)
     end
 
-    local foodLine = nil
-    local topFoods = nil
-    if hasCookingFoodList then
-        topFoods = HARMONIE_GTP.GetTopFoods(vit, 10)
-        if #topFoods > 0 then
-            foodLine = getText("IGUI_HARMONIE_TopFoodsInline", topFoods[1].displayName)
-        else
-            foodLine = getText("IGUI_HARMONIE_TopFoodsNone")
-        end
-    end
-
     return {
         value = value,
         band = band,
@@ -292,9 +292,41 @@ function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAid
         penaltyActive = penaltyActive,
         penaltyActiveLabel = penaltyActiveLabel,
         numbersText = numbersText,
-        foodLine = foodLine,
-        topFoods = topFoods,
     }
+end
+
+--[[
+    Builds the consolidated "Vitamin Ingredient Index" section shown once at
+    the very bottom of the tab (Cooking COOKING_FOOD_LEVEL+ only) -- replaces
+    the old per-row "hover to see top 10" line/tooltip per explicit request:
+    one list covering all 6 vitamins at once, always visible, no hover
+    needed. Each vitamin's own HARMONIE_GTP.GetTopFoods(vit, 10) already
+    excludes this mod's own canned items and sorts richest-first -- this
+    function just formats that into per-vitamin text lines with the amount
+    in parentheses (unit via VitaminUnit, same convention
+    HARMONIE_TooltipHook.lua's own item-tooltip vitamin breakdown uses).
+]]--
+function HARMONIE_VitaminPanel:buildFoodIndexData(hasCookingFoodList)
+    if not hasCookingFoodList then
+        return { visible = false }
+    end
+
+    local sections = {}
+    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+        local topFoods = HARMONIE_GTP.GetTopFoods(vit, 10)
+        local unit = VitaminUnit[vit] or ""
+        local lines = {}
+        if #topFoods > 0 then
+            for i, food in ipairs(topFoods) do
+                table.insert(lines, string.format("%d. %s (%.1f %s)", i, food.displayName, food.amount, unit))
+            end
+        else
+            table.insert(lines, getText("IGUI_HARMONIE_TopFoodsNone"))
+        end
+        table.insert(sections, { vit = vit, lines = lines })
+    end
+
+    return { visible = true, sections = sections }
 end
 
 --[[
@@ -318,23 +350,83 @@ function HARMONIE_VitaminPanel:refreshLayout()
 
     local totalHeight = 0
     for _, item in ipairs(self.items) do
-        local vit = item.item
-        local data = self:buildRowLines(vit, player, textWidth, hasFirstAidDetail, hasCookingFoodList)
-        item.data = data
-        item.hasFirstAidDetail = hasFirstAidDetail
-        item.hasCookingFoodList = hasCookingFoodList
+        if item.item == FOOD_INDEX_KEY then
+            local data = self:buildFoodIndexData(hasCookingFoodList)
+            item.data = data
+            if data.visible then
+                -- Must match doDrawFoodIndex's own increments exactly (top
+                -- PADDING + title line, then per section a header line +
+                -- its wrapped lines + ROW_GAP) or the section clips itself.
+                local h = PADDING + headerHeight + 4
+                for _, section in ipairs(data.sections) do
+                    h = h + headerHeight + (#section.lines * lineHeight) + ROW_GAP
+                end
+                item.height = h + ROW_GAP
+            else
+                item.height = 0
+            end
+        else
+            local vit = item.item
+            local data = self:buildRowLines(vit, player, textWidth, hasFirstAidDetail)
+            item.data = data
+            item.hasFirstAidDetail = hasFirstAidDetail
 
-        local contentHeight = headerHeight + (#data.statusLines * lineHeight) + lineHeight * 2 -- pause days + penalty active lines
-        if data.numbersText then contentHeight = contentHeight + BAR_HEIGHT + 4 + lineHeight end
-        if data.foodLine then contentHeight = contentHeight + lineHeight end
+            local contentHeight = headerHeight + (#data.statusLines * lineHeight) + lineHeight * 2 -- pause days + penalty active lines
+            if data.numbersText then contentHeight = contentHeight + BAR_HEIGHT + 4 + lineHeight end
 
-        item.height = math.max(ICON_SIZE, contentHeight) + ROW_GAP
+            item.height = math.max(ICON_SIZE, contentHeight) + ROW_GAP
+        end
         totalHeight = totalHeight + item.height
     end
     self:setScrollHeight(totalHeight)
 end
 
+--[[
+    Draws the consolidated food-index section built by buildFoodIndexData --
+    a plain title + per-vitamin (small icon + name + wrapped ranked list)
+    block, styled like the vitamin rows above it (same card background +
+    left accent stripe + bottom divider) but without a status color of its
+    own (uses the neutral border color for the stripe, since this section
+    isn't about any one vitamin's current state).
+]]--
+function HARMONIE_VitaminPanel:doDrawFoodIndex(y, item)
+    local data = item.data
+    if not data or item.height <= 0 then return y + item.height end
+    if not data.visible then return y + item.height end
+
+    local lineHeight = getTextManager():getFontHeight(UIFont.Small) + LINE_GAP
+    local headerHeight = getTextManager():getFontHeight(UIFont.Medium) + LINE_GAP
+    local textX = PADDING + STRIPE_WIDTH + 6
+    local rowHeight = item.height - ROW_GAP
+
+    self:drawRect(0, y, self:getWidth(), rowHeight, 1, 0.13, 0.14, 0.15)
+    self:drawRect(0, y, STRIPE_WIDTH, rowHeight, 1, Colors.border.r, Colors.border.g, Colors.border.b)
+
+    local lineY = y + PADDING
+    self:drawText(getText("IGUI_HARMONIE_FoodIndexTitle"), textX, lineY, Colors.text.r, Colors.text.g, Colors.text.b, 1, UIFont.Medium)
+    lineY = lineY + headerHeight + 4
+
+    for _, section in ipairs(data.sections) do
+        self:drawTextureScaled(VitaminIcon[section.vit], textX, lineY, SECTION_ICON_SIZE, SECTION_ICON_SIZE, 1, 1, 1, 1)
+        self:drawText(getText(VitaminNameKey[section.vit]), textX + SECTION_ICON_SIZE + 6, lineY, Colors.safe.r, Colors.safe.g, Colors.safe.b, 1, UIFont.Medium)
+        lineY = lineY + headerHeight
+
+        for _, line in ipairs(section.lines) do
+            self:drawText(line, textX + SECTION_ICON_SIZE + 6, lineY, Colors.textDim.r, Colors.textDim.g, Colors.textDim.b, 1, UIFont.Small)
+            lineY = lineY + lineHeight
+        end
+        lineY = lineY + ROW_GAP
+    end
+
+    self:drawRect(0, y + rowHeight, self:getWidth(), 1, 1, Colors.border.r, Colors.border.g, Colors.border.b)
+    return y + item.height
+end
+
 function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
+    if item.item == FOOD_INDEX_KEY then
+        return self:doDrawFoodIndex(y, item)
+    end
+
     local vit = item.item
     local data = item.data
     if not data then return y + item.height end
@@ -416,22 +508,6 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
         lineY = lineY + BAR_HEIGHT + 4
     end
 
-    -- Cooking-gated top foods, drawn as a compact single line (hover for the
-    -- full list) so the row height still only grows by one line, not ten.
-    if data.foodLine then
-        self:drawText(data.foodLine, textX, lineY, Colors.safe.r, Colors.safe.g, Colors.safe.b, 1, UIFont.Small)
-        local foodLineWidth = getTextManager():MeasureStringX(UIFont.Small, data.foodLine)
-        if mouseX >= textX and mouseX <= textX + foodLineWidth and mouseY >= lineY and mouseY <= lineY + lineHeight then
-            local unit = VitaminUnit[vit] or ""
-            local lines = {}
-            for i, food in ipairs(data.topFoods) do
-                table.insert(lines, string.format("%d. %s (%.1f %s)", i, food.displayName, food.amount, unit))
-            end
-            hoveredTooltip = table.concat(lines, "\n")
-        end
-        lineY = lineY + lineHeight
-    end
-
     if hoveredTooltip then
         self.pendingTooltip = hoveredTooltip
         self.pendingTooltipX = mouseX
@@ -499,6 +575,7 @@ function HARMONIE_VitaminPanel:initialise()
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         self:addItem(vit, vit)
     end
+    self:addItem(FOOD_INDEX_KEY, FOOD_INDEX_KEY)
     self:refreshLayout()
 end
 
