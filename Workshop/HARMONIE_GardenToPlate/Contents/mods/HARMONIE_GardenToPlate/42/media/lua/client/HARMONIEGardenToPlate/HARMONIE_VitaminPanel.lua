@@ -141,6 +141,12 @@ local VitaminDownsideKey = {
     K = "IGUI_HARMONIE_Downside_K",
 }
 
+-- Same unit-per-vitamin convention HARMONIE_TooltipHook.lua's own item-tooltip
+-- vitamin breakdown already uses (VitaminUnit table there) -- kept in sync by
+-- hand since it's a tiny constant table, not worth sharing across an
+-- unrelated file just to avoid duplicating 6 lines.
+local VitaminUnit = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
+
 local FIRST_AID_DETAIL_LEVEL = 3
 local COOKING_FOOD_LEVEL = 3
 
@@ -400,9 +406,10 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
         self:drawText(data.foodLine, textX, lineY, Colors.safe.r, Colors.safe.g, Colors.safe.b, 1, UIFont.Small)
         local foodLineWidth = getTextManager():MeasureStringX(UIFont.Small, data.foodLine)
         if mouseX >= textX and mouseX <= textX + foodLineWidth and mouseY >= lineY and mouseY <= lineY + lineHeight then
+            local unit = VitaminUnit[vit] or ""
             local lines = {}
             for i, food in ipairs(data.topFoods) do
-                table.insert(lines, i .. ". " .. food.displayName)
+                table.insert(lines, string.format("%d. %s (%.1f %s)", i, food.displayName, food.amount, unit))
             end
             hoveredTooltip = table.concat(lines, "\n")
         end
