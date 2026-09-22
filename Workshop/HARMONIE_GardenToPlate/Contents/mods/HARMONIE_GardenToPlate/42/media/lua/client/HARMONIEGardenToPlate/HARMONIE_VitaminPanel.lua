@@ -195,10 +195,26 @@ function HARMONIE_VitaminPanel:drawTooltip(text, mouseX, mouseY)
     -- mouseX/mouseY are already in this element's own content-space (same
     -- space self:getMouseX()/getMouseY() and doDrawItem's own y use, which
     -- the engine auto-adjusts for scroll at render time) -- do not re-offset
-    -- by getAbsoluteX/Y or getYScroll here, that would double-transform it.
+    -- by getAbsoluteX/Y here, that would double-transform it.
     local x = mouseX + 16
     local y = mouseY + 16
     if x + boxWidth > self:getWidth() then x = self:getWidth() - boxWidth end
+
+    -- Real regression found via user report after v0.5.4's auto-height fit:
+    -- before that fix this panel's height was always inherited from the
+    -- whole (usually much taller) character window, so a tooltip drawn this
+    -- far below the cursor never had anywhere to actually clip against. Now
+    -- that the panel genuinely shrinks to fit content, ISScrollingListBox's
+    -- own stencil rect (see vanilla's :prerender()) clips anything drawn
+    -- past the panel's own visible content-space window -- which is
+    -- [-getYScroll(), -getYScroll() + getHeight()], NOT [0, getHeight()],
+    -- since content-space is scroll-invariant while the viewport moves.
+    -- Without this clamp, hovering any row below the first one silently drew
+    -- the tooltip past the bottom of that window -- invisible, no error.
+    local visibleTop = -self:getYScroll()
+    local visibleBottom = visibleTop + self:getHeight()
+    if y + boxHeight > visibleBottom then y = visibleBottom - boxHeight end
+    if y < visibleTop then y = visibleTop end
 
     self:drawRect(x, y, boxWidth, boxHeight, 0.92, 0.05, 0.05, 0.05)
     self:drawRectBorder(x, y, boxWidth, boxHeight, 1, 0.4, 0.4, 0.4)
