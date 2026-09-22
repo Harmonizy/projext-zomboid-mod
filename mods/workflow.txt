@@ -1064,6 +1064,22 @@ How to debug:
     setWidthAndParentWidth(math.max(self:getWidth(), desiredWidth)) itself every
     frame in :prerender() (mirroring vanilla exactly, not depending on another
     tab) instead of borrowing a width from a sibling tab.
+  - *** Same trap applies to HEIGHT, and it's not optional like width — real
+    user-reported bug with a screenshot: a custom tab inherited its starting
+    height from the window's CURRENT height at creation time (via
+    `self.height - 8` in the Hook, matching how vanilla sizes every non-Skills
+    tab), which is whatever height the PREVIOUSLY-ACTIVE tab happened to need
+    (e.g. tall if Skills has many perks) — our tab then stayed stretched to that
+    height forever, leaving a big empty dead area below its own (much shorter)
+    real content. Vanilla's own Skills tab avoids this by calling
+    `self:setHeightAndParentHeight(math.min(y, 800))` at the end of its own
+    render() (confirmed from ISCharacterInfo.lua) — height always
+    SHRINKS-OR-GROWS to match actual content height (capped at a max), unlike
+    width, which vanilla only ever grows, never shrinks. Fix: call
+    setHeightAndParentHeight(math.min(desiredContentHeight, ownMaxCap)) every
+    frame in :prerender() too, with its own sensible max cap (don't reuse
+    vanilla's 800 blindly — pick one that fits your tab's actual content; content
+    taller than the cap still scrolls normally via the existing scrollbar). ***
   - *** ISScrollingListBox is the correct widget for a custom scrollable tab ***
     — not a plain ISPanel: derive from ISScrollingListBox, override
     :doDrawItem(y, item, alt) to draw each row, store per-row layout/height in
@@ -1189,6 +1205,12 @@ How to debug:
 [ ] Building a custom scrollable tab/panel? Use ISScrollingListBox, not a plain
     ISPanel (section 8.6) — and check EHR_DebugMenuV2.lua as an example first if
     a nice status-panel look is wanted (section 8.6).
+[ ] Adding a custom tab to ISCharacterInfoWindow? Call BOTH
+    setWidthAndParentWidth (grow-only) AND setHeightAndParentHeight
+    (shrink-or-grow, capped) every :prerender() frame — don't just inherit
+    width/height from another tab or the window's current size, or you get
+    either a too-narrow tab or a big dead empty area below short content
+    (section 8.6).
 [ ] Drawing a texture yourself? Call getTexture(path) and store the result first
     — never pass a path string directly into drawTextureScaled (section 8.6).
 [ ] Writing new text into getText()/a translation JSON? Never include a bare "%"
