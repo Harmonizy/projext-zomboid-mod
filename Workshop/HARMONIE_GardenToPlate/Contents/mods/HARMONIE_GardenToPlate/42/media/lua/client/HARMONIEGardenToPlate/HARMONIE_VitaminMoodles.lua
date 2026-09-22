@@ -33,6 +33,22 @@
     onMoodleTick below) so a live sandbox/admin-panel edit to
     criticalThreshold/sufficientThreshold is reflected here too, not just in
     the Reserve/effect logic.
+
+    BOUNDARY NOTE (confirmed the hard way from a real user report -- setting
+    Reserve to exactly 20 via the admin panel showed the moodle as Critical
+    while the actual penalty/band logic still read Low): MoodleFramework's
+    own MF_ISMoodle.lua:getLevel() compares with "value <= threasholdBad3"
+    (INCLUSIVE), while HARMONIE_GTP.GetBand compares with
+    "value < criticalThreshold" (EXCLUSIVE) -- both read the exact same
+    live Config.criticalThreshold/sufficientThreshold, there is no separate
+    hardcoded copy anywhere, but the two systems disagree right AT the
+    threshold value itself because of the different comparison operator.
+    Fixed by feeding MoodleFramework a threshold ratio nudged down by a
+    tiny BOUNDARY_EPSILON, so its inclusive "<=" only ever fires for the
+    same values our own exclusive "<" already would -- imperceptible for
+    real Reserve values (which only ever move by real food amounts, never
+    by 0.01), but makes an admin-panel test landing on the exact integer
+    threshold agree between moodle and actual effect.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -48,11 +64,18 @@ local MOODLE_NAMES = {
     K = "VitaminK",
 }
 
+-- See the header's BOUNDARY NOTE -- MoodleFramework's own threshold check
+-- is "<=" (inclusive), ours is "<" (exclusive); nudging the ratio fed to
+-- MoodleFramework down by this amount makes the two agree everywhere it
+-- actually matters, without visibly shifting the real threshold (0.0001
+-- of the 0-1 ratio scale = 0.01 out of a 0-100 Reserve value).
+local BOUNDARY_EPSILON = 0.0001
+
 -- Applies (or re-applies, on a live threshold change) this mod's own band
 -- boundaries onto the moodle's 4 MoodleFramework levels, per the header note.
 local function applyThresholds(moodle)
-    local sufficientRatio = HARMONIE_GTP.Config.sufficientThreshold / HARMONIE_GTP.Config.maxValue
-    local criticalRatio = HARMONIE_GTP.Config.criticalThreshold / HARMONIE_GTP.Config.maxValue
+    local sufficientRatio = HARMONIE_GTP.Config.sufficientThreshold / HARMONIE_GTP.Config.maxValue - BOUNDARY_EPSILON
+    local criticalRatio = HARMONIE_GTP.Config.criticalThreshold / HARMONIE_GTP.Config.maxValue - BOUNDARY_EPSILON
     moodle:setThresholds(
         criticalRatio, criticalRatio, sufficientRatio, sufficientRatio, -- bad4, bad3, bad2, bad1
         nil, nil, nil, nil -- good1..good4: unreachable, no Good side wanted
