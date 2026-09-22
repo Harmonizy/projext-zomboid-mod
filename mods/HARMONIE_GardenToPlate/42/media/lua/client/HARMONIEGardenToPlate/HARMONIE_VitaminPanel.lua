@@ -16,11 +16,13 @@
       - Cooking level 3+: adds the top 10 foods richest in this vitamin
         (HARMONIE_GTP.GetTopFoods, see HARMONIE_TopFoods.lua).
 
-    BandTextKey/BandColor are intentionally duplicated from
-    HARMONIE_NutritionUI.lua rather than shared, per this feature's own plan:
-    that file is explicitly left unmodified (it's a separate, still-existing
-    feature), and these are two tiny constant tables, not worth changing an
-    unrelated file's contract just to avoid a few duplicated lines.
+    BandTextKey is intentionally duplicated from HARMONIE_NutritionUI.lua
+    rather than shared, per this feature's own plan: that file is explicitly
+    left unmodified (it's a separate, still-existing feature), and it's one
+    tiny constant table, not worth changing an unrelated file's contract
+    just to avoid a few duplicated lines. Its own band->color table isn't
+    reused here at all -- see getStatusColor below for this tab's own
+    4-tier palette.
 
     Built on ISScrollingListBox (not a plain ISPanel) so that:
       - each row's own height grows to fit however many lines its wrapped text
@@ -28,6 +30,31 @@
       - the whole tab scrolls with a real scrollbar once total content is
         taller than the tab area (fixes content being cut off with no way to
         reach it), same widget vanilla uses for its own Skills/Traits lists.
+
+    Visual style borrowed from Extensive Health Rework Evolved's own debug
+    menu (EHR_DebugMenuV2.lua, Workshop 3726328119 -- the user pointed at
+    this file specifically as a UI worth studying): dark background, a
+    muted green border/accent, and a 4-tier semantic status palette (safe/
+    warning/danger/critical) instead of this tab's earlier flat 3-color
+    band scheme. Reused real drawing techniques from that file, not just
+    its colors -- a colored left accent stripe per row, a small background
+    "badge" chip behind the band word, a horizontal fill bar for the exact
+    Reserve number (its own drawRect-background + drawRect-fill +
+    drawRectBorder pattern, same one EHR uses for its blood-volume bar),
+    and a thin 1px divider between rows instead of a full alternating
+    background block.
+
+    The status color now has 4 tiers, not 3, mapped onto the SAME
+    band+penaltyActive data this tab already computed (see
+    HARMONIE_ModernStatusBridge.lua-adjacent VitData.IsAfflicted/
+    GetPauseDays -- no new data source, just a richer color mapping):
+      Sufficient                              -> safe (green)
+      Low                                      -> warning (yellow)
+      Critical, still pause-day-shielded       -> danger (orange)
+      Critical, penalty genuinely active now   -> critical (bright red)
+    This visually answers "is it actually hurting me right now" at a
+    glance, the exact distinction the Penalty-active line already spelled
+    out in text but that previously had no visual weight of its own.
 ]]--
 
 require "ISUI/ISScrollingListBox"
@@ -40,13 +67,22 @@ HARMONIE_VitaminPanel = ISScrollingListBox:derive("HARMONIE_VitaminPanel")
 
 local PADDING = 10
 local ICON_SIZE = 28
-local ROW_GAP = 8
+local ROW_GAP = 10
 local LINE_GAP = 3
+local STRIPE_WIDTH = 3
+local BAR_HEIGHT = 12
 
-local BandColor = {
-    critical   = {r = 0.85, g = 0.25, b = 0.25},
-    low        = {r = 0.85, g = 0.75, b = 0.25},
-    sufficient = {r = 0.30, g = 0.80, b = 0.35},
+-- EHR_DebugMenuV2.lua's own palette (Colors table, ExtensiveHealthReworkB42)
+-- -- reused directly so this tab visually matches the mod the user pointed
+-- at, not just approximated.
+local Colors = {
+    border   = {r = 0.30, g = 0.50, b = 0.40},
+    text     = {r = 0.90, g = 0.90, b = 0.90},
+    textDim  = {r = 0.60, g = 0.60, b = 0.60},
+    safe     = {r = 0.20, g = 0.80, b = 0.30},
+    warning  = {r = 0.90, g = 0.70, b = 0.20},
+    danger   = {r = 0.90, g = 0.35, b = 0.10},
+    critical = {r = 1.00, g = 0.15, b = 0.15},
 }
 
 local BandTextKey = {
@@ -54,6 +90,19 @@ local BandTextKey = {
     low        = "IGUI_HARMONIE_Band_Low",
     sufficient = "IGUI_HARMONIE_Band_Sufficient",
 }
+
+--[[
+    4-tier status color for a row, given its band AND whether the penalty
+    is genuinely active right now -- see this file's header for why
+    Critical splits into two distinct colors (danger vs critical) instead
+    of one, unlike the old 3-color BandColor table this replaces.
+]]--
+local function getStatusColor(band, penaltyActive)
+    if band == "sufficient" then return Colors.safe end
+    if band == "low" then return Colors.warning end
+    if penaltyActive then return Colors.critical end
+    return Colors.danger
+end
 
 local VitaminNameKey = {
     A = "IGUI_HARMONIE_Vitamin_A",
@@ -212,7 +261,9 @@ function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAid
     end
 
     return {
+        value = value,
         band = band,
+        statusColor = getStatusColor(band, penaltyActive),
         pauseDays = pauseDays,
         statusLines = statusLines,
         pauseDaysLabel = pauseDaysLabel,
@@ -236,7 +287,9 @@ function HARMONIE_VitaminPanel:refreshLayout()
 
     local hasFirstAidDetail = player:getPerkLevel(Perks.Doctor) >= FIRST_AID_DETAIL_LEVEL
     local hasCookingFoodList = player:getPerkLevel(Perks.Cooking) >= COOKING_FOOD_LEVEL
-    local textWidth = self:getWidth() - PADDING * 2 - ICON_SIZE - 12
+    -- Must match doDrawItem's own textX exactly (PADDING + STRIPE_WIDTH +
+    -- ICON_SIZE + 14) or wrapped lines can overflow the row by a few px.
+    local textWidth = self:getWidth() - (PADDING + STRIPE_WIDTH + ICON_SIZE + 14) - PADDING
 
     local lineHeight = getTextManager():getFontHeight(UIFont.Small) + LINE_GAP
     local headerHeight = getTextManager():getFontHeight(UIFont.Medium) + LINE_GAP
@@ -250,7 +303,7 @@ function HARMONIE_VitaminPanel:refreshLayout()
         item.hasCookingFoodList = hasCookingFoodList
 
         local contentHeight = headerHeight + (#data.statusLines * lineHeight) + lineHeight * 2 -- pause days + penalty active lines
-        if data.numbersText then contentHeight = contentHeight + lineHeight end
+        if data.numbersText then contentHeight = contentHeight + BAR_HEIGHT + 4 + lineHeight end
         if data.foodLine then contentHeight = contentHeight + lineHeight end
 
         item.height = math.max(ICON_SIZE, contentHeight) + ROW_GAP
@@ -264,30 +317,48 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
     local data = item.data
     if not data then return y + item.height end
 
-    local color = BandColor[data.band]
-    local textX = PADDING + ICON_SIZE + 10
+    local color = data.statusColor
+    local textX = PADDING + STRIPE_WIDTH + ICON_SIZE + 14
     local lineHeight = getTextManager():getFontHeight(UIFont.Small) + LINE_GAP
     local rowTop = y + 2
+    local rowHeight = item.height - ROW_GAP
 
-    self:drawRect(0, y, self:getWidth(), item.height - 3, 0.18, 0.1, 0.1, 0.1)
-    self:drawTextureScaled(VitaminIcon[vit], PADDING, rowTop, ICON_SIZE, ICON_SIZE, 1, 1, 1, 1)
+    -- Card background + colored left accent stripe (EHR_DebugMenuV2.lua's
+    -- own per-row status-stripe technique) instead of a flat block -- the
+    -- stripe alone carries the 4-tier status color, so nothing here needs
+    -- its own background tint.
+    self:drawRect(0, y, self:getWidth(), rowHeight, 1, 0.13, 0.14, 0.15)
+    self:drawRect(0, y, STRIPE_WIDTH, rowHeight, 1, color.r, color.g, color.b)
+
+    -- Icon with a thin ring in the same status color, tying the icon back
+    -- to the stripe without needing separate per-status icon art.
+    local iconX = PADDING + STRIPE_WIDTH + 6
+    self:drawRectBorder(iconX - 2, rowTop - 2, ICON_SIZE + 4, ICON_SIZE + 4, 1, color.r, color.g, color.b)
+    self:drawTextureScaled(VitaminIcon[vit], iconX, rowTop, ICON_SIZE, ICON_SIZE, 1, 1, 1, 1)
 
     local lineY = rowTop
-    self:drawText(getText(VitaminNameKey[vit]), textX, lineY, 1, 1, 1, 1, UIFont.Medium)
+    self:drawText(getText(VitaminNameKey[vit]), textX, lineY, Colors.text.r, Colors.text.g, Colors.text.b, 1, UIFont.Medium)
     local nameWidth = getTextManager():MeasureStringX(UIFont.Medium, getText(VitaminNameKey[vit]))
-    self:drawText(getText(BandTextKey[data.band]), textX + nameWidth + 14, lineY, color.r, color.g, color.b, 1, UIFont.Medium)
+
+    -- Band badge -- a small tinted background chip behind the band word,
+    -- same "status pill" look EHR's own stage/severity labels use.
+    local bandText = getText(BandTextKey[data.band])
+    local badgeX = textX + nameWidth + 12
+    local badgeTextWidth = getTextManager():MeasureStringX(UIFont.Small, bandText)
+    local badgeHeight = getTextManager():getFontHeight(UIFont.Small) + 4
+    local badgeY = lineY + 2
+    self:drawRect(badgeX, badgeY, badgeTextWidth + 10, badgeHeight, 0.35, color.r, color.g, color.b)
+    self:drawRectBorder(badgeX, badgeY, badgeTextWidth + 10, badgeHeight, 1, color.r, color.g, color.b)
+    self:drawText(bandText, badgeX + 5, badgeY + 2, color.r, color.g, color.b, 1, UIFont.Small)
     lineY = lineY + getTextManager():getFontHeight(UIFont.Medium) + LINE_GAP
 
-    local statusColor = (data.band == "critical") and {r = 0.95, g = 0.75, b = 0.75}
-        or (data.band == "low") and {r = 0.85, g = 0.85, b = 0.85}
-        or {r = 0.65, g = 0.9, b = 0.65}
     for _, line in ipairs(data.statusLines) do
-        self:drawText(line, textX, lineY, statusColor.r, statusColor.g, statusColor.b, 1, UIFont.Small)
+        self:drawText(line, textX, lineY, Colors.textDim.r, Colors.textDim.g, Colors.textDim.b, 1, UIFont.Small)
         lineY = lineY + lineHeight
     end
 
     -- Pause-days ("rest days banked") -- always visible, no skill gate.
-    local pauseDaysColor = data.pauseDays >= 1 and {r = 0.3, g = 0.8, b = 0.35} or {r = 0.6, g = 0.6, b = 0.6}
+    local pauseDaysColor = data.pauseDays >= 1 and Colors.safe or Colors.textDim
     local pauseDaysY = lineY
     self:drawText(data.pauseDaysLabel, textX, pauseDaysY, pauseDaysColor.r, pauseDaysColor.g, pauseDaysColor.b, 1, UIFont.Small)
 
@@ -302,20 +373,31 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
     -- Whether the deficiency penalty is actually biting right now -- always
     -- visible, no skill gate. Distinct from the band: Critical + banked
     -- pause days means the penalty is currently shielded off, not active.
-    local penaltyColor = data.penaltyActive and {r = 0.9, g = 0.4, b = 0.4} or {r = 0.6, g = 0.6, b = 0.6}
+    local penaltyColor = data.penaltyActive and Colors.critical or Colors.textDim
     self:drawText(data.penaltyActiveLabel, textX, lineY, penaltyColor.r, penaltyColor.g, penaltyColor.b, 1, UIFont.Small)
     lineY = lineY + lineHeight
 
-    -- First Aid-gated exact numbers.
+    -- First Aid-gated exact numbers, now with a fill bar underneath --
+    -- same drawRect-background + drawRect-fill + drawRectBorder pattern
+    -- EHR_DebugMenuV2.lua uses for its own blood-volume bar.
     if data.numbersText then
-        self:drawText(data.numbersText, textX, lineY, 0.8, 0.9, 1, 1, UIFont.Small)
+        self:drawText(data.numbersText, textX, lineY, Colors.text.r, Colors.text.g, Colors.text.b, 1, UIFont.Small)
         lineY = lineY + lineHeight
+
+        local barWidth = self:getWidth() - textX - PADDING
+        local fillWidth = math.floor(barWidth * math.max(0, math.min(1, data.value / HARMONIE_GTP.Config.maxValue)))
+        self:drawRect(textX, lineY, barWidth, BAR_HEIGHT, 1, 0.08, 0.08, 0.08)
+        if fillWidth > 0 then
+            self:drawRect(textX, lineY, fillWidth, BAR_HEIGHT, 1, color.r, color.g, color.b)
+        end
+        self:drawRectBorder(textX, lineY, barWidth, BAR_HEIGHT, 1, Colors.border.r, Colors.border.g, Colors.border.b)
+        lineY = lineY + BAR_HEIGHT + 4
     end
 
     -- Cooking-gated top foods, drawn as a compact single line (hover for the
     -- full list) so the row height still only grows by one line, not ten.
     if data.foodLine then
-        self:drawText(data.foodLine, textX, lineY, 0.8, 1, 0.8, 1, UIFont.Small)
+        self:drawText(data.foodLine, textX, lineY, Colors.safe.r, Colors.safe.g, Colors.safe.b, 1, UIFont.Small)
         local foodLineWidth = getTextManager():MeasureStringX(UIFont.Small, data.foodLine)
         if mouseX >= textX and mouseX <= textX + foodLineWidth and mouseY >= lineY and mouseY <= lineY + lineHeight then
             local lines = {}
@@ -332,6 +414,10 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
         self.pendingTooltipX = mouseX
         self.pendingTooltipY = mouseY
     end
+
+    -- Thin divider between rows instead of a full alternating background
+    -- block (matches EHR_DebugMenuV2.lua's own section-divider technique).
+    self:drawRect(0, y + rowHeight, self:getWidth(), 1, 1, Colors.border.r, Colors.border.g, Colors.border.b)
 
     return y + item.height
 end
