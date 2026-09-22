@@ -3,5 +3,5 @@ id=HARMONIE_GardenToPlate
 description=Adds a vitamin (A, B, C, D, E, K) micronutrient system on top of the food you eat. Press N (rebindable) to check your own or a nearby survivor's nutritional status -- requires First Aid 5 to interpret the result. Neglect your diet and critical vitamin deficiencies will start to hurt you. Also adds home canning: preserve vegetables and fruit indefinitely in empty tin cans.
 poster=poster.png
 icon=icon.png
-modversion=2.3
+modversion=0.3.0
 versionMin=42.0.0
