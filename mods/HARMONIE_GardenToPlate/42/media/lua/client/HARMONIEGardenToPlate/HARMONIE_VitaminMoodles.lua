@@ -1,15 +1,15 @@
 --[[
     HARMONIE - From Garden to Plate
     One moodle per vitamin (6 total: VitaminA..VitaminE, VitaminK), built on
-    MoodleFramework (Workshop 3396446795, id=MoodleFramework, require=MoodleFramework
-    in mod.info -- see mods/workflow.txt section 8.2 for the framework API this
-    file relies on).
-
-    Soft-dependency guarded (mirrors the pattern documented in workflow.txt,
-    itself taken from More Traits' own MoodleFramework usage): if MoodleFramework
-    isn't active, this whole file becomes a no-op instead of erroring, since
-    require= already guarantees load order but not that the player actually
-    kept the mod enabled.
+    MoodleFramework (Workshop 3396446795, id=MoodleFramework). Hard dependency
+    via require=MoodleFramework in mod.info (see mods/workflow.txt section 8.2
+    for the framework API this file relies on) -- confirmed real/tested in
+    this repo (workflow.txt section 1) that require= orders the WHOLE requiring
+    mod's Lua after the required mod's, so by the time this file's top level
+    runs, MoodleFramework's own files (including MF_ISMoodle.lua) have already
+    executed. No getActivatedMods()/pcall gating needed, matching every other
+    HARMONIE mod's hard-require= files (HomeMedic, LifestyleAudioTune, etc.) --
+    that pattern is only for a genuinely optional/soft dependency.
 
     Read-only presentation on top of the existing, unmodified vitamin system --
     this file never writes to VitData, never grants/revokes anything. All the
@@ -30,35 +30,14 @@
         there's no "your vitamins are amazing" moodle, only "something's
         wrong" feedback.
     Thresholds are read from HARMONIE_GTP.Config every time they change (see
-    onCheckerTick below) so a live sandbox/admin-panel edit to
+    onMoodleTick below) so a live sandbox/admin-panel edit to
     criticalThreshold/sufficientThreshold is reflected here too, not just in
     the Reserve/effect logic.
-
-    Everything that touches MoodleFramework (the require, MF.createMoodle,
-    threshold setup) is deferred to Events.OnGameBoot, not run at file-load
-    time -- GardenToPlate has no require=MoodleFramework in mod.info (soft
-    dependency, by design), so PZ's own mod load order does NOT guarantee
-    MoodleFramework's own Lua has already executed by the time this file's
-    top level runs. Confirmed the same class of bug for real on Modern
-    Status's own bridge (HARMONIE_ModernStatusBridge.lua) via console.txt --
-    same fix applied here defensively even though this specific file wasn't
-    directly observed failing.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
-
-local isInitialized = false
-
-local function isMoodleFrameworkActive()
-    local activatedMods = getActivatedMods()
-    for i = 0, activatedMods:size() - 1 do
-        if activatedMods:get(i) == "MoodleFramework" then
-            return true
-        end
-    end
-    return false
-end
+require "MF_ISMoodle"
 
 local MOODLE_NAMES = {
     A = "VitaminA",
@@ -111,8 +90,6 @@ local CHECK_INTERVAL_MS = 10000
 local lastCheckMs = 0
 
 local function onMoodleTick()
-    if not isInitialized then return end
-
     local now = getTimestampMs and getTimestampMs() or 0
     if now - lastCheckMs < CHECK_INTERVAL_MS then return end
     lastCheckMs = now
@@ -125,22 +102,8 @@ local function onMoodleTick()
     end
 end
 
-local function initMoodles()
-    if isInitialized then return end
-    if not isMoodleFrameworkActive() then return end
-
-    local status, loadedModule = pcall(require, "MF_ISMoodle")
-    if not status or not loadedModule or not loadedModule.createMoodle then
-        print("HARMONIE_GardenToPlate: MoodleFramework detected but MF_ISMoodle failed to load, skipping vitamin moodles.")
-        return
-    end
-
-    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-        MF.createMoodle(MOODLE_NAMES[vit])
-    end
-
-    isInitialized = true
+for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+    MF.createMoodle(MOODLE_NAMES[vit])
 end
 
-Events.OnGameBoot.Add(initMoodles)
 Events.OnTick.Add(onMoodleTick)

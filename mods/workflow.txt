@@ -514,6 +514,19 @@ saves only!"
       hard-dependency) -- ถ้าจะทำ moodle ของ HARMONIE เองในอนาคต ให้พิจารณาว่าอยากบังคับ
       require=MoodleFramework ตรงๆ (ง่ายกว่า, แต่ผู้เล่นต้อง subscribe เพิ่ม) หรือทำ soft-dependency
       แบบนี้ (ซับซ้อนกว่านิดหน่อย แต่ไม่บังคับ) ***
+      *** บทเรียนจริงจาก HARMONIE_GardenToPlate v0.3.0/0.3.1: เริ่มแรกทำ soft-dependency (ไม่ใส่
+      require=MoodleFramework/ModernStatus ใน mod.info ตั้งใจให้ optional) แล้วเจอบั๊กจริงจาก
+      console.txt ของเซฟจริง -- เพราะไม่มี require= เกม "ไม่การันตี" ว่า mod ที่เราพึ่งพาโหลด Lua
+      เสร็จก่อนเรา (ยืนยันจาก log จริง: HARMONIE_GardenToPlate โหลดก่อน ModernStatus) ทำให้
+      `require "MS/MS_StatusIndicator"` ที่เรียกตอน file-load time ล้มเหลว (chain ของมันพึ่ง state
+      ที่ ModernStatus ต้องตั้งค่าเองก่อน) แก้ชั่วคราวด้วยการย้ายไปเรียกใน Events.OnGameBoot แทน
+      แต่สุดท้ายผู้ใช้ตัดสินใจว่ายอมรับ hard-dependency ได้ เลยเปลี่ยนกลับมาใส่ require=จริง --
+      พอใส่ require= แล้ว "ลำดับโหลดของทั้ง mod" ถูกบังคับจริง (ยืนยันจากข้อ 1 ด้านบนเรื่อง sound
+      override) โค้ดง่ายกว่าเดิมมาก ไม่ต้องมี OnGameBoot deferral หรือ pcall/getActivatedMods gating
+      เลย เรียก require ตรงๆ ที่ top level ของไฟล์ได้เหมือน mod hard-require= อื่นๆ (HomeMedic,
+      LifestyleAudioTune ฯลฯ) *** สรุปกฎ: ถ้าตัดสินใจว่าจะพึ่งพา mod อื่นแบบจริงจัง (ไม่ใช่แค่
+      "เผื่อมี" แบบ HARMONIE_TooManyModThaiTranslate) ให้ใส่ require= เสมอ อย่าทำ soft-dependency
+      แบบครึ่งๆ กลางๆ เพราะมันแก้บั๊ก load-order ได้ตรงจุดกว่า และโค้ดง่ายกว่ามาก ***
 
   === การสร้าง Trait ใหม่ (ศึกษาจาก More Traits/ToadTraits) ===
   Trait ใหม่ประกาศผ่าน sound-script-style .txt เหมือน item/sound (module ... { ... }) ไม่ใช่ Lua
