@@ -1,116 +1,198 @@
-HARMONIE Zomboid Mod Workflow — Reference (สำหรับ Claude อ่านก่อนเริ่มงานทุกครั้ง)
+HARMONIE Zomboid Mod Workflow — Reference (Claude: read before starting any work)
 =====================================================================================
-ไฟล์นี้คือ living document — ทุกครั้งที่เจอความรู้ใหม่ (API ใหม่, ข้อจำกัดใหม่, บั๊ก/กับดักใหม่)
-ให้กลับมาอัปเดตไฟล์นี้เพิ่มเสมอ ห้ามลบของเก่าทิ้งเว้นแต่พิสูจน์แล้วว่าผิด ให้แก้ไขแทน
-อัปเดตล่าสุด: 2026-09-22
+This is a living document. Every time new knowledge shows up (a new API, a new
+constraint, a new bug/trap), come back and add it here. Never delete existing
+entries unless proven wrong — correct them instead.
+Last updated: 2026-09-22
+Rewritten to English + restructured with a table of contents on 2026-09-22 (previous
+Thai version was ~66,000 characters / 900+ lines, which turned out to cost far more
+in real tokens per read than a naive "4 chars/token" estimate suggested, since Thai
+script tokenizes much less efficiently than English in most LLM tokenizers). Goal of
+this rewrite: read the TABLE OF CONTENTS below first (cheap), then Read only the
+specific numbered section(s) relevant to the current task — not the whole file every
+time — while still never having to re-research something already recorded here.
+
+TABLE OF CONTENTS (read this first, then jump to only what's relevant)
+=====================================================================================
+0.   Repo structure — mods/ = live game folder, Workshop/ = Steam upload staging,
+     git remote/branch, always check version.txt for the real game build.
+1.   Per-mod folder layout (mods/<ModId>/<version>/, Workshop/<ModId>/Contents/...),
+     the 8-step new-mod publish checklist, and the JoJo_FightingGold bug where the
+     game silently loads the Workshop staging copy instead of mods/ — includes the
+     sync_to_workshop.sh / check_workshop_sync.sh scripts that prevent this for good.
+2.   Sandbox Options vs PZAPI.ModOptions — which one to use for which kind of
+     setting (snapshot-at-world-load vs live-adjustable-in-game), with real code.
+3.   Sound scripts — cross-mod override rules, the "volume hardcoded in Lua
+     overrides the script's own value" trap, no live API for hearing distance.
+3.1  GameSounds category volume system — real technique for live-adjustable volume,
+     but only safe for categories vanilla doesn't already use.
+3.2  Font override bug — a real leftover fonts.txt with no matching .fnt/.png files
+     silently broke Thai font rendering in an unrelated mod.
+4.   Safe cross-mod Lua hooking (wrap-and-call-through on global functions/table
+     methods) — the technique to use whenever GameSounds categories don't apply.
+5.   Thai translation workflow — one central translation mod, append-only JSON,
+     how to find CJK-leak strings that fall back to Chinese in an English game.
+6.   Windows + Git Bash + PowerShell environment traps — no Python/lua/luac, grep -P
+     unicode false negatives, PowerShell New-Object/ConvertFrom-Json bugs, node -e
+     path-escaping.
+6.1  Lifestyle: Hobbies instrument-track addon extension point — the 3-file pattern,
+     the real instrument list, why songs don't show up (Debug - Learn All), and two
+     confirmed-broken reference mods (don't copy them).
+7.   Steam Workshop content cache — always find another mod's real source before
+     patching it; folder names can be misleading.
+8.   Multi-version mod conflicts (script load errors from stale legacy Workshop
+     items running alongside the current one).
+8.1  Git push does NOT update Steam Workshop — always tell the user to re-upload.
+8.2  MoodleFramework (custom moodles) + custom CharacterTrait creation — full API,
+     soft- vs hard-dependency tradeoffs, and the full 3-design history of
+     HARMONIE_GardenToPlate's Critical-penalty system (what was tried, what broke,
+     why, and the fix each time).
+8.3  NeatUI Framework — building custom UI widgets without writing your own
+     9-patch/3-patch/virtualized-scroll-list code from scratch.
+8.4  How to read any character stat/status value (Modern Status's own real
+     Get/Calc pattern) — which raw value range each stat actually uses.
+8.5  modversion must be bumped every time a mod's real files change.
+8.6  Real bugs/techniques from building a custom scrollable character-panel tab
+     (HARMONIE_VitaminPanel) — texture loading, a literal "%" crashing PZ's text
+     formatter, moodle threshold boundary mismatches, the ISCharacterInfoWindow
+     tab-width trap, ISScrollingListBox, and a real UI reference mod.
+8.7  Multiplayer principles (researched from real vanilla source) — local-only vs
+     all-players enumeration, isClient()/isServer() gating — plus a FLAGGED, not-yet-
+     fixed architecture gap in HARMONIE_VitaminChecker.lua that needs a user decision.
+9.   Checklist to run through before starting any new work.
 
 
-0. โครงสร้าง repo นี้
+0. Repo structure
 ======================
-Root ของ git repo = C:\Users\User\Zomboid\ เอง (คือโฟลเดอร์ข้อมูลเกมจริงของ Project Zomboid)
-  - mods/                  = โฟลเดอร์ mods จริงที่เกมโหลดใช้ (ทดสอบที่นี่ก่อนเสมอ)
-  - Workshop/               = โฟลเดอร์ staging สำหรับอัปโหลดขึ้น Steam Workshop ผ่านเครื่องมือในเกม
-  - Saves/, Server/, Logs/, options.ini, version.txt ฯลฯ = ข้อมูลเกมจริงของผู้ใช้ (อย่าไปยุ่ง
-    เว้นแต่จำเป็นต้องอ่านเพื่อ debug เช่น Logs/ สำหรับหา error)
-Git remote: GitLab https://gitlab.com/got.jittakorn.2/projext-zomboid-mod.git, branch main
-  ผู้ใช้บางทีก็ commit เองนอกเซสชัน (ผ่าน VSCode ฯลฯ) -- ก่อนเริ่มงานทุกครั้งให้ `git fetch` +
-  `git status`/`git log --oneline -5` เช็คก่อนเสมอ อย่าสมมติว่า state ที่เห็นล่าสุดยังตรงอยู่
-Build เกมของผู้ใช้: เช็คที่ C:\Users\User\Zomboid\version.txt เสมอ (เคยเจอ 42.20.4 แต่ไฟล์นี้
-  เปลี่ยนได้เรื่อยๆ ตามที่เกมอัปเดต)
+The git repo root IS C:\Users\User\Zomboid\ itself (the real Project Zomboid game
+data folder).
+  - mods/      = the real mods folder the game actually loads — always test here first.
+  - Workshop/  = staging folder for uploading to Steam Workshop via the in-game tool.
+  - Saves/, Server/, Logs/, options.ini, version.txt, etc. = the user's real game
+    data — don't touch unless needed for debugging (e.g. Logs/ to find an error).
+Git remote: GitLab https://gitlab.com/got.jittakorn.2/projext-zomboid-mod.git,
+branch main. The user sometimes commits outside this session (e.g. via VS Code) —
+always `git fetch` + `git status`/`git log --oneline -5` before starting work.
+Never assume the last-seen state is still current.
+User's game build: always check C:\Users\User\Zomboid\version.txt (seen 42.20.4
+before, but this changes whenever the game updates).
 
 
-1. โครงสร้างโฟลเดอร์ของแต่ละ mod (สำคัญมาก ต้องแยกให้ถูก)
+1. Per-mod folder layout (important — get this right)
 ===========================================================
 mods/<ModId>/<version>/...
-  = โฟลเดอร์ "ใช้งานจริง" ที่เกมโหลดตรงๆ ทดสอบ/แก้ไฟล์ที่นี่ก่อนเสมอ
-  <version> ปกติคือ "42" (ตรง versionMin ใน mod.info) บางม็อดเก่าใช้ "common" (แปลว่าใช้ได้ทุก
-  เวอร์ชัน ไม่ได้แยกตาม build) ทั้งสองแบบใช้ได้ ให้ดูว่า mod อื่นที่เกี่ยวข้อง (เช่น mod ที่จะไป
-  patch) ใช้แบบไหนแล้วทำตาม (เช่น Lifestyle: Hobbies ใช้ "common" ล้วน ไม่มีโฟลเดอร์ "42" ที่มี
-  เนื้อหาจริงเลย -- แต่ HARMONIE_* ส่วนใหญ่ใช้ "42")
+  = the folder the game actually loads. Always test/edit here first.
+  <version> is normally "42" (matching versionMin in mod.info); some older mods use
+  "common" (works across all builds, not version-split). Both are valid — match
+  whatever the related mod (e.g. one you're patching) already uses (Lifestyle:
+  Hobbies uses "common" only, no real-content "42" folder at all — but most
+  HARMONIE_* mods use "42").
 
-  *** แก้แล้วยืนยันจริง (2026-09-16, กรณี JoJo_FightingGold เสียงเงียบสนิทถาวร): ห้ามสมมติเด็ดขาด
-  ว่าเกมโหลด mods/ เสมอ! ตรวจสอบจริงด้วย debug console แล้วพบว่า mod ที่ผู้ใช้ enable อยู่ตอนนี้
-  ("HARMONIE_LifestyleAudioTune") เกมกลับโหลดจาก Workshop/<ModId>/Contents/mods/<ModId>/<version>/
-  (โฟลเดอร์ staging สำหรับอัปโหลด) แทน! เช็คได้ด้วยการ require ตาราง Lua ตรงๆ ผ่าน debug console
-  แล้วเทียบค่ากับไฟล์บนดิสก์ทั้งสองที่ -- ถ้าไม่ตรงกับ mods/ แต่ตรงกับ Workshop/ แปลว่าผู้ใช้
-  เลือก mod ตัวที่มาจาก Workshop staging ในหน้าเลือก mods ของเกม (มี 2 entry ให้เลือกเพราะมี
-  mod.info ID เดียวกันอยู่ 2 จุดบนดิสก์ -- เรื่องง่ายมากที่จะพลาดเลือกผิด) ผลคือ:
-  1) แก้โค้ด/ค่าใน mods/ อย่างเดียวจะ "ดูเหมือนไม่มีผล" ทั้งที่จริงๆ แค่เกมไม่ได้อ่านจากตรงนั้น
-  2) ไฟล์เสียง .ogg (gitignore ไว้ ไม่เคย sync อัตโนมัติ) ถ้าไม่ได้ copy ไปไว้ใน Workshop/ ด้วยมือ
-  จะทำให้ playSound() หา asset ไม่เจอแล้ว fail แบบเงียบสนิท (ไม่มี error, ไม่มี GAMESOUND-SET
-  handle เลยตลอดทั้งเพลง) -- อาการนี้แยกยากจากบั๊ก cache ของหัวข้อ 6.1 มาก ต้องแยกให้ออก:
-  ใช้ debug console สั่ง `require "TimedActions/Play<Instrument>Tracks"` ตรงๆ เทียบค่ากับทั้ง
-  cache ของตัวละครและไฟล์บนดิสก์ทั้งสองที่ ถ้า LIVE (จาก require) กับ CACHED (จาก
-  learnedTracksData) ตรงกันทั้งคู่แต่ "ผิด" เมื่อเทียบกับไฟล์ mods/ -- ไม่ใช่บั๊ก cache แล้ว
-  แปลว่าเกมโหลดคนละไฟล์กับที่แก้ไปเลย ให้ไปเช็ค Workshop/ staging copy ทันที
+  *** CONFIRMED REAL BUG (2026-09-16, JoJo_FightingGold permanently-silent-sound
+  case): never assume the game loads mods/! Verified via debug console that the
+  mod the user currently has enabled ("HARMONIE_LifestyleAudioTune") was actually
+  being loaded from Workshop/<ModId>/Contents/mods/<ModId>/<version>/ (the upload
+  staging copy) instead. Confirmed by `require`-ing the Lua table directly through
+  the debug console and diffing it against both on-disk copies — if it doesn't
+  match mods/ but matches Workshop/, the user picked the Workshop-staging entry in
+  the game's mod-selection screen (there are two entries with the same mod.info id
+  at two different disk locations — very easy to pick the wrong one). Consequences:
+  1) Editing only mods/ can look like it "has no effect" when really the game just
+     isn't reading from there.
+  2) .ogg sound files (gitignored, never auto-synced) silently fail playSound() if
+     not manually copied into Workshop/ too — no error at all, no GAMESOUND-SET
+     handle ever appears for that track. This is easy to confuse with the cache bug
+     in section 6.1 — to tell them apart: use the debug console to
+     `require "TimedActions/Play<Instrument>Tracks"` directly and diff it against
+     both the character's learned-tracks cache AND both on-disk copies. If LIVE
+     (from require) and CACHED (from learnedTracksData) agree with each other but
+     BOTH disagree with the mods/ file — it's not a cache bug, the game is loading
+     a completely different file. Check the Workshop/ staging copy immediately.
 
-  *** ป้องกัน + ตรวจจับอัตโนมัติ (สร้างไว้แล้ว 2026-09-16): มี 2 สคริปต์ที่ mods/ root ใช้แก้เรื่องนี้
-  ถาวร ไม่ต้องนั่ง cp เอง/เดาว่า sync ครบหรือยัง อีกต่อไป:
-    - `mods/check_workshop_sync.sh` -- READ-ONLY เช็คทุก mod ที่มี Workshop/<ModId>/ staging
-      อยู่ (วนหาทุกโฟลเดอร์ใต้ Workshop/ อัตโนมัติ ไม่ต้องพิมพ์ชื่อ mod เอง) เทียบกับ mods/
-      ทีละไฟล์ (diff -r) แล้ว print OK/DRIFT ต่อ mod/version ไม่แก้ไฟล์ใดๆ ***ต้องรันคำสั่งนี้
-      เป็นอันดับแรกทุกครั้งที่เจออาการ "แก้โค้ด/ไฟล์แล้วในเกมดูเหมือนไม่มีผล" ก่อนจะไปสงสัยเรื่อง
-      cache (หัวข้อ 6.1) หรือเรื่องอื่นเลย*** -- ประหยัดเวลาดีบั๊กได้มหาศาล (กรณี
-      JoJo_FightingGold เสียเวลาหลายรอบเพราะไล่ทฤษฎี cache ก่อน ทั้งที่รันคำสั่งนี้ตัวเดียวจะ
-      เจอทันทีว่าไฟล์ .ogg หายไปจาก staging)
-    - `mods/sync_to_workshop.sh <ModId> [version]` -- แก้ไข: ลบโฟลเดอร์ staging ของ mod/version
-      นั้นทิ้งแล้วก็อปใหม่จาก mods/ ทั้งหมด (รวม .ogg/ไฟล์ gitignore ด้วย เพราะก็อปไฟล์จริงไม่ผ่าน
-      git) ให้ตรงกันเป๊ะเสมอ ไม่ใช่ cp ทีละไฟล์แบบเดิมที่พลาดง่าย (version default = "42" ถ้า mod
-      ใช้ "common" ต้องระบุเอง เช่น HARMONIE_HomeMedic มีทั้ง 42 และ common ต้องรันแยก 2 รอบ)
-    - ควรรัน `mods/check_workshop_sync.sh` ทุกครั้งหลังแก้ไฟล์ของ mod ที่มี Workshop/ staging
-      อยู่แล้ว (คือ mod ที่เคย publish ไปแล้ว) แล้วรัน `sync_to_workshop.sh` ทันทีถ้าเจอ DRIFT
-      ก่อนบอกผู้ใช้ให้ไปทดสอบในเกม -- ไม่ต้องรอให้ผู้ใช้เจอปัญหาก่อนค่อยเช็ค
+  *** Prevention + auto-detection (built 2026-09-16): two scripts at mods/ root
+  fix this permanently — no more manual cp / guessing whether sync is complete:
+    - `mods/check_workshop_sync.sh` — READ-ONLY. Checks every mod that has a
+      Workshop/<ModId>/ staging copy (auto-discovers every folder under Workshop/,
+      no need to type mod names) against mods/ file-by-file (diff -r), prints
+      OK/DRIFT per mod/version. Changes nothing. ***Run this FIRST, every single
+      time you see "I edited the code/file but it looks like nothing changed in
+      the game" — before suspecting the cache issue in 6.1 or anything else.***
+      Huge time saver (the JoJo_FightingGold case wasted many rounds chasing cache
+      theories first, when running this one command would have shown the missing
+      .ogg in staging immediately).
+    - `mods/sync_to_workshop.sh <ModId> [version]` — FIXES: deletes that mod/
+      version's staging folder entirely and re-copies everything from mods/
+      (including .ogg / gitignored files, since git-based syncing can't touch
+      them) so they match byte-for-byte, instead of copying file-by-file (which
+      is easy to get wrong). Default version = "42"; if a mod uses "common"
+      specify it explicitly (e.g. HARMONIE_HomeMedic has both 42 and common —
+      run this twice).
+    - Run `mods/check_workshop_sync.sh` after every edit to a mod that already has
+      a Workshop/ staging copy (i.e. was already published), and immediately run
+      `sync_to_workshop.sh` on any DRIFT — before telling the user to test in-game,
+      not after they report a problem.
 
-  *** ทางแก้ที่ต้นเหตุจริง (แนะนำผู้ใช้ แต่เป็นทางเลือก ไม่ใช่สิ่งที่ Claude ทำเองได้): ต้นตอที่แท้จริง
-  คือผู้ใช้เปิดใช้งาน (enable) mod entry ที่มาจาก Workshop staging ในหน้าเลือก mods ของเกม แทนที่
-  จะเป็น entry จาก mods/ โดยตรง ถ้าผู้ใช้สลับไปเลือก mods/ แทนตอนพัฒนา/ทดสอบ จะไม่ต้อง sync อะไร
-  เลยระหว่างทำงาน (Workshop/ ใช้ตอนจะ publish จริงๆ เท่านั้น) -- แต่ถ้าผู้ใช้ต้องการทดสอบ "เหมือน
-  คนอื่นที่ subscribe จริง" ก็มีเหตุผลที่จะยังเลือก Workshop entry ต่อไป ในกรณีนั้นให้พึ่งสคริปต์ 2
-  ตัวข้างบนแทน ***
+  *** The real root-cause fix (recommend to the user, but it's their choice, not
+  something Claude can do): the actual cause is the user having the Workshop-
+  staging mod entry ENABLED in the game's mod-selection screen instead of the
+  mods/ entry. If they switch to the mods/ entry while developing/testing, no
+  syncing is needed at all during work (Workshop/ only matters right before
+  actually publishing). But if they want to test "exactly like a real subscriber
+  would", keeping the Workshop entry selected is reasonable too — in that case,
+  rely on the two scripts above instead. ***
 
 Workshop/<ModId>/Contents/mods/<ModId>/<version>/...
-  = สำเนาสำหรับอัปโหลด Steam Workshop (โครงสร้างต้องมี "Contents/mods/<ModId>/" ครอบอีกชั้น
-  ตาม convention ของ PZ Workshop uploader — เทียบ Workshop/ModTemplate/Contents/mods/ModTemplate/
-  ซึ่งเป็น template ทางการ)
+  = the copy used for the Steam Workshop upload (needs the extra "Contents/mods/
+  <ModId>/" wrapper layer per PZ's Workshop uploader convention — compare
+  Workshop/ModTemplate/Contents/mods/ModTemplate/, the official template).
 Workshop/<ModId>/preview.png
-  = รูป preview ของ Workshop item (ส่วนใหญ่ก็อปจาก poster.png ในตัว mod เลย)
+  = the Workshop item's preview image (usually just a copy of the mod's own
+  poster.png).
 Workshop/<ModId>/workshop.txt
-  = metadata สำหรับอัปโหลด: version=1, id=<เลข Workshop item ตอนเผยแพร่แล้ว -- ถ้ายังไม่เคย
-  publish ห้ามใส่ id= เอง เกมจะเติมให้อัตโนมัติตอนอัปโหลดครั้งแรก>, title=, description= (ซ้ำได้
-  หลายบรรทัดสำหรับย่อหน้าใหม่), tags=, visibility=public
-  *** ไฟล์นี้เกมแก้กลับมาเองได้ (เช่นเติม id= หลัง publish) ระวัง "changed on disk since you last
-  read" ให้ถือเป็นของจริง อย่า revert เอง อ่านใหม่ก่อนแก้ทับเสมอ ***
+  = upload metadata: version=1, id=<the Workshop item's ID once published — never
+  set id= yourself before the first publish, the game fills it in automatically>,
+  title=, description= (repeatable for new paragraphs), tags=, visibility=public.
+  *** The game can rewrite this file itself (e.g. adding id= after publishing) —
+  treat a "changed on disk since you last read" warning as real, never blindly
+  overwrite; re-read before editing. ***
 
-ขั้นตอนมาตรฐานตอนสร้าง mod ใหม่ที่จะไป publish:
-  1. เขียน/ทดสอบใน mods/<ModId>/42/ ให้เสร็จก่อน (รวม mod.info, sandbox-options.txt, lua, scripts)
-  2. ถ้าไม่มีรูป: สร้าง placeholder ง่ายๆ ด้วย PowerShell System.Drawing (ดูหัวข้อ 6) --
-     poster.png ขนาด 256x256, icon.png ขนาด 64x64 (เช็คขนาดจาก mod อื่นที่มีอยู่แล้วด้วย
-     PowerShell Add-Type System.Drawing + [System.Drawing.Image]::FromFile ถ้าไม่มี ImageMagick)
-  3. เพิ่ม `poster=poster.png` และ `icon=icon.png` ใน mod.info
-  4. คัดลอกทั้งโฟลเดอร์ 42/ ไปที่ Workshop/<ModId>/Contents/mods/<ModId>/42/ (ใช้ cp -r ทับทั้งอัน
-     ง่ายสุด อย่าคัดลอกทีละไฟล์เดี๋ยวตกหล่น)
-  5. คัดลอก poster.png ไปเป็น Workshop/<ModId>/preview.png
-  6. เขียน Workshop/<ModId>/workshop.txt (ไม่ใส่ id= ถ้ายังไม่เคย publish)
-  7. *** ขั้นตอนอัปโหลดจริงทำแทนไม่ได้ *** ต้องให้ผู้ใช้กดเองในเกม (Mods/Workshop menu ->
-     ชี้ไปที่โฟลเดอร์ Workshop/<ModId>/) เพราะต้อง login Steam ของผู้ใช้เอง Claude Code ไม่มีทาง
-     เข้าถึง Steam ได้เลย
-  8. ทุกครั้งที่แก้ mod หลัง publish แล้ว ต้อง sync ทั้งสองชุด (mods/ กับ Workshop/.../Contents/
-     mods/) ให้ตรงกันเสมอ ไม่งั้นรอบอัปโหลดถัดไปจะหลุดของที่เพิ่งแก้
+Standard steps for a brand-new mod that will be published:
+  1. Write/test it fully in mods/<ModId>/42/ first (mod.info, sandbox-options.txt,
+     lua, scripts — everything).
+  2. If there's no artwork yet: generate simple placeholders with PowerShell
+     System.Drawing (see section 6) — poster.png 256x256, icon.png 64x64 (check
+     sizes from an existing mod via PowerShell Add-Type System.Drawing +
+     [System.Drawing.Image]::FromFile if ImageMagick isn't available).
+  3. Add `poster=poster.png` and `icon=icon.png` to mod.info.
+  4. Copy the whole 42/ folder to Workshop/<ModId>/Contents/mods/<ModId>/42/ (use
+     `cp -r` to overwrite the whole thing at once — never copy file-by-file, it's
+     easy to miss something).
+  5. Copy poster.png to Workshop/<ModId>/preview.png.
+  6. Write Workshop/<ModId>/workshop.txt (no id= if never published before).
+  7. *** The actual upload step cannot be done for the user *** — they must click
+     through it themselves in-game (Mods/Workshop menu -> point at
+     Workshop/<ModId>/) since it needs their own Steam login. Claude Code has no
+     way to access Steam at all.
+  8. Every time a mod is edited after being published, both copies (mods/ and
+     Workshop/.../Contents/mods/) must stay in sync, or the next upload will lose
+     whatever was just changed.
 
 
-2. Sandbox Options vs PZAPI.ModOptions — เลือกให้ถูก (จุดที่เคยพลาดมาก่อน)
+2. Sandbox Options vs PZAPI.ModOptions — pick the right one (a past real mistake)
 ============================================================================
-สองระบบนี้ทำงานคนละแบบ ห้ามสับสน — เคยเจอเคสจริง: ทำ volume slider ด้วย sandbox option
-แล้วผู้ใช้ปรับกลางเกมแล้ว "ไม่มีผล" ต้องออกเข้าใหม่ถึงจะเห็นผล → ไม่ใช่บั๊ก แต่เลือกกลไกผิด
-ตั้งแต่แรก แก้โดยเปลี่ยนไปใช้ PZAPI.ModOptions แทน
+These two systems behave completely differently — don't mix them up. Real case:
+built a volume slider with a sandbox option, then the user adjusted it mid-game and
+it "had no effect" until restarting. Not a bug — the wrong mechanism was chosen
+from the start. Fixed by switching to PZAPI.ModOptions.
 
-(ก) Sandbox Options (media/sandbox-options.txt + Translate/{EN,TH}/Sandbox.json)
-  - อ่านค่าจาก SandboxVars.<Category>.<OptionName> ใน Lua
-  - ค่าถูก "snapshot" ตอนโหลดโลก/เซฟเข้ามาครั้งเดียว เปลี่ยนกลางเซสชันไม่มีผลจนกว่าจะสร้างโลก
-    ใหม่หรือโหลดเซฟใหม่ (พฤติกรรมมาตรฐานของเกม ไม่ใช่เฉพาะ mod เรา)
-  - ใช้เหมาะกับ: ค่าคงที่ระดับโลก/เซิร์ฟเวอร์ ที่ไม่จำเป็นต้องเปลี่ยนกลางเกม เช่น drop rate
-    multiplier, damage multiplier
-  - format ตัวอย่าง:
+(a) Sandbox Options (media/sandbox-options.txt + Translate/{EN,TH}/Sandbox.json)
+  - Read in Lua via SandboxVars.<Category>.<OptionName>.
+  - Values are "snapshotted" once when a world/save loads. Changing them mid-
+    session has no effect until a new world is created or the save is reloaded
+    (standard vanilla behavior, not specific to our mods).
+  - Good for: world/server-level constants that don't need to change mid-game,
+    e.g. drop rate multiplier, damage multiplier.
+  - Example format:
       option HARMONIE_ModName.OptionName
       {
           type = double,
@@ -120,21 +202,22 @@ Workshop/<ModId>/workshop.txt
           page = HARMONIE_ModName,
           translation = HARMONIE_ModNameOptionName,
       }
-    แปล label ที่ Translate/EN(TH)/Sandbox.json ด้วย key แบบ:
-      "Sandbox_HARMONIE_ModName": "ชื่อหน้า page"
-      "Sandbox_HARMONIE_ModNameOptionName": "ชื่อ option"
-      "Sandbox_HARMONIE_ModNameOptionName_tooltip": "คำอธิบาย"
-  - *** ข้อจำกัดเด็ดขาด: ไฟล์ .txt สคริปต์เสียง/ไอเทม (media/scripts/*.txt) ถูก parse ก่อน
-    Lua/SandboxVars จะมีตัวตนด้วยซ้ำ (ตอน engine boot) เพราะฉะนั้น "ระยะเสียง (distanceMax)"
-    หรือค่าคงที่อื่นในสคริปต์พวกนี้ *ไม่มีทาง* เชื่อมกับ sandbox var ได้เลยไม่ว่าจะยอมรีสตาร์ท
-    แค่ไหนก็ตาม ต้องแก้ไฟล์ .txt ตรงๆ แล้วรีสตาร์ทเกมให้ parse ใหม่เท่านั้น ***
+    Translate the label in Translate/EN(TH)/Sandbox.json with keys like:
+      "Sandbox_HARMONIE_ModName": "Page title"
+      "Sandbox_HARMONIE_ModNameOptionName": "Option name"
+      "Sandbox_HARMONIE_ModNameOptionName_tooltip": "Description"
+  - *** HARD LIMIT: sound/item script .txt files (media/scripts/*.txt) are parsed
+    BEFORE Lua/SandboxVars even exist (at engine boot). So a sound's hearing
+    distance (distanceMax) or any other constant baked into these scripts can
+    NEVER be wired to a sandbox var no matter how many restarts you accept — must
+    edit the .txt directly and restart the game to re-parse it. ***
 
-(ข) PZAPI.ModOptions (Lua, client-side, ไฟล์ .lua ธรรมดา ไม่ต้องมี .txt แยก)
-  - สร้างหน้าตั้งค่าจริงใน Options -> Mods -> <ชื่อที่ตั้ง> มี slider/tickbox/keybind ปรับสดได้
-    ทันที ไม่ต้องรีสตาร์ท ต่อผู้เล่นแยกกัน (per-player)
-  - ใช้เหมาะกับ: อะไรก็ตามที่อยากให้ผู้เล่นปรับ "ระหว่างเล่น" แล้วเห็นผลทันที (เสียง, keybind,
-    toggle ฟีเจอร์)
-  - โค้ดตัวอย่างจริงที่ยืนยันแล้วว่าใช้ได้ (อ้างอิงจาก ModernFirearmsSystem เอง,
+(b) PZAPI.ModOptions (Lua, client-side, plain .lua file, no separate .txt needed)
+  - Creates a real settings page under Options -> Mods -> <chosen name> with
+    sliders/tickboxes/keybinds that apply live, no restart needed, per player.
+  - Good for: anything the player should be able to adjust "while playing" and see
+    take effect immediately (volume, keybinds, feature toggles).
+  - Confirmed-working real example code (from ModernFirearmsSystem itself,
     media/lua/client/EFK_Mod_Options.lua):
       local options = PZAPI.ModOptions:create("UniqueModOptionsId", getText("UI_options_X_title"))
       options:addTitle(getText("..."))
@@ -142,361 +225,441 @@ Workshop/<ModId>/workshop.txt
       options:addKeyBind("keybind_id", getText("..."), Keyboard.KEY_G, getText("...tooltip"))
       options:addTickBox("tickbox_id", getText("..."), true, getText("...tooltip"))
       local slider = options:addSlider("slider_id", getText("..."), 0, 2, 0.01, currentValue, getText("...tooltip"))
-      slider.onChange = function(_, value) ... end       -- ยิงสดขณะลาก
-      slider.onChangeApply = function(_, value) ... end  -- ยิงตอนปล่อย/ยืนยัน
-  - *** สำคัญ: ต้องเรียก Init()/create() "ทันทีตอนไฟล์โหลด" (ท้ายไฟล์เลย) ห้ามห่อด้วย
-    Events.OnGameStart.Add(...) แบบที่ทำกับ hook อื่น -- ระบบ options menu สแกนหาไว้ตั้งแต่ตอน
-    เกมเริ่ม ถ้าห่อ OnGameStart อาจไม่ทันหรือไม่โผล่ (ยึดตาม pattern จริงของ
-    EFK_Mod_Options.lua ที่เรียก AWCWF_Options.Init() ทันทีบรรทัดสุดท้ายของไฟล์) ***
-  - ต้องมี key getText(...) ใน Translate/{EN,TH}/UI.json ด้วย ใช้ prefix
-    "UI_options_<something>_..." (สังเกตจาก ModernFirearmsSystem เอง และของที่เราทำเองใน
-    HARMONIE_LifestyleAudioTune ก็ใช้ "UI_options_HARMONIE_LAT_...")
+      slider.onChange = function(_, value) ... end       -- fires live while dragging
+      slider.onChangeApply = function(_, value) ... end  -- fires on release/confirm
+  - *** IMPORTANT: must call Init()/create() "immediately when the file loads"
+    (last line of the file) — do NOT wrap it in Events.OnGameStart.Add(...) like
+    other hooks. The options-menu system scans for this at game start; wrapping it
+    in OnGameStart may be too late or never show up (matches EFK_Mod_Options.lua's
+    own real pattern, which calls AWCWF_Options.Init() as the file's last line). ***
+  - Also needs a getText(...) key in Translate/{EN,TH}/UI.json with the prefix
+    "UI_options_<something>_..." (seen in ModernFirearmsSystem itself and our own
+    HARMONIE_LifestyleAudioTune, which uses "UI_options_HARMONIE_LAT_...").
 
-กฎง่ายๆ: ถ้าผู้ใช้บอกว่า "ปรับแล้วไม่เห็นผลจนกว่าจะรีสตาร์ท" ให้สงสัยว่ากำลังใช้ sandbox option
-ผิดที่ผิดทาง (ควรเป็น ModOptions) ก่อน อย่าเพิ่งอธิบายว่า "sandbox ต้องรีสตาร์ทเป็นปกติ" เฉยๆ
-ถ้าจริงๆ requirement คือ "ปรับสดได้" -- ให้เสนอย้ายไปใช้ ModOptions แทนเลย
+Simple rule: if the user says "I adjusted it but it doesn't take effect until I
+restart", suspect a misused sandbox option (should be ModOptions) FIRST. Don't
+just explain "that's how sandbox options normally work" — if the actual
+requirement is "adjustable live", offer to switch to ModOptions instead.
 
 
-3. ระบบเสียง (sound script) — กลไก override และข้อจำกัด
+3. Sound scripts — override mechanics and limits
 ==========================================================
-- Sound script (.txt ใต้ media/scripts) ถูก parse ก่อน Lua ทั้งหมด (ตอน engine boot) ดังนั้น
-  เขียนค่าแบบ SandboxVars.xxx ในไฟล์นี้ไม่ได้เด็ดขาด (ดูข้อ 2)
-- Override เสียงข้าม mod: ถ้า mod สองตัวประกาศ `sound <ชื่อเดียวกัน> {...}` ชื่อซ้ำกัน
-  mod ที่โหลด "ทีหลัง" ชนะ (ยืนยันด้วย web search + ทดสอบจริงแล้วใช้ได้) การบังคับลำดับโหลด
-  ใช้ `require=<ModId>` ใน mod.info ของตัวที่ต้องโหลดทีหลัง (ยืนยันจาก mods.txt จริงของเซฟ
-  ที่ mod ที่ require เรียงอยู่หลัง mod ที่ถูก require เสมอ)
-- *** กับดักสำคัญที่สุด: ค่า volume/distanceMax ในสคริปต์ .txt เป็นแค่ "ค่าตั้งต้น" เท่านั้น
-  ต้องเช็คโค้ด Lua จริงของ mod ก่อนเสมอว่ามันเรียก playSound/playSoundImpl แบบเฉยๆ (เคารพค่า
-  จากสคริปต์) หรือมีการเรียก emitter:setVolume(handle, ค่าตายตัว) ทับทีหลัง (ซึ่งจะ override
-  ค่าจากสคริปต์ทั้งหมด ทำให้แก้ .txt ไปก็ไม่มีผล) -- เจอเคสจริงกับ Lifestyle: Hobbies' Jukebox
-  ที่มีปุ่ม "Jukebox Volume" ของตัวเองอยู่แล้ว เซ็ต emitter:setVolume() ทับค่าสคริปต์ตรงๆ ***
-- *** ไม่มี Lua API ให้เปลี่ยน "ระยะที่ได้ยิน" (distanceMax/distanceMin) ของเสียงที่กำลังเล่นอยู่
-  หลังจากเริ่มเล่นแล้ว (ค้นหาทั่ว vanilla lua แล้วไม่เจอ setMaxRange หรือเทียบเท่าเลย มีแค่
-  setVolume/setPitch) ต้องแก้ไฟล์ .txt แล้วรีสตาร์ทเท่านั้น ไม่มีทางทำให้ live ได้ ***
+- Sound scripts (.txt under media/scripts) are parsed before all Lua (at engine
+  boot), so SandboxVars.xxx can never be written into this file (see section 2).
+- Cross-mod sound overrides: if two mods declare `sound <same name> {...}`, the
+  mod that loads LATER wins (confirmed via web search + real testing). Force load
+  order with `require=<ModId>` in mod.info on whichever mod must load later
+  (confirmed from a real save's mods.txt — the requiring mod always sorts after
+  the required one).
+- *** MOST IMPORTANT TRAP: volume/distanceMax values in a .txt script are only
+  the "default" value. Always check the mod's real Lua first to see whether it
+  just calls playSound/playSoundImpl plainly (respects the script's value) or
+  calls emitter:setVolume(handle, fixedValue) afterward (which overrides the
+  script value entirely, making .txt edits do nothing). Real case: Lifestyle:
+  Hobbies' Jukebox has its own "Jukebox Volume" button that sets
+  emitter:setVolume() directly over the script value. ***
+- *** There is no Lua API to change a currently-playing sound's hearing distance
+  (distanceMax/distanceMin) after it starts (searched all of vanilla Lua — no
+  setMaxRange or equivalent, only setVolume/setPitch exist). Must edit the .txt
+  and restart — there's no way to make this live. ***
 
-3.1 GameSounds category volume system (สำหรับทำ volume ปรับสดได้จริงแบบปลอดภัย)
-  - `GameSounds.getSoundsInCategory("ชื่อ category")` คืนเสียงทุกตัวที่ประกาศ `category = X`
-    ในสคริปต์ (ของ mod ไหนก็ได้ ไม่จำกัดแค่ mod เดียว)
-  - `sound:setUserVolume(x)` / `sound:getUserVolume()` ตั้ง/อ่านตัวคูณ volume ต่อผู้เล่น ถาวร
-    (เก็บผ่าน `GameSounds.saveINI()`)
-  - *** ต้องเช็คก่อนใช้เสมอ: grep vanilla media/scripts ทั้งหมดหาว่า category ชื่อนี้ vanilla
-    ใช้เยอะแค่ไหน (เคยเจอ "Item" ใช้ 1521 ครั้ง, "Object" ใช้ 351 ครั้ง ถ้าไปปรับ category
-    พวกนี้จะกระทบเสียงทั้งเกม ไม่ใช่แค่ของ mod เป้าหมาย) ใช้เทคนิคนี้ได้เฉพาะ category ที่
-    ไม่ซ้ำกับ vanilla เท่านั้น (เช่น "DJ"/"Oldies"/"SFX" ของ Lifestyle: Hobbies ไม่มี vanilla
-    ใช้เลยสักครั้ง -- ปลอดภัย) ***
-  - ถ้า category ที่ต้องการปรับดันใช้ร่วมกับ vanilla (เช่นเครื่องดนตรีของ Lifestyle ใช้
-    category "Item" เหมือน vanilla ส่วนใหญ่) ต้องใช้เทคนิคข้อ 4 (hook รายจุด) แทน ใช้
-    GameSounds category ไม่ได้เลย
+3.1 GameSounds category volume system (for genuinely live-adjustable volume, safely)
+  - `GameSounds.getSoundsInCategory("category name")` returns every sound that
+    declares `category = X` in a script (from any mod, not just one).
+  - `sound:setUserVolume(x)` / `sound:getUserVolume()` sets/reads a per-player
+    persistent volume multiplier (stored via `GameSounds.saveINI()`).
+  - *** Always check first: grep all of vanilla media/scripts to see how heavily
+    vanilla already uses that category name ("Item" = 1521 uses, "Object" = 351
+    uses seen — adjusting these categories would affect the entire game's sounds,
+    not just the target mod's). Only safe for categories vanilla never uses at all
+    (e.g. Lifestyle: Hobbies' "DJ"/"Oldies"/"SFX" — vanilla never uses these, safe). ***
+  - If the target category is shared with vanilla (e.g. Lifestyle's instruments use
+    category "Item" like most vanilla sounds), use the per-instance hook technique
+    in section 4 instead — GameSounds categories won't work.
 
-3.2 Font override — เจอบั๊กจริง gunk ค้างจาก mod ตัวเอง (ยืนยันแล้ว 2026-09-22)
-  - ฟอนต์ของแต่ละภาษาประกาศผ่าน media/fonts/<LangCode>/fonts.txt (เช่น media/fonts/TH/fonts.txt)
-    แมป "ชื่อ font แบบ logical" (Small/Medium/Large/Dialogue/... ที่โค้ด Lua เรียกผ่าน
-    Font.Small เป็นต้น) ไปยังไฟล์ .fnt + .png จริง -- กลไก override เหมือน sound script
-    ทุกประการ (ข้อ 3): mod ไหนโหลด "ทีหลัง" ชนะ ถ้าหลาย mod ประกาศ font ชื่อเดียวกัน
-  - *** เจอเคสจริง: mods/HARMONIE_GardenToPlate/42/media/fonts/TH/fonts.txt มีอยู่ (เศษซาก
-    เก่าจากก่อนเซสชันนี้ ไม่เกี่ยวกับหน้าที่จริงของมอดเลย -- GardenToPlate คือมอดวิตามิน/ดองผัก
-    ไม่ใช่มอดฟอนต์) แมป Small/Medium/Large ไปที่ zomboidSmallThai.fnt/zomboidMediumThai.fnt/
-    zomboidLargeThai.fnt แต่ **ไม่มีไฟล์ .fnt/.png จริงอยู่ในมอดเลยสักไฟล์เดียว** (มีแต่
-    fonts.txt ตัวเดียวลอยๆ) ถ้า GardenToPlate โหลดทีหลังมอดฟอนต์ไทยจริง (เช่น "PZ Thai Print
-    Media"/ThaiMediaB42 ซึ่งใช้ชื่อไฟล์คนละชุด zomboidSmall.fnt ไม่มี "Thai" ต่อท้าย) การแมป
-    Small/Medium/Large จะถูกชี้ไปที่ไฟล์ที่ไม่มีอยู่จริง เกมน่าจะ fallback ไปใช้ฟอนต์เดิม/ฟอนต์
-    default ที่แย่กว่า (มีปัญหาสระ/วรรณยุกต์ลอย) แม้จะเปิดมอดฟอนต์ไทยที่ถูกต้องอยู่แล้วก็ตาม --
-    อาการที่ผู้ใช้เจอคือ "เปิดมอดต่างๆ ที่ HARMONIE แปลแล้ว ตัวอักษรยังตกวรรณยุกต์เหมือนใช้ฟอนต์
-    เก่าอยู่" ทั้งที่ mods/default.txt เปิดมอดฟอนต์ใหม่ถูกต้องแล้ว ***
-  - วิธีแก้: ลบ fonts.txt (และโฟลเดอร์ fonts/ ทั้งหมด) ทิ้งจาก GardenToPlate เพราะไม่มีไฟล์จริง
-    รองรับอยู่แล้ว ไม่มีประโยชน์อะไรเลย มีแต่โทษ -- เจอทั้งใน mods/ และ Workshop/ staging (แปลว่า
-    เคย publish ขึ้น Workshop จริงไปแล้วด้วย ต้อง publish ใหม่หลังลบเพื่อให้คนอื่นที่ subscribe
-    ไม่โดนปัญหานี้ด้วย)
-  - บทเรียน: ถ้าเจออาการ "ฟอนต์/เสียง/asset ไม่เปลี่ยนตามมอดที่เพิ่งเปิด ทั้งที่ enable ถูกต้อง
-    แล้ว" ให้ grep หา path ที่ชนกัน (`find mods -path "*/fonts/*"` เป็นต้น) ข้าม mod HARMONIE
-    ทุกตัวก่อนเสมอ ไม่ใช่แค่มอดที่กำลังเจอปัญหาโดยตรง -- อาจมีเศษซากจาก mod อื่นที่ไม่เกี่ยวข้อง
-    ไปชนโดยไม่รู้ตัว เหมือนเคสนี้เป๊ะ
+3.2 Font override — real leftover-gunk bug from our own mod (confirmed 2026-09-22)
+  - Each language's font is declared via media/fonts/<LangCode>/fonts.txt (e.g.
+    media/fonts/TH/fonts.txt), mapping "logical" font names (Small/Medium/Large/
+    Dialogue/... referenced in Lua as Font.Small etc.) to real .fnt + .png files —
+    same override mechanic as sound scripts (section 3): whichever mod loads LAST
+    wins if multiple mods declare the same font name.
+  - *** Real case found: mods/HARMONIE_GardenToPlate/42/media/fonts/TH/fonts.txt
+    existed (leftover debris from before this session, unrelated to the mod's
+    actual purpose — GardenToPlate is a vitamin/canning mod, not a font mod). It
+    mapped Small/Medium/Large to zomboidSmallThai.fnt/zomboidMediumThai.fnt/
+    zomboidLargeThai.fnt but **had zero matching .fnt/.png files anywhere in the
+    mod** (just a lone fonts.txt). If GardenToPlate loaded after the real Thai
+    font mod (e.g. "PZ Thai Print Media"/ThaiMediaB42, which uses a different file
+    set — zomboidSmall.fnt, no "Thai" suffix), the Small/Medium/Large mapping
+    would point at files that don't exist, and the game would likely fall back to
+    the old/worse default font (broken vowel/tone-mark rendering) even with the
+    correct Thai font mod enabled. User-visible symptom: "every HARMONIE-
+    translated mod still shows broken tone marks like the old font", even though
+    mods/default.txt had the correct new font mod enabled. ***
+  - Fix: delete fonts.txt (and the whole fonts/ folder) from GardenToPlate entirely
+    — no real files back it, pure downside with zero benefit. Found in both mods/
+    and Workshop/ staging (meaning it had already been published — needed
+    re-publishing after deletion so subscribers wouldn't hit this too).
+  - Lesson: if you see "font/sound/asset doesn't change with the mod I just
+    enabled even though it's correctly enabled", grep for the colliding path
+    (`find mods -path "*/fonts/*"` etc.) across EVERY HARMONIE mod first, not
+    just the one directly reporting the issue — there may be unrelated leftover
+    debris from another mod colliding without anyone realizing, exactly like this
+    case.
 
 
-4. Hook Lua ข้าม mod แบบปลอดภัย (เมื่อ GameSounds category ใช้ไม่ได้)
+4. Safe cross-mod Lua hooking (when GameSounds categories don't apply)
 ========================================================================
-- เขียนทับ "ทั้งไฟล์" (ชื่อ path เดียวกันข้าม mod) ใช้ไม่ได้กับ Lua เหมือนที่ใช้ได้กับ sound/item
-  script -- ไฟล์ Lua ของทุก mod ที่ path ไหนก็ตามจะถูกรันหมดทุกไฟล์ ไม่มีกลไก "อันหลังทับอันแรก"
-  แบบสคริปต์เลย
-- วิธีที่ถูกต้อง: หา "global function" หรือ "table method" (ไม่ใช่ `local function`) ที่ mod
-  เป้าหมายประกาศไว้ แล้วเขียนทับแบบ wrap-and-call-through:
+- Overwriting an "entire file" by same path across mods does NOT work for Lua the
+  way it does for sound/item scripts — every mod's Lua file at any given path all
+  get run, there's no "later one wins" mechanic like scripts have.
+- The correct approach: find a "global function" or "table method" (not a
+  `local function`) the target mod declares, and wrap-and-call-through:
     local original_X = SomeGlobalTable.someMethod
     function SomeGlobalTable.someMethod(...)
         original_X(...)
-        -- โค้ดเพิ่มเติมของเรา
+        -- our extra code
     end
-  ปลอดภัยเพราะ method ของ class ใน Lua ก็แค่ entry ใน table ธรรมดา เขียนทับได้จาก mod อื่น
-  ตราบใดที่โหลดทีหลัง (บังคับด้วย require=)
-- *** ข้อจำกัด: `local function` ใน Lua มองไม่เห็นจากไฟล์อื่นเลย เขียนทับ/ลบ/เรียกจากข้างนอก
-  ไม่ได้เด็ดขาด ถ้าฟังก์ชันที่อยากดักเป็น local ให้หาว่ามันเรียก global function/table method
-  อะไรข้างในอีกที แล้วไป wrap ตัวนั้นแทน (เคยเจอเคสจริง: ChangeMagazineType.lua ของ
-  ModernFirearmsSystem มี `local function NeedRefresh()` ที่ wrap ไม่ได้ แต่มันเรียก global
-  `function ChangeMagzine(...)` ข้างใน เลย wrap ChangeMagzine แทน) ***
-- เวลาจะอ่าน instance field (self.xxx) จาก object ที่ method ต้นฉบับ set ไว้เอง (เช่น
-  self.gameSound, self.soundFile) ทำได้เลยหลัง original(...) return กลับมา เพราะเป็น field
-  บน object เดียวกัน ไม่ต้องแก้ไฟล์ต้นฉบับเลย (เจอ pattern นี้ซ้ำๆ ใน TimedAction classes
-  ของทั้ง Lifestyle: Hobbies และ ModernFirearmsSystem)
-- เวลา wrap ให้ครอบด้วย `Events.OnGameStart.Add(function() ... end)` เสมอ (ยกเว้น
-  PZAPI.ModOptions ที่ต้องเรียกทันที ดูข้อ 2) เพื่อรับประกันว่า mod เป้าหมายโหลด class จริง
-  เสร็จแล้วก่อนเราไปแก้ ไม่สนใจว่าไฟล์ mod ไหนโหลดก่อน-หลังกันภายในติ๊กเดียวกัน
-- เช็คเสมอว่า global/class ที่จะ wrap มีอยู่จริงก่อน (`if not X or not X.method then print(...);
-  return end`) แล้ว print แจ้งเตือนถ้าไม่เจอ เผื่อ mod เป้าหมายอัปเดต/เปลี่ยนโครงสร้างในอนาคต
-  จะได้รู้ทันทีจาก DebugLog ไม่ใช่เงียบๆ พังลึกๆ
+  Safe because a class method in Lua is just a plain table entry, overwritable
+  from another mod as long as it loads later (forced via require=).
+- *** LIMIT: `local function` in Lua is invisible from other files entirely —
+  cannot be overwritten/removed/called externally at all. If the function you
+  want to intercept is local, find which global function/table method it calls
+  internally and wrap that instead (real case: ModernFirearmsSystem's
+  ChangeMagazineType.lua has a `local function NeedRefresh()` that can't be
+  wrapped, but it calls a global `function ChangeMagzine(...)` internally — wrap
+  ChangeMagzine instead). ***
+- Reading an instance field (self.xxx) that the original method set itself (e.g.
+  self.gameSound, self.soundFile) works fine after original(...) returns, since
+  it's a field on the same object — no need to touch the original file at all
+  (seen repeatedly in TimedAction classes across both Lifestyle: Hobbies and
+  ModernFirearmsSystem).
+- Always wrap hooks in `Events.OnGameStart.Add(function() ... end)` (except
+  PZAPI.ModOptions, which must run immediately — see section 2) to guarantee the
+  target mod's real class is fully loaded before we touch it, regardless of which
+  mod's files load first-vs-second within the same tick.
+- Always check the global/class to be wrapped actually exists first (`if not X or
+  not X.method then print(...); return end`), and print a warning if not found —
+  in case the target mod updates/restructures later, this surfaces immediately in
+  the debug log instead of silently breaking deep inside.
 
 
 5. Thai translation workflow
 ==============================
-- คำแปลไทยของทุก mod ที่ HARMONIE ทำ/แพตช์ (ทั้งของ HARMONIE เองและที่แพตช์ mod คนอื่น) รวมไว้
-  ที่เดียว: mods/HARMONIE_TooManyModThaiTranslate/42/media/lua/shared/Translate/TH/*.json
-  ไม่ต้อง bundle คำแปลแยกไปกับแต่ละ mod เอง (แม้แต่ mod ของ HARMONIE เองก็ตาม)
-  mod นี้ตั้งใจไม่มี require= dependency เลยสักตัว เพื่อให้เปิดค้างไว้ได้ตลอดอย่างปลอดภัย
-  (ข้อความจะโชว์เองเมื่อ mod เจ้าของ key นั้นเปิดใช้งานอยู่ ไม่งั้นก็เงียบไม่มีผลอะไร)
-- ไฟล์แยกตาม category (PZ translation format มาตรฐาน): ContextMenu.json, IG_UI.json,
-  ItemName.json, Recipes.json, Sandbox.json, Tooltip.json, UI.json (+ เพิ่มได้ตามต้องการ เช่น
-  Farming.json, Moodles.json, Moveables.json, Recorded_Media.json) เป็น flat key-value JSON
-  รวมกันได้จากหลาย mod ในไฟล์เดียว (เกมรวม key จากทุก mod ที่เปิดใช้เป็น namespace เดียวต่อภาษา)
-- *** ห้ามเขียนทับไฟล์ทั้งไฟล์เด็ดขาด (เคยพลาดมาแล้วจริง: cp ทับ Sandbox.json ของ
-  HARMONIE_ModernFirearmsSystemFix จนคำแปล key เดิมหาย ต้อง merge กลับ) ต้อง "เติมต่อท้าย" เสมอ:
-    1. อ่านท้ายไฟล์ก่อน (entry สุดท้ายไม่มี comma ต่อท้าย)
-    2. Edit เปลี่ยน entry สุดท้ายเดิม -> entry เดิม + comma + entry ใหม่ๆ + closing brace
-    3. ห้ามลบ/แก้ entry เดิมที่ไม่เกี่ยวกับงานที่ทำอยู่เลย ***
-- วิธีหา "ข้อความจีน/ภาษาอื่นที่หลุดมาโชว์ในเกมภาษาอังกฤษ": อย่าเทียบแค่ "จำนวน key" ระหว่าง
-  EN vs CN (ไฟล์ EN อาจมี key รวมเยอะกว่า CN ในภาพรวมได้ แต่ยังขาด key สำคัญบางตัวอยู่ดี) ให้:
-    1. หา DisplayName field ในสคริปต์ item/recipe จริงที่มีตัวอักษรจีน (CJK) ฝังอยู่ตรงๆ
-       (นี่คือค่า fallback ที่เกมโชว์เมื่อไม่มี key แปลตรงกับภาษาปัจจุบันเป๊ะๆ)
-    2. เทียบ key แต่ละตัวที่เจอ กับ CN translation file ว่ามี key ตรงกันไหม (ชื่อ key ที่ถูกต้อง
-       คือ "ItemName_" + FullType เช่น item AK103_cat ในโมดูล Base -> key "Base.AK103_cat"
-       ใน ItemName.json)
-    3. ถ้ามี key ใน CN -> แปล CN เป็นอังกฤษ/ไทยแล้วเติมเข้า EN/TH
-    4. ถ้าไม่มี key ใน CN เลย (orphan จริง) -> ตั้งชื่อเองจาก context/ชื่อ item ข้างเคียงที่มี
-       pattern คล้ายกัน (เช่นของตกแต่งแม็กกาซีนกระบอกอื่นๆ ที่มี pattern เดียวกันอยู่แล้ว)
-- ชื่อรุ่นปืน/โมเดลอาวุธ (เช่น "AK103", "M4A1", "HK416") ธรรมเนียมคือคงเป็นภาษาอังกฤษ/รหัส
-  เดิมไว้แม้แปลไทยแล้ว แปลแค่คำขยายความเป็นไทย (สอดคล้องกับที่คลังคำแปลเดิมทำกับชื่อรุ่น/เลข
-  ชิ้นส่วนรถ เช่น "ถัง 1000" ที่คงเลข 1000 ไว้)
-- Validate JSON ที่แก้เสร็จแล้วด้วย Node.js เท่านั้น (ดูข้อ 6 เรื่องทำไมห้ามใช้ PowerShell
-  ConvertFrom-Json หรือ grep -P)
+- Thai translations for every mod HARMONIE makes/patches (both HARMONIE's own mods
+  and patches to other people's) are centralized in one place:
+  mods/HARMONIE_TooManyModThaiTranslate/42/media/lua/shared/Translate/TH/*.json —
+  never bundle separate translations with each individual mod (not even
+  HARMONIE's own). This mod deliberately has zero require= dependencies so it's
+  always safe to leave enabled (text only shows once the mod owning that key is
+  also enabled; otherwise it's silently unused).
+- Files split by category (standard PZ translation format): ContextMenu.json,
+  IG_UI.json, ItemName.json, Recipes.json, Sandbox.json, Tooltip.json, UI.json
+  (add more as needed, e.g. Farming.json, Moodles.json, Moveables.json,
+  Recorded_Media.json) — flat key-value JSON, mergeable across mods in one file
+  (the game merges keys from every enabled mod into one namespace per language).
+- *** NEVER overwrite an entire file (real past mistake: cp'd over
+  HARMONIE_ModernFirearmsSystemFix's Sandbox.json, losing existing translated
+  keys — had to merge them back). Always APPEND instead:
+    1. Read the end of the file first (the last entry has no trailing comma).
+    2. Edit the old last entry -> old entry + comma + new entries + closing brace.
+    3. Never delete/modify unrelated existing entries. ***
+- How to find "Chinese/other-language text leaking into an English game": don't
+  just compare "key count" between EN vs CN (EN can have more total keys overall
+  while still missing specific important ones). Instead:
+    1. Find DisplayName fields in real item/recipe scripts with literal CJK
+       characters embedded (this is the fallback value the game shows when no
+       translation key matches the current language exactly).
+    2. Check whether each one has a matching key in the CN translation file (the
+       correct key name is "ItemName_" + FullType, e.g. item AK103_cat in module
+       Base -> key "Base.AK103_cat" in ItemName.json).
+    3. If a CN key exists -> translate CN to English/Thai and add it to EN/TH.
+    4. If no CN key exists at all (a true orphan) -> name it yourself from
+       context/similar neighboring items with the same naming pattern (e.g. other
+       magazine attachments that already follow a consistent pattern).
+- Gun model/weapon names (e.g. "AK103", "M4A1", "HK416") stay in English/original
+  code by convention even when translated to Thai — only descriptive text around
+  them gets translated (consistent with how the existing translation library
+  already handles model names/part numbers for vehicles, e.g. "ถัง 1000" keeps the
+  1000).
+- Only validate edited JSON with Node.js (see section 6 for why PowerShell
+  ConvertFrom-Json or grep -P must not be used for this).
 
 
-6. ข้อจำกัด/กับดักของ environment (Windows + Git Bash + PowerShell)
+6. Windows + Git Bash + PowerShell environment traps
 ======================================================================
-- ไม่มี Python ใช้งานได้ (python/python3 ชี้ไปที่ Windows Store stub ที่ error ทันที) --
-  ใช้ PowerShell (System.Drawing สำหรับรูป, ConvertFrom-Json สำหรับเช็คคร่าวๆ) หรือ Node.js
-  แทน (ยืนยันแล้วว่ามี Node.js ติดตั้งจริงที่ C:\Program Files\nodejs\node เวอร์ชัน 24.19.0)
-- ไม่มี `lua`/`luac` ให้ syntax-check ไฟล์ .lua ตรงๆ -- ต้องอ่านตรวจเองอย่างละเอียด + เช็ค
-  brace/paren สมดุล (grep นับ "{" กับ "}" คร่าวๆ ได้ แต่ระวัง: Lua ใช้ do/end ไม่ใช่ {} สำหรับ
-  if/for/function ตัว {} ใน Lua มีแค่ table constructor เท่านั้น อย่านับผิด)
-- ไม่มี ImageMagick (`identify`) -- เช็คขนาดภาพด้วย PowerShell:
+- No usable Python (python/python3 point at a Windows Store stub that errors
+  immediately) — use PowerShell (System.Drawing for images, ConvertFrom-Json for
+  rough checks) or Node.js instead (confirmed installed at
+  C:\Program Files\nodejs\node, version 24.19.0).
+- No `lua`/`luac` to syntax-check .lua files directly — must read carefully by
+  hand + check brace/paren balance (grep can roughly count "{" vs "}", but note:
+  Lua uses do/end, not {}, for if/for/function — {} in Lua is ONLY table
+  constructors, don't miscount).
+- No ImageMagick (`identify`) — check image dimensions via PowerShell:
     Add-Type -AssemblyName System.Drawing
     $img = [System.Drawing.Image]::FromFile($path); "$($img.Width)x$($img.Height)"; $img.Dispose()
-  สร้างรูป placeholder ด้วย System.Drawing เหมือนกัน (Bitmap + Graphics + Font + Pen/Brush)
-- *** `grep -P` (PCRE) กับ regex ที่มี unicode range เช่น [\x{4e00}-\x{9fff}] (ตรวจอักษรจีน)
-  ใน Git Bash ของเครื่องนี้ "fail แบบเงียบ" -- บางทีขึ้น error "supports only unibyte and UTF-8
-  locales" ชัดเจน แต่บางทีก็คืนค่าว่างเปล่าเฉยๆ ทำให้เข้าใจผิดว่า "ไม่เจอ" (false negative
-  อันตรายมาก เคยพลาดมาแล้วจริง สรุปผิดว่า "ไม่มีอักษรจีนในสคริปต์เลย" ทั้งที่จริงมี 144 ไฟล์)
-  *** ห้ามใช้ bash grep -P กับ unicode range เด็ดขาด ใช้ Grep tool (ripgrep-based) แทนเสมอ
-  ซึ่งรองรับ unicode ถูกต้อง ***
-- PowerShell `New-Object Type(a, b, c)` แบบใส่ argument ในวงเล็บตรงๆ (โดยเฉพาะถ้ามี expression
-  ที่มี comma หรือ operator อย่าง `/` อยู่ข้างในด้วย) จะถูก parse ผิดเป็น array argument เดียว
-  แทนที่จะเป็น constructor args หลายตัว -- error แบบ "positional parameter cannot be found"
-  หรือ "does not contain a method named 'op_Division'" *** ต้องใช้ฟอร์ม
-  `New-Object -TypeName X -ArgumentList a, b, c` เสมอ และถ้ามี expression ซับซ้อน (เช่นหาร)
-  ให้แยกคำนวณเก็บตัวแปรไว้ก่อนแล้วค่อยส่งเข้า -ArgumentList ***
-- PowerShell `ConvertFrom-Json` แปลงเป็น object/hashtable ที่ key เป็น case-INsensitive ทำให้
-  เจอ error "duplicate keys" ปลอมๆ เวลา JSON มี key ที่สะกดต่างกันแค่ตัวพิมพ์ใหญ่-เล็ก (เช่น
-  "IGUI_VehiclePartCounter" vs "IGUI_VehiclePartcounter" ซึ่งเป็น key ที่ถูกต้องและแยกกันจริง
-  ตาม JSON spec) *** อย่าเชื่อ error นี้ทันที เช็คก่อนว่า key ที่ชนกันสะกดต่างกันแค่ตัวพิมพ์
-  หรือเปล่า ถ้าใช่แปลว่า JSON ถูกต้องจริง ให้ validate ด้วย Node.js `JSON.parse` แทน (case-
-  sensitive ถูกต้องตาม JSON spec จริงๆ) ***
-- เรียก `node -e "..."` จาก bash ระวังปัญหา path escaping ระหว่าง git-bash-style (/c/Users/...)
-  กับ Windows-style (C:\Users\...) ที่ node ต้องการ -- วิธีชัวร์สุดคือเขียนเป็นไฟล์ .js แยก
-  (ใช้ forward slash ข้างใน เช่น "C:/Users/User/...") แล้วรันด้วย `node path/to/script.js`
-  แทนการยัด -e string ยาวๆ ผ่าน bash
+  Generate placeholder images the same way with System.Drawing (Bitmap + Graphics
+  + Font + Pen/Brush).
+- *** `grep -P` (PCRE) with a unicode range like [\x{4e00}-\x{9fff}] (detecting
+  Chinese characters) on this machine's Git Bash "fails silently" — sometimes a
+  clear "supports only unibyte and UTF-8 locales" error, but sometimes just
+  returns empty, making it look like "not found" (a dangerous false negative —
+  once wrongly concluded "no Chinese characters in the scripts at all" when there
+  were actually 144 files). *** NEVER use bash grep -P with a unicode range —
+  always use the Grep tool (ripgrep-based) instead, which handles unicode
+  correctly. ***
+- PowerShell `New-Object Type(a, b, c)` with arguments directly in parentheses
+  (especially if any expression inside contains a comma or an operator like `/`)
+  gets misparsed as a single array argument instead of multiple constructor args
+  — errors like "positional parameter cannot be found" or "does not contain a
+  method named 'op_Division'". *** Always use
+  `New-Object -TypeName X -ArgumentList a, b, c` instead, and if any argument is a
+  complex expression (e.g. division), compute it into a variable first before
+  passing it to -ArgumentList. ***
+- PowerShell `ConvertFrom-Json` converts to an object/hashtable with case-
+  INsensitive keys, causing false "duplicate keys" errors when JSON has keys that
+  only differ by capitalization (e.g. "IGUI_VehiclePartCounter" vs
+  "IGUI_VehiclePartcounter", which are legitimately distinct per the JSON spec).
+  *** Don't trust this error immediately — check whether the colliding keys only
+  differ by case first. If so, the JSON is actually valid; validate with Node.js
+  `JSON.parse` instead (correctly case-sensitive per spec). ***
+- Calling `node -e "..."` from bash: watch for path-escaping issues between
+  git-bash-style (/c/Users/...) and Windows-style (C:\Users\...) paths that node
+  needs — safest to write a separate .js file (forward slashes inside, e.g.
+  "C:/Users/User/...") and run it with `node path/to/script.js` instead of
+  stuffing a long string through bash -e.
 
 
-6.1 Lifestyle: Hobbies — ช่องเสียบเพลงเครื่องดนตรีสำหรับ addon (ยืนยันจาก 3 mod อ้างอิงจริง:
-    Workshop 3783028777 "LifestyleRedemptionB42", 3016221184 "Hazy Lifestyle",
-    3782768673 "UndertaleOnGuitar" — ทั้ง 3 ใช้ pattern เดียวกันเป๊ะ)
-  Lifestyle เปิด extension point ไว้ให้เพิ่มเพลงเครื่องดนตรีได้โดยไม่ต้องแก้ไฟล์ของ Lifestyle เอง
-  ต้องมี 3 ไฟล์ในมอด addon ใหม่:
-    (1) media/sound/<name>.ogg -- ไฟล์เพลงจริง
-    (2) media/scripts/<AddonName>_sounds_item.txt --
+6.1 Lifestyle: Hobbies — instrument-track addon extension point (confirmed from 3
+    real reference mods: Workshop 3783028777 "LifestyleRedemptionB42", 3016221184
+    "Hazy Lifestyle", 3782768673 "UndertaleOnGuitar" — all 3 use the exact same
+    pattern)
+  Lifestyle exposes an extension point for adding instrument songs without editing
+  Lifestyle's own files. Requires 3 files in the new addon mod:
+    (1) media/sound/<name>.ogg — the actual song file.
+    (2) media/scripts/<AddonName>_sounds_item.txt —
           module Base { sound <name> { category = Item, loop = false, is3D = true,
             clip { file = media/sound/<name>.ogg, distanceMin = 10, distanceMax = 100,
             reverbFactor = 0.1, volume = 0.4, } } }
-    (3) media/lua/client/TimedActions/AddMoreTracks_<AddonName>.lua --
+    (3) media/lua/client/TimedActions/AddMoreTracks_<AddonName>.lua —
           local XTracks = require "TimedActions/Play<Instrument>Tracks"
-          table.insert(XTracks, {level=N, sound="<name>", length=<วินาทีจริง>, name="<ชื่อโชว์ในเกม>"})
-        (รันทันทีตอนโหลดไฟล์ ไม่ต้องห่อ Events.OnGameStart)
-  รายชื่อ instrument table ที่ require ได้ (ยืนยันแล้ว 2026-09-16 จากต้นฉบับจริง --
-  zInstrumentsUtil.lua ฟังก์ชัน getSongsLib() ในตัวม็อด Lifestyle เอง คือ list ทางการที่ใช้ใน
-  checkLearnedSongs/chooseInstruments -- ครบ 10 ตัว ไม่ใช่ 9 ตามที่เคยจดผิดไว้ ตัวที่พลาดไปคือ
-  Violin): PlayTrumpetTracks, PlayGuitarAcousticTracks, PlayBanjoTracks, PlayFluteTracks,
-  PlayGuitarElectricBassTracks, PlayGuitarElectricTracks, PlayKeytarTracks, PlaySaxophoneTracks,
-  PlayViolinTracks, PlayHarmonicaTracks (ตัวหลังต้องมี addon ฮาร์โมนิกาแยกลงไว้ก่อนถึงจะมีโมดูลนี้
-  ให้ require) -- ฟิลด์ learnedTracks ที่ตรงกัน: TrumpetLearnedTracks, GuitarALearnedTracks,
-  BanjoLearnedTracks, FluteLearnedTracks, GuitarEBLearnedTracks, GuitarELearnedTracks,
-  KeytarLearnedTracks, SaxophoneLearnedTracks, ViolinLearnedTracks, HarmonicaLearnedTracks
+          table.insert(XTracks, {level=N, sound="<name>", length=<real seconds>, name="<display name>"})
+        (runs immediately when the file loads, no Events.OnGameStart wrapper needed)
+  Confirmed real list of requirable instrument tables (2026-09-16, from the actual
+  source — zInstrumentsUtil.lua's getSongsLib() function inside Lifestyle itself,
+  the authoritative list used in checkLearnedSongs/chooseInstruments — 10 total,
+  not 9 as previously mis-recorded; Violin was the missing one): PlayTrumpetTracks,
+  PlayGuitarAcousticTracks, PlayBanjoTracks, PlayFluteTracks,
+  PlayGuitarElectricBassTracks, PlayGuitarElectricTracks, PlayKeytarTracks,
+  PlaySaxophoneTracks, PlayViolinTracks, PlayHarmonicaTracks (this last one needs a
+  separate harmonica addon installed before this module exists to require) —
+  matching learnedTracks fields: TrumpetLearnedTracks, GuitarALearnedTracks,
+  BanjoLearnedTracks, FluteLearnedTracks, GuitarEBLearnedTracks,
+  GuitarELearnedTracks, KeytarLearnedTracks, SaxophoneLearnedTracks,
+  ViolinLearnedTracks, HarmonicaLearnedTracks.
 
-  *** Piano ("Instruments/Tracks/PlayPianoTracks", field PianoLearnedTracks) มีอยู่จริงเหมือนกัน
-  แต่ "ไม่นับ" อยู่ในชุด 10 ตัวข้างบน เพราะใช้ระบบคนละแบบ: เป็นเปียโนที่วางเป็นเฟอร์นิเจอร์ในโลก
-  (world object) ไม่ใช่ไอเทมถือ, มี context menu ของตัวเอง (InstrumentPianoContextMenu.lua)
-  และ action (PlayInstrumentPiano.lua) ต้องเช็ค adjacency ของชิ้นเปียโนหลายชิ้นประกอบกัน
-  (getAdjObj/checkObj ใน PlayInstrumentActionNew.lua เช็ค self.instrumentType == "Piano" เป็น
-  พิเศษ) -- ยังไม่ยืนยันว่า pattern table.insert ธรรมดาแบบเดียวกับ 10 ตัวข้างบนจะใช้ได้ปลอดภัย
-  ห้ามเดาทำโดยไม่ทดสอบก่อน มี Drums ก็มีร่องรอยคล้ายกัน (เช็ค == "Drums" ในโค้ดเดียวกัน) แต่หา
-  PlayDrumsTracks.lua ไม่เจอเลย ไม่มีหลักฐานว่ามีระบบเพลงเรียนรู้ได้แบบนี้ให้ Drums
-  เป็น extension point สำหรับ "เพลงที่เล่นผ่านเครื่องดนตรี" เท่านั้น ไม่ใช่เพลง Jukebox/DJ Booth
-  (นั่นเป็นระบบคนละตัว ดูข้อ 3 เรื่อง sound script override ทั่วไปแทน)
-  *** ข้อสังเกต: 2 ใน 3 มอดตัวอย่าง (Hazy Lifestyle, UndertaleOnGuitar) ไม่ใส่
-  require=LifestyleHobbies ใน mod.info เลย (มีแต่ LifestyleRedemptionB42 ใส่ไว้) ทั้งที่พึ่งพา
-  module ของ Lifestyle โดยตรงผ่าน require "TimedActions/PlayXTracks" -- ควรใส่ require= เสมอ
-  เวลาทำ addon แบบนี้เอง อย่าทำตามแบบที่ขาดไป ***
+  *** Piano ("Instruments/Tracks/PlayPianoTracks", field PianoLearnedTracks) also
+  exists but does NOT count as one of the 10 above — it uses a different system
+  entirely: it's a placed-in-world furniture item (not a held item), with its own
+  context menu (InstrumentPianoContextMenu.lua) and action
+  (PlayInstrumentPiano.lua) that checks adjacency across multiple piano pieces
+  (getAdjObj/checkObj in PlayInstrumentActionNew.lua specifically checks
+  self.instrumentType == "Piano") — NOT confirmed whether the same plain
+  table.insert pattern as the 10 above is safe here. Do not guess/attempt without
+  testing first. Drums shows a similar trace (checks == "Drums" in the same code)
+  but no PlayDrumsTracks.lua was found — no evidence Drums has a learnable-song
+  system like this at all. This extension point is only for "songs played through
+  an instrument", not Jukebox/DJ Booth songs (that's a separate system — see
+  section 3 for general sound-script overrides instead).
+  *** Note: 2 of the 3 reference mods (Hazy Lifestyle, UndertaleOnGuitar) don't
+  include require=LifestyleHobbies in mod.info at all (only LifestyleRedemptionB42
+  does), despite directly depending on Lifestyle's module via
+  require "TimedActions/PlayXTracks" — always include require= when building an
+  addon like this yourself; don't copy the mods that are missing it. ***
 
-  *** ตรวจสอบ Steam Workshop จริงแล้ว (2026-09-15): ทั้ง 3 มอดอ้างอิงนี้ใช้งานไม่ได้แล้วทั้งหมด --
-  Hazy Lifestyle เป็นมอด B41.78+ เท่านั้น ไม่เคยอัปเดตเป็น B42 เลย ส่วน LifestyleRedemptionB42
-  กับ UndertaleOnGuitar แม้ประกาศรองรับ B42 จริง แต่ถูกลบออกจาก Workshop ไปแล้ว (ผิด Content
-  Guidelines -- แทบชัวร์ว่าเพราะลิขสิทธิ์เพลงที่แปะมาด้วย, ตรงกับที่เตือนผู้ใช้ไว้เรื่องเพลง
-  ลิขสิทธิ์) ก่อนอ้างอิง mod ไหนจาก Workshop ควรเช็คหน้า Steam จริงถ้าทำได้ ว่ายัง publish
-  อยู่ไหม/ยังไม่ถูกแจ้งว่า incompatible ไหม อย่าเชื่อแค่ไฟล์ cache ในเครื่องอย่างเดียว
+  *** Verified against real Steam Workshop (2026-09-15): all 3 reference mods are
+  now broken/unusable — Hazy Lifestyle is B41.78-only, never updated to B42;
+  LifestyleRedemptionB42 and UndertaleOnGuitar both claim B42 support but have
+  been removed from Workshop entirely (Content Guidelines violation — almost
+  certainly the copyrighted-song attachments, matching what was already warned
+  about regarding copyrighted music). Before referencing any Workshop mod, check
+  its real Steam page if possible to confirm it's still published / not flagged
+  incompatible — don't trust the local cache alone.
 
-  *** ห้ามใช้ WebFetch เปิดหน้า steamcommunity.com อีกต่อไป (ยืนยันแล้ว 2026-09-21/22):
-  ลองแล้วหลายรอบคนละวัน ได้ HTTP 429 Too Many Requests ทุกครั้งไม่มีข้อยกเว้น -- Steam
-  บล็อกฝั่งเครื่องมือนี้ไว้แล้วจริงๆ ไม่ใช่ rate limit ชั่วคราวที่รอแล้วหายไป อย่าเสียเวลาลองซ้ำ
-  ให้ตรวจสอบ mod จาก Steam Workshop content cache ในเครื่องแทนเสมอ (path ด้านล่าง อ่าน
-  mod.info เอาชื่อ/เวอร์ชัน/require ตรงๆ) ถ้า mod ยังไม่ได้ subscribe ในเครื่องเลยและจำเป็นต้องรู้
-  ข้อมูลจากหน้า Steam จริงๆ (เช่นวันอัปเดตล่าสุด, ยังไม่ถูกลบไหม) ให้บอกผู้ใช้ไปเช็คเองแทน
-  อย่าพยายาม WebFetch ต่อ ***
+  *** Do not use WebFetch on steamcommunity.com anymore (confirmed 2026-09-21/22):
+  tried repeatedly across different days, got HTTP 429 Too Many Requests every
+  single time — Steam has genuinely blocked this tool, not a temporary rate limit
+  that clears on its own. Don't waste time retrying — always check the mod via the
+  local Steam Workshop content cache instead (path below, read mod.info directly
+  for name/version/require). If a mod isn't subscribed locally at all and real
+  Steam-page info is genuinely needed (e.g. last update date, still-published
+  status), ask the user to check it themselves instead of attempting WebFetch. ***
 
-  *** กับดักใหญ่ที่เจอจริงและเสียเวลามาก -- แก้ไขคำอธิบายเดิมที่เข้าใจผิด (2026-09-17): เพลงที่โชว์
-  ในเมนูเครื่องดนตรี **ไม่ได้อ่านจากตาราง PlayXTracks (live) ทุกครั้งที่เปิดเมนู** แต่อ่านจาก
-  player:getModData().<Instrument>LearnedTracks (เช่น GuitarELearnedTracks) ที่ persist ต่อ
-  ตัวละคร -- ข้อความเดิมที่เขียนไว้ว่า "แค่เปิดเมนูเครื่องดนตรีครั้งแรกก็ auto-learn ให้เอง" นั้น
-  ผิด! ไปเช็คโค้ดจริงของ Lifestyle ละเอียดอีกรอบ (NewInstrumentsContextMenu.lua,
-  VanillaInstrumentsContextMenu.lua, InstrumentPianoContextMenu.lua) แล้วพบว่า
-  `doLearnAllSongsFull`/`doLearnAllSongsPartial` (ฟังก์ชันที่เติม learnedTracksData จากตาราง
-  live ทั้งหมด) **ถูกเรียกจากปุ่ม "Debug - Learn All" ในเมนูเท่านั้น** (เงื่อนไข
-  `if isAdmin() or isDebugEnabled() then` -- โชว์ปุ่มนี้ก็ต่อเมื่อเป็น admin/debug mode, ใน
-  singleplayer ตัวละครเป็น admin โดยปริยายเลยเห็นปุ่มนี้เสมอ) ไม่มี auto-learn จากการเปิดเมนู
-  เฉยๆ เลยในทุกระบบ (New/Vanilla/Piano) -- ทางเดียวที่เพลงจะเข้า learnedTracksData แบบปกติ
-  (ไม่ใช้ debug) คือเล่น "Practice" (PlayInstrumentTraining.lua) แล้วมีโอกาสสุ่มได้เรียนรู้ทีละเพลง
-  เท่านั้น ต่อให้โหลดเซฟใหม่เอี่ยม (ตัวละครใหม่ ไม่เคยเล่นอะไรเลย) ก็จะไม่มีเพลงโชว์ในเมนู "Play
-  a song by name" เลยสักเพลงเดียว ไม่ใช่แค่เพลง addon ของเรา -- **นี่คือพฤติกรรมปกติของม็อดหลัก
-  ไม่ใช่บั๊ก**
+  *** Big real time-sink trap — corrects a previous misunderstanding
+  (2026-09-17): songs shown in the instrument menu **do NOT read from the
+  PlayXTracks table (live) every time the menu opens** — they read from
+  player:getModData().<Instrument>LearnedTracks (e.g. GuitarELearnedTracks),
+  persisted per character. The earlier note claiming "just opening the instrument
+  menu once auto-learns everything" was WRONG! Re-checked Lifestyle's real code
+  in detail (NewInstrumentsContextMenu.lua, VanillaInstrumentsContextMenu.lua,
+  InstrumentPianoContextMenu.lua) and found that
+  `doLearnAllSongsFull`/`doLearnAllSongsPartial` (the functions that populate
+  learnedTracksData from the full live table) **are only ever called from the
+  "Debug - Learn All" button in the menu** (condition
+  `if isAdmin() or isDebugEnabled() then` — only shown when admin/debug mode;
+  in singleplayer the character is admin by default, so this button is always
+  visible there). There is no auto-learn from just opening the menu, in any of
+  the three systems (New/Vanilla/Piano) — the only normal (non-debug) way songs
+  enter learnedTracksData is playing "Practice"
+  (PlayInstrumentTraining.lua), which has a random chance to learn one song at a
+  time. Even a brand-new save (fresh character, never played anything) will show
+  zero songs in the "Play a song by name" menu — not just our addon's songs.
+  **This is normal base-mod behavior, not a bug.**
 
-  *** วิธีทดสอบที่ถูกต้อง: ถือเครื่องดนตรี เปิดเมนู (คลิกขวาที่ตัวเอง หรือคลิกขวาไอเทมเครื่องดนตรี
-  ในมือ) แล้วกด **"Debug - Learn All"** (มีไอคอนแมลง/bug อยู่ใกล้ด้านบนเมนู) หนึ่งครั้ง -- จะดึง
-  เพลงทั้งหมดที่มีอยู่ตอนนี้ (ของ vanilla Lifestyle + ของ addon ที่เราเพิ่มเข้าไปด้วย ถ้า require
-  ถูกต้อง) เข้า learnedTracksData ทันที แล้วค่อยเปิดเมนูใหม่อีกรอบเพื่อดูรายชื่อเพลง -- นี่คือ
-  ขั้นตอนที่ขาดหายไปเวลาบอกผู้ใช้ให้ทดสอบ อย่าบอกแค่ "เคลียร์ getModData().XLearnedTracks = {}"
-  เฉยๆ เพราะการเคลียร์ให้ว่างอย่างเดียวไม่ทำให้มันเติมกลับมาเอง (ต้องกด Debug - Learn All ต่อ
-  หรือ Practice เอาเอง) -- ถ้าตัวละครมีเพลงเก่าค้าง (จากที่เคย Debug - Learn All ไปแล้วก่อนเรา
-  แก้ field ของเพลง เช่น length) การเคลียร์ {} แล้วกด Debug - Learn All ใหม่คือวิธีรีเฟรชที่ถูกต้อง
-  ครบวงจร ***
+  *** Correct test procedure: hold the instrument, open the menu (right-click
+  self, or right-click the instrument item in hand), press **"Debug - Learn
+  All"** once (has a bug icon near the top of the menu) — this pulls every
+  currently-available song (both vanilla Lifestyle's and any correctly-required
+  addon's) into learnedTracksData immediately; then reopen the menu to see the
+  song list. This is the missing step when telling the user how to test — don't
+  just say "clear getModData().XLearnedTracks = {}", since clearing it alone
+  doesn't repopulate it (still need Debug - Learn All or Practice afterward). If
+  the character has stale old song data (from Debug - Learn All run before a
+  field like length was edited), clearing {} then pressing Debug - Learn All
+  again is the correct full refresh procedure. ***
 
-  *** ส่วนขยายที่เจอเพิ่ม (ยืนยันแล้ว 2026-09-16, กรณี JoJo_FightingGold): บั๊กนี้ไม่ได้เกิดแค่ตอน
-  "เพิ่มเพลงใหม่" เท่านั้น -- ถ้า**แก้ field ของเพลงที่ตัวละครเคย learn ไปแล้ว** (เช่น แก้ length
-  จาก placeholder 90 เป็นค่าจริง) snapshot ที่ค้างอยู่ก็ยังเก็บค่า field เดิมทั้งหมดไว้ (ไม่ใช่แค่
-  ชื่อ/การมีอยู่) เพราะตอน "Debug - Learn All"/doLearnAllSongsFull ทำ table.insert(learnedTracksData,
-  v) โดย v คือ table object ที่ถูกสร้างใหม่ทุกครั้งที่ AddMoreTracks_*.lua รันในแต่ละเกมเซสชัน แต่
-  learnedTracksData ที่เคย "เรียนรู้" ไปแล้วจะถูก serialize ลงเซฟไฟล์ พอโหลดเซฟใหม่มันจะกลาย
-  เป็น table คนละอันที่ไม่เชื่อมกับตัวแปร global อีกต่อไป -- ค่า length/name/sound ฯลฯ ที่ cache
-  ไว้จึงเป็นค่า ณ ตอนที่ "เรียน" เท่านั้น ไม่ sync กับไฟล์ .lua ปัจจุบันเลยแม้จะ restart เกมกี่รอบ
-  ก็ตาม สังเกตอาการนี้ได้จาก log diagnostic (ถ้ามี) ที่ค่า length ที่พิมพ์ออกมาไม่ตรงกับไฟล์บนดิสก์
-  -- แก้ด้วยการเคลียร์ cache instrument นั้นแล้ว relearn ใหม่เหมือนเดิม (วิธีเดียวกับข้างบน) ***
+  *** Extra finding (confirmed 2026-09-16, JoJo_FightingGold case): this bug
+  isn't limited to "adding a new song" — if you **edit a field of a song the
+  character already learned** (e.g. changing length from a placeholder 90 to a
+  real value), the stale snapshot still keeps all the OLD field values (not just
+  the name/existence). Because "Debug - Learn All"/doLearnAllSongsFull does
+  table.insert(learnedTracksData, v) where v is a table object freshly created
+  every time AddMoreTracks_*.lua runs in that game session — but
+  learnedTracksData, once "learned", gets serialized into the save file, and on
+  reload it becomes a completely different table no longer linked to the global
+  variable. The cached length/name/sound/etc. values are frozen at the moment
+  they were "learned" and never sync with the current .lua file again no matter
+  how many times the game restarts. Spot this from diagnostic logs (if any) where
+  a printed length value doesn't match the file on disk — fix by clearing that
+  instrument's cache and relearning (same procedure as above). ***
 
 
-7. Steam Workshop content cache — หาไฟล์ต้นฉบับของ mod คนอื่นก่อน patch เสมอ
+7. Steam Workshop content cache — always find another mod's real source before patching
 ================================================================================
-ก่อน patch mod คนอื่น ต้องหาไฟล์จริงของเขาก่อนเสมอ อย่าเดา — อยู่ที่:
-  C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\<WorkshopItemID>\mods\<โฟลเดอร์>\
-  (108600 = AppID ของ Project Zomboid)
-*** ชื่อโฟลเดอร์ใต้ mods/ ในนั้นอาจไม่ตรงกับชื่อ mod จริงเลย (เจอเคสจริง: Workshop item
-"ModernFirearmsSystem" อยู่ในโฟลเดอร์ชื่อ "Escape from Kentucky4215" ซึ่งเป็นชื่อ mod อื่น
-คนละตัว) *** ต้องเปิด mod.info ข้างในเช็ค id=/name= จริงเสมอ ห้ามเชื่อชื่อโฟลเดอร์
-1 Workshop item อาจรวมหลาย mod ไว้ด้วยกันก็ได้ (เจอเคสจริงเช่นกัน: item เดียวมี
-BackpackSystem, BladesmithSystem, ModernFirearmsSystem รวมกัน 3 mod)
+Before patching someone else's mod, always find their real files first — never
+guess. Located at:
+  C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\<WorkshopItemID>\mods\<folder>\
+  (108600 = Project Zomboid's AppID)
+*** The folder name under mods/ inside there may not match the real mod name at
+all (real case: the Workshop item "ModernFirearmsSystem" lives in a folder named
+"Escape from Kentucky4215", a completely different mod's name). *** Always open
+mod.info inside and check the real id=/name= — never trust the folder name.
+One Workshop item can also bundle multiple mods together (also seen for real: one
+item containing BackpackSystem, BladesmithSystem, and ModernFirearmsSystem all
+together, 3 mods in one).
 
-เทียบกับ vanilla เกมจริงเพื่อเช็คว่า category/keyword ไหนซ้ำ/ชนกับ vanilla หรือเปล่า
-(เช่นตอนหา category เสียงที่ปลอดภัยจะใช้กับ GameSounds, ข้อ 3.1) อยู่ที่:
-  C:\Program Files (x86)\Steam\steamapps\common\ProjectZomboid\media\...
-ห้ามสมมติ (assume) ว่า keyword ไหนซ้ำ/ไม่ซ้ำกับ vanilla โดยไม่ grep เช็คจริงก่อน
+Compare against the real vanilla game to check whether a category/keyword collides
+with vanilla (e.g. when picking a safe GameSounds category, section 3.1) — located
+at: C:\Program Files (x86)\Steam\steamapps\common\ProjectZomboid\media\...
+Never assume a keyword does/doesn't collide with vanilla without actually grepping
+to check first.
 
 
-8. บั๊ก/กับดัก multi-version mod ที่เคยเจอจริง (ต้องระวังเวลา debug อาการ "โหลด script ไม่ผ่าน")
+8. Multi-version mod conflicts (watch for this when debugging "script won't load")
 ===================================================================================================
-บาง author publish Workshop item แยกสำหรับ build เกมเก่ากว่าด้วย (คนละ Workshop ID, คนละ
-internal mod id) นอกเหนือจากตัวหลัก/ตัวปัจจุบัน เช่น "Lifestyle: Hobbies 42.12" (mod id
-LifestyleHobbies4212, แยกจากตัวหลัก LifestyleHobbies) ระบุชัดในคำอธิบายว่า "For 42.12 version
-saves only!"
+Some authors publish a separate Workshop item for older game builds too (different
+Workshop ID, different internal mod id) alongside the current one, e.g.
+"Lifestyle: Hobbies 42.12" (mod id LifestyleHobbies4212, separate from the main
+LifestyleHobbies) — clearly labeled "For 42.12 version saves only!" in its
+description.
 
-ถ้าเปิดทั้งตัวหลักกับตัว legacy พร้อมกันโดยไม่ตั้งใจ (เช่นมาจาก modlist/collection เก่า) จะได้
-เนื้อหาที่พังจากตัว legacy (เช่น recipe อ้างถึง timedAction ที่ไม่มีอยู่แล้วใน build ปัจจุบัน)
-มาชนกัน ทำให้เกม error ตอน parse script:
+If both the main and legacy versions end up enabled at once by accident (e.g. from
+an old modlist/collection), broken content from the legacy one (e.g. a recipe
+referencing a TimedAction that no longer exists in the current build) collides,
+causing a script-parse error:
   ScriptManager.loadScripts > Exception thrown ... IOException: Script load errors
 
-วิธี debug:
-  1. เช็ค Logs/<วันที่>_DebugLog.txt หา error message ตรงๆ (ค้นคำว่า "no such sound", "could not
-     be found in recipe", "Exception thrown" เป็นต้น)
-  2. grep หา reference ที่พังนั้นทั่ว Workshop content cache ทั้งหมด (steamapps/workshop/content/
-     108600/*/) อย่าสมมติว่ามันอยู่ใน mod ที่ชื่อตรงกับที่คิด (ดูข้อ 7 เรื่องชื่อโฟลเดอร์หลอกได้)
-  3. เช็ค version เกมจริง (version.txt) เทียบกับที่ mod แต่ละตัวรองรับ
-  4. แก้โดยปิด mod เวอร์ชันเก่าที่ไม่ตรงกับ build ปัจจุบันทิ้ง (ผ่านเมนู MODS ในเกม ไม่ใช่ Options
-     -- Options ไม่มีแท็บ mod เลย ปุ่ม MODS อยู่แยกที่หน้าเมนูหลักต่างหาก)
+How to debug:
+  1. Check Logs/<date>_DebugLog.txt for the exact error message ("no such sound",
+     "could not be found in recipe", "Exception thrown", etc.).
+  2. Grep for the broken reference across the ENTIRE Workshop content cache
+     (steamapps/workshop/content/108600/*/) — don't assume it lives in the mod
+     whose name matches what you'd expect (see section 7 — folder names lie).
+  3. Check the real game version (version.txt) against what each mod actually
+     supports.
+  4. Fix by disabling the old version mismatched with the current build (via the
+     in-game MODS menu — not Options, which has no mod tab at all; MODS is a
+     separate button on the main menu screen).
 
 
 8.1 Git push
-  - ใน repo นี้ push ขึ้น origin ทันทีหลัง commit เสมอ (ไม่ต้องถามก่อน ตามที่สั่งไว้ 2026-09-15)
-  - *** git push ไม่ได้อัปเดต Steam Workshop ให้เลย *** เป็นคนละระบบกันเด็ดขาด -- mod ที่เคย
-    publish ขึ้น Workshop แล้ว (เช็คว่า publish แล้วหรือยังจาก Workshop/<ModId>/workshop.txt มี
-    บรรทัด "id=<เลข>" หรือไม่ -- ถ้ามีคือ published แล้ว) ทุกครั้งที่แก้โค้ด/ไฟล์ของ mod นั้น
-    ต้องแจ้งผู้ใช้เสมอว่า "ต้องไปอัปโหลดใหม่ผ่านเมนูในเกมด้วย" (ข้อ 1 ขั้นตอนที่ 7-8) อย่าให้
-    ผู้ใช้เข้าใจผิดว่า push ขึ้น git แล้ว Workshop จะอัปเดตตามเองอัตโนมัติ
+  - In this repo, always push to origin immediately after committing (no need to
+    ask first, per standing instruction from 2026-09-15).
+  - *** git push does NOT update Steam Workshop at all *** — completely separate
+    systems. For any mod already published to Workshop (check
+    Workshop/<ModId>/workshop.txt for an "id=<number>" line — present means
+    published), always tell the user after any code/file change: "you also need
+    to re-upload via the in-game menu" (section 1, steps 7-8). Never let the user
+    think pushing to git automatically updates Workshop.
 
 
-8.2 Custom Moodles (MoodleFramework) และการสร้าง Trait ใหม่ — อ้างอิงสำหรับงานในอนาคต
-  (ศึกษาจากต้นฉบับจริง 2026-09-22: MoodleFramework Workshop 3396446795/id=MoodleFramework โดย
-  Tchernobill เวอร์ชัน 42.20/modversion 2.8, และ More Traits Workshop 1299328280 เป็นตัวอย่าง
-  mod ที่ใช้งานจริง — ทั้งคู่ subscribe อยู่ในเครื่องแล้ว อ่านซอร์สได้ตรงที่
+8.2 Custom Moodles (MoodleFramework) + creating new Traits — reference for future work
+  (Studied from real source, 2026-09-22: MoodleFramework Workshop
+  3396446795/id=MoodleFramework by Tchernobill, version 42.20/modversion 2.8, and
+  More Traits Workshop 1299328280 as a real usage example — both subscribed
+  locally, source readable at
   C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\<ID>\mods\...)
 
-  === MoodleFramework (MF) — สร้าง moodle เองแบบไม่ต้องยุ่ง Java ===
-  ไฟล์จริง: media/lua/client/MF_ISMoodle.lua (เกือบ 700 บรรทัด, อ่านมาทั้งไฟล์แล้ว) +
-  MF_Config.lua (ตัวเลือกสี ผ่าน PZAPI.ModOptions ปกติ)
+  === MoodleFramework (MF) — build your own moodles without touching Java ===
+  Real files: media/lua/client/MF_ISMoodle.lua (nearly 700 lines, read in full) +
+  MF_Config.lua (color options via plain PZAPI.ModOptions).
 
-  วิธีใช้จากมอดของเราเอง (4 ขั้นตอนตามคู่มือทางการ ตรงกับโค้ดจริงที่เช็คแล้ว):
-    1. ใส่ require=MoodleFramework ใน mod.info ของเรา (มอดนี้ optional-dependency แบบมี Workshop
-       item จริง ต้องประกาศ require ปกติ ไม่ใช่แบบ HARMONIE_TooManyModThaiTranslate ที่ตั้งใจไม่
-       ใส่ require)
-    2. ไอคอน: วาง <ชื่อMoodle>.png (30x30, มี alpha) ที่ media/ui/ -- รองรับไอคอนแยกตาม level ได้
-       ด้วย เช่น <ชื่อ>_Good_2.png / <ชื่อ>_Bad_4.png (level 1-4) ถ้าไม่ใส่จะ fallback ไปใช้ไฟล์
-       ไม่มี suffix
-    3. ข้อความ: เติม media/lua/shared/Translate/EN/Moodles.json (และ TH ถ้าจะแปลเองเลย) คีย์
-       รูปแบบตายตัว: Moodles_<ชื่อ>_Good_lvl1..4, Moodles_<ชื่อ>_Good_desc_lvl1..4,
-       Moodles_<ชื่อ>_Bad_lvl1..4, Moodles_<ชื่อ>_Bad_desc_lvl1..4 -- ใส่แค่บางระดับที่ใช้จริงก็ได้
-       ไม่ต้องครบ 8 คู่เสมอไป (getText คืนค่าว่างเฉยๆ ถ้าไม่เจอ key ไม่ error)
-    4. สร้าง object: `require "MF_ISMoodle"` แล้ว `MF.createMoodle("ชื่อ")` -- เรียกตรงๆ ตอนไฟล์
-       โหลด (มันไป hook Events.OnCreatePlayer เองข้างในแล้ว ไม่ต้องห่อ event เพิ่ม)
-    5. ปรับค่า: `require "MF_ISMoodle"` แล้ว `MF.getMoodle("ชื่อ",playerNum):setValue(x)` โดย
-       0.0 <= x <= 1.0 (float) -- **ไม่ใส่ playerNum จะพังกับ splitscreen** (ค่า default fallback
-       เป็น 0 ซึ่งเป็นผู้เล่นคนแรกเท่านั้น) เอา playerNum จาก player:getPlayerNum()
+  How to use it from our own mod (4 steps per the official guide, matching real
+  checked code):
+    1. Add require=MoodleFramework to our mod.info (this is an optional-dependency
+       mod with a real Workshop item, so declare a normal require — unlike
+       HARMONIE_TooManyModThaiTranslate, which deliberately has no require=).
+    2. Icon: place <MoodleName>.png (30x30, alpha) at media/ui/ — per-level icons
+       are also supported, e.g. <name>_Good_2.png / <name>_Bad_4.png (levels 1-4);
+       falls back to the no-suffix file if not provided.
+    3. Text: add keys to media/lua/shared/Translate/EN/Moodles.json (and TH if
+       translating directly) in the fixed format: Moodles_<name>_Good_lvl1..4,
+       Moodles_<name>_Good_desc_lvl1..4, Moodles_<name>_Bad_lvl1..4,
+       Moodles_<name>_Bad_desc_lvl1..4 — only the levels actually used need to
+       exist, not all 8 pairs (getText just returns empty for a missing key, no
+       error).
+    4. Create the object: `require "MF_ISMoodle"` then `MF.createMoodle("name")`
+       — call directly at file-load time (it hooks Events.OnCreatePlayer
+       internally already, no extra event wrapper needed).
+    5. Update the value: `require "MF_ISMoodle"` then
+       `MF.getMoodle("name",playerNum):setValue(x)` where 0.0 <= x <= 1.0 (float)
+       — **omitting playerNum breaks split-screen** (default fallback is 0, i.e.
+       only the first player). Get playerNum from player:getPlayerNum().
 
-  กลไกภายในที่ควรรู้ก่อนใช้งานจริง (จากโค้ดจริง ไม่ใช่แค่คู่มือ):
-    - ค่า value แปลงเป็น "ระดับ" (0-4) และ "ทิศทาง" (Good/Bad/Neutral) อัตโนมัติผ่าน threshold
-      8 ค่า default: bad4..bad1 = 0.1/0.2/0.3/0.4, good1..good4 = 0.6/0.7/0.8/0.9 (0.5 = neutral
-      พอดีกลาง) เปลี่ยนได้เองด้วย `moodle:setThresholds(bad4,bad3,bad2,bad1,good1,good2,good3,good4)`
-      (ส่ง nil ตัวไหนจะ fallback ไปใช้ค่าถัดไปในทิศทางเดียวกัน)
-    - เก็บค่าไว้ที่ `character:getModData().Moodles[ชื่อ] = {Level=, GoodBadNeutral=, Value=}` --
-      persist ต่อตัวละครแบบเดียวกับ moddata อื่นๆ ที่เราคุ้นเคยอยู่แล้ว (ข้อ 6.1 เรื่อง cache
-      ก็ใช้หลักการเดียวกัน แต่ moodle framework ออกแบบให้ defensive คืนค่า default ถ้าตารางหาย
-      ไม่ต้อง manual clear เองแบบ Lifestyle)
-    - UI element ต่อ moodle ต่อผู้เล่นเก็บใน `MF.MoodlesStorage[playerNum][ชื่อ]` -- นี่คือจุดที่
-      ทำให้ splitscreen ใช้ playerNum แยกกันได้ถูกต้อง
-    - มี custom title/desc/background/picture override ต่อ level ได้ผ่าน
-      `moodle:setTitle/setDescription/setBackground/setPicture(goodBadNeutral, level, ...)`
-      (goodBadNeutral: 1=Good, 2=Bad) เผื่อไม่อยากพึ่งแค่ Translate JSON + ไฟล์ภาพชื่อตายตัว
-    - ตัวอย่างการใช้งานจริง (จาก More Traits, MoreTraits .lua บรรทัด ~13-31, 2087, 5196-5300 --
-      แม้ในเวอร์ชันที่อ่านตอนนี้ท่อน createMoodle จะถูกคอมเมนต์ปิดไว้อยู่ แต่ pattern ยังตรงกับ
-      คู่มือทางการ ใช้เป็นตัวอย่างโครงสร้างได้):
+  Internal mechanics worth knowing before real use (from real code, not just the
+  guide):
+    - value converts to a "level" (0-4) and "direction" (Good/Bad/Neutral)
+      automatically via 8 default thresholds: bad4..bad1 = 0.1/0.2/0.3/0.4,
+      good1..good4 = 0.6/0.7/0.8/0.9 (0.5 = exactly neutral) — changeable via
+      `moodle:setThresholds(bad4,bad3,bad2,bad1,good1,good2,good3,good4)` (a nil
+      argument falls back to the next value in the same direction).
+    - Stored at `character:getModData().Moodles[name] = {Level=, GoodBadNeutral=,
+      Value=}` — persisted per character like any other ModData (section 6.1's
+      cache principle applies here too, but the framework is designed to be
+      defensive and return sane defaults if the table is missing — no manual
+      clearing needed, unlike Lifestyle).
+    - The UI element per moodle per player lives in
+      `MF.MoodlesStorage[playerNum][name]` — this is what makes split-screen work
+      correctly with separate playerNum values.
+    - Custom title/desc/background/picture overrides per level are available via
+      `moodle:setTitle/setDescription/setBackground/setPicture(goodBadNeutral,
+      level, ...)` (goodBadNeutral: 1=Good, 2=Bad), in case relying only on
+      Translate JSON + fixed-name image files isn't enough.
+    - Real usage example (from More Traits, MoreTraits.lua lines ~13-31, 2087,
+      5196-5300 — even though the createMoodle block is currently commented out in
+      the read version, the pattern still matches the official guide, safe to use
+      as a structural reference):
       ```
       if getActivatedMods():contains("MoodleFramework") == true then
           local status, MFModule = pcall(require, "MF_ISMoodle")
@@ -504,51 +667,76 @@ saves only!"
               MFModule.createMoodle("MTAlcoholism")
           end
       end
-      -- ที่อื่นในโค้ด:
+      -- elsewhere in the code:
       MF.getMoodle("MTAlcoholism"):getValue()
       MF.getMoodle("MTAlcoholism"):setValue(Alcoholism - percent)
       ```
-      *** เทคนิคที่ควรลอกตาม: เช็ค `getActivatedMods():contains("MoodleFramework")` +
-      `pcall(require, ...)` ก่อนเรียกจริงเสมอ กัน error ถ้าผู้เล่นปิดมอด MoodleFramework ไว้
-      (ทำให้ MF เป็น soft-dependency ที่ปิดได้โดยไม่ crash มอดเรา ต่างจาก require= ปกติที่เป็น
-      hard-dependency) -- ถ้าจะทำ moodle ของ HARMONIE เองในอนาคต ให้พิจารณาว่าอยากบังคับ
-      require=MoodleFramework ตรงๆ (ง่ายกว่า, แต่ผู้เล่นต้อง subscribe เพิ่ม) หรือทำ soft-dependency
-      แบบนี้ (ซับซ้อนกว่านิดหน่อย แต่ไม่บังคับ) ***
-      *** บทเรียนจริงจาก HARMONIE_GardenToPlate v0.3.0/0.3.1: เริ่มแรกทำ soft-dependency (ไม่ใส่
-      require=MoodleFramework/ModernStatus ใน mod.info ตั้งใจให้ optional) แล้วเจอบั๊กจริงจาก
-      console.txt ของเซฟจริง -- เพราะไม่มี require= เกม "ไม่การันตี" ว่า mod ที่เราพึ่งพาโหลด Lua
-      เสร็จก่อนเรา (ยืนยันจาก log จริง: HARMONIE_GardenToPlate โหลดก่อน ModernStatus) ทำให้
-      `require "MS/MS_StatusIndicator"` ที่เรียกตอน file-load time ล้มเหลว (chain ของมันพึ่ง state
-      ที่ ModernStatus ต้องตั้งค่าเองก่อน) แก้ชั่วคราวด้วยการย้ายไปเรียกใน Events.OnGameBoot แทน
-      แต่สุดท้ายผู้ใช้ตัดสินใจว่ายอมรับ hard-dependency ได้ เลยเปลี่ยนกลับมาใส่ require=จริง --
-      พอใส่ require= แล้ว "ลำดับโหลดของทั้ง mod" ถูกบังคับจริง (ยืนยันจากข้อ 1 ด้านบนเรื่อง sound
-      override) โค้ดง่ายกว่าเดิมมาก ไม่ต้องมี OnGameBoot deferral หรือ pcall/getActivatedMods gating
-      เลย เรียก require ตรงๆ ที่ top level ของไฟล์ได้เหมือน mod hard-require= อื่นๆ (HomeMedic,
-      LifestyleAudioTune ฯลฯ) *** สรุปกฎ: ถ้าตัดสินใจว่าจะพึ่งพา mod อื่นแบบจริงจัง (ไม่ใช่แค่
-      "เผื่อมี" แบบ HARMONIE_TooManyModThaiTranslate) ให้ใส่ require= เสมอ อย่าทำ soft-dependency
-      แบบครึ่งๆ กลางๆ เพราะมันแก้บั๊ก load-order ได้ตรงจุดกว่า และโค้ดง่ายกว่ามาก ***
-      *** บทเรียนที่ 2 จาก HARMONIE_GardenToPlate (2026-09-22, v0.5.0): ระบบผลเสียตอนวิกฤติเปลี่ยนมาแล้ว
-      3 รอบ -- (1) จ่าย CharacterStat/timer ครั้งเดียวต่อวัน -> พังจริง เพราะเกมฟื้นค่าคืนเองเร็วกว่าที่
-      สังเกตได้ (ENDURANCE ฟื้นจากพักผ่อน, Stiffness ลดเองถ้าไม่ได้ออกแรง, ผ้าพันแผลลด BleedingTime เร็ว
-      กว่าปกติ 10 เท่า) (2) แก้ด้วยการบังคับค่า floor/ceiling ซ้ำทุก 10 วินาทีแทน -- ใช้งานได้จริง แต่บาง
-      trait ก็ไม่มีทาง hook จาก Lua ได้เลย (เช่น Disorganized ลดพื้นที่กระเป๋า) และ K (บังคับเลือดออก) ลอง
-      ตรงๆ ด้วย setBleedingTime() แล้วไม่มีผลอะไรในเกมจริง ต้องใช้ bodyPart:setScratched(true,true) แล้วตาม
-      ด้วย bodyPart:generateBleeding() (ลำดับจริงที่ซอมบี้ข่วนใช้ ยืนยันจาก BodyPart.class) ถึงจะสร้างแผล
-      จริงที่ UI เห็น (3) รอบปัจจุบัน: เปลี่ยนจาก grant CharacterTrait จริงมาเป็นปรับ CharacterStat/Stiffness
-      ตรงๆ อีกครั้ง (คนละชุดค่ากับรอบ 1-2) พร้อมเพิ่ม universal effect ใหม่ (health cap ต่อจำนวนวิตามินที่
-      ขาดพร้อมกัน ผ่าน bodyDamage:ReduceGeneralHealth() -- ลอกลาย pattern จริงจากมอด Extensive Health Rework
-      Evolved, Workshop 3726328119, ที่ subscribe อยู่แล้วและ HARMONIE_HomeMedic เป็น soft-dependency อยู่แล้ว
-      -- มอดนี้มี EHR_DebugMenuV2.lua ที่ทำ UI ปรับแต่งร่างกายได้สวยงาม และ EHR_EnvironmentalDiseases.lua มี
-      ฟังก์ชัน EHR_EnvironmentalClampBodyHealth ที่ใช้ pattern เดียวกันนี้เป๊ะ -- ควรกลับมาดูมอดนี้อีกถ้าจะทำ
-      อะไรเกี่ยวกับ body damage/health ในอนาคต) *** สรุปกฎ: การ์ดกันแบบ "afflicted AND pauseDays < 1" (เช็ค
-      ทุก Maintain*/MaybeTrigger* function) ต้องคงไว้เสมอไม่ว่าจะเปลี่ยน mechanism กี่รอบ, เมื่อเปลี่ยน
-      mechanism ของผลเสีย ต้องเขียน migration function ด้วย (ดู VitEffects.MigrateAwayFromRealTraits) เพื่อ
-      เคลียร์ผลเสียแบบเก่าที่ค้างอยู่ใน save เดิม ไม่งั้นผู้เล่นเก่าจะติด trait เก่าถาวรเพราะไม่มีอะไรดูแลมันอีก
-      ต่อไปแล้ว ***
+      *** Technique worth copying: check
+      `getActivatedMods():contains("MoodleFramework")` +
+      `pcall(require, ...)` before ever calling it for real, guarding against an
+      error if the player has MoodleFramework disabled (makes MF a soft
+      dependency that can be turned off without crashing our mod, unlike a normal
+      require= which is a hard dependency) — if building HARMONIE's own moodle in
+      future, consider whether to force require=MoodleFramework directly (simpler,
+      but the player must subscribe to one more mod) or do this soft-dependency
+      pattern (a bit more complex, but not mandatory). ***
 
-  === การสร้าง Trait ใหม่ (ศึกษาจาก More Traits/ToadTraits) ===
-  Trait ใหม่ประกาศผ่าน sound-script-style .txt เหมือน item/sound (module ... { ... }) ไม่ใช่ Lua
-  ล้วนๆ -- อยู่ที่ media/scripts/<ชื่อไฟล์>.txt ของ mod เอง (More Traits ใช้ ToadTraits.txt):
+      *** Real lesson from HARMONIE_GardenToPlate v0.3.0/0.3.1: initially built
+      this as a soft dependency (no require=MoodleFramework/ModernStatus in
+      mod.info, deliberately optional), then hit a real bug confirmed via a real
+      save's console.txt — without require=, the game does NOT guarantee the mod
+      we depend on finishes loading its Lua before we do (confirmed from real
+      logs: HARMONIE_GardenToPlate loaded before ModernStatus), causing
+      `require "MS/MS_StatusIndicator"` (called at file-load time) to fail (its
+      chain depends on state ModernStatus must set up itself first). Temporarily
+      fixed by moving the call into Events.OnGameBoot instead — but the user
+      ultimately decided a hard dependency was fine, so it was switched back to a
+      real require=. Once require= was added, "the whole mod's load order" really
+      is enforced (confirmed via section 1's sound-override finding above) — code
+      became much simpler, no more OnGameBoot deferral or pcall/getActivatedMods
+      gating needed; require can be called directly at the top level of the file
+      just like every other HARMONIE mod with a hard require= (HomeMedic,
+      LifestyleAudioTune, etc.). *** Rule of thumb: if you decide to genuinely
+      depend on another mod (not just "in case it's there" like
+      HARMONIE_TooManyModThaiTranslate), always add require= — don't do a
+      half-soft-dependency, since it fixes load-order bugs more directly and
+      keeps the code much simpler. ***
+
+      *** Second lesson, from HARMONIE_GardenToPlate (2026-09-22, v0.5.0): the
+      Critical-band penalty system has now been rebuilt 3 times —
+      (1) A once-a-day flat dose to a CharacterStat/timer -> genuinely broken,
+      because the game regenerates the value back faster than it can be noticed
+      (ENDURANCE regenerates from rest, Stiffness decays on its own without
+      exercise, a bandage drains BleedingTime 10x faster than normal).
+      (2) Fixed by re-enforcing a floor/ceiling every 10 seconds instead —
+      worked mechanically, but some real trait effects have zero Lua hook at all
+      (e.g. Disorganized's bag-capacity reduction), and K's forced-bleeding
+      attempt via setBleedingTime() directly had NO effect in-game at all — had
+      to use bodyPart:setScratched(true,true) followed by
+      bodyPart:generateBleeding() (the real sequence a zombie scratch uses,
+      confirmed from BodyPart.class) to create a wound the UI actually shows.
+      (3) Current design: switched from granting a real CharacterTrait back to
+      directly adjusting CharacterStat/Stiffness again (a different set of
+      values than rounds 1-2), plus a new universal effect (a health cap scaling
+      with how many vitamins are deficient at once, via
+      bodyDamage:ReduceGeneralHealth() — copied directly from a real pattern in
+      Extensive Health Rework Evolved, Workshop 3726328119, already subscribed
+      and already a soft dependency of HARMONIE_HomeMedic — that mod has
+      EHR_DebugMenuV2.lua with a genuinely nice body-editing debug UI, and
+      EHR_EnvironmentalDiseases.lua has an EHR_EnvironmentalClampBodyHealth
+      function using this exact same pattern — worth revisiting this mod again
+      for any future body-damage/health work). *** Rule: the "afflicted AND
+      pauseDays < 1" guard (checked in every Maintain*/MaybeTrigger* function)
+      must be kept no matter how many times the mechanism changes. Whenever the
+      penalty mechanism changes, write a migration function too (see
+      VitEffects.MigrateAwayFromRealTraits) to clear out whatever the old
+      mechanism left behind in existing saves — otherwise players with old saves
+      get stuck with a permanent leftover effect that nothing maintains anymore. ***
+
+  === Creating a new Trait (studied from More Traits/ToadTraits) ===
+  A new trait is declared via a sound-script-style .txt (module ... { ... }),
+  not plain Lua — lives at media/scripts/<filename>.txt in the mod's own folder
+  (More Traits uses ToadTraits.txt):
     ```
     module ToadTraits {
         character_trait_definition ToadTraits:albino
@@ -563,98 +751,122 @@ saves only!"
         }
     }
     ```
-  ฟิลด์หลักที่เจอใช้จริง (มี field มากกว่านี้ใน vanilla แต่นี่คือชุดที่ More Traits ใช้ครบ):
-    - Cost: ตัวเลขแต้มตอนสร้างตัวละคร บวก = เสียแต้ม (ข้อดี), ลบ = ได้แต้มคืน (ข้อเสีย)
-    - UIName / UIDescription: translation key (ไปเติมค่าจริงใน Translate/EN/UI.json ปกติ ไม่ใช่
-      Tooltip.json)
-    - MutuallyExclusiveTraits: กันเลือกพร้อมกัน คั่นด้วย ; หรือ , ได้ (เจอทั้งสองแบบในไฟล์จริง)
-    - XPBoosts: เพิ่ม XP skill ทันทีแบบ declarative เช่น `XPBoosts = Scavenging=1,` ไม่ต้องเขียน
-      Lua เลยถ้าผลแค่นี้พอ
-    - GrantedRecipes: ให้สูตรคราฟฟรีทันทีแบบ declarative เหมือนกัน
-    - IsProfessionTrait: false = trait ปกติเลือกได้อิสระ, true = ผูกกับอาชีพ
-  ผลลัพธ์ที่ซับซ้อนกว่า field พวกนี้ทำเองไม่ได้ (stat modifier ระหว่างเล่น, ผูกกับ moodle,
-  เงื่อนไขพิเศษ ฯลฯ) ต้องเขียน Lua เช็คเอง -- API ที่ยืนยันจากซอร์สจริง (MoreTraits .lua บรรทัด
-  33-45 และ 235+):
+  Main fields seen in real use (vanilla has more fields than this, but this is
+  the full set More Traits uses):
+    - Cost: character-creation point cost. Positive = costs points (a benefit),
+      negative = grants points back (a drawback).
+    - UIName / UIDescription: translation keys (fill in the real value in
+      Translate/EN/UI.json, NOT Tooltip.json).
+    - MutuallyExclusiveTraits: prevents co-selection, separated by ; or , (both
+      seen in real files).
+    - XPBoosts: grants skill XP immediately, declaratively, e.g.
+      `XPBoosts = Scavenging=1,` — no Lua needed if this is all that's wanted.
+    - GrantedRecipes: grants free crafting recipes immediately, same declarative way.
+    - IsProfessionTrait: false = a normal freely-selectable trait, true = tied to
+      a profession.
+  Anything more complex than these fields (live stat modifiers, tying to a
+  moodle, special conditions, etc.) can't be done declaratively — needs actual
+  Lua. Confirmed real API (MoreTraits.lua lines 33-45 and 235+):
     ```
-    -- ลงทะเบียน object ของ trait ไว้ล่วงหน้า (ทำครั้งเดียวตอนโหลด ปกติแยกไฟล์ registries.lua)
+    -- Pre-register the trait's object once at load time (usually a separate registries.lua)
     MyModRegistries = MyModRegistries or {}
     MyModRegistries.mytrait = CharacterTrait.register("MyMod:mytrait")
 
-    -- เช็คว่าตัวละครมี trait นี้ไหม (lowercase hasTrait ตาม IsoGameCharacter API จริง ไม่ใช่ HasTrait)
+    -- Check whether a character has this trait (lowercase hasTrait per the real IsoGameCharacter API, not HasTrait)
     if player:hasTrait(MyModRegistries.mytrait) then
-        -- ใส่ผลของ trait เอง ตรงนี้
+        -- apply the trait's effect here
     end
     ```
-    *** สังเกต: `player:hasTrait(...)` รับทั้ง trait object ที่ลงทะเบียนผ่าน
-    `CharacterTrait.register("Module:name")` (ตามตัวอย่างข้างบน, ยืนยันจากซอร์สจริงของ More
-    Traits) และน่าจะรับ string literal ตรงๆ ได้ด้วย (`player:hasTrait("Module:name")`,
-    พบใช้แบบนี้ในโค้ดฝั่ง Lifestyle/อื่นๆ มาก่อนหน้านี้ในเซสชัน) -- แบบ register ปลอดภัยกว่าเพราะ
-    พิมพ์ชื่อผิดจะ error ตอนโหลดทันทีแทนที่จะเงียบๆ คืน false ตลอดไป ควรใช้แบบ register เวลาทำ
-    mod ของ HARMONIE เอง ***
-  Hook จริงต้องหาจุดที่เกมเรียกทุก tick/ทุกการกระทำที่เกี่ยวข้องเอง (เช่น
-  Events.OnPlayerUpdate, หรือ TimedAction เฉพาะทาง) ไม่มี field script ให้ "ผลกระทบต่อ stat
-  ระหว่างเล่น" ตรงๆ แบบ auto -- ต้องดูตัวอย่างจาก mod อื่นที่ทำเอฟเฟกต์คล้ายกันเป็นรายกรณีไป
+    *** Note: `player:hasTrait(...)` accepts both a trait object registered via
+    `CharacterTrait.register("Module:name")` (as above, confirmed from More
+    Traits' real source) and likely a plain string literal too
+    (`player:hasTrait("Module:name")`, seen used this way in Lifestyle/other code
+    earlier in past sessions) — the registered form is safer since a typo'd name
+    errors immediately at load time instead of silently returning false forever.
+    Prefer the registered form for any HARMONIE mod's own traits. ***
+  The actual hook point must be found wherever the game already calls it every
+  tick/relevant action (e.g. Events.OnPlayerUpdate, or a specific TimedAction) —
+  there's no script field for "affects a stat live" automatically; look at how a
+  similar-effect mod does it, case by case.
 
 
-8.3 NeatUI Framework — ทำ custom UI widget โดยไม่ต้องเขียน render เองทั้งหมด
-  (ศึกษาจากต้นฉบับจริง 2026-09-22: NeatUI_Framework Workshop 3508537032/id=NeatUI_Framework
-  โดย Rocco/Afyrmo และ Modern Status Workshop 3451167732/id=ModernStatus เป็นตัวอย่างจริงที่ใช้
-  งาน ทั้งคู่ subscribe อยู่ในเครื่องแล้ว อ่านไฟล์ Lua ของ NeatUI ครบทุกไฟล์แล้ว (compat 1,
-  neattool 5, scrollview 4, ui 1) และไล่ดู Modern Status จริงว่าเรียกใช้ยังไง)
+8.3 NeatUI Framework — building custom UI widgets without writing all the rendering yourself
+  (Studied from real source, 2026-09-22: NeatUI_Framework Workshop
+  3508537032/id=NeatUI_Framework by Rocco/Afyrmo, and Modern Status Workshop
+  3451167732/id=ModernStatus as a real consumer — both subscribed locally, read
+  every NeatUI Lua file in full (compat 1, neattool 5, scrollview 4, ui 1) and
+  traced through how Modern Status actually calls it)
 
-  วิธีพึ่งพา NeatUI จาก mod ของเราเอง:
-    - ใส่ `require=NeatUI_Framework` ใน mod.info เพื่อบังคับ load order (ต้องโหลดก่อนมอดเราเสมอ)
-      *** สังเกต: mod.info จริงของ Modern Status (เวอร์ชัน 42.13+) เขียนว่า
-      `require=\NeatUI_Framework` มี backslash นำหน้าจริงๆ -- ไม่ใช่ syntax มาตรฐานที่เคยเจอที่ไหน
-      มาก่อนในเซสชันนี้ ไม่แน่ใจว่าตั้งใจหรือพิมพ์ผิดของผู้เขียน ห้ามลอกตามโดยไม่ทดสอบ ใช้แบบ
-      `require=NeatUI_Framework` ธรรมดา (ไม่มี backslash) ตามที่ mod อื่นๆ ในเซสชันนี้ใช้กันมา
-      ตลอดจะปลอดภัยกว่า ***
-    - **ไม่ต้อง `require "neatui_framework/..."` ในไฟล์ Lua ของเราเลย** -- ยืนยันจากการ grep
-      ทั่ว Modern Status ทั้งมอดแล้วไม่เจอการ require path ของ neatui_framework จุดไหนเลยสักที่
-      เพราะไฟล์ NeatTool.*.lua ประกาศเป็น GLOBAL table ตรงๆ ตอนโหลด (ไม่ใช่ module แบบ
-      `return X` ที่ต้อง require ถึงจะได้ค่า) พอ require=NeatUI_Framework บังคับ load order
-      ถูกแล้ว เรียก `NeatTool.ThreePatch.drawHorizontal(...)` ฯลฯ เป็น global ได้ตรงๆ เลย
+  How to depend on NeatUI from our own mod:
+    - Add `require=NeatUI_Framework` to mod.info to force load order (must load
+      before our mod always). *** Note: Modern Status's own real mod.info
+      (version 42.13+) literally writes `require=\NeatUI_Framework` with a
+      leading backslash — not standard syntax seen anywhere else this session.
+      Unclear if intentional or a typo by the author — don't copy it without
+      testing. Plain `require=NeatUI_Framework` (no backslash), as every other
+      mod this session uses, is safer. ***
+    - **No need for `require "neatui_framework/..."` in our own Lua files at
+      all** — confirmed by grepping all of Modern Status and finding zero
+      require paths for neatui_framework anywhere, because the NeatTool.*.lua
+      files declare themselves as GLOBAL tables directly at load time (not a
+      `return X`-style module that needs requiring to get a value). Once
+      require=NeatUI_Framework forces the correct load order,
+      `NeatTool.ThreePatch.drawHorizontal(...)` etc. can just be called directly
+      as globals.
 
-  เครื่องมือที่มีให้ใช้จริง (ยืนยันจากซอร์ส พร้อม signature จริง):
-    - `NeatTool.NinePatch.draw(panel, x, y, width, height, textures, alpha, r, g, b)` --
-      textures เป็น table 9 คีย์ (topLeft, topRight, bottomLeft, bottomRight, top, bottom,
-      left, right, middle) ใช้กับพาเนล/กรอบที่ขยายได้ทุกทิศทาง
-    - `NeatTool.ThreePatch.drawHorizontal(panel, x, y, width, height, leftTex, midTex, rightTex,
-      alpha, r, g, b)` และ `.drawVertical(panel, x, y, width, height, topTex, midTex, bottomTex,
-      alpha, r, g, b)` -- ใช้กับปุ่ม/แถบยาวที่ขยายแค่แกนเดียว (ซ้าย-ขวา ปลายคงสัดส่วนเดิม, ตรงกลาง
-      stretch) ตัวอย่างการใช้จริงดูข้างล่าง
-    - `NeatTool.truncateText(text, maxWidth, font, suffix)` -- ตัดข้อความยาวเกิน + "..." พร้อม
-      cache ในตัว (FIFO 512 entries, กันช้าเวลามี list ยาวๆ), ปลอดภัยกับ UTF-16 surrogate pair
-      (ภาษาที่ใช้ emoji/อักขระนอก BMP) กับ `NeatTool.fitLabelText(label, text, maxWidth, font,
-      suffix, showTooltip)` ตัวช่วยระดับสูงกว่าที่ตัด label โดยตรงพร้อมใส่ tooltip เต็มให้เอง
+  Real available tools (confirmed from source, with real signatures):
+    - `NeatTool.NinePatch.draw(panel, x, y, width, height, textures, alpha, r, g, b)`
+      — textures is a 9-key table (topLeft, topRight, bottomLeft, bottomRight,
+      top, bottom, left, right, middle), for panels/frames that stretch in every
+      direction.
+    - `NeatTool.ThreePatch.drawHorizontal(panel, x, y, width, height, leftTex,
+      midTex, rightTex, alpha, r, g, b)` and `.drawVertical(panel, x, y, width,
+      height, topTex, midTex, bottomTex, alpha, r, g, b)` — for buttons/long bars
+      that stretch along only one axis (left-right ends keep their proportions,
+      middle stretches). Real usage example below.
+    - `NeatTool.truncateText(text, maxWidth, font, suffix)` — truncates
+      overlength text + "..." with built-in caching (FIFO, 512 entries, avoids
+      slowdown with long lists), safe with UTF-16 surrogate pairs (languages
+      using emoji/characters outside the BMP); plus
+      `NeatTool.fitLabelText(label, text, maxWidth, font, suffix, showTooltip)`,
+      a higher-level helper that truncates a label directly and sets up a full
+      tooltip automatically.
     - `NeatTool.renderText(panel, text, x, y, size, alpha, r, g, b, useOutline)` +
-      `NeatTool.measureTextWidth(text, size, useOutline)` -- render ตัวเลข/สัญลักษณ์บางตัว
-      (0-9, M, L, /, ?, :, ., S) ด้วยภาพ bitmap แทนฟอนต์ปกติ เพราะฟอนต์ตัวเลขบางภาษา (เช่นจีน)
-      เพี้ยนใน PZ -- ใช้เฉพาะจุดที่โชว์ตัวเลขสำคัญๆ (เช่น HP/ค่า stat ตัวใหญ่ๆ) ไม่ต้องใช้ทุกที่
-    - `NeatTool.drawTexturePercentage(self, texture, percentage, x, y, w, h, a, r, g, b)` /
-      `.drawTexturePercentageBottomUp(...)` -- **ไฟล์นี้บอกไว้ในคอมเมนต์เองว่าให้คัดลอกโค้ดไปใส่
-      ในมอดตัวเอง ไม่ใช่เรียกผ่าน require เหมือนตัวอื่น** (of เตรียมไว้ชั่วคราวรอ ISUIElement
-      วนิลลารองรับเอง) ต้องอ่าน comment ในไฟล์ต้นฉบับก่อนใช้เครื่องมือไหนเสมอ อย่าสมมติว่าทุกตัว
-      ใช้แบบเดียวกันหมด
-    - `NI_SquareButton` (extends ISButton) -- ปุ่มสี่เหลี่ยมมีไอคอน พร้อม state hover/pressed/
-      active ในตัว: `NI_SquareButton:new(x,y,size,iconTexture,target,onclick)` แล้วปรับแต่งด้วย
-      `:setIcon/:setIconSizeRatio/:setActive/:setActiveColor(r,g,b)`
-    - `NIVirtualScrollView` (extends ISUIElement, มี grid variant NIGridVirtualScrollView ด้วย)
-      -- scroll list แบบ virtualized/object-pool (สร้าง UI element เท่าที่เห็นบนจอจริงแล้ว
-      recycle ซ้ำ ไม่สร้างทั้งลิสต์รวดเดียว) เหมาะกับลิสต์ยาวๆ เช่นรายการไอเทม/สูตรคราฟ:
-      `NIVirtualScrollView:new(x,y,w,h)` แล้วตั้งค่าด้วย `:setDataSource(dataSource,
-      forceRefresh)`, `:setConfig(itemHeight, padding)`, `:setOnCreateItem(callback)`,
-      `:setOnUpdateItem(callback)`, `:setPoolSize(size)`/`:setPoolSizeBuffer(buffer)` (ยังไม่ได้
-      ไล่อ่านทุกบรรทัดละเอียดเท่าไฟล์อื่น แค่ดู public method signature เพราะไฟล์ยาว 384-496
-      บรรทัด -- ถ้าจะใช้จริงควรกลับไปอ่านเต็มไฟล์อีกรอบก่อน)
-    - `ISUIElement` compat shim (nui_isuielement_compat.lua): เติม getCentreX/Y,
-      getSelfCenterX/Y, getCenterX/Y, getAbsoluteCenterX/Y, setCenterX/Y ให้ ISUIElement แบบ
-      `if not ISUIElement.xxx then function ISUIElement:xxx() ... end end` -- เทคนิคที่ควรลอก
-      เวลาต้อง patch API วนิลลาที่เปลี่ยนเบอร์ build: เช็คว่ามีอยู่แล้วหรือยังก่อนเสมอ ไม่งั้นจะ
-      ไปทับพฤติกรรมจริงของ build ใหม่ที่มันมีอยู่แล้ว
+      `NeatTool.measureTextWidth(text, size, useOutline)` — renders digits/some
+      symbols (0-9, M, L, /, ?, :, ., S) via bitmap image instead of the normal
+      font, since some languages' number glyphs (e.g. Chinese) render wrong in
+      PZ's normal font — use only where important numbers show (e.g. big HP/stat
+      values), not needed everywhere.
+    - `NeatTool.drawTexturePercentage(self, texture, percentage, x, y, w, h, a, r,
+      g, b)` / `.drawTexturePercentageBottomUp(...)` — **this file explicitly
+      says in its own comments to COPY this code into your own mod, not require
+      it like the others** (a temporary stand-in until vanilla's own ISUIElement
+      supports this natively). Always read the source file's own comments before
+      using any tool — don't assume they all work the same way.
+    - `NI_SquareButton` (extends ISButton) — a square icon button with built-in
+      hover/pressed/active states: `NI_SquareButton:new(x,y,size,iconTexture,
+      target,onclick)`, customized via
+      `:setIcon/:setIconSizeRatio/:setActive/:setActiveColor(r,g,b)`.
+    - `NIVirtualScrollView` (extends ISUIElement, has a grid variant
+      NIGridVirtualScrollView too) — a virtualized/object-pooled scroll list
+      (only creates UI elements for what's actually visible on screen, recycles
+      them — doesn't build the whole list at once), good for long lists like
+      items/recipes: `NIVirtualScrollView:new(x,y,w,h)` then configure with
+      `:setDataSource(dataSource, forceRefresh)`, `:setConfig(itemHeight,
+      padding)`, `:setOnCreateItem(callback)`, `:setOnUpdateItem(callback)`,
+      `:setPoolSize(size)`/`:setPoolSizeBuffer(buffer)` (not read line-by-line as
+      thoroughly as the other files, just the public method signatures, since the
+      file is 384-496 lines — read it in full again before real use).
+    - `ISUIElement` compat shim (nui_isuielement_compat.lua): adds
+      getCentreX/Y, getSelfCenterX/Y, getCenterX/Y, getAbsoluteCenterX/Y,
+      setCenterX/Y to ISUIElement via
+      `if not ISUIElement.xxx then function ISUIElement:xxx() ... end end` —
+      technique worth copying whenever patching a vanilla API that changes
+      between builds: always check whether it already exists first, or risk
+      overwriting real behavior a newer build already has.
 
-  ตัวอย่างการสร้าง widget แบบเต็ม (คัดลอกโครงจริงจาก Modern Status MS_LongButton.lua มา ยืนยัน
-  ว่าใช้งานได้จริงเพราะเป็นมอด published ที่คนใช้กันเยอะ):
+  Full widget-building example (copied structure from Modern Status's real
+  MS_LongButton.lua — confirmed working since it's a widely-used published mod):
     ```
     require "ISUI/ISButton"
     MyLongButton = ISButton:derive("MyLongButton")
@@ -667,7 +879,7 @@ saves only!"
         local o = ISButton:new(x, y, width, height, title, target, onclick)
         setmetatable(o, self)
         self.__index = self
-        o:setDisplayBackground(false)  -- ปิด background เดิมของ ISButton เพราะเราวาดเอง
+        o:setDisplayBackground(false)  -- turn off ISButton's own background since we draw our own
         o.bg = {L=getTexture("..._L.png"), M=getTexture("..._M.png"), R=getTexture("..._R.png")}
         return o
     end
@@ -681,226 +893,313 @@ saves only!"
         end
     end
     ```
-    แพทเทิร์นหลัก: derive จาก ISButton/ISUIElement วนิลลาปกติ, override แค่ `:new()` (ตั้งค่า
-    texture/สี) กับ `:render()` (วาดเอง) -- ใช้ `self:isMouseOver()` / `self.pressed` เช็ค state
-    ปุ่มได้ตรงๆ เพราะ ISButton จัดการให้แล้ว ไม่ต้องเขียน mouse handling เอง
+    Main pattern: derive from a normal vanilla ISButton/ISUIElement, override
+    only `:new()` (set up textures/colors) and `:render()` (draw it yourself) —
+    use `self:isMouseOver()` / `self.pressed` to check button state directly
+    since ISButton already handles that, no need to write mouse handling.
 
 
-8.4 วิธีอ่านค่า status/stat ต่างๆ ของตัวละคร (ศึกษาจาก Modern Status จริง)
-  (ศึกษาจาก MS_PlayerStatus.lua ของ Modern Status Workshop 3451167732 บรรทัด 1-403 เต็ม
-  2026-09-22 -- ไฟล์นี้คือจุดเดียวที่รวบรวมวิธีอ่านค่า stat ทุกตัวของทั้ง mod ไว้ที่เดียว มี
-  รูปแบบตายตัวชัดเจนมาก เอามาเป็น reference ได้เลย)
+8.4 How to read any character stat/status value (studied from real Modern Status source)
+  (Studied MS_PlayerStatus.lua from Modern Status Workshop 3451167732, lines
+  1-403, read in full 2026-09-22 — this single file centralizes how the entire
+  mod reads every stat value, with a very consistent pattern, safe to use as a
+  reference directly.)
 
-  โครงสร้างที่ Modern Status ใช้: แยกเป็น 2 ชั้นเสมอ -- `MS_PlayerStatus.Get.X(player)` (ไปอ่าน
-  ค่าดิบจากเกมจริง) เรียก `MS_PlayerStatus.Calc.X(value)` (แปลงค่าดิบให้เป็น 0.0-1.0 เสมอ สำหรับ
-  เอาไปวาด progress bar ได้ตรงๆ) ทุกฟังก์ชัน Get เช็ค `player:isDead()` ก่อนเป็นอันดับแรกเสมอ คืน
-  -1 ถ้าตายแล้ว (กัน error/ค่าพิลึกจากศพ)
+  The structure Modern Status uses: always split into 2 layers —
+  `MS_PlayerStatus.Get.X(player)` (reads the raw value from the real game) calls
+  `MS_PlayerStatus.Calc.X(value)` (always converts the raw value to 0.0-1.0, ready
+  to draw a progress bar directly). Every Get function checks `player:isDead()`
+  first, always, returning -1 if dead (avoids errors/nonsense values from a corpse).
 
-  ที่มาของค่าดิบ แยกตาม subsystem (ยืนยันจาก source จริง ไม่ใช่เดา):
-    - **Stats ทั่วไป**: `player:getStats():get(CharacterStat.<ชื่อ>)` -- ใช้กับ THIRST, HUNGER,
-      ENDURANCE, FATIGUE, TEMPERATURE, PANIC, BOREDOM, UNHAPPINESS, DISCOMFORT, SICKNESS,
-      POISON, PAIN, ANGER, WETNESS, INTOXICATION (Drunkenness) -- enum เต็มที่มีจริงใน vanilla
-      (grep เจอใน media/lua ของเกมจริง): ANGER, BOREDOM, DISCOMFORT, ENDURANCE, FATIGUE,
-      FITNESS, FOOD_SICKNESS, HUNGER, IDLENESS, INTOXICATION, MORALE, NICOTINE_WITHDRAWAL,
-      PAIN, PANIC, POISON, SANITY, SICKNESS, STRESS, TEMPERATURE, THIRST, UNHAPPINESS, WETNESS,
-      ZOMBIE_FEVER, ZOMBIE_INFECTION -- Modern Status ไม่ได้ใช้ทุกตัว (FITNESS/IDLENESS/MORALE/
-      NICOTINE_WITHDRAWAL/SANITY/FOOD_SICKNESS/ZOMBIE_FEVER/ZOMBIE_INFECTION ไม่ได้เอามาโชว์ใน
-      HUD) แต่ enum พวกนี้ยังใช้ได้จริงถ้าจะทำ indicator เพิ่มเอง
-    - *** ข้อสังเกตแปลกที่เจอ: ตัว "Stress" ของ Modern Status ไม่ได้ใช้
-      `player:getStats():get(CharacterStat.STRESS)` (ซึ่งเป็นวิธีมาตรฐานจริงที่ vanilla ใช้เองทั่ว
-      โค้ด เช่น forageSystem.lua, ISReadABook.lua, ISCraftAction.lua) แต่ใช้
-      `player:getStats():getNicotineStress()` แทน -- ไม่แน่ใจว่าตั้งใจ (อยากรวมผลนิโคตินเข้าไปด้วย
-      เป็นพิเศษ) หรือเป็นความผิดพลาดของผู้เขียน ห้ามลอกตามโดยไม่คิด ถ้าจะทำ Stress indicator เอง
-      ใช้ `CharacterStat.STRESS` แบบมาตรฐานน่าจะถูกต้องกว่า เว้นแต่ต้องการแยกเฉพาะผลจากนิโคติน
-      จริงๆ ***
-    - **Health/ความหนาว/การติดเชื้อ**: `player:getBodyDamage():getHealth()` (health รวม),
-      `player:getBodyDamage():getApparentInfectionLevel()` (0-100, หารด้วย 100 เอง),
-      `player:getBodyDamage():getColdStrength()` (ตัวใหม่ ใช้ก่อนเสมอ ผูกกับ debug slider
-      "Catch Cold Strength" จริง) มี fallback ไป `getCatchACold()` ถ้า build เก่าไม่มี
-      getColdStrength -- เช็คว่า method มีจริงก่อนเรียกเสมอ (`bodyDamage.getColdStrength` truthy
-      check) ป้องกัน build เก่ากว่าไม่มี method นี้แล้ว error
-    - **Body part รายชิ้น**: `player:getBodyDamage():getBodyParts()` คืน list, loop
-      `bodyParts:get(i)` (index เริ่ม 0 แบบ Java) แต่ละชิ้นมี `:getBleedingTime()`,
-      `:bandaged()`, `:getStiffness()`, `:getType()` ฯลฯ
-    - **โภชนาการ**: `player:getNutrition():getCalories()`, `:getProteins()`,
-      `:getCarbohydrates()`, `:getLipids()`, `:getWeight()` (น้ำหนักตัวจริงเป็นกิโล)
-    - **น้ำหนักที่แบก (carry weight)**: ไม่ใช่ stat เดียว ต้องรวมหลายค่า:
-      `player:getInventoryWeight()` (น้ำหนักที่แบกอยู่จริง), `player:getMaxWeight()` (ความจุ
-      สูงสุดปัจจุบัน รวม trait/buff แล้ว), `player:getMaxWeightBase()` (ความจุฐานไม่รวม
-      modifier), `player:getWeightMod()` (ตัวคูณจาก Strength), `player:getMaxWeightDelta()`
-      (ตัวคูณจาก trait)
-    - **Moodle** (bleeding level, และ moodle อื่นๆ ที่ใช้ level 0-4 ไม่ใช่ float 0-1): คนละ
-      subsystem เลย ไม่ผ่าน getStats() -- ใช้ `player:getMoodles():getMoodleLevel(MoodleType.
-      <ชื่อ>)` คืนค่า integer 0-4 ตรงๆ (ไม่ต้องหารเอง) *** เทคนิคป้องกัน build เปลี่ยนชื่อ enum
-      ที่ควรลอก: เช็คชื่อใหม่ก่อน แล้ว fallback ไปชื่อเก่าด้วย `MoodleType[newName] or
-      MoodleType[legacyName]`, ห่อการเรียกจริงด้วย `pcall(...)` เผื่อ enum ไม่มีอยู่เลยทั้งคู่
-      คืน 0 แทนที่จะ error ***
+  Where the raw value comes from, by subsystem (confirmed from real source, not
+  guessed):
+    - **General stats**: `player:getStats():get(CharacterStat.<name>)` — used for
+      THIRST, HUNGER, ENDURANCE, FATIGUE, TEMPERATURE, PANIC, BOREDOM,
+      UNHAPPINESS, DISCOMFORT, SICKNESS, POISON, PAIN, ANGER, WETNESS,
+      INTOXICATION (Drunkenness) — the full real enum confirmed in vanilla (grep
+      hit in media/lua): ANGER, BOREDOM, DISCOMFORT, ENDURANCE, FATIGUE, FITNESS,
+      FOOD_SICKNESS, HUNGER, IDLENESS, INTOXICATION, MORALE,
+      NICOTINE_WITHDRAWAL, PAIN, PANIC, POISON, SANITY, SICKNESS, STRESS,
+      TEMPERATURE, THIRST, UNHAPPINESS, WETNESS, ZOMBIE_FEVER,
+      ZOMBIE_INFECTION — Modern Status doesn't use all of them
+      (FITNESS/IDLENESS/MORALE/NICOTINE_WITHDRAWAL/SANITY/FOOD_SICKNESS/
+      ZOMBIE_FEVER/ZOMBIE_INFECTION aren't shown on its HUD), but these enums are
+      still usable for building your own indicator.
+    - *** Odd thing found: Modern Status's own "Stress" indicator does NOT use
+      `player:getStats():get(CharacterStat.STRESS)` (the real standard method
+      vanilla itself uses everywhere, e.g. forageSystem.lua, ISReadABook.lua,
+      ISCraftAction.lua) — it uses `player:getStats():getNicotineStress()`
+      instead. Unclear whether intentional (wanting to specifically fold in
+      nicotine's effect) or an authoring mistake — don't copy this without
+      thinking. If building your own Stress indicator, the standard
+      `CharacterStat.STRESS` is probably more correct, unless nicotine's effect
+      specifically needs to be isolated. ***
+    - **Health/cold/infection**: `player:getBodyDamage():getHealth()` (overall
+      health), `player:getBodyDamage():getApparentInfectionLevel()` (0-100,
+      divide by 100 yourself), `player:getBodyDamage():getColdStrength()` (the
+      newer method, prefer this, tied to the real "Catch Cold Strength" debug
+      slider), falling back to `getCatchACold()` if an older build lacks
+      getColdStrength — always check the method exists first
+      (`bodyDamage.getColdStrength` truthy check) to guard against older builds
+      that don't have it.
+    - **Individual body parts**: `player:getBodyDamage():getBodyParts()` returns
+      a list, loop with `bodyParts:get(i)` (0-indexed, Java-style); each part has
+      `:getBleedingTime()`, `:bandaged()`, `:getStiffness()`, `:getType()`, etc.
+    - **Nutrition**: `player:getNutrition():getCalories()`, `:getProteins()`,
+      `:getCarbohydrates()`, `:getLipids()`, `:getWeight()` (real body weight in kg).
+    - **Carry weight**: not a single stat, needs combining several values:
+      `player:getInventoryWeight()` (actual currently-carried weight),
+      `player:getMaxWeight()` (current max capacity including trait/buffs),
+      `player:getMaxWeightBase()` (base capacity without modifiers),
+      `player:getWeightMod()` (Strength-based multiplier),
+      `player:getMaxWeightDelta()` (trait-based multiplier).
+    - **Moodles** (bleeding level, and other moodles that use a 0-4 level, not a
+      0-1 float): a completely separate subsystem, doesn't go through getStats()
+      at all — use
+      `player:getMoodles():getMoodleLevel(MoodleType.<name>)`, returns an integer
+      0-4 directly (no division needed). *** Technique worth copying to guard
+      against a build renaming the enum: check the new name first, fall back to
+      the old name with `MoodleType[newName] or MoodleType[legacyName]`, and wrap
+      the actual call in `pcall(...)` in case neither name exists at all,
+      returning 0 instead of erroring. ***
 
-  ช่วง/สเกลของค่าดิบแต่ละตัว (ความรู้ที่หา่ยากสุด ได้มาจากฟังก์ชัน Calc ที่แปลงกลับเป็น 0.0-1.0
-  -- ถ้าไม่มี reference นี้ต้อง trial-and-error เองนานมาก):
-    - Thirst, Hunger: ดิบ 0.0-1.0 อยู่แล้ว แต่ 0=อิ่ม/ชุ่มน้ำเต็มที่, 1=หิว/กระหายสุด (ตรงข้ามกับ
-      สัญชาตญาณ "แถบยิ่งเต็มยิ่งดี") Modern Status เลยพลิกเป็น `1 - value` ก่อนโชว์
-    - Endurance, Fatigue: ดิบ 0.0-1.0 อยู่แล้ว และทิศทางตรงแล้ว (มาก=ดี) ไม่ต้องพลิก
-    - Temperature: ดิบเป็นองศาอยู่ในช่วงประมาณ 20-42 ปรับเป็น 0-1 ด้วย (value-20)/(42-20)
-    - Panic, Boredom, Unhappiness, Discomfort, Health, Poison, ColdStrength, Pain, Wetness,
-      Intoxication(Drunkenness), Stiffness: ดิบเป็น 0-100 หารด้วย 100 ธรรมดา
-    - Stress: ดิบ 0.0-1.0 อยู่แล้ว (จาก getNicotineStress ตามที่เจอ) แค่ clamp ไม่ให้เกิน 1
-    - Sickness: ผสมสองค่า `getApparentInfectionLevel()/100 + getStats():get(SICKNESS)` (ตัวแรก
-      0-100 ต้องหาร ตัวหลังดิบ 0-1 อยู่แล้ว) บวกกันตรงๆ แล้วไม่ clamp เพิ่ม (อาจเกิน 1 ได้ตอน
-      ติดเชื้อรุนแรง)
-    - Calorie: ดิบเป็นค่าพลังงานสุทธิ ช่วงประมาณ -2200 ถึง 3700 (ไม่ใช่ 0-based) ปรับด้วย
-      (value-(-2200))/(3700-(-2200))
-    - Proteins, Carbohydrates, Lipids: ดิบช่วงประมาณ -500 ถึง 1000 ปรับด้วย (value+500)/1500
-    - Weight (น้ำหนักตัว): ดิบเป็นกิโลจริง ช่วงประมาณ 35-130 ปรับด้วย (value-35)/(130-35)
-    - CarryWeight: ไม่ใช้ capacity ตรงๆ เป็นเพดาน แต่ใช้ 2 เท่าของ capacity เป็นเพดานสายตา
-      (`visualMax = capacity * 2`) เพราะ vanilla ให้แบกเกิน capacity ได้ (แค่โทษ endurance/
-      ช้าลง) ถ้าใช้ capacity ตรงๆ เป็น 100% แถบจะเต็มเกินจริงเร็วไป
+  Raw value range/scale per stat (the hardest-to-find knowledge, derived from the
+  Calc functions that convert back to 0.0-1.0 — without this reference it would
+  take a long time of trial and error):
+    - Thirst, Hunger: raw is already 0.0-1.0, but 0=fully fed/hydrated, 1=fully
+      hungry/thirsty (counter-intuitive to "fuller bar = better") — Modern Status
+      flips it with `1 - value` before displaying.
+    - Endurance, Fatigue: raw is already 0.0-1.0 and already in the intuitive
+      direction (higher = better), no flip needed.
+    - Temperature: raw is degrees, roughly in the 20-42 range, normalized to 0-1
+      via (value-20)/(42-20).
+    - Panic, Boredom, Unhappiness, Discomfort, Health, Poison, ColdStrength, Pain,
+      Wetness, Intoxication (Drunkenness), Stiffness: raw is 0-100, just divide
+      by 100.
+    - Stress: raw is already 0.0-1.0 (from getNicotineStress as found above), just
+      clamp to not exceed 1.
+    - Sickness: combines two values,
+      `getApparentInfectionLevel()/100 + getStats():get(SICKNESS)` (the first is
+      0-100 so needs dividing, the second is already raw 0-1), added directly with
+      no further clamping (can exceed 1 during severe infection).
+    - Calorie: raw is a net energy value, roughly -2200 to 3700 (not 0-based),
+      normalized via (value-(-2200))/(3700-(-2200)).
+    - Proteins, Carbohydrates, Lipids: raw is roughly -500 to 1000, normalized via
+      (value+500)/1500.
+    - Weight (body weight): raw is real kg, roughly 35-130, normalized via
+      (value-35)/(130-35).
+    - CarryWeight: doesn't use capacity directly as the ceiling — uses 2x capacity
+      as the visual ceiling (`visualMax = capacity * 2`) because vanilla allows
+      carrying over capacity (just an endurance/speed penalty) — using capacity
+      directly as 100% would fill the bar too fast relative to reality.
 
-  *** สรุปสั้นๆ เอาไปใช้ได้ทันที: ถ้าจะอ่านค่า stat ตัวไหนของตัวละครในมอด HARMONIE เอง เช็ค 4
-  ที่นี้ตามลำดับ: (1) `player:getStats():get(CharacterStat.X)` สำหรับ stat หลักๆ ก่อน (2)
-  `player:getBodyDamage():getX()` สำหรับเรื่อง health/หนาว/ติดเชื้อ/body part (3)
-  `player:getNutrition():getX()` สำหรับโภชนาการ/น้ำหนักตัว (4)
-  `player:getMoodles():getMoodleLevel(MoodleType.X)` เฉพาะกรณีอยากได้ level 0-4 แบบ moodle ไม่ใช่
-  ค่าดิบต่อเนื่อง -- แล้วเช็ค isDead() ก่อนอ่านเสมอ กับดูว่าค่าดิบเป็นช่วง 0-1 หรือ 0-100 หรือช่วง
-  แปลกๆ (เช่น temperature/calorie/protein) ก่อนเอาไปคำนวณต่อ อย่าสมมติว่าทุกตัว 0-1 เหมือนกันหมด ***
-
-
-8.5 modversion — ต้องขยับทุกครั้งที่แก้ mod (สั่งไว้ 2026-09-22)
-  ทุกครั้งที่แก้ไฟล์ของ mod ไหนก็ตาม (ไม่ว่าจะแก้โค้ด, เพิ่มฟีเจอร์, แก้บั๊ก, หรือแค่แก้คำอธิบาย)
-  ต้องขยับเลข `modversion=` ใน mod.info ของ mod นั้นด้วยเสมอ ห้ามลืม -- ทำคู่กับ sync_to_workshop.sh
-  + commit + push ตามปกติ (ข้อ 8.1) เพิ่มขั้นตอนนี้เข้าไปอีกขั้นก่อน sync ทุกรอบที่แก้ไฟล์จริงของ
-  mod (ไม่ใช่แก้แค่ workflow.txt เฉยๆ ซึ่งไม่ใช่ไฟล์ของ mod ไหน ไม่ต้องขยับ)
-  รูปแบบเลขเวอร์ชัน: แต่ละ mod อาจใช้คนละ scheme กัน (เช่น GardenToPlate เคยใช้ X.Y แบบ 2.3 มาก่อน
-  แล้วรีสตาร์ทเป็น semver X.Y.Z ตอน 0.3.0 ตามที่ผู้ใช้สั่งเอง 2026-09-22) -- เช็คของเดิมในมอดนั้น
-  ก่อนเสมอว่าใช้ scheme ไหนอยู่ อย่าเปลี่ยน scheme เองโดยไม่ถาม ถ้าจะรีสตาร์ทเลขใหม่/เปลี่ยน scheme
-  ต้องถามผู้ใช้ก่อนเหมือนที่ทำกับ GardenToPlate (เพราะเลขลดลงมาจากเดิมอาจดูแปลกถ้าไม่ได้ตั้งใจ)
-
-
-8.6 บั๊กจริงที่เจอระหว่างทำ custom scrollable tab (HARMONIE_VitaminPanel, 2026-09-22) —
-    อ้างอิงสำหรับงาน UI ในอนาคต
-  - *** drawTextureScaled ต้องการ Texture object จริง ไม่รับ string path เฉยๆ *** --
-    ISUITextureGetter.checkGetTexture() แปลง string เป็น Texture ให้เฉพาะ draw function
-    บางตัวเท่านั้น ตัวนี้ไม่ทำ -- ยืนยันจาก error จริง "expected argument of type Texture, got
-    String" (console.txt) ตอนส่ง path string ตรงๆ เข้า self:drawTextureScaled() แก้โดยเรียก
-    getTexture(path) เก็บผลลัพธ์ไว้ที่ top-level ของไฟล์ครั้งเดียว (ครั้งเดียวตอนโหลดไฟล์ ไม่ใช่ทุกเฟรม)
-    แล้วส่ง Texture object ที่ resolve แล้วเข้า draw function แทน
-  - *** getText()/moodle description ห้ามมีเครื่องหมาย "%" เปล่าๆ *** -- PZ ส่งข้อความผ่าน
-    java.util.Formatter จริง (ยืนยันจาก error จริง "UnknownFormatConversionException ...
-    Message: ERROR: Formatting") เครื่องหมาย % ตัวเดียวที่ไม่ตามด้วยตัวเลข (เช่น "%1") หรือไม่ใช่
-    "%%" จะทำให้ Formatter throw แล้วข้อความนั้นแสดงผลเพี้ยน/หายไปเงียบๆ ไม่มี error โผล่ในเกม เจอ
-    จริงกับ "80%" ในข้อความ Vitamin B ทั้ง Downside/Moodle description ทั้งไทย+อังกฤษ วิธีแก้ที่
-    ปลอดภัยกว่าใช้ "%%": เขียนเลี่ยงเป็นคำ (เช่น "80 percent"/"80 เปอร์เซ็นต์") แทนตัวเลข+% ตรงๆ
-    เพื่อกันคนแก้ทีหลังลืมดับเบิล % (ยืนยันว่า "%%" ใช้ได้จริงจาก mod อื่นในแพ็คแปล เช่น
-    IGUI_LSAmbitions_* ที่เขียน "+15%%" ไว้แล้วไม่มีปัญหา)
-  - *** ระวัง boundary comparison ไม่ตรงกันระหว่างระบบสองตัวที่อ่านค่า threshold เดียวกัน *** --
-    MoodleFramework เอง (MF_ISMoodle.lua:getLevel()) เทียบแบบ "value <= threasholdBadN"
-    (inclusive) แต่ HARMONIE_GTP.GetBand เทียบแบบ "value < criticalThreshold" (exclusive) ทั้งคู่
-    อ่านค่า Config.criticalThreshold ตัวเดียวกันจริง (ไม่ได้ hardcode คนละที่) แต่ผลต่างกันตรงค่า
-    ที่ตรง threshold พอดีเป๊ะ (เช่น ตั้ง Reserve = 20 เป๊ะ ตอน threshold = 20) -- แก้โดยลบ epsilon
-    เล็กๆ (0.0001 ของสเกล ratio) ออกจากค่าที่ส่งให้ MoodleFramework ก่อนตั้ง threshold เพื่อให้ "<="
-    ของมันทำงานตรงกับ "<" ของเราทุกกรณีที่มีความหมายจริง (ดู HARMONIE_VitaminMoodles.lua's
-    applyThresholds) -- บทเรียน: เวลาเอา threshold ตัวเดียวกันไปป้อนให้ระบบสองตัว ต้องเช็คว่าแต่ละ
-    ตัวเทียบแบบ inclusive หรือ exclusive ก่อนเสมอ อย่าสมมติว่าเหมือนกัน
-  - *** เพิ่ม tab เองใน ISCharacterInfoWindow ห้ามอ่านความกว้างจาก self.characterView ทันทีหลัง
-    createChildren *** -- self.characterView (แท็บ Skills) ถูกสร้างด้วยความกว้างเริ่มต้นแคบๆ
-    (แค่พอใส่ป้ายชื่อ 5 แท็บ, "tabTotalWidth" ในคอมเมนต์ vanilla เอง) แล้วค่อยขยายทีหลังตอน
-    ISCharacterInfo:render() เรียก self:setWidthAndParentWidth(math.max(self.width, ...)) เอง --
-    ถ้าไปอ่าน self.characterView:getWidth() ทันทีตอน createChildren จะได้ค่าแคบตัวเดิมติดไปตลอด
-    วิธีแก้: ให้ tab ใหม่ทำ setWidthAndParentWidth(math.max(self:getWidth(), desiredWidth)) เอง
-    ทุกเฟรมใน :prerender() (เลียนแบบ vanilla เป๊ะ ไม่พึ่งพาแท็บอื่น) แทนที่จะยืมความกว้างจากแท็บอื่น
-  - *** ISScrollingListBox คือ widget ที่ถูกต้องสำหรับ custom scrollable tab *** -- ไม่ใช่ ISPanel
-    เปล่าๆ: derive จาก ISScrollingListBox, override :doDrawItem(y, item, alt) สำหรับวาดแต่ละแถว,
-    เก็บ layout/ความสูงต่อแถวไว้ใน item.height (คำนวณจาก wrapped text จริงจำนวนบรรทัด ไม่ใช่ค่าคงที่)
-    แล้วเรียก self:setScrollHeight(totalHeight) ให้ scrollbar โผล่เองอัตโนมัติเมื่อเนื้อหาสูงเกิน
-    พื้นที่ที่มองเห็น -- ได้ scroll/clip/mouse-wheel ฟรีจาก widget เดิม ไม่ต้องเขียนเอง
-  - *** อ้างอิง UI สวยจริงสำหรับ debug/status panel: EHR_DebugMenuV2.lua *** (Extensive Health
-    Rework Evolved, Workshop 3726328119, subscribe อยู่แล้ว + เป็น soft-dependency ของ
-    HARMONIE_HomeMedic อยู่แล้ว) -- เทคนิคที่ลอกมาใช้จริงใน HARMONIE_VitaminPanel.lua: แถบสี status
-    ข้างซ้ายของแต่ละแถว (accent stripe), badge/chip พื้นหลังโปร่งหลังคำ status, fill bar
-    (drawRect พื้นหลังเข้ม + drawRect เติมสีตามสัดส่วน + drawRectBorder ขอบ) และเส้นแบ่งบางๆ 1px
-    ระหว่างแถวแทนพื้นหลังสลับสี ยังมี pattern จริงเรื่อง body damage ที่ยืมมาใช้ด้วย:
-    bodyDamage:getOverallBodyHealth()/bodyDamage:ReduceGeneralHealth(amount) สำหรับลด/จำกัด
-    ค่าสุขภาพโดยรวมแบบปลอดภัย (ดู EHR_EnvironmentalClampBodyHealth ใน
-    EHR_EnvironmentalDiseases.lua) -- กลับมาดู mod นี้อีกถ้าจะทำอะไรเกี่ยวกับ body damage/UI สวยๆ
-    ในอนาคต
+  *** Quick summary, ready to use immediately: to read any character stat in a
+  HARMONIE mod, check these 4 in order: (1) `player:getStats():get(CharacterStat.X)`
+  for main stats first (2) `player:getBodyDamage():getX()` for health/cold/
+  infection/body-part stuff (3) `player:getNutrition():getX()` for
+  nutrition/body weight (4)
+  `player:getMoodles():getMoodleLevel(MoodleType.X)` only when a 0-4 moodle level
+  is wanted, not a continuous raw value — always check isDead() before reading,
+  and check whether the raw value is 0-1, 0-100, or an odd range (e.g.
+  temperature/calorie/protein) before using it in a calculation — never assume
+  every stat is 0-1 alike. ***
 
 
-8.7 Multiplayer — หลักการที่ต้องยึดเสมอทุกครั้งที่เขียน hook/loop ใหม่ (2026-09-22)
-  งานวิจัยจริงจากซอร์ส vanilla (ไม่ใช่เดา) ระหว่างพยายามเช็คว่า HARMONIE_VitaminChecker.lua
-  เหมาะกับ MP แค่ไหน:
-
-  - *** getNumActivePlayers()/getSpecificPlayer(i) คือ "ผู้เล่น local บนเครื่องนี้เท่านั้น" ***
-    (แนวคิดสำหรับ split-screen เป็นหลัก -- ยืนยันจาก client/XpSystem/ISUI/ISCharacterInfo.lua
-    ที่ใช้คู่นี้วนแค่ local player slots) -- บนเครื่อง client แต่ละเครื่องใน MP จริง คู่นี้จะคืนแค่
-    ตัวละครของผู้เล่นคนนั้นเอง ไม่เห็นผู้เล่นคนอื่นเลย
-  - *** getOnlinePlayers() คือฟังก์ชันจริงสำหรับวนผู้เล่น "ทุกคนที่ต่ออยู่" แบบ server-side ***
-    (ยืนยันจาก server/ClientCommands.lua ที่ admin command ใช้ตัวนี้จริงเวลาต้องทำอะไรกับทุกคน)
-  - *** isClient()/isServer() เป็น idiom มาตรฐานของ vanilla สำหรับกันโค้ดที่มีผลข้างเคียง
-    (world-mutating) ไม่ให้รันซ้ำบน remote client ที่ไม่ใช่ authoritative *** -- แพทเทิร์นจริงที่
-    เจอซ้ำๆ ในซอร์ส vanilla: `if isClient() then return end` หรือ `if not isClient() then ... end`
-    คลุมเฉพาะส่วนที่ต้องรันแค่ที่เดียว (singleplayer, dedicated server, หรือ host's embedded
-    server -- ทุกกรณีนี้ isClient() เป็น false) ส่วน remote client (isClient() เป็น true) จะข้าม
-    แล้วรอรับผลจาก sync แทน
-
-  *** ช่องโหว่จริงที่เจอและยังไม่ได้แก้ -- ต้องถามผู้ใช้ก่อนว่าจะแก้ตอนนี้เลยไหม ***:
-  HARMONIE_VitaminChecker.lua (และไฟล์ Decay/Effects ที่เกี่ยวข้อง) อยู่ใน media/lua/shared/ และ
-  ใช้ getNumActivePlayers()/getSpecificPlayer() วนผู้เล่น -- ตามที่ยืนยันข้างบน คู่ฟังก์ชันนี้เห็น
-  แค่ผู้เล่น local เท่านั้น หมายความว่า:
-    1. บน dedicated server แท้ๆ (ไม่มีใคร host บนเครื่องนั้น ไม่มี local player) checker นี้อาจไม่
-       ทำงานเลย (getNumActivePlayers() = 0) เพราะไม่ใช่ฟังก์ชันที่ออกแบบมาให้ใช้ฝั่ง server
-    2. ในเกม MP จริง (host + remote clients) ระบบผลเสียวิตามินตอนนี้ทำงานแบบ "แต่ละ client คำนวณ
-       เอง" (client-trusted) ไม่ใช่ server-authoritative -- ผู้เล่นที่แก้ไฟล์มอดตัวเองสามารถปิด
-       ผลเสียของตัวเองได้ ไม่ต่างจาก single-player mod ทั่วไปที่ไม่ได้ออกแบบมาป้องกันโกง แต่ถ้าเล่น
-       ปกติไม่โกงจะยังเห็นผลเสียตามปกติ เพราะ client ของแต่ละคนคำนวณให้ตัวเองอยู่แล้ว (ModData sync
-       ผ่าน transmitModData() ที่มีอยู่แล้วทำให้ client อื่น/host เห็นค่า Reserve ที่ถูกต้อง แค่ตัว
-       "คำนวณผลเสีย" เองไม่ได้ผ่าน server)
-  ยังไม่ได้แก้เพราะเป็นการเปลี่ยนสถาปัตยกรรมที่มีนัยสำคัญ (ต้องเปลี่ยนมาใช้ getOnlinePlayers() +
-  isClient() gate + ทดสอบบน dedicated server จริงซึ่งตอนนี้ไม่มีให้ทดสอบ) และ pattern เดิมมาจาก
-  commit "multiplayer vitamin sync character/item" ของผู้ใช้เองที่อาจตั้งใจออกแบบมาแบบนี้แล้ว --
-  ต้องถามผู้ใช้ก่อนว่าต้องการให้ทำ server-authoritative จริงไหม หรือยอมรับ client-trusted model นี้
-  ต่อไป (ใช้ได้ปกติสำหรับ host+remote clients เล่นด้วยกัน แค่ไม่รองรับ dedicated server เปล่าๆ
-  และไม่กันโกงจากผู้เล่นที่ตั้งใจแก้ไฟล์ตัวเอง)
-
-  *** กฎที่ต้องทำทุกครั้งจากนี้ไป: ก่อนเขียน hook/loop ใหม่ที่มีผลข้างเคียง (เปลี่ยนค่า stat, สร้าง
-  item, สร้างแผล, ฯลฯ) ถามตัวเองก่อนเสมอ: (1) ต้องการวนผู้เล่น local หรือทุกคนที่ต่ออยู่? เลือก
-  getNumActivePlayers()/getSpecificPlayer() หรือ getOnlinePlayers() ให้ตรง (2) โค้ดนี้ควรรันที่
-  เดียว (authoritative) หรือรันได้ทุกเครื่อง (idempotent, ไม่มีผลข้างเคียงที่สุ่ม/สร้างของใหม่)?
-  ถ้าไม่ idempotent (เช่น สุ่ม dice หรือสร้าง item/wound ใหม่) ต้องคลุมด้วย isClient()/isServer()
-  gate เสมอ ***
+8.5 modversion — must be bumped every time a mod's files change (standing rule since 2026-09-22)
+  Every time any mod's files are edited (whether code, a new feature, a bug fix,
+  or just a description tweak), the `modversion=` number in that mod's mod.info
+  must always be bumped too — never forget this. Pair it with
+  sync_to_workshop.sh + commit + push as usual (section 8.1) — add this as one
+  more step before every sync whenever a mod's real files change (not just
+  editing workflow.txt itself, which isn't any mod's file — no bump needed for that).
+  Version number format: each mod may use a different scheme (e.g. GardenToPlate
+  previously used X.Y like 2.3, then restarted as semver X.Y.Z at 0.3.0 per the
+  user's own explicit instruction on 2026-09-22) — always check what scheme a mod
+  already uses first. Never change schemes on your own without asking; if
+  restarting the numbering or changing scheme, ask the user first like was done
+  for GardenToPlate (since a number going DOWN from before can look accidental if
+  not deliberate).
 
 
-9. Checklist ก่อนเริ่มงานใหม่ทุกครั้ง
+8.6 Real bugs/techniques from building a custom scrollable tab (HARMONIE_VitaminPanel, 2026-09-22) — reference for future UI work
+  - *** drawTextureScaled needs a real Texture object, not a plain string path
+    *** — ISUITextureGetter.checkGetTexture() only converts a string to a
+    Texture for SOME draw functions, not this one — confirmed via a real error
+    "expected argument of type Texture, got String" (console.txt) when passing a
+    path string directly into self:drawTextureScaled(). Fix: call getTexture(path)
+    once at the file's top level (once at file-load time, not every frame) and
+    pass the already-resolved Texture object into the draw function instead.
+  - *** getText()/moodle description strings must never contain a bare "%" ***
+    — PZ routes text through a real java.util.Formatter (confirmed via a real
+    error "UnknownFormatConversionException ... Message: ERROR: Formatting"). A
+    single "%" not followed by a digit (like "%1") or not doubled as "%%" makes
+    the Formatter throw, and that string silently renders wrong/blank with no
+    in-game error at all. Hit this for real with "80%" in Vitamin B's text
+    (Downside + Moodle description, both Thai and English). Safer fix than using
+    "%%": rewrite as words (e.g. "80 percent"/"80 เปอร์เซ็นต์") instead of a raw
+    number+% combo, so a future edit can't forget to double the sign (confirmed
+    "%%" does work — other mods in the translation pack, e.g.
+    IGUI_LSAmbitions_*, already use "+15%%" with no issue).
+  - *** Watch for a boundary-comparison mismatch between two systems reading the
+    same threshold *** — MoodleFramework itself (MF_ISMoodle.lua:getLevel())
+    compares with "value <= threasholdBadN" (inclusive), but
+    HARMONIE_GTP.GetBand compares with "value < criticalThreshold" (exclusive).
+    Both genuinely read the same Config.criticalThreshold value (not hardcoded
+    separately anywhere) — but they disagree exactly at the threshold value
+    itself (e.g. setting Reserve to exactly 20 when threshold = 20). Fixed by
+    subtracting a small epsilon (0.0001 of the ratio scale) from the value fed
+    to MoodleFramework before setting its thresholds, so its "<=" behaves like
+    our "<" in every case that matters (see HARMONIE_VitaminMoodles.lua's
+    applyThresholds). Lesson: whenever feeding the same threshold into two
+    different systems, always check whether each one compares inclusively or
+    exclusively — never assume they match.
+  - *** Adding your own tab to ISCharacterInfoWindow: never read a width from
+    self.characterView right after createChildren *** — self.characterView (the
+    Skills tab) is initially created at a narrow starting width (just enough for
+    5 tab labels, called "tabTotalWidth" in vanilla's own comment), then grows
+    later when ISCharacterInfo:render() itself calls
+    self:setWidthAndParentWidth(math.max(self.width, ...)). Reading
+    self.characterView:getWidth() immediately during createChildren locks in
+    that same narrow value forever. Fix: make the new tab do
+    setWidthAndParentWidth(math.max(self:getWidth(), desiredWidth)) itself every
+    frame in :prerender() (mirroring vanilla exactly, not depending on another
+    tab) instead of borrowing a width from a sibling tab.
+  - *** ISScrollingListBox is the correct widget for a custom scrollable tab ***
+    — not a plain ISPanel: derive from ISScrollingListBox, override
+    :doDrawItem(y, item, alt) to draw each row, store per-row layout/height in
+    item.height (computed from the real number of wrapped-text lines, not a
+    constant), then call self:setScrollHeight(totalHeight) so the scrollbar
+    appears automatically once content exceeds the visible area — gets
+    scroll/clip/mouse-wheel for free from the existing widget, no need to write
+    it yourself.
+  - *** Real reference for a nice-looking debug/status panel UI:
+    EHR_DebugMenuV2.lua *** (Extensive Health Rework Evolved, Workshop
+    3726328119, already subscribed + already a soft dependency of
+    HARMONIE_HomeMedic) — techniques actually reused in
+    HARMONIE_VitaminPanel.lua: a colored status accent stripe down the left edge
+    of each row, a tinted background badge/chip behind a status word, a fill bar
+    (dark-background drawRect + proportional-fill drawRect + drawRectBorder
+    outline), and a thin 1px divider between rows instead of an alternating
+    background block. Also has a real body-damage pattern worth reusing:
+    bodyDamage:getOverallBodyHealth()/bodyDamage:ReduceGeneralHealth(amount) to
+    safely reduce/cap overall health (see EHR_EnvironmentalClampBodyHealth in
+    EHR_EnvironmentalDiseases.lua) — revisit this mod again for any future body-
+    damage or nice-UI work.
+
+
+8.7 Multiplayer — principles to follow every time a new hook/loop is written (2026-09-22)
+  Real research from vanilla source (not guessed) while trying to check how MP-
+  safe HARMONIE_VitaminChecker.lua actually is:
+
+  - *** getNumActivePlayers()/getSpecificPlayer(i) mean "local players on THIS
+    machine only" *** (primarily a split-screen concept — confirmed from
+    client/XpSystem/ISUI/ISCharacterInfo.lua, which uses this pair to loop only
+    local player slots) — on each individual client machine in real MP, this
+    pair only ever returns that player's own character, never sees other
+    players at all.
+  - *** getOnlinePlayers() is the real function for looping EVERY connected
+    player, server-side *** (confirmed from server/ClientCommands.lua, where a
+    real admin command uses this when it needs to affect everyone).
+  - *** isClient()/isServer() is vanilla's own standard idiom for keeping code
+    with side effects (world-mutating) from running redundantly on a non-
+    authoritative remote client *** — the real recurring pattern found in
+    vanilla source: `if isClient() then return end` or
+    `if not isClient() then ... end` wraps only the part that must run in
+    exactly one place (singleplayer, dedicated server, or the host's embedded
+    server — isClient() is false in all of these cases); a remote client
+    (isClient() is true) skips it and waits to receive the result via sync
+    instead.
+
+  *** A real gap found here that's NOT yet fixed — needs to ask the user whether
+  to fix it now ***: HARMONIE_VitaminChecker.lua (and its dependent Decay/
+  Effects files) live in media/lua/shared/ and use
+  getNumActivePlayers()/getSpecificPlayer() to loop players — per the above,
+  this pair only ever sees LOCAL players. This means:
+    1. On a genuine bare dedicated server (nobody hosting locally on that
+       machine, no local player), this checker likely doesn't run at all
+       (getNumActivePlayers() = 0), since it's not a function meant for
+       server-side use.
+    2. In real MP (host + remote clients), the vitamin penalty system currently
+       works as "each client computes its own" (client-trusted), not server-
+       authoritative — a player who edits their own mod files could disable
+       their own penalties, same as any singleplayer-style mod not designed to
+       prevent cheating. Playing normally without cheating still shows correct
+       penalties, since each client already computes for itself (ModData sync
+       via the existing transmitModData() already lets other clients/the host
+       see the correct Reserve value — only the "compute the penalty" step
+       itself doesn't go through the server).
+  Left unfixed because it's a meaningful architecture change (would need
+  switching to getOnlinePlayers() + an isClient() gate + testing on a real
+  dedicated server, which isn't available to test against right now), and the
+  existing pattern comes from the user's own "multiplayer vitamin sync
+  character/item" commit, which may have been deliberately designed this way
+  already — must ask the user first whether they want genuine server-
+  authoritative behavior, or to accept this client-trusted model going forward
+  (works fine for host + remote clients playing together, just doesn't support a
+  bare dedicated server, and doesn't prevent a player from cheating via their own
+  edited files).
+
+  *** Rule to follow from now on: before writing any new hook/loop with a side
+  effect (changing a stat, creating an item, creating a wound, etc.), always ask:
+  (1) does this need to loop LOCAL players or ALL connected players? Pick
+  getNumActivePlayers()/getSpecificPlayer() or getOnlinePlayers() accordingly.
+  (2) should this code run in exactly ONE place (authoritative), or is it safe to
+  run on every machine (idempotent, no random/object-creating side effects)? If
+  it's NOT idempotent (e.g. rolls dice, or creates a new item/wound), it must
+  always be wrapped in an isClient()/isServer() gate. ***
+
+
+9. Checklist before starting any new work
 =======================================
-[ ] อ่านไฟล์นี้ (mods/workflow.txt) ก่อนเสมอ
-[ ] `git fetch` + `git status` + `git log --oneline -5` เช็ค state ล่าสุดของ repo
-[ ] ถ้าจะ patch mod คนอื่น: หาไฟล์จริงใน Steam Workshop content cache ก่อน (ข้อ 7) อย่าเดา
-[ ] ถ้าจะทำ "ปรับได้ระหว่างเล่น": เลือก PZAPI.ModOptions ไม่ใช่ sandbox option (ข้อ 2)
-[ ] ถ้าจะทำ volume ปรับสด: เช็ค category ก่อนว่าซ้ำ vanilla ไหม (ข้อ 3.1) ถ้าซ้ำใช้ hook แทน
-[ ] ถ้าจะ hook Lua ข้าม mod: หา global function/table method ไม่ใช่ local function (ข้อ 4)
-[ ] ถ้าจะแก้ไฟล์แปล JSON: เติมต่อท้าย ห้ามเขียนทับทั้งไฟล์ (ข้อ 5) แล้ว validate ด้วย Node.js
-[ ] ถ้าจะสร้าง mod ใหม่ที่จะ publish: ทำครบ 8 ขั้นตอนในข้อ 1 รวม Workshop staging + รูป
-[ ] แก้ไฟล์ของ mod ที่เคย publish แล้ว (มี Workshop/<ModId>/ อยู่) -> รัน
-    `mods/check_workshop_sync.sh` ก่อนบอกผู้ใช้ให้ไปทดสอบในเกมเสมอ ถ้าเจอ DRIFT รัน
-    `mods/sync_to_workshop.sh <ModId> [version]` ทันที (ข้อ 1 -- ป้องกันบั๊ก JoJo_FightingGold
-    ซ้ำ ที่เกมโหลดจาก Workshop staging คนละไฟล์กับที่แก้ใน mods/)
-[ ] ถ้าจะทำ moodle เอง: ใช้ MoodleFramework (ข้อ 8.2) ไม่ต้องเขียน UI/render เอง
-[ ] ถ้าจะสร้าง trait ใหม่: ประกาศผ่าน character_trait_definition script (ข้อ 8.2) ไม่ใช่ Lua ล้วน
-[ ] ถ้าจะทำ custom UI widget (ปุ่ม/แถบ/scroll list): เช็ค NeatTool ก่อน (ข้อ 8.3) ไม่ต้องเขียน
-    9-patch/3-patch/virtualized list เองใหม่
-[ ] ถ้าจะอ่านค่า stat ตัวละคร: เช็คข้อ 8.4 ก่อนเสมอ ว่าดิบเป็นช่วง 0-1/0-100/ช่วงแปลก อย่าสมมติ
-[ ] อาการ "แก้แล้วในเกมเหมือนไม่มีผล" -> รัน `mods/check_workshop_sync.sh` ก่อนสงสัยเรื่อง cache
-    (ข้อ 6.1) หรือทฤษฎีอื่นเสมอ เช็คถูกที่ก่อนจะประหยัดเวลาดีบั๊กได้มาก
-[ ] เจอความรู้ใหม่ระหว่างทาง -> กลับมาอัปเดตไฟล์นี้ก่อนจบงานเสมอ
-[ ] แก้ไฟล์จริงของ mod ไหนก็ตาม -> ขยับ modversion ใน mod.info ของ mod นั้นด้วยเสมอ (ข้อ 8.5)
-[ ] ถ้าจะทำ custom scrollable tab/panel: ใช้ ISScrollingListBox ไม่ใช่ ISPanel เปล่าๆ (ข้อ 8.6)
-    และถ้าอยากได้ UI สวยแบบ status panel ดู EHR_DebugMenuV2.lua เป็นตัวอย่างก่อน (ข้อ 8.6)
-[ ] จะวาด texture เอง -> เรียก getTexture(path) เก็บผลลัพธ์ไว้ก่อน อย่าส่ง path string ตรงเข้า
-    drawTextureScaled (ข้อ 8.6)
-[ ] จะเขียนข้อความใหม่ลง getText()/translation JSON -> ห้ามมีเครื่องหมาย "%" เปล่าๆ (เขียนเป็นคำ
-    "percent"/"เปอร์เซ็นต์" แทน หรือใช้ "%%" ถ้าจำเป็นต้องใช้สัญลักษณ์จริง) (ข้อ 8.6)
-[ ] จะป้อน threshold ตัวเดียวกันให้ระบบสองตัว (เช่น mod เราเอง + MoodleFramework) -> เช็คก่อนว่า
-    แต่ละฝั่งเทียบแบบ inclusive (`<=`) หรือ exclusive (`<`) อย่าสมมติว่าเหมือนกัน (ข้อ 8.6)
-[ ] จะเขียน hook/loop ใหม่ที่มีผลข้างเคียง -> เช็คก่อนเสมอว่าต้องการผู้เล่น local
-    (getNumActivePlayers/getSpecificPlayer) หรือทุกคนที่ต่ออยู่ (getOnlinePlayers) และถ้าไม่
-    idempotent (สุ่ม dice/สร้างของใหม่) ต้องคลุมด้วย isClient()/isServer() gate เสมอ (ข้อ 8.7)
-[ ] จบงานแล้ว commit+push (ข้อ 8.1) และแจ้งผู้ใช้รายชื่อ mod ที่ต้อง publish ใหม่บน Workshop
+[ ] Always read this file (mods/workflow.txt) first.
+[ ] `git fetch` + `git status` + `git log --oneline -5` to check the repo's latest state.
+[ ] Patching someone else's mod? Find their real files in the Steam Workshop
+    content cache first (section 7) — never guess.
+[ ] Building something "adjustable while playing"? Use PZAPI.ModOptions, not a
+    sandbox option (section 2).
+[ ] Building live-adjustable volume? Check first whether the category collides
+    with vanilla (section 3.1) — use a hook instead if it does.
+[ ] Hooking Lua across mods? Find a global function/table method, not a local
+    function (section 4).
+[ ] Editing a translation JSON file? Append only, never overwrite the whole file
+    (section 5), then validate with Node.js.
+[ ] Creating a new mod to publish? Complete all 8 steps in section 1, including
+    Workshop staging + artwork.
+[ ] Editing a mod that's already published (has a Workshop/<ModId>/ folder)? Run
+    `mods/check_workshop_sync.sh` before ever telling the user to test in-game —
+    if DRIFT shows up, run `mods/sync_to_workshop.sh <ModId> [version]`
+    immediately (section 1 — prevents a repeat of the JoJo_FightingGold bug where
+    the game loaded a different file from Workshop staging than what was edited
+    in mods/).
+[ ] Building your own moodle? Use MoodleFramework (section 8.2) — no need to
+    write your own UI/rendering.
+[ ] Creating a new trait? Declare it via a character_trait_definition script
+    (section 8.2), not plain Lua.
+[ ] Building a custom UI widget (button/bar/scroll list)? Check NeatTool first
+    (section 8.3) — no need to write your own 9-patch/3-patch/virtualized list.
+[ ] Reading a character stat value? Always check section 8.4 first — is the raw
+    value 0-1/0-100/an odd range? Never assume.
+[ ] "I edited it but it looks like nothing changed in the game" symptom? Run
+    `mods/check_workshop_sync.sh` before suspecting the cache issue (section 6.1)
+    or any other theory — checking the right thing first saves huge debugging time.
+[ ] Learned something new along the way? Always come back and update this file
+    before finishing the task.
+[ ] Edited any mod's real files? Always bump modversion in that mod's mod.info
+    too (section 8.5).
+[ ] Building a custom scrollable tab/panel? Use ISScrollingListBox, not a plain
+    ISPanel (section 8.6) — and check EHR_DebugMenuV2.lua as an example first if
+    a nice status-panel look is wanted (section 8.6).
+[ ] Drawing a texture yourself? Call getTexture(path) and store the result first
+    — never pass a path string directly into drawTextureScaled (section 8.6).
+[ ] Writing new text into getText()/a translation JSON? Never include a bare "%"
+    character (spell it out as "percent"/"เปอร์เซ็นต์" instead, or use "%%" if a
+    literal symbol is truly needed) (section 8.6).
+[ ] Feeding the same threshold into two systems (e.g. our own mod + MoodleFramework)?
+    Check first whether each side compares inclusively (`<=`) or exclusively
+    (`<`) — never assume they match (section 8.6).
+[ ] Writing a new hook/loop with a side effect? Always check first whether it
+    needs LOCAL players (getNumActivePlayers/getSpecificPlayer) or ALL connected
+    players (getOnlinePlayers), and if it's not idempotent (rolls dice/creates
+    something new), always wrap it in an isClient()/isServer() gate (section 8.7).
+[ ] Done? Commit + push (section 8.1) and tell the user which mods need
+    re-publishing on Workshop.
