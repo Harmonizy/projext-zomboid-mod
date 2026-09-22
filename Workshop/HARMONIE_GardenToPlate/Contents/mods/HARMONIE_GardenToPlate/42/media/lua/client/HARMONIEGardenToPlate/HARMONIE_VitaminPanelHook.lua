@@ -11,16 +11,23 @@
     hooking pattern documented in mods/workflow.txt section 4 -- global
     function, not a local, so it's wrappable: call the original first so
     every vanilla tab (Info/Skills/Health/Protection/Clothing) is built and
-    self.panel/self.characterView already exist, then add one more tab the
-    exact same way vanilla adds its own (self.panel:addView(title, view)).
+    self.panel already exists, then add one more tab the exact same way
+    vanilla adds its own (self.panel:addView(title, view)).
 
-    Reuses self.characterView's already-computed width/height instead of
-    recomputing tabTotalWidth itself -- that value is a local inside vanilla's
-    own createChildren (the "nasty way ... there's no way to get the total
-    length of all the tabs before they've been added" it comments on itself),
-    not something this wrap can reach directly, but self.characterView is a
-    real field already sized to that exact width by the time our wrapped
-    call runs.
+    Width: use self.panel:getWidth() as a starting size, NOT
+    self.characterView:getWidth() -- confirmed by reading vanilla's own
+    createChildren that self.characterView (the Skills tab) is initially
+    created at only `tabTotalWidth` (just wide enough for the 5 tab labels,
+    ~300px), and only grows wider later, during ISCharacterInfo:render()'s
+    own documented "BIG CHEAT" (self:setWidthAndParentWidth(...) in
+    ISCharacterInfo.lua) -- which hasn't run yet at the point our wrapped
+    createChildren executes. Reading its width here previously captured that
+    too-narrow starting value, producing a cramped panel with heavily
+    word-wrapped Thai text (real user report, screenshot of the "Vitamins"
+    tab looking squeezed). HARMONIE_VitaminPanel.lua now does the same
+    self:setWidthAndParentWidth() growth trick itself, every prerender frame
+    while visible, exactly like vanilla's Skills tab does -- so the starting
+    width here only matters for the very first frame.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminPanel"
@@ -30,10 +37,10 @@ local originalCreateChildren = ISCharacterInfoWindow.createChildren
 ISCharacterInfoWindow.createChildren = function(self, ...)
     originalCreateChildren(self, ...)
 
-    if not self.characterView then return end
+    if not self.panel then return end
 
-    local width = self.characterView:getWidth()
-    local height = self.characterView:getHeight()
+    local width = self.panel:getWidth()
+    local height = self.height - 8
 
     self.vitaminView = HARMONIE_VitaminPanel:new(0, 8, width, height, self.playerNum)
     self.vitaminView:initialise()

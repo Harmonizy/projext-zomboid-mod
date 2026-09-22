@@ -316,8 +316,20 @@ end
 
 local LAYOUT_REFRESH_INTERVAL_MS = 2000
 
+-- Comfortable width for the text this tab shows (Thai translations in
+-- particular need more room than English) -- vanilla's own Skills tab
+-- (ISCharacterInfo:render(), the "BIG CHEAT" it comments on itself) grows
+-- the whole window every frame via self:setWidthAndParentWidth(math.max(
+-- self.width, ...)), never shrinking it; this mirrors that same trick so
+-- our tab isn't stuck at the narrow ~300px starting width every other
+-- non-Skills tab uses (see HARMONIE_VitaminPanelHook.lua's header for the
+-- full explanation of why that starting width is too narrow here).
+local PANEL_DESIRED_WIDTH = 480
+
 function HARMONIE_VitaminPanel:prerender()
     self.pendingTooltip = nil
+
+    self:setWidthAndParentWidth(math.max(self:getWidth(), PANEL_DESIRED_WIDTH))
 
     local now = getTimestampMs and getTimestampMs() or 0
     if not self.lastLayoutRefreshMs or now - self.lastLayoutRefreshMs >= LAYOUT_REFRESH_INTERVAL_MS then
