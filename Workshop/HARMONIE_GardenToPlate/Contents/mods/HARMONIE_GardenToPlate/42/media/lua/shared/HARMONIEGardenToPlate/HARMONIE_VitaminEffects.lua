@@ -343,6 +343,17 @@ end
 -- ---------------------------------------------------------------------
 local SICKNESS_FLOOR = 0.55
 
+-- TEMP DIAGNOSTIC (2026-09-22): user reports the debug menu's own
+-- "Sickness" slider always reads 0 despite this function running every 10
+-- real seconds while Vitamin K is Critical (confirmed via console.txt --
+-- the "hit Critical -- effect ACTIVE" log fired, no Lua errors anywhere
+-- near it). Every write-persistence path was checked by decompiling
+-- Stats.class (set() clamps + stores into a real Map, returns whether it
+-- changed; get() is a plain Map read; IsoGameCharacter.getStats() returns
+-- the same persistent Stats field, not a fresh throwaway object) -- all
+-- confirmed fine in isolation. This print closes the remaining gap: does
+-- the value ACTUALLY hold from the game's own perspective right after we
+-- write it? Remove once the real cause is found and fixed.
 function VitEffects.MaintainSicknessFloor(character)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
     if not isActive(character, "K") then return end
@@ -352,6 +363,10 @@ function VitEffects.MaintainSicknessFloor(character)
     if current < SICKNESS_FLOOR then
         stats:set(CharacterStat.SICKNESS, SICKNESS_FLOOR)
     end
+
+    local readback = stats:get(CharacterStat.SICKNESS)
+    print(string.format("[HARMONIE][DIAG] SICKNESS before=%.4f floor=%.2f after-write readback=%.4f",
+        current, SICKNESS_FLOOR, readback))
 end
 
 --[[
