@@ -1056,6 +1056,18 @@ How to debug:
       grepped, and prefer a CharacterStat nobody else's active mods
       reference at all over one that merely "sounds right" thematically.
       ***
+    - CharacterStat.INTOXICATION (0-100 scale, default 0, confirmed via the
+      same javap technique on CharacterStat.class's static initializer):
+      drives vanilla's real "Drunk" moodle directly
+      (`getStats():get(INTOXICATION)` alone, no combination with anything
+      else, same single-value shape as DISCOMFORT/UNCOMFORTABLE above) --
+      MoodleStat.DRUNK's own registered thresholds are 10/30/50/70 for its
+      4 levels. Used by HARMONIE_GardenToPlate's Vitamin A (2026-09-22) to
+      floor at 30 purely for Intoxication's real blurred-vision side
+      effect, with an explicit user requirement that none of the mod's own
+      text (Symptom/Downside/Moodle copy) ever mention being drunk --
+      vanilla's own native "Drunk" moodle icon still shows regardless
+      (unavoidable, same as every other vitamin's native side-moodle).
     - Calorie: raw is a net energy value, roughly -2200 to 3700 (not 0-based),
       normalized via (value-(-2200))/(3700-(-2200)).
     - Proteins, Carbohydrates, Lipids: raw is roughly -500 to 1000, normalized via

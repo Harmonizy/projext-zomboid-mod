@@ -31,11 +31,12 @@
          back.
       5. Every vitamin applies its own direct stat penalty (see
          HARMONIE_VitaminEffects.lua's header for the full mapping and
-         API citations): A stress floor, B endurance ceiling, C a random
-         Head-scratch check (its own 1-game-hour block, separate from the
-         6-hour symptom block above), D muscle-strain (Stiffness) floor
-         on every body part, E unhappiness floor, K sickness floor -- plus
-         the universal per-affliction health cap (MaintainHealthCap).
+         API citations): A Intoxication floor (blurred vision), B Stress
+         floor, C a random Head-scratch check (its own 1-game-hour block,
+         separate from the 6-hour symptom block above), D muscle-strain
+         (Stiffness) floor on every body part, E unhappiness floor, K a
+         flat -10 overall-health ceiling -- plus the universal
+         per-affliction Endurance ceiling (MaintainEnduranceCap).
       6. Every vitamin also gets a permanent console.txt confirmation
          (VitEffects.LogEffectStateChange) the moment its Critical-band
          effect actually gets applied/cleared -- fires once per
@@ -102,13 +103,13 @@ local function checkCharacter(character, symptomBlock, scratchBlock)
         HARMONIE_GTP.VitEffects.LogEffectStateChange(character, vit)
     end
 
+    HARMONIE_GTP.VitEffects.MaintainDrunkFloor(character)
     HARMONIE_GTP.VitEffects.MaintainStressFloor(character)
-    HARMONIE_GTP.VitEffects.MaintainEnduranceCeiling(character)
     HARMONIE_GTP.VitEffects.MaybeTriggerScratch(character, scratchBlock)
     HARMONIE_GTP.VitEffects.MaintainMuscleStrain(character)
     HARMONIE_GTP.VitEffects.MaintainUnhappinessFloor(character)
-    HARMONIE_GTP.VitEffects.MaintainSicknessFloor(character)
-    HARMONIE_GTP.VitEffects.MaintainHealthCap(character)
+    HARMONIE_GTP.VitEffects.MaintainKHealthCap(character)
+    HARMONIE_GTP.VitEffects.MaintainEnduranceCap(character)
 
     HARMONIE_GTP.VitEffects.MaybeSaySymptomReminder(character, symptomBlock)
 end

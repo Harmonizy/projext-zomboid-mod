@@ -66,14 +66,27 @@
         universal per-affliction health cap.
 
     Per-vitamin mapping (user's own real-world reasoning behind each,
-    given verbatim):
-      A -> CharacterStat.STRESS floor 0.30 (0-1 scale). "stressed ส่งผลให้
-           ตีเบาลงและใช้อาวุธไกลยากขึ้น เหมือนกับอาการที่คนตาพร่าเลย
-           โจมตียากขึ้น" -- persistent stress standing in for how blurred
-           vision would make combat harder.
-      B -> CharacterStat.ENDURANCE ceiling 0.80 (0-1 scale, capped
-           stamina). "กล้ามเนื้ออ่อนแรง โลหิตจาง และอื่นๆ เลยทำให้ใช้แรงได้
-           น้อยลง" -- muscle weakness/anemia meaning less usable strength.
+    given verbatim). UPDATED 2026-09-22, per a further explicit request
+    reassigning A/B/K -- see each entry below for what changed and why:
+      A -> CharacterStat.INTOXICATION floor 30 (0-100 scale, drives
+           vanilla's real "Drunk" moodle -- confirmed by decompiling
+           Moodle.class: that moodle reads getStats():get(INTOXICATION)
+           alone). "มันให้อาการตาพร่า" -- reused purely for Intoxication's
+           real blurred-vision side effect; deliberately NO drunk-themed
+           dialogue or description anywhere in this mod's own text (Symptom/
+           DoctorSymptom/Downside/Moodle copy all stay framed around
+           blurred vision only) -- vanilla's own native "Drunk" moodle icon
+           will still show regardless (same as every other vitamin's native
+           side-moodle; not something this mod can rename). Previously used
+           CharacterStat.STRESS floor 0.30 -- freed up and reassigned to B
+           below.
+      B -> CharacterStat.STRESS floor 0.30 (0-1 scale) -- the exact
+           mechanism A used through v0.6.5, reassigned here per explicit
+           request. "เหน็บชาเกิดขึ้นบ่อย โลหิตจางจนปวดหัว และอ่อนล้า
+           เล็กๆน้อยๆ ทำให้เครียด" -- frequent tingling/numbness, anemia-
+           driven headaches, and mild fatigue combining into stress.
+           Previously used CharacterStat.ENDURANCE ceiling 0.80 -- freed up
+           and folded into the universal effect below instead.
       C -> random spontaneous Head scratch (bleeding gums/nosebleed),
            checked every 1 GAME hour, 5% chance per check.
            "จำลองการเลือดกำเดาไหลหรือเลือดออกตามไรฟัน"
@@ -86,18 +99,25 @@
            own earlier VitaminConfig.lua research citing MoodleStat.class).
            "unhappy ทำให้ย้ายของหรือทำอะไรช้าลง จำลองการทำงานผิดปกติของ
            ระบบประสาทและกล้ามเนื้ออ่อนแรง"
-      K -> CharacterStat.DISCOMFORT floor 45 (0-100 scale, guarantees at
-           least the "Uncomfortable" tier of vanilla's real Uncomfortable
-           moodle -- confirmed by decompiling Moodle.class/MoodleStat.class.
-           NOT SICKNESS: that stat is contested by the "Extensive Health
-           Rework Evolved" mod, which clears it every tick -- see
-           MaintainSicknessFloor below for the full story). "อาการของ sick
-           ทำให้การรักษาช้าลง เลยเหมือนอาการเลือดแข็งตัวยาก"
+      K -> flat overall-health ceiling, -10 points (same
+           bodyDamage:ReduceGeneralHealth ceiling technique as the
+           universal effect below, just scoped to K alone and stacking
+           with it). "อาการของ sick ทำให้การรักษาช้าลง เลยเหมือนอาการ
+           เลือดแข็งตัวยาก" -- weakened overall condition standing in for
+           poor clotting/slow healing. Previously used CharacterStat.
+           DISCOMFORT floor 45 (itself already a replacement for the
+           EHR-contested CharacterStat.SICKNESS, see the long comment still
+           kept on MaintainKHealthCap below for that full saga) -- not
+           broken, just superseded by this further explicit request.
 
-    Universal effect (new this design, independent of which specific
-    vitamins): every vitamin currently afflicted-and-not-pause-shielded
-    caps overall body health 5 percentage points lower each, stacking --
-    see VitEffects.MaintainHealthCap below.
+    Universal effect (independent of which specific vitamins): every
+    vitamin currently afflicted-and-not-pause-shielded caps ENDURANCE 10
+    percentage points lower each, stacking -- see
+    VitEffects.MaintainEnduranceCap below. CHANGED 2026-09-22 from the
+    original "-5% overall health per affliction" (health is now K's own
+    individual job instead, see above -- this avoids double-counting health
+    from two different mechanisms at once). Reuses the ENDURANCE stat B's
+    old ceiling effect freed up.
 
     All of this is a no-op while the vitamin has at least 1 WHOLE banked
     pause day (HARMONIE_GTP.VitData.GetPauseDays >= 1), same as every
@@ -222,34 +242,40 @@ function VitEffects.MigrateAwayFromRealTraits(character)
 end
 
 -- ---------------------------------------------------------------------
--- A: CharacterStat.STRESS floor 0.30
+-- A: CharacterStat.INTOXICATION floor 30 (0-100 scale). Reused purely for
+-- Intoxication's real blurred-vision side effect -- deliberately NOT
+-- CharacterStat.STRESS anymore (moved to B below), and deliberately no
+-- drunk-themed text anywhere; see the header comment above for the full
+-- reasoning.
+-- ---------------------------------------------------------------------
+local INTOXICATION_FLOOR = 30
+
+function VitEffects.MaintainDrunkFloor(character)
+    if not HARMONIE_GTP.Config.effectsEnabled then return end
+    if not isActive(character, "A") then return end
+
+    local stats = character:getStats()
+    local current = stats:get(CharacterStat.INTOXICATION)
+    if current < INTOXICATION_FLOOR then
+        stats:set(CharacterStat.INTOXICATION, INTOXICATION_FLOOR)
+    end
+end
+
+-- ---------------------------------------------------------------------
+-- B: CharacterStat.STRESS floor 0.30 (0-1 scale). The exact mechanism A
+-- used through v0.6.5, reassigned to B per explicit request -- see the
+-- header comment above.
 -- ---------------------------------------------------------------------
 local STRESS_FLOOR = 0.30
 
 function VitEffects.MaintainStressFloor(character)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
-    if not isActive(character, "A") then return end
+    if not isActive(character, "B") then return end
 
     local stats = character:getStats()
     local current = stats:get(CharacterStat.STRESS)
     if current < STRESS_FLOOR then
         stats:set(CharacterStat.STRESS, STRESS_FLOOR)
-    end
-end
-
--- ---------------------------------------------------------------------
--- B: CharacterStat.ENDURANCE ceiling 0.80 (capped stamina)
--- ---------------------------------------------------------------------
-local ENDURANCE_CEILING = 0.80
-
-function VitEffects.MaintainEnduranceCeiling(character)
-    if not HARMONIE_GTP.Config.effectsEnabled then return end
-    if not isActive(character, "B") then return end
-
-    local stats = character:getStats()
-    local current = stats:get(CharacterStat.ENDURANCE)
-    if current > ENDURANCE_CEILING then
-        stats:set(CharacterStat.ENDURANCE, ENDURANCE_CEILING)
     end
 end
 
@@ -327,6 +353,12 @@ function VitEffects.MaintainUnhappinessFloor(character)
 end
 
 -- ---------------------------------------------------------------------
+-- K: flat overall-health ceiling, -10 points (0-100 scale). CHANGED
+-- 2026-09-22, per further explicit request, from the CharacterStat.
+-- DISCOMFORT floor 45 this function used through v0.6.5 -- DISCOMFORT
+-- itself was NOT broken (kept here as history, not deleted, per this
+-- file's own policy):
+--
 -- K: CharacterStat.DISCOMFORT floor 45 (0-100 scale, drives vanilla's
 -- real "Uncomfortable" moodle -- confirmed via decompiling Moodle.class:
 -- that moodle reads `getStats():get(CharacterStat.DISCOMFORT)` alone, no
@@ -335,14 +367,14 @@ end
 -- Uncomfortable / Uncomfortable / Very Uncomfortable / Extremely
 -- Uncomfortable -- 45 comfortably clears the 2nd tier).
 --
--- NOT the first choice. CharacterStat.SICKNESS (the obviously "correct"-
--- sounding stat, and the mod's own target through v0.6.4) was CONFIRMED,
--- via a real user report ("resets to 0 constantly") plus a read-back
--- diagnostic print left in this function for one test session, to get
--- wiped every single ~10-second re-enforcement cycle. Root cause: this
--- has NOTHING to do with our own code -- it's a genuine conflict with the
--- "Extensive Health Rework Evolved" mod (Workshop 3726328119, a soft
--- dependency of this repo's own HARMONIE_HomeMedic), whose
+-- NOT the first choice EITHER. CharacterStat.SICKNESS (the obviously
+-- "correct"-sounding stat, and the mod's own target through v0.6.4) was
+-- CONFIRMED, via a real user report ("resets to 0 constantly") plus a
+-- read-back diagnostic print left in this function for one test session,
+-- to get wiped every single ~10-second re-enforcement cycle. Root cause:
+-- this had NOTHING to do with our own code -- it's a genuine conflict
+-- with the "Extensive Health Rework Evolved" mod (Workshop 3726328119, a
+-- soft dependency of this repo's own HARMONIE_HomeMedic), whose
 -- EHR_Disease.lua runs an every-single-game-tick "vanilla sickness sync"
 -- that explicitly zeroes CharacterStat.SICKNESS (and FOOD_SICKNESS,
 -- POISON) whenever EHR's OWN disease system has nothing active for that
@@ -354,45 +386,69 @@ end
 -- an unconditional per-tick sweep) to BOREDOM/ENDURANCE/FATIGUE/HUNGER/
 -- PAIN/PANIC/STRESS/TEMPERATURE/THIRST/UNHAPPINESS/WETNESS/ZOMBIE_FEVER/
 -- ZOMBIE_INFECTION too -- DISCOMFORT was one of the few CharacterStat
--- values EHR's codebase never writes to at all, hence the switch. Same
+-- values EHR's codebase never writes to at all, hence that switch. Same
 -- general lesson as this file's own BleedingTime/FOOD_SICKNESS traps, one
 -- level up: confirming a write persists in isolation isn't enough when
 -- another active mod also claims the same stat -- check what ELSE is
 -- installed before trusting a "correct-looking" stat long-term.
+--
+-- The NEW mechanism below sidesteps needing to re-litigate any of that:
+-- it uses the exact same bodyDamage:ReduceGeneralHealth() ceiling pattern
+-- as MaintainEnduranceCap's health-cap predecessor did (see that
+-- function's own header-block history) -- health isn't claimed by EHR the
+-- way SICKNESS/FOOD_SICKNESS/POISON are (EHR only reduces health as a
+-- SYMPTOM of its own tracked diseases, never as an unconditional per-tick
+-- reset of an idle value), and a real vanilla wound/health system has no
+-- equivalent "residue cleanup" sweep the way the disease-stat cluster
+-- does.
 -- ---------------------------------------------------------------------
-local DISCOMFORT_FLOOR = 45
+local K_HEALTH_REDUCTION = 10
 
-function VitEffects.MaintainSicknessFloor(character)
+function VitEffects.MaintainKHealthCap(character)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
     if not isActive(character, "K") then return end
 
-    local stats = character:getStats()
-    local current = stats:get(CharacterStat.DISCOMFORT)
-    if current < DISCOMFORT_FLOOR then
-        stats:set(CharacterStat.DISCOMFORT, DISCOMFORT_FLOOR)
+    local bodyDamage = character:getBodyDamage()
+    if not bodyDamage or not bodyDamage.getOverallBodyHealth or not bodyDamage.ReduceGeneralHealth then return end
+
+    local healthCap = 100 - K_HEALTH_REDUCTION
+    local currentHealth = bodyDamage:getOverallBodyHealth()
+    if currentHealth > healthCap then
+        bodyDamage:ReduceGeneralHealth(currentHealth - healthCap)
     end
 end
 
 --[[
     Universal effect, independent of which specific vitamins are
     afflicted: every currently afflicted-and-not-pause-shielded vitamin
-    caps overall body health (bodyDamage:getOverallBodyHealth(), 0-100)
-    5 percentage points lower, stacking -- 3 vitamins afflicted at once
-    means health can never read above 85. New this design (didn't exist
-    in either earlier attempt).
+    caps CharacterStat.ENDURANCE (0-1 scale) 10 percentage points lower
+    each, stacking -- 3 vitamins afflicted at once means Endurance can
+    never recover above 0.70. CHANGED 2026-09-22, per explicit request,
+    from the original "-5% overall health per affliction" (kept as history
+    below, not deleted): health duty moved to K's own individual
+    MaintainKHealthCap instead, freeing this universal slot up for
+    Endurance, which itself was freed up when B moved off its old fixed
+    0.80 Endurance ceiling onto Stress (see this file's header). Avoids
+    double-counting health from two different mechanisms firing at once.
 
-    Uses bodyDamage:ReduceGeneralHealth(amount), NOT setOverallBodyHealth
-    directly -- confirmed real pattern from Extensive Health Rework
-    Evolved's own EHR_EnvironmentalClampBodyHealth (EHR_EnvironmentalDiseases
-    .lua), a mature, actively-used mod already a soft dependency of
-    HARMONIE_HomeMedic in this same repo. Only ever reduces (never
-    increases) health -- a no-op once actual health is already at or below
-    the cap, letting vanilla's own healing fully take back over the moment
-    fewer vitamins are afflicted.
+    ORIGINAL (v0.5.0-v0.6.5) health-cap version, preserved for the
+    technique it proved rather than deleted: capped overall body health
+    (bodyDamage:getOverallBodyHealth(), 0-100) 5 percentage points lower
+    per affliction, via bodyDamage:ReduceGeneralHealth(amount), NOT
+    setOverallBodyHealth directly -- confirmed real pattern from Extensive
+    Health Rework Evolved's own EHR_EnvironmentalClampBodyHealth
+    (EHR_EnvironmentalDiseases.lua), a mature, actively-used mod already a
+    soft dependency of HARMONIE_HomeMedic in this same repo. The NEW
+    Endurance version below reuses the exact same "only ever reduce
+    toward a cap, never below it, no-op once already under the cap"
+    ceiling shape -- via stats:set instead of ReduceGeneralHealth since
+    Endurance is a plain CharacterStat, not a BodyDamage value -- so
+    vanilla's own regen fully takes back over the moment fewer vitamins
+    are afflicted, same as every other floor/ceiling in this file.
 ]]--
-local HEALTH_CAP_PERCENT_PER_AFFLICTION = 5
+local ENDURANCE_CAP_PERCENT_PER_AFFLICTION = 0.10
 
-function VitEffects.MaintainHealthCap(character)
+function VitEffects.MaintainEnduranceCap(character)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
 
     local afflictedCount = 0
@@ -403,15 +459,13 @@ function VitEffects.MaintainHealthCap(character)
     end
     if afflictedCount == 0 then return end
 
-    local bodyDamage = character:getBodyDamage()
-    if not bodyDamage or not bodyDamage.getOverallBodyHealth or not bodyDamage.ReduceGeneralHealth then return end
+    local stats = character:getStats()
+    local enduranceCap = 1.0 - (ENDURANCE_CAP_PERCENT_PER_AFFLICTION * afflictedCount)
+    enduranceCap = math.max(0, enduranceCap)
 
-    local healthCap = 100 - (HEALTH_CAP_PERCENT_PER_AFFLICTION * afflictedCount)
-    healthCap = math.max(0, healthCap)
-
-    local currentHealth = bodyDamage:getOverallBodyHealth()
-    if currentHealth > healthCap then
-        bodyDamage:ReduceGeneralHealth(currentHealth - healthCap)
+    local current = stats:get(CharacterStat.ENDURANCE)
+    if current > enduranceCap then
+        stats:set(CharacterStat.ENDURANCE, enduranceCap)
     end
 end
 
@@ -419,12 +473,12 @@ end
 -- used only by LogEffectStateChange below, purely for the console
 -- message text.
 local EffectDescription = {
-    A = "CharacterStat.STRESS floor 0.30 (weaker hits/harder ranged aim)",
-    B = "CharacterStat.ENDURANCE ceiling 0.80 (capped stamina)",
+    A = "CharacterStat.INTOXICATION floor 30 (blurred vision -- weaker hits/harder ranged aim)",
+    B = "CharacterStat.STRESS floor 0.30 (tingling/headaches/fatigue -> stress)",
     C = "random Head scratch, 1 game hour / 5% chance (nosebleed/bleeding gums)",
     D = "per-body-part Stiffness floor 20, all body parts (muscle strain)",
     E = "CharacterStat.UNHAPPINESS floor 30 (slower item handling)",
-    K = "CharacterStat.DISCOMFORT floor 45 -- at least Uncomfortable (slower recovery)",
+    K = "flat overall-health ceiling -10 (weakened condition -- slower recovery)",
 }
 
 --[[

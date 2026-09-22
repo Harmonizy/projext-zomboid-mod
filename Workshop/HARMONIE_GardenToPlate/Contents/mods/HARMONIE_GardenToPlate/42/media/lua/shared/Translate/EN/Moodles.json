@@ -1,21 +1,21 @@
 {
     "Moodles_VitaminA_Bad_lvl1": "Vitamin A: Low",
-    "Moodles_VitaminA_Bad_desc_lvl1": "Your Vitamin A reserve is running low. Keep it dropping and you'll grow persistently stressed, weakening your hits and ranged aim.",
+    "Moodles_VitaminA_Bad_desc_lvl1": "Your Vitamin A reserve is running low. Keep it dropping and your vision will start blurring, weakening your hits and ranged aim.",
     "Moodles_VitaminA_Bad_lvl2": "Vitamin A: Low",
-    "Moodles_VitaminA_Bad_desc_lvl2": "Your Vitamin A reserve is running low. Keep it dropping and you'll grow persistently stressed, weakening your hits and ranged aim.",
+    "Moodles_VitaminA_Bad_desc_lvl2": "Your Vitamin A reserve is running low. Keep it dropping and your vision will start blurring, weakening your hits and ranged aim.",
     "Moodles_VitaminA_Bad_lvl3": "Vitamin A: Critical",
-    "Moodles_VitaminA_Bad_desc_lvl3": "You're persistently stressed from Vitamin A deficiency (Stress no lower than 30 percent) -- weaker hits and harder ranged aim. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminA_Bad_desc_lvl3": "Your vision is blurring from Vitamin A deficiency -- weaker hits and harder ranged aim. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminA_Bad_lvl4": "Vitamin A: Critical",
-    "Moodles_VitaminA_Bad_desc_lvl4": "You're persistently stressed from Vitamin A deficiency (Stress no lower than 30 percent) -- weaker hits and harder ranged aim. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminA_Bad_desc_lvl4": "Your vision is blurring from Vitamin A deficiency -- weaker hits and harder ranged aim. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
 
     "Moodles_VitaminB_Bad_lvl1": "Vitamin B: Low",
-    "Moodles_VitaminB_Bad_desc_lvl1": "Your Vitamin B reserve is running low. Keep it dropping and your stamina will start capping out early, leaving you weak and drained.",
+    "Moodles_VitaminB_Bad_desc_lvl1": "Your Vitamin B reserve is running low. Keep it dropping and you'll start getting frequent tingling/numbness and headaches, growing more stressed.",
     "Moodles_VitaminB_Bad_lvl2": "Vitamin B: Low",
-    "Moodles_VitaminB_Bad_desc_lvl2": "Your Vitamin B reserve is running low. Keep it dropping and your stamina will start capping out early, leaving you weak and drained.",
+    "Moodles_VitaminB_Bad_desc_lvl2": "Your Vitamin B reserve is running low. Keep it dropping and you'll start getting frequent tingling/numbness and headaches, growing more stressed.",
     "Moodles_VitaminB_Bad_lvl3": "Vitamin B: Critical",
-    "Moodles_VitaminB_Bad_desc_lvl3": "Your stamina is capped from Vitamin B deficiency -- endurance can't recover past 80 percent, muscle weakness and low energy. Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminB_Bad_desc_lvl3": "Frequent tingling/numbness, headaches from anemia, and mild fatigue are keeping you persistently stressed from Vitamin B deficiency (Stress no lower than 30 percent). Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminB_Bad_lvl4": "Vitamin B: Critical",
-    "Moodles_VitaminB_Bad_desc_lvl4": "Your stamina is capped from Vitamin B deficiency -- endurance can't recover past 80 percent, muscle weakness and low energy. Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminB_Bad_desc_lvl4": "Frequent tingling/numbness, headaches from anemia, and mild fatigue are keeping you persistently stressed from Vitamin B deficiency (Stress no lower than 30 percent). Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
 
     "Moodles_VitaminC_Bad_lvl1": "Vitamin C: Low",
     "Moodles_VitaminC_Bad_desc_lvl1": "Your Vitamin C reserve is running low. Keep it dropping and you'll start getting spontaneous nosebleeds or bleeding gums.",
@@ -49,7 +49,7 @@
     "Moodles_VitaminK_Bad_lvl2": "Vitamin K: Low",
     "Moodles_VitaminK_Bad_desc_lvl2": "Your Vitamin K reserve is running low. Keep it dropping and you'll feel generally run down, healing and recovery slowing.",
     "Moodles_VitaminK_Bad_lvl3": "Vitamin K: Critical",
-    "Moodles_VitaminK_Bad_desc_lvl3": "You're generally run down from Vitamin K deficiency (at least Uncomfortable) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminK_Bad_desc_lvl3": "You're generally run down from Vitamin K deficiency (overall health capped 10 lower) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminK_Bad_lvl4": "Vitamin K: Critical",
-    "Moodles_VitaminK_Bad_desc_lvl4": "You're generally run down from Vitamin K deficiency (at least Uncomfortable) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it."
+    "Moodles_VitaminK_Bad_desc_lvl4": "You're generally run down from Vitamin K deficiency (overall health capped 10 lower) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it."
 }

@@ -47,11 +47,11 @@
     symptom mapped to the closest PZ mechanic that's actually confirmed
     settable from Lua -- see HARMONIE_VitaminEffects.lua's header for the
     exact API calls and the full user-provided reasoning behind each):
-      A -> CharacterStat.STRESS floor 0.30 (persistent stress -- weaker
-           hits and harder ranged aim, standing in for how blurred/
-           impaired vision would make combat harder)
-      B -> CharacterStat.ENDURANCE ceiling 0.80 (capped stamina -- muscle
-           weakness/anemia meaning less usable strength)
+      A -> CharacterStat.INTOXICATION floor 30 (blurred vision -- weaker
+           hits and harder ranged aim; deliberately no drunk-themed text
+           anywhere, reused purely for the real vision-blur side effect)
+      B -> CharacterStat.STRESS floor 0.30 (frequent tingling/numbness,
+           anemia-driven headaches, and mild fatigue combining into stress)
       C -> random spontaneous Head scratch (bleeding gums/nosebleed),
            checked every 1 game hour, 5% chance per check
       D -> per-body-part Stiffness floor 20, ALL body parts (bone/muscle
@@ -59,18 +59,20 @@
       E -> CharacterStat.UNHAPPINESS floor 30 (persistent unhappiness --
            slows down handling/moving items, standing in for impaired
            nerve/muscle coordination)
-      K -> CharacterStat.DISCOMFORT floor 45 (general malaise slowing
-           recovery, standing in for blood not clotting properly -- NOT
-           SICKNESS, which the "Extensive Health Rework Evolved" mod
-           contests, see HARMONIE_VitaminEffects.lua's MaintainSicknessFloor)
+      K -> flat overall-health ceiling, -10 points (weakened overall
+           condition, standing in for blood not clotting properly -- NOT
+           a CharacterStat floor at all anymore; see
+           HARMONIE_VitaminEffects.lua's MaintainKHealthCap for why, and
+           for the still-preserved SICKNESS/DISCOMFORT history)
     PLUS a universal effect independent of which specific vitamins:
       every vitamin currently afflicted-and-not-pause-shielded caps
-      overall body health (bodyDamage:getOverallBodyHealth(), 0-100) 5
-      percentage points lower, stacking -- 3 vitamins afflicted at once
-      means health can never read above 85.
+      CharacterStat.ENDURANCE (0-1 scale) 10 percentage points lower,
+      stacking -- 3 vitamins afflicted at once means Endurance can never
+      recover above 0.70.
     See HARMONIE_VitaminEffects.lua's header for the full citations
-    behind each of these and VitEffects.MaintainHealthCap's own comment
-    for the universal health-cap mechanic.
+    behind each of these and VitEffects.MaintainEnduranceCap's own comment
+    for the universal Endurance-cap mechanic (and its preserved health-cap
+    history).
 
     All values here are rough real-world-approximate game-balance figures,
     not medical reference data. Vitamin "B" is a single stat standing in for
