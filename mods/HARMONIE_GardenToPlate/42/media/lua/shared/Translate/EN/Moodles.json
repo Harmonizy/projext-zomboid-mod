@@ -13,9 +13,9 @@
     "Moodles_VitaminB_Bad_lvl2": "Vitamin B: Low",
     "Moodles_VitaminB_Bad_desc_lvl2": "Your Vitamin B reserve is running low. Keep it dropping and your stamina will start capping out early, leaving you weak and drained.",
     "Moodles_VitaminB_Bad_lvl3": "Vitamin B: Critical",
-    "Moodles_VitaminB_Bad_desc_lvl3": "Your stamina is capped from Vitamin B deficiency -- endurance can't recover past 80%, muscle weakness and low energy. Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminB_Bad_desc_lvl3": "Your stamina is capped from Vitamin B deficiency -- endurance can't recover past 80 percent, muscle weakness and low energy. Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminB_Bad_lvl4": "Vitamin B: Critical",
-    "Moodles_VitaminB_Bad_desc_lvl4": "Your stamina is capped from Vitamin B deficiency -- endurance can't recover past 80%, muscle weakness and low energy. Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminB_Bad_desc_lvl4": "Your stamina is capped from Vitamin B deficiency -- endurance can't recover past 80 percent, muscle weakness and low energy. Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
 
     "Moodles_VitaminC_Bad_lvl1": "Vitamin C: Low",
     "Moodles_VitaminC_Bad_desc_lvl1": "Your Vitamin C reserve is running low. Keep it dropping and you'll start getting spontaneous nosebleeds or bleeding gums.",

@@ -138,7 +138,7 @@
 
     "IGUI_HARMONIE_VitaminTabTitle": "Vitamins",
     "IGUI_HARMONIE_Downside_A": "Persistently stressed -- weaker hits and harder aim with ranged weapons.",
-    "IGUI_HARMONIE_Downside_B": "Stamina caps low -- endurance can't recover past 80%, muscle weakness and low energy.",
+    "IGUI_HARMONIE_Downside_B": "Stamina caps low -- endurance can't recover past 80 percent, muscle weakness and low energy.",
     "IGUI_HARMONIE_Downside_C": "Occasional spontaneous nosebleeds or bleeding gums.",
     "IGUI_HARMONIE_Downside_D": "Muscles ache and stiffen all over the body (muscle strain).",
     "IGUI_HARMONIE_Downside_E": "Persistently unhappy -- slows down moving and handling items.",
@@ -148,7 +148,7 @@
     "IGUI_HARMONIE_No": "No",
     "IGUI_HARMONIE_PauseDays": "Rest days banked: %1",
     "IGUI_HARMONIE_PenaltyActive": "Penalty active: %1",
-    "IGUI_HARMONIE_PauseDaysTooltip": "Banked days temporarily hold off the deficiency penalty -- they do NOT stop decay from resuming once they run out. Gained by eating well, or from a crafted Multivitamin pill. To actually clear the affliction for good, eat this vitamin's foods until Reserve reaches Sufficient. Each afflicted vitamin also caps your overall health 5% lower, stacking -- banked pause days shield this too.",
+    "IGUI_HARMONIE_PauseDaysTooltip": "Banked days temporarily hold off the deficiency penalty -- they do NOT stop decay from resuming once they run out. Gained by eating well, or from a crafted Multivitamin pill. To actually clear the affliction for good, eat this vitamin's foods until Reserve reaches Sufficient. Each afflicted vitamin also caps your overall health 5 percent lower, stacking -- banked pause days shield this too.",
     "IGUI_HARMONIE_ExactNumbers": "Reserve: %1 / 100   Daily need: %2",
     "IGUI_HARMONIE_TopFoodsInline": "Best source: %1 (hover for top 10)",
     "IGUI_HARMONIE_TopFoodsNone": "No known food sources tracked.",
