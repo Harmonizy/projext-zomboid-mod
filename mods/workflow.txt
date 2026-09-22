@@ -655,6 +655,85 @@ saves only!"
     ปุ่มได้ตรงๆ เพราะ ISButton จัดการให้แล้ว ไม่ต้องเขียน mouse handling เอง
 
 
+8.4 วิธีอ่านค่า status/stat ต่างๆ ของตัวละคร (ศึกษาจาก Modern Status จริง)
+  (ศึกษาจาก MS_PlayerStatus.lua ของ Modern Status Workshop 3451167732 บรรทัด 1-403 เต็ม
+  2026-09-22 -- ไฟล์นี้คือจุดเดียวที่รวบรวมวิธีอ่านค่า stat ทุกตัวของทั้ง mod ไว้ที่เดียว มี
+  รูปแบบตายตัวชัดเจนมาก เอามาเป็น reference ได้เลย)
+
+  โครงสร้างที่ Modern Status ใช้: แยกเป็น 2 ชั้นเสมอ -- `MS_PlayerStatus.Get.X(player)` (ไปอ่าน
+  ค่าดิบจากเกมจริง) เรียก `MS_PlayerStatus.Calc.X(value)` (แปลงค่าดิบให้เป็น 0.0-1.0 เสมอ สำหรับ
+  เอาไปวาด progress bar ได้ตรงๆ) ทุกฟังก์ชัน Get เช็ค `player:isDead()` ก่อนเป็นอันดับแรกเสมอ คืน
+  -1 ถ้าตายแล้ว (กัน error/ค่าพิลึกจากศพ)
+
+  ที่มาของค่าดิบ แยกตาม subsystem (ยืนยันจาก source จริง ไม่ใช่เดา):
+    - **Stats ทั่วไป**: `player:getStats():get(CharacterStat.<ชื่อ>)` -- ใช้กับ THIRST, HUNGER,
+      ENDURANCE, FATIGUE, TEMPERATURE, PANIC, BOREDOM, UNHAPPINESS, DISCOMFORT, SICKNESS,
+      POISON, PAIN, ANGER, WETNESS, INTOXICATION (Drunkenness) -- enum เต็มที่มีจริงใน vanilla
+      (grep เจอใน media/lua ของเกมจริง): ANGER, BOREDOM, DISCOMFORT, ENDURANCE, FATIGUE,
+      FITNESS, FOOD_SICKNESS, HUNGER, IDLENESS, INTOXICATION, MORALE, NICOTINE_WITHDRAWAL,
+      PAIN, PANIC, POISON, SANITY, SICKNESS, STRESS, TEMPERATURE, THIRST, UNHAPPINESS, WETNESS,
+      ZOMBIE_FEVER, ZOMBIE_INFECTION -- Modern Status ไม่ได้ใช้ทุกตัว (FITNESS/IDLENESS/MORALE/
+      NICOTINE_WITHDRAWAL/SANITY/FOOD_SICKNESS/ZOMBIE_FEVER/ZOMBIE_INFECTION ไม่ได้เอามาโชว์ใน
+      HUD) แต่ enum พวกนี้ยังใช้ได้จริงถ้าจะทำ indicator เพิ่มเอง
+    - *** ข้อสังเกตแปลกที่เจอ: ตัว "Stress" ของ Modern Status ไม่ได้ใช้
+      `player:getStats():get(CharacterStat.STRESS)` (ซึ่งเป็นวิธีมาตรฐานจริงที่ vanilla ใช้เองทั่ว
+      โค้ด เช่น forageSystem.lua, ISReadABook.lua, ISCraftAction.lua) แต่ใช้
+      `player:getStats():getNicotineStress()` แทน -- ไม่แน่ใจว่าตั้งใจ (อยากรวมผลนิโคตินเข้าไปด้วย
+      เป็นพิเศษ) หรือเป็นความผิดพลาดของผู้เขียน ห้ามลอกตามโดยไม่คิด ถ้าจะทำ Stress indicator เอง
+      ใช้ `CharacterStat.STRESS` แบบมาตรฐานน่าจะถูกต้องกว่า เว้นแต่ต้องการแยกเฉพาะผลจากนิโคติน
+      จริงๆ ***
+    - **Health/ความหนาว/การติดเชื้อ**: `player:getBodyDamage():getHealth()` (health รวม),
+      `player:getBodyDamage():getApparentInfectionLevel()` (0-100, หารด้วย 100 เอง),
+      `player:getBodyDamage():getColdStrength()` (ตัวใหม่ ใช้ก่อนเสมอ ผูกกับ debug slider
+      "Catch Cold Strength" จริง) มี fallback ไป `getCatchACold()` ถ้า build เก่าไม่มี
+      getColdStrength -- เช็คว่า method มีจริงก่อนเรียกเสมอ (`bodyDamage.getColdStrength` truthy
+      check) ป้องกัน build เก่ากว่าไม่มี method นี้แล้ว error
+    - **Body part รายชิ้น**: `player:getBodyDamage():getBodyParts()` คืน list, loop
+      `bodyParts:get(i)` (index เริ่ม 0 แบบ Java) แต่ละชิ้นมี `:getBleedingTime()`,
+      `:bandaged()`, `:getStiffness()`, `:getType()` ฯลฯ
+    - **โภชนาการ**: `player:getNutrition():getCalories()`, `:getProteins()`,
+      `:getCarbohydrates()`, `:getLipids()`, `:getWeight()` (น้ำหนักตัวจริงเป็นกิโล)
+    - **น้ำหนักที่แบก (carry weight)**: ไม่ใช่ stat เดียว ต้องรวมหลายค่า:
+      `player:getInventoryWeight()` (น้ำหนักที่แบกอยู่จริง), `player:getMaxWeight()` (ความจุ
+      สูงสุดปัจจุบัน รวม trait/buff แล้ว), `player:getMaxWeightBase()` (ความจุฐานไม่รวม
+      modifier), `player:getWeightMod()` (ตัวคูณจาก Strength), `player:getMaxWeightDelta()`
+      (ตัวคูณจาก trait)
+    - **Moodle** (bleeding level, และ moodle อื่นๆ ที่ใช้ level 0-4 ไม่ใช่ float 0-1): คนละ
+      subsystem เลย ไม่ผ่าน getStats() -- ใช้ `player:getMoodles():getMoodleLevel(MoodleType.
+      <ชื่อ>)` คืนค่า integer 0-4 ตรงๆ (ไม่ต้องหารเอง) *** เทคนิคป้องกัน build เปลี่ยนชื่อ enum
+      ที่ควรลอก: เช็คชื่อใหม่ก่อน แล้ว fallback ไปชื่อเก่าด้วย `MoodleType[newName] or
+      MoodleType[legacyName]`, ห่อการเรียกจริงด้วย `pcall(...)` เผื่อ enum ไม่มีอยู่เลยทั้งคู่
+      คืน 0 แทนที่จะ error ***
+
+  ช่วง/สเกลของค่าดิบแต่ละตัว (ความรู้ที่หา่ยากสุด ได้มาจากฟังก์ชัน Calc ที่แปลงกลับเป็น 0.0-1.0
+  -- ถ้าไม่มี reference นี้ต้อง trial-and-error เองนานมาก):
+    - Thirst, Hunger: ดิบ 0.0-1.0 อยู่แล้ว แต่ 0=อิ่ม/ชุ่มน้ำเต็มที่, 1=หิว/กระหายสุด (ตรงข้ามกับ
+      สัญชาตญาณ "แถบยิ่งเต็มยิ่งดี") Modern Status เลยพลิกเป็น `1 - value` ก่อนโชว์
+    - Endurance, Fatigue: ดิบ 0.0-1.0 อยู่แล้ว และทิศทางตรงแล้ว (มาก=ดี) ไม่ต้องพลิก
+    - Temperature: ดิบเป็นองศาอยู่ในช่วงประมาณ 20-42 ปรับเป็น 0-1 ด้วย (value-20)/(42-20)
+    - Panic, Boredom, Unhappiness, Discomfort, Health, Poison, ColdStrength, Pain, Wetness,
+      Intoxication(Drunkenness), Stiffness: ดิบเป็น 0-100 หารด้วย 100 ธรรมดา
+    - Stress: ดิบ 0.0-1.0 อยู่แล้ว (จาก getNicotineStress ตามที่เจอ) แค่ clamp ไม่ให้เกิน 1
+    - Sickness: ผสมสองค่า `getApparentInfectionLevel()/100 + getStats():get(SICKNESS)` (ตัวแรก
+      0-100 ต้องหาร ตัวหลังดิบ 0-1 อยู่แล้ว) บวกกันตรงๆ แล้วไม่ clamp เพิ่ม (อาจเกิน 1 ได้ตอน
+      ติดเชื้อรุนแรง)
+    - Calorie: ดิบเป็นค่าพลังงานสุทธิ ช่วงประมาณ -2200 ถึง 3700 (ไม่ใช่ 0-based) ปรับด้วย
+      (value-(-2200))/(3700-(-2200))
+    - Proteins, Carbohydrates, Lipids: ดิบช่วงประมาณ -500 ถึง 1000 ปรับด้วย (value+500)/1500
+    - Weight (น้ำหนักตัว): ดิบเป็นกิโลจริง ช่วงประมาณ 35-130 ปรับด้วย (value-35)/(130-35)
+    - CarryWeight: ไม่ใช้ capacity ตรงๆ เป็นเพดาน แต่ใช้ 2 เท่าของ capacity เป็นเพดานสายตา
+      (`visualMax = capacity * 2`) เพราะ vanilla ให้แบกเกิน capacity ได้ (แค่โทษ endurance/
+      ช้าลง) ถ้าใช้ capacity ตรงๆ เป็น 100% แถบจะเต็มเกินจริงเร็วไป
+
+  *** สรุปสั้นๆ เอาไปใช้ได้ทันที: ถ้าจะอ่านค่า stat ตัวไหนของตัวละครในมอด HARMONIE เอง เช็ค 4
+  ที่นี้ตามลำดับ: (1) `player:getStats():get(CharacterStat.X)` สำหรับ stat หลักๆ ก่อน (2)
+  `player:getBodyDamage():getX()` สำหรับเรื่อง health/หนาว/ติดเชื้อ/body part (3)
+  `player:getNutrition():getX()` สำหรับโภชนาการ/น้ำหนักตัว (4)
+  `player:getMoodles():getMoodleLevel(MoodleType.X)` เฉพาะกรณีอยากได้ level 0-4 แบบ moodle ไม่ใช่
+  ค่าดิบต่อเนื่อง -- แล้วเช็ค isDead() ก่อนอ่านเสมอ กับดูว่าค่าดิบเป็นช่วง 0-1 หรือ 0-100 หรือช่วง
+  แปลกๆ (เช่น temperature/calorie/protein) ก่อนเอาไปคำนวณต่อ อย่าสมมติว่าทุกตัว 0-1 เหมือนกันหมด ***
+
+
 9. Checklist ก่อนเริ่มงานใหม่ทุกครั้ง
 =======================================
 [ ] อ่านไฟล์นี้ (mods/workflow.txt) ก่อนเสมอ
@@ -673,6 +752,7 @@ saves only!"
 [ ] ถ้าจะสร้าง trait ใหม่: ประกาศผ่าน character_trait_definition script (ข้อ 8.2) ไม่ใช่ Lua ล้วน
 [ ] ถ้าจะทำ custom UI widget (ปุ่ม/แถบ/scroll list): เช็ค NeatTool ก่อน (ข้อ 8.3) ไม่ต้องเขียน
     9-patch/3-patch/virtualized list เองใหม่
+[ ] ถ้าจะอ่านค่า stat ตัวละคร: เช็คข้อ 8.4 ก่อนเสมอ ว่าดิบเป็นช่วง 0-1/0-100/ช่วงแปลก อย่าสมมติ
 [ ] อาการ "แก้แล้วในเกมเหมือนไม่มีผล" -> รัน `mods/check_workshop_sync.sh` ก่อนสงสัยเรื่อง cache
     (ข้อ 6.1) หรือทฤษฎีอื่นเสมอ เช็คถูกที่ก่อนจะประหยัดเวลาดีบั๊กได้มาก
 [ ] เจอความรู้ใหม่ระหว่างทาง -> กลับมาอัปเดตไฟล์นี้ก่อนจบงานเสมอ
