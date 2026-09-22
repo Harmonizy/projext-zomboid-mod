@@ -3,6 +3,6 @@ id=HARMONIE_GardenToPlate
 description=Adds a vitamin (A, B, C, D, E, K) micronutrient system on top of the food you eat. Press N (rebindable) to check your own or a nearby survivor's nutritional status -- requires First Aid 5 to interpret the result. Neglect your diet and critical vitamin deficiencies will start to hurt you. Also adds home canning: preserve vegetables and fruit indefinitely in empty tin cans. Also adds a "Vitamins" tab right in the vanilla character info window -- shows Critical/Low/Sufficient at a glance for everyone, plus exact numbers at First Aid 3 and a top-10 food list per vitamin at Cooking 3. Requires "Moodle Framework" (Workshop 3396446795) for per-vitamin moodles when Low or Critical, and "Modern Status" (Workshop 3451167732) for selectable per-vitamin HUD indicators -- please subscribe to both.
 poster=poster.png
 icon=icon.png
-modversion=0.4.2
+modversion=0.4.3
 versionMin=42.0.0
 require=MoodleFramework,ModernStatus

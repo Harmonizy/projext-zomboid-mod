@@ -181,6 +181,19 @@ function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAid
 
     local pauseDaysLabel = getText("IGUI_HARMONIE_PauseDays", math.floor(pauseDays))
 
+    -- Same penaltyActive condition HARMONIE_AdminPanel.lua already uses:
+    -- afflicted (Critical was hit) AND not currently pause-day-shielded --
+    -- distinct from the band itself, since Critical + banked pause days
+    -- means the penalty is NOT actually biting right now.
+    -- Uses HARMONIE's own Yes/No keys rather than vanilla's shared UI_Yes/
+    -- UI_No (which HARMONIE_AdminPanel.lua uses) -- translating those would
+    -- affect "Yes"/"No" text everywhere in the whole game, not just this
+    -- mod's own UI, which is outside HARMONIE_TooManyModThaiTranslate's
+    -- stated scope of translating specific mods' own content.
+    local penaltyActive = HARMONIE_GTP.VitData.IsAfflicted(player, vit) and pauseDays < 1
+    local penaltyActiveLabel = getText("IGUI_HARMONIE_PenaltyActive",
+        penaltyActive and getText("IGUI_HARMONIE_Yes") or getText("IGUI_HARMONIE_No"))
+
     local numbersText = nil
     if hasFirstAidDetail then
         local requirement = HARMONIE_GTP.DailyRequirement[vit]
@@ -203,6 +216,8 @@ function HARMONIE_VitaminPanel:buildRowLines(vit, player, textWidth, hasFirstAid
         pauseDays = pauseDays,
         statusLines = statusLines,
         pauseDaysLabel = pauseDaysLabel,
+        penaltyActive = penaltyActive,
+        penaltyActiveLabel = penaltyActiveLabel,
         numbersText = numbersText,
         foodLine = foodLine,
         topFoods = topFoods,
@@ -234,7 +249,7 @@ function HARMONIE_VitaminPanel:refreshLayout()
         item.hasFirstAidDetail = hasFirstAidDetail
         item.hasCookingFoodList = hasCookingFoodList
 
-        local contentHeight = headerHeight + (#data.statusLines * lineHeight) + lineHeight -- pause days line
+        local contentHeight = headerHeight + (#data.statusLines * lineHeight) + lineHeight * 2 -- pause days + penalty active lines
         if data.numbersText then contentHeight = contentHeight + lineHeight end
         if data.foodLine then contentHeight = contentHeight + lineHeight end
 
@@ -282,6 +297,13 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
     if mouseX >= textX and mouseX <= textX + labelWidth and mouseY >= pauseDaysY and mouseY <= pauseDaysY + lineHeight then
         hoveredTooltip = self:getPauseDaysTooltip()
     end
+    lineY = lineY + lineHeight
+
+    -- Whether the deficiency penalty is actually biting right now -- always
+    -- visible, no skill gate. Distinct from the band: Critical + banked
+    -- pause days means the penalty is currently shielded off, not active.
+    local penaltyColor = data.penaltyActive and {r = 0.9, g = 0.4, b = 0.4} or {r = 0.6, g = 0.6, b = 0.6}
+    self:drawText(data.penaltyActiveLabel, textX, lineY, penaltyColor.r, penaltyColor.g, penaltyColor.b, 1, UIFont.Small)
     lineY = lineY + lineHeight
 
     -- First Aid-gated exact numbers.
