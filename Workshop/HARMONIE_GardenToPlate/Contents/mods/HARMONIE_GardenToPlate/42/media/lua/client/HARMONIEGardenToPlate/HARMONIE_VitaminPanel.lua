@@ -13,16 +13,19 @@
         HARMONIE_NutritionUI.lua's own isLocked() for the same renaming note)
         level 3+: adds the exact Reserve number (0-100) and this vitamin's Daily
         Requirement.
-      - Cooking level 3+ OR First Aid level FIRST_AID_DETAIL_LEVEL+ (a cook
-        knows what's rich in vitamins from experience; a nutritionist/doctor
-        knows the same thing medically -- either skill unlocks it, per
-        explicit request): adds a "Vitamin Ingredient Index" section at the
-        very bottom of the tab, one consolidated list for all 6 vitamins (not
-        a per-row hover tooltip anymore, per explicit request) -- each
-        vitamin's own top 10 richest ingredients (HARMONIE_GTP.GetTopFoods,
-        see HARMONIE_TopFoods.lua; canned items already excluded there),
-        sorted richest first, with each amount shown in parentheses, always
-        visible (scrolls with the rest of the tab, no hover needed).
+      - Cooking level 3+ OR the real Nutritionist trait (CORRECTED
+        2026-09-22 -- an earlier version of this gate used First Aid level
+        3+ instead; the user explicitly meant the actual "Nutritionist"
+        CharacterTrait, not a First Aid skill threshold. A cook knows what's
+        rich in vitamins from experience; someone with the Nutritionist
+        trait knows the same thing professionally -- either one unlocks it):
+        adds a "Vitamin Ingredient Index" section at the very bottom of the
+        tab, one consolidated list for all 6 vitamins (not a per-row hover
+        tooltip anymore, per explicit request) -- each vitamin's own top 10
+        richest ingredients (HARMONIE_GTP.GetTopFoods, see
+        HARMONIE_TopFoods.lua; canned items already excluded there), sorted
+        richest first, with each amount shown in parentheses, always visible
+        (scrolls with the rest of the tab, no hover needed).
 
     BandTextKey is intentionally duplicated from HARMONIE_NutritionUI.lua
     rather than shared, per this feature's own plan: that file is explicitly
@@ -157,6 +160,18 @@ local VitaminUnit = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "m
 
 local FIRST_AID_DETAIL_LEVEL = 3
 local COOKING_FOOD_LEVEL = 3
+
+-- Real vanilla trait (B42's data-driven Registry system, not a hardcoded
+-- CharacterTrait.X enum field) -- confirmed via forageSystem.lua's own real
+-- usage (getSkillTraitSpecBonus etc.): `CharacterTrait.get(ResourceLocation.
+-- of("Nutritionist"))` then `character:hasTrait(...)`. Wrapped in pcall since
+-- a scripted trait lookup can fail if the id is ever renamed -- falls back to
+-- nil, which hasTrait treats as "no trait" (Cooking 3 alone still unlocks
+-- the food index in that case).
+local NUTRITIONIST_TRAIT_OK, NUTRITIONIST_TRAIT = pcall(function()
+    return CharacterTrait.get(ResourceLocation.of("Nutritionist"))
+end)
+if not NUTRITIONIST_TRAIT_OK then NUTRITIONIST_TRAIT = nil end
 
 -- Sentinel item key for the consolidated food-index section added after the
 -- 6 real vitamin rows in :initialise() -- never a real vitamin letter, so
@@ -300,8 +315,8 @@ end
 
 --[[
     Builds the consolidated "Vitamin Ingredient Index" section shown once at
-    the very bottom of the tab (Cooking COOKING_FOOD_LEVEL+ OR First Aid
-    FIRST_AID_DETAIL_LEVEL+ -- either skill unlocks it, see refreshLayout's
+    the very bottom of the tab (Cooking COOKING_FOOD_LEVEL+ OR the real
+    Nutritionist trait -- either one unlocks it, see refreshLayout's
     canSeeFoodIndex) -- replaces the old per-row "hover to see top 10"
     line/tooltip per explicit request: one list covering all 6 vitamins at
     once, always visible, no hover needed. Each vitamin's own
@@ -346,9 +361,11 @@ function HARMONIE_VitaminPanel:refreshLayout()
 
     local hasFirstAidDetail = player:getPerkLevel(Perks.Doctor) >= FIRST_AID_DETAIL_LEVEL
     local hasCookingFoodList = player:getPerkLevel(Perks.Cooking) >= COOKING_FOOD_LEVEL
-    -- Either a cook (knows from experience) or a nutritionist/doctor (knows
-    -- medically) can see the food index -- either skill unlocks it.
-    local canSeeFoodIndex = hasCookingFoodList or hasFirstAidDetail
+    local hasNutritionistTrait = NUTRITIONIST_TRAIT ~= nil and player:hasTrait(NUTRITIONIST_TRAIT)
+    -- Either a cook (knows from experience) or someone with the real
+    -- Nutritionist trait (knows professionally) can see the food index --
+    -- either one unlocks it. NOT First Aid -- see the header comment above.
+    local canSeeFoodIndex = hasCookingFoodList or hasNutritionistTrait
     -- Must match doDrawItem's own textX exactly (PADDING + STRIPE_WIDTH +
     -- ICON_SIZE + 14) or wrapped lines can overflow the row by a few px.
     local textWidth = self:getWidth() - (PADDING + STRIPE_WIDTH + ICON_SIZE + 14) - PADDING
