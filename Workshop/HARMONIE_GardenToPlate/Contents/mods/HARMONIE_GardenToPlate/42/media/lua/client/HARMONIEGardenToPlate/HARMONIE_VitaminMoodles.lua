@@ -33,10 +33,22 @@
     onCheckerTick below) so a live sandbox/admin-panel edit to
     criticalThreshold/sufficientThreshold is reflected here too, not just in
     the Reserve/effect logic.
+
+    Everything that touches MoodleFramework (the require, MF.createMoodle,
+    threshold setup) is deferred to Events.OnGameBoot, not run at file-load
+    time -- GardenToPlate has no require=MoodleFramework in mod.info (soft
+    dependency, by design), so PZ's own mod load order does NOT guarantee
+    MoodleFramework's own Lua has already executed by the time this file's
+    top level runs. Confirmed the same class of bug for real on Modern
+    Status's own bridge (HARMONIE_ModernStatusBridge.lua) via console.txt --
+    same fix applied here defensively even though this specific file wasn't
+    directly observed failing.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
+
+local isInitialized = false
 
 local function isMoodleFrameworkActive()
     local activatedMods = getActivatedMods()
@@ -48,16 +60,6 @@ local function isMoodleFrameworkActive()
     return false
 end
 
-if not isMoodleFrameworkActive() then
-    return
-end
-
-local status, MF_ISMoodle = pcall(require, "MF_ISMoodle")
-if not status or not MF_ISMoodle or not MF_ISMoodle.createMoodle then
-    print("HARMONIE_GardenToPlate: MoodleFramework detected but MF_ISMoodle failed to load, skipping vitamin moodles.")
-    return
-end
-
 local MOODLE_NAMES = {
     A = "VitaminA",
     B = "VitaminB",
@@ -66,10 +68,6 @@ local MOODLE_NAMES = {
     E = "VitaminE",
     K = "VitaminK",
 }
-
-for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-    MF.createMoodle(MOODLE_NAMES[vit])
-end
 
 -- Applies (or re-applies, on a live threshold change) this mod's own band
 -- boundaries onto the moodle's 4 MoodleFramework levels, per the header note.
@@ -82,12 +80,9 @@ local function applyThresholds(moodle)
     )
 end
 
-local CHECK_INTERVAL_MS = 10000
-local lastCheckMs = 0
-
--- MF.createMoodle() above only registers a lazy Events.OnCreatePlayer hook
--- (see MF_ISMoodle.lua) -- the actual per-player moodle instance doesn't
--- exist until that fires, so thresholds can't be set at file-load time.
+-- MF.createMoodle() only registers a lazy Events.OnCreatePlayer hook (see
+-- MF_ISMoodle.lua) -- the actual per-player moodle instance doesn't exist
+-- until that fires, so thresholds can't be set right after createMoodle.
 -- Tracked per playerNum+vitamin so a threshold only needs re-applying once
 -- right after the moodle first exists, or again later if the sandbox/admin
 -- panel changes criticalThreshold/sufficientThreshold live.
@@ -112,7 +107,12 @@ local function updatePlayerMoodles(player)
     end
 end
 
+local CHECK_INTERVAL_MS = 10000
+local lastCheckMs = 0
+
 local function onMoodleTick()
+    if not isInitialized then return end
+
     local now = getTimestampMs and getTimestampMs() or 0
     if now - lastCheckMs < CHECK_INTERVAL_MS then return end
     lastCheckMs = now
@@ -125,4 +125,22 @@ local function onMoodleTick()
     end
 end
 
+local function initMoodles()
+    if isInitialized then return end
+    if not isMoodleFrameworkActive() then return end
+
+    local status, loadedModule = pcall(require, "MF_ISMoodle")
+    if not status or not loadedModule or not loadedModule.createMoodle then
+        print("HARMONIE_GardenToPlate: MoodleFramework detected but MF_ISMoodle failed to load, skipping vitamin moodles.")
+        return
+    end
+
+    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+        MF.createMoodle(MOODLE_NAMES[vit])
+    end
+
+    isInitialized = true
+end
+
+Events.OnGameBoot.Add(initMoodles)
 Events.OnTick.Add(onMoodleTick)

@@ -16,6 +16,19 @@
 
     Read-only presentation on top of the existing, unmodified vitamin system,
     same as HARMONIE_VitaminMoodles.lua -- never writes to VitData.
+
+    Everything (the require of MS_StatusIndicator included) is deferred to
+    Events.OnGameBoot, not run at file-load time. GardenToPlate has no
+    require=ModernStatus in mod.info (soft dependency, by design), so PZ's
+    own mod load order does NOT guarantee ModernStatus's own Lua has already
+    executed by the time this file's top level runs -- confirmed via
+    console.txt on a real save: HARMONIE_GardenToPlate loaded before
+    ModernStatus, and `require "MS/MS_StatusIndicator"` failed because that
+    chain (MS_MatrixManager/MS_GridManager/MS_IndicatorVisualConfig/etc.)
+    relies on state ModernStatus's own files set up as THEY load in order.
+    OnGameBoot fires once, after every active mod's Lua has fully loaded, so
+    by then that chain is safe to require regardless of our own load
+    position.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -33,16 +46,6 @@ local function isModernStatusActive()
     return false
 end
 
-if not isModernStatusActive() then
-    return
-end
-
-local status, MS_StatusIndicator = pcall(require, "MS/MS_StatusIndicator")
-if not status or not MS_StatusIndicator then
-    print("HARMONIE_GardenToPlate: ModernStatus detected but MS_StatusIndicator failed to load, skipping vitamin indicators.")
-    return
-end
-
 local VITAMIN_INDICATOR_COLOR = {
     A = {r = 0.90, g = 0.50, b = 0.14},
     B = {r = 0.95, g = 0.77, b = 0.06},
@@ -52,33 +55,40 @@ local VITAMIN_INDICATOR_COLOR = {
     K = {r = 0.61, g = 0.35, b = 0.71},
 }
 
--- One MS_StatusIndicator subclass per vitamin. baseIconName reuses the same
--- 30x30 moodle icon (media/ui/Vitamin<X>.png) already added for
--- HARMONIE_VitaminMoodles.lua rather than shipping a second copy of the art.
-local IndicatorClasses = {}
-for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-    local className = "HARMONIE_Vitamin" .. vit .. "StatusIndicator"
-    local indicatorClass = MS_StatusIndicator:derive(className)
-
-    indicatorClass.new = function(self, x, y, width, height, player)
-        local o = MS_StatusIndicator.new(self, x, y, width, height, player)
-        o.baseIconName = "Vitamin" .. vit
-        o.__type = className
-        o.indicatorColor = VITAMIN_INDICATOR_COLOR[vit]
-        return o
-    end
-
-    indicatorClass.getValue = function(self)
-        if not self.player or self.player:isDead() then return 0 end
-        return HARMONIE_GTP.VitData.Get(self.player, vit) / HARMONIE_GTP.Config.maxValue
-    end
-
-    _G[className] = indicatorClass
-    IndicatorClasses[vit] = indicatorClass
-end
-
 local function integrateToModernStatus()
     if isInitialized then return end
+    if not isModernStatusActive() then return end
+
+    local status, MS_StatusIndicator = pcall(require, "MS/MS_StatusIndicator")
+    if not status or not MS_StatusIndicator then
+        print("HARMONIE_GardenToPlate: ModernStatus detected but MS_StatusIndicator failed to load, skipping vitamin indicators.")
+        return
+    end
+
+    -- One MS_StatusIndicator subclass per vitamin. baseIconName reuses the
+    -- same 30x30 moodle icon (media/ui/Vitamin<X>.png) already added for
+    -- HARMONIE_VitaminMoodles.lua rather than shipping a second copy of the art.
+    local IndicatorClasses = {}
+    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+        local className = "HARMONIE_Vitamin" .. vit .. "StatusIndicator"
+        local indicatorClass = MS_StatusIndicator:derive(className)
+
+        indicatorClass.new = function(self, x, y, width, height, player)
+            local o = MS_StatusIndicator.new(self, x, y, width, height, player)
+            o.baseIconName = "Vitamin" .. vit
+            o.__type = className
+            o.indicatorColor = VITAMIN_INDICATOR_COLOR[vit]
+            return o
+        end
+
+        indicatorClass.getValue = function(self)
+            if not self.player or self.player:isDead() then return 0 end
+            return HARMONIE_GTP.VitData.Get(self.player, vit) / HARMONIE_GTP.Config.maxValue
+        end
+
+        _G[className] = indicatorClass
+        IndicatorClasses[vit] = indicatorClass
+    end
 
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         local className = "HARMONIE_Vitamin" .. vit .. "StatusIndicator"
@@ -91,9 +101,8 @@ local function integrateToModernStatus()
         StatusWidget._originalCreateUI_HARMONIE_GTP = StatusWidget.createUI
     end
 
-    local oldCreateUI = StatusWidget.createUI
     StatusWidget.createUI = function(playerIndex, player)
-        oldCreateUI(playerIndex, player)
+        StatusWidget._originalCreateUI_HARMONIE_GTP(playerIndex, player)
 
         if not StatusWidget.indicators[playerIndex] then
             StatusWidget.indicators[playerIndex] = {}
