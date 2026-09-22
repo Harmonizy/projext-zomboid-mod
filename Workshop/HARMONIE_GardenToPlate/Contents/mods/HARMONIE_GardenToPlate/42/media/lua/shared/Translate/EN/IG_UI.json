@@ -142,7 +142,7 @@
     "IGUI_HARMONIE_Downside_C": "Occasional spontaneous nosebleeds or bleeding gums (unexplained head wound).",
     "IGUI_HARMONIE_Downside_D": "Muscles ache and stiffen all over the body (Stiffness no lower than 20 percent, all body parts).",
     "IGUI_HARMONIE_Downside_E": "Persistently unhappy -- slows down moving and handling items (Unhappiness no lower than 30 percent).",
-    "IGUI_HARMONIE_Downside_K": "Generally run down -- recovery and healing are slower (at least Nauseous on the Sick moodle).",
+    "IGUI_HARMONIE_Downside_K": "Generally run down -- recovery and healing are slower (at least Uncomfortable).",
     "IGUI_HARMONIE_LowWarning": "If this keeps dropping: %1",
     "IGUI_HARMONIE_SufficientNote": "Reserve is healthy. No penalty active.",
     "IGUI_HARMONIE_No": "No",

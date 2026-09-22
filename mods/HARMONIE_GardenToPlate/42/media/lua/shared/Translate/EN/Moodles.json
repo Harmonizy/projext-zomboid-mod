@@ -49,7 +49,7 @@
     "Moodles_VitaminK_Bad_lvl2": "Vitamin K: Low",
     "Moodles_VitaminK_Bad_desc_lvl2": "Your Vitamin K reserve is running low. Keep it dropping and you'll feel generally run down, healing and recovery slowing.",
     "Moodles_VitaminK_Bad_lvl3": "Vitamin K: Critical",
-    "Moodles_VitaminK_Bad_desc_lvl3": "You're generally run down from Vitamin K deficiency (at least Nauseous on the Sick moodle) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminK_Bad_desc_lvl3": "You're generally run down from Vitamin K deficiency (at least Uncomfortable) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminK_Bad_lvl4": "Vitamin K: Critical",
-    "Moodles_VitaminK_Bad_desc_lvl4": "You're generally run down from Vitamin K deficiency (at least Nauseous on the Sick moodle) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it."
+    "Moodles_VitaminK_Bad_desc_lvl4": "You're generally run down from Vitamin K deficiency (at least Uncomfortable) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it."
 }

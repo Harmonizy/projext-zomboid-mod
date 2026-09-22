@@ -86,11 +86,13 @@
            own earlier VitaminConfig.lua research citing MoodleStat.class).
            "unhappy ทำให้ย้ายของหรือทำอะไรช้าลง จำลองการทำงานผิดปกติของ
            ระบบประสาทและกล้ามเนื้ออ่อนแรง"
-      K -> CharacterStat.SICKNESS floor 0.55 (0-1 scale, guarantees at
-           least the "Nauseous" tier of vanilla's real Sick moodle --
-           confirmed by decompiling Moodle.class/MoodleStat.class, see
-           MaintainSicknessFloor below). "อาการของ sick ทำให้การรักษาช้าลง
-           เลยเหมือนอาการเลือดแข็งตัวยาก"
+      K -> CharacterStat.DISCOMFORT floor 45 (0-100 scale, guarantees at
+           least the "Uncomfortable" tier of vanilla's real Uncomfortable
+           moodle -- confirmed by decompiling Moodle.class/MoodleStat.class.
+           NOT SICKNESS: that stat is contested by the "Extensive Health
+           Rework Evolved" mod, which clears it every tick -- see
+           MaintainSicknessFloor below for the full story). "อาการของ sick
+           ทำให้การรักษาช้าลง เลยเหมือนอาการเลือดแข็งตัวยาก"
 
     Universal effect (new this design, independent of which specific
     vitamins): every vitamin currently afflicted-and-not-pause-shielded
@@ -325,48 +327,50 @@ function VitEffects.MaintainUnhappinessFloor(character)
 end
 
 -- ---------------------------------------------------------------------
--- K: CharacterStat.SICKNESS floor 0.55 (0-1 scale). CONFIRMED via
--- decompiling vanilla's own Moodle.class + MoodleStat.class (javap -p -c
--- on projectzomboid.jar, 2026-09-22 -- see workflow.txt section 8.4 for
--- the full bytecode trail): the real "Sick" moodle (Queasy/Nauseous/Sick/
--- Fever) is computed as
--- `getBodyDamage():getApparentInfectionLevel()/100 + getStats():get(SICKNESS)`,
--- compared (strictly >) against MoodleStat.SICK's own registered
--- thresholds 0.25/0.5/0.75/0.9 for Queasy/Nauseous/Sick/Fever. So
--- CharacterStat.SICKNESS genuinely IS the right stat (an earlier version
--- of this function switched to FOOD_SICKNESS based on a red herring in
--- Tutorial/Steps.lua and was WRONG -- reverted). The real bug was the
--- floor VALUE: 0.30 only barely clears the lowest (Queasy) threshold,
--- easy to miss entirely. 0.55 comfortably clears the Nauseous threshold
--- (0.5) with margin for float precision, matching what the user actually
--- wants visible ("the Nauseous status").
+-- K: CharacterStat.DISCOMFORT floor 45 (0-100 scale, drives vanilla's
+-- real "Uncomfortable" moodle -- confirmed via decompiling Moodle.class:
+-- that moodle reads `getStats():get(CharacterStat.DISCOMFORT)` alone, no
+-- combination with anything else, compared against MoodleStat.
+-- UNCOMFORTABLE's own registered thresholds 20/40/60/80 for A Little
+-- Uncomfortable / Uncomfortable / Very Uncomfortable / Extremely
+-- Uncomfortable -- 45 comfortably clears the 2nd tier).
+--
+-- NOT the first choice. CharacterStat.SICKNESS (the obviously "correct"-
+-- sounding stat, and the mod's own target through v0.6.4) was CONFIRMED,
+-- via a real user report ("resets to 0 constantly") plus a read-back
+-- diagnostic print left in this function for one test session, to get
+-- wiped every single ~10-second re-enforcement cycle. Root cause: this
+-- has NOTHING to do with our own code -- it's a genuine conflict with the
+-- "Extensive Health Rework Evolved" mod (Workshop 3726328119, a soft
+-- dependency of this repo's own HARMONIE_HomeMedic), whose
+-- EHR_Disease.lua runs an every-single-game-tick "vanilla sickness sync"
+-- that explicitly zeroes CharacterStat.SICKNESS (and FOOD_SICKNESS,
+-- POISON) whenever EHR's OWN disease system has nothing active for that
+-- character, on the assumption any nonzero value must be leftover
+-- residue from a cured illness. EHR's every-tick check always wins the
+-- race against our slower 10-second one. Grepping EHR's entire Lua
+-- source for every `stats:set(CharacterStat.X` confirms it also writes
+-- (less aggressively, only under specific disease conditions rather than
+-- an unconditional per-tick sweep) to BOREDOM/ENDURANCE/FATIGUE/HUNGER/
+-- PAIN/PANIC/STRESS/TEMPERATURE/THIRST/UNHAPPINESS/WETNESS/ZOMBIE_FEVER/
+-- ZOMBIE_INFECTION too -- DISCOMFORT was one of the few CharacterStat
+-- values EHR's codebase never writes to at all, hence the switch. Same
+-- general lesson as this file's own BleedingTime/FOOD_SICKNESS traps, one
+-- level up: confirming a write persists in isolation isn't enough when
+-- another active mod also claims the same stat -- check what ELSE is
+-- installed before trusting a "correct-looking" stat long-term.
 -- ---------------------------------------------------------------------
-local SICKNESS_FLOOR = 0.55
+local DISCOMFORT_FLOOR = 45
 
--- TEMP DIAGNOSTIC (2026-09-22): user reports the debug menu's own
--- "Sickness" slider always reads 0 despite this function running every 10
--- real seconds while Vitamin K is Critical (confirmed via console.txt --
--- the "hit Critical -- effect ACTIVE" log fired, no Lua errors anywhere
--- near it). Every write-persistence path was checked by decompiling
--- Stats.class (set() clamps + stores into a real Map, returns whether it
--- changed; get() is a plain Map read; IsoGameCharacter.getStats() returns
--- the same persistent Stats field, not a fresh throwaway object) -- all
--- confirmed fine in isolation. This print closes the remaining gap: does
--- the value ACTUALLY hold from the game's own perspective right after we
--- write it? Remove once the real cause is found and fixed.
 function VitEffects.MaintainSicknessFloor(character)
     if not HARMONIE_GTP.Config.effectsEnabled then return end
     if not isActive(character, "K") then return end
 
     local stats = character:getStats()
-    local current = stats:get(CharacterStat.SICKNESS)
-    if current < SICKNESS_FLOOR then
-        stats:set(CharacterStat.SICKNESS, SICKNESS_FLOOR)
+    local current = stats:get(CharacterStat.DISCOMFORT)
+    if current < DISCOMFORT_FLOOR then
+        stats:set(CharacterStat.DISCOMFORT, DISCOMFORT_FLOOR)
     end
-
-    local readback = stats:get(CharacterStat.SICKNESS)
-    print(string.format("[HARMONIE][DIAG] SICKNESS before=%.4f floor=%.2f after-write readback=%.4f",
-        current, SICKNESS_FLOOR, readback))
 end
 
 --[[
@@ -420,7 +424,7 @@ local EffectDescription = {
     C = "random Head scratch, 1 game hour / 5% chance (nosebleed/bleeding gums)",
     D = "per-body-part Stiffness floor 20, all body parts (muscle strain)",
     E = "CharacterStat.UNHAPPINESS floor 30 (slower item handling)",
-    K = "CharacterStat.SICKNESS floor 0.55 -- at least Nauseous (slower recovery)",
+    K = "CharacterStat.DISCOMFORT floor 45 -- at least Uncomfortable (slower recovery)",
 }
 
 --[[

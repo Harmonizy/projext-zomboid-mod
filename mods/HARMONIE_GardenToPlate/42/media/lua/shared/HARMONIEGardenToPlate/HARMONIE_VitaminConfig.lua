@@ -59,8 +59,10 @@
       E -> CharacterStat.UNHAPPINESS floor 30 (persistent unhappiness --
            slows down handling/moving items, standing in for impaired
            nerve/muscle coordination)
-      K -> CharacterStat.SICKNESS floor 0.30 (general malaise slowing
-           recovery, standing in for blood not clotting properly)
+      K -> CharacterStat.DISCOMFORT floor 45 (general malaise slowing
+           recovery, standing in for blood not clotting properly -- NOT
+           SICKNESS, which the "Extensive Health Rework Evolved" mod
+           contests, see HARMONIE_VitaminEffects.lua's MaintainSicknessFloor)
     PLUS a universal effect independent of which specific vitamins:
       every vitamin currently afflicted-and-not-pause-shielded caps
       overall body health (bodyDamage:getOverallBodyHealth(), 0-100) 5

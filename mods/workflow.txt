@@ -1015,6 +1015,47 @@ How to debug:
       field names, thresholds, and comparison operators straight from the
       real formula instead of guessing from Lua-side circumstantial evidence.
       ***
+    - *** FURTHER UPDATE 2026-09-22, same Vitamin K saga -- the 0.55 SICKNESS
+      floor above was STILL invisible in-game, confirmed by the user AND by a
+      one-session read-back diagnostic print (`stats:get` immediately after
+      `stats:set` always showed the write held instantly, but the NEXT check
+      ~10 real seconds later always found it back at exactly 0.0). This was
+      never a bug in HARMONIE's own code -- it's a genuine cross-MOD conflict.
+      The user has "Extensive Health Rework Evolved" active (Workshop
+      3726328119, a soft dependency of this repo's own HARMONIE_HomeMedic).
+      Its `EHR_Disease.lua` runs an every-SINGLE-game-tick "vanilla sickness
+      sync" (`VANILLA_SICKNESS_INTERVAL = 1`) that explicitly zeroes
+      `CharacterStat.SICKNESS` (and `FOOD_SICKNESS`, `POISON`) whenever EHR's
+      own disease-tracking has nothing active for that character, on the
+      assumption any nonzero value must be leftover residue from an
+      EHR-cured illness -- it has no way to know another mod set it on
+      purpose. Running every tick, EHR always wins the race against any
+      slower re-enforcement loop. Found by extracting and full-text-grepping
+      EHR's entire Lua source (not just vanilla's jar) for
+      `stats:set(CharacterStat.` -- EHR also writes (less aggressively, only
+      under specific disease conditions, not an unconditional per-tick
+      sweep) to BOREDOM/ENDURANCE/FATIGUE/HUNGER/PAIN/PANIC/STRESS/
+      TEMPERATURE/THIRST/UNHAPPINESS/WETNESS/ZOMBIE_FEVER/ZOMBIE_INFECTION
+      too. Fix: switched Vitamin K off CharacterStat entirely away from the
+      disease-stat cluster, onto `CharacterStat.DISCOMFORT` floor 45 (0-100
+      scale) instead -- confirmed via the same javap technique to drive
+      vanilla's real "Uncomfortable" moodle on its own
+      (`getStats():get(DISCOMFORT)` alone, thresholds 20/40/60/80, no
+      combination with anything else) -- and DISCOMFORT was confirmed absent
+      from EHR's entire `stats:set(CharacterStat.` grep results. *** Lesson
+      for ANY future HARMONIE mod that floors/ceilings a CharacterStat as a
+      symptom: confirming the write persists in isolation (even with a
+      read-back print) is NOT enough proof it'll hold over time -- always
+      also check what OTHER active mods (especially health/disease-rework
+      mods, which tend to claim broad ownership of stats like SICKNESS/
+      FOOD_SICKNESS/POISON/ZOMBIE_INFECTION/ZOMBIE_FEVER) might be writing to
+      that same stat. If a mod folder is locally subscribed
+      (`steamapps/workshop/content/108600/<id>/mods/...`, findable by
+      grepping mod.info files for the mod's name), its Lua source is
+      completely readable — grep it the same way vanilla's own jar gets
+      grepped, and prefer a CharacterStat nobody else's active mods
+      reference at all over one that merely "sounds right" thematically.
+      ***
     - Calorie: raw is a net energy value, roughly -2200 to 3700 (not 0-based),
       normalized via (value-(-2200))/(3700-(-2200)).
     - Proteins, Carbohydrates, Lipids: raw is roughly -500 to 1000, normalized via
