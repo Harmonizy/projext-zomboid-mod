@@ -982,6 +982,28 @@ How to debug:
       `getApparentInfectionLevel()/100 + getStats():get(SICKNESS)` (the first is
       0-100 so needs dividing, the second is already raw 0-1), added directly with
       no further clamping (can exceed 1 during severe infection).
+    - *** TRAP found 2026-09-22 (HARMONIE_GardenToPlate's Vitamin K effect):
+      `CharacterStat.SICKNESS` (the one Modern Status's composite Sickness
+      indicator above reads) is NOT the stat that drives vanilla's own visible
+      "Sick" moodle -- writing to it with `stats:set(CharacterStat.SICKNESS, x)`
+      was CONFIRMED to produce no visible symptom at all, reported by the user
+      as "sick effect doesn't show". The moodle is actually driven by the
+      SEPARATE `CharacterStat.FOOD_SICKNESS` stat (0-100 scale) -- proven by
+      vanilla's own `media/lua/client/Tutorial/Steps.lua`
+      (InventoryLootingStep:update), which sets
+      `getPlayer():getStats():set(CharacterStat.FOOD_SICKNESS, 40)` immediately
+      before calling `getCore():setBlinkingMoodle("Sick")` to teach the player
+      about that exact moodle. SICKNESS and FOOD_SICKNESS are confirmed genuinely
+      separate stats (both independently exposed as their own sliders in
+      vanilla's own `DebugUIs/DebugMenu/General/ISStatsAndBody.lua`, and both
+      read independently in `forageSystem.lua`'s getBodyPenalty). Lesson: a
+      stat name "sounding right" is not proof it drives the symptom you want --
+      same class of trap as the BleedingTime lesson in section 8.2/
+      HARMONIE_VitaminEffects.lua's own header (setting a raw value doesn't mean
+      it's wired to anything visible; find a real vanilla caller that produces
+      the actual visible effect and confirm it uses the same stat you're about
+      to write). Fixed by switching Vitamin K's effect to floor
+      `CharacterStat.FOOD_SICKNESS` at 30 instead. ***
     - Calorie: raw is a net energy value, roughly -2200 to 3700 (not 0-based),
       normalized via (value-(-2200))/(3700-(-2200)).
     - Proteins, Carbohydrates, Lipids: raw is roughly -500 to 1000, normalized via
