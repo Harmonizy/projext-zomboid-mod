@@ -4,3 +4,8 @@
 !/mods/
 !/Workshop/
 !/.gitignore
+
+# The game writes its own current mod-selection list here every time the
+# player changes mods in-game -- it's local play state, not mod source, and
+# kept showing up as unrelated drift in git status. Untracked 2026-09-22.
+mods/default.txt
