@@ -350,8 +350,9 @@ end
       - status line: Band (Critical/Low/Sufficient, colored the same as
         HARMONIE_NutritionUI.lua) + whether the critical penalty is
         actively firing right now (afflicted AND no banked pause days
-        left -- mirrors the exact gate HARMONIE_VitaminChecker.lua /
-        VitEffects.MaintainRealTrait use) + consecutive days afflicted.
+        left -- mirrors the exact gate every VitEffects.Maintain*/
+        MaybeTrigger* function in HARMONIE_VitaminChecker.lua uses) +
+        consecutive days afflicted.
       - current-values line: the real Reserve and Pause Days right now
         (see the file header for why Pause Days is display-only).
     Doesn't touch the Reserve text ENTRY field -- that only ever changes

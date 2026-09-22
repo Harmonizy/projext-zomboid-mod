@@ -29,32 +29,30 @@
          maintenance below, specifically so several vitamins crossing
          into Critical on the same day don't all say their line back to
          back.
-      5. Every vitamin genuinely grants/revokes its own themed real
-         vanilla CharacterTrait (VitEffects.MaintainRealTrait -- Short
-         Sighted/Disorganized/Thin-Skinned/Short of Breath/All Thumbs/
-         Slow Healer) -- see that function's own comment in
-         HARMONIE_VitaminEffects.lua for the safety logic that keeps this
-         from ever stripping a trait the character actually chose at
-         creation. This is the ONLY mechanism now -- earlier versions of
-         this mod also layered custom proxy effects (CharacterStat
-         floors, body-part Stiffness, BleedingTime/nosebleeds, a hand-
-         written stopOnWalk hook) and even a set of brand-new mod-
-         registered traits on top of the real ones; both were explicitly
-         removed in favor of this simpler, single-trait design.
+      5. Every vitamin applies its own direct stat penalty (see
+         HARMONIE_VitaminEffects.lua's header for the full mapping and
+         API citations): A stress floor, B endurance ceiling, C a random
+         Head-scratch check (its own 1-game-hour block, separate from the
+         6-hour symptom block above), D muscle-strain (Stiffness) floor
+         on every body part, E unhappiness floor, K sickness floor -- plus
+         the universal per-affliction health cap (MaintainHealthCap).
       6. Every vitamin also gets a permanent console.txt confirmation
          (VitEffects.LogEffectStateChange) the moment its Critical-band
-         trait actually gets granted/removed -- fires once per
-         transition, not every tick, so console.txt can be used to verify
-         "did it actually kick in" without digging through the Traits
-         list in-game.
+         effect actually gets applied/cleared -- fires once per
+         transition, not every tick.
+      7. Once per character (idempotent, a no-op after the first pass),
+         VitEffects.MigrateAwayFromRealTraits revokes any real vanilla
+         CharacterTrait an EARLIER version of this mod granted, so a save
+         upgrading from that design doesn't end up with a trait
+         permanently stuck on the character now that nothing maintains it
+         anymore.
 
-    Effect APPLICATION timing lives here now, not in
-    HARMONIE_VitaminDecay.lua's daily tick -- that file only owns the
-    day-based Reserve decay / pauseDays / afflictedDays bookkeeping.
-    Every vitamin's trait grant/revoke is a continuous, idempotent
-    re-enforcement now (no once-per-day dose left at all), so there's no
-    "already applied today" state to track here anymore -- MaintainRealTrait
-    is safe to call every single tick.
+    Effect APPLICATION timing lives here, not in HARMONIE_VitaminDecay.lua's
+    daily tick -- that file only owns the day-based Reserve decay /
+    pauseDays / afflictedDays bookkeeping. Every vitamin's effect is a
+    continuous, idempotent re-enforcement (no once-per-day dose), so
+    there's no "already applied today" state to track here -- every
+    Maintain*/MaybeTrigger* function is safe to call every single tick.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -68,10 +66,8 @@ local lastCheckMs = 0
 -- dividing by Config.symptomReminderHours (sandbox/admin-adjustable, see
 -- HARMONIE_VitaminConfig.lua) gives a number that increments exactly
 -- once per that many game hours, for the symptom-reminder dialogue
--- (VitEffects.MaybeSaySymptomReminder) -- lets the character comment on
--- an ongoing deficiency multiple times a day instead of once, without
--- ever saying more than one line in the same block. Read fresh every
--- call (not cached) so an admin changing the interval live takes effect
+-- (VitEffects.MaybeSaySymptomReminder). Read fresh every call (not
+-- cached) so an admin changing the interval live takes effect
 -- immediately, same as every other sandbox-backed value here.
 local function getSymptomBlockIndex()
     local hours = HARMONIE_GTP.Config.symptomReminderHours
@@ -79,7 +75,18 @@ local function getSymptomBlockIndex()
     return math.floor(getGameTime():getWorldAgeHours() / hours)
 end
 
-local function checkCharacter(character, symptomBlock)
+-- Same worldAgeHours source as above, fixed 1-game-hour granularity (not
+-- sandbox-adjustable, unlike the symptom block) -- see
+-- HARMONIE_VitaminEffects.lua's MaybeTriggerScratch. Tracked in its own
+-- ModData field (VitData.GetLastScratchBlock) so it never interferes with
+-- the 6-hour symptom block above.
+local function getScratchBlockIndex()
+    return math.floor(getGameTime():getWorldAgeHours())
+end
+
+local function checkCharacter(character, symptomBlock, scratchBlock)
+    HARMONIE_GTP.VitEffects.MigrateAwayFromRealTraits(character)
+
     -- At most one "feeling better" line per character per tick, even if
     -- several vitamins recover in the same 10 seconds (e.g. right after
     -- a big varied meal) -- see VitEffects.SayRecovered.
@@ -93,8 +100,15 @@ local function checkCharacter(character, symptomBlock)
         end
 
         HARMONIE_GTP.VitEffects.LogEffectStateChange(character, vit)
-        HARMONIE_GTP.VitEffects.MaintainRealTrait(character, vit)
     end
+
+    HARMONIE_GTP.VitEffects.MaintainStressFloor(character)
+    HARMONIE_GTP.VitEffects.MaintainEnduranceCeiling(character)
+    HARMONIE_GTP.VitEffects.MaybeTriggerScratch(character, scratchBlock)
+    HARMONIE_GTP.VitEffects.MaintainMuscleStrain(character)
+    HARMONIE_GTP.VitEffects.MaintainUnhappinessFloor(character)
+    HARMONIE_GTP.VitEffects.MaintainSicknessFloor(character)
+    HARMONIE_GTP.VitEffects.MaintainHealthCap(character)
 
     HARMONIE_GTP.VitEffects.MaybeSaySymptomReminder(character, symptomBlock)
 end
@@ -106,11 +120,12 @@ local function onCheckerTick()
 
     HARMONIE_GTP.RefreshFromSandbox()
     local symptomBlock = getSymptomBlockIndex()
+    local scratchBlock = getScratchBlockIndex()
 
     for i = 0, getNumActivePlayers() - 1 do
         local player = getSpecificPlayer(i)
         if player and not player:isDead() then
-            checkCharacter(player, symptomBlock)
+            checkCharacter(player, symptomBlock, scratchBlock)
         end
     end
 end

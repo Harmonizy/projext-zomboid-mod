@@ -527,6 +527,24 @@ saves only!"
       LifestyleAudioTune ฯลฯ) *** สรุปกฎ: ถ้าตัดสินใจว่าจะพึ่งพา mod อื่นแบบจริงจัง (ไม่ใช่แค่
       "เผื่อมี" แบบ HARMONIE_TooManyModThaiTranslate) ให้ใส่ require= เสมอ อย่าทำ soft-dependency
       แบบครึ่งๆ กลางๆ เพราะมันแก้บั๊ก load-order ได้ตรงจุดกว่า และโค้ดง่ายกว่ามาก ***
+      *** บทเรียนที่ 2 จาก HARMONIE_GardenToPlate (2026-09-22, v0.5.0): ระบบผลเสียตอนวิกฤติเปลี่ยนมาแล้ว
+      3 รอบ -- (1) จ่าย CharacterStat/timer ครั้งเดียวต่อวัน -> พังจริง เพราะเกมฟื้นค่าคืนเองเร็วกว่าที่
+      สังเกตได้ (ENDURANCE ฟื้นจากพักผ่อน, Stiffness ลดเองถ้าไม่ได้ออกแรง, ผ้าพันแผลลด BleedingTime เร็ว
+      กว่าปกติ 10 เท่า) (2) แก้ด้วยการบังคับค่า floor/ceiling ซ้ำทุก 10 วินาทีแทน -- ใช้งานได้จริง แต่บาง
+      trait ก็ไม่มีทาง hook จาก Lua ได้เลย (เช่น Disorganized ลดพื้นที่กระเป๋า) และ K (บังคับเลือดออก) ลอง
+      ตรงๆ ด้วย setBleedingTime() แล้วไม่มีผลอะไรในเกมจริง ต้องใช้ bodyPart:setScratched(true,true) แล้วตาม
+      ด้วย bodyPart:generateBleeding() (ลำดับจริงที่ซอมบี้ข่วนใช้ ยืนยันจาก BodyPart.class) ถึงจะสร้างแผล
+      จริงที่ UI เห็น (3) รอบปัจจุบัน: เปลี่ยนจาก grant CharacterTrait จริงมาเป็นปรับ CharacterStat/Stiffness
+      ตรงๆ อีกครั้ง (คนละชุดค่ากับรอบ 1-2) พร้อมเพิ่ม universal effect ใหม่ (health cap ต่อจำนวนวิตามินที่
+      ขาดพร้อมกัน ผ่าน bodyDamage:ReduceGeneralHealth() -- ลอกลาย pattern จริงจากมอด Extensive Health Rework
+      Evolved, Workshop 3726328119, ที่ subscribe อยู่แล้วและ HARMONIE_HomeMedic เป็น soft-dependency อยู่แล้ว
+      -- มอดนี้มี EHR_DebugMenuV2.lua ที่ทำ UI ปรับแต่งร่างกายได้สวยงาม และ EHR_EnvironmentalDiseases.lua มี
+      ฟังก์ชัน EHR_EnvironmentalClampBodyHealth ที่ใช้ pattern เดียวกันนี้เป๊ะ -- ควรกลับมาดูมอดนี้อีกถ้าจะทำ
+      อะไรเกี่ยวกับ body damage/health ในอนาคต) *** สรุปกฎ: การ์ดกันแบบ "afflicted AND pauseDays < 1" (เช็ค
+      ทุก Maintain*/MaybeTrigger* function) ต้องคงไว้เสมอไม่ว่าจะเปลี่ยน mechanism กี่รอบ, เมื่อเปลี่ยน
+      mechanism ของผลเสีย ต้องเขียน migration function ด้วย (ดู VitEffects.MigrateAwayFromRealTraits) เพื่อ
+      เคลียร์ผลเสียแบบเก่าที่ค้างอยู่ใน save เดิม ไม่งั้นผู้เล่นเก่าจะติด trait เก่าถาวรเพราะไม่มีอะไรดูแลมันอีก
+      ต่อไปแล้ว ***
 
   === การสร้าง Trait ใหม่ (ศึกษาจาก More Traits/ToadTraits) ===
   Trait ใหม่ประกาศผ่าน sound-script-style .txt เหมือน item/sound (module ... { ... }) ไม่ใช่ Lua

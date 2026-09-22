@@ -21,40 +21,54 @@
         reaches sufficientThreshold ("Sufficient" band) -- not just out of
         "Critical". This matches a real deficiency: you don't feel better
         the moment you're technically no longer in the red.
-      - The critical-band penalty is a real vanilla CharacterTrait,
-        genuinely granted/revoked by HARMONIE_VitaminChecker.lua every 10
-        seconds (VitEffects.MaintainRealTrait) -- NOT a custom stat/timer
-        effect. Earlier versions of this mod tried several custom proxy
-        mechanics on top of (or instead of) a real trait -- a
-        CharacterStat floor/ceiling to force a vanilla Moodle icon to
-        show, a per-body-part Stiffness/BleedingTime floor, a hand-
-        written stopOnWalk hook, and even a set of brand-new mod-
-        registered traits -- ALL of these were explicitly removed per
-        request: harder to tune/control than they were worth, compared to
-        just reusing a real trait's own already-balanced, already-tested
-        vanilla behavior. See HARMONIE_VitaminEffects.lua's header for
-        the full current design and per-vitamin trait mapping.
+      - THIRD DESIGN (per explicit request, replacing the real-vanilla-
+        trait system this mod used before): each vitamin now applies a
+        DIRECT game-stat penalty instead of granting a real CharacterTrait
+        -- see HARMONIE_VitaminEffects.lua's header for the full mapping
+        and the real, confirmed-working PZ APIs each one uses
+        (getStats():set(CharacterStat.X, ...), per-body-part Stiffness,
+        and a real wound-creation sequence for the scratch effect).
+        History, so this isn't tried blind a third time the same way
+        twice: an EARLIER version of this mod (before the real-trait
+        system) already tried continuous CharacterStat floor/ceiling
+        effects and hit real, confirmed problems -- a one-shot daily dose
+        gets erased by the stat's own natural regen before it's ever
+        felt (fixed by re-enforcing the floor/ceiling every 10 seconds
+        instead, not once a day -- this design keeps that fix), B's
+        original real trait (Disorganized/bag capacity) has zero Lua
+        exposure at all, and K's wound effect needs the exact two-step
+        setScratched()+generateBleeding() sequence or nothing visible
+        happens in-game. All of that history is preserved in git
+        (commits 06944a6/4068598) and repeated here in
+        HARMONIE_VitaminEffects.lua's header so the same mistakes aren't
+        relearned the hard way a third time.
 
-    Per-vitamin trait mapping (all six are real, already-compiled,
-    normally player-selectable CharacterTrait values -- confirmed via
-    decompiling CharacterTrait.class -- reused here rather than
-    registering anything new):
-      A -> Short Sighted (vision blur)
-      B -> Disorganized (reduced bag/world-container capacity; skips
-           auto-returning leftover crafting items to their container)
-      C -> Thin-Skinned (more easily cut/scratched)
-      D -> Short of Breath (in-game display name -- internal id/enum is
-           Asthmatic/base:asthmatic; real effect confirmed via
-           decompiling CharacterTraits.class is 1.2x faster ENDURANCE
-           loss, NOT panic-driven asthma attacks)
-      E -> All Thumbs (forces stopOnWalk during crafting; fumbles
-           dropped items and inventory transfers)
-      K -> Slow Healer (wounds take longer to heal)
+    Per-vitamin stat-penalty mapping (each vitamin's real-world deficiency
+    symptom mapped to the closest PZ mechanic that's actually confirmed
+    settable from Lua -- see HARMONIE_VitaminEffects.lua's header for the
+    exact API calls and the full user-provided reasoning behind each):
+      A -> CharacterStat.STRESS floor 0.30 (persistent stress -- weaker
+           hits and harder ranged aim, standing in for how blurred/
+           impaired vision would make combat harder)
+      B -> CharacterStat.ENDURANCE ceiling 0.80 (capped stamina -- muscle
+           weakness/anemia meaning less usable strength)
+      C -> random spontaneous Head scratch (bleeding gums/nosebleed),
+           checked every 1 game hour, 5% chance per check
+      D -> per-body-part Stiffness floor 20, ALL body parts (bone/muscle
+           ache and weakness)
+      E -> CharacterStat.UNHAPPINESS floor 30 (persistent unhappiness --
+           slows down handling/moving items, standing in for impaired
+           nerve/muscle coordination)
+      K -> CharacterStat.SICKNESS floor 0.30 (general malaise slowing
+           recovery, standing in for blood not clotting properly)
+    PLUS a universal effect independent of which specific vitamins:
+      every vitamin currently afflicted-and-not-pause-shielded caps
+      overall body health (bodyDamage:getOverallBodyHealth(), 0-100) 5
+      percentage points lower, stacking -- 3 vitamins afflicted at once
+      means health can never read above 85.
     See HARMONIE_VitaminEffects.lua's header for the full citations
-    behind each of these (which are Java-only vs which have a confirmed
-    Lua-visible hook) and for MaintainRealTrait's safety logic that
-    guarantees a character's own genuinely-chosen starting trait is never
-    stripped by this mod.
+    behind each of these and VitEffects.MaintainHealthCap's own comment
+    for the universal health-cap mechanic.
 
     All values here are rough real-world-approximate game-balance figures,
     not medical reference data. Vitamin "B" is a single stat standing in for
@@ -105,8 +119,8 @@ HARMONIE_GTP.Config = {
     -- First Aid perk level required to interpret the manual assessment UI
     assessmentRequiredFirstAid = 5,
 
-    -- master switch for critical-band penalties (MaintainRealTrait no-ops
-    -- entirely while this is false)
+    -- master switch for critical-band penalties (every VitEffects.Maintain*/
+    -- MaybeTrigger* function no-ops entirely while this is false)
     effectsEnabled = true,
 
     -- How often (in GAME hours) a character with at least one Critical,

@@ -31,19 +31,19 @@
                      regardless of how long it's persisted -- see
                      HARMONIE_VitaminEffects.lua); kept in case something
                      wants to show/use it later
-      traitGranted - true only while THIS mod is the one currently holding
-                     the real vanilla CharacterTrait mapped to this vitamin
-                     (Short Sighted/Disorganized/Thin-Skinned/Short of
-                     Breath/All Thumbs/Slow Healer -- see VitEffects.
-                     MaintainRealTrait). Critical: a character may have
-                     genuinely CHOSEN that same trait at character
-                     creation (all six are real, normally player-
-                     selectable negative traits) -- this flag is what
-                     stops the mod from ever stripping a real, player-
-                     chosen trait back off once Reserve recovers. Only
-                     ever removed if this mod was the one that added it
-                     (see MaintainRealTrait's own comment for the exact
-                     logic).
+      traitGranted - LEGACY field from this mod's earlier real-vanilla-
+                     trait design (Short Sighted/Disorganized/Thin-Skinned/
+                     Short of Breath/All Thumbs/Slow Healer), now retired
+                     in favor of direct stat penalties (see
+                     HARMONIE_VitaminEffects.lua's header for the full
+                     history). Kept in the data model, still read once, so
+                     an existing save upgrading from that version doesn't
+                     end up with a real trait permanently stuck on the
+                     character forever -- see VitEffects.
+                     MigrateAwayFromRealTraits, which revokes any
+                     mod-granted trait it finds still set and clears this
+                     flag. Once cleared it stays false and this field does
+                     nothing further.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
@@ -151,6 +151,22 @@ end
 
 function VitData.SetLastSymptomBlock(character, block)
     character:getModData().HARMONIE_LastSymptomBlock = block
+    sync(character)
+end
+
+--[[
+    Same once-per-block gating as GetLastSymptomBlock above, but tracked
+    separately (its own ModData field, its own 1-game-hour block
+    granularity) so it never interferes with the 6-hour symptom-dialogue
+    block -- see HARMONIE_VitaminEffects.lua's MaybeTriggerScratch and
+    HARMONIE_VitaminChecker.lua's getScratchBlockIndex.
+]]--
+function VitData.GetLastScratchBlock(character)
+    return character:getModData().HARMONIE_LastScratchBlock or -1
+end
+
+function VitData.SetLastScratchBlock(character, block)
+    character:getModData().HARMONIE_LastScratchBlock = block
     sync(character)
 end
 
