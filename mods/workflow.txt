@@ -40,6 +40,9 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
      confirmed-broken reference mods (don't copy them).
 7.   Steam Workshop content cache — always find another mod's real source before
      patching it; folder names can be misleading.
+7.1  External community doc repo (MrBounty/PZ-Mod---Doc) — verified STALE
+     (last commit 2023, predates Build 42); fine for general concepts, never trust
+     an exact B42 API from it without confirming against real current source.
 8.   Multi-version mod conflicts (script load errors from stale legacy Workshop
      items running alongside the current one).
 8.1  Git push does NOT update Steam Workshop — always tell the user to re-upload.
@@ -564,6 +567,34 @@ with vanilla (e.g. when picking a safe GameSounds category, section 3.1) — loc
 at: C:\Program Files (x86)\Steam\steamapps\common\ProjectZomboid\media\...
 Never assume a keyword does/doesn't collide with vanilla without actually grepping
 to check first.
+
+7.1 External community doc repo: MrBounty/PZ-Mod---Doc (checked 2026-09-25, user
+provided the link) — https://github.com/MrBounty/PZ-Mod---Doc
+*** VERIFIED STALE: predates Build 42 entirely. `git log` on the repo shows its
+LAST commit is 2023-08-25 (138 total commits, oldest from 2022) -- Build 42 unstable
+didn't start until mid-2024, so nothing in this repo has ever been checked against
+B42 by its own author. Confirmed via one concrete example: its "How to make a
+custom trait.md" shows `player:HasTrait("MyTrait")` (capital H) for checking a
+trait -- but this same session's own decompile/vanilla-source work (see section 8.4
+and HARMONIE_GardenToPlate's Vitamin Ingredient Index / Nutritionist-trait fix)
+confirmed CURRENT B42 vanilla code (forageSystem.lua) uses lowercase
+`character:hasTrait(...)`, paired with the newer Registry-based lookup
+`CharacterTrait.get(ResourceLocation.of("TraitName"))` for real vanilla traits (not
+needed for a mod's OWN custom TraitFactory.addTrait-created trait, which may still
+use the classic string-id path shown in that doc -- not independently confirmed
+either way this session). ***
+Verdict / how to use it: fine as a CONCEPTUAL starting point for things unlikely to
+have changed across builds -- what an event is, the general shape of a custom timed
+action / custom UI panel / modData save pattern, links to other resources (its own
+"Useful links.md" points at the FWolfe Zomboid-Modding-Guide, the official PZ
+modding wiki, the Lua events list, and community APIs like Konijima's
+PZ-Community-API) -- but NEVER trust an exact B42 method name, enum field, or class
+API straight from it without confirming against real, CURRENT source first (grep
+the actual vanilla jar's decompiled classes per section 8.4's javap technique, or a
+real subscribed mod's own Lua under
+steamapps\workshop\content\108600\<id>\mods\...\media\lua\, section 7 above) --
+same discipline this file has already learned the hard way multiple times this
+session (BleedingTime, FOOD_SICKNESS/SICKNESS, the Nutritionist trait itself).
 
 
 8. Multi-version mod conflicts (watch for this when debugging "script won't load")
