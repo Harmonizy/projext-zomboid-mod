@@ -1,7 +1,5 @@
 name=HARMONIE - TheWayToAttack
 id=HARMONIE_TheWayToAttack
-description=(WIP) New melee weapon-crafting mod.
-poster=poster.png
-icon=icon.png
-modversion=0.1.0
+description=(WIP) New melee weapon-crafting mod. 137 weapons staged as spawnable items (no crafting recipes yet).
+modversion=0.2.0
 versionMin=42.0.0

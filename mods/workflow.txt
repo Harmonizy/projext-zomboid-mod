@@ -67,6 +67,13 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
      fixed architecture gap in HARMONIE_VitaminChecker.lua that needs a user decision,
      plus a real client<->server command pattern and a local MP test-rig setup that
      would help fix/test that gap when the time comes.
+8.8  Porting another mod's item scripts into your own mod (HARMONIE_TheWayToAttack) —
+     3 real traps that all produced the SAME crash symptom (Debug > Items list dying
+     with a null getItemType()): hyphens in item/model identifiers, model-name
+     collisions with vanilla's own models from blindly copying a whole reference
+     file, and the real root cause — missing ItemType= (Type= alone isn't enough,
+     confirmed 409-vs-0 against real vanilla source). Plus the live-diagnostic
+     technique that found the third one after static grepping alone wasn't enough.
 9.   Checklist to run through before starting any new work.
 
 
@@ -1366,6 +1373,115 @@ How to debug:
     mods/ directly on the host). `/setaccesslevel <username> admin` from the
     host's own game grants admin. This is the practical way to actually exercise
     the flagged MP gap above instead of reasoning about it from source alone.
+
+8.8 Porting another mod's item scripts into your own mod (HARMONIE_TheWayToAttack,
+    2026-09-25) -- THREE real, confirmed traps found while turning 137 weapons
+    from 2 reference mods (MWPWeapons42 + SOMW, see
+    mods/WEAPON_CRAFTING_MOD_REFERENCE.txt) into real items in a brand new mod.
+    All 3 caused the SAME outward symptom (vanilla's own Debug > Items list
+    crashing instantly with "attempted index: toString of non-table: null" at
+    ISItemsListTable.lua:244, which iterates getAllItems() and calls
+    v:getItemType():toString() on EVERY item with no nil-check) -- so don't
+    assume "same error message" means "same bug", check each one:
+
+    TRAP 1 -- hyphens in `item <name>` / `model <name>` DECLARATIONS. Two of
+    MWPWeapons42's own items were named `ka-bar_knife` and
+    `z-hunter_red_sawback_machete` -- PZ's script parser cannot handle a hyphen
+    in the identifier token right after the `item`/`model` keyword (unlike a
+    VALUE, e.g. `DisplayName = KA-BAR Knife` with a hyphen works completely
+    fine as a value). Fix: rename the item/model declaration itself
+    (`ka-bar_knife` -> `ka_bar_knife`) and update any field that must MATCH that
+    identifier by reference (`WeaponSprite=`, `WeaponSpritesByIndex=`) to the
+    same new name -- leave `Icon=`/`IconsForTexture=`/`mesh=`/`texture=` VALUES
+    alone since those really are just string-like lookups, not identifiers, and
+    the underlying files on disk keep their original hyphenated names. ***
+    Lesson: always grep every `^\s*(item|model)\s+` declaration line for any
+    character outside `[A-Za-z0-9_]` before trusting a batch-copied script file
+    -- one bad mod author's typo becomes YOUR mod's crash. ***
+
+    TRAP 2 -- MODEL NAME collisions with vanilla's own models. A source mod
+    that also retextures/reskins EXISTING vanilla weapons (SOMW's own
+    description: "changing their stats, models, textures, ADDS NEW WEAPONS...")
+    mixes its vanilla-reskin `model` blocks into the SAME script file as the
+    model blocks for its genuinely NEW items. Copying that whole file
+    wholesale (as one naturally would when porting "everything") brought along
+    ~51 `model` blocks reusing vanilla's own exact model names (FireplacePoker,
+    Hammer, Katana, TreeBranch, WoodAxe, Crowbar, etc. -- confirmed by
+    diffing every declared model name in the new mod against every
+    `^\s*model\s+X` in vanilla's OWN scripts, both the dedicated
+    `media/scripts/generated/models_weapons.txt` and, for non-weapon world-item
+    models, a full-repo grep). Unlike a plain texture-file override (harmless,
+    logged as a normal "mod overrides X.png" cosmetic replacement -- confirmed
+    NOT the cause here), REDECLARING a `model <name>` block that vanilla's own
+    scripts already declare corrupts that model's registration in a way that
+    later crashes when ANYTHING touches an item using it. Fix: for every
+    colliding model name, check whether any of YOUR OWN new items actually use
+    it (grep their `WeaponSprite=` values) -- if unused, just delete the
+    colliding block entirely (safe, it was dead weight from the source mod's
+    OTHER feature you don't want anyway); if one of your items DOES use it,
+    still delete YOUR redeclaration and let that item fall back to reusing
+    vanilla's own pre-existing real model for that name (a safe, valid, zero-
+    extra-art outcome) rather than trying to preserve the source mod's
+    alternate version under the same name. *** Lesson: when porting an ENTIRE
+    script file from a "does more than just add items" reference mod, always
+    diff its declared model/item names against vanilla's own before trusting
+    the whole file -- "just add new content" and "also reskins existing vanilla
+    content" are two different features easily tangled together in one file by
+    the original author. ***
+
+    TRAP 3 (the REAL root cause here, traps 1+2 were real bugs but didn't fully
+    explain the crash) -- MISSING `ItemType=` field. `v:getItemType():toString()`
+    (the exact vanilla call that crashes) reads the script's `ItemType=` field
+    specifically -- NOT the `Type=` field (a different, also-real field setting
+    the item's fundamental engine class, e.g. Weapon/Normal/Food). These are
+    two SEPARATE mechanisms: `Type=Weapon` sets the base kind directly;
+    `ItemType=base:weapon` is a template-inheritance reference to a real
+    `item weapon {...}` block (under module `base`) that other items can pull
+    shared defaults from -- an item can function fine with `Type=Weapon` alone
+    and never set `ItemType=` at all (confirmed: SOMW's own 64 new items ALL do
+    exactly this, and their basic weapon behavior -- damage, crafting,
+    equipping -- works completely normally in SOMW's own real published mod).
+    BUT vanilla's own Debug Items list assumes EVERY item has `ItemType=` set,
+    with no defensive nil-check, so it crashes hard on the first item that
+    doesn't. *** CONFIRMED by directly diffing SOMW's real source against
+    vanilla's own real source, not guessed: grepped every one of SOMW's own
+    item script files for "ItemType" -- ZERO real item declarations use it
+    anywhere. Then grepped vanilla's own media/scripts/generated/items/
+    weapon.txt: 409 real vanilla weapon items use `ItemType = base:weapon`,
+    and ZERO use bare `Type = Weapon`. 100% vs 0% -- `ItemType=base:weapon` is
+    the actual universal, required vanilla convention for weapon items; SOMW's
+    own `Type=Weapon`-only style is a real, if mostly harmless, deviation from
+    it that only surfaces as a problem in this one specific debug UI. *** Fix:
+    add `ItemType = base:weapon` (or `base:normal` for a Type=Normal item, per
+    vanilla's own full set of real `ItemType = base:X` values found by
+    grepping the whole game: alarmclock, alarmclockclothing, animal, clothing,
+    container, drainable, food, key, literature, map, moveable, normal,
+    radio, weapon, weaponpart) to every item that's missing it -- safe to
+    insert right after the item's opening `{` regardless of what other fields
+    exist, and safe to leave an existing `Type=` field in place alongside it
+    (redundant, not conflicting).
+
+    Diagnostic technique that actually found trap 3 (traps 1+2 were found by
+    static grep/diffing alone -- this one needed live confirmation): a
+    temporary Lua file with `Events.OnGameBoot.Add(...)` looping
+    `getAllItems()` in the EXACT same order/index the crashing vanilla code
+    uses, PRINTING each item's identity (via the real methods vanilla's own
+    ISItemsListViewer.lua uses for this object type: `item:getModuleName()` +
+    `item:getDisplayName()` -- NOT `item:getFullType()`, which doesn't exist on
+    this script-side Item object and throws its own unrelated "Tried to call
+    nil" error if you guess wrong, wasting a whole test cycle) BEFORE doing the
+    risky `item:getItemType():toString()` call on that same item each
+    iteration. *** Important: a normal Lua `pcall()` around the risky call did
+    NOT catch this -- the underlying error is a raw Java RuntimeException from
+    deep inside KahluaThread.tableget that escapes pcall's boundary entirely
+    (confirmed: the pcall-wrapped v1 attempt still crashed the whole event
+    handler, logged as an uncaught exception exactly like the unwrapped
+    original). So the fix isn't "wrap it in pcall and keep going" -- it's
+    "print identifying info unconditionally BEFORE the risky line, so the last
+    successfully printed line names the culprit even when the crash itself
+    can't be caught." Always delete this kind of temp diagnostic file once the
+    real item(s)/cause are found and fixed -- same discipline as every other
+    TEMP DIAGNOSTIC noted elsewhere in this file. ***
 
 
 9. Checklist before starting any new work

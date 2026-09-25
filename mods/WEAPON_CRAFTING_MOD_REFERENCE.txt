@@ -80,6 +80,25 @@ existing `item` block instead of deleting the block outright (SOMW's
 somw_items_delete.txt) — keeps existing saves that reference that item type from
 erroring.
 
+*** CONFIRMED REQUIRED FIELD, easy to miss: `ItemType = base:weapon` ***. SOMW's
+own item scripts (all 64 of its new weapons) only ever set `Type = Weapon` and
+NEVER set `ItemType=` at all -- basic weapon behavior (damage, crafting,
+equipping) still works fine without it, which is how this went unnoticed in
+SOMW's own real published mod. But `ItemType=` (a template-inheritance
+reference, distinct from `Type=`) is what vanilla's own Debug > Items list
+reads via `getItemType():toString()`, with no nil-check -- an item missing it
+crashes that ENTIRE debug tool for everyone the instant it's reached during
+iteration, not just that one item. Confirmed by diffing real source: 0 of
+SOMW's own items use ItemType=, vs 409-of-409 (100%) of vanilla's own real
+weapon items in media/scripts/generated/items/weapon.txt. Always add
+`ItemType = base:weapon` to every new weapon item (or the matching
+`base:normal`/`base:food`/`base:container`/etc. for other Type= values -- the
+full real set is alarmclock, alarmclockclothing, animal, clothing, container,
+drainable, food, key, literature, map, moveable, normal, radio, weapon,
+weaponpart), even if you also keep `Type=` — redundant, not conflicting. Full
+incident writeup (plus 2 more real traps hit while porting these exact 2
+reference mods' items): mods/workflow.txt section 8.8.
+
 
 2. Weapon item script — full real field vocabulary + worked examples
 =====================================================================================
