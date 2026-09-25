@@ -43,6 +43,9 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
 7.1  External community doc repo (MrBounty/PZ-Mod---Doc) — verified STALE
      (last commit 2023, predates Build 42); fine for general concepts, never trust
      an exact B42 API from it without confirming against real current source.
+7.2  Global ModData API (world-level key/value store, distinct from per-character
+     modData) — create/get/getOrCreate/remove/add, manual client<->server sync via
+     transmit/request. Not yet confirmed against B42 source.
 8.   Multi-version mod conflicts (script load errors from stale legacy Workshop
      items running alongside the current one).
 8.1  Git push does NOT update Steam Workshop — always tell the user to re-upload.
@@ -61,7 +64,9 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
      tab-width trap, ISScrollingListBox, and a real UI reference mod.
 8.7  Multiplayer principles (researched from real vanilla source) — local-only vs
      all-players enumeration, isClient()/isServer() gating — plus a FLAGGED, not-yet-
-     fixed architecture gap in HARMONIE_VitaminChecker.lua that needs a user decision.
+     fixed architecture gap in HARMONIE_VitaminChecker.lua that needs a user decision,
+     plus a real client<->server command pattern and a local MP test-rig setup that
+     would help fix/test that gap when the time comes.
 9.   Checklist to run through before starting any new work.
 
 
@@ -596,6 +601,33 @@ steamapps\workshop\content\108600\<id>\mods\...\media\lua\, section 7 above) --
 same discipline this file has already learned the hard way multiple times this
 session (BleedingTime, FOOD_SICKNESS/SICKNESS, the Nutritionist trait itself).
 
+7.2 Global ModData API (from MrBounty/PZ-Mod---Doc, section 7.1 -- NOT independently
+confirmed against B42 source yet, same caution applies)
+================================================================================
+A WORLD-level key/value store, distinct from the per-character `player:getModData()`
+table every HARMONIE_* mod currently uses (HARMONIE_VitaminData.lua etc.). Worth
+knowing about for any FUTURE mod/feature that needs state shared across characters
+or independent of any one player (current HARMONIE mods have had no need for this
+yet):
+  ModData.create(key)         -- creates + returns the table, or nil if it already exists
+  ModData.create()            -- no key: creates with a random UUID, returns that key string
+  ModData.getOrCreate(key)    -- the one to reach for normally
+  ModData.get(key)            -- nil if it doesn't exist
+  ModData.exists(key)         -- boolean
+  ModData.remove(key)         -- removes + returns it, or nil
+  ModData.add(key, table)     -- overwrites whatever was at key
+  getTableNames()             -- lists every registered key
+Fires `OnInitGlobalModData(isNewGame)` once during world load.
+NOT synced between server/client automatically (unlike per-character modData, which
+already gets this via the game's own player-sync). Two functions handle it manually:
+  ModData.transmit(key)  -- server: sends to all clients; client: sends to server
+  ModData.request(key)   -- client-only: asks the server to send this key back
+A received packet does NOT auto-register into the local table -- instead
+`OnReceiveGlobalModData(key, table)` fires (table can be `false` if a requested key
+doesn't exist), and the receiving code decides what to do with it (register it,
+parse it, discard it). Before using any of this for real, verify `ModData.*` still
+exists under these exact names in B42 (same rule as section 7.1) -- untested this
+session.
 
 8. Multi-version mod conflicts (watch for this when debugging "script won't load")
 ===================================================================================================
@@ -1299,6 +1331,31 @@ How to debug:
   run on every machine (idempotent, no random/object-creating side effects)? If
   it's NOT idempotent (e.g. rolls dice, or creates a new item/wound), it must
   always be wrapped in an isClient()/isServer() gate. ***
+
+  *** If the gap above ever gets fixed, two things from MrBounty/PZ-Mod---Doc
+  (section 7.1 -- same "verify against real source first" caution) would directly
+  help, both from its author's own real released mod (The Only Cure): ***
+  - Client<->server round-trip pattern, the actual real functions:
+    `sendClientCommand(module, command, arg)` (client -> server) and
+    `sendServerCommand(player, module, command, arg)` (server -> one player, or
+    every player if `player` is nil/empty) -- `module` is a string namespace (use
+    the mod's own id, e.g. "HARMONIE_GardenToPlate"), `command` picks which
+    handler runs, `arg` is a plain table of only strings/ints/floats (no player/
+    square objects -- send a square's position and re-resolve it on the other
+    side instead). Received on `Events.OnServerCommand` (server-side handler) and
+    `Events.OnClientCommand` (client-side handler), each keyed by module+command
+    string so one shared dispatch table per side is enough. This is the real
+    mechanism an isClient()-gated authoritative rewrite of
+    HARMONIE_VitaminChecker.lua would need to push a server-computed penalty
+    result back down to each client.
+  - Local multiplayer test rig without needing a second Steam account: copy
+    `ProjectZomboid64.bat` and `.json` from the game's root install folder twice
+    (e.g. "noSteam Host"/"noSteam Client"), change `-Dzomboid.steam=1` to `=0` in
+    all 4 copies, run both, Host on one, join the other via `127.0.0.1` or
+    `localhost` (no Workshop access in this mode -- mods must be enabled from
+    mods/ directly on the host). `/setaccesslevel <username> admin` from the
+    host's own game grants admin. This is the practical way to actually exercise
+    the flagged MP gap above instead of reasoning about it from source alone.
 
 
 9. Checklist before starting any new work
