@@ -1,0 +1,807 @@
+HARMONIE — Weapon/Crafting Mod Reference (Build 42)
+=====================================================================================
+Compiled 2026-09-25 for the user's planned new melee-weapon-crafting mod. Sourced by
+deep-diving 3 real, released Workshop mods (full source available locally under
+C:\Program Files (x86)\Steam\steamapps\workshop\content\108600\<id>\mods\...):
+
+  A. MWPWeapons42 (Workshop 3747202678) — "[B42] MWPWeapons" / Madax's Melee Weapon
+     Pack Reworked. 73 new weapons, full custom 3D models, NO crafting system at all
+     (loot-only + repairable).
+  B. CraftedMeleeRebalance (Workshop 3769855058) — "[B42] Cye's Crafted Melee
+     Rebalance". Retunes 150 VANILLA weapons' stats via pure-Lua runtime mutation,
+     adds no new items/recipes. Best source for "how to safely retune existing
+     items" + a full in-game vanilla-vs-modded comparison UI.
+  C. SOMW + SOMW_EasySpearAttachments (Workshop 3052668642) — "Simple Overhaul:
+     Melee Weapons". New weapons + new models/textures + new recipes + Lua
+     mechanic changes (skill-scaled live combat stats) + a weapon-attach-to-spear
+     crafting system + extensive 3rd-party-mod compatibility layer. The single
+     richest source of the three.
+
+Same discipline as workflow.txt applies: this is a snapshot of 3 specific mods'
+real, working code, not official documentation — cross-check anything surprising
+against actual current vanilla source before depending on it in a released mod
+(see workflow.txt section 7.1/8.4 for the javap/decompile technique if a Java-level
+API is ever in question). This file is intentionally SEPARATE from workflow.txt
+(which is scoped to this repo's existing HARMONIE_* mods) since it's pre-project
+research for a mod that doesn't exist yet — fold the relevant parts into a real
+mod's own header comments once that mod exists, same way HARMONIE_VitaminEffects.lua
+documents its own design history.
+
+TABLE OF CONTENTS
+=====================================================================================
+1.   mod.info / module namespace conventions
+2.   Weapon item script — full real field vocabulary + worked examples
+3.   Models, textures, icons — the real asset pipeline end to end
+4.   Animations — why you probably don't need any custom ones
+5.   Crafting recipes — full syntax, OR-ingredients, tag-group tool lookup,
+     multi-recipe-same-name, AllowDestroyedItem, reversible disassembly
+6.   OnCreate Lua hooks — condition transfer, multi-output crafting, tool wear
+7.   Runtime vanilla-item override via ScriptManager + DoParam (no script file
+     needed) — for both wholesale rebalance AND single-field reskins
+8.   Skill-scaled live combat stat modifiers (a cleaner alternative to hardcoding
+     stats in the script file)
+9.   Repair ("fixing") recipes
+10.  Sandbox options patterns (enum presets, intensity sliders, self-audit QA)
+11.  Third-party mod compatibility patterns
+12.  Two DIFFERENT "attached weapon" systems — don't confuse them
+13.  Translation file conventions (including renaming vanilla items)
+14.  Optional: full custom comparison/stat-diff UI (CMR's approach)
+15.  Straight punch-list of reusable techniques, ranked by how essential they are
+
+
+1. mod.info / module namespace conventions
+=====================================================================================
+All 3 mods use the modern B42 "<ModFolder>/42/" subfolder layout (matches this
+repo's own HARMONIE_* convention — see workflow.txt section 1).
+
+Minimal working mod.info (SOMW's, most minimal of the three):
+  name=Simple Overhaul: Melee Weapons (SOMW)
+  id=SimpleOverhaulMeleeWeapons
+  modversion=1
+  description=...
+  poster=poster.png
+No `require=` needed for a standalone weapon mod. An ADDON that depends on a base
+mod just adds one line:
+  require=SimpleOverhaulMeleeWeapons
+CraftedMeleeRebalance additionally pins a minimum game build so it refuses to load
+somewhere its item-field assumptions might not hold:
+  versionMin=42.20.0
+
+*** Use a UNIQUE module namespace for all new items ***, e.g.
+  module YourModId { imports { Base, } item X { ... } }
+so every new item's full type is `YourModId.X`, never colliding with vanilla
+`Base.X` or another mod's items. All 3 source mods follow this (MWPWeapons uses
+`Base` directly since it only adds items, never touches existing ones by ID; SOMW
+uses its own `SOMW` module since it also modifies vanilla items in a separate file
+under `module Base`).
+
+Retiring an old item across mod versions: mark it `OBSOLETE = true` inside its
+existing `item` block instead of deleting the block outright (SOMW's
+somw_items_delete.txt) — keeps existing saves that reference that item type from
+erroring.
+
+
+2. Weapon item script — full real field vocabulary + worked examples
+=====================================================================================
+Location convention: `media/scripts/<yourprefix>_weapons_<category>.txt`, one file
+per weapon class (axes/blades/blunts/spears) is a clean, real pattern both
+MWPWeapons and SOMW use.
+
+*** Full union of every real field seen actually set on a weapon item across both
+mods (this is a far more complete/trustworthy list than a generic tutorial's) ***:
+  AimingMod, AlwaysKnockdown, AttachmentType, BaseSpeed, BreakSound, CanBarricade,
+  CantAttackWithLowestEndurance, Categories, CloseKillMove, ConditionLowerChanceOneIn,
+  ConditionMax, CritDmgMultiplier, CriticalChance, DamageCategory, DamageMakeHole,
+  DisplayCategory, DisplayName, DoorDamage, DoorHitSound, DropSound, EnduranceMod,
+  EquipSound, HeadCondition, HeadConditionLowerChanceMultiplier, HeadConditionMax,
+  HitAngleMod, HitFloorSound, HitSound, Icon, IconsForTexture, IdleAnim, ImpactSound,
+  IsAimedHandWeapon, ItemType, KnockBackOnNoDeath, KnockdownMod, MaxDamage,
+  MaxHitCount, MaxRange, MetalValue, MinAngle, MinDamage, MinRange, MinimumSwingTime,
+  OnBreak, PushBackMod, RequiresEquippedBothHands, RunAnim, Sharpness, SoundMap,
+  SplatBloodOnNoDeath, SplatNumber, SplatSize, SubCategory, SurvivalGear,
+  SwingAmountBeforeImpact, SwingAnim, SwingSound, SwingTime, Tags, Tooltip,
+  TreeDamage, TwoHandWeapon, Type, WeaponLength, WeaponSprite, WeaponSpritesByIndex,
+  WeaponWeight, Weight
+
+Worked example — one-handed stabbing knife (from MWPWeapons42, muelahuntingknife):
+  item muelahuntingknife
+  {
+      DisplayName                        = Muela Hunting Knife,
+      DisplayCategory                    = Weapon,
+      ItemType                           = base:weapon,
+      Weight                             = 0.8,
+      AimingMod                          = 0.8,
+      AttachmentType                     = Knife,
+      BreakSound                         = HuntingKnifeBreak,
+      Categories                         = SmallBlade,
+      CloseKillMove                      = Jaw_Stab,
+      ConditionLowerChanceOneIn          = 15,
+      ConditionMax                       = 10,
+      CritDmgMultiplier                  = 3,
+      CriticalChance                     = 50,
+      DamageCategory                     = Slash,
+      DamageMakeHole                     = TRUE,
+      DoorDamage                         = 1,
+      DoorHitSound                       = HuntingKnifeHit,
+      DropSound                          = HuntingKnifeDrop,
+      HitFloorSound                      = HuntingKnifeHit,
+      HitSound                           = HuntingKnifeHit,
+      IdleAnim                           = Idle_Weapon2,
+      ImpactSound                        = HuntingKnifeHit,
+      IsAimedHandWeapon                  = TRUE,
+      KnockBackOnNoDeath                 = FALSE,
+      KnockdownMod                       = 0,
+      MaxDamage                          = 1.2,
+      MaxHitCount                        = 1,
+      MaxRange                           = 0.9,
+      MetalValue                         = 30,
+      MinAngle                           = 0.65,
+      MinDamage                          = 0.8,
+      MinRange                           = 0.61,
+      MinimumSwingTime                   = 2.0,
+      PushBackMod                        = 0.01,
+      RunAnim                            = Run_Weapon2,
+      SplatBloodOnNoDeath                = TRUE,
+      SplatNumber                        = 4,
+      SubCategory                        = Stab,
+      SwingAmountBeforeImpact            = 0.02,
+      SwingAnim                          = Stab,
+      SwingSound                         = HuntingKnifeSwing,
+      SwingTime                          = 2.0,
+      TreeDamage                         = 0,
+      WeaponLength                       = 0.25,
+      WeaponSprite                       = muelahuntingknife,
+      Tags = CutPlant;SharpKnife;RepairWithGlue;RepairWithTape;ButcherAnimal;Sharpenable;KillAnimal;HasMetal,
+      Sharpness                          = 1.0,
+      OnBreak                            = OnBreak.HuntingKnife,
+  }
+
+Worked example — two-handed heavy blunt (MWPWeapons42, ox_trade_sledgehammer):
+  item ox_trade_sledgehammer
+  {
+      DisplayName                    = OX Trade Sledgehammer,
+      DisplayCategory                = ToolWeapon,
+      Weight                         = 6,
+      Icon                           = ox_trade_sledgehammer_icon,
+      AlwaysKnockdown                = TRUE,
+      AttachmentType                 = BigBlade,
+      BaseSpeed                      = 0.9,
+      CantAttackWithLowestEndurance  = TRUE,
+      Categories                     = Blunt,
+      EnduranceMod                   = 4,
+      KnockBackOnNoDeath             = TRUE,
+      KnockdownMod                   = 3,
+      MaxDamage                      = 3.0,
+      MaxHitCount                    = 3,
+      MinDamage                      = 2.0,
+      RequiresEquippedBothHands      = TRUE,
+      SubCategory                    = Swinging,
+      SwingAnim                      = Heavy,
+      TreeDamage                     = 10,
+      TwoHandWeapon                  = TRUE,
+      (+ standard sound/condition/damage fields as above)
+  }
+NOTE: for blunt weapons, both source mods simply OMIT `DamageCategory` entirely
+rather than writing `DamageCategory = Blunt` — the field is only ever explicitly
+set to `Slash`. Leave it unset for blunt weapons rather than guessing a "Blunt"
+literal.
+
+Worked example — spear (two-handed thrust), MWPWeapons42 reapr_11003_survival_spear:
+      MaxHitCount     = 2,
+      SoundMap        = SpearStab SpearHuntingKnifeStab,
+      SubCategory     = Spear,
+      SwingAnim       = Spear,
+      TwoHandWeapon   = TRUE,
+      WeaponSpritesByIndex = coldsteelspear,
+      HeadCondition                      = 10,
+      HeadConditionMax                   = 10,
+      HeadConditionLowerChanceMultiplier = 1,
+      OnBreak = OnBreak.SpearLong,
+`SoundMap = <TriggerSound> <ActualSound>` remaps one named sound cue to another —
+used to give the STAB variant of an attack (as opposed to the swing) a distinct
+sound without a second full sound-field set.
+
+Real enumerated values confirmed in use (safe defaults / valid options):
+  Categories:      Axe, SmallBlade, Blunt, LongBlade, SmallBlunt, Spear
+  SubCategory:      Spear, Stab, Swinging
+  AttachmentType:   BigBlade, BigWeapon, Hammer, HammerRotated, Knife, LongBlade,
+                    Nightstick, Screwdriver, Shovel, Sword
+                    (governs which belt/back/hip visual slot the item uses — see
+                    section 12)
+  DisplayCategory:  GardeningWeapon, SportsWeapon, ToolWeapon, Weapon, WeaponCrafted
+  OnBreak:          all real vanilla OnBreak.* handlers (BallPeenHammer, BaseballBat,
+                    Clawhammer, FireAxe, HandAxe, HandScythe, HuntingKnife, Katana,
+                    Machete, SpearHuntingKnife, SpearLong, WoodAxe) — neither source
+                    mod defines a custom OnBreak handler, both just reuse vanilla's.
+  Tags (union):     BallPeenHammer, ButcherAnimal, ChopTree, CutPlant, FastDraw,
+                    File, FishingSpear, Hammer, HandScythe, HasMetal, HasToolHead,
+                    IgnoreZombieDensity, IsFireFuel, KillAnimal, RemoveBarricade,
+                    RepairWithEpoxy, RepairWithGlue, RepairWithTape, Scythe,
+                    Sharpenable, SharpKnife, Sledgehammer, SmithingHammer
+                    (these gate vanilla CONTEXT ACTIONS: ChopTree=can fell trees like
+                    an axe, Hammer=usable in construction, RemoveBarricade=can pry
+                    barricades, FishingSpear=usable for spear-fishing)
+
+Fields that are B42-specific / newer / easy to miss in older tutorials:
+  - HeadCondition / HeadConditionMax / HeadConditionLowerChanceMultiplier — a
+    SEPARATE condition sub-system for a weapon's "head" (blade/hammerhead) distinct
+    from the handle's own ConditionMax. Used on axes and spears.
+  - Sharpness — flat numeric (seen as 1.0 on every bladed item) tied to the
+    sharpening/`Sharpenable` tag system.
+  - IsAimedHandWeapon — marks small knives as "aimed" one-handed weapons (affects
+    aim/animation behavior); only ever seen on knives.
+  - CantAttackWithLowestEndurance + AlwaysKnockdown — paired on the heaviest
+    two-handed weapons (sledgehammers): can't swing on empty stamina, but always
+    knocks down on a connecting hit.
+  - EnduranceMod — a per-swing stamina-cost multiplier, tuned per weapon class
+    (spears ~1.25, small blades ~1.0 in SOMW).
+  - SurvivalGear = TRUE — flags an item as a valid "survivalist" tool for relevant
+    UI/recipe filters.
+  - Icon vs IconsForTexture vs WeaponSpritesByIndex vs WeaponSprite: MWPWeapons42
+    uses all four inconsistently across its own items (visible iterative/legacy
+    authoring, some fields even left commented out next to their replacement) —
+    B42 tolerates several, but PICK ONE AND BE CONSISTENT in a new mod. `Icon=`
+    (auto-resolves to `Item_<value>.png`) for the UI icon and `WeaponSprite=`
+    (points at a `model` block, section 3) for the in-hand/world visual is the
+    simplest, most modern combination — this is exactly what SOMW does throughout.
+
+
+3. Models, textures, icons — the real asset pipeline end to end
+=====================================================================================
+Folder convention (both MWPWeapons42 and SOMW use this, independently):
+  media/models_X/weapons/{1handed,2handed}/<ItemName>.fbx   (also .x for older/
+                                                              legacy meshes — B42
+                                                              still accepts .x
+                                                              alongside .fbx)
+  media/textures/weapons/{1handed,2handed}/<ItemName>.png    (mirrors the mesh path)
+  media/textures/Item_<IconName>.png                         (flat, UI inventory icon)
+  media/models_X/WorldItems/<ItemName>.fbx                   (optional: separate
+                                                              ground-drop mesh, for
+                                                              non-weapon items mainly)
+
+The `model` block (in a scripts .txt, `module Base`) is what actually ties a mesh +
+texture + world-attachment transform together:
+  model TantoKnife
+  {
+      mesh = weapons/1handed/TantoKnife,      -- relative to media/models_X/, NO extension
+      texture = weapons/1handed/TantoKnife,   -- relative to media/textures/, NO extension
+      scale = 1,
+      attachment world
+      {
+          offset = 0.0000 0.1000 0.0000,
+          rotate = 0.0000 180.0000 180.0000,
+      }
+  }
+MWPWeapons42's cheap-but-effective shortcut: it reuses the EXACT SAME
+`offset = 0.0120 0.1250 0.0000` / `rotate = 180 0 180` transform on all 73 of its
+weapons rather than hand-tuning each — a reasonable starting default if you don't
+want to iterate per-weapon.
+
+The item script links to this purely by NAME, not path:
+  item TantoKnife { WeaponSprite = TantoKnife, Icon = TantoKnife, ... }
+`WeaponSprite` -> looks up the `model` block by that name (the 3D in-hand/world
+visual). `Icon` -> SEPARATELY auto-resolves to `media/textures/Item_TantoKnife.png`
+(the flat UI inventory icon) — the engine prepends `Item_` itself, you never
+declare this mapping. These two can point at different names/assets entirely (see
+"texture reuse trick" below).
+
+Real full chain, verbatim from SOMW (also demonstrates deliberate ART-BUDGET REUSE
+— new mesh, but an EXISTING texture):
+  Item:  SOMW.SharpTrowel      WeaponSprite=SharpTrowel   Icon=SharpTrowel
+    -> Model SharpTrowel:  mesh=SharpTrowel (own .fbx)  texture=Trowel (REUSED, not its own .png)
+    -> Item_SharpTrowel.png  (separate, dedicated UI icon asset)
+
+Ground-drop variant (for non-weapon items, or a weapon wanting a distinct
+on-the-ground look):
+  item GardenShears { StaticModel = GardenShears, WorldStaticModel = GardenShears_Ground, }
+  model GardenShears_Ground { mesh = WorldItems/GardenShears, texture = weapons/1handed/GardenShears, }
+
+*** Composite "attach two items visually" technique — IMPORTANT ***: neither mod
+does any runtime mesh-compositing/socket-attachment. For every "spear + knife =
+spear-knife" combo, there's a FULLY SEPARATE, individually authored mesh + texture
++ model block + item (e.g. SpearCombatKnife, SpearKukri, PlankSpearKukri are each
+their own complete asset set). If your mod wants "attach item A to item B," budget
+for N x M distinct meshes, not a compositing system — PZ scripting has no
+built-in runtime mesh-merge for held weapons.
+
+No texture-pack (.pack) files needed: neither mod bundles a packed texture atlas
+— MWPWeapons42's texturepacks/ folder is present but empty. All icons/model
+textures are loose PNGs referenced directly; B42 loads them fine without packing.
+
+
+4. Animations — why you probably don't need any custom ones
+=====================================================================================
+BOTH mods, despite adding 70+ and 100+ new weapons respectively, ship ZERO custom
+animations. Every `SwingAnim`/`IdleAnim`/`RunAnim`/`CloseKillMove` value is a
+REUSED VANILLA animation name:
+  SwingAnim:  Bat (generic swing — axes/machetes/bats/hammers/long blades),
+              Heavy (very heavy two-handed swings — sledgehammers),
+              Spear (thrust weapons on a pole),
+              Stab (one-handed thrust — knives)
+  IdleAnim:   Idle_Weapon2   (near-universal)
+  RunAnim:    Run_Weapon2    (near-universal)
+  CloseKillMove: Jaw_Stab    (stealth/execution finisher, used on knives)
+
+*** Conclusion: you can ship an entire large, visually distinct weapon roster with
+ZERO animation work — differentiate weapons purely via model+texture+numeric stats
++ sound set (HitSound/SwingSound/BreakSound/SoundMap), mapped onto these ~4 generic
+vanilla swing archetypes by weapon "feel" (light stab, heavy swing, blunt bash,
+polearm thrust). This is proven at real scale (100+ shipped weapons) by SOMW. ***
+
+
+5. Crafting recipes — full syntax + real patterns
+=====================================================================================
+File convention: `media/scripts/<prefix>_recipes*.txt`, `module YourModId`.
+
+Basic conversion recipe with tool consumption (SOMW, "Make Sharp Trowel"):
+  recipe Make Sharp Trowel
+  {
+     HandShovel,
+     keep Saw,
+     keep SOMW.HandFile,
+     keep [Recipe.GetItemTypes.Hammer],
+
+     Result:SharpTrowel,
+     Sound:Sawing,
+     Time:100.0,
+     Category:Survivalist,
+     AnimNode:SawLog,
+     Prop1: Source=2,
+     Prop2: Source=1,
+     CanBeDoneFromFloor: true,
+     OnCreate:Recipe.OnCreate.SharpTrowel,
+  }
+Field notes:
+  - Bare item type (`HandShovel`) = CONSUMED as a material/ingredient.
+  - `keep <ItemType>` = required but NOT consumed (a tool).
+  - `keep [Recipe.GetItemTypes.<TagName>]` = TAG-GROUP tool lookup — ANY item
+    carrying that Tag qualifies (e.g. any Hammer-tagged item), not a hardcoded
+    item-type list. Much more flexible/compatible with 3rd-party items that
+    happen to share the tag.
+  - `Result:X` = the produced item type.
+  - `AnimNode:SawLog` reuses an existing vanilla craft animation — no need to
+    author your own crafting animation either.
+  - `Prop1:`/`Prop2: Source=N` — positions the Nth listed ingredient as the
+    visually-held prop during the craft animation.
+  - `CanBeDoneFromFloor: true` — lets the player craft without picking the item
+    up first.
+
+OR-ingredient list (any ONE of several alternatives satisfies that slot) — use `/`:
+  recipe Create Spear Chipped Stone
+  {
+      TreeBranch,
+      SharpedStone,
+      RippedSheets/Twine/RippedSheetsDirty/DenimStrips/DenimStripsDirty,
+
+      Result:SpearChippedStone,
+      Time:300.0,
+      OnCreate:Recipe.OnCreate.CreateLongStoneWeapon,
+      Category:Survivalist,
+  }
+
+"Attach weapon to another item" pattern — TWO separate recipe blocks sharing the
+SAME recipe name (legal; craft menu just shows both as valid variants), used when
+different fasteners should consume different QUANTITIES rather than being a
+simple OR-list:
+  recipe Attach Kukri to Spear { SpearCrafted, Kukri, DuctTape=2,   Result:SpearKukri, ... }
+  recipe Attach Kukri to Spear { SpearCrafted, Kukri, Scotchtape=2, Result:SpearKukri, ... }
+(Note: `ItemType=N` sets a required quantity, e.g. `DuctTape=2` needs 2 tape.)
+
+Reversible/disassembly recipe with `AllowDestroyedItem` (lets the recipe run even
+on a fully-broken, 0-condition input — needed since "reclaim a part" should still
+work on a wrecked composite weapon):
+  recipe Reclaim Kukri from Spear
+  {
+      SpearKukri,
+      Result:Kukri,
+      OnCreate:Recipe.OnCreate.DismantleSpear,
+      Time:60.0,
+      Category:Survivalist,
+      AllowDestroyedItem:true,
+  }
+
+Neither source mod gates ANY of its crafting recipes behind a skill/perk level
+(`Require:` lines) — unlocked purely by ingredient possession. (This is a design
+choice, not an engine limitation — vanilla recipes DO support skill-gating; just
+note that neither reference mod exercises it, so if you want skill-gated crafting
+you'll need to source that pattern elsewhere, e.g. vanilla's own scripts.)
+
+Cross-mod Lua reuse: SOMW_EasySpearAttachments (an addon with its OWN recipes but
+NO Lua files at all) calls `OnCreate:Recipe.OnCreate.UpgradeSpear` — a function
+that lives in the BASE mod's Lua, loaded first because of `require=`. Recipes in
+an addon mod can freely call OnCreate handlers defined in their required base mod.
+
+
+6. OnCreate Lua hooks — condition transfer, multi-output, tool wear
+=====================================================================================
+`OnCreate:` is OPTIONAL — most simple recipes don't need it (the result just
+spawns at full condition). It's for anything the declarative recipe syntax can't
+express. Real examples, verbatim (`media/lua/server/Recipes_SOMW_OnCreate.lua`):
+
+Condition-transfer (propagate wear from the WORSE of the combined ingredients into
+the crafted result, clamped to the result's own max):
+  function Recipe.OnCreate.UpgradeSpear(items, result, player, selectedItem)
+      local spearCondition, spearConditionMax, spearConditionPenalty = 0,0,0
+      local attachmentCondition, timesrepaired = 0,0
+      for i = 0, items:size() - 1 do
+          local item = items:get(i)
+          if item:getType() == "SpearCrafted" then
+              spearCondition = item:getCondition()
+              spearConditionMax = item:getConditionMax()
+              spearConditionPenalty = spearConditionMax - spearCondition
+              break
+          end
+      end
+      for i = 0, items:size() - 1 do
+          local item = items:get(i)
+          if instanceof(item, "HandWeapon") and item:getType() ~= "SpearCrafted" then
+              attachmentCondition = item:getCondition()
+              timesrepaired = item:getHaveBeenRepaired()
+          elseif item:getType() == "SharpedStone" then
+              attachmentCondition = 8
+          end
+      end
+      local conditionMax = attachmentCondition - spearConditionPenalty
+      if conditionMax > result:getConditionMax() then conditionMax = result:getConditionMax() end
+      if conditionMax < 1 then conditionMax = 1 end
+      result:setHaveBeenRepaired(timesrepaired)
+      result:setCondition(conditionMax)
+  end
+`items` = the ItemContainer/list of consumed ingredients passed in; `result` = the
+newly-created output item instance; loop with `items:get(i)` (0-indexed, Java-style
+— same convention as everywhere else in PZ Lua, see workflow.txt section 8.4).
+
+Multi-output crafting (script `Result:` only supports ONE output type — spawn a
+second item manually for "splitting" recipes):
+  function Recipe.OnCreate.BreakInHalfBranch(items, result, player, selectedItem)
+      local conditionCurrent = selectedItem:getCondition()
+      result:setCondition(conditionCurrent - ZombRand(2))
+      local branchstick = player:getInventory():AddItem("SOMW.ShortTreeBranch")
+      branchstick:setCondition(branchstick:getConditionMax() - ZombRand(2))
+  end
+
+Tool micro-degradation on craft (a `keep`-listed tool normally takes zero wear —
+simulate real wear-and-tear manually if wanted):
+  if item:getType() == "HandFile" then
+      if ZombRand(3) == 0 then item:setCondition(item:getCondition() - 1) end
+  end
+
+Reversible chains: every "Attach X" recipe in SOMW has a mirrored "Reclaim X"
+recipe with its own dismantle handler that re-derives a (damaged) base item —
+worth doing if your mod has composite/attachable items, so players aren't
+permanently locked into a combination.
+
+
+7. Runtime vanilla-item override via ScriptManager + DoParam
+=====================================================================================
+*** This is the single most valuable technique found across all 3 mods — a clean
+way to retune or reskin EXISTING (vanilla or another mod's) items from pure Lua,
+with NO script-file override, NO item redeclaration, and NO load-order sensitivity
+for the item parsing itself. ***
+
+Core mechanism (CraftedMeleeRebalance's `CMR_ApplyBalance.lua`, simplified):
+  local manager = ScriptManager.instance
+  local scriptItem = manager:getItem("Base.BoneClub")   -- the LIVE parsed Item object
+  scriptItem:DoParam("MinDamage = 0.45")                -- re-parses+assigns ONE field,
+                                                         -- exactly as if that line were
+                                                         -- in the original .txt script
+Wrap every call in `pcall` — if a field name doesn't exist on that build/item, it's
+caught and logged instead of crashing the mod:
+  local ok, err = pcall(function() scriptItem:DoParam(expression) end)
+
+Run this on `Events.OnGameBoot` (silent, at menu/boot) AND again on
+`Events.OnInitWorld` (per save load — ScriptManager state isn't guaranteed to
+persist identically across loads, so re-apply defensively rather than once).
+
+*** Why this sidesteps load-order entirely ***: this mutates the ALREADY-FULLY-
+PARSED item object after literally every mod's script files (including any other
+weapon-rebalance mod) have loaded and merged — so it's structurally the "last
+write" for whichever fields it lists, regardless of the mod's position in the
+Workshop load order. (The only real conflict risk: another mod ALSO doing a
+DoParam mutation on the same item+field via its own OnGameBoot handler — then
+whichever mod's Lua event fires last in the event chain wins, which unlike script
+parsing IS sensitive to mod list order — but this is rare and neither source mod
+does anything special to control it.)
+
+Simple single-field reskin variant (SOMW's `SOMWAddWeaponMods.lua` — swap a
+vanilla weapon's mesh/texture without touching its item ID, so existing
+saves/other mods referencing `Base.Axe` keep working):
+  function SOMWAdjuster(Name, Property, Value)
+      local Item = ScriptManager.instance:getItem(Name)
+      if Item then Item:DoParam(Property.." = "..Value) end
+  end
+  SOMWAdjuster("Base.WoodAxe", "Weight", 3.0)
+  SOMWAdjuster("Base.WoodAxe", "MinDamage", 1.5)
+  SOMWAdjuster("Base.Axe", "Icon", "FireAxeNew")
+  SOMWAdjuster("Base.Axe", "WeaponSprite", "FireAxeNew")
+
+Field-level, not whole-item: only the fields you explicitly call DoParam on are
+touched — everything else on that item stays exactly as vanilla (or whatever
+other mod) defined it. Good practice: build a single Lua table of
+{fullType -> {field=value,...}} and loop over it (both CMR and SOMW do this),
+rather than dozens of individual SOMWAdjuster/DoParam calls scattered around.
+
+Self-audit pattern worth stealing wholesale for any large hand-authored data
+table: hardcode expected counts and warn on mismatch at apply time —
+  CMR_BalanceData.EXPECTED_ITEM_COUNT = 150
+  CMR_BalanceData.EXPECTED_PARAMETER_COUNT = 944
+— cheap regression guard against a future edit accidentally dropping/duplicating
+an entry.
+
+
+8. Skill-scaled live combat stat modifiers
+=====================================================================================
+An alternative/complement to static script stats: modify a weapon's EFFECTIVE
+damage/range/endurance-cost live, based on the WIELDER's skill level, via Lua
+events rather than the item script. SOMW's real implementation
+(`SOMWTweakItem.lua`):
+
+  local ShortBluntDamageMod, ShortBluntEndModMod, ShortBluntMaxRangeMod
+  function CheckWepSkillLevel()
+      local player = getPlayer()
+      if player == nil then return end
+      local lvl = player:getPerkLevel(Perks.SmallBlunt)
+      if lvl >= 8 then ShortBluntDamageMod = 1.2; ShortBluntEndModMod = 0.8; ShortBluntMaxRangeMod = 1.2
+      elseif lvl == 7 then ShortBluntDamageMod = 1.2; ShortBluntEndModMod = 1.0; ShortBluntMaxRangeMod = 1.2
+      elseif lvl >= 3 then ShortBluntDamageMod = 1.1; ShortBluntEndModMod = 1.0; ShortBluntMaxRangeMod = 1.0
+      else ShortBluntDamageMod = 1.0; ShortBluntEndModMod = 1.0; ShortBluntMaxRangeMod = 1.0
+      end
+  end
+  Events.OnGameStart.Add(CheckWepSkillLevel)
+  Events.LevelPerk.Add(CheckWepSkillLevel)
+  Events.OnCreatePlayer.Add(CheckWepSkillLevel)
+  Events.OnCreateLivingCharacter.Add(CheckWepSkillLevel)
+
+Applied per-hit (NOT via function-wrapping/monkeypatching — direct instance
+mutation on the live `HandWeapon`):
+  local function ShortBluntOnWeaponSwingHitPoint(player, weapon)
+      if weapon:hasTag("SReward") then return end            -- exclude special items
+      if not weapon:getCategories():contains("SmallBlunt") then return end
+      local txt = weapon:getScriptItem()                     -- base/unmodified stats
+      local newMin = txt:getMinDamage() * ShortBluntDamageMod
+      local newMax = txt:getMaxDamage() * ShortBluntDamageMod
+      weapon:setMinDamage(newMin)
+      weapon:setMaxDamage(newMax)
+  end
+  Events.OnWeaponSwingHitPoint.Add(ShortBluntOnWeaponSwingHitPoint)
+Reset back to script-defined base stats after the swing resolves via
+`Events.OnWeaponHitCharacter`, `Events.OnPlayerAttackFinished`, and
+`Events.EveryOneMinute` (belt-and-suspenders reset triggers) — always read the
+BASE stat from `weapon:getScriptItem():getMinDamage()` and reapply the CURRENT
+multiplier, never accumulate/compound multipliers across calls. Range/endurance
+mods are applied on `Events.OnEquipPrimary`/`OnEquipSecondary` instead (persist
+while held, unlike the transient per-hit damage boost).
+
+This is a cleaner, more mod-conflict-safe alternative to wrap-and-call-through
+function hooking (see workflow.txt section 4) for this specific use case — pure
+event subscription + direct instance mutation, no overriding of any vanilla
+function.
+
+Soft-incompatibility self-check pattern (warn the player in chat instead of
+silently conflicting/crashing):
+  local function checknotcompatiblemods()
+      if getActivatedMods():contains("JawStab_Buff") then jawstabmodcheck = 1 end
+  end
+  Events.OnGameStart.Add(checknotcompatiblemods)
+  -- later: if jawstabmodcheck == 1 then player:Say("...disable X mod...") end
+
+
+9. Repair ("fixing") recipes
+=====================================================================================
+Real syntax (`module Base`, MWPWeapons42's `MWP_Repairs.txt`):
+  fixing Fix Fiskar Curved Machete
+  {
+      Require = Base.fiskarcurvedmachete,
+      Fixer = Base.DuctTape=2,
+      Fixer = Base.Scotchtape=3,
+  }
+  fixing Fix C.W Combat Hatchet
+  {
+     Require = Base.cwcombathatchet,
+     Fixer = Base.Woodglue=2; Woodwork=2,
+     Fixer = Base.DuctTape=2,
+     Fixer = Base.Glue=2,
+     Fixer = Base.Scotchtape=4,
+  }
+  - `Require = Base.<item>` ties the fix definition to one specific item.
+  - Multiple `Fixer =` lines = alternative repair paths (player needs only ONE).
+  - Within a single `Fixer` line, `;`-separate multiple conditions, e.g.
+    `Fixer = Base.Woodglue=2; Woodwork=2` means "2x Wood Glue AND Woodwork skill
+    level 2" — this is how a real mod gates repair of wooden-handled tools behind
+    a skill, while pure-metal blades need only tape/glue with no skill requirement.
+  - Restores condition up toward the item's own `ConditionMax`/`HeadConditionMax`.
+
+
+10. Sandbox options patterns
+=====================================================================================
+Simple enum "rarity slider" (MWPWeapons42, for loot spawn rate):
+  option MWPWeapons.SpawnRate
+  {
+      type = enum, numValues = 7, default = 3,
+      page = MWPWeapons, translation = MWPWeapons_SpawnRate,
+      valueTranslation = MWPWeapons_SpawnRateOpt,
+  }
+  option MWPWeapons.CustomSpawnMultiplier
+  { type = double, min = 0.0, max = 10.0, default = 1.0, page = MWPWeapons,
+    translation = MWPWeapons_CustomSpawnMultiplier, }
+Lua reads it with an array-of-presets + "Custom" fallback pattern:
+  local SPAWN_MULT = { 0.1, 0.5, 1.0, 2.0, 4.0, 0 }   -- presets 1-6; enum value 7 = Custom
+  local setting = SandboxVars.MWPWeapons.SpawnRate or 3
+  local mult = (setting == 7) and (SandboxVars.MWPWeapons.CustomSpawnMultiplier or 1.0)
+               or (SPAWN_MULT[setting] or 1.0)
+Translation keys follow `Sandbox_<Page>_<Option>` / `_tooltip` / (for enums)
+`Sandbox_<Page>_<Option>Opt_option<N>` — dot in the option key becomes underscore
+in the translation key, with a `Sandbox_` prefix.
+
+Intensity/interpolation slider for a whole-mod "how strong should this rebalance
+be" dial (CraftedMeleeRebalance's `CMR_Scaling.lua`) — every tuned stat is a LERP
+between the stored vanilla value and the stored modded value, by a sandbox %:
+  effectiveValue = vanillaValue + (moddedValue - vanillaValue) * intensity
+Two configurable modes feed `intensity`: a "Quick" mode tying it to the server's
+existing XP/loot multiplier (`1 / ProgressionMultiplier`), and a "Precise" mode
+using a direct 0-200% sandbox slider (0%=pure vanilla, 100%=full mod values,
+200%=overshoot past the mod's own tuning). Per-field normalization after the lerp
+(integer-rounding for count-like fields, clamping CriticalChance to 0-100, etc.)
+Directly reusable for any "rebalance mod with a strength dial" design.
+
+
+11. Third-party mod compatibility patterns
+=====================================================================================
+The standard, real pattern across all 3 mods for playing nice with OTHER Workshop
+mods, without hard-`require=`-ing them:
+  if getActivatedMods():contains("INVENTORY_TETRIS") then
+      -- register this mod's items into that mod's own data tables
+  end
+SOMW takes this further than most: ~20 separate small files, ONE PER popular
+third-party weapon mod (BritaWeaponPack, GunnerWeaponPack, HandmadeWeapons,
+MorePoleWeapons, TacticalWeapons, VFE, etc.), each internally soft-gated on
+`getActivatedMods()`, providing extra crafting-recipe compatibility (e.g. "attach
+YOUR spear to THEIR knife") and/or stat-tweak compatibility. Expensive to maintain
+(dozens of extra files) but keeps every integration isolated/independently
+debuggable/toggleable — the standard strategy seen in large, well-maintained PZ
+overhaul mods, worth doing incrementally (add a compat file only once you notice
+real demand for a specific popular mod) rather than upfront.
+
+Also seen: registering into a 3rd-party UI mod's own item-metadata table (SOMW's
+Inventory Tetris compat, `TetrisDataPack_zSOMW.lua`):
+  if getActivatedMods():contains("INVENTORY_TETRIS") then
+      Events.OnGameBoot.Add(function()
+          local itemPack = { ["SOMW.ShortTreeBranch"] = {height=2, width=1, maxStackSize=4}, ... }
+          -- fed into that mod's own registration API
+      end)
+  end
+
+
+12. Two DIFFERENT "attached weapon" systems — don't confuse them
+=====================================================================================
+Both source mods use vanilla's `AttachedWeaponDefinitions` table, but for TWO
+UNRELATED purposes with similar-sounding names:
+
+(a) HOLSTER/CARRY-SLOT VISUALS (cosmetic only, for the PLAYER's own character):
+  require "Definitions/AttachedWeaponDefinitions"
+  table.insert(AttachedWeaponDefinitions["knifeBack"].weapons, "Base.muelahuntingknife")
+  table.insert(AttachedWeaponDefinitions["axeBack"].weapons, "Base.cwcombathatchet")
+Registers a weapon into existing back/hip/leg/stomach carry-slot pools so it
+renders correctly on the character's body when holstered (not held). Slot keys
+seen: spearStomach, meatCleaverBack(LowQuality), axeBack, knifeBack,
+knife{Left,Right}Leg, knifeShoulder, MacheteShoulder, knifeStomach, katanaStomach,
+weaponInStomach, constructionWorker, lumberjack (the last two tie into
+outfit-based visuals). Depends on `AttachmentType=` set on the item (section 2).
+
+(b) NPC/ZOMBIE SPAWN-CARRY TABLES (what zombies/NPCs spawn holding, by outfit):
+  AttachedWeaponDefinitions.SOMWBigBladeBack = {
+      chance = 1, weaponLocation = {"Big Weapon On Back"}, bloodLocations = {"Back"},
+      addHoles = false, daySurvived = 20,
+      weapons = { "SOMW.GardenScythe", "SOMW.GardenBrushCutter" },
+  }
+  AttachedWeaponDefinitions.attachedWeaponCustomOutfit.Bandit = {
+      chance = 50, maxitem = 2,
+      weapons = { AttachedWeaponDefinitions.meleeInBack, AttachedWeaponDefinitions.SOMWbladeBelt },
+  }
+Defines brand-new pools and/or extends existing outfit-specific weapon tables so
+zombies wearing a given outfit (e.g. "Bandit") have a chance to spawn holding/
+wearing your new weapons. Completely unrelated to (a) despite using the same
+top-level global table — don't conflate a "player can holster this" fix with a
+"zombies spawn carrying this" fix; you may want one, the other, or both.
+
+
+13. Translation file conventions (including renaming vanilla items)
+=====================================================================================
+Standard per-language folder, `media/lua/shared/Translate/<LANG>/`:
+  ItemName_<LANG>.txt, Recipes_<LANG>.txt, Sandbox_<LANG>.txt, Tooltip_<LANG>.txt
+Key format: `<Category>_<Module.ItemOrRecipeName, spaces as underscores>`:
+  ItemName_EN = {
+      ItemName_Base.WoodAxe = "Wood Axe",                    -- CAN rename VANILLA items too
+      ItemName_SOMW.LShapedLugWrench = "L-Shaped Lug Wrench",
+  }
+  Recipes_EN = {
+      Recipe_Make_Shovel_Axe = "Make Improvised Metal Axe from Shovel",
+  }
+SOMW ships 15 language folders (AR, CH, CN, DE, EN, ES, IT, JP, KO, PL, PTBR, RU,
+TH, TR, UA) — TH is already covered if you want to reuse this repo's own
+HARMONIE_TooManyModThaiTranslate pattern (see workflow.txt section 5) for a new
+mod instead of bundling Thai directly.
+
+Custom in-Lua tooltip references: `Tooltip = Tooltip_CanBeUsedAsClawHammer` on an
+item pulls from `Tooltip_<LANG>.txt` — a clean way to bolt extra explanatory text
+onto an item's hover tooltip without touching any core UI code.
+
+Two systems CAN coexist in one mod (seen in CraftedMeleeRebalance): standard PZ
+Translate/*.json files for anything the ENGINE itself looks up by convention
+(Mod.json for the Workshop listing, Sandbox.json for sandbox-option labels —
+REQUIRED, the engine specifically searches these), plus a fully custom hand-rolled
+Lua string table for the mod's OWN UI text (manual language detection +
+table-lookup with EN fallback) if you want, e.g., i18n. Note from CMR's own dead
+code: an abandoned custom ContextMenu translation file existed but nothing ever
+called `getText()` on its keys — a data point that it's easy to half-migrate and
+leave orphaned entries; if you pick the custom-Lua-table approach, commit to it
+fully rather than mixing.
+
+
+14. Optional: full custom comparison/stat-diff UI (CMR's approach)
+=====================================================================================
+Only worth building if your mod's whole value proposition is "see exactly what
+changed" (a rebalance mod) — CraftedMeleeRebalance's `CMR_ChangesWindow.lua`
+(1236 lines) is a from-scratch `ISCollapsableWindow` subclass showing vanilla vs.
+modded stat values side by side, with per-stat icons and a collapsible "unchanged
+parameters" section. Two entry points, both real, reusable hook patterns:
+
+(a) From an inventory item's right-click menu — hook
+    `Events.OnFillInventoryObjectContextMenu`, find/reuse the vanilla "More..."
+    submenu (or create one via `ISContextMenu:getNew`), inject a new option:
+      Events.OnFillInventoryObjectContextMenu.Add(onFillInventoryObjectContextMenu)
+      local option = moreSubMenu:addOption("CMR Changes", item, showChangesFn, data)
+
+(b) From the crafting menu — MONKEY-PATCH the vanilla crafting panel class (save
+    the original method, wrap it, call through — same wrap-and-call-through
+    principle as workflow.txt section 4, just applied to a UI class instead of a
+    global function):
+      local original = ISHandCraftPanel.createRecipesColumn
+      ISHandCraftPanel.createRecipesColumn = function(self, ...)
+          original(self, ...)
+          -- then attach a right-click handler onto the resulting recipe tiles
+      end
+    A SEPARATE parallel adapter file handles the same integration for the popular
+    third-party "Neat Crafting Menu" mod (see workflow.txt section 8.3 for this
+    repo's own NeatUI Framework notes — related but a different specific mod).
+
+Both entry points are individually togglable via `PZAPI.ModOptions` (see
+workflow.txt section 2 for this repo's own ModOptions notes), and force-disablable
+server-side in MP via a sandbox `ExemptPlayers` string (comma/semicolon-separated
+usernames or SteamID64s) checked against `player:getAccessLevel() == "admin"` and
+singleplayer/co-op-host exemption — a clean reusable pattern for any mod shipping
+player-facing UI toggles that a server admin might want to lock down.
+
+The underlying data for the UI is a STATIC, hand-authored Lua table (NOT read live
+from ScriptManager) mapping every affected item to its vanilla/modded stat pairs
+— i.e., the comparison numbers are pre-baked strings kept in sync by hand with the
+actual `DoParam` dataset (section 7), not introspected at runtime. Simpler to
+build, but means the two tables (the live-applied one and the display one) must be
+kept manually consistent — CMR's own self-audit constants (section 7) exist
+specifically to catch drift between them.
+
+
+15. Straight punch-list, ranked by how essential it is to a new weapon-crafting mod
+=====================================================================================
+  1. Module namespace + item script fields (section 2) — mandatory, start here.
+  2. Model/texture/icon pipeline (section 3) — mandatory for anything beyond a
+     re-flavored vanilla item.
+  3. Recipe syntax incl. OR-ingredients, keep-tools, tag-group lookups (section 5)
+     — mandatory for the actual "crafting" part.
+  4. Reuse vanilla SwingAnim values (section 4) — skip custom animation work
+     entirely unless you have a very specific reason not to.
+  5. ScriptManager + DoParam (section 7) — essential IF you ever want to retune or
+     reskin an EXISTING vanilla/other-mod item instead of only adding new ones.
+  6. OnCreate hooks (section 6) — only needed for composite/attach-style crafting
+     or anything beyond "spawn result at full condition."
+  7. Fixing/repair recipes (section 9) — do this, it's cheap and expected.
+  8. Sandbox options (section 10) — do a simple spawn-rate/intensity slider early;
+     players expect it.
+  9. Skill-scaled live stat modifiers (section 8) — optional depth feature, only
+     if you want combat feel to scale with character skill beyond vanilla's own
+     perk system.
+  10. Third-party compatibility files (section 11) — grow this incrementally,
+      never needed on day one.
+  11. Attached-weapon visuals, both flavors (section 12) — nice-to-have polish.
+  12. Full comparison UI (section 14) — only if your mod is fundamentally a
+      rebalance/comparison mod like CMR; skip entirely for a pure content-add mod.

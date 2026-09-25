@@ -82,6 +82,16 @@ Git remote: GitLab https://gitlab.com/got.jittakorn.2/projext-zomboid-mod.git,
 branch main. The user sometimes commits outside this session (e.g. via VS Code) —
 always `git fetch` + `git status`/`git log --oneline -5` before starting work.
 Never assume the last-seen state is still current.
+
+*** mods/WEAPON_CRAFTING_MOD_REFERENCE.txt (2026-09-25) *** — a SEPARATE living doc,
+pre-project research for a planned new weapon-crafting mod (not yet started, no
+mod folder exists for it yet). Deep-dive findings from 3 real released B42 melee
+mods (weapon item script fields, model/texture pipeline, recipe syntax, the
+ScriptManager+DoParam runtime item-override technique, skill-scaled live combat
+stats, etc.). Kept separate from this file since it's not about any existing
+HARMONIE_* mod — read it when that new mod actually starts, and fold the relevant
+parts into ITS OWN header comments at that point (same pattern
+HARMONIE_VitaminEffects.lua already uses for its own design history).
 User's game build: always check C:\Users\User\Zomboid\version.txt (seen 42.20.4
 before, but this changes whenever the game updates).
 
