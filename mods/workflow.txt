@@ -2989,6 +2989,67 @@ NINETEENTH round (2026-09-26) -- added a 10th tier stat (DPS):
   balance 1119/1119 OK, all 33 procedure ids cross-referenced clean),
   copied into the mod, modversion 0.10.4 -> 0.10.5.
 
+TWENTIETH round (2026-09-26) -- real per-item crit multiplier discovered,
+BaseSpeed direction confirmed via real correlation, tier system rebuilt
+around DPS alone:
+- User's pasted claim list about PZ weapon fields was fact-checked term by
+  term against the real installed `weapon.txt`: most matched (MaxDmg/
+  MinDmg/Range/Knockdown/Weight/DmgRange all real, under the names already
+  used), one was WRONG (claimed BaseSpeed is often negative -- real grep:
+  ZERO negative BaseSpeed values exist anywhere in the file), one was
+  right-concept-wrong-name (their "Durability" is really the field
+  `ConditionLowerChanceOneIn`, a 1-in-X per-hit degrade chance, separate
+  from `ConditionMax`), and one was unverifiable (claimed crits have "very
+  high one-shot chance" -- plausible given CritDmgMultiplier's real range
+  below, but not confirmed as an exact kill-chance model).
+- *** Real discovery from that same pasted list, verified true: PZ weapon
+  scripts have a REAL per-item `CritDmgMultiplier` field (grep-confirmed,
+  352 real vanilla items define it, range 0.0-12.0 -- e.g. Katana=6.0,
+  Sledgehammer=2.0). This directly resolves the earlier "no decompiler, use
+  an industry-convention crit multiplier" limitation -- every weapon's REAL
+  crit multiplier is readable from its own script, no guessing needed. Also
+  found `PushBackMod` (real, 0.0-1.0, a stagger-DISTANCE stat separate from
+  `KnockdownMod`) -- not used yet, flagged for later. Extended both
+  extraction scripts (extract_items.js, extract_vanilla_weapons.js) to pull
+  `CritDmgMultiplier`; re-ran both (HARMONIE: 136/137 items set it, vanilla:
+  327/341). ***
+- A second pasted claim asserted the OPPOSITE BaseSpeed direction (lower =
+  faster, citing sledgehammers as "high speed = slow"). Tested against real
+  data instead of arguing in the abstract: correlation(Weight, BaseSpeed)
+  across 262 real vanilla items = -0.513. Real heavy/slow weapons
+  (Sledgehammer/BarBell/StoneMaul/BucketMace, 6-10kg) cluster at the LOW end
+  of BaseSpeed (0.7-0.9), confirming higher BaseSpeed = faster (matches
+  what the tier code already assumed) and that the pasted claim's direction
+  was backwards.
+- User decided to use DPS alone as the sole tier-ranking metric, dropping
+  the entire 10-stat weighted-average system. New formula in
+  gen_craftdata.js (`dpsOf()`), built on the standard real-game crit-blend
+  convention (WoW/Diablo/PoE all compute "expected damage" the same way --
+  research from an earlier message this round):
+    avgDamage = (MaxDamage+MinDamage)/2
+    expectedDamage = avgDamage * (1 + critChance * (CritDmgMultiplier-1))
+    DPS = expectedDamage * BaseSpeed
+  `computeTiers()` rewritten to rank by this ONE number: 5 EQUAL-WIDTH bands
+  over the real global DPS min/max (same shape the old system used, just
+  against a single value instead of an averaged score).
+- Real regenerated result across all 473 items: tier1=452 (95.6%!), tier2=
+  12, tier3=4, tier4=3, tier5=2. Investigated why immediately rather than
+  reporting it as if it were fine: the DPS distribution is extremely
+  heavy-tailed -- median DPS is only 1.36, p90 is 3.21, but the TOP 9 items
+  (apoc_tactical_longsword=23.4, Katana=22.0, gothsamuraisword=18.6,
+  apoc_tactical_katana/albtacticalkatana=15.5, WoodAxe/WoodAxeForged=14.0,
+  syntheticsword=13.5, browning_outdoorsman_axe=13.0) are 4-17x higher than
+  that, because they combine high raw damage with a high CritDmgMultiplier
+  AND high CriticalChance simultaneously. Equal-width banding over a range
+  that wide (0-23.375) makes band 1 alone span 0-4.68 -- past the 90th
+  percentile of the ENTIRE pool -- so almost everything falls in tier1. This
+  is the same "skewed distribution + equal-width bands = degenerate result"
+  lesson from earlier rounds, now on DPS specifically; flagged to the user
+  rather than silently switching to percentile-based bands without asking.
+  Re-validated the same way (brace balance 1119/1119 OK, all 33 procedure
+  ids cross-referenced clean), copied into the mod, modversion
+  0.10.5 -> 0.11.0.
+
 
 9. Checklist before starting any new work
 =======================================
