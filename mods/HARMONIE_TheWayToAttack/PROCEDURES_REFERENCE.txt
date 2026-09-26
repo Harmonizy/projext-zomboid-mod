@@ -73,11 +73,11 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
 
 -- Assembly (การประกอบ) (18) --
   - WrapClothImprov
-      tool=SHARP_KNIFE, consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
+      consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
   - SawWood
-      tool=SAW, consumes=Plank x1, skill=(none), time=150ms, sound=Sawing
+      tool=SAW, consumes=(none), skill=(none), time=150ms, sound=Sawing
   - SmashBottle
-      tool=HAMMER, consumes=BeerBottle x1, skill=(none), time=100ms, sound=SmashStoneHit
+      tool=Base.HammerStone, consumes=BeerBottle x1, skill=(none), time=100ms, sound=SmashStoneHit
   - BreakBranch
       tool=SHARP_KNIFE, consumes=TreeBranch2 x1, skill=(none), time=100ms, sound=CraftFixWeapon
   - WrapBarbedWireAssembly
@@ -165,11 +165,18 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    component's procedure INSTEAD OF whatever Sharpness/Piercing (A/B)
    would otherwise assign -- removes any of SharpenEdge/StropLeather/
    PrecisionGrind/ForgeShape/KnapHead/TaperPoint already picked, then adds
-   the matching Assembly procedure. 4 specific named items get a fixed
-   override (Handiknife/GlassShiv/Toothbrush_Shiv/HandFile -> WrapClothImprov,
-   HalfPlank -> SawWood, SmashedBottle -> SmashBottle, ShortTreeBranch ->
-   BreakBranch); everything else matches by real NAME SUFFIX (e.g. any
-   "*_Nails" item -> AssembleNails, any "*_Bone"/"BoneClub*" item ->
+   the matching Assembly procedure. 4 specific named items get a fixed,
+   EXCLUSIVE override -- their entire procedure list becomes just this one
+   procedure, since the item itself already IS the raw material (a bottle
+   you smash, a branch you snap, a plank you saw, glass/tools wrapped in
+   cloth by hand, no tool needed) -- no other rule (C-G) applies on top:
+     Handiknife/GlassShiv/Toothbrush_Shiv/HandFile -> WrapClothImprov (no tool)
+     HalfPlank -> SawWood (tool only, no material consumed)
+     SmashedBottle -> SmashBottle (tool = Base.HammerStone, a real stone)
+     ShortTreeBranch -> BreakBranch (tool = SHARP_KNIFE)
+   Everything else matches by real NAME SUFFIX and is ADDITIVE (only
+   Sharpness/Piercing get swapped out, other categories still apply), e.g.
+   any "*_Nails" item -> AssembleNails, any "*_Bone"/"BoneClub*" item ->
    AssembleBoneSpike, "*_BarbedWire"/"*BarbedWire" -> WrapBarbedWireAssembly,
    etc. -- see gen_craftdata.js's ASSEMBLY_PATTERNS for the full real-name
    lists). Real result: 75 of the 248 craftable recipes get an Assembly

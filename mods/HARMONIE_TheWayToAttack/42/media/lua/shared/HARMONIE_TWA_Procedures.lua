@@ -275,17 +275,16 @@ TWAProcedures.List = {
     -- real material named after the procedure itself. =====
     WrapClothImprov = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapClothImprov", icon = "Rag",
-        tool = { kind = "tag", value = "SHARP_KNIFE" },
         consumes = { { itemType = "Base.RippedSheets", qty = 1 } }, time = 100, sound = "FixWithTape",
     },
     SawWood = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_SawWood", icon = "Plank",
         tool = { kind = "tag", value = "SAW" },
-        consumes = { { itemType = "Base.Plank", qty = 1 } }, time = 150, sound = "Sawing",
+        time = 150, sound = "Sawing",
     },
     SmashBottle = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_SmashBottle", icon = "BeerBottle",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = { kind = "type", value = "Base.HammerStone" },
         consumes = { { itemType = "Base.BeerBottle", qty = 1 } }, time = 100, sound = "SmashStoneHit",
     },
     BreakBranch = {

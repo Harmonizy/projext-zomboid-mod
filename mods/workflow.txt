@@ -3661,6 +3661,49 @@ NAME-BASED (not stat-based) procedure overrides:
   ids cross-referenced clean -- 0 missing, ForgeShape+SurfaceCoating the 2
   honestly-unused ones), copied into the mod, modversion 0.16.0 -> 0.17.0.
 
+TWENTY-EIGHTH round (2026-09-27) -- tightened the 4 exact-name Assembly
+overrides' own tool/material requirements, and made them fully exclusive:
+- User corrected 3 of the 4 exact-override procedures' own equipment:
+  WrapClothImprov (พันผ้า) no longer needs a knife -- wrapping cloth by hand
+  needs no tool, so its `tool` field was removed entirely (RippedSheets x1
+  consume unchanged). SawWood (เลื่อยไม้) no longer consumes a Plank -- the
+  recipe's own base item (HalfPlank) IS the plank being sawed, so consuming
+  a SECOND Plank on top of that was a double-count; `consumes` was removed,
+  `tool=SAW` kept. SmashBottle (ทุบ) now uses a real stone
+  (`Base.HammerStone`, a grep-verified real vanilla stone-hammer weapon item,
+  matching this session's own established "reuse a real, already-verified
+  item" discipline) as its tool instead of a HAMMER tag. BreakBranch
+  (หักกิ่ง, ใช้มีด) needed no change -- it already used SHARP_KNIFE.
+- Separately, and more structurally: user said these 4 overrides' items
+  should be left needing ONLY this one procedure, full stop -- not unioned
+  with whatever the stat-based rules (C-G: Handle/Balance/Structure/
+  Toughness/WearResist) would otherwise also assign. Checked the real
+  generated data first rather than assuming: HalfPlank's own `base` field is
+  already `Base.Plank`, SmashedBottle's is `Base.BeerBottle`,
+  ShortTreeBranch's is `Base.TreeBranch2` -- confirming the "this item IS
+  its own raw material" read behind the request. Split
+  gen_craftdata.js's single ASSEMBLY_EXACT/PATTERNS loop into two real
+  behaviors: the 4 ASSEMBLY_EXACT items now get `r.procedures =
+  [ASSEMBLY_EXACT[name]]` (a full replace, not a filter+push), while the 14
+  ASSEMBLY_PATTERNS name-suffix items keep the previous additive behavior
+  (only Sharpness/Piercing get swapped out, other categories like Balance's
+  HammerNails still stack on top when triggered separately by their own
+  stats -- e.g. BaseballBat_Nails keeps both HammerNails and AssembleNails,
+  unaffected by this round).
+- Regenerated HARMONIE_TWA_RecipeData.lua and verified by hand: GlassShiv/
+  Toothbrush_Shiv/HandFile/HalfPlank/SmashedBottle/ShortTreeBranch each now
+  show `procedures = { "<TheOneProc>" }` and nothing else (Handiknife has no
+  real craftable recipe in the current 248-recipe pool, so its
+  ASSEMBLY_EXACT entry stays harmlessly unused, same as before this round).
+  Assembly override count unchanged at 75/248 (this round only changed HOW
+  the exact ones get applied, not WHICH recipes match).
+  PROCEDURES_REFERENCE.txt regenerated with the corrected tool/consumes
+  lines and an updated rule H explicitly noting the exact-vs-pattern
+  exclusive-vs-additive distinction. Re-validated (brace balance 233/233 on
+  Procedures.lua, 972/972 on RecipeData.lua, 43 procedure ids cross-
+  referenced clean, same 2 honestly-unused ones as before), copied into the
+  mod, modversion 0.17.0 -> 0.17.1.
+
 
 9. Checklist before starting any new work
 =======================================
