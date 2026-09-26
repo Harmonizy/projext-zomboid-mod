@@ -3390,6 +3390,29 @@ crafting UI, plus a real pre-existing bug found and fixed along the way:
   procedure ids still cross-reference cleanly -- unaffected by this round),
   copied into the mod, modversion 0.14.0 -> 0.14.1.
 
+TWENTY-THIRD round (2026-09-26) -- in-game screenshot feedback on the new
+stat grid:
+- User screenshotted the crafting UI (roughneckgorillasledgehammer, real
+  Epic-tier item) and asked why Critical Chance didn't show at all. Checked
+  the real data: this item's own script genuinely leaves `CriticalChance`
+  blank (empty string, not even "0") -- it baked to nil and the STAT_GRID
+  cell had no `always` flag, so the row just silently disappeared, same
+  failure mode BaseSpeed had before its own fix. Fixed the same way:
+  critChance cell now has `always = true, default = 0`.
+  - "รูปแบบการโจมตี" (Attack Style) shortened to just "รูปแบบ" (TH only).
+  - "ความทนทาน" (the conditionLowerChanceOneIn label, "Durability") renamed
+    to "สึกหรอ" (Wear) (TH only), and its VALUE FORMAT changed from the
+    hardcoded "1 in %.0f" to "1:%.0f" -- this lives in the Lua fmt string
+    itself (not a translation key), so it changes for both languages at
+    once, not just Thai.
+  - "ความทนทานสูงสุด" (the conditionMax label, "Max Condition") renamed to
+    "ความทนทาน" (Durability) (TH only) -- now the more prominent, simpler
+    term attaches to max condition capacity instead of the wear-rate stat.
+  EN labels were left unchanged (the request was specifically about Thai
+  wording; English had no equivalent naming collision to resolve).
+  Re-validated (brace balance 90/90, JSON valid on both translation files),
+  copied into the mod, modversion 0.14.1 -> 0.14.2.
+
 
 9. Checklist before starting any new work
 =======================================

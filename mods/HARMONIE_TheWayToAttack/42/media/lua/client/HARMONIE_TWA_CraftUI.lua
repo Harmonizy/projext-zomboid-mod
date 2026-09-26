@@ -987,7 +987,13 @@ local STAT_GRID = {
     { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%.2f", always = true } },
     { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
       { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" } },
-    { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%" },
+    -- `always = true, default = 0` (request 2026-09-26: "ทำไมโอกาสคริติคอล
+    -- ไม่ขึ้น" -- why doesn't crit% show) -- real cause found: some real
+    -- items (e.g. roughneckgorillasledgehammer) genuinely leave
+    -- CriticalChance blank in their own script, so it baked to nil and the
+    -- row silently disappeared with no `always` flag -- same fix pattern
+    -- as BaseSpeed's own missing-value default.
+    { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%", always = true, default = 0 },
       { key = "knockdownMod", labelKey = "IGUI_TWA_Stat_Knockdown", fmt = "%.1f" } },
     -- `always = true` (request 2026-09-26: "always show attack speed") --
     -- shown even when the baked value is missing. `default = 1.0` (request
@@ -997,10 +1003,11 @@ local STAT_GRID = {
     { { key = "baseSpeed", labelKey = "IGUI_TWA_Stat_Speed", fmt = "%.2f", always = true, default = 1.0 },
       { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" } },
     { { key = "conditionMax", labelKey = "IGUI_TWA_Stat_Condition", fmt = "%.0f" },
-      -- Real "durability" mechanic (request 2026-09-26) -- a 1-in-X chance
-      -- PER HIT to lose Condition, higher = more durable; a different real
+      -- Real "wear rate" mechanic (request 2026-09-26, relabeled same day:
+      -- "ความทนทาน เปลี่ยนเป็น สึกหรอ ค่าก็เป็น 1:40") -- a 1-in-X chance PER
+      -- HIT to lose Condition, higher = wears out slower; a different real
       -- field from `conditionMax` (max condition capacity) just above.
-      { key = "conditionLowerChanceOneIn", labelKey = "IGUI_TWA_Stat_Durability", fmt = "1 in %.0f" } },
+      { key = "conditionLowerChanceOneIn", labelKey = "IGUI_TWA_Stat_Durability", fmt = "1:%.0f" } },
     { { key = "weight", labelKey = "IGUI_TWA_StatWeight", fmt = "%.1f" },
       -- Real "push power" stagger-distance stat (request 2026-09-26) --
       -- separate from `knockdownMod` (knockdown chance/strength) above.
