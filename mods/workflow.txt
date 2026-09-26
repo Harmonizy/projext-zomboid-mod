@@ -2311,6 +2311,556 @@ details, and a corrected (not guessed) stat:
   source (`DamageModelDefinitions.lua`) rather than inferred from the field's
   name. The stat was removed from the UI rather than mislabeled again. ***
 
+NINTH round (2026-09-26) -- real timed actions with XP/sound, a two-item
+base-item model, vanilla's own real spear-head materials, and flexible
+multi-tool procedures:
+- *** ARCHITECTURE CHANGE: performing a procedure is now a real queued timed
+  action (`TWA_PerformProcedureAction.lua`, new), not an instant click --
+  request 2026-09-26 ("give it a real time, sound effect, and XP like
+  vanilla crafting -- whatever vanilla gives, give the same"). Modeled
+  directly on vanilla's own real `ISCraftAction.lua`
+  (media/lua/shared/TimedActions/ISCraftAction.lua): same
+  playSound/stopOrTriggerSound/setActionAnim(CharacterActionAnims.Craft)/
+  forceProgressBar pattern. Every procedure grew a real `time` (game-tick
+  duration, hand-picked in the same 100-600 range real vanilla recipes use)
+  and `sound` field, both grep-confirmed real vanilla sound event names from
+  `media/scripts/generated/sounds/player/*.txt` (e.g. "Hammering", "Sawing",
+  "CraftWelding", "SharpenBladeWhetstone", "FixWithTape", "SmashStoneHit").
+  XP is granted via the real `character:getXp():AddXP(perk, amount)` API
+  (confirmed from ISPlayerStatsUI.lua's own real usage) in
+  `TWAProcedures.AwardXP`, amount = requiredLevel*10 (matches the rough scale
+  of every real vanilla `xpAward` value grep-checked this session). The
+  crafting window now shows a real progress bar in the procedure-details box
+  while the action runs, reading the SAME `getJobDelta()` vanilla's own
+  built-in action-progress bar uses. Only one procedure can be in progress
+  per window at a time; the action's `onEnd` callback (called from BOTH
+  `stop()` and `perform()`, idempotently, exactly mirroring ISCraftAction's
+  own redundant cleanup-in-both-hooks pattern) clears that lock whether the
+  action completed OR was cancelled/interrupted, so a cancelled attempt never
+  permanently blocks starting another one. ***
+- *** REAL BUG FIXED: `Base.BlowTorch` (Weld procedure's tool) is a real
+  `ItemType = base:drainable` item with `KeepOnDeplete = true` -- a
+  rechargeable TOOL, not a single-use consumable. It was wrongly sitting in
+  `consumes` at qty=2, destroying 2 whole blowtorches on every single weld.
+  Fixed: it's `tool2` now (kept), matching the request "weld (mask + torch)"
+  literally -- Weld now checks for BOTH a welding mask (tag) and a blowtorch
+  (kept type) as its two tools, only Base.ScrapMetal is actually consumed.
+- *** ARCHITECTURE CHANGE: a recipe's base item can now be TWO separate
+  required items, `base` and `base2` (request 2026-09-26: "let the base item
+  be two items, so only one attach procedure is left" -- the user's own
+  example: a plank-spear-with-a-screwdriver needs the screwdriver AND the
+  plank-spear both owned, one simple lash/tape step to finish it). Both
+  `HARMONIE_TWA_CraftUI.lua` (`ownsSlot`/`ownsBase`/the base-item display,
+  now one card per slot instead of one) and `TWA_FinishCraftAction.lua`
+  (`ownsSlot`/`removeOneOf`, consumes both slots on Finish) handle `base`/
+  `base2` identically -- each is independently nil, one fullType, or an
+  alternatives list. This ELIMINATED THE ENTIRE 15-procedure auto-generated
+  `Attach_<Name>` system from 8.11/the 5th round: every spear-with-a-head
+  recipe (ours AND vanilla's) now just needs its head item as `base2` and
+  performs ONE shared `AttachSpearhead` procedure (flexible consumes:
+  LeatherStrips/Zipties/Twine/DuctTape, grep-confirmed real alternatives from
+  vanilla's own BindSpear + DuctTapeSpear recipes) instead of a bespoke
+  procedure per distinct head item.
+- *** REAL BUG FIXED (found via user report, not guessed): `Spear_Plunger`
+  (a toilet-plunger-head spear) was using the universal Metal Ingot base --
+  forging a plunger spear from a steel ingot makes no sense. Root-caused by
+  reading vanilla's own real spear recipes
+  (media/scripts/generated/recipes/recipes_spears.txt) in full: `BindSpear`/
+  `DuctTapeSpear`/`WireSpear` all share ONE real `SpearMapper` itemMapper --
+  a shaft (Base.LongStick/Sapling) + one of ~24 real head items
+  (BrokenGlass/CrudeBlade/CrudeKnife/FlintKnife/HandFork/HuntingKnife(Forged)/
+  KitchenKnife(Forged)/LongCrudeBlade/LongCrudeKnife/Plunger/Scissors/
+  Screwdriver(_Old)/SharpBone_Long/SharpBoneFragment/SmashedBottle/
+  StoneBlade/StoneBladeLong/StoneKnifeLong/SmallKnife/LargeKnife/
+  LargeKnife_Scrap/FightingKnife/SteakKnife), and a SEPARATE real
+  `AssembleSpear` recipe covers SpearLong/SpearShort with an actual forged
+  head component (Base.SpearLongHead/SpearHead) instead of a knife. Every
+  one of these is now base=shaft + base2=its real head alternatives +
+  `AttachSpearhead` -- 18 more vanilla items fixed this way (99/112 vanilla
+  additions now use a real, verified construction method, up from 80/112
+  last round). `SpearCraftedFireHardened` (real recipe: CarveSpear +
+  FireHardenSpear, a kept knife TOOL just whittles the stick, no separate
+  head consumed at all) got its own SPECIAL_CASES entry instead:
+  base=shaft only, procedures=['CutShape','SharpenEdge','HardenWood']. This
+  is exactly the kind of case the mod's own 8.8/8.11 "don't guess, grep the
+  real recipe" discipline exists to catch -- the user's own request 2026-
+  09-26 ("check the others again for anything else unreasonable") is met by
+  applying that discipline systematically instead of case-by-case again.
+- Multi-tool alternatives (request 2026-09-26: "some procedures should
+  accept multiple tools -- make it flexible"): `tool`/`tool2` can now be
+  either one spec or a LIST of alternative specs
+  (`TWAProcedures.ToolAlts`/`hasAnyTool` in HARMONIE_TWA_Procedures.lua,
+  `toolSpecName` in HARMONIE_TWA_CraftUI.lua for display). Grepping vanilla's
+  own Lua for the FULL real `ItemTag` enum (not just the 5 members found in
+  8.11 -- that grep only checked usage the mod already needed, not every
+  member that exists) turned up many more real tags actually used in
+  vanilla's own code, most usefully `ISPickAxeGroundCoverItem.lua`'s own
+  real "any hammering tool" check: `hasTag(HAMMER) or hasTag(SLEDGEHAMMER)
+  or hasTag(CLUB_HAMMER) or hasTag(STONE_MAUL)` -- reused 1:1 for KnapStone
+  (knapping stone is "hit rock with a heavy tool", not blacksmithing, so no
+  reason to lock it to Base.HammerStone specifically), and `PIPE_WRENCH`
+  added as an alternative everywhere WRENCH is used (real vanilla code
+  checks both, per `ISWorldObjectContextMenu.lua`). `SharpenEdge`/`PolishI`
+  also gained Base.File/Base.SmallFileSet as tool alternatives to a
+  whetstone (request 2026-09-26: "add a filing procedure" -- filing and
+  whetstone-sharpening do the same job, so one flexible procedure covers
+  both rather than two separate ones). New procedures added for real tools
+  that had NO procedure using them at all yet: `WrapTape` (Base.DuctTape,
+  real sound "FixWithTape") and `DrillHole` (Base.HandDrill -- no confirmed
+  ItemTag for a generic "drill", real recipes reference
+  `tags[base:drillmetal]`, a script-tag with no Lua query API, so the
+  concrete real item behind that tag is used instead, same pattern as
+  Tongs/Whetstone/HammerStone/File).
+- Recipe list now sorted alphabetically by display name (request
+  2026-09-26), resolved at runtime in `TWARecipeScrollList:refresh()` since
+  display names only exist via `getDisplayName()` -- the generator can't
+  pre-sort by something it can't compute.
+- Center panel's base-item box(es) got a real solid dark background (same
+  flat-fill style as `drawNeatCard`) instead of a bare `drawRectBorder` with
+  floating text inside it (bug report 2026-09-26: "the missing-base-item
+  text looks disconnected/floaty") -- now reads as an actual card belonging
+  to the panel, and there's one card per base slot (1 or 2) instead of
+  always exactly one.
+- Thai item names: 69 of this mod's own branded items had "Brand ไทยคำอธิบาย"
+  ordering (brand-first) -- Thai convention (and the user's explicit
+  request 2026-09-26, e.g. "Browning ขวานนักเดินป่า" -> "ขวานนักเดินป่า
+  Browning") puts the descriptive Thai noun first and the brand name last.
+  Fixed with a script (`scratchpad/reorder_brand_names.js`) that extracts
+  every contiguous Thai-Unicode-range run, extracts everything else
+  (Latin/digits/punctuation) separately, and rejoins as
+  "{all Thai, joined} {all non-Thai, joined}" -- handles not just the simple
+  trailing-Thai case but also names where the translator had inserted the
+  Thai word into the MIDDLE of the original brand (e.g. "Assault มีด V" ->
+  correctly "มีด Assault V", not a broken partial swap), and safely no-ops
+  on names that are pure-English (no Thai at all, e.g. "SOG-F19N Elite") or
+  pure-Thai (already correct, e.g. this mod's own non-branded items like
+  "มีดทันโตะ") by only touching strings containing BOTH a Thai run and a
+  non-Thai run.
+
+TENTH round (2026-09-26) -- a real getText() format-string bug, confirm/
+cancel buttons, and more flexible procedures:
+- *** REAL BUG FIXED (confirmed from the actual console warning text this
+  time, not guessed): `Translator.reportMissingArgumentsFromPastAbuse ...
+  MissingFormatArgumentException: Format specifier '%d' ... Missing
+  arguments for "IGUI_TWA_OrOtherVariants"`, spamming on almost every
+  interaction. Root cause: `IGUI_TWA_OrOtherVariants` (added 8th round) held
+  a bare Java-style `%d`, but PZ's OWN getText() placeholder syntax is
+  `%1`/`%2` (its own positional convention -- confirmed from real vanilla
+  strings, e.g. `"Suspicion points: %1"`), AND the calling code called
+  `getText(key)` with NO extra args at all, then ran `string.format` on the
+  RESULT afterward -- so getText() itself already choked internally on the
+  unconsumed `%d` before this mod's own string.format ever ran. This is
+  exactly the class of mistake section 8.6's own checklist already warns
+  about ("never include a bare % in a getText string") -- it was written
+  down and still slipped through once a dynamic count was actually needed,
+  not just a literal displayed percent. Fixed properly, not by swapping to
+  `%1` syntax: request 2026-09-26 also asked for the underlying message to
+  be clearer than a bare count anyway, so the whole mechanism was replaced --
+  `consumeSpecName()`/`toolSpecName()` (client) now name EVERY alternative
+  material/tool directly, joined with " / ", no format-string indirection at
+  all. Lesson: a documented rule about a class of bug does not prevent a
+  future instance of that SAME class if the exact trigger condition (needing
+  a real dynamic value, not just a literal symbol) wasn't the one originally
+  tested -- when in doubt, avoid the format-string mechanism entirely rather
+  than trying to get its syntax right. ***
+- Performing a procedure now needs an explicit Confirm button, and shows a
+  Cancel button while in progress (request 2026-09-26) -- clicking a grid
+  icon only SELECTS a procedure any more (`onProcedureCellClicked`), two new
+  real ISButton children (`procConfirmButton`/`procCancelButton`, mutually
+  exclusive, toggled every frame in `drawProcedureDetails`) actually
+  start/stop it. Cancelling calls `self.activeAction:forceStop()` -- real
+  API, confirmed from `ISFitnessUI.lua`'s own real Cancel-button handler
+  (`currentAction.action:forceStop()`), which reaches this mod's own
+  `TWA_PerformProcedureAction:stop()` (and its `onEnd` cleanup) the same way
+  a natural interruption would.
+- More flexible procedures (request 2026-09-26, follow-up to the 8th round's
+  multi-tool work): `BindLashing` now accepts the same real alternative
+  materials as `AttachSpearhead` (LeatherStrips/Zipties/Twine/DuctTape --
+  it's the exact same lashing action). `HammerNails` also accepts
+  SLEDGEHAMMER/CLUB_HAMMER as alternative tools, not just HAMMER.
+  `CarveBone` also accepts SHARP_KNIFE (confirmed real tag from
+  `ISMoveableDefinitions.lua`) as an alternative to SAW. `KnapStone` also
+  gained PICK_AXE -- the 8th round's own comment claimed a "1:1" match with
+  vanilla's real `ISPickAxeGroundCoverItem.lua` check but had actually left
+  PICK_AXE out; fixed to genuinely match now.
+- Investigated but NOT resolved: user reports no audible sound for
+  SharpenEdge ("SharpenBladeWhetstone") and CutShape ("Sawing") specifically,
+  despite both being grep-confirmed real sound event names used the exact
+  same way ISCraftAction.lua's own real code uses them. No code-level defect
+  found via static inspection (names correct, API calls match the confirmed
+  real pattern) -- worth re-testing after this round's other fixes (the %d
+  warning spam may have been distracting from/interacting with something),
+  and worth checking whether LONGER-duration procedures (e.g. ForgeShape,
+  400 ticks) ARE audible while these two (100/150 ticks, the shortest in the
+  library) are not, which would point at the action completing/being
+  stopped before the sound clip finishes rather than a naming issue.
+- Reported to the user rather than deciding unilaterally (their own request
+  2026-09-26: "tell me what's unused, I'll choose"): `WrapGrip`, `WrapTape`,
+  and `DrillHole` are defined in the procedure library but not referenced by
+  any recipe yet (computed via a cross-reference script, not guessed) --
+  `WrapTape`/`DrillHole` were added 8th round per explicit request but never
+  actually wired into a recipe, which is really an incomplete follow-through
+  on that request rather than a deliberate library-only addition.
+
+ELEVENTH round (2026-09-26) -- a real DPS-based 5-tier rarity system, real
+materials for the improvised shivs, and 2 real InventoryItem APIs discovered
+along the way:
+- Real construction fixed for the household-object shivs (bug report
+  2026-09-26: "the improvised pocket knife needs Scrap Metal as its base,
+  the glass-shard one needs a glass shard" -- both were base=null before).
+  Grep-confirmed from vanilla's own MakeGlassShiv/MakeShiv/
+  MakeToothbrushShiv/MakeScrewdriver recipes
+  (recipes_improvised_weapons.txt): `GlassShiv` = Base.BrokenGlass + just a
+  binding step (glass is already sharp, no separate sharpen step at all --
+  wires `WrapTape` into a real recipe for the first time, added 8th round
+  but never used until now); `KnifeShiv` = any of ScrapMetal/
+  SteelBarQuarter/IronBarQuarter/UnusableMetal + SharpenEdge + WrapTape;
+  `Toothbrush_Shiv` = Base.Toothbrush + the same two steps;
+  `Screwdriver_Improvised` = the same scrap-metal alternatives (minus
+  UnusableMetal) + the same two steps.
+- *** NEW SUBSYSTEM: a 5-tier rarity system (Common/Uncommon/Rare/Epic/
+  Qualificated), request 2026-09-26. Computed at generation time from a real
+  DPS-style score (`computeDps()`: avg damage * (1 + critChance/100) /
+  baseSpeed), split into 5 equal-sized quintiles PER CATEGORY so each
+  category's own weakest/strongest 20% get tiered independently (matches
+  "แบ่งแยก tier ตามแต่ละประเภทไอเท็มนั้นๆ"), computed separately for the 137
+  HARMONIE items and the vanilla pool. A 6th tier, Legendary, is
+  intentionally never generated by crafting -- request 2026-09-26 says it's
+  admin-only, which is NOT yet implemented (see "not yet done" below).
+  - Tier -> procedure count (request: Common=1..Qualificated=5) is
+    interpreted as EXTRA finishing/quality procedures ADDED on top of
+    whatever a recipe's own real construction already needs, not the total
+    procedure count -- several branches (the universal-ingot formula's own
+    mandatory ForgeShape+handle-attach pair, or a real vanilla attach-a-part
+    step) already need 1-2 procedures just to physically exist, so "Common =
+    exactly 1 procedure total" would mean removing a structurally necessary
+    step for those. This still directly honors "higher tier = more
+    procedures work" -- `addFinishingSteps()` in gen_craftdata.js adds
+    exactly `tier` new steps (never removes any), picked from a category-
+    appropriate pool (`FINISHING_POOLS`) or an attach-specific one
+    (`ATTACH_FINISHING_POOL`, prioritizing the newly-wired `DrillHole` for
+    real vanilla bolt-a-part-on style recipes) with a generic fallback,
+    skipping anything already in the recipe. Applied UNIVERSALLY to every
+    recipe from every branch (own items, vanilla items, OVERRIDES, bone,
+    stone, attach-a-part, spear-attach, standalone-spear, Weld-based
+    specials, shiv specials) -- this is also what finally wired the
+    previously-unused `WrapGrip` into real recipes (it's in every category's
+    finishing pool now).
+  - Tier is baked into `TWARecipeData.Stats[x].tier` (1-5) at generation
+    time, same mechanism as every other baked stat.
+  - UI (request 2026-09-26: "color the recipe list and let it filter by
+    tier"): the recipe list now shows a colored left-edge strip per tier
+    (`TWACraftUI.lua`'s local `TIER_INFO` table) and has a second,
+    independent row of tier filter tabs (`TWATierTabButton`, ANDed with the
+    existing category filter, exactly like "Available" already combines with
+    a category pick) under the category tabs. The center panel shows the
+    tier name in its own color under the item name, and tints the item
+    icon's own border by tier.
+  - `item:setName(str)` -- confirmed real from
+    ISInventoryPaneContextMenu.lua's own real "rename item" feature, used to
+    append "[Tier Name]" to the crafted item's display name (real text on
+    the real item, everywhere a name is shown -- tooltips, world labels,
+    everything). Called in `TWA_FinishCraftAction:perform()`.
+  - *** CORRECTION (same day, next message): this round's first pass ALSO
+    called `item:setColorRed/Green/Blue(v)` (confirmed real, generic
+    InventoryItem methods, found via vanilla's own admin
+    `ISItemEditPanel.lua`) attempting to tint the crafted weapon's own icon/
+    sprite by tier -- user corrected this immediately: "I didn't ask to
+    recolor the weapon, just the name" (never actually requested; a scope
+    overreach). REMOVED. While investigating what "color the name" could
+    even mean technically, found a REAL, confirmed engine limitation: the
+    item-hover tooltip's NAME line is HARDCODED white --
+    `ISToolTip.lua:112`, `self:drawText(self.name, 8, 5, 1, 1, 1, 1,
+    UIFont.Medium)`, a literal (1,1,1,1) with no per-item color read
+    anywhere in that file, and confirmed separately that
+    `ISInventoryPane.lua`'s own inventory-list name rendering never reads
+    `getColorRed/Green/Blue()` either. So neither the tooltip's name line
+    nor the inventory list's name text can be recolored per-item through any
+    confirmed API -- this isn't a guess, both real render paths were
+    checked. (Vanilla DOES support inline `<RGB:r,g,b>` rich-text tags, but
+    only in TOOLTIP DESCRIPTION text, e.g. `ContextMenuCode.lua`'s own real
+    usage -- never in the hardcoded-white name line itself.) The setName()
+    bracket tag remains the one guaranteed-working, real mechanism for
+    tagging the actual item; true colored-name text on a vanilla item
+    appears to not be possible without a much larger, riskier hook into
+    ISInventoryPane's/ISToolTip's own rendering, not attempted this round.
+    Lesson: when a request has a real weapon vs. real text/tooltip
+    distinction, verify which one an API discovery actually reaches
+    (setColorRGB reaches neither, in this case) before wiring it in --
+    "the method exists and is real" is not the same as "it does what the
+    request asked for". ***
+  - NOT YET DONE (flagged, not silently skipped): the admin right-click
+    "set any item's tier, including Legendary, to any color" context-menu
+    tool the user asked for. Needs real research into the right context-menu
+    hook (ISInventoryPaneContextMenu vs ISWorldObjectContextMenu, an
+    `isAdmin()` gate, and how to persist an admin-assigned tier on an
+    arbitrary vanilla item that never went through this mod's own Finish
+    action) that wasn't done this round given the size of everything else
+    requested at once.
+
+TWELFTH round (2026-09-26) -- per-stat tier averaging (replaces the DPS
+formula) + a real tooltip label via a scoped, safe UI hook:
+- Tier calculation REVISED per explicit follow-up request: instead of one
+  derived DPS score, EVERY individual stat (MaxDamage, MinDamage,
+  CriticalChance, BaseSpeed [inverted -- lower is better/faster],
+  MaxRange, KnockdownMod, Weight [inverted -- lower is better], ConditionMax)
+  gets its own real min/max within the category, split into 5 equal buckets
+  (0-4, inverted for the two lower-is-better stats), then an item's per-stat
+  buckets are AVERAGED and that average (0-4) is split into 5 equal final-
+  tier bands. `computeTiers()` in gen_craftdata.js rewritten accordingly.
+  *** OBSERVED (verified by actually running it, not guessed): averaging
+  several independent per-stat quintile scores statistically clusters
+  toward the MIDDLE tiers (central-limit-theorem effect) -- the actual
+  result on this mod's real 248 recipes is tier1=6, tier2=78, tier3=101,
+  tier4=63, tier5=0. Tier 5 (Qualificated) is currently UNREACHABLE by any
+  real item under this exact formula -- flagged to the user rather than
+  silently adjusted, since this is a direct, faithful implementation of what
+  was asked, but likely not the intended outcome for a top rarity tier. ***
+- Real tooltip label added (request 2026-09-26: "the vanilla tooltip doesn't
+  show tier"), but ONLY after finding real, hard limitations from the
+  previous round's own research: the item tooltip's actual content
+  (`ISToolTipInv.lua`) is built by `item:DoTooltip(tooltip)`, a JAVA method
+  with no confirmed Lua hook to inject a line inside it, and the name line
+  is hardcoded white with no per-item override. Rather than patch that
+  internal content/sizing (real risk: `ISToolTipInv:render()` is the hover
+  tooltip for EVERY item in the whole game, not just this mod's own -- a
+  mistake there breaks tooltips everywhere), the real fix draws the tier as
+  a SEPARATE small label directly below the tooltip instead
+  (`HARMONIE_TWA_TierTooltip.lua`, new): wraps `ISToolTipInv.render`
+  (call the original first, unmodified, then draw one extra strip using the
+  panel's own already-computed `self.width`/`self.height`), and explicitly
+  GROWS `self.height` before drawing into the new space rather than drawing
+  past the original bounds and assuming it isn't clipped -- this session's
+  own earlier real lesson (8.11: ISScrollingListBox manages its own clip
+  region around its declared size) says that assumption isn't safe. Only
+  fires for items carrying `TWA_Tier` in their own real ModData (tagged by
+  `TWA_FinishCraftAction:perform()` at craft time via
+  `item:getModData().TWA_Tier = tier`) -- so ~100% of items in the game
+  (everything not crafted through this mod) are completely unaffected,
+  keeping the blast radius of hooking a core, global UI class as small as
+  realistically possible. Scope: only covers the inventory-list hover
+  tooltip, not hotbar/equipped-slot tooltips (not chased this round).
+- *** CORRECTION carried over from the previous round's own workflow entry:
+  `item:setColorRed/Green/Blue()` (weapon-sprite tint) stays removed --
+  confirmed not requested and not reachable from either real name-render
+  path anyway (see TWA_FinishCraftAction.lua's own updated comment). ***
+
+THIRTEENTH round (2026-09-26) -- 2 corrections + a 9th tier stat, per-stat
+ranges reported on request, tier threshold left untouched on request:
+- *** CORRECTION: BaseSpeed's direction in the tier formula was backwards.
+  11th round assumed BaseSpeed = swing TIME (lower = faster = better, the
+  same assumption the DPS formula used, dividing damage by it); user
+  corrected: "ความเร็วโจมตียิ่งน้อยยิ่งไม่ดี" (lower attack speed is WORSE)
+  -- BaseSpeed is the speed value itself, higher = better, same direction as
+  every other stat except Weight. `invert: false` now (was `true`). ***
+- Added a 9th tier stat, `DamageRange = MaxDamage - MinDamage` (a DERIVED
+  value, not a raw column -- `TIER_STAT_FIELDS` entries can now carry a
+  `derive(r)` function instead of a plain `key`), per request ("ระยะห่าง
+  ระหว่างดาเมจต่ำและสูงให้เป็นอีก 1 ใน stats"). Direction (wider range =
+  better or worse) was not specified -- treated as higher-is-better (not
+  inverted) as a stated, flagged judgment call, not a guessed certainty.
+- Full per-category, per-stat min/max ranges reported to the user on request
+  (`tier_ranges_<own|vanilla>.json`, written by `computeTiers()`'s own
+  `reportLabel` param) -- both pools, all 9 stats, all 6 categories.
+- Explicitly NOT touched this round per direct request ("ยังไม่ต้องปรับเกณฑ์
+  คำนวน"): the 5-equal-band final-tier threshold from the 12th round stays
+  as-is, including the known consequence that Qualificated (tier 5) is
+  still unreached by any real item under the current formula+data. The user
+  may choose to fix this later by adjusting individual weapons' own stats
+  instead of the tier math -- noted as their stated preference, not
+  implemented yet.
+
+FOURTEENTH round (2026-09-26) -- one single global tier scale, and always-
+visible attack speed:
+- Tier min/max scoping simplified again per explicit request: instead of
+  separate ranges per pool (137 HARMONIE vs vanilla) AND per category (6
+  weapon categories), there is now ONE combined pool (`combinedForTier` =
+  both pools merged, still excluding the 2 known HARMONIE/vanilla name
+  collisions) and ONE global min/max per stat across EVERY category at once
+  -- every weapon in the game competes on the exact same scale per stat now.
+  *** OBSERVED CONSEQUENCE (computed, not guessed): this pushes the
+  distribution even further toward the low/mid tiers than the per-category
+  version already did -- real result across all 249 items: tier1=9,
+  tier2=181, tier3=57, tier4=2, tier5=0. SmallBlade/SmallBlunt items in
+  particular are now structurally disadvantaged, since their real raw
+  MaxDamage numbers are inherently far below 2-handed LongBlade/Axe weapons
+  even when they're excellent WITHIN their own class -- on one shared global
+  scale they read as uniformly weak. Flagged for the user's awareness, not
+  silently patched (per their own explicit instruction the same round not
+  to touch the tier threshold logic itself). ***
+- Attack Speed's stat row in the crafting UI's center panel now ALWAYS shows
+  (a "-" placeholder when the baked value is missing), never silently
+  vanishing like every other stat still does when its own value is nil
+  (`STAT_GRID`'s new `always = true` flag, HARMONIE_TWA_CraftUI.lua).
+
+FIFTEENTH round (2026-09-26) -- research on 2 real game-mechanic questions
+(one inconclusive without Java decompiling), and a 10th tier factor:
+- Researched (not guessed) whether BaseSpeed defaults to 1.0 when a script
+  omits it, and whether a two-handed weapon held one-handed takes a damage
+  penalty. Both are ultimately JAVA-side facts; this environment has the
+  real `projectzomboid.jar` but no decompiler (`javap`/`jar`/etc were all
+  checked and are not installed) -- so neither could be verified with full
+  certainty. What WAS confirmed from the real accessible Lua layer: every
+  equip path that touches `isTwoHandWeapon()`
+  (ISEquipWeaponAction.lua, ISInventoryPaneContextMenu.equipWeapon) always
+  passes `twoHands=true` straight through to occupy BOTH hand slots -- there
+  is no code path found that lets a player equip a `TwoHandWeapon=true` item
+  into a single hand slot at all, meaning "held one-handed" may not be a
+  reachable game state in the first place (so no damage-penalty value exists
+  to find). BaseSpeed's real Java default could not be confirmed either way;
+  circumstantial evidence only (many explicit values cluster near 1.0).
+- Given the above was inconclusive, `TwoHandWeapon` was NOT scored from a
+  measured game penalty -- the user gave an explicit direct DESIGN CHOICE
+  instead ("มือเดียว 5 สองมือ 1"): one-handed (false) maps straight to the
+  TOP bucket (4, matching "5" on this system's 1-5 scale), two-handed (true)
+  maps to the BOTTOM bucket (0, matching "1") -- a fixed `boolMap`, not a
+  min/max-normalized stat like the other 9, since a boolean has no range to
+  place a value inside. Missing/unknown values are excluded from the
+  average (not defaulted to either bucket) rather than guessed. This is now
+  the 10th tier-scoring factor. Real combined-pool result across 249 items:
+  tier1=9, tier2=188, tier3=50, tier4=2, tier5=0 (was tier1=9, tier2=181,
+  tier3=57, tier4=2, tier5=0 before this factor -- several strong two-handed
+  weapons were pulled down a notch, as expected from the stated direction).
+- *** WITHDRAWN same day ("ไม่เอาดีกว่า" -- decided not to include it after
+  all): the TwoHandWeapon boolean factor above is removed. Tier scoring is
+  back to the 9 stats from the 14th round (MaxDamage/MinDamage/
+  CriticalChance/BaseSpeed/MaxRange/KnockdownMod/Weight/ConditionMax/
+  DamageRange), confirmed to reproduce the exact same distribution as
+  before it was added (tier1=9, tier2=181, tier3=57, tier4=2, tier5=0). ***
+
+SIXTEENTH round (2026-09-26) -- stat-editing feasibility + divisor change:
+- User asked whether both weapon groups' own stats (not the tier formula)
+  can be edited. Confirmed real, precedented techniques exist for both:
+  HARMONIE's own 137 items are a direct script edit (we own the file, zero
+  blast radius); vanilla's ~112 items use the real `ScriptManager.instance:
+  getItem("Base.X"):DoParam("Field = Value")` runtime technique already
+  documented in WEAPON_CRAFTING_MOD_REFERENCE.txt section 7 (run on
+  OnGameBoot + OnInitWorld, field-level, game-wide, easily reversible --
+  confirmed from real CraftedMeleeRebalance/SOMW reference-mod code, not
+  guessed). User explicitly chose the game-wide vanilla-default-edit option
+  over a per-instance-only alternative when asked.
+- Before touching any stats, ran a real analysis of exactly HOW FAR the
+  current top items are from reaching tier5 (Qualificated) under the 9-stat
+  average: top 2 (both HARMONIE's own -- apoc_tactical_longsword,
+  browning_outdoorsman_axe) sit at avg=2.44/4, needing roughly +7 bucket-
+  units spread across several stats simultaneously (e.g. KnockdownMod 0->
+  2.4+, CriticalChance 35->56+) to cross the avg>=3.2 threshold -- i.e. not
+  a minor tweak but a real redesign of that weapon's fighting identity.
+  Reported this honestly and asked before picking numbers unilaterally for
+  a hand-named flagship item; no stat edits were made based on this finding
+  alone (still pending user direction on that specific redesign).
+- Separately, user asked to change the tier-average's divisor from 9 (the
+  natural per-item stat count) to a FIXED 7, keeping every other part of the
+  calculation (which 9 stats, how each bucket is computed, summing) exactly
+  the same -- explicitly confirmed after I first assumed they meant "drop 2
+  of the 9 stats" and asked which ones ("คำนวนทั้งหมดเหมือนเดิม แต่หาร 7
+  แทน" -- calculate everything the same, just divide by 7 instead). Fixed:
+  in gen_craftdata.js's computeTiers(), `sum / count` -> `sum / 7` (count
+  still gates the count>0 "no data at all" fallback to the middle bucket,
+  it just no longer IS the divisor). This lets avg exceed 4 for items
+  strong in most/all applicable stats (harmless -- final tier is still
+  clamped to 1-5). Real regenerated result across the same 249 items: tier1
+  (Common)=5, tier2 (Uncommon)=103, tier3 (Rare)=113, tier4 (Epic)=28, tier5
+  (Qualificated)=0 -- Epic jumped from 2->28 items as expected, but nobody
+  reached Qualificated yet: the current top 2 items' raw bucket-sum is 22,
+  and 23 is the minimum integer sum needed for avg=23/7≈3.286>=3.2. So the
+  divisor change alone gets everyone measurably closer (and populates Epic
+  much more) but doesn't by itself create any Qualificated-tier items --
+  that still needs an actual stat change to at least one item (the SIXTEENTH
+  round's earlier open finding above), reported to the user rather than
+  silently also bumping stats to force a tier5 to exist. Regenerated
+  HARMONIE_TWA_RecipeData.lua, re-validated (brace balance 895/895 OK, all
+  33 procedure ids cross-referenced clean both directions), copied into the
+  mod, modversion 0.9.6 -> 0.9.7.
+- Same day, immediately after: user asked for the divisor to become 5
+  instead ("ปรับเป็นหาร 5") -- same pattern, only the fixed divisor changes.
+  Fixed: `sum / 7` -> `sum / 5`. Real regenerated result across the same 249
+  items: tier1 (Common)=0, tier2 (Uncommon)=12, tier3 (Rare)=119, tier4
+  (Epic)=82, tier5 (Qualificated)=36. Qualificated is now populated for the
+  first time since this tier system existed, and Common dropped to 0 (every
+  item now averages at least into Uncommon under this divisor) -- reported
+  as an observed real consequence, not silently smoothed over, since it's a
+  big swing from the ÷9 baseline (no user request yet to keep Common
+  populated). Re-validated the same way (brace balance 895/895 OK, all 33
+  procedure ids cross-referenced clean), copied into the mod, modversion
+  0.9.7 -> 0.9.8.
+- Same day, immediately after: user asked for divisor 6 ("หาร 6"). Fixed:
+  `sum / 5` -> `sum / 6`. Real regenerated result across the same 249 items:
+  tier1 (Common)=5, tier2 (Uncommon)=39, tier3 (Rare)=149, tier4 (Epic)=50,
+  tier5 (Qualificated)=6 -- a middle ground between the ÷7 (Qualificated=0)
+  and ÷5 (Qualificated=36, Common=0) results; both Common and Qualificated
+  are populated again (5 and 6 respectively) with Rare as the dominant
+  middle tier (149/249). Re-validated the same way (brace balance 895/895
+  OK, all 33 procedure ids cross-referenced clean), copied into the mod,
+  modversion 0.9.8 -> 0.9.9.
+
+SEVENTEENTH round (2026-09-26) -- confirmed ÷6, broadened the tier pool to
+EVERY vanilla melee weapon (not just the craftable subset), and several UI/
+data polish requests in one batch:
+- Confirmed ÷6 is the keeper divisor (no further change requested).
+- *** Broadened tier pool (request: "ไอเท็มที่ไม่ได้คราฟจากม็อดก็เอามาคำนวน
+  ในจำนวนด้วย และให้ชี้แล้วเห็น tier ด้วย" -- items the mod never crafts
+  should also count toward the pool, and show a tier when hovered). The
+  ranges/tier computation and the Stats table now cover the FULL vanilla
+  melee-weapon extraction (`vanillaRowsAll`, 341 real items with a
+  Categories tag in one of the 6 melee categories -- scratchpad/
+  extract_vanilla_weapons.js), not just the 123-item Weaponry-recipe subset
+  this mod actually crafts. Only 2 rows dropped as non-gameplay leftovers
+  (grep-confirmed dev/debug names: FISH_DEV_ITEM, YardstickDEBUG -- empty
+  DisplayName turned out NOT to be a useful filter, since ALL 222 "extra"
+  vanilla rows lack an explicit script DisplayName, real weapons included --
+  B42 resolves most vanilla item names via ItemName translation keys at
+  runtime instead) plus BrassNameplate (already judged not a real weapon by
+  the existing recipe-side EXCLUDE_RE). `_Broken` variants are KEPT in this
+  pool (real lootable degraded weapons) even though they're still excluded
+  from RECIPE generation -- the two exclusions serve different questions
+  ("is this a real combat item" vs "can this be crafted"). Combined pool
+  grew from 249 to 473 items (137 HARMONIE + 336 vanilla). Real regenerated
+  distribution: Uncommon=64, Rare=284, Epic=116, Qualificated=9, Common=0.
+  Qualificated (9): apoc_tactical_katana, apoc_tactical_longsword,
+  browning_outdoorsman_axe, albtacticalkatana, gothsamuraisword (all
+  HARMONIE), JawboneBovide_Morningstar, WoodAxe, WoodAxeForged, Katana (all
+  vanilla). ***
+- Tooltip hook (HARMONIE_TWA_TierTooltip.lua) reworked from a per-instance
+  ModData.TWA_Tier gate (only set for items THIS mod crafted) to a
+  by-fullType lookup in the now-broadened `TWARecipeData.Stats` table -- so
+  ANY hovered melee weapon in either pool shows a tier, found/looted or not.
+- Tier names are no longer translated anywhere (request: "ไม่ต้องแปลชื่อ
+  tier") -- CraftUI.lua's TIER_INFO/TIER_TABS, TWA_FinishCraftAction.lua's
+  applyTier, and the tooltip hook all now use plain hardcoded English
+  strings (Common/Uncommon/Rare/Epic/Qualificated/Legendary) instead of
+  getText() lookups. The now-fully-unused `IGUI_TWA_Tier_*` keys (6 each)
+  were removed from both EN/TH IG_UI.json (the TH file really was showing
+  translated names like "ยอดเยี่ยม" for Qualificated before this).
+- Confirmed by design, no code change: Legendary (tier 6) stays reserved,
+  never generated by crafting, strictly above Qualificated -- matches what
+  the user described.
+- Center-panel required-procedure icon hover (request: "in the center UI,
+  hovering only needs to show the procedure's name") simplified to just the
+  name -- dropped the missing-requirement detail lines it used to also show
+  (that detail still lives in the right panel's own details box once a
+  procedure is actually clicked there).
+- STAT_GRID's baseSpeed cell (request: "ความเร็วโจมตีหากไม่มีให้ขึ้น 1.0
+  แทน" -- if missing, show 1.0 instead) now defaults display to "1.0"
+  instead of "-" when the baked value is nil. Also applied the SAME 1.0
+  default inside gen_craftdata.js's statValue() for the tier-calc itself
+  (TIER_STAT_FIELDS' BaseSpeed entry gained `default: 1.0`) so items with no
+  BaseSpeed value no longer just get silently excluded from that one stat's
+  bucket average -- a UI/design decision, not a new claim about the real
+  Java default (still unconfirmed either way, no decompiler available).
+- Filter section layout (request: "จัดเรียงส่วน filter ให้ดูดีกว่านี้"):
+  added small "Category"/"Rarity" caption labels above each tab row (drawn
+  in TWACraftWindow:render() using Y positions stored during
+  createChildren()), extra vertical gap between the two row blocks, and
+  TWATierTabButton:render() now always draws a thin bottom strip in the
+  tier's own color even when inactive (previously the color only appeared
+  once a tab was clicked), so the rarity row reads as color-coded at a
+  glance.
+- Re-validated the same way as every round (brace/paren balance checks on
+  both the generated Lua data and CraftUI.lua, all 33 procedure ids
+  cross-referenced clean, JSON.parse on both translation files), copied
+  into the mod, modversion 0.9.9 -> 0.10.0.
+
 
 9. Checklist before starting any new work
 =======================================
