@@ -273,33 +273,15 @@ local function getItemTexture(icon)
     return getTexture("media/textures/Item_" .. icon .. ".png")
 end
 
--- `recipe.base` (and TWARecipeData.Stats[x].icon, resultIcon() below) may be
--- nil, a single fullType string, or a LIST of interchangeable fullTypes --
--- e.g. the universal "Metal Ingot" base is really any of vanilla's own 4
--- real base:ingot items, not one hard-locked type (request 2026-09-26:
--- "materials used in procedures aren't flexible").
-local function baseList(base)
-    if base == nil then return {} end
-    if type(base) == "table" then return base end
-    return { base }
-end
-
-local function ownsSlot(spec, player)
-    if not spec then return true end
-    local inv = player:getInventory()
-    for _, t in ipairs(baseList(spec)) do
-        if inv:getItemCountRecurse(t) >= 1 then return true end
-    end
-    return false
-end
-
--- `base2` (request 2026-09-26: "the base item should be able to be TWO
--- items") is a SEPARATE required slot, not an alternative to `base` -- e.g.
--- a spear recipe needs its shaft (`base`, any of LongStick/Sapling) AND a
--- head component (`base2`, any of its real attachable alternatives) owned
--- at the same time. Both must be satisfied.
+-- `recipe.base` is either nil (no starting item needed at all) or a SINGLE
+-- real fullType string -- every recipe has exactly one starting item now
+-- (request 2026-09-27: "ปรับให้ทุกอันมีชิ้นงานตั้งต้นเพียงชิ้นเดียว"). The
+-- earlier base+base2 two-slot system and interchangeable-alternatives lists
+-- (e.g. "any of 4 Metal Ingot types") are gone -- gen_craftdata.js now
+-- resolves each recipe down to one specific real item at generation time.
 local function ownsBase(recipe, player)
-    return ownsSlot(recipe.base, player) and ownsSlot(recipe.base2, player)
+    if not recipe.base then return true end
+    return player:getInventory():getItemCountRecurse(recipe.base) >= 1
 end
 
 -- Prefer the baked icon (resolved at generation time from the item's real
@@ -314,16 +296,11 @@ local function resultIcon(fullType)
     return item and getItemTexture(item:getIcon())
 end
 
--- Readable name for a (possibly multi-type) base requirement, e.g. "Steel
--- Ingot / Iron Ingot / Copper Ingot / Brass Ingot" for the universal Metal
--- Ingot group.
+-- Readable name for the recipe's single base requirement.
 local function baseDisplayName(base)
-    local names = {}
-    for _, t in ipairs(baseList(base)) do
-        local it = getItemScript(t)
-        names[#names + 1] = it and it:getDisplayName() or t
-    end
-    return table.concat(names, " / ")
+    if not base then return "" end
+    local it = getItemScript(base)
+    return it and it:getDisplayName() or base
 end
 
 -- Recipe list (left panel) -- a real ISScrollingListBox, the same proven
@@ -1217,33 +1194,26 @@ function TWACraftWindow:render()
     -- Base-item requirement box(es) -- request 2026-09-26: the old bare-
     -- border-with-floating-text version ("looks disconnected/floaty") is
     -- replaced with a solid card (same dark fill drawNeatCard uses
-    -- elsewhere, so it visually belongs to this panel), and now draws ONE
-    -- CARD PER SLOT since a recipe can require a second, separate base item
-    -- (`base2`, e.g. a spear's shaft AND its head component both owned at
-    -- once) instead of a single base item.
-    local slots = {}
-    if recipe.base then slots[#slots + 1] = recipe.base end
-    if recipe.base2 then slots[#slots + 1] = recipe.base2 end
+    -- elsewhere, so it visually belongs to this panel). Every recipe has at
+    -- most ONE base item now (request 2026-09-27: "ปรับให้ทุกอันมีชิ้นงาน
+    -- ตั้งต้นเพียงชิ้นเดียว"), so there's only ever one card or none.
     local baseY = math.max(centerY + ICON + 12, statY + 8)
-    if #slots == 0 then
+    if not recipe.base then
         self:drawRect(centerX, baseY, CENTER_W - 16, 30, 0.85, 0.08, 0.08, 0.09)
         self:drawRectBorder(centerX, baseY, CENTER_W - 16, 30, 0.4, 0.4, 0.4, 0.4)
         drawTextShadowed(self, getText("IGUI_TWA_NoBaseItemNeeded"), centerX + 8, baseY + 8, 0.75, 0.75, 0.75, 1, UIFont.Small)
         baseY = baseY + 30 + 10
     else
-        for _, slot in ipairs(slots) do
-            local owned = ownsSlot(slot, self.player)
-            self:drawRect(centerX, baseY, CENTER_W - 16, 34, 0.85, 0.08, 0.08, 0.09)
-            self:drawRectBorder(centerX, baseY, CENTER_W - 16, 34, 0.4, 0.4, 0.4, 0.4)
-            if owned and TWA_NEAT.check then
-                self:drawTextureScaled(TWA_NEAT.check, centerX + (CENTER_W - 16) - 24, baseY + 9, 16, 16, 1, 1, 1, 1)
-            end
-            drawTextShadowed(self, baseDisplayName(slot), centerX + 8, baseY + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
-            local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
-            drawTextShadowed(self, getText(statusKey), centerX + 8, baseY + 19, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
-            baseY = baseY + 34 + 6
+        local owned = ownsBase(recipe, self.player)
+        self:drawRect(centerX, baseY, CENTER_W - 16, 34, 0.85, 0.08, 0.08, 0.09)
+        self:drawRectBorder(centerX, baseY, CENTER_W - 16, 34, 0.4, 0.4, 0.4, 0.4)
+        if owned and TWA_NEAT.check then
+            self:drawTextureScaled(TWA_NEAT.check, centerX + (CENTER_W - 16) - 24, baseY + 9, 16, 16, 1, 1, 1, 1)
         end
-        baseY = baseY + 4
+        drawTextShadowed(self, baseDisplayName(recipe.base), centerX + 8, baseY + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+        local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
+        drawTextShadowed(self, getText(statusKey), centerX + 8, baseY + 19, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
+        baseY = baseY + 34 + 6 + 4
     end
 
     -- Required-procedure checklist grid

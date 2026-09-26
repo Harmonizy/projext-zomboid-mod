@@ -16,43 +16,27 @@ require "TimedActions/ISBaseTimedAction"
 
 TWA_FinishCraftAction = ISBaseTimedAction:derive("TWA_FinishCraftAction")
 
--- `recipe.base`/`recipe.base2` may each be nil, a single fullType string, or
--- a LIST of interchangeable fullTypes (e.g. the universal "Metal Ingot" base
--- is really any of vanilla's own 4 real base:ingot items -- request
--- 2026-09-26: "materials aren't flexible"). `base2` is a SEPARATE required
--- slot, not an alternative to `base` (request 2026-09-26: "let the base item
--- be two items" -- e.g. a spear's shaft AND its head component).
-local function baseList(base)
-    if base == nil then return {} end
-    if type(base) == "table" then return base end
-    return { base }
+-- `recipe.base` is either nil (no starting item needed at all) or a SINGLE
+-- real fullType string -- every recipe has exactly one starting item now
+-- (request 2026-09-27: "ปรับให้ทุกอันมีชิ้นงานตั้งต้นเพียงชิ้นเดียว"). The
+-- earlier base+base2 two-slot system and interchangeable-alternatives lists
+-- (e.g. "any of 4 Metal Ingot types") are gone -- gen_craftdata.js now
+-- resolves each recipe down to one specific real item at generation time.
+local function ownsSlot(character, fullType)
+    if not fullType then return true end
+    return character:getInventory():getItemCountRecurse(fullType) >= 1
 end
 
-local function ownsSlot(character, spec)
-    if not spec then return true end
+local function removeOneOf(character, fullType)
+    if not fullType then return end
     local inv = character:getInventory()
-    for _, t in ipairs(baseList(spec)) do
-        if inv:getItemCountRecurse(t) >= 1 then return true end
-    end
-    return false
-end
-
-local function removeOneOf(character, spec)
-    if not spec then return end
-    local inv = character:getInventory()
-    for _, t in ipairs(baseList(spec)) do
-        local it = inv:getFirstTypeEvalRecurse(t, function() return true end)
-        if it then
-            inv:Remove(it)
-            return
-        end
-    end
+    local it = inv:getFirstTypeEvalRecurse(fullType, function() return true end)
+    if it then inv:Remove(it) end
 end
 
 function TWA_FinishCraftAction:isValid()
     if not self.character or not self.recipe then return false end
     if not ownsSlot(self.character, self.recipe.base) then return false end
-    if not ownsSlot(self.character, self.recipe.base2) then return false end
     for _, procId in ipairs(self.recipe.procedures) do
         if not self.doneProcedures[procId] then return false end
     end
@@ -126,7 +110,6 @@ function TWA_FinishCraftAction:perform()
     end
     local inv = self.character:getInventory()
     removeOneOf(self.character, self.recipe.base)
-    removeOneOf(self.character, self.recipe.base2)
     local newItem = inv:AddItem(self.recipe.result)
     if newItem then applyTier(newItem, self.recipe.result) end
     ISBaseTimedAction.perform(self)

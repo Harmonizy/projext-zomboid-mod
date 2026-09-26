@@ -3548,6 +3548,59 @@ quantities on all 25 procedures, doc cleanup:
   SurfaceCoating as the one unused procedure), copied into the mod,
   modversion 0.15.2 -> 0.15.3.
 
+TWENTY-SIXTH round (2026-09-27) -- collapse every recipe to exactly ONE base
+item, removing the base+base2 two-slot system and all interchangeable-
+alternatives lists entirely:
+- User pasted a huge real-item catalogue (~80 items -- common household
+  scrap, real vanilla knives/heads/parts) as the pool of "starting items"
+  and asked for every recipe to have exactly one starting item
+  ("ปรับให้ทุกอันมีชิ้นงานตั้งต้นเพียงชิ้นเดียว"). This reverses the
+  earlier "let the base item be two items" / "materials aren't flexible"
+  requests from way earlier in this session -- confirmed as intentional via
+  2 clarifying questions before touching 248 recipes:
+    (1) for a base+base2 pair (e.g. a spear's shaft + head), keep the
+        HEAD/distinctive component and drop the generic shaft.
+    (2) for a still-multi-item single base (the 4-way Metal Ingot group,
+        LongStick/Sapling shafts, old/forged part-variant pairs, etc.),
+        resolve to ONE fixed real item PER RECIPE, explicitly varied
+        across recipes rather than all collapsing to the same fallback
+        (rejected "always use Base.SteelIngot" specifically).
+- Implemented as a single post-processing pass in gen_craftdata.js, run
+  after both HARMONIE-own and vanilla recipe loops finish, rather than
+  editing dozens of individual OVERRIDES/SPECIAL_CASES call sites by hand:
+  `pickOne(candidate, seed)` returns the candidate unchanged if it's already
+  a single value, otherwise picks one entry via a stable hash of the
+  recipe's own id (deterministic and reproducible, not actually random).
+  For every recipe: if `base2` is present, `base` becomes `pickOne(base2,
+  id)` and `base2` is deleted (dropping the shaft, keeping the resolved
+  head); otherwise if `base` is itself an array, it becomes `pickOne(base,
+  id)`. Verified real per-recipe variation on the Metal Ingot group across
+  all 248 recipes: SteelIngot=25, IronIngot=18, CopperIngot=19,
+  BrassIngot=34 -- a real spread, not a single fallback. Verified
+  Spear_Plunger (หอกหัวไม้ปั๊มส้วม) specifically now resolves to `base =
+  "Base.Plunger"` (the head) with no shaft requirement at all.
+- Updated the doc comments in gen_craftdata.js (the header above
+  TWARecipeData.List emission) to describe the new single-base contract
+  instead of the old two-slot/list one.
+- Cleaned up the now-dead base2/multi-type handling in the 2 Lua consumers
+  rather than leaving it as unreachable-but-harmless code: TWA_
+  FinishCraftAction.lua's `ownsSlot`/`removeOneOf` simplified from list-
+  aware to single-fullType-only, its 2nd `ownsSlot(...,recipe.base2)` check
+  and 2nd `removeOneOf(...,recipe.base2)` call removed; HARMONIE_TWA_
+  CraftUI.lua's `baseList`/multi-type `ownsSlot` removed entirely, `ownsBase`
+  simplified to a direct single-item inventory check, `baseDisplayName`
+  simplified to a single name lookup (no more " / "-joining), and the
+  center-panel base-item card rendering simplified from a "draw one card per
+  slot" loop down to "draw at most one card" (recipe.base or none). Grepped
+  the whole mod for any remaining base2/baseList/ownsSlot reference
+  afterward -- only the intentionally-kept simplified `ownsSlot` in
+  TWA_FinishCraftAction.lua and doc comments remain.
+- Re-validated (brace balance OK on both touched Lua files -- CraftUI
+  86/86, FinishCraftAction 1/1 -- generated data 972/972, all 25 procedure
+  ids cross-referenced clean, confirmed 0 recipes still have a `base2`
+  field or an array-valued `base`), copied into the mod, modversion
+  0.15.3 -> 0.16.0.
+
 
 9. Checklist before starting any new work
 =======================================
