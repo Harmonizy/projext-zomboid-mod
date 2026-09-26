@@ -3178,6 +3178,29 @@ around DPS alone:
   strip itself. Re-validated (brace balance 24/24 on TierTooltip.lua,
   1119/1119 on the generated data, all 33 procedure ids cross-referenced
   clean), copied into the mod, modversion 0.12.1 -> 0.13.0.
+- Same day, immediately after: user asked to remove Prototype and move
+  Legendary onto its slot at a lower threshold ("เอา legendary มาสลับกับ
+  เกณฑ์ prototype และให้ prototype หายไปจาก filter การคราฟ ทำให้เกณฑ์คือ
+  10+"). Prototype is gone entirely (not just hidden from the crafting
+  filter -- removed from the generator's DPS_TIER_THRESHOLDS and every Lua
+  consumer's tier tables), Elite absorbed its old range (upper bound moved
+  8 -> 10), Legendary now starts at DPS >= 10 (was >= 15), and every tier
+  from Legendary down got renumbered (Elite 6, Legendary 7 -- was 6/7/8
+  with Prototype in between). Updated all 4 places that enumerate tiers by
+  number: gen_craftdata.js's DPS_TIER_THRESHOLDS/tierFromDps,
+  HARMONIE_TWA_CraftUI.lua's TIER_INFO/TIER_TABS, TWA_FinishCraftAction.lua's
+  TIER_NAMES, HARMONIE_TWA_TierTooltip.lua's TIER_NAMES/TIER_COLOR. Real
+  regenerated result across all 473 items: Junk=18, Common=60, Uncommon=
+  172, Rare=180, Epic=37, Elite=6 (gained the 2 former-Prototype items,
+  apoc_tactical_longsword DPS=8.5 and Katana DPS=8.0), Legendary=0 --
+  flagged honestly rather than silently adjusted: the highest real DPS in
+  the whole pool is still only 8.5, so nobody reaches the new 10+ bar yet;
+  implemented exactly as specified anyway since the user may be setting the
+  bar ahead of future weapon additions/buffs on purpose. Re-validated
+  (brace balance OK on all 3 touched Lua files -- CraftUI 80/80,
+  FinishCraftAction 3/3, TierTooltip 23/23 -- generated data 1119/1119, all
+  33 procedure ids cross-referenced clean), copied into the mod, modversion
+  0.13.0 -> 0.13.1.
 
 
 9. Checklist before starting any new work

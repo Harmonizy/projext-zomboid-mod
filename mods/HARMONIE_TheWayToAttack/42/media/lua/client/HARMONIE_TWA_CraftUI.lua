@@ -225,13 +225,13 @@ local CATEGORY_TABS = {
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
--- (avgDamage * crit-blend * BaseSpeed) against FIXED thresholds, baked into
--- TWARecipeData.Stats[x].tier. Rebuilt into a full 8-tier fixed scale this
--- round ("junk < 0.25...legendary 15+"), replacing the earlier 6-tier one.
--- Every tier from Rare upward is a genuinely reachable outcome for real
--- items under fixed thresholds, not an admin-only reserved value -- see
--- workflow.txt for the confirmed real craftable-Legendary items. Names are
--- plain English, NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier").
+-- (avgDamage * BaseSpeed) against FIXED thresholds, baked into
+-- TWARecipeData.Stats[x].tier. Prototype was REMOVED as a tier this round
+-- (request: "เอา legendary มาสลับกับเกณฑ์ prototype และให้ prototype หายไป
+-- จาก filter การคราฟ ทำให้เกณฑ์คือ 10+" -- swap Legendary onto Prototype's
+-- slot, drop Prototype, Legendary now starts at DPS >= 10 instead of 15) --
+-- Elite absorbed its old range. Names are plain English, NOT translated
+-- (request 2026-09-26: "ไม่ต้องแปลชื่อ tier").
 local TIER_INFO = {
     [1] = { name = "Junk", r = 1.0, g = 1.0, b = 1.0 },
     [2] = { name = "Common", r = 0.3, g = 0.7, b = 1.0 },
@@ -239,8 +239,7 @@ local TIER_INFO = {
     [4] = { name = "Rare", r = 1.0, g = 0.45, b = 0.75 },
     [5] = { name = "Epic", r = 0.65, g = 0.3, b = 0.95 },
     [6] = { name = "Elite", r = 1.0, g = 0.55, b = 0.15 },
-    [7] = { name = "Prototype", r = 0.85, g = 0.2, b = 0.15 },
-    [8] = { name = "Legendary", r = 1.0, g = 0.85, b = 0.15 },
+    [7] = { name = "Legendary", r = 1.0, g = 0.85, b = 0.15 },
 }
 local TIER_TABS = {
     { key = "All", labelKey = "IGUI_TWA_FilterAll" },
@@ -250,8 +249,7 @@ local TIER_TABS = {
     { key = 4, label = "Rare" },
     { key = 5, label = "Epic" },
     { key = 6, label = "Elite" },
-    { key = 7, label = "Prototype" },
-    { key = 8, label = "Legendary" },
+    { key = 7, label = "Legendary" },
 }
 
 local function getItemScript(fullType)

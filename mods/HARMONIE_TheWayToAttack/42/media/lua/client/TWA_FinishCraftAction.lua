@@ -99,13 +99,12 @@ end
 -- limitation.
 -- Tier names are NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier")
 -- -- shown as the plain English label directly, same as the tooltip hook.
--- Full 8-tier fixed-DPS scale (request 2026-09-26: "junk < 0.25...legendary
--- 15+"), replacing the earlier 6-tier one -- every tier from Rare upward is
--- a real, reachable outcome for a few of this mod's own recipes, not just
--- an admin-only reserved value.
+-- 7-tier fixed-DPS scale (Prototype removed, request 2026-09-26: "เอา
+-- legendary มาสลับกับเกณฑ์ prototype...ทำให้เกณฑ์คือ 10+" -- Legendary now
+-- starts at DPS >= 10 instead of 15, on Prototype's old slot).
 local TIER_NAMES = {
     [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
-    [6] = "Elite", [7] = "Prototype", [8] = "Legendary",
+    [6] = "Elite", [7] = "Legendary",
 }
 
 local function applyTier(item, fullType)
