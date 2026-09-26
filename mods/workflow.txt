@@ -3529,6 +3529,24 @@ quantities on all 25 procedures, doc cleanup:
   1119/1119, all 25 procedure ids cross-referenced clean, same SurfaceCoating
   as the one unused procedure), copied into the mod, modversion
   0.15.1 -> 0.15.2.
+- Immediately after: real bug reported against Spear_Plunger (หอกหัวไม้
+  ปั๊มส้วม) -- its handle installation was requiring BOTH the >1.2 tier
+  (MakeHandle+WrapBind) AND the >1.4 tier (MakeLongHandle+ReinforcedBind)
+  stacked together, when it should only need the single >1.4 tier alone.
+  Root cause: category C (Handle) had been wrongly treated as CUMULATIVE
+  like D/E/F/G -- a handle can only be attached ONE way, so it needs
+  SINGLE-TIER-SELECT (highest qualifying tier only), matching this
+  session's own original instinct before it was overridden by symmetry with
+  the other categories. Fixed in gen_craftdata.js: the 3 MaxRange checks
+  changed from independent `if`s to an `if/else if` chain, highest tier
+  first. Verified directly against the reported item: Spear_Plunger
+  (MaxRange in the >1.4 but <1.6 band) now gets exactly `MakeLongHandle,
+  ReinforcedBind` plus its other real category hits, no longer also
+  `MakeHandle, WrapBind`. PROCEDURES_REFERENCE.txt's rules section updated
+  to describe C as single-tier-select. Re-validated (brace balance
+  1119/1119, all 25 procedure ids cross-referenced clean, same
+  SurfaceCoating as the one unused procedure), copied into the mod,
+  modversion 0.15.2 -> 0.15.3.
 
 
 9. Checklist before starting any new work

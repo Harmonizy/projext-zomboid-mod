@@ -77,23 +77,28 @@ RULES ENGINE -- how a recipe's real stats decide which procedures it
 needs (gen_craftdata.js addFinishingSteps(), the actual source of truth)
 ==============================================================================
 
-A) Sharpness -- Swinging weapons only. SINGLE-BAND-SELECT by
+A) Sharpness -- Swinging weapons only, and only if CriticalChance > 0
+   (CritChance = 0 skips this category entirely). SINGLE-BAND-SELECT by
    CriticalChance (exactly one procedure, not cumulative):
      CritChance < 20        -> SharpenEdge
      20 <= CritChance < 40  -> StropLeather
      40 <= CritChance < 60  -> PrecisionGrind
      CritChance >= 60       -> ForgeShape
 
-B) Piercing -- Spear/Stab weapons only. Same band shape as A:
+B) Piercing -- Spear/Stab weapons only, same CritChance > 0 gate and band
+   shape as A:
      CritChance < 20        -> KnapHead
      20 <= CritChance < 40  -> TaperPoint
      40 <= CritChance < 60  -> PrecisionGrind (shared with A)
      CritChance >= 60       -> ForgeShape (shared with A)
 
-C) Handle -- CUMULATIVE by MaxRange (each tier ADDS to the last):
-     MaxRange > 1.2   -> + MakeHandle, WrapBind
-     MaxRange > 1.4   -> + MakeLongHandle, ReinforcedBind
-     MaxRange >= 1.6  -> + MakeRivetedHandle, TightenBolts
+C) Handle -- SINGLE-TIER-SELECT by MaxRange (the highest qualifying tier
+   ONLY -- NOT cumulative; a handle can only be attached one way, confirmed
+   by a real report against Spear_Plunger which was wrongly getting both
+   the >1.2 and >1.4 tiers stacked together):
+     MaxRange >= 1.6              -> MakeRivetedHandle, TightenBolts
+     else MaxRange > 1.4          -> MakeLongHandle, ReinforcedBind
+     else MaxRange > 1.2          -> MakeHandle, WrapBind
 
 D) Balance -- CUMULATIVE by PushBackMod:
      PushBackMod >= 0.3  -> + HammerNails
