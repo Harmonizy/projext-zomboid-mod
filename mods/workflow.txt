@@ -3519,6 +3519,16 @@ quantities on all 25 procedures, doc cleanup:
   25 procedure ids still cross-reference cleanly against the existing
   248-recipe data, same as before -- SurfaceCoating still the one honestly-
   unused procedure), copied into the mod, modversion 0.15.0 -> 0.15.1.
+- Immediately after: user asked for CriticalChance = 0 to skip Sharpness/
+  Piercing entirely, not even the lowest band ("ไม่ต้องทำกรรมวิธีสร้าง
+  ความคม หรือสร้างความแหลม หาก CriticalChance = 0"). gen_craftdata.js's
+  rule A/B gate changed from `if (!isNaN(crit))` to `if (!isNaN(crit) &&
+  crit > 0)`. Real impact right now: only 1 of the 248 craftable recipes
+  actually has CriticalChance exactly 0, so this mostly future-proofs the
+  rule rather than changing much today. Re-validated (brace balance
+  1119/1119, all 25 procedure ids cross-referenced clean, same SurfaceCoating
+  as the one unused procedure), copied into the mod, modversion
+  0.15.1 -> 0.15.2.
 
 
 9. Checklist before starting any new work
