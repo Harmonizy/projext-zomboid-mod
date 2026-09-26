@@ -264,6 +264,105 @@ TWAProcedures.List = {
         category = "WearResist", nameKey = "IGUI_TWA_Proc_SurfaceCoating", icon = "Bleach",
         consumes = { { itemType = "Base.Bleach", qty = 1 } }, skill = "Blacksmith:2", time = 250, sound = "CraftFixWeapon",
     },
+
+    -- ===== Assembly (การประกอบ) -- request 2026-09-27: real items whose
+    -- own NAME describes a specific attached/constructed component (e.g.
+    -- "BaseballBat_Nails", "Cudgel_Bone", "Plunger_BarbedWire") get the
+    -- procedure matching THAT name instead of whatever the generic
+    -- Sharpness/Piercing rule would otherwise assign -- see
+    -- gen_craftdata.js's applyAssemblyOverrides() for the actual name-match
+    -- rules. Every one of these is explicitly noskill, one real tool, one
+    -- real material named after the procedure itself. =====
+    WrapClothImprov = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapClothImprov", icon = "Rag",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        consumes = { { itemType = "Base.RippedSheets", qty = 1 } }, time = 100, sound = "FixWithTape",
+    },
+    SawWood = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_SawWood", icon = "Plank",
+        tool = { kind = "tag", value = "SAW" },
+        consumes = { { itemType = "Base.Plank", qty = 1 } }, time = 150, sound = "Sawing",
+    },
+    SmashBottle = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_SmashBottle", icon = "BeerBottle",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.BeerBottle", qty = 1 } }, time = 100, sound = "SmashStoneHit",
+    },
+    BreakBranch = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_BreakBranch", icon = "Branch",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        consumes = { { itemType = "Base.TreeBranch2", qty = 1 } }, time = 100, sound = "CraftFixWeapon",
+    },
+    WrapBarbedWireAssembly = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapBarbedWireAssembly", icon = "BarbedWire",
+        tool = { kind = "type", value = "Base.Pliers" },
+        consumes = { { itemType = "Base.BarbedWire", qty = 1 } }, time = 150, sound = "CraftFixWeapon",
+    },
+    WrapWireAssembly = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapWireAssembly", icon = "Wire",
+        tool = { kind = "type", value = "Base.Pliers" },
+        consumes = { { itemType = "Base.Wire", qty = 1 } }, time = 150, sound = "CraftFixWeapon",
+    },
+    AssembleCan = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleCan", icon = "TinCanEmpty",
+        tool = { kind = "tag", value = "SCREWDRIVER" },
+        consumes = { { itemType = "Base.TinCanEmpty", qty = 1 } }, time = 150, sound = "Screwdriver",
+    },
+    AssembleNails = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleNails", icon = "Nails",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.Nails", qty = 5 } }, time = 150, sound = "Hammering",
+    },
+    AssembleRailSpike = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleRailSpike", icon = "RailroadSpike",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.RailroadSpike", qty = 1 } }, time = 200, sound = "Hammering",
+    },
+    AssembleBoneSpike = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBoneSpike", icon = "Bone",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        consumes = { { itemType = "Base.AnimalBone", qty = 1 } }, time = 150, sound = "SmashBoneHit",
+    },
+    AssembleSawblade = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSawblade", icon = "CircularSawBlade_Half",
+        tool = { kind = "tag", value = "SAW" },
+        consumes = { { itemType = "Base.CircularSawblade_Half", qty = 1 } }, time = 200, sound = "Sawing",
+    },
+    AssembleSheetMetal = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSheetMetal", icon = "SheetMetal",
+        tool = { kind = "tag", value = "SCREWDRIVER" },
+        consumes = { { itemType = "Base.SheetMetal", qty = 1 } }, time = 150, sound = "Screwdriver",
+    },
+    AssembleSpike = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpike", icon = "ScrapMetal",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, time = 150, sound = "Hammering",
+    },
+    AssembleBrake = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBrake", icon = "CarBrakes",
+        tool = { kind = "tag", value = "WRENCH" },
+        consumes = { { itemType = "Base.NormalBrake1", qty = 1 } }, time = 200, sound = "RepairWithWrench",
+    },
+    AssembleBucket = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBucket", icon = "MetalBucket",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.Bucket", qty = 1 } }, time = 200, sound = "Hammering",
+    },
+    AssembleKettle = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleKettle", icon = "Kettle",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.Kettle", qty = 1 } }, time = 200, sound = "Hammering",
+    },
+    AssembleRakeHead = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleRakeHead", icon = "RakeHead",
+        tool = { kind = "tag", value = "WRENCH" },
+        consumes = { { itemType = "Base.RakeHead", qty = 1 } }, time = 200, sound = "RepairWithWrench",
+    },
+    AssembleSpadeHead = {
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpadeHead", icon = "ShovelHead_Forged",
+        tool = { kind = "tag", value = "WRENCH" },
+        consumes = { { itemType = "Base.SpadeHead", qty = 1 } }, time = 200, sound = "RepairWithWrench",
+    },
 }
 
 -- 7 categories in display order, each with its own translated header and
@@ -278,6 +377,13 @@ TWAProcedures.Categories = {
     { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
     { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
     { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
+    { key = "Assembly", nameKey = "IGUI_TWA_ProcCat_Assembly", ids = {
+        'WrapClothImprov', 'SawWood', 'SmashBottle', 'BreakBranch',
+        'WrapBarbedWireAssembly', 'WrapWireAssembly', 'AssembleCan', 'AssembleNails',
+        'AssembleRailSpike', 'AssembleBoneSpike', 'AssembleSawblade', 'AssembleSheetMetal',
+        'AssembleSpike', 'AssembleBrake', 'AssembleBucket', 'AssembleKettle',
+        'AssembleRakeHead', 'AssembleSpadeHead',
+    } },
 }
 
 TWAProcedures.Order = {}

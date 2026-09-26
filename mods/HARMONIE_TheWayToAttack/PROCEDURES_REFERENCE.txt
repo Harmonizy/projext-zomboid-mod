@@ -1,11 +1,10 @@
 HARMONIE_TheWayToAttack -- crafting procedure library reference
 Generated 2026-09-27. Documents the CURRENT procedure library only --
 older versions are not tracked here any more (see git history if ever
-needed: commit 013f532 for the 33-procedure v1, commit 85c14cf for the
-31-procedure v2).
+needed).
 
 ==============================================================================
-CURRENT LIBRARY -- 25 procedures, 7 categories
+CURRENT LIBRARY -- 43 procedures, 8 categories
 ==============================================================================
 
 -- Sharpness (สร้างความคม) (4) --
@@ -72,9 +71,48 @@ CURRENT LIBRARY -- 25 procedures, 7 categories
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
 
+-- Assembly (การประกอบ) (18) --
+  - WrapClothImprov
+      tool=SHARP_KNIFE, consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
+  - SawWood
+      tool=SAW, consumes=Plank x1, skill=(none), time=150ms, sound=Sawing
+  - SmashBottle
+      tool=HAMMER, consumes=BeerBottle x1, skill=(none), time=100ms, sound=SmashStoneHit
+  - BreakBranch
+      tool=SHARP_KNIFE, consumes=TreeBranch2 x1, skill=(none), time=100ms, sound=CraftFixWeapon
+  - WrapBarbedWireAssembly
+      tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=150ms, sound=CraftFixWeapon
+  - WrapWireAssembly
+      tool=Base.Pliers, consumes=Wire x1, skill=(none), time=150ms, sound=CraftFixWeapon
+  - AssembleCan
+      tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=150ms, sound=Screwdriver
+  - AssembleNails
+      tool=HAMMER, consumes=Nails x5, skill=(none), time=150ms, sound=Hammering
+  - AssembleRailSpike
+      tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=200ms, sound=Hammering
+  - AssembleBoneSpike
+      tool=SHARP_KNIFE, consumes=AnimalBone x1, skill=(none), time=150ms, sound=SmashBoneHit
+  - AssembleSawblade
+      tool=SAW, consumes=CircularSawblade_Half x1, skill=(none), time=200ms, sound=Sawing
+  - AssembleSheetMetal
+      tool=SCREWDRIVER, consumes=SheetMetal x1, skill=(none), time=150ms, sound=Screwdriver
+  - AssembleSpike
+      tool=HAMMER, consumes=ScrapMetal x1, skill=(none), time=150ms, sound=Hammering
+  - AssembleBrake
+      tool=WRENCH, consumes=NormalBrake1 x1, skill=(none), time=200ms, sound=RepairWithWrench
+  - AssembleBucket
+      tool=HAMMER, consumes=Bucket x1, skill=(none), time=200ms, sound=Hammering
+  - AssembleKettle
+      tool=HAMMER, consumes=Kettle x1, skill=(none), time=200ms, sound=Hammering
+  - AssembleRakeHead
+      tool=WRENCH, consumes=RakeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
+  - AssembleSpadeHead
+      tool=WRENCH, consumes=SpadeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
+
 ==============================================================================
-RULES ENGINE -- how a recipe's real stats decide which procedures it
-needs (gen_craftdata.js addFinishingSteps(), the actual source of truth)
+RULES ENGINE -- how a recipe's real stats/name decide which procedures it
+needs (gen_craftdata.js addFinishingSteps() + applyAssemblyOverrides(),
+the actual source of truth)
 ==============================================================================
 
 A) Sharpness -- Swinging weapons only, and only if CriticalChance > 0
@@ -93,9 +131,7 @@ B) Piercing -- Spear/Stab weapons only, same CritChance > 0 gate and band
      CritChance >= 60       -> ForgeShape (shared with A)
 
 C) Handle -- SINGLE-TIER-SELECT by MaxRange (the highest qualifying tier
-   ONLY -- NOT cumulative; a handle can only be attached one way, confirmed
-   by a real report against Spear_Plunger which was wrongly getting both
-   the >1.2 and >1.4 tiers stacked together):
+   ONLY -- NOT cumulative; a handle can only be attached one way):
      MaxRange >= 1.6              -> MakeRivetedHandle, TightenBolts
      else MaxRange > 1.4          -> MakeLongHandle, ReinforcedBind
      else MaxRange > 1.2          -> MakeHandle, WrapBind
@@ -124,7 +160,24 @@ G) Wear Resistance -- CUMULATIVE by ConditionLowerChanceOneIn:
       actually exceeds 40, so SurfaceCoating is defined but currently
       never required by any real recipe.)
 
+H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
+   describes a specific attached/constructed component gets that
+   component's procedure INSTEAD OF whatever Sharpness/Piercing (A/B)
+   would otherwise assign -- removes any of SharpenEdge/StropLeather/
+   PrecisionGrind/ForgeShape/KnapHead/TaperPoint already picked, then adds
+   the matching Assembly procedure. 4 specific named items get a fixed
+   override (Handiknife/GlassShiv/Toothbrush_Shiv/HandFile -> WrapClothImprov,
+   HalfPlank -> SawWood, SmashedBottle -> SmashBottle, ShortTreeBranch ->
+   BreakBranch); everything else matches by real NAME SUFFIX (e.g. any
+   "*_Nails" item -> AssembleNails, any "*_Bone"/"BoneClub*" item ->
+   AssembleBoneSpike, "*_BarbedWire"/"*BarbedWire" -> WrapBarbedWireAssembly,
+   etc. -- see gen_craftdata.js's ASSEMBLY_PATTERNS for the full real-name
+   lists). Real result: 75 of the 248 craftable recipes get an Assembly
+   override; this also made ForgeShape currently unused alongside
+   SurfaceCoating (the only 2 craftable items that ever qualified for
+   ForgeShape, BucketMace_Metal/BucketMace_Wood, are also Assembly-matched).
+
 A recipe's final procedure list is the UNION of every rule its own real
-stats trigger across all 7 categories -- e.g. a long, heavy-swinging,
-high-crit sword can require procedures from A, C, D, F, and G all at
-once. Real range across all 248 recipes: 1 to 12 procedures per recipe.
+stats/name trigger across all 8 categories -- e.g. a long, heavy-swinging,
+high-crit sword can require procedures from A, C, D, F, and G all at once.
+Real range across all 248 recipes: 1 to 12 procedures per recipe.

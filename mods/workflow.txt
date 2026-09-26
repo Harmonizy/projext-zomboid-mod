@@ -3601,6 +3601,66 @@ alternatives lists entirely:
   field or an array-valued `base`), copied into the mod, modversion
   0.15.3 -> 0.16.0.
 
+TWENTY-SEVENTH round (2026-09-27) -- an 8th "Assembly" category with
+NAME-BASED (not stat-based) procedure overrides:
+- User pointed out real items whose own name describes a specific attached
+  component (e.g. "BaseballBat_Nails", "Cudgel_Bone", "Plunger_BarbedWire")
+  should get a procedure matching THAT real component instead of whatever
+  the generic Sharpness/Piercing rule assigns, and gave 18 new procedures
+  in 2 groups: 4 that replace a specific NAMED item's procedure
+  (Handiknife/GlassShiv/Toothbrush_Shiv/HandFile -> WrapClothImprov (พันผ้า),
+  HalfPlank -> SawWood (เลื่อยไม้), SmashedBottle -> SmashBottle (ทุบ),
+  ShortTreeBranch -> BreakBranch (หักกิ่ง)), and 14 that replace by real NAME
+  SUFFIX pattern (WrapBarbedWireAssembly/WrapWireAssembly/AssembleCan/
+  AssembleNails/AssembleRailSpike/AssembleBoneSpike/AssembleSawblade/
+  AssembleSheetMetal/AssembleSpike/AssembleBrake/AssembleBucket/
+  AssembleKettle/AssembleRakeHead/AssembleSpadeHead). Every one of the 18:
+  noskill, exactly 1 real tool, 1 real material matching its own name --
+  explicitly NOT given the flexible multi-alternative treatment the other
+  25 procedures got 2 rounds ago, per this round's own explicit "อุปกรณ์ 1
+  อย่าง" (one piece of equipment).
+- Verified real materials/items before wiring anything: Handiknife/
+  GlassShiv/Toothbrush_Shiv confirmed real VANILLA items, HandFile/
+  HalfPlank/ShortTreeBranch confirmed real HARMONIE-own items (all 6
+  grep-checked against both extraction tables, not assumed from the name
+  alone). All 14 name-suffix match lists (Nails/Bone/BarbedWire/Railspike/
+  Sawblade/ScrapSheet/Spike/Brake/Bucket/Kettle/RakeHead/SpadeHead/Can/
+  Wire) built from REAL item names found by grepping the actual extracted
+  tables, not guessed or regex-applied blindly at generation time --
+  narrowed several patterns by hand to exclude false positives (e.g. the
+  broad "bone" pattern initially also matched raw AnimalBone/
+  LargeAnimalBone material items and unrelated cutlery like DullBoneKnife/
+  Fork_Bone/Spoon_Bone, which aren't "a club with a bone spike attached").
+- Implemented as a second post-processing pass in gen_craftdata.js
+  (`applyAssemblyOverrides`, via `ASSEMBLY_EXACT` for the 4 specific items
+  and `ASSEMBLY_PATTERNS`/`NAME_TO_ASSEMBLY_PROC` for the 14 name-suffix
+  ones), run after the base-collapse pass: for a matching recipe, every
+  Sharpness/Piercing-category procedure id already assigned (SharpenEdge/
+  StropLeather/PrecisionGrind/ForgeShape/KnapHead/TaperPoint) is removed and
+  the matching Assembly procedure is added instead. The recipe's own real
+  item name is recovered from its id (`Make_[Vanilla_]<name>`) rather than
+  needing every push call site to carry the name separately. Real result:
+  75 of the 248 craftable recipes get an Assembly override. Verified by
+  hand: Cudgel_Bone gets AssembleBoneSpike, Plunger_BarbedWire gets
+  WrapBarbedWireAssembly, GlassShiv's procedures collapse to just
+  WrapClothImprov, and BaseballBat_Nails correctly keeps its unrelated
+  Balance-category HammerNails (PushBackMod-triggered) ALONGSIDE its new
+  Assembly-category AssembleNails -- these are two genuinely different
+  procedures for two different reasons, not a naming collision.
+- Real side effect found and reported rather than silently accepted:
+  ForgeShape is now unused too (alongside SurfaceCoating from an earlier
+  round) -- the only 2 craftable items that ever had CriticalChance >= 60
+  (BucketMace_Metal, BucketMace_Wood) are both Assembly-matched
+  (AssembleBucket), so their ForgeShape assignment gets removed every time.
+- Added 19 new translation keys (18 procedures + 1 "Assembly" category,
+  EN+TH using the user's own exact Thai names) and cross-referenced all 51
+  nameKeys the Lua now uses against both files (51/51 resolve).
+  PROCEDURES_REFERENCE.txt regenerated to include the new 8th category and
+  a written-out rule H describing the name-based override mechanism.
+  Re-validated (brace balance 236/236 on Procedures.lua, all 43 procedure
+  ids cross-referenced clean -- 0 missing, ForgeShape+SurfaceCoating the 2
+  honestly-unused ones), copied into the mod, modversion 0.16.0 -> 0.17.0.
+
 
 9. Checklist before starting any new work
 =======================================
