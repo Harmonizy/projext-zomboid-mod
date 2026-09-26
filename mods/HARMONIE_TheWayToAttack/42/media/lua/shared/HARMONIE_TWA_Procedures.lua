@@ -1,32 +1,38 @@
 --============================================================================
 -- HARMONIE_TheWayToAttack -- crafting procedure library (shared)
 --
--- Full rebuild (request 2026-09-26: "ลบทุกอันก่อนหน้า และสร้างกรรมวิธีต่างๆ
--- ด้วยข้อมูลนี้" -- delete every previous procedure, build new ones from a
--- pasted 9-category/31-procedure design brief). The brief itself cites other
--- MODS (Hydrocraft/Metalworking Expanded) as design inspiration, not real
--- vanilla PZ data, so every tool/material/skill below was independently
--- grep-verified against the actual installed game before use, same
--- discipline as every earlier round -- a few concepts from the brief have NO
--- real vanilla equivalent (a "Crucible"/"Mold" item, an "AnimalTendon" item,
--- any acid item, a literal "WireCutters" item, a "Furnace" item) and are
--- flagged with *** SUBSTITUTED *** where a real, closely-related item/tool
--- stands in for them instead of inventing something fake.
+-- 2nd full rebuild (request 2026-09-26/27): 25 procedures this time, given
+-- directly by the user in Thai with skill/tool/material per step, PLUS a
+-- real rules engine (see gen_craftdata.js's `PROCEDURE_RULES`) that decides
+-- which of these 25 a given recipe actually NEEDS from its own real stats
+-- (CriticalChance/SubCategory/MaxRange/PushBackMod/KnockdownMod/
+-- ConditionMax/ConditionLowerChanceOneIn) -- unlike the previous 31-
+-- procedure library, THIS one is actually wired onto all 248 recipes.
 --
--- Real per-procedure infrastructure (tool/tool2/consumes/skill/time/sound,
--- CheckEligibility/DescribeAll/Consume/AwardXP) is UNCHANGED from before --
--- only the actual procedure definitions and their category grouping are new.
--- `category` (a plain string) is new on every procedure -- used by
--- HARMONIE_TWA_CraftUI.lua's right-panel grid to draw a header per group
--- (request 2026-09-26: "จัดหมวดหมู่กรรมวิธีในหน้า ui ทางขวาด้วย").
+-- Real item/tool verification (same discipline as every earlier round):
+-- most materials were already grep-confirmed real in earlier rounds
+-- (Whetstone/File/SmallFileSet, Tongs, Charcoal/CharcoalCrafted/Coke,
+-- LeatherStrips, NutsBolts, Nails, ScrapMetal, BlowTorch, Wire, Pliers,
+-- TinCanEmpty, SheetMetal, HandDrill, Rope, DuctTape, Bleach, Lighter,
+-- MetalPipe). Newly confirmed THIS round: RippedSheets (real, Icon=Rag --
+-- stands in for "เศษผ้า"/cloth scraps), Clay (real, exact match for
+-- "ดินเหนียว"), Candle (real, exact match for "เทียน"), Thread (real,
+-- base:drainable, no KeepOnDeplete -- used as a real substitute for
+-- "เอ็น"/sinew, since neither "Sinew" nor "AnimalTendon" exist in vanilla,
+-- grep-confirmed absent). LongStick/LongHandle already confirmed real
+-- (used for the two handle-tier procedures' materials).
 --
--- Real skill Perk names used below (grep-confirmed from server/XpSystem/
--- XPSystem_SkillBook.lua's own real `SkillBook[x].perk = Perks.Y` mappings,
--- since several skill-BOOK display names do NOT match their real Perk enum
--- member -- e.g. the "Carpentry" skillbook is really `Perks.Woodwork`, and
--- the "Foraging" skillbook is really `Perks.PlantScavenging`, not
--- `Perks.Foraging`): Woodwork, Blacksmith, MetalWelding, FlintKnapping,
--- Masonry, Tailoring, Trapping.
+-- Real skill Perk names (see server/XpSystem/XPSystem_SkillBook.lua's own
+-- mappings, confirmed in an earlier round this session): the user's own
+-- category labels map to these real Perks -- "smith"->Blacksmith,
+-- "carpentry"->Woodwork (matches vanilla's own real "Carpentry" skillbook
+-- -> Perks.Woodwork mapping exactly), "tailoring"->Tailoring,
+-- "wielding"(sic, welding)->MetalWelding. "carving" has NO exact real
+-- vanilla equivalent -- a judgment call, mapped to FlintKnapping (fine
+-- detail shaping/sharpening work), flagged here rather than silently
+-- assumed, since vanilla only has one general "woodworking" skill
+-- (Woodwork) and this mod already uses it for the separate "carpentry"
+-- category.
 --============================================================================
 
 TWAProcedures = TWAProcedures or {}
@@ -35,9 +41,6 @@ local function predicateNotBroken(item)
     return not item:isBroken()
 end
 
--- tool/tool2 = a single spec `{ kind = "tag"|"type", value = X }`, OR a LIST
--- of alternative specs `{ {kind=.., value=..}, {kind=.., value=..} }` meaning
--- "any one of these".
 local function toolAlts(spec)
     if not spec then return nil end
     if spec[1] then return spec end
@@ -63,8 +66,6 @@ local function hasAnyTool(spec, player)
     return false
 end
 
--- A consume slot is either a single real type (`itemType = "Base.X"`) or a
--- list of interchangeable real types (`itemTypes = {"Base.A", "Base.B"}`).
 local function altTypes(c)
     if c.itemTypes then return c.itemTypes end
     return { c.itemType }
@@ -78,269 +79,162 @@ local function countAny(inv, types)
     return total
 end
 
--- 9 categories, 31 procedures total (matches the pasted brief's own count).
--- Categories 6-9 come from the brief's own loosely-grouped "หมวดที่ 6 ถึง 9"
--- tail section (5 procedures, no explicit 1-per-category split given) --
--- split here into 4 categories by real subject matter (Chemical/Welding/
--- Balance+Rivets/Engraving) so the count lands on exactly 9/31 as named.
+-- 25 procedures, grouped into the 7 real gameplay-purpose categories the
+-- rules engine (gen_craftdata.js) actually assigns by -- Sharpness/
+-- Piercing/Handle/Balance/Structure/Toughness/WearResist. `category` here
+-- drives the right-panel UI grouping only; the ACTUAL per-recipe
+-- requirement logic lives in gen_craftdata.js's PROCEDURE_RULES, since it
+-- needs each recipe's own real stat values (not available in this file).
 TWAProcedures.List = {
-    -- ===== 1. Binding & Wrapping (การผูกและยึดติดด้วยวัสดุ) =====
-    DuctTapeBinding = {
-        category = "Binding", nameKey = "IGUI_TWA_Proc_DuctTapeBinding", icon = "DuctTape",
-        consumes = { { itemType = "Base.DuctTape", qty = 2 } },
-        skill = "Tailoring:1", time = 100, sound = "FixWithTape",
+    -- ===== Sharpness (สร้างความคม) -- Swinging weapons =====
+    SharpenEdge = {
+        category = "Sharpness", nameKey = "IGUI_TWA_Proc_SharpenEdge", icon = "Whetstone2",
+        tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
+        consumes = {}, skill = "FlintKnapping:1", time = 100, sound = "SharpenBladeWhetstone",
     },
-    RopeTwineBinding = {
-        category = "Binding", nameKey = "IGUI_TWA_Proc_RopeTwineBinding", icon = "Rope2",
-        consumes = { { itemTypes = { "Base.Rope", "Base.Twine" }, qty = 2 } },
-        skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
+    StropLeather = {
+        category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "LeatherStrips",
+        tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
+        consumes = { { itemType = "Base.LeatherStrips", qty = 1 } }, skill = "FlintKnapping:2", time = 150, sound = "SharpenBladeWhetstone",
     },
-    -- *** SUBSTITUTED: the brief's "Wire Cutters" is not a real vanilla item
-    -- (grep-confirmed absent) -- Base.Pliers is the real vanilla tool for
-    -- wire work (already used this way by this mod in earlier rounds). ***
-    WireBinding = {
-        category = "Binding", nameKey = "IGUI_TWA_Proc_WireBinding", icon = "Wire",
-        tool = { kind = "type", value = "Base.Pliers" },
-        consumes = { { itemType = "Base.Wire", qty = 1 } },
-        skill = "Tailoring:2", time = 150, sound = "CraftFixWeapon",
+    PrecisionGrind = {
+        category = "Sharpness", nameKey = "IGUI_TWA_Proc_PrecisionGrind", icon = "HotChisel_Forged",
+        tool = { kind = "type", value = "Base.File" },
+        consumes = {}, skill = "Blacksmith:3", time = 250, sound = "SharpenBladeWhetstone",
     },
-    BarbedWireWrapping = {
-        category = "Binding", nameKey = "IGUI_TWA_Proc_BarbedWireWrapping", icon = "BarbedWire",
-        tool = { kind = "type", value = "Base.Pliers" },
-        consumes = { { itemType = "Base.BarbedWire", qty = 1 } },
-        skill = "Tailoring:2", time = 150, sound = "CraftFixWeapon",
-    },
-    LeatherStripsBinding = {
-        category = "Binding", nameKey = "IGUI_TWA_Proc_LeatherStripsBinding", icon = "LeatherStrips",
-        consumes = { { itemType = "Base.LeatherStrips", qty = 2 }, { itemType = "Base.Glue", qty = 1 } },
-        skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
-    },
-
-    -- ===== 2. Reinforcing & Impaling (การตอกย้ำและเสริมโครงสร้าง) =====
-    Nailing = {
-        category = "Reinforcing", nameKey = "IGUI_TWA_Proc_Nailing", icon = "Nails",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "type", value = "Base.WoodenMallet" } },
-        consumes = { { itemType = "Base.Nails", qty = 5 } },
-        skill = "Woodwork:1", time = 150, sound = "Hammering",
-    },
-    CanReinforcement = {
-        category = "Reinforcing", nameKey = "IGUI_TWA_Proc_CanReinforcement", icon = "TinCanEmpty",
+    ForgeShape = {
+        category = "Sharpness", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "Ingot_Steel",
         tool = { kind = "tag", value = "HAMMER" },
-        tool2 = { kind = "type", value = "Base.Pliers" },
-        consumes = { { itemTypes = { "Base.TinCanEmpty", "Base.WaterRationCanEmpty" }, qty = 1 } },
-        skill = "Blacksmith:1", time = 150, sound = "Hammering",
-    },
-    SheetMetalReinforcement = {
-        category = "Reinforcing", nameKey = "IGUI_TWA_Proc_SheetMetalReinforcement", icon = "SheetMetal",
-        tool = { kind = "tag", value = "WELDING_MASK" },
-        tool2 = { kind = "type", value = "Base.BlowTorch" }, -- kept tool, real base:drainable KeepOnDeplete item
-        consumes = { { itemType = "Base.SheetMetal", qty = 1 }, { itemType = "Base.ScrapMetal", qty = 1 } },
-        skill = "MetalWelding:3", time = 400, sound = "CraftWelding",
-    },
-    BoneSpiking = {
-        category = "Reinforcing", nameKey = "IGUI_TWA_Proc_BoneSpiking", icon = "Bone",
-        tool = { kind = "tag", value = "SHARP_KNIFE" },
-        consumes = { { itemTypes = { "Base.AnimalBone", "Base.LargeAnimalBone" }, qty = 1 } },
-        skill = "Trapping:1", time = 200, sound = "SmashBoneHit",
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
+        skill = "Blacksmith:4", time = 400, sound = "Hammering",
     },
 
-    -- ===== 3. Woodworking & Carving (งานไม้และแปรรูปจากธรรมชาติ) =====
-    SawingPlankCutting = {
-        category = "Woodworking", nameKey = "IGUI_TWA_Proc_SawingPlankCutting", icon = "Logs",
-        tool = { kind = "tag", value = "SAW" },
-        consumes = { { itemType = "Base.Log", qty = 1 } },
-        skill = "Woodwork:1", time = 150, sound = "Sawing",
+    -- ===== Piercing (สร้างความแหลม) -- Spear/Stab weapons =====
+    KnapHead = {
+        category = "Piercing", nameKey = "IGUI_TWA_Proc_KnapHead", icon = "RockSharpened",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = {}, skill = "FlintKnapping:1", time = 150, sound = "SmashStoneHit",
     },
-    FireHardening = {
-        category = "Woodworking", nameKey = "IGUI_TWA_Proc_FireHardening", icon = "LongHandle",
-        consumes = {},
+    TaperPoint = {
+        category = "Piercing", nameKey = "IGUI_TWA_Proc_TaperPoint", icon = "Shaft",
+        tool = { kind = "type", value = "Base.File" },
+        consumes = {}, skill = "FlintKnapping:2", time = 150, sound = "SharpenBladeWhetstone",
+    },
+
+    -- ===== Handle (ติดตั้งด้าม) -- by MaxRange =====
+    MakeHandle = {
+        category = "Handle", nameKey = "IGUI_TWA_Proc_MakeHandle", icon = "Shaft",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        consumes = { { itemType = "Base.LongStick", qty = 1 } }, skill = "Woodwork:1", time = 150, sound = "CraftWeaponSpearWood",
+    },
+    WrapBind = {
+        category = "Handle", nameKey = "IGUI_TWA_Proc_WrapBind", icon = "DuctTape",
+        consumes = { { itemTypes = { "Base.DuctTape", "Base.RippedSheets", "Base.LeatherStrips", "Base.Rope" }, qty = 2 } },
+        time = 100, sound = "FixWithTape",
+    },
+    MakeLongHandle = {
+        category = "Handle", nameKey = "IGUI_TWA_Proc_MakeLongHandle", icon = "LongHandle",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        consumes = { { itemType = "Base.LongHandle", qty = 1 } }, skill = "Woodwork:2", time = 200, sound = "CraftWeaponSpearWood",
+    },
+    ReinforcedBind = {
+        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "Thread",
+        consumes = { { itemType = "Base.Thread", qty = 1 }, { itemType = "Base.Glue", qty = 1 } },
+        skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
+    },
+    MakeRivetedHandle = {
+        category = "Handle", nameKey = "IGUI_TWA_Proc_MakeRivetedHandle", icon = "MetalTube",
+        consumes = { { itemType = "Base.LongHandle", qty = 1 }, { itemType = "Base.MetalPipe", qty = 1 } },
+        skill = "Blacksmith:4", time = 350, sound = "Hammering",
+    },
+    TightenBolts = {
+        category = "Handle", nameKey = "IGUI_TWA_Proc_TightenBolts", icon = "NutsBolts",
+        tool = { kind = "tag", value = "SCREWDRIVER" },
+        consumes = { { itemType = "Base.NutsBolts", qty = 2 } }, skill = "Blacksmith:1", time = 150, sound = "Screwdriver",
+    },
+
+    -- ===== Balance (ถ่วงน้ำหนัก) -- by PushBackMod =====
+    HammerNails = {
+        category = "Balance", nameKey = "IGUI_TWA_Proc_HammerNails", icon = "Nails",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.Nails", qty = 5 } }, skill = "Blacksmith:1", time = 150, sound = "Hammering",
+    },
+    CounterweightHead = {
+        category = "Balance", nameKey = "IGUI_TWA_Proc_CounterweightHead", icon = "TinCanEmpty",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.TinCanEmpty", qty = 1 } }, skill = "FlintKnapping:1", time = 150, sound = "Hammering",
+    },
+    WeldMetal = {
+        category = "Balance", nameKey = "IGUI_TWA_Proc_WeldMetal", icon = "BlowTorch",
+        tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
+        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, skill = "MetalWelding:1", time = 400, sound = "CraftWelding",
+    },
+
+    -- ===== Structure (เสริมโครงสร้าง) -- by KnockdownMod =====
+    RivetPlate = {
+        category = "Structure", nameKey = "IGUI_TWA_Proc_RivetPlate", icon = "SheetMetal",
+        tool = { kind = "tag", value = "HAMMER" },
+        consumes = { { itemType = "Base.SheetMetal", qty = 1 } }, skill = "Blacksmith:1", time = 200, sound = "Hammering",
+    },
+    DrillCore = {
+        category = "Structure", nameKey = "IGUI_TWA_Proc_DrillCore", icon = "Drill_OldFashioned",
+        tool = { kind = "type", value = "Base.HandDrill" },
+        consumes = {}, skill = "FlintKnapping:1", time = 150, sound = "CraftFixWeapon",
+    },
+
+    -- ===== Toughness (เสริมความคงทน) -- by ConditionMax =====
+    WrapCloth = {
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_WrapCloth", icon = "Rag",
+        consumes = { { itemType = "Base.RippedSheets", qty = 2 } }, time = 100, sound = "FixWithTape",
+    },
+    WrapLeather = {
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_WrapLeather", icon = "LeatherStrips",
+        consumes = { { itemType = "Base.LeatherStrips", qty = 2 } }, skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
+    },
+    StringSinew = {
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_StringSinew", icon = "Thread",
+        consumes = { { itemType = "Base.Thread", qty = 1 }, { itemType = "Base.Glue", qty = 1 } },
+        skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
+    },
+    WeaveWire = {
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_WeaveWire", icon = "Wire",
+        tool = { kind = "type", value = "Base.Pliers" },
+        consumes = { { itemType = "Base.Wire", qty = 2 } }, skill = "Blacksmith:2", time = 200, sound = "CraftFixWeapon",
+    },
+
+    -- ===== WearResist (ลดการสึกหรอ) -- by ConditionLowerChanceOneIn =====
+    CoatMud = {
+        category = "WearResist", nameKey = "IGUI_TWA_Proc_CoatMud", icon = "Clay",
+        consumes = { { itemType = "Base.Clay", qty = 1 } }, time = 150, sound = "CraftFixWeapon",
+    },
+    FireTreat = {
+        category = "WearResist", nameKey = "IGUI_TWA_Proc_FireTreat", icon = "Charcoal",
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 1 } },
         skill = "Woodwork:1", time = 200, sound = "CraftFixWeapon",
     },
-    WhittlingWoodCarving = {
-        category = "Woodworking", nameKey = "IGUI_TWA_Proc_WhittlingWoodCarving", icon = "Handle",
-        tool = { { kind = "tag", value = "SHARP_KNIFE" }, { kind = "type", value = "Base.KnifePocket" } },
-        consumes = {},
-        skill = "Woodwork:1", time = 150, sound = "CraftFixWeapon",
-    },
-    Chiseling = {
-        category = "Woodworking", nameKey = "IGUI_TWA_Proc_Chiseling", icon = "HotChisel_Forged",
-        tool = { kind = "type", value = "Base.CarpentryChisel" },
-        tool2 = { kind = "type", value = "Base.WoodenMallet" },
-        consumes = {},
-        skill = "Woodwork:3", time = 250, sound = "Hammering",
-    },
-
-    -- ===== 4. Knapping & Stone Working (การกะเทาะหินและทำหินมีคม) =====
-    StoneKnapping = {
-        category = "Knapping", nameKey = "IGUI_TWA_Proc_StoneKnapping", icon = "RockSharpened",
-        tool = {
-            { kind = "type", value = "Base.HammerStone" },
-            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" },
-            { kind = "tag", value = "CLUB_HAMMER" }, { kind = "tag", value = "STONE_MAUL" },
-            { kind = "tag", value = "PICK_AXE" },
-        },
-        consumes = { { itemType = "Base.SharpedStone", qty = 1 } },
-        skill = "FlintKnapping:1", time = 200, sound = "SmashStoneHit",
-    },
-    StoneShaftFitting = {
-        category = "Knapping", nameKey = "IGUI_TWA_Proc_StoneShaftFitting", icon = "Shaft",
-        consumes = { { itemTypes = { "Base.Rope", "Base.Twine" }, qty = 1 } },
-        skill = "FlintKnapping:1", time = 150, sound = "CraftWeaponSpearWood",
-    },
-
-    -- ===== 5. Forging & Metalworking (การตีเหล็กและหลอมโลหะ) =====
-    -- *** SUBSTITUTED: no real vanilla "Furnace"/"Brick Furnace" item exists
-    -- (grep-confirmed absent) -- Base.MasonsTrowel (real, Masonry skill) is
-    -- the closest real vanilla tool for "build a stone/masonry base". ***
-    FurnaceConstruction = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_FurnaceConstruction", icon = "MasonsTrowel",
-        tool = { kind = "type", value = "Base.MasonsTrowel" },
-        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Masonry:1", time = 300, sound = "CraftFixWeapon",
-    },
-    CharcoalBurning = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_CharcoalBurning", icon = "Lighter",
+    CoatWax = {
+        category = "WearResist", nameKey = "IGUI_TWA_Proc_CoatWax", icon = "Candle",
         tool = { kind = "type", value = "Base.Lighter" },
-        consumes = { { itemType = "Base.Log", qty = 1 } },
-        skill = "Blacksmith:1", time = 300, sound = "CraftFixWeapon",
+        consumes = { { itemType = "Base.Candle", qty = 1 } }, skill = "FlintKnapping:1", time = 150, sound = "CraftFixWeapon",
     },
-    -- *** SUBSTITUTED: the brief's "Bellows" IS a real vanilla item
-    -- (Base.LargeBellows), but it's placed FURNITURE (moveable.txt), not a
-    -- carried tool -- this mod's procedure system only checks the player's
-    -- own inventory, not nearby world objects, so it can't gate on it
-    -- meaningfully. Base.Tongs (real, already used elsewhere here) stands in
-    -- as the hand-held part of "tend the forge fire" instead. ***
-    BellowsOperation = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_BellowsOperation", icon = "Charcoal",
-        tool = { kind = "type", value = "Base.Tongs" },
-        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 1 } },
-        skill = "Blacksmith:1", time = 200, sound = "CraftFixWeapon",
-    },
-    ScrapMetalCollection = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_ScrapMetalCollection", icon = "ScrapMetal",
-        tool = { { kind = "type", value = "Base.Crowbar" }, { kind = "tag", value = "WRENCH" }, { kind = "tag", value = "PIPE_WRENCH" } },
-        consumes = {},
-        skill = "Blacksmith:1", time = 150, sound = "CraftFixWeapon",
-    },
-    -- *** SUBSTITUTED: no real vanilla "Crucible" or "Metal/Sand Mold" item
-    -- exists (grep-confirmed absent -- these are Hydrocraft/Metalworking-
-    -- Expanded concepts, not vanilla PZ). Base.Tongs + Base.WeldingMask
-    -- (both real, already used elsewhere here) stand in for "handle molten
-    -- scrap safely" instead. ***
-    CrucibleLoadingMelting = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_CrucibleLoadingMelting", icon = "ScrapMetal",
-        tool = { kind = "type", value = "Base.Tongs" },
-        tool2 = { kind = "tag", value = "WELDING_MASK" },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 2 }, { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:3", time = 400, sound = "Hammering",
-    },
-    -- *** SUBSTITUTED: no real vanilla mold item (see above) -- kept as a
-    -- light real step (Tongs + a Charcoal top-up) rather than inventing a
-    -- fake mold item. ***
-    IngotCasting = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_IngotCasting", icon = "Ingot_Steel",
-        tool = { kind = "type", value = "Base.Tongs" },
-        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 1 } },
-        skill = "Blacksmith:3", time = 300, sound = "CraftFixWeapon",
-    },
-    HeatingTheMetal = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_HeatingTheMetal", icon = "Charcoal",
-        tool = { kind = "type", value = "Base.Tongs" },
-        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:2", time = 300, sound = "CraftFixWeapon",
-    },
-    AnvilShaping = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_AnvilShaping", icon = "Ingot_Steel",
-        tool = { kind = "tag", value = "HAMMER" },
-        tool2 = { kind = "type", value = "Base.Tongs" },
-        consumes = {},
-        skill = "Blacksmith:5", time = 500, sound = "Hammering",
-    },
-    Quenching = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_Quenching", icon = "Ingot_Steel",
-        consumes = {},
-        skill = "Blacksmith:2", time = 150, sound = "CraftFixWeapon",
-    },
-    GrindingSharpening = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_GrindingSharpening", icon = "Whetstone2",
-        tool = {
-            { kind = "type", value = "Base.Whetstone" },
-            { kind = "type", value = "Base.File" },
-            { kind = "type", value = "Base.SmallFileSet" },
-        },
-        consumes = {},
-        skill = "Blacksmith:1", time = 150, sound = "SharpenBladeWhetstone",
-    },
-    HaftingHandleWrapping = {
-        category = "Forging", nameKey = "IGUI_TWA_Proc_HaftingHandleWrapping", icon = "LeatherStrips",
-        consumes = { { itemType = "Base.LeatherStrips", qty = 2 }, { itemType = "Base.Glue", qty = 1 } },
-        skill = "Woodwork:1", time = 150, sound = "CraftFixWeapon",
-    },
-
-    -- ===== 6. Chemical Treatment (การกัดลายและปรับปรุงพื้นผิว) =====
-    -- *** SUBSTITUTED: no real vanilla acid item (no MuriaticAcid/Vinegar
-    -- Concentrate/generic "Acid" -- grep-confirmed absent) -- Base.Bleach
-    -- (real, common vanilla cleaning item) stands in as the closest real
-    -- corrosive liquid. ***
-    ChemicalEtching = {
-        category = "Chemical", nameKey = "IGUI_TWA_Proc_ChemicalEtching", icon = "Bleach",
-        consumes = { { itemType = "Base.Bleach", qty = 1 } },
-        skill = "Blacksmith:2", time = 300, sound = "CraftFixWeapon",
-    },
-
-    -- ===== 7. Welding & Assembly (การเชื่อมประกอบโครงเหล็ก) =====
-    ScrapWelding = {
-        category = "Welding", nameKey = "IGUI_TWA_Proc_ScrapWelding", icon = "BlowTorch",
-        tool = { kind = "tag", value = "WELDING_MASK" },
-        tool2 = { kind = "type", value = "Base.BlowTorch" },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 2 } },
-        skill = "MetalWelding:2", time = 400, sound = "CraftWelding",
-    },
-
-    -- ===== 8. Balance & Rivets (การถ่วงสมดุลและตอกหมุด) =====
-    Counterbalancing = {
-        category = "Balance", nameKey = "IGUI_TWA_Proc_Counterbalancing", icon = "Drill_OldFashioned",
-        tool = { kind = "type", value = "Base.HandDrill" },
-        consumes = { { itemType = "Base.NutsBolts", qty = 2 } },
-        skill = "Blacksmith:2", time = 200, sound = "CraftFixWeapon",
-    },
-    Riveting = {
-        category = "Balance", nameKey = "IGUI_TWA_Proc_Riveting", icon = "Punch_Forged",
-        tool = { kind = "type", value = "Base.MetalworkingPunch" },
-        tool2 = { kind = "tag", value = "HAMMER" },
-        consumes = { { itemType = "Base.NutsBolts", qty = 2 } },
-        skill = "Blacksmith:2", time = 200, sound = "Hammering",
-    },
-
-    -- ===== 9. Finishing & Engraving (การแกะสลักแต่งขั้นสุด) =====
-    CustomEngraving = {
-        category = "Engraving", nameKey = "IGUI_TWA_Proc_CustomEngraving", icon = "HotChisel_Forged",
-        tool = { { kind = "type", value = "Base.CarpentryChisel" }, { kind = "type", value = "Base.File" } },
-        consumes = {},
-        skill = "Blacksmith:3", time = 300, sound = "SharpenBladeWhetstone",
+    SurfaceCoating = {
+        category = "WearResist", nameKey = "IGUI_TWA_Proc_SurfaceCoating", icon = "Bleach",
+        consumes = { { itemType = "Base.Bleach", qty = 1 } }, skill = "Blacksmith:2", time = 250, sound = "CraftFixWeapon",
     },
 }
 
--- 9 categories in display order, each with its own translated header and the
--- ordered list of procedure ids inside it -- both the flat `Order` (used
--- wherever a plain list is still needed) and the new `Categories` (used by
--- the right-panel grid to draw a header per group, request 2026-09-26:
--- "จัดหมวดหมู่กรรมวิธีในหน้า ui ทางขวาด้วย") are derived from ONE list here
--- so they can never drift apart.
+-- 7 categories in display order, each with its own translated header and
+-- the ordered list of procedure ids inside it -- both `Order` and the
+-- right-panel grid grouping are derived from ONE list here so they can't
+-- drift apart.
 TWAProcedures.Categories = {
-    { key = "Binding", nameKey = "IGUI_TWA_ProcCat_Binding", ids = { 'DuctTapeBinding', 'RopeTwineBinding', 'WireBinding', 'BarbedWireWrapping', 'LeatherStripsBinding' } },
-    { key = "Reinforcing", nameKey = "IGUI_TWA_ProcCat_Reinforcing", ids = { 'Nailing', 'CanReinforcement', 'SheetMetalReinforcement', 'BoneSpiking' } },
-    { key = "Woodworking", nameKey = "IGUI_TWA_ProcCat_Woodworking", ids = { 'SawingPlankCutting', 'FireHardening', 'WhittlingWoodCarving', 'Chiseling' } },
-    { key = "Knapping", nameKey = "IGUI_TWA_ProcCat_Knapping", ids = { 'StoneKnapping', 'StoneShaftFitting' } },
-    { key = "Forging", nameKey = "IGUI_TWA_ProcCat_Forging", ids = {
-        'FurnaceConstruction', 'CharcoalBurning', 'BellowsOperation', 'ScrapMetalCollection',
-        'CrucibleLoadingMelting', 'IngotCasting', 'HeatingTheMetal', 'AnvilShaping',
-        'Quenching', 'GrindingSharpening', 'HaftingHandleWrapping',
-    } },
-    { key = "Chemical", nameKey = "IGUI_TWA_ProcCat_Chemical", ids = { 'ChemicalEtching' } },
-    { key = "Welding", nameKey = "IGUI_TWA_ProcCat_Welding", ids = { 'ScrapWelding' } },
-    { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'Counterbalancing', 'Riveting' } },
-    { key = "Engraving", nameKey = "IGUI_TWA_ProcCat_Engraving", ids = { 'CustomEngraving' } },
+    { key = "Sharpness", nameKey = "IGUI_TWA_ProcCat_Sharpness", ids = { 'SharpenEdge', 'StropLeather', 'PrecisionGrind', 'ForgeShape' } },
+    { key = "Piercing", nameKey = "IGUI_TWA_ProcCat_Piercing", ids = { 'KnapHead', 'TaperPoint' } },
+    { key = "Handle", nameKey = "IGUI_TWA_ProcCat_Handle", ids = { 'MakeHandle', 'WrapBind', 'MakeLongHandle', 'ReinforcedBind', 'MakeRivetedHandle', 'TightenBolts' } },
+    { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'HammerNails', 'CounterweightHead', 'WeldMetal' } },
+    { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
+    { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
+    { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
 }
 
 TWAProcedures.Order = {}
@@ -350,8 +244,6 @@ for _, cat in ipairs(TWAProcedures.Categories) do
     end
 end
 
--- Live eligibility check against a player's current inventory/skills.
--- Returns (metAll: bool, missing: array of {kind, ...} describing every unmet requirement).
 function TWAProcedures.CheckEligibility(proc, player)
     local missing = {}
 
@@ -385,8 +277,6 @@ function TWAProcedures.CheckEligibility(proc, player)
     return #missing == 0, missing
 end
 
--- Like CheckEligibility, but returns EVERY requirement (not just the unmet
--- ones), each tagged with its own `met` flag.
 function TWAProcedures.DescribeAll(proc, player)
     local reqs = {}
     if proc.tool then
@@ -416,8 +306,6 @@ function TWAProcedures.DescribeAll(proc, player)
     return reqs
 end
 
--- Consumes the procedure's materials from the player's inventory. Assumes
--- CheckEligibility already confirmed everything is present.
 function TWAProcedures.Consume(proc, player)
     local inv = player:getInventory()
     for _, c in ipairs(proc.consumes or {}) do
@@ -434,9 +322,6 @@ function TWAProcedures.Consume(proc, player)
     end
 end
 
--- Grants the procedure's skill XP on completion. Real API:
--- `character:getXp():AddXP(perk, amount)`, confirmed from ISPlayerStatsUI.lua's
--- own real usage.
 function TWAProcedures.AwardXP(proc, player)
     if not proc.skill then return end
     local skillName, lvl = proc.skill:match("^(%a+):(%d+)$")

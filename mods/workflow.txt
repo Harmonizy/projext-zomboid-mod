@@ -3413,6 +3413,72 @@ stat grid:
   Re-validated (brace balance 90/90, JSON valid on both translation files),
   copied into the mod, modversion 0.14.1 -> 0.14.2.
 
+TWENTY-FOURTH round (2026-09-26/27) -- 2nd full procedure-library rebuild
+(25 procedures), PLUS a real rules engine that finally wires procedures onto
+all 248 recipes from each recipe's own real stats:
+- User gave a complete new procedure list directly (25 procedures in Thai,
+  each with skill+level, tool, materials) AND a full rules spec: 7 named
+  categories (สร้างความคม/สร้างความแหลม/ติดตั้งด้าม/ถ่วงน้ำหนัก/
+  เสริมโครงสร้าง/เสริมความคงทน/ลดการสึกหรอ), each triggering specific
+  procedures from a recipe's own real CriticalChance/SubCategory/MaxRange/
+  PushBackMod/KnockdownMod/ConditionMax/ConditionLowerChanceOneIn.
+- Deleted the previous 31-procedure library outright, replaced with these
+  25 in HARMONIE_TWA_Procedures.lua, grouped into the new 7 categories
+  (TWAProcedures.Categories) which the right-panel UI already renders
+  generically (no code change needed there -- confirmed no hardcoded
+  category assumptions anywhere in HARMONIE_TWA_CraftUI.lua).
+- Real material verification this round: RippedSheets (real, Icon=Rag --
+  substitute for "เศษผ้า"), Clay (real, exact match for "ดินเหนียว"),
+  Candle (real, exact match for "เทียน"), Thread (real base:drainable, no
+  KeepOnDeplete -- substitute for "เอ็น"/sinew, since neither "Sinew" nor
+  "AnimalTendon" exist in vanilla, grep-confirmed absent again). Real skill
+  Perk mapping: "smith"->Blacksmith, "carpentry"->Woodwork (matches
+  vanilla's own real skillbook mapping), "tailoring"->Tailoring,
+  "wielding"(sic)->MetalWelding, all direct/exact. "carving" has NO exact
+  real vanilla equivalent -- judgment call, mapped to FlintKnapping and
+  flagged in-code (vanilla only has one general woodworking skill,
+  Woodwork, already used for the separate real "carpentry" category).
+- *** THE REAL RULES ENGINE (the actual deliverable of this round) --
+  gen_craftdata.js's addFinishingSteps() completely rewritten from a no-op
+  into a real per-recipe rules function, now taking the recipe's own row
+  data directly (signature changed from `(procedures, category, tier)` to
+  `(r)`, all 8 call sites updated) instead of a hand-authored procedure
+  list:
+    A/B (Sharpness/Piercing, Swinging vs Spear/Stab only): SINGLE-BAND-
+      SELECT by CriticalChance ("<20,40,60,70") -- exactly one procedure
+      chosen by which band the value falls in. Confirmed this must be
+      band-select, not cumulative: since the comparator is "<" (ascending
+      thresholds), naive cumulative stacking would backwards-favor WEAK
+      weapons needing MORE work -- worked out from the logic itself, not
+      guessed, since the request's wording alone was ambiguous here.
+    C/D/E/F/G (Handle/Balance/Structure/Toughness/WearResist, by MaxRange/
+      PushBackMod/KnockdownMod/ConditionMax/ConditionLowerChanceOneIn):
+      CUMULATIVE -- each ascending threshold ADDS its own procedure(s) on
+      top of every lower one already triggered (explicit "เพิ่ม"/"และ" in
+      the user's own wording for D/E, extended by symmetry + real layered-
+      treatment logic to C/F/G).
+  Real regenerated result: all 248 recipes now have REAL, non-empty
+  procedure lists again (verified: 0 recipes with empty procedures, down
+  from 248/248 empty last round) -- distribution ranges 1-12 procedures per
+  recipe. Spot-checked apoc_tactical_longsword by hand against its own real
+  stats (crit=35/Swinging, range=1.4, pushback=0.5, knockdown=0,
+  conditionMax=12, wear=15) and confirmed the generated procedure list
+  (StropLeather, MakeHandle, WrapBind, HammerNails, CounterweightHead,
+  WrapCloth, WrapLeather, CoatMud) matches every rule exactly. One
+  procedure, SurfaceCoating (the top WearResist tier, ConditionLowerChance
+  OneIn > 40) came out UNUSED by any of the 248 craftable recipes -- not a
+  bug, the real craftable pool's actual max for that stat is exactly 40,
+  never exceeding it, so that tier is honestly unreachable right now (same
+  class of finding as the earlier "nothing reaches Legendary" note).
+- Added 32 new translation keys (25 procedures + 7 categories, EN+TH),
+  removed the previous round's 40 keys outright. Cross-referenced every
+  nameKey the new Lua uses against both files (32/32 resolve) and grepped
+  the whole mod for stray references to any of the previous round's 31
+  procedure ids (none found). Re-validated (brace balance 132/132 on
+  Procedures.lua, 1119/1119 on generated data, JSON valid on both
+  translation files, all 25 procedure ids cross-referenced clean against
+  the 248 recipes), copied into the mod, modversion 0.14.2 -> 0.15.0.
+
 
 9. Checklist before starting any new work
 =======================================

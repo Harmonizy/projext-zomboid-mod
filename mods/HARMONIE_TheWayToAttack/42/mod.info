@@ -1,6 +1,6 @@
 name=HARMONIE - TheWayToAttack
 id=HARMONIE_TheWayToAttack
 description=(WIP) New melee weapon-crafting mod. 137 HARMONIE weapons + every vanilla melee weapon with a real Weaponry-category recipe, craftable through a custom procedural crafting UI: pick a recipe, perform its required procedures (each a real timed action with sound/XP, from a shared flexible-tool/flexible-material library) from a shared library, finish to produce the item. Also a separate weapon modification UI (Grip/Head/Tactical/Weight upgrade slots, works on any melee weapon). Full EN/TH translations included.
-modversion=0.14.2
+modversion=0.15.0
 versionMin=42.0.0
 require=NeatUI_Framework

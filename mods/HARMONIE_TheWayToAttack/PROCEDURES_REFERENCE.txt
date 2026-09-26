@@ -1,183 +1,134 @@
-HARMONIE_TheWayToAttack -- crafting procedure library reference
-Generated 2026-09-26. Compares the OLD library (33 procedures, deleted
-this session) against the NEW library (31 procedures, current) so both
-can be reviewed side by side.
+HARMONIE_TheWayToAttack -- crafting procedure library reference (v3)
+Generated 2026-09-27. This mod has rebuilt its procedure library twice
+now:
+  v1 (33 procedures) -- deleted 2026-09-26, see git history before commit
+      013f532 if you need the full list.
+  v2 (31 procedures, 9 categories) -- deleted 2026-09-27, see git commit
+      85c14cf for its full definitions.
+  v3 (25 procedures, 7 categories) -- CURRENT, shown in full below.
+
+The key difference from v1/v2: v3 is the first version with a REAL RULES
+ENGINE (gen_craftdata.js addFinishingSteps()) that actually assigns
+procedures to all 248 craftable recipes from each recipe's own real
+stats -- v1 and v2 never had any recipe actually require a procedure to
+craft (every recipe's procedures list was empty).
 
 ==============================================================================
-OLD LIBRARY -- 33 procedures, grouped by skill area (no formal "category"
-field existed yet -- grouping below is reconstructed from the file's own
-section comments)
+CURRENT LIBRARY (v3) -- 25 procedures, 7 categories
 ==============================================================================
 
--- Woodwork (17) --
-  - HammerNails
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x5, skill=Woodwork:1, time=150ms, sound=Hammering
-  - HardenWood
-      consumes=(none), skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
-  - CutShape
-      tool=SAW, consumes=(none), skill=Woodwork:1, time=150ms, sound=Sawing
+-- Sharpness (สร้างความคม) (4) --
   - SharpenEdge
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Woodwork:1, time=100ms, sound=SharpenBladeWhetstone
-  - WrapGrip
-      consumes=LeatherStrips x2, skill=Woodwork:1, time=150ms, sound=CraftFixWeapon
-  - BindLashing
-      consumes=LeatherStrips/Zipties/Twine/DuctTape x2, skill=Woodwork:1, time=150ms, sound=CraftFixWeapon
-  - AttachSpearhead
-      consumes=LeatherStrips/Zipties/Twine/DuctTape x2, skill=Woodwork:1, time=250ms, sound=CraftWeaponSpearWood
-  - WrapTape
-      consumes=DuctTape x2, skill=Woodwork:1, time=100ms, sound=FixWithTape
-  - DrillHole
-      tool=Base.HandDrill, consumes=(none), skill=Woodwork:2, time=150ms, sound=CraftFixWeapon
-  - AttachHardware
-      tool=WRENCH / PIPE_WRENCH, consumes=NutsBolts x2, skill=Woodwork:1, time=150ms, sound=RepairWithWrench
-  - AttachScrews
-      tool=WRENCH / PIPE_WRENCH, consumes=Screws x4, skill=Woodwork:2, time=150ms, sound=Screwdriver
-  - WrapWire
-      tool=Base.Pliers, consumes=Wire x2, skill=Woodwork:2, time=150ms, sound=CraftFixWeapon
-  - WrapBarbedWire
-      tool=Base.Pliers, consumes=BarbedWire x1, skill=Woodwork:2, time=150ms, sound=CraftFixWeapon
-  - Disassemble
-      tool=SCREWDRIVER, consumes=(none), skill=Woodwork:1, time=100ms, sound=Screwdriver
-  - AttachHandleSmall
-      consumes=SmallHandle x1, skill=Woodwork:1, time=150ms, sound=Hammering
-  - AttachHandleLong
-      consumes=LongHandle x1, skill=Woodwork:1, time=150ms, sound=Hammering
-  - AttachHaft
-      consumes=LongStick x1, skill=Woodwork:1, time=150ms, sound=CraftWeaponSpearWood
-
--- Blacksmith (4) --
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=FlintKnapping:1, time=100ms, sound=SharpenBladeWhetstone
+  - StropLeather
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips x1, skill=FlintKnapping:2, time=150ms, sound=SharpenBladeWhetstone
+  - PrecisionGrind
+      tool=Base.File, consumes=(none), skill=Blacksmith:3, time=250ms, sound=SharpenBladeWhetstone
   - ForgeShape
-      tool=HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:2, time=400ms, sound=Hammering
-  - PolishI
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Blacksmith:1, time=150ms, sound=SharpenBladeWhetstone
-  - TemperII
-      tool=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x3, skill=Blacksmith:5, time=300ms, sound=CraftFixWeapon
-  - ReinforceIII
-      tool=HAMMER, tool2=Base.Tongs, consumes=ScrapMetal x3, Charcoal/CharcoalCrafted/Coke x5, skill=Blacksmith:8, time=500ms, sound=Hammering
+      tool=HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, time=400ms, sound=Hammering
 
--- MetalWelding (2) --
-  - Weld
-      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:2, time=400ms, sound=CraftWelding
-  - BoltAssembly
-      tool=WRENCH / PIPE_WRENCH, consumes=NutsBolts x2, skill=MetalWelding:1, time=150ms, sound=RepairWithWrench
+-- Piercing (สร้างความแหลม) (2) --
+  - KnapHead
+      tool=HAMMER, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=SmashStoneHit
+  - TaperPoint
+      tool=Base.File, consumes=(none), skill=FlintKnapping:2, time=150ms, sound=SharpenBladeWhetstone
 
--- FlintKnapping (2) --
-  - KnapStone
-      tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL / PICK_AXE, consumes=SharpedStone x1, skill=FlintKnapping:1, time=200ms, sound=SmashStoneHit
-  - CarveBone
-      tool=SAW / SHARP_KNIFE, consumes=(none), skill=Woodwork:1, time=200ms, sound=SmashBoneHit
+-- Handle (ติดตั้งด้าม) (6) --
+  - MakeHandle
+      tool=SHARP_KNIFE, consumes=LongStick x1, skill=Woodwork:1, time=150ms, sound=CraftWeaponSpearWood
+  - WrapBind
+      consumes=DuctTape/RippedSheets/LeatherStrips/Rope x2, skill=(none), time=100ms, sound=FixWithTape
+  - MakeLongHandle
+      tool=SHARP_KNIFE, consumes=LongHandle x1, skill=Woodwork:2, time=200ms, sound=CraftWeaponSpearWood
+  - ReinforcedBind
+      consumes=Thread x1, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+  - MakeRivetedHandle
+      consumes=LongHandle x1, MetalPipe x1, skill=Blacksmith:4, time=350ms, sound=Hammering
+  - TightenBolts
+      tool=SCREWDRIVER, consumes=NutsBolts x2, skill=Blacksmith:1, time=150ms, sound=Screwdriver
 
--- Attach-a-Salvaged-Part (8) --
-  - AttachSawblade
-      tool=SAW, consumes=CircularSawblade_Half x1, skill=Woodwork:5, time=300ms, sound=Sawing
-  - AttachRakeHead
-      tool=WRENCH / PIPE_WRENCH, consumes=RakeHead x1, skill=Woodwork:4, time=250ms, sound=RepairWithWrench
-  - AttachGardenForkHead
-      tool=WRENCH / PIPE_WRENCH, consumes=GardenForkHead/GardenForkHead_Forged x1, skill=Woodwork:6, time=300ms, sound=RepairWithWrench
-  - AttachSpadeHead
-      tool=WRENCH / PIPE_WRENCH, consumes=SpadeHead/SpadeHead_Forged x1, skill=Woodwork:6, time=300ms, sound=RepairWithWrench
-  - AttachRailspike
-      tool=HAMMER, consumes=RailroadSpike x1, skill=Woodwork:3, time=200ms, sound=Hammering
-  - AttachCan
-      tool=SCREWDRIVER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Woodwork:1, time=150ms, sound=Screwdriver
-  - AttachScrapSheet
-      tool=SCREWDRIVER, consumes=SmallSheetMetal/UnusableMetal/AluminumScrap x2, skill=Woodwork:4, time=250ms, sound=Screwdriver
-  - AttachBrake
-      tool=WRENCH / PIPE_WRENCH, consumes=NormalBrake1/NormalBrake2/NormalBrake3/OldBrake1/OldBrake2/OldBrake3/ModernBrake1/ModernBrake2/ModernBrake3 x1, skill=Woodwork:5, time=300ms, sound=RepairWithWrench
+-- Balance (ถ่วงน้ำหนัก) (3) --
+  - HammerNails
+      tool=HAMMER, consumes=Nails x5, skill=Blacksmith:1, time=150ms, sound=Hammering
+  - CounterweightHead
+      tool=HAMMER, consumes=TinCanEmpty x1, skill=FlintKnapping:1, time=150ms, sound=Hammering
+  - WeldMetal
+      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=400ms, sound=CraftWelding
 
-==============================================================================
-NEW LIBRARY -- 31 procedures, 9 categories (current, live in
-HARMONIE_TWA_Procedures.lua -- but not yet wired into any recipe;
-every recipe's procedures list is empty for now)
-==============================================================================
+-- Structure (เสริมโครงสร้าง) (2) --
+  - RivetPlate
+      tool=HAMMER, consumes=SheetMetal x1, skill=Blacksmith:1, time=200ms, sound=Hammering
+  - DrillCore
+      tool=Base.HandDrill, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
 
--- Binding & Wrapping (5) --
-  - DuctTapeBinding
-      consumes=DuctTape x2, skill=Tailoring:1, time=100ms, sound=FixWithTape
-  - RopeTwineBinding
-      consumes=Rope/Twine x2, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
-  - WireBinding
-      tool=Base.Pliers, consumes=Wire x1, skill=Tailoring:2, time=150ms, sound=CraftFixWeapon
-  - BarbedWireWrapping
-      tool=Base.Pliers, consumes=BarbedWire x1, skill=Tailoring:2, time=150ms, sound=CraftFixWeapon
-  - LeatherStripsBinding
-      consumes=LeatherStrips x2, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+-- Toughness (เสริมความคงทน) (4) --
+  - WrapCloth
+      consumes=RippedSheets x2, skill=(none), time=100ms, sound=FixWithTape
+  - WrapLeather
+      consumes=LeatherStrips x2, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+  - StringSinew
+      consumes=Thread x1, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+  - WeaveWire
+      tool=Base.Pliers, consumes=Wire x2, skill=Blacksmith:2, time=200ms, sound=CraftFixWeapon
 
--- Reinforcing & Impaling (4) --
-  - Nailing
-      tool=HAMMER / Base.WoodenMallet, consumes=Nails x5, skill=Woodwork:1, time=150ms, sound=Hammering
-  - CanReinforcement
-      tool=HAMMER, tool2=Base.Pliers, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Blacksmith:1, time=150ms, sound=Hammering
-  - SheetMetalReinforcement
-      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=SheetMetal x1, ScrapMetal x1, skill=MetalWelding:3, time=400ms, sound=CraftWelding
-  - BoneSpiking
-      tool=SHARP_KNIFE, consumes=AnimalBone/LargeAnimalBone x1, skill=Trapping:1, time=200ms, sound=SmashBoneHit
-
--- Woodworking & Carving (4) --
-  - SawingPlankCutting
-      tool=SAW, consumes=Log x1, skill=Woodwork:1, time=150ms, sound=Sawing
-  - FireHardening
-      consumes=(none), skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
-  - WhittlingWoodCarving
-      tool=SHARP_KNIFE / Base.KnifePocket, consumes=(none), skill=Woodwork:1, time=150ms, sound=CraftFixWeapon
-  - Chiseling
-      tool=Base.CarpentryChisel, tool2=Base.WoodenMallet, consumes=(none), skill=Woodwork:3, time=250ms, sound=Hammering
-
--- Knapping & Stone Working (2) --
-  - StoneKnapping
-      tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL / PICK_AXE, consumes=SharpedStone x1, skill=FlintKnapping:1, time=200ms, sound=SmashStoneHit
-  - StoneShaftFitting
-      consumes=Rope/Twine x1, skill=FlintKnapping:1, time=150ms, sound=CraftWeaponSpearWood
-
--- Forging & Metalworking (11) --
-  - FurnaceConstruction
-      tool=Base.MasonsTrowel, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Masonry:1, time=300ms, sound=CraftFixWeapon
-  - CharcoalBurning
-      tool=Base.Lighter, consumes=Log x1, skill=Blacksmith:1, time=300ms, sound=CraftFixWeapon
-  - BellowsOperation
-      tool=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Blacksmith:1, time=200ms, sound=CraftFixWeapon
-  - ScrapMetalCollection
-      tool=Base.Crowbar / WRENCH / PIPE_WRENCH, consumes=(none), skill=Blacksmith:1, time=150ms, sound=CraftFixWeapon
-  - CrucibleLoadingMelting
-      tool=Base.Tongs, tool2=WELDING_MASK, consumes=ScrapMetal x2, Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:3, time=400ms, sound=Hammering
-  - IngotCasting
-      tool=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Blacksmith:3, time=300ms, sound=CraftFixWeapon
-  - HeatingTheMetal
-      tool=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:2, time=300ms, sound=CraftFixWeapon
-  - AnvilShaping
-      tool=HAMMER, tool2=Base.Tongs, consumes=(none), skill=Blacksmith:5, time=500ms, sound=Hammering
-  - Quenching
-      consumes=(none), skill=Blacksmith:2, time=150ms, sound=CraftFixWeapon
-  - GrindingSharpening
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Blacksmith:1, time=150ms, sound=SharpenBladeWhetstone
-  - HaftingHandleWrapping
-      consumes=LeatherStrips x2, Glue x1, skill=Woodwork:1, time=150ms, sound=CraftFixWeapon
-
--- Chemical Treatment (1) --
-  - ChemicalEtching
-      consumes=Bleach x1, skill=Blacksmith:2, time=300ms, sound=CraftFixWeapon
-
--- Welding & Assembly (1) --
-  - ScrapWelding
-      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x2, skill=MetalWelding:2, time=400ms, sound=CraftWelding
-
--- Balance & Rivets (2) --
-  - Counterbalancing
-      tool=Base.HandDrill, consumes=NutsBolts x2, skill=Blacksmith:2, time=200ms, sound=CraftFixWeapon
-  - Riveting
-      tool=Base.MetalworkingPunch, tool2=HAMMER, consumes=NutsBolts x2, skill=Blacksmith:2, time=200ms, sound=Hammering
-
--- Finishing & Engraving (1) --
-  - CustomEngraving
-      tool=Base.CarpentryChisel / Base.File, consumes=(none), skill=Blacksmith:3, time=300ms, sound=SharpenBladeWhetstone
+-- Wear Resistance (ลดการสึกหรอ) (4) --
+  - CoatMud
+      consumes=Clay x1, skill=(none), time=150ms, sound=CraftFixWeapon
+  - FireTreat
+      consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
+  - CoatWax
+      tool=Base.Lighter, consumes=Candle x1, skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
+  - SurfaceCoating
+      consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
 
 ==============================================================================
-SUBSTITUTIONS (new library only) -- brief concepts with no real vanilla
-equivalent, grep-confirmed absent, swapped for the closest real item:
+RULES ENGINE -- how a recipe's real stats decide which procedures it
+needs (gen_craftdata.js addFinishingSteps(), the actual source of truth)
 ==============================================================================
-  - "Crucible"/"Metal or Sand Mold"   -> Tongs + Welding Mask (CrucibleLoadingMelting, IngotCasting)
-  - "Furnace"/"Brick Furnace"          -> Masons Trowel (FurnaceConstruction)
-  - Any Acid/Muriatic Acid item        -> Bleach (ChemicalEtching)
-  - "AnimalTendon"                     -> dropped, Glue already covers the same binding role
-  - Literal "Wire Cutters" item         -> Base.Pliers (this mod's own established wire tool)
-  - "Bellows" (real item, but FURNITURE, not a carried tool) -> Tongs (BellowsOperation)
+
+A) Sharpness -- Swinging weapons only. SINGLE-BAND-SELECT by
+   CriticalChance (exactly one procedure, not cumulative):
+     CritChance < 20        -> SharpenEdge
+     20 <= CritChance < 40  -> StropLeather
+     40 <= CritChance < 60  -> PrecisionGrind
+     CritChance >= 60       -> ForgeShape
+
+B) Piercing -- Spear/Stab weapons only. Same band shape as A:
+     CritChance < 20        -> KnapHead
+     20 <= CritChance < 40  -> TaperPoint
+     40 <= CritChance < 60  -> PrecisionGrind (shared with A)
+     CritChance >= 60       -> ForgeShape (shared with A)
+
+C) Handle -- CUMULATIVE by MaxRange (each tier ADDS to the last):
+     MaxRange > 1.2   -> + MakeHandle, WrapBind
+     MaxRange > 1.4   -> + MakeLongHandle, ReinforcedBind
+     MaxRange >= 1.6  -> + MakeRivetedHandle, TightenBolts
+
+D) Balance -- CUMULATIVE by PushBackMod:
+     PushBackMod >= 0.3  -> + HammerNails
+     PushBackMod >= 0.5  -> + CounterweightHead
+     PushBackMod >= 1.0  -> + WeldMetal
+
+E) Structure -- CUMULATIVE by KnockdownMod:
+     KnockdownMod >= 2  -> + RivetPlate
+     KnockdownMod >= 3  -> + DrillCore
+
+F) Toughness -- CUMULATIVE by ConditionMax:
+     ConditionMax > 5   -> + WrapCloth
+     ConditionMax > 10  -> + WrapLeather
+     ConditionMax > 15  -> + StringSinew
+     ConditionMax > 20  -> + WeaveWire
+
+G) Wear Resistance -- CUMULATIVE by ConditionLowerChanceOneIn:
+     ConditionLowerChanceOneIn > 10  -> + CoatMud
+     ConditionLowerChanceOneIn > 20  -> + FireTreat
+     ConditionLowerChanceOneIn > 30  -> + CoatWax
+     ConditionLowerChanceOneIn > 40  -> + SurfaceCoating
+     (real note: nothing in the current 248-recipe craftable pool
+      actually exceeds 40, so SurfaceCoating is defined but currently
+      never required by any real recipe.)
+
+A recipe's final procedure list is the UNION of every rule its own real
+stats trigger across all 7 categories -- e.g. a long, heavy-swinging,
+high-crit sword can require procedures from A, C, D, F, and G all at
+once. Real range across all 248 recipes: 1 to 12 procedures per recipe.
