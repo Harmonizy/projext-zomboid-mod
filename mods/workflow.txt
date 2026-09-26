@@ -3113,6 +3113,22 @@ around DPS alone:
   CraftUI 80/80, FinishCraftAction 3/3, TierTooltip 11/11 -- all 33
   procedure ids cross-referenced clean), copied into the mod, modversion
   0.11.1 -> 0.12.0.
+- Same day, immediately after: user asked to show BaseDPS in both the
+  crafting UI's recipe-detail stat grid AND the real-item tooltip, right
+  next to the tier label ("หน้ารายละเอียดของการคราฟให้ขึ้น BaseDPS ด้วย
+  tooltip ก็ให้ขึ้นเหมือนกัน ตรงที่แสดงระดับอาวุธเมื่อเอาเมาส์ไปชี้"). Baked
+  the exact real `dps` value (same number tierFromDps() ranks by) into
+  TWARecipeData.Stats via emitStatsRow() in gen_craftdata.js, so neither Lua
+  consumer needs to recompute the formula. HARMONIE_TWA_CraftUI.lua's
+  STAT_GRID gained a new first row (`IGUI_TWA_Stat_DPS` / "Base DPS", EN+TH
+  added) shown before Min/Max Damage since it's now the stat everything
+  else explains. HARMONIE_TWA_TierTooltip.lua appends the DPS value in
+  parentheses directly onto the existing tier-name line (e.g. "Epic (DPS
+  3.42)") rather than adding a separate line, matching "same spot that
+  shows the tier". Re-validated (JSON valid on both translation files,
+  brace balance OK on CraftUI 82/82 and TierTooltip 11/11, generated Lua
+  data 1119/1119, all 33 procedure ids cross-referenced clean), copied into
+  the mod, modversion 0.12.0 -> 0.12.1.
 
 
 9. Checklist before starting any new work

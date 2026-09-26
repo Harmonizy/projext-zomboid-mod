@@ -936,6 +936,11 @@ end
 -- every stat, organized, easy to read"). Each cell is {statKey, labelKey,
 -- fmt}; fmt receives the raw numeric stat value.
 local STAT_GRID = {
+    -- BaseDPS (request 2026-09-26: "หน้ารายละเอียดของการคราฟให้ขึ้น
+    -- BaseDPS ด้วย") -- the exact real number that now drives the whole
+    -- tier system, shown first since it's the primary stat everything else
+    -- here explains.
+    { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%.2f", always = true } },
     { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
       { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" } },
     { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%" },

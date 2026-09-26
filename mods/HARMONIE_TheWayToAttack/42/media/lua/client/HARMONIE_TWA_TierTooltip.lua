@@ -68,7 +68,13 @@ function ISToolTipInv:render()
     local tier = stats and stats.tier
     if not tier or not TIER_NAMES[tier] then return end
     local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
+    -- Base DPS shown alongside the tier name (request 2026-09-26: "tooltip
+    -- ก็ให้ขึ้นเหมือนกัน ตรงที่แสดงระดับอาวุธ" -- same spot that shows the
+    -- tier) -- the exact real number that tier was ranked by.
     local label = TIER_NAMES[tier]
+    if stats.dps then
+        label = label .. " (DPS " .. string.format("%.2f", stats.dps) .. ")"
+    end
     local font = UIFont.Small
     local textH = getTextManager():getFontHeight(font)
     local stripH = textH + 6
