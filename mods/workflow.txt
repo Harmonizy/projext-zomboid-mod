@@ -3479,6 +3479,47 @@ all 248 recipes from each recipe's own real stats:
   translation files, all 25 procedure ids cross-referenced clean against
   the 248 recipes), copied into the mod, modversion 0.14.2 -> 0.15.0.
 
+TWENTY-FIFTH round (2026-09-27) -- flexible tools/materials + rarity-aware
+quantities on all 25 procedures, doc cleanup:
+- User asked for every procedure's tool AND material to allow real
+  substitutes where reasonable, quantities scaled to real relative rarity,
+  and old-version procedure history removed from tracking.
+- Widened tool/material alternatives, all grep-confirmed real (no invented
+  items): StropLeather materials -> LeatherStrips/RippedSheets;
+  PrecisionGrind/TaperPoint tools -> File/Whetstone/SmallFileSet (was
+  File-only); ForgeShape tool -> HAMMER/SLEDGEHAMMER/CLUB_HAMMER (was
+  HAMMER-only); KnapHead tool -> the same real "any hammering tool" group
+  KnapStone/StoneKnapping already used (HammerStone/HAMMER/SLEDGEHAMMER/
+  CLUB_HAMMER/STONE_MAUL); MakeHandle/MakeLongHandle/MakeRivetedHandle
+  materials -> LongStick/Sapling (real established shaft-alt pair) and
+  LongHandle/LongStick, MetalPipe/SteelBarHalf; TightenBolts tool ->
+  SCREWDRIVER/WRENCH; HammerNails/CounterweightHead tools -> added
+  SLEDGEHAMMER; CounterweightHead material -> TinCanEmpty/
+  WaterRationCanEmpty (real established pair); RivetPlate material ->
+  SheetMetal/SmallSheetMetal/UnusableMetal/AluminumScrap (real established
+  scrap-sheet group); CoatWax tool -> Lighter/Matches (both real).
+- Quantities re-tuned by real relative rarity (request: "จำนวนที่
+  สมเหตุสมผลต่อความหายาก"): the 4 Toughness-tier materials all dropped from
+  qty 2 to qty 1 -- RippedSheets/LeatherStrips/Wire get progressively
+  scarcer up that chain (cloth -> leather -> wire), so asking for MORE of
+  the rarer top-tier material than the common bottom one was backwards;
+  every tier now asks for just 1, letting the SKILL LEVEL (Tailoring:1 ->
+  Blacksmith:2) carry the escalating difficulty instead of raw quantity.
+- PROCEDURES_REFERENCE.txt rewritten to drop the v1/v2 history section
+  entirely (request: "กรรมวิธีที่เก่ากว่าเวอร์ชันนี้ให้เอาออกไป ไม่ใช้แล้ว"
+  -- remove procedures older than this version, not used any more) --
+  documents ONLY the current 25-procedure/7-category library + rules
+  engine now, with just a one-line pointer to the relevant git commits if
+  the old versions are ever needed again.
+- No regeneration of HARMONIE_TWA_RecipeData.lua was needed -- the rules
+  engine (gen_craftdata.js) only ever references procedures BY ID, and no
+  procedure id/category changed this round, only their internal tool/
+  consumes fields -- so which procedures each of the 248 recipes requires
+  is unaffected. Re-validated (brace balance 162/162 on Procedures.lua, all
+  25 procedure ids still cross-reference cleanly against the existing
+  248-recipe data, same as before -- SurfaceCoating still the one honestly-
+  unused procedure), copied into the mod, modversion 0.15.0 -> 0.15.1.
+
 
 9. Checklist before starting any new work
 =======================================
