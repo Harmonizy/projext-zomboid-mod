@@ -3222,6 +3222,35 @@ around DPS alone:
   FinishCraftAction 3/3, TierTooltip 24/24 -- generated data 1119/1119,
   all 33 procedure ids cross-referenced clean), copied into the mod,
   modversion 0.13.1 -> 0.13.2. ***
+- Immediately after, user pasted a full explicit tier table swapping
+  Legendary and Prototype's positions again -- this time as a complete
+  spec (name/DPS/color per row), not a verbal instruction, so implemented
+  literally rather than reconciled against earlier phrasing:
+    1 Junk        DPS < 0.25   white
+    2 Common      DPS < 0.5    light blue
+    3 Uncommon    DPS < 1      green
+    4 Rare        DPS < 2      pink
+    5 Epic        DPS < 4      purple
+    6 Elite       DPS < 8      orange
+    7 Legendary   DPS < 10     yellow
+    8 Prototype   DPS >= 10    red
+  Only the threshold changed in gen_craftdata.js (DPS_TIER_THRESHOLDS' last
+  boundary 15 -> 10); the NAME/color swap lives entirely in the 3 Lua
+  consumers (TIER_INFO in HARMONIE_TWA_CraftUI.lua, TIER_NAMES in
+  TWA_FinishCraftAction.lua, TIER_NAMES/TIER_COLOR in HARMONIE_TWA_
+  TierTooltip.lua) -- tier 7 is now "Legendary" (yellow, was "Prototype"/
+  red), tier 8 is now "Prototype" (red, was "Legendary"/yellow). The
+  filter-hiding rule from the previous round (hide Junk + Prototype from
+  CraftUI's TIER_TABS) is about the NAMES, not fixed numbers, so it moved
+  with "Prototype" to its new slot (8) -- the filter row's Legendary tab
+  now points at key 7. Real regenerated result across all 473 items:
+  identical counts to the pre-swap run (Junk=18, Common=60, Uncommon=172,
+  Rare=180, Epic=37, Elite=4, tier7=2, tier8=0) since only which NAME
+  attaches to which number changed, not the boundary values themselves.
+  Re-validated (brace balance OK on all 3 Lua files -- CraftUI 80/80,
+  FinishCraftAction 3/3, TierTooltip 24/24 -- generated data 1119/1119,
+  all 33 procedure ids cross-referenced clean), copied into the mod,
+  modversion 0.13.2 -> 0.13.3.
 
 
 9. Checklist before starting any new work

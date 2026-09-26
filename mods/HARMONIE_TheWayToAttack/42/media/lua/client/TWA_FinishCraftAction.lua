@@ -99,13 +99,12 @@ end
 -- limitation.
 -- Tier names are NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier")
 -- -- shown as the plain English label directly, same as the tooltip hook.
--- Full 8-tier fixed-DPS scale (Junk/Common/Uncommon/Rare/Epic/Elite/
--- Prototype/Legendary) -- restored after a brief Prototype-removal turned
--- out to be a misread; both Junk and Prototype are only hidden from the
--- CraftUI filter row, not removed here or anywhere else.
+-- Full 8-tier fixed-DPS scale. Legendary and Prototype swapped positions
+-- (request 2026-09-26, full explicit table): Legendary is now DPS < 10,
+-- Prototype is now the unbounded top tier DPS >= 10.
 local TIER_NAMES = {
     [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
-    [6] = "Elite", [7] = "Prototype", [8] = "Legendary",
+    [6] = "Elite", [7] = "Legendary", [8] = "Prototype",
 }
 
 local function applyTier(item, fullType)

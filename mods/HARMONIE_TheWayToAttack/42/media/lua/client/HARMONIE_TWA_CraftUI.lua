@@ -226,16 +226,18 @@ local CATEGORY_TABS = {
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
 -- (avgDamage * BaseSpeed) against FIXED thresholds, baked into
--- TWARecipeData.Stats[x].tier. Full 8-tier scale (Junk/Common/Uncommon/
--- Rare/Epic/Elite/Prototype/Legendary), restored after a brief attempt to
--- remove Prototype turned out to be a misread -- the user actually wanted
--- Junk AND Prototype kept as real tiers, just hidden from THIS window's
--- own filter row (request 2026-09-26: "เก็บ tier prototype ไว้ แค่ไม่แสดง
--- ในฟิลเตอร์ค้นหาของ ui คราฟอาวุธ ทำแบบนี้กับ tier junk ด้วย"). TIER_INFO
--- below keeps all 8 (still used for the recipe-list color strip and the
--- center-panel tier label); TIER_TABS (the filter row) omits Junk and
--- Prototype on purpose -- see the comment there. Names are plain English,
--- NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier").
+-- TWARecipeData.Stats[x].tier. Full 8-tier scale. Legendary and Prototype
+-- swapped positions (request 2026-09-26, given as a full explicit table):
+-- Legendary is now DPS < 10 (was Prototype's old slot), Prototype is now
+-- the unbounded top tier DPS >= 10 (was Legendary's old slot) -- gen_
+-- craftdata.js's DPS_TIER_THRESHOLDS is the source of truth for the actual
+-- boundary; only the NAMES/colors here need to track which number each one
+-- is attached to. TIER_INFO below keeps all 8 (still used for the recipe-
+-- list color strip and the center-panel tier label); TIER_TABS (the filter
+-- row) omits Junk and Prototype on purpose -- that exclusion is about the
+-- NAMES, not fixed tier numbers, so it moved with "Prototype" to slot 8.
+-- Names are plain English, NOT translated (request 2026-09-26: "ไม่ต้องแปล
+-- ชื่อ tier").
 local TIER_INFO = {
     [1] = { name = "Junk", r = 1.0, g = 1.0, b = 1.0 },
     [2] = { name = "Common", r = 0.3, g = 0.7, b = 1.0 },
@@ -243,10 +245,10 @@ local TIER_INFO = {
     [4] = { name = "Rare", r = 1.0, g = 0.45, b = 0.75 },
     [5] = { name = "Epic", r = 0.65, g = 0.3, b = 0.95 },
     [6] = { name = "Elite", r = 1.0, g = 0.55, b = 0.15 },
-    [7] = { name = "Prototype", r = 0.85, g = 0.2, b = 0.15 },
-    [8] = { name = "Legendary", r = 1.0, g = 0.85, b = 0.15 },
+    [7] = { name = "Legendary", r = 1.0, g = 0.85, b = 0.15 },
+    [8] = { name = "Prototype", r = 0.85, g = 0.2, b = 0.15 },
 }
--- Junk (1) and Prototype (7) are intentionally left OUT of this list --
+-- Junk (1) and Prototype (now 8) are intentionally left OUT of this list --
 -- both tiers still exist (TIER_INFO above, the generated Stats table, and
 -- the real-item tooltip all still know about them), they just aren't
 -- offered as filter choices in this specific window.
@@ -257,7 +259,7 @@ local TIER_TABS = {
     { key = 4, label = "Rare" },
     { key = 5, label = "Epic" },
     { key = 6, label = "Elite" },
-    { key = 8, label = "Legendary" },
+    { key = 7, label = "Legendary" },
 }
 
 local function getItemScript(fullType)
