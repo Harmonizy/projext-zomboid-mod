@@ -969,8 +969,16 @@ function TWACraftWindow:drawHoverTooltip()
 end
 
 -- 2-column stat grid shown in the center panel (request 2026-09-26: "show
--- every stat, organized, easy to read"). Each cell is {statKey, labelKey,
--- fmt}; fmt receives the raw numeric stat value.
+-- every stat, organized, easy to read", then reorganized + extended same
+-- day: "track เพิ่มแสดงในหน้า ui คราฟตรงกลาง...จัดเรียงให้มีระเบียบ").
+-- Each cell is {key, labelKey, fmt, always, default, derive}; `derive(stats)`
+-- (when set) computes the display value instead of a plain `stats[key]`
+-- lookup -- used for the two boolean/enum-derived cells below. Grouped by
+-- subject: damage, combat effects, mobility, durability, physical, style --
+-- `Categories` is intentionally NOT here (request: "หมวดหมู่ให้เอาไปไว้
+-- ข้างๆ tier" -- put it next to the tier label instead, see the center-
+-- panel render() call site below).
+local HANDEDNESS_LABELS = { [true] = "IGUI_TWA_Stat_TwoHanded", [false] = "IGUI_TWA_Stat_OneHanded" }
 local STAT_GRID = {
     -- BaseDPS (request 2026-09-26: "หน้ารายละเอียดของการคราฟให้ขึ้น
     -- BaseDPS ด้วย") -- the exact real number that now drives the whole
@@ -980,16 +988,30 @@ local STAT_GRID = {
     { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
       { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" } },
     { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%" },
-      { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" } },
+      { key = "knockdownMod", labelKey = "IGUI_TWA_Stat_Knockdown", fmt = "%.1f" } },
     -- `always = true` (request 2026-09-26: "always show attack speed") --
     -- shown even when the baked value is missing. `default = 1.0` (request
     -- 2026-09-26: "ความเร็วโจมตีหากไม่มีให้ขึ้น 1.0 แทน" -- if missing, show
     -- 1.0 instead) -- a display/design decision, not a claim this is the
     -- real Java default (still unconfirmed, no decompiler available).
     { { key = "baseSpeed", labelKey = "IGUI_TWA_Stat_Speed", fmt = "%.2f", always = true, default = 1.0 },
-      { key = "knockdownMod", labelKey = "IGUI_TWA_Stat_Knockdown", fmt = "%.1f" } },
+      { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" } },
     { { key = "conditionMax", labelKey = "IGUI_TWA_Stat_Condition", fmt = "%.0f" },
-      { key = "weight", labelKey = "IGUI_TWA_StatWeight", fmt = "%.1f" } },
+      -- Real "durability" mechanic (request 2026-09-26) -- a 1-in-X chance
+      -- PER HIT to lose Condition, higher = more durable; a different real
+      -- field from `conditionMax` (max condition capacity) just above.
+      { key = "conditionLowerChanceOneIn", labelKey = "IGUI_TWA_Stat_Durability", fmt = "1 in %.0f" } },
+    { { key = "weight", labelKey = "IGUI_TWA_StatWeight", fmt = "%.1f" },
+      -- Real "push power" stagger-distance stat (request 2026-09-26) --
+      -- separate from `knockdownMod` (knockdown chance/strength) above.
+      { key = "pushBackMod", labelKey = "IGUI_TWA_Stat_PushPower", fmt = "%.2f" } },
+    { { key = "twoHanded", labelKey = "IGUI_TWA_Stat_Handedness", fmt = "%s", always = true,
+        derive = function(s) return HANDEDNESS_LABELS[s.twoHanded] and getText(HANDEDNESS_LABELS[s.twoHanded]) or nil end },
+      -- Real field, but NOT "One-Handed/Two-Handed" as first assumed --
+      -- its real values are Swinging/Stab/Spear/Firearm (attack style),
+      -- grep-confirmed and corrected for the user when this was asked.
+      { key = "subCategory", labelKey = "IGUI_TWA_Stat_AttackStyle", fmt = "%s",
+        derive = function(s) return s.subCategory and s.subCategory ~= "" and s.subCategory or nil end } },
 }
 
 function TWACraftWindow:drawStatGrid(x, y, w)
@@ -1001,10 +1023,10 @@ function TWACraftWindow:drawStatGrid(x, y, w)
     local colW = w / 2
     for _, row in ipairs(STAT_GRID) do
         for col, cellDef in ipairs(row) do
-            local v = stats[cellDef.key]
-            if v or cellDef.always then
+            local v = cellDef.derive and cellDef.derive(stats) or stats[cellDef.key]
+            if v ~= nil or cellDef.always then
                 local cx = x + (col - 1) * colW
-                local valueText = v and string.format(cellDef.fmt, v)
+                local valueText = (v ~= nil) and string.format(cellDef.fmt, v)
                     or (cellDef.default and string.format(cellDef.fmt, cellDef.default))
                     or "-"
                 drawTextShadowed(self, getText(cellDef.labelKey) .. ": " .. valueText, cx, y, 0.85, 0.85, 0.85, 1, UIFont.Small)
@@ -1012,22 +1034,15 @@ function TWACraftWindow:drawStatGrid(x, y, w)
         end
         y = y + 18
     end
-    -- `DamageCategory` ("Slash") is NOT shown as its own stat any more --
-    -- verified against media/lua/shared/Definitions/DamageModelDefinitions.lua
+    -- `DamageCategory` ("Slash") is NOT shown as its own stat -- verified
+    -- against media/lua/shared/Definitions/DamageModelDefinitions.lua
     -- (question raised 2026-09-26: "what does this actually do, don't
     -- guess"). It is real, but purely cosmetic: it only picks which visual
     -- gore/wound texture gets stamped onto a zombie's torso/head on hit
     -- (ZedDmg_*_Slash textures vs the default), nothing else -- it does NOT
     -- affect damage, bleeding, or infection chance (the "Causes Bleeding"
     -- label this UI showed briefly was a wrong guess and has been removed).
-    -- Not meaningful to a crafting decision, so it's left out of the stat
-    -- grid entirely instead of showing a cosmetic-only detail as if it
-    -- mattered.
-    if stats.twoHanded ~= nil then
-        drawTextShadowed(self, getText("IGUI_TWA_Stat_TwoHanded") .. ": " .. getText(stats.twoHanded and "IGUI_TWA_Yes" or "IGUI_TWA_No"),
-            x, y, 0.85, 0.85, 0.85, 1, UIFont.Small)
-        y = y + 18
-    end
+    -- Not meaningful to a crafting decision, so it stays out of the grid.
     return y
 end
 
@@ -1180,7 +1195,14 @@ function TWACraftWindow:render()
     end
     drawTextShadowed(self, name, centerX + ICON + 12, centerY + 6, 1, 1, 1, 1, UIFont.Medium)
     if tierInfo then
-        drawTextShadowed(self, tierInfo.name, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, UIFont.Small)
+        -- Weapon category shown right next to the tier name (request
+        -- 2026-09-26: "หมวดหมู่ให้เอาไปไว้ข้างๆ tier" -- put the category
+        -- beside the tier), not in the generic stat grid below.
+        local tierLabel = tierInfo.name
+        if stats and stats.categories then
+            tierLabel = tierLabel .. "  \194\183  " .. stats.categories
+        end
+        drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, UIFont.Small)
     end
 
     local statY = self:drawStatGrid(centerX + ICON + 12, centerY + 44, CENTER_W - ICON - 20)

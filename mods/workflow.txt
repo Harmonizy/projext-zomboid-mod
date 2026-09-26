@@ -3341,6 +3341,55 @@ pasted 9-category/31-procedure design brief:
   always available once its base item is owned, until a future round wires
   specific procedures back onto specific recipes using this new library.
 
+TWENTY-SECOND round (2026-09-26) -- 4 more real stats tracked + shown in the
+crafting UI, plus a real pre-existing bug found and fixed along the way:
+- User asked for real value ranges (min/max/2-3 in-between) for CriticalChance/
+  MaxRange/KnockdownMod/"Durability" -- computed from real data:
+  CriticalChance 0-70, MaxRange 0.69-1.63 (MinRange separately 0.2-0.98),
+  KnockdownMod 0-3, and the real "Durability" mechanic
+  (ConditionLowerChanceOneIn, a 1-in-X per-hit degrade chance) 1-200 (10/5/15
+  most common).
+- User then asked to also TRACK and show in the crafting UI's center panel:
+  CriticalChance, MaxRange, KnockdownMod, ConditionMax (already tracked),
+  ConditionLowerChanceOneIn, Categories, SubCategory("OneHanded TwoHanded"),
+  PushPower -- organized neatly, with Categories moved next to the tier
+  label. Corrected a real wrong assumption before implementing: SubCategory
+  does NOT hold "OneHanded"/"TwoHanded" -- grep-confirmed its real values are
+  Swinging/Stab/Spear/Firearm (attack style). Handedness is the SEPARATE
+  real `TwoHandWeapon` boolean field, already tracked as `twoHanded`.
+- *** Real pre-existing bug found and fixed while wiring this up: HARMONIE's
+  own 137 items write `TwoHandWeapon` as uppercase "TRUE"/"FALSE" (grep-
+  confirmed from twa_item_table.json), but gen_craftdata.js's emitStatsRow()
+  only ever matched lowercase "true"/"false" -- meaning `twoHanded` has been
+  silently `nil` for ALL 137 HARMONIE items since the field was first added
+  (only vanilla's lowercase values ever matched). Fixed with a case-
+  insensitive compare. This had been invisible until now because nothing
+  displayed `twoHanded` prominently before. ***
+- Extended extract_items.js + extract_vanilla_weapons.js to also pull
+  ConditionLowerChanceOneIn and PushBackMod (neither captured before), and
+  SubCategory for the vanilla extractor (HARMONIE's already had it). Re-ran
+  both. gen_craftdata.js's emitStatsRow() now also bakes `categories`,
+  `subCategory`, `conditionLowerChanceOneIn`, `pushBackMod` into
+  TWARecipeData.Stats (categories via the existing `norm()` helper so
+  HARMONIE's own "Improvised;Axe"-style raw values come out as clean "Axe").
+- HARMONIE_TWA_CraftUI.lua's STAT_GRID reorganized into subject groups
+  (damage / combat effects / mobility / durability / physical / style) and
+  extended with 2 new rows: Durability (conditionLowerChanceOneIn) + Push
+  Power (pushBackMod), and Handedness + Attack Style (replacing the old
+  separate special-cased "Two-Handed: Yes/No" line that used to run below
+  the grid -- folded into the grid itself as a proper cell, with a new
+  `derive(stats)` field on cell definitions for the two enum/boolean-
+  derived cells). `Categories` is NOT in the grid -- moved to render()'s
+  center-panel tier-name line instead (request: "หมวดหมู่ให้เอาไปไว้ข้างๆ
+  tier"), shown as "TierName · Category" in the tier's own color.
+- Added 5 new translation keys (Durability, PushPower, AttackStyle,
+  OneHanded, Handedness -- TwoHanded already existed) to EN+TH; cross-
+  referenced all 21 labelKeys STAT_GRID now uses against both files
+  (21/21 resolve). Re-validated (brace balance 90/90 on CraftUI.lua,
+  1119/1119 on generated data, JSON valid on both translation files, 31
+  procedure ids still cross-reference cleanly -- unaffected by this round),
+  copied into the mod, modversion 0.14.0 -> 0.14.1.
+
 
 9. Checklist before starting any new work
 =======================================
