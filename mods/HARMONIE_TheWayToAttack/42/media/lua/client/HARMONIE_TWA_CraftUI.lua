@@ -480,19 +480,41 @@ function TWAProcScrollList:new(x, y, w, h, ui)
     return o
 end
 
+-- Grouped by category (request 2026-09-26: "จัดหมวดหมู่กรรมวิธีในหน้า ui
+-- ทางขวาด้วย" -- organize the procedures in the right-side UI panel into
+-- categories too). Each `TWAProcedures.Categories` entry becomes one header
+-- row (its own translated name) followed by that category's procedures
+-- packed into grid rows, same cell layout as before. Header rows and grid
+-- rows are told apart by shape (`entry.item.header` vs `entry.item.row`) --
+-- see doDrawItem/onMouseDown below. `self.itemheight` is toggled around each
+-- addItem() call so ISScrollingListBox's own real addItem() (which reads
+-- `self.itemheight` to both stamp the new entry's height AND grow the
+-- scrollbar) picks up the right height for whichever kind of row it's
+-- adding -- confirmed real from ISScrollingListBox.lua's own source.
 function TWAProcScrollList:populate()
     self:clear()
-    local row = nil
-    for _, id in ipairs(TWAProcedures.Order) do
-        local proc = TWAProcedures.List[id]
-        if proc then
-            if not row or #row >= self.perRow then
-                row = {}
-                self:addItem("", row)
+    local gridItemHeight = self.cellSize + self.cellGap
+    self.headerHeight = 22
+    for _, cat in ipairs(TWAProcedures.Categories) do
+        local ids = {}
+        for _, id in ipairs(cat.ids) do
+            if TWAProcedures.List[id] then ids[#ids + 1] = id end
+        end
+        if #ids > 0 then
+            self.itemheight = self.headerHeight
+            self:addItem("", { header = cat.nameKey })
+            self.itemheight = gridItemHeight
+            local row = nil
+            for _, id in ipairs(ids) do
+                if not row or #row >= self.perRow then
+                    row = {}
+                    self:addItem("", { row = row })
+                end
+                row[#row + 1] = id
             end
-            row[#row + 1] = id
         end
     end
+    self.itemheight = gridItemHeight
 end
 
 function TWAProcScrollList:cellAt(mx)
@@ -518,7 +540,9 @@ function TWAProcScrollList:onMouseDown(x, y)
     if #self.items == 0 then return end
     local row = self:rowAt(x, y)
     if row < 1 or row > #self.items then return end
-    local ids = self.items[row].item
+    local entry = self.items[row]
+    if not entry.item.row then return end -- header row, not clickable
+    local ids = entry.item.row
     local col = self:cellAt(x)
     local id = ids[col]
     if not id then return end
@@ -530,11 +554,8 @@ end
 
 -- Tag-based tools have no single real item to name (any hammer-tagged item
 -- works) -- this is every ItemTag member this mod's procedures actually use
--- (see HARMONIE_TWA_Procedures.lua's own real-API verification note; grown
--- 2026-09-26 from the original 5 once multi-tool alternatives were added --
--- e.g. KnapStone now also accepts SLEDGEHAMMER/CLUB_HAMMER/STONE_MAUL,
--- matching vanilla's own real "any hammering tool" check 1:1), so a small
--- fixed label table covers every case without guessing further.
+-- (see HARMONIE_TWA_Procedures.lua's own real-API verification note), so a
+-- small fixed label table covers every case without guessing further.
 local TOOL_TAG_LABELS = {
     HAMMER = "IGUI_TWA_Tool_Hammer",
     SAW = "IGUI_TWA_Tool_Saw",
@@ -633,7 +654,14 @@ function TWAProcScrollList:getProcTexture(proc)
 end
 
 function TWAProcScrollList:doDrawItem(y, entry, alt)
-    local ids = entry.item
+    if entry.item.header then
+        local h = entry.height or self.headerHeight
+        self:drawRect(0, y, self:getWidth(), h, 0.9, 0.16, 0.13, 0.1)
+        self:drawRectBorder(0, y, self:getWidth(), h, 0.5, 0.5, 0.4, 0.3)
+        drawTextShadowed(self, getText(entry.item.header), self.cellPad, y + 3, 0.9, 0.75, 0.4, 1, UIFont.Small)
+        return y + h
+    end
+    local ids = entry.item.row
     local h = entry.height or self.itemheight
     local hoveredRow = self.mouseoverselected == entry.index
     local cs, gap, pad = self.cellSize, self.cellGap, self.cellPad

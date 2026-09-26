@@ -3252,6 +3252,95 @@ around DPS alone:
   all 33 procedure ids cross-referenced clean), copied into the mod,
   modversion 0.13.2 -> 0.13.3.
 
+TWENTY-FIRST round (2026-09-26) -- full procedure-library rebuild from a
+pasted 9-category/31-procedure design brief:
+- User pasted a detailed design brief (tools/materials/skills/furniture per
+  step, organized into 9 categories: Binding & Wrapping, Reinforcing &
+  Impaling, Woodworking & Carving, Knapping & Stone Working, Forging &
+  Metalworking, plus 4 misc categories in a "6 to 9" tail section) and
+  asked to: (1) empty every recipe's `procedures` list for now, (2) delete
+  every one of the old 33 procedures, (3) build a brand new library from
+  the brief, (4) group the right-panel procedure grid in the crafting UI by
+  these categories.
+- The brief itself cites OTHER MODS (Hydrocraft/Metalworking Expanded) as
+  its own inspiration, not real vanilla PZ data -- so every tool/material/
+  skill was independently grep-verified against the actual installed game
+  before use, same discipline as every earlier round, rather than trusted
+  as-is. Real confirmations: Rope (Icon=Rope2, not "Rope"), Wire/Glue (real
+  base:drainable, no KeepOnDeplete so treated as normal one-shot consumes),
+  SheetMetal, Log (Icon=Logs), WoodenMallet (Icon=WoodMallet),
+  CarpentryChisel (Icon=HotChisel_Forged), MasonsTrowel, MetalworkingPunch
+  (Icon=Punch_Forged), KnifePocket (real item -- the brief's own
+  "PocketKnife" name doesn't exist), AnimalBone/LargeAnimalBone, HandDrill,
+  Crowbar, Bleach, Base.LargeBellows (real but FURNITURE, not a carried
+  tool). Also grep-confirmed real skill Perk names differ from their
+  skillbook display names in server/XpSystem/XPSystem_SkillBook.lua --
+  e.g. the "Carpentry" skillbook is really `Perks.Woodwork`, "Foraging" is
+  really `Perks.PlantScavenging` (NOT `Perks.Foraging`) -- so Trapping was
+  used for Bone Spiking instead, and every skill string below uses the
+  real Perk enum name, not the brief's own casual terms. *** NOT real
+  (grep-confirmed absent), each flagged in-code and substituted with the
+  closest real equivalent rather than invented: "Crucible"/"Metal or Sand
+  Mold" (no such items exist -- Tongs+WeldingMask substitute for "handle
+  molten metal safely"), "Furnace"/"Brick Furnace" (MasonsTrowel substitutes
+  for the masonry-tool part), any Acid/MuriaticAcid/VinegarConcentrate item
+  (Bleach substitutes as the closest real corrosive liquid),
+  "AnimalTendon" (dropped, Glue already covers the same binding role),
+  literal "Wire Cutters" (Base.Pliers, already this mod's own established
+  wire tool). ***
+- New HARMONIE_TWA_Procedures.lua: exactly 31 procedures across 9
+  categories (Binding/Reinforcing/Woodworking/Knapping/Forging/Chemical/
+  Welding/Balance/Engraving -- the brief's own loose "6 to 9" tail split
+  into 4 named categories by real subject matter since it gave 5
+  procedures with no explicit 1-per-category mapping). Every procedure has
+  a new `category` field (used by the UI grouping below) plus the same
+  tool/tool2/consumes/skill/time/sound shape every earlier procedure used --
+  the CheckEligibility/DescribeAll/Consume/AwardXP infrastructure functions
+  are UNCHANGED, only the actual definitions and a new `TWAProcedures.
+  Categories` table (which `Order` is now derived FROM, so they can't drift
+  apart) are new.
+- gen_craftdata.js's `addFinishingSteps()` is now a one-line no-op
+  returning `[]` unconditionally (request: empty every recipe's procedures
+  for now) -- the old FINISHING_POOLS/ATTACH_FINISHING_POOL/GENERIC_
+  FINISHING_POOL/ATTACH_PROC_RE constants and the old padding algorithm
+  were deleted outright (referenced the deleted procedure library by name,
+  and were confirmed to have zero other consumers before removal). Real
+  regenerated result: all 248 recipes now have `procedures = {}` --
+  confirmed by direct count (248 recipes, 0 non-empty `procedures` blocks).
+  OVERRIDES/SPECIAL_CASES' own old procedure-id string literals scattered
+  through the classification logic were left untouched (they're now dead
+  input data addFinishingSteps ignores, but rewriting ~100 scattered
+  literals to the new taxonomy is out of scope for "empty it for now" and
+  doesn't change any actual output either way).
+- HARMONIE_TWA_CraftUI.lua's right-panel procedure grid (TWAProcScrollList)
+  now draws a header row per category before that category's procedures
+  (request: "จัดหมวดหมู่กรรมวิธีในหน้า ui ทางขวาด้วย"). Implementation:
+  `populate()` iterates `TWAProcedures.Categories`, toggling `self.
+  itemheight` around each `addItem()` call (real confirmed behavior from
+  ISScrollingListBox.lua's own source: `addItem` reads `self.itemheight`
+  BOTH to stamp the new entry's own height AND to grow the scrollbar at
+  call time, so toggling it beforehand is the correct way to get two
+  different row heights in one list) so header rows get `self.
+  headerHeight` (22px) and procedure-grid rows get the normal cell height.
+  `doDrawItem`/`onMouseDown` tell header rows (`entry.item.header`) apart
+  from grid rows (`entry.item.row`, was just `entry.item` before) by shape;
+  header rows aren't clickable and draw a small translated caption instead
+  of a cell grid.
+- Added 40 new translation keys (31 procedure names + 9 category names,
+  EN+TH) replacing the 33 old `IGUI_TWA_Proc_*` keys outright (removed, not
+  left dead) -- cross-referenced every nameKey the new Lua actually uses
+  against both translation files (40/40 resolve in both). Grepped the whole
+  mod's Lua tree for any straggling reference to any of the 33 deleted
+  procedure ids -- one stale comment mentioning the old "KnapStone" name
+  found and fixed, no functional references found anywhere.
+- Re-validated (brace balance OK on both touched Lua files -- CraftUI
+  83/83, Procedures.lua 189/189 -- generated data 1119/1119, JSON valid on
+  both translation files), copied into the mod, modversion 0.13.3 -> 0.14.0.
+  Note: since every recipe's procedures list is empty, no recipe currently
+  requires any of these 31 new procedures to craft -- Finish is effectively
+  always available once its base item is owned, until a future round wires
+  specific procedures back onto specific recipes using this new library.
+
 
 9. Checklist before starting any new work
 =======================================
