@@ -2861,6 +2861,80 @@ data polish requests in one batch:
   cross-referenced clean, JSON.parse on both translation files), copied
   into the mod, modversion 0.9.9 -> 0.10.0.
 
+EIGHTEENTH round (2026-09-26) -- Common=0 investigated (not fixed silently),
+then a real DamageRange direction bug found and fixed:
+- User asked why Common was empty even at ÷6. Investigated with real data
+  (bottom-15-by-score items: Fork, ButterKnife, LetterOpener, Scalpel,
+  GlassShiv, etc.) -- confirmed even the objectively worst real weapons in
+  the game bottom out at bucket 0 in all 6 damage-related stats but still
+  score bucket 4 on Weight (inverted -- they're extremely light) and bucket
+  2 on BaseSpeed (the 1.0 default sits at the 43rd percentile of the real
+  0.7-1.4 range, not the bottom). Floor sum = 6, avg = 6/6 = 1.0, which
+  lands exactly ON the tier2 boundary, never tier1. Reported the mechanism
+  with real numbers and offered 3 options (un-invert Weight / use unequal
+  tier bands / accept it) -- no change made at this point, purely
+  diagnostic, per this session's practice of not silently patching balance
+  math the user hasn't signed off on.
+- Also computed, on request, the tier breakdown for the 217 real vanilla
+  weapons this mod CANNOT craft (no Weaponry-category recipe) -- notably:
+  plain Axe/Sledgehammer/Shovel/PickAxe/Machete/Sword/BaseballBat all land
+  Epic despite never having a real recipe; WoodAxe/WoodAxeForged/Katana are
+  Qualificated. All show a real tier on hover via the tooltip hook (16th
+  round) even though the mod never crafts them.
+- *** Real bug found by the user, not guessed: asked to confirm whether
+  Weight AND DamageRange both score MORE points for LOWER values. Checked
+  the actual code (TIER_STAT_FIELDS) and confirmed Weight is genuinely
+  inverted, but DamageRange was NOT (`invert: false`) -- it had shipped
+  since the FOURTEENTH round as a documented "judgment call, no evidence
+  either way" toward higher-is-better, and nobody had revisited it since.
+  Proved it concretely: Katana (DamageRange=0, i.e. MaxDamage=MinDamage=8,
+  a perfectly consistent hit) was scoring the WORST bucket (0) for that
+  stat, while browning_outdoorsman_axe (DamageRange=2.4, the global max
+  spread) scored the best bucket (4) -- the opposite of what "consistent
+  damage should score well" would suggest. User confirmed the intended
+  direction ("Weight และ DmgRange ยิ่งน้อยยิ่งได้แต้มเยอะ...ปรับเลย") and
+  DamageRange's `invert` flipped to `true` -- tight/consistent damage now
+  scores MORE points, matching Weight's own direction. ***
+- Real regenerated result across all 473 items: Common=0, Uncommon=2
+  (DumbBell, DumbBell_Forged), Rare=201, Epic=259, Qualificated=11 (up from
+  9 -- gained BaseballBat_Can/_Metal/_Metal_Bolts/_RakeHead/_ScrapSheet,
+  Cudgel_ScrapSheet, weyland_kukri, syntheticsword; lost
+  apoc_tactical_katana, albtacticalkatana, browning_outdoorsman_axe,
+  JawboneBovide_Morningstar, WoodAxe, WoodAxeForged -- makes sense, those
+  6 leaned on a WIDE damage spread for their DamageRange bucket, which now
+  scores against them instead of for them). Re-validated the same way
+  (brace balance 1119/1119 OK, all 33 procedure ids cross-referenced
+  clean), copied into the mod, modversion 0.10.0 -> 0.10.1.
+- Same day, immediately after: user asked for divisor 7 again ("ปรับเป็น
+  ผลรวมหาร 7") -- now against the broadened 473-item pool with DamageRange
+  inverted (both real changes since the last time ÷7 was tried on the
+  smaller 249-item pool). Fixed: `sum / 6` -> `sum / 7`. Real regenerated
+  result: Common=0, Uncommon=33, Rare=323, Epic=115, Qualificated=2 --
+  Rare now dominates heavily (323/473 ≈ 68%). Re-validated the same way
+  (brace balance 1119/1119 OK, all 33 procedure ids cross-referenced
+  clean), copied into the mod, modversion 0.10.1 -> 0.10.2.
+- Same day, immediately after: user asked to go back to the ORIGINAL divisor
+  ("หาร 9 เหมือนเดิม" -- divide by 9 like before). This is different from
+  every divisor request since the 16th round -- those were all a FIXED
+  number regardless of stat count; this one restores the tier system's
+  actual original formula, `sum / count` (the dynamic per-item stat count,
+  which is 9 for every item in this pool since all 9 stats have real
+  variation for everyone). Fixed: `sum / 7` -> `sum / count`. Real
+  regenerated result across all 473 items: Common=0, Uncommon=198, Rare=271,
+  Epic=3, Qualificated=1 -- back to the original formula's own strong
+  central tendency (Rare + Uncommon = 469/473 ≈ 99%), now on the broadened
+  473-item pool with the corrected DamageRange direction (17th/18th
+  rounds), so not numerically identical to any earlier ÷9 result. Also
+  produced a 3-way breakdown by request ("สรุปเป็น คราฟโดยม็อดไม่ได้ คราฟ
+  โดยม็อดได้ที่เป็น vanilla และ mod และรวม"):
+    HARMONIE craftable (137): Uncommon=32, Rare=102, Epic=2, Qualificated=1
+    vanilla craftable (119):  Uncommon=54, Rare=65
+    non-craftable vanilla (217): Uncommon=112, Rare=104, Epic=1
+    combined (473): Uncommon=198, Rare=271, Epic=3, Qualificated=1
+  Re-validated the same way (brace balance 1119/1119 OK, all 33 procedure
+  ids cross-referenced clean), copied into the mod, modversion
+  0.10.2 -> 0.10.3.
+
 
 9. Checklist before starting any new work
 =======================================
