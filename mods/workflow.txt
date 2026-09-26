@@ -3049,6 +3049,44 @@ around DPS alone:
   Re-validated the same way (brace balance 1119/1119 OK, all 33 procedure
   ids cross-referenced clean), copied into the mod, modversion
   0.10.5 -> 0.11.0.
+- User asked for the DPS bands' exact ranges ("gap ค่าของแต่ละ tier คือ
+  อะไรบ้าง"). Reported the 5 equal-width bands (0-4.675-9.35-14.025-18.7-
+  23.375) and explained why almost everything landed in the first one.
+- User then redesigned the bands directly ("gap แต่ละ tier คือ 2.5 แทน
+  โดยที่ qualificated คือ 10-15 และเพิ่ม tier ใหม่ legendary dps 15+"):
+  FIXED thresholds replacing the live-min/max-derived bands entirely --
+  Common [0,2.5), Uncommon [2.5,5), Rare [5,7.5), Epic [7.5,10),
+  Qualificated [10,15), Legendary [15,+inf). Implemented as
+  `DPS_TIER_THRESHOLDS`/`tierFromDps()` in gen_craftdata.js. *** This is a
+  REAL reversal of the "Legendary is admin-only, never crafted" rule
+  repeated throughout this whole tier system's history -- under every
+  earlier formula that was true by construction (nothing could
+  mathematically exceed tier 5); under fixed thresholds it is NOT automatic,
+  and several real items DO score >=15 DPS. Confirmed via direct check
+  (not assumed): 4 of the 5 resulting Legendary items --
+  apoc_tactical_katana, apoc_tactical_longsword, albtacticalkatana,
+  gothsamuraisword -- are genuinely CRAFTABLE HARMONIE recipes (verified
+  against TWARecipeData.List), so a player can now legitimately craft a
+  Legendary weapon through normal play; only the 5th (vanilla Katana) is
+  find-only. Flagged this explicitly rather than silently keeping the old
+  "clamp to 5" cap, since the user gave Legendary a concrete, clearly
+  reachable numeric definition. Updated the Lua side to match: added tier
+  6 to TWA_FinishCraftAction.lua's TIER_NAMES (crafting one of these 4 now
+  correctly tags/names it "Legendary" instead of silently no-op'ing), and
+  added a Legendary filter tab to HARMONIE_TWA_CraftUI.lua's TIER_TABS
+  (TIER_INFO already had a tier-6 entry reserved from the original design).
+  HARMONIE_TWA_TierTooltip.lua already had a tier-6 entry too, unchanged.
+- Real regenerated result across all 473 items: tier1(Common)=383,
+  tier2(Uncommon)=69, tier3(Rare)=12, tier4(Epic)=0, tier5(Qualificated)=4
+  (browning_outdoorsman_axe, syntheticsword, WoodAxe, WoodAxeForged),
+  tier6(Legendary)=5 (the 4 HARMONIE items above + vanilla Katana). Epic
+  ended up with ZERO items -- a real gap in the data at DPS [7.5,10), not a
+  bug: nothing in either pool happens to score in that exact range (the
+  distribution jumps from ~3-5 DPS for ordinary weapons straight to 13+ for
+  the crit-stacked outliers). Re-validated the same way (brace balance
+  1119/1119 OK on both the generated Lua data and CraftUI.lua, all 33
+  procedure ids cross-referenced clean), copied into the mod, modversion
+  0.11.0 -> 0.11.1.
 
 
 9. Checklist before starting any new work
