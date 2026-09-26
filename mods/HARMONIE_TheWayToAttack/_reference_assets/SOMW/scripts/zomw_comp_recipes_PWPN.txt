@@ -1,0 +1,59 @@
+module PWPN
+{
+
+	imports
+	{
+		Base,
+	}
+
+	recipe Attach Sharp Metal Sheet to Spear
+	{
+        SpearCrafted/PlankSpear,
+        SharpenedMetalSheet,
+        Scotchtape=1,
+		
+        Result:SpearSharpenedMetalSheet,
+        Time:200.0,
+		Override:true,		
+        OnCreate:Recipe.OnCreate.UpgradeSpear,
+        Category:Survivalist,
+    }
+
+	recipe Attach Sharp Metal Sheet to Spear
+	{
+        SpearCrafted/PlankSpear,
+        SharpenedMetalSheet,
+        DuctTape=1,
+		
+        Result:SpearSharpenedMetalSheet,
+        Time:200.0,
+        OnCreate:Recipe.OnCreate.UpgradeSpear,
+        Category:Survivalist,
+    }
+
+	recipe Attach Forged Metal Cleaver to Spear
+	{
+        SpearCrafted/PlankSpear,
+        ForgedCleaver,
+        Scotchtape=1,
+		
+        Result:SpearForgedCleaver,
+        Time:200.0,
+		Override:true,
+        OnCreate:Recipe.OnCreate.UpgradeSpear,
+        Category:Survivalist,
+    }
+
+	recipe Attach Forged Metal Cleaver to Spear
+	{
+        SpearCrafted/PlankSpear,
+        ForgedCleaver,
+        DuctTape=1,
+		
+        Result:SpearForgedCleaver,
+        Time:200.0,
+        OnCreate:Recipe.OnCreate.UpgradeSpear,
+        Category:Survivalist,
+    }
+
+}

@@ -1,0 +1,366 @@
+module Base {
+	fixing Fix Fiskar Curved Machete
+	{
+		Require = Base.fiskarcurvedmachete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}	
+	fixing Fix Aluminium Baseball Bat
+    {
+       Require = Base.aluminiumbaseballbat,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+    }	
+    fixing Fix Muela Hunting Knife
+    {
+       Require = Base.muelahuntingknife,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+    fixing Fix A.L.B Tactical Katana
+    {
+       Require = Base.albtacticalkatana,
+       Fixer = Base.DuctTape=3,
+       Fixer = Base.Glue=3,
+       Fixer = Base.Scotchtape=6,
+    }		
+	fixing Fix C.W Combat Hatchet
+	{
+	   Require = Base.cwcombathatchet,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+    fixing Fix Synthetic Sword
+    {
+       Require = Base.syntheticsword,
+       Fixer = Base.DuctTape=3,
+       Fixer = Base.Glue=3,
+       Fixer = Base.Scotchtape=6,
+    }				
+	fixing Fix Defender.18 Machete
+	{
+		Require = Base.defender18machete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}	
+	fixing Fix Roughneck Axe
+	{
+	   Require = Base.roughneckaxe,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+    fixing Fix C.G Combat Tanto
+    {
+       Require = Base.cgcombattanto,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }
+	fixing Fix CRTK Freyr Axe
+	{
+	   Require = Base.crtkfreyraxe,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+	fixing Fix Gerber Pack Hatchet
+	{
+	   Require = Base.gerberpackhatchet,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+	fixing Fix Doomsday Survival Axe
+	{
+	   Require = Base.doomsdaysurvivalaxe,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}		
+	fixing Fix Zhunter Hook Machete
+	{
+		Require = Base.zhunterhookmachete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}		
+	fixing Fix Spyderco Hatchet Hawk
+	{
+	   Require = Base.spydercohatchethawk,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}		
+    fixing Fix Yangjang Columbia Bayonet
+    {
+       Require = Base.yangjangcolumbiabayonet,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+    fixing Fix Assault V.Knife
+    {
+       Require = Base.assaultvknife,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+	fixing Fix Python Campaxe
+	{
+	   Require = Base.pythoncampaxe,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}		
+    fixing Fix Goth Samurai Sword
+    {
+       Require = Base.gothsamuraisword,
+       Fixer = Base.DuctTape=3,
+       Fixer = Base.Glue=3,
+       Fixer = Base.Scotchtape=6,
+    }		
+    fixing Fix Khk Combat Knife
+    {
+       Require = Base.khkcombatknife,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }	
+	fixing Fix Winkler Survival Hatchet
+	{
+	   Require = Base.winklersurvivalhatchet,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+	fixing Fix EastonB5 Baseball Bat
+    {
+       Require = Base.eastonb5baseballbat,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+    }
+    fixing Fix Roughneck Gorilla Sledgehammer
+    {
+       Require = Base.roughneckgorillasledgehammer,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=3,
+       Fixer = Base.Scotchtape=4,
+    }	
+	fixing Fix Avenge Baseball Bat
+    {
+       Require = Base.avengebaseballbat,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+    }	
+    fixing Fix Fatmax Brick Hammer
+    {
+       Require = Base.fatmaxbrickhammer,
+       Fixer = Base.Woodglue; Woodwork=1,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=3,
+    }	
+    fixing Fix OX Nail Hammer
+    {
+       Require = Base.oxnailhammer,
+       Fixer = Base.Woodglue; Woodwork=1,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=3,
+    }			
+    fixing Fix Kabar1245 Tanto Knife
+    {
+       Require = Base.kabar1245tanto,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+	fixing Fix SOG Bearded Camp Axe
+	{
+	   Require = Base.sogbeardedcampaxe,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+	fixing Fix Louisville Vapor Baseball Bat
+    {
+       Require = Base.louisvillevaporbaseballbat,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+    }	
+	fixing Fix Gemtord42 Crash Axe
+	{
+	   Require = Base.gemtord42crashaxe,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+    fixing Fix Aitormontero Bowieknife
+    {
+       Require = Base.aitormonterobowieknife,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+    fixing Fix Arlia Butterfly knife
+    {
+       Require = Base.arliabutterflyknife,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+	fixing Fix CRTK Kukri Machete
+	{
+		Require = Base.crtkkukrimachete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}	
+    fixing Fix Reaper Tac Sickle
+    {
+       Require = Base.reapertacsickle,
+       Fixer = Base.Woodglue; Woodwork=1,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=3,
+    }			
+    fixing Fix Rexler Kunai
+    {
+       Require = Base.rexlerkunai,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }	
+	fixing Fix Gerberdownrange Tomahawk
+	{
+	   Require = Base.gerberdownrangetomahawk,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}		
+	fixing Fix British 1856 Pioneers
+	{
+		Require = Base.britishp1856pioneers,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}	
+	fixing Fix Brooklyn Smasher
+    {
+       Require = Base.brooklynsmasher,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+	   Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+    }			
+    fixing Fix Ontariookc10 Bayonet
+    {
+       Require = Base.ontariookc10bayonet,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }			
+    fixing Fix Sogf19 Elite
+    {
+       Require = Base.sogf19nelite,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }	
+	fixing Fix Sptesnaz Tactical Shovel
+	{
+	   Require = Base.sptesnaztacticalshovel,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+    fixing Fix M48 Tactical Warhammer
+    {
+       Require = Base.m48tacticalwarhammer,
+       Fixer = Base.Woodglue; Woodwork=1,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=3,
+    }	
+	fixing Fix Fiskar Splittingmaul
+	{
+	   Require = Base.fiskarsplittingmaul,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}		
+    fixing Fix Russian AKM Bayonet
+    {
+       Require = Base.russianakmbayonet,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+    fixing Fix Blitalian Stiletto
+    {
+       Require = Base.blitalianstiletto,
+       Fixer = Base.DuctTape,
+       Fixer = Base.Glue,
+       Fixer = Base.Scotchtape=2,
+    }		
+	fixing Fix SOG-Fari Tanto Machete
+	{
+		Require = Base.sogfaritantomachete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}			
+	fixing Fix Korek Machete
+	{
+		Require = Base.korekmachete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}	
+	fixing Fix Reaver Cleaver
+	{
+	   Require = Base.reavercleaver,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+	}	
+    fixing Fix Coldsteelspear
+    {
+       Require = Base.coldsteelspear,
+       Fixer = Base.Woodglue=2; Woodwork=2,
+       Fixer = Base.DuctTape=2,
+       Fixer = Base.Glue=2,
+       Fixer = Base.Scotchtape=4,
+    }		
+	fixing Fix Taiga Machete
+	{
+		Require = Base.taigamachete,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Scotchtape=3,
+	}		
+	fixing Fix DMM Ice Axe
+	{
+		Require = Base.dmmiceaxe,
+		Fixer = Base.Woodglue=2; Woodwork=2,
+		Fixer = Base.DuctTape=2,
+		Fixer = Base.Glue=2,
+		Fixer = Base.Scotchtape=4,
+	}
+}
