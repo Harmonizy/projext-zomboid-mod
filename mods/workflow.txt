@@ -3201,6 +3201,27 @@ around DPS alone:
   FinishCraftAction 3/3, TierTooltip 23/23 -- generated data 1119/1119, all
   33 procedure ids cross-referenced clean), copied into the mod, modversion
   0.13.0 -> 0.13.1.
+- *** Corrected immediately: that was a misread of the request. User meant
+  "ไม่ใช่ เก็บ tier prototype ไว้ แค่ไม่แสดงในฟิลเตอร์ค้นหาของ ui คราฟอาวุธ
+  ทำแบบนี้กับ tier junk ด้วย" -- KEEP Prototype (and do the same for Junk):
+  both stay real tiers everywhere (generator, Stats table, tooltip), only
+  hidden from HARMONIE_TWA_CraftUI.lua's own filter row. Reverted
+  gen_craftdata.js's DPS_TIER_THRESHOLDS/tierFromDps back to the full
+  8-tier scale (Junk<0.25/Common<0.5/Uncommon<1/Rare<2/Epic<4/Elite<8/
+  Prototype<15/Legendary>=15) and restored TIER_NAMES/TIER_COLOR back to 8
+  entries in TWA_FinishCraftAction.lua and HARMONIE_TWA_TierTooltip.lua
+  (both still need every tier, since they show/name ANY item's real tier).
+  Only HARMONIE_TWA_CraftUI.lua's TIER_TABS (the filter row specifically)
+  omits keys 1 (Junk) and 7 (Prototype) -- TIER_INFO in that same file
+  keeps all 8 (still used for the recipe-list color strip and center-panel
+  label, unaffected by what the filter offers). Real regenerated result
+  across all 473 items (identical to the earlier crit-free-formula 8-tier
+  run since the formula itself didn't change here): Junk=18, Common=60,
+  Uncommon=172, Rare=180, Epic=37, Elite=4, Prototype=2, Legendary=0.
+  Re-validated (brace balance OK on all 3 Lua files -- CraftUI 80/80,
+  FinishCraftAction 3/3, TierTooltip 24/24 -- generated data 1119/1119,
+  all 33 procedure ids cross-referenced clean), copied into the mod,
+  modversion 0.13.1 -> 0.13.2. ***
 
 
 9. Checklist before starting any new work

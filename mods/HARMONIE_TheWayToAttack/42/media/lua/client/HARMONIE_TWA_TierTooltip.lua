@@ -36,17 +36,19 @@
 
 require "ISUI/ISToolTipInv"
 
--- 7-tier fixed-DPS scale (Prototype removed, request 2026-09-26: "เอา
--- legendary มาสลับกับเกณฑ์ prototype...ทำให้เกณฑ์คือ 10+" -- Legendary now
--- starts at DPS >= 10 instead of 15, on Prototype's old slot).
+-- Full 8-tier fixed-DPS scale (Junk/Common/Uncommon/Rare/Epic/Elite/
+-- Prototype/Legendary) -- restored after a brief Prototype-removal turned
+-- out to be a misread; both Junk and Prototype are only hidden from the
+-- CraftUI filter row, not removed here -- any hovered Junk/Prototype item
+-- still shows its real tier in this tooltip.
 local TIER_NAMES = {
     [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
-    [6] = "Elite", [7] = "Legendary",
+    [6] = "Elite", [7] = "Prototype", [8] = "Legendary",
 }
 local TIER_COLOR = {
     [1] = { r = 1.0, g = 1.0, b = 1.0 }, [2] = { r = 0.3, g = 0.7, b = 1.0 }, [3] = { r = 0.25, g = 0.85, b = 0.3 },
     [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.55, b = 0.15 },
-    [7] = { r = 1.0, g = 0.85, b = 0.15 },
+    [7] = { r = 0.85, g = 0.2, b = 0.15 }, [8] = { r = 1.0, g = 0.85, b = 0.15 },
 }
 
 -- Full weapon stat grid (request 2026-09-26: "stats อาวุธเอาไปแสดงใน
