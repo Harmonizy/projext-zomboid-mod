@@ -225,30 +225,33 @@ local CATEGORY_TABS = {
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
--- (avgDamage * crit-blend * BaseSpeed) against fixed thresholds, baked into
--- TWARecipeData.Stats[x].tier. Tier 6 (Legendary, DPS >= 15) started as an
--- admin-only reserved value under every earlier formula (nothing could
--- mathematically reach it), but the fixed-threshold rebuild this round
--- ("gap แต่ละ tier คือ 2.5...legendary dps 15+") made it a REAL, reachable
--- outcome -- several of this mod's own recipes genuinely score >= 15 DPS
--- and craft into Legendary now, not just admin-set. Names are plain
--- English, NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier").
+-- (avgDamage * crit-blend * BaseSpeed) against FIXED thresholds, baked into
+-- TWARecipeData.Stats[x].tier. Rebuilt into a full 8-tier fixed scale this
+-- round ("junk < 0.25...legendary 15+"), replacing the earlier 6-tier one.
+-- Every tier from Rare upward is a genuinely reachable outcome for real
+-- items under fixed thresholds, not an admin-only reserved value -- see
+-- workflow.txt for the confirmed real craftable-Legendary items. Names are
+-- plain English, NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier").
 local TIER_INFO = {
-    [1] = { name = "Common", r = 0.65, g = 0.65, b = 0.65 },
-    [2] = { name = "Uncommon", r = 0.25, g = 0.85, b = 0.3 },
-    [3] = { name = "Rare", r = 0.3, g = 0.55, b = 1.0 },
-    [4] = { name = "Epic", r = 1.0, g = 0.45, b = 0.75 },
-    [5] = { name = "Qualificated", r = 0.65, g = 0.3, b = 0.95 },
-    [6] = { name = "Legendary", r = 1.0, g = 0.85, b = 0.15 },
+    [1] = { name = "Junk", r = 1.0, g = 1.0, b = 1.0 },
+    [2] = { name = "Common", r = 0.3, g = 0.7, b = 1.0 },
+    [3] = { name = "Uncommon", r = 0.25, g = 0.85, b = 0.3 },
+    [4] = { name = "Rare", r = 1.0, g = 0.45, b = 0.75 },
+    [5] = { name = "Epic", r = 0.65, g = 0.3, b = 0.95 },
+    [6] = { name = "Elite", r = 1.0, g = 0.55, b = 0.15 },
+    [7] = { name = "Prototype", r = 0.85, g = 0.2, b = 0.15 },
+    [8] = { name = "Legendary", r = 1.0, g = 0.85, b = 0.15 },
 }
 local TIER_TABS = {
     { key = "All", labelKey = "IGUI_TWA_FilterAll" },
-    { key = 1, label = "Common" },
-    { key = 2, label = "Uncommon" },
-    { key = 3, label = "Rare" },
-    { key = 4, label = "Epic" },
-    { key = 5, label = "Qualificated" },
-    { key = 6, label = "Legendary" },
+    { key = 1, label = "Junk" },
+    { key = 2, label = "Common" },
+    { key = 3, label = "Uncommon" },
+    { key = 4, label = "Rare" },
+    { key = 5, label = "Epic" },
+    { key = 6, label = "Elite" },
+    { key = 7, label = "Prototype" },
+    { key = 8, label = "Legendary" },
 }
 
 local function getItemScript(fullType)

@@ -3087,6 +3087,32 @@ around DPS alone:
   1119/1119 OK on both the generated Lua data and CraftUI.lua, all 33
   procedure ids cross-referenced clean), copied into the mod, modversion
   0.11.0 -> 0.11.1.
+- Same day, immediately after: user replaced the 6-tier scale with a full
+  8-tier one, giving exact thresholds and colors directly ("junk < 0.25
+  ขาว, common < 0.5 ฟ้า, uncommon < 1 เขียว, rare < 2 ชมพู, epic < 4 ม่วง,
+  elite < 8 ส้ม, prototype < 15 แดง, legendary 15+ เหลือง"):
+    1 Junk       DPS <0.25   white
+    2 Common     DPS <0.5    light blue
+    3 Uncommon   DPS <1      green
+    4 Rare       DPS <2      pink
+    5 Epic       DPS <4      purple
+    6 Elite      DPS <8      orange
+    7 Prototype  DPS <15     red
+    8 Legendary  DPS >=15    yellow
+  Implemented in gen_craftdata.js (`DPS_TIER_THRESHOLDS` now 7 boundaries
+  for 8 tiers) and mirrored across all 3 Lua consumers: HARMONIE_TWA_
+  CraftUI.lua's TIER_INFO/TIER_TABS, TWA_FinishCraftAction.lua's
+  TIER_NAMES, HARMONIE_TWA_TierTooltip.lua's TIER_NAMES/TIER_COLOR -- same
+  "reachable through real crafting, not admin-only" caveat from the 6-tier
+  version still applies (thresholds are fixed, not pool-relative). Real
+  regenerated result across all 473 items: Junk=18, Common=26, Uncommon=
+  113, Rare=171, Epic=114, Elite=22, Prototype=4, Legendary=5 -- a much
+  more usable spread than either the 6-tier or the equal-width-band DPS
+  attempts, no empty tiers this time. Re-validated the same way (brace
+  balance OK on all 4 touched Lua files -- generated data 1119/1119,
+  CraftUI 80/80, FinishCraftAction 3/3, TierTooltip 11/11 -- all 33
+  procedure ids cross-referenced clean), copied into the mod, modversion
+  0.11.1 -> 0.12.0.
 
 
 9. Checklist before starting any new work

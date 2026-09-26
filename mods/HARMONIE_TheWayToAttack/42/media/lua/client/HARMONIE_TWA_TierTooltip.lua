@@ -34,12 +34,16 @@
 
 require "ISUI/ISToolTipInv"
 
+-- Full 8-tier fixed-DPS scale (request 2026-09-26: "junk < 0.25...legendary
+-- 15+"), replacing the earlier 6-tier one.
 local TIER_NAMES = {
-    [1] = "Common", [2] = "Uncommon", [3] = "Rare", [4] = "Epic", [5] = "Qualificated", [6] = "Legendary",
+    [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
+    [6] = "Elite", [7] = "Prototype", [8] = "Legendary",
 }
 local TIER_COLOR = {
-    [1] = { r = 0.65, g = 0.65, b = 0.65 }, [2] = { r = 0.25, g = 0.85, b = 0.3 }, [3] = { r = 0.3, g = 0.55, b = 1.0 },
-    [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.85, b = 0.15 },
+    [1] = { r = 1.0, g = 1.0, b = 1.0 }, [2] = { r = 0.3, g = 0.7, b = 1.0 }, [3] = { r = 0.25, g = 0.85, b = 0.3 },
+    [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.55, b = 0.15 },
+    [7] = { r = 0.85, g = 0.2, b = 0.15 }, [8] = { r = 1.0, g = 0.85, b = 0.15 },
 }
 
 -- Grows the panel's own real height to fit the extra line BEFORE drawing it

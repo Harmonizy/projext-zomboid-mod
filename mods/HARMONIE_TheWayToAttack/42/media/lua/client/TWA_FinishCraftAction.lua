@@ -99,12 +99,13 @@ end
 -- limitation.
 -- Tier names are NOT translated (request 2026-09-26: "ไม่ต้องแปลชื่อ tier")
 -- -- shown as the plain English label directly, same as the tooltip hook.
--- Tier 6 (Legendary) added 2026-09-26 when the tier system moved to fixed
--- DPS thresholds (>=15 DPS) -- unlike every earlier formula, this is now a
--- REAL, reachable outcome for a few of this mod's own recipes (not just an
--- admin-only reserved value any more), so it needs a real name here too.
+-- Full 8-tier fixed-DPS scale (request 2026-09-26: "junk < 0.25...legendary
+-- 15+"), replacing the earlier 6-tier one -- every tier from Rare upward is
+-- a real, reachable outcome for a few of this mod's own recipes, not just
+-- an admin-only reserved value.
 local TIER_NAMES = {
-    [1] = "Common", [2] = "Uncommon", [3] = "Rare", [4] = "Epic", [5] = "Qualificated", [6] = "Legendary",
+    [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
+    [6] = "Elite", [7] = "Prototype", [8] = "Legendary",
 }
 
 local function applyTier(item, fullType)
