@@ -2955,6 +2955,39 @@ NINETEENTH round (2026-09-26) -- added a 10th tier stat (DPS):
   tier system's history. Re-validated the same way (brace balance 1119/1119
   OK, all 33 procedure ids cross-referenced clean), copied into the mod,
   modversion 0.10.3 -> 0.10.4.
+- User asked to summarize the whole tier system's history and flagged that
+  "something seems off" ("มีอะไรแปลกๆ"). Audited it and found a REAL
+  structural issue (not just tuning): MaxDamage/MinDamage/DamageRange/DPS
+  are 4 of the 10 stats but are all really the same underlying "raw damage"
+  quantity -- confirmed empirically that DPS's bucket matched MaxDamage's
+  bucket exactly 91.5% of the time across all 472 comparable items (avg
+  abs difference only 0.08/4), since BaseSpeed's real range (0.7-1.4) is
+  too narrow to meaningfully perturb DPS away from being ~proportional to
+  MaxDamage. So raw damage was already getting ~40% of the average's
+  weight instead of the intended 10%, purely from stat redundancy. Reported
+  this with the real numbers and asked whether to de-duplicate; user did
+  not ask for that yet.
+- Asked for DPS's real min/max: 8.5 (apoc_tactical_longsword, HARMONIE) at
+  the top; 0.1 (Fork, vanilla) at the bottom among items with real damage
+  data -- GardenShears reports 0 but that's a data-missing edge case (no
+  MaxDamage/MinDamage set at all), not a genuine "weakest weapon" data
+  point.
+- User then asked to give DPS's points DOUBLE weight instead of removing
+  the redundancy ("dps ให้แต้มคูณ 2"). Implemented as a generic per-stat
+  `weight` field on TIER_STAT_FIELDS (default 1) -- a weighted stat's
+  bucket is added to both `sum` and `count` `weight` times instead of once,
+  so it's still a plain weighted average, just no longer uniform. DPS got
+  `weight: 2` (counts for 2/11 of the average instead of 1/11). Real
+  regenerated result across all 473 items: Common=0, Uncommon=393, Rare=77,
+  Epic=3, Qualificated=0 -- concentration got MUCH heavier in Uncommon
+  (was 270, now 393) at Rare's expense (was 199, now 77). This makes sense
+  once you look at DPS's own distribution: its ceiling (8.5) is set by a
+  small handful of very strong weapons, so most real items -- even
+  otherwise-decent ones -- sit far below that ceiling and score a LOW DPS
+  bucket; doubling the weight of a stat most items score low on pulls the
+  typical item's average DOWN, not up. Re-validated the same way (brace
+  balance 1119/1119 OK, all 33 procedure ids cross-referenced clean),
+  copied into the mod, modversion 0.10.4 -> 0.10.5.
 
 
 9. Checklist before starting any new work
