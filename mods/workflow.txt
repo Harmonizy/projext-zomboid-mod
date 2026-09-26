@@ -2935,6 +2935,27 @@ then a real DamageRange direction bug found and fixed:
   ids cross-referenced clean), copied into the mod, modversion
   0.10.2 -> 0.10.3.
 
+NINETEENTH round (2026-09-26) -- added a 10th tier stat (DPS):
+- User asked to add DPS as another stat and include it in the tier
+  calculation ("เพิ่มอีก stats คือ dps และเอาไปคำนวน"). DPS is DERIVED, not
+  a raw script column: `((MaxDamage+MinDamage)/2) * BaseSpeed` (BaseSpeed
+  defaults to 1.0 when missing, same convention used everywhere else it
+  appears). Flagged the same way DamageRange was originally flagged: a
+  comparative in-mod-only approximation for ranking weapons against each
+  other, not a claim about the real Java combat formula (which also depends
+  on player stats/exhaustion/traits this static per-item calc can't see).
+  Higher is better, not inverted. TIER_STAT_FIELDS is now 10 entries; since
+  the divisor is back to the dynamic per-item stat count (18th round), this
+  automatically became ÷10 for every item with full data, no separate
+  divisor change needed.
+- Real regenerated result across all 473 items: Common=0, Uncommon=270,
+  Rare=199, Epic=4, Qualificated=0 -- Qualificated emptied out again (was 1
+  before adding DPS); adding a 10th averaged stat pulls the top end back
+  toward the middle the same way every additional stat has throughout this
+  tier system's history. Re-validated the same way (brace balance 1119/1119
+  OK, all 33 procedure ids cross-referenced clean), copied into the mod,
+  modversion 0.10.3 -> 0.10.4.
+
 
 9. Checklist before starting any new work
 =======================================
