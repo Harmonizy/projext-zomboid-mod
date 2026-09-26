@@ -3129,6 +3129,55 @@ around DPS alone:
   brace balance OK on CraftUI 82/82 and TierTooltip 11/11, generated Lua
   data 1119/1119, all 33 procedure ids cross-referenced clean), copied into
   the mod, modversion 0.12.0 -> 0.12.1.
+- *** Real note for future sessions: right after that push, `git fetch`
+  revealed a NEW commit (83b0103, message literally `"this machine"?`) that
+  the user made directly in this same working directory outside this
+  session (VS Code or similar) -- exactly the "commits outside this
+  session" case this file already warns about (see the standing note near
+  the top: always `git fetch` + `git status`/`git log` before starting
+  work). That commit added the ENTIRE `_reference_assets/` folder to git --
+  596 files, ~1.85M lines, third-party MWPWeapons42/SOMW reference-mod
+  assets that had been deliberately kept untracked all session (per that
+  folder's own README -- not part of the shipped mod). Flagged to the user
+  with 3 options (remove going forward / rewrite history to erase it /
+  leave it); user chose to LEAVE IT. So as of 2026-09-26, `_reference_assets/`
+  IS now tracked in git history (that one commit), even though nothing in
+  this mod's own build/shipping process uses it -- don't treat its sudden
+  appearance in `git log`/`git show --stat` as a mistake to fix; it's a
+  deliberate "leave it" decision, not something to revert or re-flag. This
+  session's own routine `git add` commands still only ever target
+  `mods/HARMONIE_TheWayToAttack/42/...` + `mods/workflow.txt` explicitly, so
+  nothing about the auto-commit-on-version-bump workflow changes because of
+  this -- it just means that ONE folder is no longer untracked if the user
+  (not this session) stages it again in the future. ***
+- Right after, user asked why GardenFork (real MaxDamage/MinDamage avg
+  only 1.25) had become Elite. Traced it exactly: CriticalChance=30% and a
+  real CritDmgMultiplier=10.0 blow the crit-blend formula's expectedDamage
+  up to 3.7x the plain average (1.25 * (1+0.30*9) = 4.625), i.e. one stat
+  alone was responsible for the result, not overall weapon strength.
+- User decided to drop CritDmgMultiplier from the tier calculation entirely
+  ("ฉันไม่อยากเอา CritDmgMultiplier แล้ว ขอสูตรคำนวนอันใหม่ แล้วปรับ tier
+  อาวุธใหม่"). New DPS formula in gen_craftdata.js's `dpsOf()`: back to the
+  simple pre-crit form, `avgDamage * BaseSpeed` (CriticalChance/
+  CritDmgMultiplier no longer feed the tier calc at all -- CriticalChance
+  is still shown as its own separate stat in the UI, just not folded into
+  DPS any more). Same 8 fixed thresholds kept, just re-run against the new
+  formula. Real regenerated result across all 473 items: Junk=18, Common=
+  60, Uncommon=172, Rare=180, Epic=37, Elite=4, Prototype=2, Legendary=0.
+  GardenFork confirmed now Rare (DPS 1.125, was Elite at DPS 4.16). Nobody
+  reaches Legendary any more -- the crit-heavy outliers that used to define
+  the top of the range lost their main advantage.
+- Also asked to show the weapon's full stat grid in the real-item tooltip
+  too, nicely arranged ("stats อาวุธเอาไปแสดงใน tooltip ด้วย เรียงให้ดูดี").
+  HARMONIE_TWA_TierTooltip.lua gained a second strip below the tier/DPS
+  line: the SAME 2-column STAT_GRID layout and the SAME translation keys
+  HARMONIE_TWA_CraftUI.lua's own stat grid already uses (Min/Max Damage,
+  Crit%, Range, Speed, Knockdown, Condition, Weight), so the crafting
+  window and the real-item tooltip present stats identically. Panel height
+  grows to fit both strips, same "grow before drawing" pattern as the tier
+  strip itself. Re-validated (brace balance 24/24 on TierTooltip.lua,
+  1119/1119 on the generated data, all 33 procedure ids cross-referenced
+  clean), copied into the mod, modversion 0.12.1 -> 0.13.0.
 
 
 9. Checklist before starting any new work
