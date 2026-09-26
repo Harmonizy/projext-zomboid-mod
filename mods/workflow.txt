@@ -74,6 +74,67 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
      file, and the real root cause — missing ItemType= (Type= alone isn't enough,
      confirmed 409-vs-0 against real vanilla source). Plus the live-diagnostic
      technique that found the third one after static grepping alone wasn't enough.
+8.9  Writing crafting recipes for B42 (HARMONIE_TheWayToAttack) — there are TWO
+     different recipe syntaxes and they are NOT interchangeable: the OLD flat
+     `recipe NAME { ItemA, ItemB, Result:X, ... }` block (still works, used by
+     older mods like SOMW) vs the NEW `craftRecipe NAME { inputs{ item N [Type]
+     tags[base:x] mode:keep/destroy flags[...] } outputs{ item N Result } }`
+     block that ALL of vanilla's own B42 recipes exclusively use. Material/tool
+     vocabulary like `tags[base:x]`, `mode:`, and `flags[...]` is ONLY confirmed
+     real inside the NEW craftRecipe syntax — mixing it into an OLD recipe block
+     (as a first draft of this mod's generator briefly did) produces a file that
+     LOOKS plausible but was never verified against any real source. Fix: always
+     grep the actually-installed game's own `media/scripts/generated/**` for the
+     exact syntax before writing a generator, and prefer the NEW craftRecipe
+     syntax for anything new since it's vanilla's own real, exclusive format —
+     don't invent a hybrid. Also recorded: `category = Weaponry` is vanilla's
+     real crafting-category for weapons (confirmed from
+     recipes_improvised_weapons.txt and recipes_blacksmith_welded_etc_weapons.txt);
+     `timedAction = CraftWeapon1H`/`CraftWeapon2H` picked from the item's own
+     `TwoHandWeapon` field; recipe display names live in a flat
+     `media/lua/shared/Translate/EN/Recipes.json` dict keyed by the bare
+     craftRecipe identifier (confirmed from vanilla's own Recipes.json, e.g.
+     `"BarbedWireWeapon": "Barbed-Wire Wrap Weapon"`) — no "Recipe_" prefix,
+     no old Lua-table format.
+8.10 Weapon modification UI (HARMONIE_TheWayToAttack, 2026-09-25) — ported/adapted
+     from a real reference mod's melee-weapon upgrade system (BladesmithSystem,
+     inside Workshop item 3633421539, which actually bundles 3 unrelated mods —
+     always check mod.info per-folder, section 7). Real confirmed API: vanilla's
+     own gun-attachment WeaponPart/attachWeaponPart system works for melee too
+     (B42 stores both in the same HandWeapon class); PartType is an arbitrary
+     string, not a fixed enum; a keybind's translation key drops the `[...]`
+     brackets the Lua registration keeps, and lives in UI.json (not IG_UI.json) —
+     a real mistake caught by testing the reference mod's own translation file
+     instead of guessing. Also: never copy an unfamiliar reference mod's exact
+     sound-effect name without grep-verifying it against the real installed
+     game first — `WeaponPartInsertSound` (copied from the reference) does not
+     exist anywhere in vanilla's own files; removed rather than left unverified,
+     since vanilla's own real ISUpgradeWeapon plays no extra sound either.
+8.11 Custom procedural crafting UI (HARMONIE_TheWayToAttack, 2026-09-25) — the
+     entire vanilla-craftRecipe-based system (8.9/8.10's WeaponPlus tab, 140
+     recipes) was REPLACED by a fully custom 3-panel crafting window (recipe
+     picker with base-item-owned gating / search / category filter on the
+     left, live preview+stats+procedure-checklist+Cancel/Finish in the
+     center, a shared "procedure library" grid on the right where each
+     procedure is its own reusable tool+material+skill requirement, clickable
+     only when currently eligible). Real API pitfall caught mid-build: there
+     is NO confirmed generic Lua-side way to query the `tags[base:x]`
+     namespace item/recipe SCRIPTS use (that's resolved purely Java-side by
+     the craft engine) — grepping the entire vanilla media/lua tree for every
+     real `ItemTag.X` enum member in actual use turned up only 5 tool-relevant
+     ones (HAMMER, SAW, WRENCH, WELDING_MASK, SCREWDRIVER); TONGS/WHETSTONE/
+     PLIERS/HAMMERSTONE/KNAPPINGTOOL have no confirmed ItemTag equivalent, so
+     those check a concrete real item type instead (Base.Tongs/Base.Whetstone/
+     Base.Pliers/Base.HammerStone) via `containsTypeRecurse`/
+     `getFirstTypeEvalRecurse`, both confirmed real for arbitrary types.
+     `Perks.Woodwork/Blacksmith/MetalWelding/FlintKnapping` are real direct
+     table fields (simpler and more directly confirmed than going through
+     `Perks.FromString`). Output-item stats (damage/condition/weight) are
+     NOT queryable through any confirmed Lua API on an un-instantiated Item
+     script object (vanilla's own crafting UI never needed to show them, so
+     there's no real precedent to copy) — solved by baking the already-
+     extracted real values into the generated recipe-data Lua file itself
+     instead of querying the engine at runtime.
 9.   Checklist to run through before starting any new work.
 
 
@@ -1482,6 +1543,773 @@ How to debug:
     can't be caught." Always delete this kind of temp diagnostic file once the
     real item(s)/cause are found and fixed -- same discipline as every other
     TEMP DIAGNOSTIC noted elsewhere in this file. ***
+
+
+8.9 Writing crafting recipes for B42 (HARMONIE_TheWayToAttack, 2026-09-25)
+================================================================================
+Task: generate balanced crafting recipes for all 137 HARMONIE_TheWayToAttack
+weapon items (per-category tiered templates: improvised / crafted / forged),
+referencing vanilla B42's own real recipe design (materials, skills, times).
+
+*** Real bug found and fixed before this ever hit the mod folder: the recipe
+generator's first draft mixed TWO incompatible recipe syntaxes. B42 actually
+has two, and they are not interchangeable: ***
+
+  - OLD syntax: `recipe NAME { ItemA, ItemB, Result:X, Time:N,
+    SkillRequired:X, Category:Z }` — a flat block, ingredients are a bare
+    comma list. Confirmed still real and working (SOMW's own real recipes use
+    it, e.g. `somw_recipes.txt`, `zomw_comp_recipes_TWeapons.txt`), but its
+    real ingredient-list vocabulary is much narrower than it looks:
+      * alternative items: bare `ItemA/ItemB,` (NO brackets) — confirmed from
+        `SpearCrafted/PlankSpear,` in SOMW's real Attach-to-Spear recipes.
+      * quantities: `ItemName=N,` suffix (e.g. `DuctTape=1,`,
+        `Scotchtape=2,`) — NOT a leading `N [Item]` prefix.
+      * tool categories: ONLY `keep [Recipe.GetItemTypes.X]` for X in
+        {Hammer, Saw, SharpKnife} (+ mod-specific ones like
+        SapphCookingKnifes) is confirmed real — grepped as the *only*
+        `Recipe.GetItemTypes.*` usage anywhere in the SOMW source.
+      * `tags[base:x]`, `mode:destroy`, `flags[...]` bracket syntax: ZERO
+        occurrences anywhere in the OLD syntax across the whole SOMW source
+        tree. These do NOT belong in an old-style `recipe{}` block.
+
+  - NEW syntax: `craftRecipe NAME { time=N, category=Weaponry,
+    NeedToBeLearn=bool, SkillRequired=Skill:N, timedAction=CraftWeapon1H/2H,
+    xpAward=Skill:N, AutoLearnAny=Skill:N;Skill:N, inputs { item N [Base.X;
+    Base.Y] tags[base:x] mode:keep/destroy flags[Prop2;InheritCondition;...],
+    ... } outputs { item N Base.Result, } }` — this is the format vanilla's
+    OWN recipes exclusively use (confirmed: zero old-style `recipe{}` blocks
+    exist anywhere in the real installed game's
+    `media/scripts/generated/recipes/**`). Every `tags[base:x]`/`mode:`/
+    `flags[...]` usage the generator needed (hammer, tongs, saw, whetstone,
+    wrench, sharpknife, simpleweaponbinding, MayDegrade(Light), Prop2,
+    InheritCondition, DontReplace) is directly grep-confirmed real here, e.g.
+    `recipes_improvised_weapons.txt`:
+      `item 1 tags[base:wrench] mode:keep flags[MayDegradeLight],`
+      `item 2 [Base.NutsBolts],`
+      `item 1 tags[base:brake] flags[IsHeadPart],`
+
+  ROOT CAUSE of the mistake: the generator's ingredient vocabulary (tags[],
+  flags[], mode:) was written for the NEW syntax from the start, but the
+  output-writer wrapped it in the OLD `recipe{}` block by habit/muscle-memory
+  from the SOMW reference material, without checking that SOMW's OWN recipes
+  never actually use that vocabulary. LESSON: when copying a *pattern* (not
+  literal code) from a reference mod, re-verify the pattern against that
+  mod's own real source line-by-line — don't assume vocabulary is portable
+  between two different block types just because both are called "recipe"
+  syntax in casual conversation.
+
+  FIX APPLIED: rewrote the whole generator to emit the NEW `craftRecipe{}`
+  syntax exclusively (see `HARMONIE_TheWayToAttack/42/media/scripts/
+  TWA_recipes.txt`) — this also happens to be the more correct choice anyway
+  since it's vanilla's own real, currently-used format, not a legacy
+  compatibility path.
+
+  Also confirmed while building this:
+  - `category = Weaponry` is vanilla's real crafting-menu category for
+    weapon recipes (grepped from `recipes_improvised_weapons.txt` and
+    `entities/blacksmith/craftRecipes/recipes_blacksmith_welded_etc_weapons.txt`
+    — every single weapon recipe in both files uses it).
+  - `timedAction = CraftWeapon1H` vs `CraftWeapon2H` — pick from the item's
+    own `TwoHandWeapon` field (both values are real & confirmed common
+    across vanilla's improvised/blacksmith weapon recipes).
+  - Recipe display names/translations: a FLAT JSON dict at
+    `media/lua/shared/Translate/EN/Recipes.json`, keyed by the bare
+    craftRecipe identifier with no prefix (confirmed from vanilla's own file,
+    e.g. `"BarbedWireWeapon": "Barbed-Wire Wrap Weapon"`, and from this
+    repo's own established convention in HARMONIE_GardenToPlate/
+    HARMONIE_ModernFirearmsSystemFix). Item display names work the same way
+    via `media/lua/shared/Translate/<LANG>/ItemName.json`, keyed by the full
+    `<Module>.<ItemName>` type (confirmed from HARMONIE_GardenToPlate's own
+    `"Base.PillsVitamins": "Multivitamin Pills"` and from
+    HARMONIE_TooManyModThaiTranslate's much larger real example set).
+    *** CORRECTION (same day): first attempt put this mod's Thai recipe
+    translations into the shared `HARMONIE_TooManyModThaiTranslate` aggregator
+    mod (which is the right place for translating OTHER people's mods this
+    repo doesn't own) — but a mod's OWN Thai translation belongs INSIDE that
+    mod itself (`HARMONIE_TheWayToAttack/42/media/lua/shared/Translate/TH/
+    Recipes.json` + `ItemName.json`), so the mod is self-contained and doesn't
+    need the aggregator installed to have Thai text. Moved there; reverted the
+    aggregator-mod edit since it was uncommitted. ***
+  - Custom crafting-menu categories: `category = X` on a `craftRecipe` is NOT
+    restricted to vanilla's built-in set — the crafting UI's category list is
+    built dynamically from whatever category strings actually exist on loaded
+    recipes (`ISWidgetRecipeCategories:populateCategoryList`, which calls
+    `self.callbackTarget:getCategoryList()` and looks up each one's label via
+    `getText("IGUI_CraftingCategories_" .. Capitalized(name))`). So a mod can
+    freely invent its own new tab (used here: `category = WeaponPlus`, a
+    dedicated "Weapon+" tab so this mod's 136 recipes don't get buried inside
+    vanilla's own Weaponry tab) — it just needs a matching
+    `"IGUI_CraftingCategories_WeaponPlus"` key added to both
+    `Translate/EN/IG_UI.json` and `Translate/TH/IG_UI.json` (same file vanilla
+    itself defines `IGUI_CraftingCategories_Weaponry` in), or the tab shows
+    its raw un-translated key text instead of a real label.
+  - Balance-philosophy correction (same day, after user testing/feedback):
+    the first version split recipes across Maintenance/Woodwork/MetalWelding/
+    Blacksmith by tier, with tier-1 "improvised" recipes using primitive
+    materials (tree branch + sharpened stone) even for items that are
+    thematically modern manufactured products (e.g. a "CFA Peacemaker
+    Tomahawk"). User explicitly rejected this: wanted EVERY weapon in the mod
+    gated on Blacksmith only (no Maintenance skill at all, matching neither
+    vanilla's own design nor this mod's), and wanted materials to consistently
+    make sense. Fix: every category+tier template now goes through the same
+    real forging chain (bar stock sized by tier -> hammer+tongs+charcoal ->
+    handle+binding), varying only the Blacksmith level/bar size/charcoal count
+    by tier instead of switching skill families and material eras. Spear
+    base/attach recipes (lashing an already-made blade to a haft) kept their
+    original lightweight assembly materials — only their skill gate changed
+    to Blacksmith — since forge materials on a knife-taped-to-a-stick recipe
+    would reintroduce the same "materials don't make sense" problem in the
+    other direction.
+
+  *** SECOND correction (same day, user tested again): "all Blacksmith" was
+  ALSO wrong -- not because Blacksmith-only was the instruction, but because
+  applying it uniformly ignored what each item actually IS. User's own
+  example: a "Wire Baseball Bat" should be built from wood + wire + the right
+  tool, not steel bar stock through a forge. Lesson: a category (Axe/Blunt/
+  etc.) describes gameplay stats, not real-world construction method -- two
+  items in the same category can be built completely differently (a forged
+  tactical tomahawk vs. a shovel sharpened into a spear vs. a plank wrapped
+  in barbed wire), so the recipe generator needed a per-ITEM construction
+  classification, not a per-CATEGORY one. Fix: added an `OVERRIDES` map
+  keyed by item name that fully replaces the category+tier template for
+  every item whose real construction isn't forging, using vanilla's own
+  real analogous recipes as the template for each:
+    - Woodwork (existing wood-handled tool sharpened/reshaped by hand, no
+      forge): mirrors SOMW's own real "Make Shovel Axe"/"Make Shovel Spear"
+      (Shovel + Saw + Whetstone + Hammer, all `mode:keep` tools, no bar
+      stock/charcoal at all). Applied to ShovelAxe, Shovel2Axe, SharpTrowel,
+      GardenShearBlade, ShovelSpear, Shovel2Spear, PlankSpear, and all wood
+      items (HalfPlank(Nails), CricketBat(Nails), WalkingCane,
+      ShortTreeBranch, syntheticsword) and every spear attach-combo recipe
+      (lashing a blade to a wood haft).
+    - Woodwork (wood item + wire/nails/screws): mirrors vanilla's own real
+      `MakeBrakeWeapon` (`recipes_improvised_weapons.txt`) -- the one real
+      vanilla improvised-weapon recipe that actually uses `SkillRequired =
+      Woodwork:5` instead of Maintenance. Applied to BaseballBatWire (+
+      `tags[base:pliers] mode:keep`, confirmed real from the same file's
+      BarbedWireWeapon recipe), BaseballBatBarbedWire, BaseballBatScrews.
+      `Base.BaseballBat`, `Base.Wire`, `Base.BarbedWire`, `Base.Screws` all
+      individually grep-confirmed real vanilla items.
+    - MetalWelding (metal tube/aluminum stock, welded not forged): mirrors
+      vanilla's own real welded-weapon recipes in
+      `entities/blacksmith/craftRecipes/recipes_blacksmith_welded_etc_weapons.txt`
+      (`MakeBlockBludgeon`, `Make_Scrap_Knife`) -- `item N [Base.MetalBar;
+      Base.MetalPipe;...]` + `item N [Base.BlowTorch]` +
+      `tags[base:weldingmask] mode:keep`, `timedAction = Welding`/
+      `Welding_Surface`. Applied to every aluminum baseball bat variant,
+      the expandable baton, the raw metal bar/pipe items, the lug wrench,
+      and the (motorized) brush cutter.
+    - FlintKnapping (real vanilla stone-tool skill, confirmed from
+      `recipes/recipes_knapping.txt` -- `MakeStoneAwl`/`MakeSharpFlintFlake`
+      both use `xpAward = FlintKnapping:N`): applied to SpearChippedStone
+      (tree branch + sharpened stone + binding). Note: vanilla's own real
+      `MakeCrudeStoneAxe` -- the closest literal analogue, same TreeBranch2+
+      SharpedStone+binding recipe -- actually uses `SkillRequired =
+      Maintenance:1` for the assembly step (FlintKnapping is only awarded
+      for producing the raw SharpedStone/FlintNodule components beforehand);
+      since Maintenance stays excluded, FlintKnapping was used for the
+      assembly step too as the next-closest thematic fit.
+  Result: skill distribution across the 136 recipes is no longer one skill --
+  83 Blacksmith (genuinely forged items), 40 Woodwork, 12 MetalWelding, 1
+  FlintKnapping, 0 Maintenance.
+
+
+8.10 Weapon modification UI (HARMONIE_TheWayToAttack, 2026-09-25)
+================================================================================
+Task: give this mod a weapon-customization UI, modeled on a real reference mod
+the user pointed at by Workshop ID (3633421539).
+
+*** That single Workshop ID actually bundles 3 completely unrelated mods
+(BackpackSystem, BladesmithSystem, ModernFirearmsSystem) under one folder tree
+-- confirmed real via section 7's own rule ("always open mod.info, never trust
+the folder name"). Asked the user which one before doing any real work, since
+guessing wrong would have wasted the whole implementation. Answer:
+BladesmithSystem -- it has the melee-specific weapon-upgrade UI
+(`AB_MeleeInspectUI.lua`), the other two are gun/backpack systems. ***
+
+Real API confirmed by reading BladesmithSystem's actual source (not guessed):
+  - B42 stores melee and ranged weapons in the SAME Java class (`HandWeapon`),
+    so vanilla's own gun-attachment system (`WeaponPart` items,
+    `weapon:attachWeaponPart`/`getWeaponPart`, the vanilla `ISUpgradeWeapon`/
+    `ISRemoveWeaponUpgrade` timed actions) works unmodified on melee weapons
+    too -- nothing melee-specific needs to be built from scratch for the
+    attach/detach mechanics themselves.
+  - `PartType = X` on a `base:weaponpart` item is an ARBITRARY STRING, not a
+    fixed engine enum -- confirmed since the reference mod's own slots
+    (Grip/Head/Tactical/Weight) don't exist anywhere in vanilla's real
+    PartType usage (which is all gun slots like Scope/Clip/Sling). An empty
+    `MountOn = ` makes `canAttach` always return true (mount-on-anything);
+    real melee-only validation (slot-empty + melee-weapon check) has to be
+    added in a `ISUpgradeWeapon:isValid` override, same as the reference does.
+  - Melee-only stats (min/max damage, crit chance, speed, endurance/pushback/
+    knockdown mod, max condition) aren't natively WeaponPart-modifiable the
+    way `WeightModifier`/`MaxRangeModifier` are -- the reference's fix (reused
+    here) is a `HandWeapon` getter-override loop: wrap each getter, add up
+    `PartDefs` bonuses from currently-attached parts if the weapon is melee,
+    otherwise return the untouched original value. Safe globally since it's a
+    no-op for every weapon without one of this mod's own parts installed.
+  - *** REAL BUG caught during this port: the keybind's in-game display text
+    is NOT looked up the way it's registered. `table.insert(keyBinding, {value
+    = "[KeySetting_X]"})` keeps the brackets in the Lua registration, but the
+    actual translation lookup (confirmed from `MainOptions.lua`:
+    `getText("UI_optionscreen_binding_" .. v.value)`) needs the key WITHOUT
+    brackets, e.g. `UI_optionscreen_binding_KeySetting_TWAParts` -- confirmed
+    by finding BladesmithSystem's own real `AB_UI.json`, which has exactly
+    that stripped-bracket key. Also: these keybind translation keys live in a
+    plain `UI.json` translate file, NOT `IG_UI.json` (a different vanilla
+    file, confirmed from vanilla's own `UI_optionscreen_binding_Map` etc. in
+    its own `Translate/EN/UI.json`) -- first guess used the wrong file, fixed
+    by actually checking the reference mod's own translation files rather
+    than assuming a key format. ***
+  - *** REAL BUG caught before it shipped: copied
+    `getSoundManager():PlayWorldSound("WeaponPartInsertSound", ...)` verbatim
+    from the reference mod without grep-verifying the sound name first --
+    same discipline this file already applies to items/tags should apply to
+    sound-effect names too. Grepped the entire installed game folder: zero
+    matches anywhere. Also confirmed vanilla's own real `ISUpgradeWeapon`
+    plays no explicit extra sound at all. Fix: removed the calls rather than
+    guess a replacement name -- matches vanilla's own real behavior exactly.
+  - Icon names for new items: same discipline as everything else in this
+    mod -- one guess (`Icon = IronBandSmall`, by analogy with the ITEM name
+    we already use as a material) was wrong; the real icon vanilla's own
+    `IronBandSmall` item uses is `Icon = Metal_BandSmall` (confirmed by
+    reading that item's own real script block). Item name and icon name are
+    not always the same string -- always check the specific item's own real
+    `Icon =` field, don't assume.
+
+Design choices made after asking the user directly (AskUserQuestion, all 3
+answered before writing code): reuse the reference's same 4 slots verbatim
+(no redesign needed); a plain 2D `ISPanel`/`ISCollapsableWindow` UI instead of
+the reference's full `ISUI3DScene` weapon-preview + position-offset-slider
+system (cut ~260 lines of the reference's own complexity that wasn't wanted);
+the 4 new part items are craftable immediately, using this mod's own
+established construction-appropriate skill design from section 8.9 (Grip =
+leather wrap -> Woodwork, Head/Weight = forged -> Blacksmith, Tactical =
+bolted-on -> MetalWelding), not a blanket skill.
+
+Scope is deliberately generic, matching the reference's own real scope: the
+part system works on ANY melee weapon in the game (vanilla, other mods, or
+this mod's own 137 items), not just this mod's items -- this falls out
+naturally from `MountOn` being empty and the melee check testing the engine
+class (`instanceof(item, "HandWeapon") and not item:isRanged()`), not this
+mod's own module name.
+
+
+8.11 Custom procedural crafting UI (HARMONIE_TheWayToAttack, 2026-09-25)
+================================================================================
+Task: the user rejected the plain 2D weapon-crafting approach from 8.9 (vanilla
+`craftRecipe` blocks in a custom "Weapon+" tab) after seeing it in-game and
+sent a ChatGPT-mocked-up UI + a written spec asking for a completely custom
+3-panel crafting system instead: pick a recipe (only selectable once its real
+"base item" is owned) -> perform each of that recipe's required steps from a
+shared procedure library (each step its own tool/material/skill gate) -> once
+every step is done, Finish produces the item. Confirmed via 3 rounds of
+AskUserQuestion before writing any code: (1) this fully REPLACES the vanilla-
+craftRecipe system, not adds to it; (2) design a whole new, real procedure set
+from scratch rather than copying the mockup's illustrative ones; (3) most of
+the 137 items are finished branded products with no raw version already in
+the game, so create new per-category "blank"/rough-forged base items instead
+of inventing a base item per finished weapon.
+
+Data model actually built:
+  - `HARMONIE_TWA_Procedures.lua` (shared): ~22 hand-authored procedures
+    across the same 4 skill families this mod already uses (Woodwork/
+    Blacksmith/MetalWelding/FlintKnapping, 8.9/8.10) + 15 more auto-generated
+    `Attach_<Name>` procedures (one per distinct spear-combo attachment item,
+    e.g. `Attach_CampyKnife`), each just `{tool, consumes, skill}`.
+  - `TWA_Blanks.txt`: 6 new `base:normal`/`DisplayCategory = Material` blank
+    items (TWA_Blank_Axe/SmallBlade/Blunt/SmallBlunt/LongBlade/Spear,
+    confirmed-real icon names from vanilla's own `_Forged` icon set, e.g.
+    `AxeHead_Forged`) -- cut from a possible 15+ (one per category+tier) down
+    to 6 by keeping the OLD tier system's difficulty scaling entirely inside
+    the FINISHING procedures a recipe requires, not inside the blank itself.
+  - `HARMONIE_TWA_RecipeData.lua` (generated by `scratchpad/gen_craftdata.js`,
+    reusing gen_recipes.js's exact same category+tier classification and
+    OVERRIDES real-base-item list from 8.9): 146 recipes total (137 weapons
+    minus 1 non-weapon GardenShears, + 4 weapon-part items, + 6 blanks).
+    Items with a real natural base object (Shovel->ShovelAxe, BaseballBat->
+    BaseballBatWire, etc., same OVERRIDES set as 8.9) keep that as their real
+    base; the ~83 purely-forged branded items get `base = <category's
+    blank>` and a procedure list scaled by the item's existing tier
+    (tier1=[PolishI], tier2=[TemperII,PolishI], tier3=[ReinforceIII,TemperII,
+    PolishI]). Also emits a static `TWARecipeData.Stats` table (maxDamage/
+    conditionMax/weight per result item) baked in at generation time -- see
+    the API-pitfall note in section 8.10/8.11's TOC entry for why this is
+    static data instead of a runtime engine query.
+
+UI (`HARMONIE_TWA_CraftUI.lua`, `TWA_FinishCraftAction.lua`,
+`HARMONIE_TWA_CraftTrigger.lua`): left = `TWARecipeListPane` (search box +
+wrapping category-tab buttons + scrollable `TWARecipeRow` list, greyed/red-
+bordered when the base item isn't owned, matching the already-proven
+ABSlotButton-style border-color pattern from 8.10's parts UI); center =
+drawn directly on the main `ISCollapsableWindow` (icon, name, stats from the
+static table above, base-item-owned line, a row of procedure-icon squares
+tinted full-color once done vs dim otherwise, Cancel/Finish); right =
+`TWAProcLibraryPane`, one `TWAProcButton` per procedure in `TWAProcedures.
+Order` (a hand-maintained stable list, since `pairs()` over the procedure
+table has no guaranteed order), red/green bordered live off
+`TWAProcedures.CheckEligibility`, with a custom-drawn tooltip box (not a
+vanilla ISToolTip -- avoids yet another unverified API) listing every unmet
+requirement on hover. Clicking a procedure only does something if it's BOTH
+currently eligible AND part of the selected recipe's own requirement list AND
+not already done for this crafting session -- otherwise it's a no-op, so
+players can't accidentally waste materials by clicking an eligible-but-
+irrelevant procedure. `TWA_FinishCraftAction` is a minimal `ISBaseTimedAction`
+subclass (only `isValid`/`perform`/`new` overridden -- every other method
+uses the base class's own real default implementation, confirmed from
+`ISBaseTimedAction.lua`'s own source rather than guessed) that removes the
+base item and adds the result item, queued the same
+`ISTimedActionQueue.add(...)` way as any other crafting action.
+
+Old system removed: `TWA_recipes.txt`, `TWA_recipes_parts.txt`, and both
+`Recipes.json` translation files deleted outright (no longer referenced by
+anything); the `IGUI_CraftingCategories_WeaponPlus` category-tab translation
+key removed from `IG_UI.json` too. `TWA_WeaponParts.txt` (the 4 physical part
+items) and the entire weapon-*modification* UI from 8.10 are UNCHANGED --
+that's a separate feature (upgrading a weapon you already have) from this one
+(crafting a weapon in the first place).
+
+*** 4 real bugs found and fixed after the user tested this in-game (same day):
+1) Non-weapon craftables (the 6 blanks + 4 parts) were scattered across the
+   weapon-category tabs / a "Part" category no tab pointed at -- moved all 10
+   to one dedicated "PartMod" category + filter tab (labelled "ดัดแปลงอาวุธ" /
+   "Weapon Mods" in the UI), matching the naming already used by the sibling
+   modification UI from 8.10.
+2) Both scrollable panes (recipe list, procedure library) had no visible
+   scrollbar. Root cause: `ISPanel:prerender()`'s own real default
+   implementation (confirmed by reading ISPanel.lua) only draws anything (and
+   critically, only sets up scrolling correctly) `if self.background` is set
+   -- which was never set on either pane, and nothing else in `ISPanel`
+   establishes a stencil rect for clipping scrolled content either way. Fix:
+   gave both panes their own explicit `prerender()`/`render()` overrides
+   (`setStencilRect`/`clearStencilRect` + unconditional background/border
+   draw) matching BladesmithSystem's own real `ABSelectPane` pattern exactly
+   -- the ORIGINAL reference code this session already adapted successfully
+   for the parts-picker popup in 8.10, but this new pane class never got the
+   same treatment.
+3) Recipes with no owned base item couldn't be selected at all (by design),
+   so a player could never discover WHICH item they needed -- the center
+   panel (which shows that) never appeared. Fix: recipe rows are now always
+   selectable; only the Finish button (via `allProceduresDone`, which was
+   ALSO missing its own base-ownership check until this fix -- a real latent
+   bug where completing every procedure without ever owning the base item
+   would still show Finish as enabled) stays gated on actually owning the
+   base item.
+4) The procedure-library tooltip (missing-requirement text on hover) was
+   drawn as a normal in-widget draw call from inside a scrollable
+   (stencil-clipped) pane -- anything drawn past a button's own bounds gets
+   cut off right at the pane's clip edge, so it was invisible/clipped.
+   Fix: the button no longer draws its own tooltip; it hands the data up to
+   the top-level window (`self.ui.hoverTooltip`), which draws it last, one
+   frame later (imperceptible at 60fps), unclipped, and positioned to the
+   LEFT of the button (falling back right only if that would go off the left
+   edge) so it also can't run off the window's own right edge.
+
+*** SECOND round of fixes (same day, user tested again): the stencil/
+background prerender()/render() override from fix #2 above did NOT actually
+fix the missing scrollbars -- it was the wrong layer of the problem. Real root
+cause, found by reading `ISScrollingListBox.lua`'s own source end to end: that
+class manages its scrollbar, stencil clipping, AND scroll-height entirely
+itself inside its own `prerender()` (iterates `self.items`, calls
+`doDrawItem` per row, calls `self:setScrollHeight(...)` automatically every
+frame) -- a hand-rolled `ISPanel` with `addScrollBars()` bolted on, even with
+a correct stencil rect, never gets any of that; the reference mod's own
+`ABSelectPane` pattern this session copied for two different pop-ups only
+"works" because it's a small, occasionally-used list where the missing
+scrollbar was never noticed. Fix: rewrote both the recipe list and the
+procedure library as real `ISScrollingListBox` subclasses (`TWARecipeScrollList`
+`TWAProcScrollList`) with a `doDrawItem(y, entry, alt)` override for the
+custom icon+text+status rendering and `setOnMouseDownFunction` for clicks --
+the same class every scrollable list in vanilla itself uses, so this is the
+first version with any real precedent for reliably working. Bonus: per-row
+hover is free too (`self.mouseoverselected`, tracked internally from the
+class's own real `onMouseMove`), which also fixed a related complaint (the
+required-procedure checklist in the CENTER panel -- separate small drawn
+icons, not a scrolling list -- showed no name on hover; fixed with a plain
+manual `getMouseX()`/`getMouseY()` bounds check feeding the same
+`hoverTooltip` mechanism, since those icons aren't scrollinglistbox rows).
+LESSON: when adapting a reference mod's UI *pattern*, matching its code
+verbatim isn't the same as confirming the pattern is the RIGHT tool for a
+bigger, always-visible list -- for anything that needs guaranteed reliable
+scrolling, use vanilla's own purpose-built `ISScrollingListBox` instead of a
+raw `ISPanel` + manually bolted-on scrollbar, even though the latter is a
+real, valid API that "should" work.
+
+*** THIRD round (same day): user asked for this UI to actually use NeatUI
+Framework (Workshop 3508537032, already researched in full in section 8.3 --
+this was the first real use of that research in this repo) to look like a
+provided reference image, plus 2 more bug fixes: ***
+- Added `require=NeatUI_Framework` to `mod.info` (hard dependency now, not
+  optional -- matches this feature actually needing it to render at all).
+- Confirmed real usable texture set from NeatUI's own asset folder (not
+  guessed): `DefaultPanel/InnerPanel_BG.png` (card/row backgrounds),
+  `DefaultPanel/CategoryText_L/M/R.png` (pill-shaped tab chrome, a real
+  matching 3-piece set), `Button/Button_FULL_L/M/R.png` (button bar chrome),
+  `ICON/ICON_Check.png` (green checkmark badge). `NeatTool.NinePatch.draw`
+  was NOT used even though documented in 8.3 -- none of NeatUI's own panel
+  textures are actually pre-sliced into the 9 separate corner/edge files that
+  function requires (checked the real asset folder first rather than
+  assuming); they're single flat images meant for direct
+  `drawTextureScaled`, or 3-piece sets meant for `NeatTool.ThreePatch`.
+- New reusable pieces: `drawNeatCard(panel, x, y, w, h, ok, selected)` (a
+  textured row/icon background + checkmark badge, replacing every
+  `drawRectBorder` card in this UI) and `TWANeatButton` (an `ISButton`
+  subclass using `NeatTool.ThreePatch.drawHorizontal` for its background --
+  the exact pattern already confirmed working in section 8.3's own
+  `MS_LongButton.lua`-derived example, used here for real for the first
+  time), both with a safe fallback to the original flat `drawRectBorder`/
+  `drawRect` if a texture ever comes back nil (e.g. NeatUI failing to load).
+- Bug: clicking an ineligible procedure said "missing tool" with no tool
+  name. Fixed by resolving a real name for both tool kinds this mod's
+  procedures use: `kind="type"` tools (Tongs/Whetstone/Pliers/HammerStone)
+  via the item's own real `getDisplayName()`; `kind="tag"` tools (the 5
+  `ItemTag` members from 8.11's earlier fix) via a small fixed label table,
+  since there's no single real item to name for those.
+
+*** FOURTH round (same day): user said the reskin still looked bad and asked
+for a genuine redesign with no constraints, after testing showed 2 real
+visual bugs from the third round: ***
+- Filter tabs were completely blank except the active (orange) one. Root
+  cause: NeatUI's `CategoryText_L/M/R.png` set renders as a pale/light chrome
+  -- the plain white `drawText` used on top of it had no contrast on every
+  non-active tab (the orange tint on the active one was the only thing
+  giving the white text enough contrast to read). Fix: replaced the
+  texture-based tab with a new `TWATabButton` (flat solid-color fill +
+  border, no NeatUI texture dependency at all) and introduced
+  `drawTextShadowed(panel, text, x, y, r,g,b,a, font)` -- draws a 1px black
+  offset copy underneath the real color -- used for literally every text
+  draw in this file from this point on, so label contrast can never again
+  depend on guessing what color an underlying texture happens to be.
+- The center panel looked empty/see-through (game world dimly visible behind
+  the text) because it never had its own background at all -- only floating
+  text/icons drawn directly on the window's own translucent backdrop. Fixed
+  by giving it an explicit card background (`ContentPanel_BG.png`, same
+  technique as `drawNeatCard`) before drawing its contents, matching the
+  solid-card look of the two side lists.
+- *** Real bug caught by the IDE's own lint pass, not by testing: `local
+  cell, gap, perRow = 44, 8, math.max(1, math.floor((CENTER_W - 16 + gap) /
+  (cell + gap)))` -- referencing `gap`/`cell` in the SAME multiple-assignment
+  statement that declares them. Lua evaluates every expression on the right
+  BEFORE any of the new locals exist, so `gap` inside that expression
+  resolved to whatever `gap` was in the enclosing scope (nil, an
+  undeclared global) -- `CENTER_W - 16 + nil` would have thrown a real Lua
+  arithmetic error and broken `render()` every single frame once a recipe
+  was selected. Always split a computed local's own dependencies onto a
+  separate `local` line first; never reference a name inside the same
+  statement that's declaring it. ***
+- Also reworked the required-procedure checklist in the center panel into a
+  proper wrapping grid (`perRow` computed from the panel's real width)
+  instead of a single row that could run off the panel edge for
+  many-procedure recipes, and increased every list row's height/padding
+  (42px -> 48-52px) for less cramped spacing throughout.
+
+FIFTH round (2026-09-26) -- data-model simplification + every vanilla weapon +
+right-panel redesign + a real icon-name audit:
+- Data model: the 6 category blanks (TWA_Blank_*, 8.11's "blank" step above)
+  are GONE. Every ingot-based recipe now consumes a SINGLE real vanilla item,
+  `Base.SteelIngot` ("Metal Ingot"), as its base -- confirmed real (B42 has
+  its own native blacksmithing/ingot system: `Icon = Ingot_Steel`,
+  `Tags = base:hasmetal;base:steelmaterial;base:ingot`). The old
+  ForgeBilletSmall/ForgeBilletMedium procedures (which forged a SteelBar into
+  an intermediate blank) are replaced by one `ForgeShape` procedure (Hammer+
+  Tongs, Blacksmith:2, Charcoal x2) representing the initial ingot-to-rough-
+  shape step, now folded directly into each weapon's own recipe instead of a
+  separate blank-crafting recipe. Items with a real natural base object
+  (OVERRIDES from 8.9, e.g. Shovel->ShovelAxe) are untouched -- this only
+  replaced the blank-based branch.
+- Weapon-mod parts (Grip/Head/Tactical/Weight, TWA_WeaponParts.txt) are no
+  longer craftable through this UI at all (removed from
+  HARMONIE_TWA_RecipeData.lua and the "PartMod" filter tab is gone). The
+  items themselves and the separate weapon-modification UI (8.10) are
+  untouched -- they just currently have NO crafting path any more (not
+  addressed this round; flagged to the user rather than inventing one
+  unasked).
+- Every vanilla melee weapon is now also craftable through this UI: extracted
+  341 `Categories = base:axe/smallblade/blunt/smallblunt/longblade/spear`
+  items straight from the real installed game's
+  `media/scripts/generated/items/weapon.txt` (same regex-block extraction
+  technique as `extract_items.js`, new `extract_vanilla_weapons.js`),
+  excluded damaged/debug placeholders (`_Broken`, `DEBUG`, `_DEV_`,
+  `Nameplate`) and 2 items whose short name collides with one of this mod's
+  own 137 (FireplacePoker, IceAxe -- kept the HARMONIE version only), leaving
+  309 real vanilla weapons added. Each gets the same universal-ingot formula
+  (ForgeShape + a category handle-attach procedure + the existing tier 1/2/3
+  Blacksmith finishing steps), tiered by MaxDamage percentile within its OWN
+  category (computed separately from the 137 HARMONIE items' own tiering, so
+  neither pool skews the other's spread).
+- Center panel: icon grew 64px -> 100px, and now shows a full organized 2-
+  column stat grid (Min/Max Damage, Crit Chance, Range, Attack Speed,
+  Knockdown, Durability, Weight, Damage Type, Two-Handed) instead of 3 bare
+  lines -- pulled from newly-extracted MinDamage/CriticalChance/MaxRange/
+  BaseSpeed/KnockdownMod/DamageCategory/TwoHandWeapon fields (added to both
+  `extract_items.js` and the new vanilla extractor; baked into
+  `TWARecipeData.Stats` the same "no confirmed Lua API to read stats off an
+  un-instantiated Item script object" way as before, 8.11).
+- Right panel (procedure library) rebuilt as an icon-frame GRID instead of a
+  text-row list: `TWAProcScrollList` now treats each `ISScrollingListBox`
+  "item" as one grid ROW (an array of up to `perRow` procedure ids, not one
+  procedure), overriding `onMouseMove`/`onMouseDown` itself to resolve which
+  CELL in that row the mouse is over/clicked (`math.floor((mx - pad) /
+  (cellSize + gap)) + 1`) since the base class only tracks row-level hover
+  natively. Hovering a cell now shows ONLY the procedure's name (a 1-line
+  tooltip); clicking a cell both selects it (highlighting it + showing its
+  full tool/material/skill breakdown in a new fixed, non-scrolling details
+  box under the grid, `TWACraftWindow:drawProcedureDetails()`) AND still
+  performs it immediately if it's eligible and belongs to the selected
+  recipe (same click-to-perform behavior as before, just no longer gated
+  behind a floating hover tooltip that could get clipped).
+- *** REAL BUG FIXED: the floating hover-tooltip (`drawHoverTooltip`) was
+  being drawn from `TWACraftWindow:render()` BEFORE the checklist-grid icons
+  and the procedure-library rows that draw AFTER it in the same render pass
+  -- later draw calls land on top of earlier ones within a single frame, so
+  the (1-frame-delayed) tooltip was always rendering UNDERNEATH that frame's
+  own icons, making its text unreadable exactly as reported ("tooltip goes
+  behind the icon"). Fixed by moving the `self:drawHoverTooltip()` call to
+  the very END of `render()`, after every other draw call that frame, both
+  in the "no recipe selected" early-return branch and the main body. Lesson:
+  in this immediate-mode UI rendering, an overlay/tooltip must always be the
+  LAST thing drawn in its containing `render()`, never the first -- drawing
+  it early only "worked" as long as nothing else happened to overlap it that
+  frame. ***
+- *** REAL BUG FIXED: a second wrong-icon-name class, found by the SAME
+  grep-verification discipline used successfully before (8.11 round 3) but
+  not yet applied to every icon string in `HARMONIE_TWA_Procedures.lua`. An
+  item's real `Icon = X` field is very often NOT the same as the item's own
+  type name -- `Base.Whetstone`'s real icon is `Whetstone2`, `Base.Saw`'s
+  real icon is `Hacksaw` (no icon named "HandSaw" exists anywhere in
+  vanilla), `Base.SmallHandle`'s real icon is `Handle`, `Base.LongStick`'s
+  real icon is `Shaft`, `Base.SharpedStone`'s real icon is `RockSharpened`.
+  Every one of these was wrongly using the item's own type name as its icon
+  string, rendering as a blank grey square exactly as reported (Polish,
+  Sharpen, Cut to Shape, plus 3 more not in the original report). Separately,
+  `Attach_Screwdriver`/`Attach_HuntingKnife` (auto-generated procedures that
+  fall back to `it:getIcon()` on their consumed item at runtime) were ALSO
+  blank -- because `Base.Screwdriver`/`Base.HuntingKnife` only set
+  `IconsForTexture` (a per-instance randomized display list), not a
+  singular `Icon` field, so `getIcon()` has nothing to return. Fixed by
+  hardcoding an explicit `icon` override for just these two in
+  `gen_craftdata.js`'s `VANILLA_ATTACH` table (`icon = "Screwdriver"` /
+  `"HuntingKnife"`, both real loose texture names from their own
+  `IconsForTexture` list). Lesson: `it:getIcon()` is only a safe icon
+  fallback for items that actually declare a singular `Icon = X` field --
+  always check for `IconsForTexture`-only items and give them an explicit
+  override instead of trusting the runtime fallback.
+- Icon-name verification method used throughout, for anyone doing this again:
+  `grep -A15 "item <Name>$" media/scripts/generated/items/*.txt | grep -oE
+  "Icon = [A-Za-z0-9_]+"` against the real installed game files. Do NOT
+  trust `media/textures/Item_<name>.png` existing on disk as a check --
+  confirmed the real installed game has almost NO loose files under that
+  naming convention at all (icons are compiled into `.pack` texture atlases
+  at build time); the only reliable check is the `Icon =` field value
+  itself, not what's loose on disk.
+
+SIXTH round (2026-09-26) -- flexible materials, honest stats, real
+translations, and vanilla's own "attach a scavenged part" system:
+- *** REAL DESIGN GAP FOUND: several real vanilla items share the SAME
+  functional tag but were being treated as only ONE specific item accepted a
+  material. `Base.Charcoal`/`Base.CharcoalCrafted`/`Base.Coke` all carry
+  vanilla's own `Tags = base:charcoal`; `Base.SteelIngot`/`IronIngot`/
+  `CopperIngot`/`BrassIngot` all carry `Tags = base:ingot` -- confirmed by
+  grepping every item sharing each tag, not guessed. Bug report 2026-09-26:
+  "materials aren't flexible, charcoal has 2 real ids but only one worked."
+  Fixed generally, not just for charcoal: `HARMONIE_TWA_Procedures.lua`'s
+  `consumes` entries now accept EITHER `{ itemType = "Base.X", qty = N }`
+  (one real type) OR `{ itemTypes = {"Base.A","Base.B"}, qty = N }` (several
+  interchangeable real types) -- `CheckEligibility` sums counts across every
+  alternative, `Consume` pulls each unit from whichever alt actually has
+  stock. The universal "Metal Ingot" base itself became a 4-way alternative
+  list this same way (`gen_craftdata.js`'s `METAL_BASE`), and
+  `HARMONIE_TWA_CraftUI.lua`/`TWA_FinishCraftAction.lua` both grew a small
+  `baseList(base)` helper so `recipe.base` can be nil, one fullType string,
+  or a list, transparently, everywhere it's read (ownership check, display
+  name, consuming on Finish). ***
+- *** REAL DESIGN GAP FOUND: applying ONE blanket "forge from a Metal Ingot"
+  formula to literally every vanilla weapon addition was thematically wrong
+  for a meaningful chunk of them -- a bone club or a sawblade welded onto an
+  axe handle isn't smithed from a steel ingot with a hammer and charcoal.
+  Bug report 2026-09-26, with concrete examples ("attach sawblade", "carve
+  bone" procedures still missing). Root-caused by reading vanilla's own real
+  crafting system for these exact items --
+  `media/scripts/generated/recipes/recipes_improvised_weapons.txt` turned
+  out to be EXACTLY vanilla's own "take a plain base object (Plank/
+  LongHandle/TableLeg/ShortBat/BaseballBat/LargeBranch/TreeBranch2/...) and
+  attach ONE real scavenged part to it" system, itemMapper-driven, with the
+  real consumed material spelled out per variant (e.g.
+  `Base.Axe_Sawblade = Base.CircularSawblade_Half`,
+  `Base.Cudgel_GardenForkHead = Base.LargeBranch` +
+  `[Base.GardenForkHead;Base.GardenForkHead_Forged]`,
+  `Base.TreeBranch_Railspike = Base.TreeBranch2` + `Base.RailroadSpike`), and
+  `entities/blacksmith/craftRecipes/recipes_blacksmith_welded_etc_weapons.txt`
+  covering the MetalWelding-flavored ones (brake discs, engine parts) the
+  same way. Added 8 new real "attach a part" procedures (`AttachSawblade`,
+  `AttachRakeHead`, `AttachGardenForkHead`, `AttachSpadeHead`,
+  `AttachRailspike`, `AttachCan`, `AttachScrapSheet`, `AttachBrake`) plus one
+  carving procedure (`CarveBone`, for bone weapons -- Woodwork, no forging)
+  to `HARMONIE_TWA_Procedures.lua`, and a `classifyVanilla(row)` function in
+  `gen_craftdata.js` that pattern-matches a vanilla item's OWN name (bone/
+  stone keyword, or `<Root>_<Suffix>` where `<Root>` is verified to actually
+  exist as a real item and `<Suffix>` maps to one of the new procedures) to
+  give it its real construction method + real base item instead of the
+  universal-ingot fallback -- 73 of the 309 vanilla additions got
+  reclassified this way. Anything that doesn't match still falls through to
+  the universal Metal Ingot formula, which remains correct for genuinely
+  forged metal weapons (axes, machetes, kitchen knives, wrenches, pipes...).
+  Lesson: when copying a blanket formula across a large generated batch,
+  check whether the SOURCE game already has a real, itemized "how this is
+  actually made" system for at least some of that batch before assuming one
+  formula fits all -- it's usually faster to grep the real recipes than to
+  hand-guess plausible materials. ***
+- *** REAL BUG FIXED: 19 of HARMONIE's own 137 items and most bone-family
+  vanilla items only set `IconsForTexture` (no singular `Icon` field), so
+  `item:getIcon()` had nothing to return and several recipe-list rows showed
+  no image at all (bug report 2026-09-26 -- "every item has an icon, they
+  should all show one"). Fixed generally instead of one item at a time: both
+  `extract_items.js` and `extract_vanilla_weapons.js` now also capture
+  `IconsForTexture`, `gen_craftdata.js` bakes a resolved `icon` field into
+  `TWARecipeData.Stats` for EVERY result (`Icon` if set, else the first
+  `IconsForTexture` entry), and `HARMONIE_TWA_CraftUI.lua` grew a
+  `resultIcon(fullType)` helper that checks this baked value FIRST and only
+  falls back to the live `item:getIcon()` lookup if nothing was baked --
+  used everywhere a recipe's own result icon is drawn (left-panel list,
+  center-panel big icon). ***
+- Stat display: `DamageCategory` (the field behind a "damage type" stat)
+  turned out to have exactly ONE real value anywhere in the entire vanilla
+  item set ("Slash") and is simply left unset for every blunt weapon --
+  question raised 2026-09-26 ("what's this useful for, are there other
+  types?"). *** CORRECTION (same day, next round): the first answer here was
+  a guess ("Causes Bleeding") and it was WRONG -- called out by the user
+  ("หาข้อมูลมา อย่าเดามั่ว", don't guess, go find out). The real, verified
+  answer, found in `media/lua/shared/Definitions/DamageModelDefinitions.lua`
+  (`DamageModelDefinitions.checkCategory` / `.OnHitZombie`, real vanilla
+  source, not guessed): `DamageCategory = "Slash"` only selects which
+  cosmetic wound/gore TEXTURE gets stamped onto a zombie's torso/head on hit
+  (`ZedDmg_*_Slash` vs the default) -- it does not affect damage, bleeding,
+  or infection chance at all. Since it's purely cosmetic and not meaningful
+  to a crafting decision, the stat was removed from the UI entirely rather
+  than mislabeled. Lesson: when asked what a real field actually does
+  in-game, grep for its real Lua usage (`getDamageCategory`,
+  `containsTagEvalRecurse(ItemTag.X, ...)`, etc.) before writing ANY label
+  for it -- inferring a plausible-sounding mechanical effect from a field's
+  NAME alone ("Slash" -> "must cause bleeding") is exactly the kind of guess
+  this mod's own established discipline (grep-verify, never guess) exists to
+  prevent, and it slipped through here because the field was being
+  DISPLAYED, not called as an API -- the same discipline applies to both. ***
+- Translation bug: the auto-generated `Attach_<X>` procedure names for
+  vanilla source items (BreadKnife, HandFork, Screwdriver, HuntingKnife,
+  IcePick, Machete) were left as bare untranslated English type names in
+  BOTH languages ("Attach BreadKnife" / "ติด BreadKnife") -- bug report
+  2026-09-26 ("some procedures could be translated"). Root cause: these 7
+  vanilla items all have a genuinely blank `DisplayName` script field (their
+  real name comes from vanilla's own `ItemName.json` instead, which this
+  mod's own name-lookup step never consulted), so the generator's own
+  "look up DisplayName, fall back to the raw type name" logic always hit the
+  fallback for these specific 7. Fixed with a small hardcoded
+  `VANILLA_ATTACH_LABELS` map of real English names in `gen_craftdata.js`,
+  feeding the SAME `translateName()` Thai word-substitution step already
+  used successfully for every other Attach_<X> procedure. Lesson: a script's
+  `DisplayName` field being blank does not mean the item has no real display
+  name -- many base-game items resolve their name purely through
+  ItemName.json, so falling back to the raw type name silently produces
+  untranslated/unreadable output instead of erroring, which is easy to miss
+  without specifically testing that item.
+
+SEVENTH round (2026-09-26) -- background too light, washing out text:
+- *** REAL BUG FIXED: bug report "background สีเทาสว่างเกินไป จนตัวอักษรสีขาว
+  กับแดงมองยาก" (background is too light grey, white/red text hard to read).
+  Root cause: the center-panel card, the new procedure-details box, and
+  every `drawNeatCard` (list rows, checklist cells, procedure-grid cells)
+  drew NeatUI's own `InnerPanel_BG`/`ContentPanel_BG` textures under
+  everything, tinted at a flat 0.5 (or the state color multiplied by 3 for
+  drawNeatCard). Both textures' own base pixels are light/pale -- the EXACT
+  same root cause already found and fixed once before for the filter-tab
+  texture (8.11 round 3, `CategoryText_L/M/R.png`) -- so even a 0.5 tint
+  still produced a visibly light grey panel, not the dark panel the state
+  colors alone would suggest. Fixed by dropping these two textures for
+  backgrounds entirely (both are now unused and removed from the `TWA_NEAT`
+  table) and using a flat `drawRect` everywhere instead, so the background
+  color is always exactly what's written in code, never lightened by an
+  unpredictable source texture. Lesson (now confirmed twice in the same
+  file): NEVER trust a NeatUI Framework texture's actual brightness for
+  anything that colored/white text will sit on top of -- always use a flat
+  fill for text backgrounds in this UI, reserve the real NeatUI textures for
+  chrome that has no text directly on top of it (buttons' own label text
+  already gets drawTextShadowed, which is a separate, already-safe
+  mitigation, not a substitute for choosing a dark-enough background).
+
+EIGHTH round (2026-09-26) -- scope vanilla additions to real Weaponry
+recipes, checkmark logic/z-order, always-visible per-condition requirement
+details, and a corrected (not guessed) stat:
+- Scope: "every vanilla weapon" (7th-round-ago request) was over-broad --
+  it pulled in every item with a combat Categories tag, including plain
+  looted/found weapons vanilla itself never crafts at all (a bare Axe,
+  Machete, kitchen knife...). Narrowed 2026-09-26 to only vanilla items that
+  have a REAL vanilla craftRecipe tagged `category = Weaponry` -- extracted
+  by parsing every real `craftRecipe` block (balanced-brace, itemMapper-
+  aware) across the 6 real files that contain one
+  (`recipes.txt`/`recipes_bone.txt`/`recipes_improvised_weapons.txt`/
+  `recipes_spears.txt`/`blacksmith_heads.txt`/
+  `blacksmith_welded_etc_weapons.txt`, new
+  `scratchpad/extract_weaponry_recipes.js`) -- 123 real names, narrowing the
+  vanilla addition count from 309 down to 112 (a few don't have a matching
+  melee Categories, e.g. shotgun variants). This also naturally solved most
+  of the earlier "wrong construction method" cases from the previous round
+  in one pass: added `SUFFIX_PROC` entries (`Bolts`->AttachHardware reuse,
+  `Spiked`->HammerNails reuse, `Spike`->ForgeShape reuse -- Cudgel_Spike's
+  real recipe punches a spike into a forged head, grep-confirmed) and a
+  `SPECIAL_CASES` map for named oddballs that don't fit the generic
+  `<Root>_<Suffix>` pattern (EngineMaul, ScrapMaul, the 3 ScrapWeapon* items,
+  BucketMace/KettleMace's wood+metal variants, Morningstar_Scrap(_Short),
+  and the household-object shivs GlassShiv/KnifeShiv/Toothbrush_Shiv/
+  Screwdriver_Improvised/SmashedBottle -> base=nil + SharpenEdge, since
+  they're found/broken objects sharpened into a point, not metal-forged at
+  all) -- 80 of the 112 vanilla additions now get a real, verified
+  construction method instead of the universal Metal Ingot fallback (up from
+  73/309 last round). A handful of scrap-welded swords/knives with only a
+  TAG-based real material (no single concrete item, e.g.
+  `tags[base:barstock;base:fullblade]`) were left on the universal formula
+  as a deliberate, documented tradeoff -- still a real metal weapon, just not
+  precisely replicated.
+- *** REAL BUG FIXED: the procedure-library grid's checkmark badge was
+  passed `met` (current eligibility) instead of `done` (already performed
+  as part of THIS recipe) -- bug report 2026-09-26 ("checkmark should only
+  show once a procedure is actually done, not repeatable"). Conflating the
+  two meant every eligible-but-not-yet-performed procedure showed a
+  checkmark too. Fixed by computing `done = self.ui.selectedRecipe and
+  self.ui.doneProcedures[id]` separately from `met` in
+  `TWAProcScrollList:doDrawItem`, passing `met` only to `drawNeatCard` (for
+  the dim/bright tint) and `done` only to the new `drawCheckBadge`. ***
+- *** REAL BUG FIXED (again, different spot): the checkmark badge was drawn
+  INSIDE `drawNeatCard`, called BEFORE the caller's own icon texture draw in
+  every one of its 3 call sites -- so the badge always ended up underneath
+  the icon in the same render pass (bug report 2026-09-26, same z-order bug
+  CLASS as the hover-tooltip fix a few rounds ago, different specific draw
+  call this time). Fixed by splitting the badge out into its own
+  `drawCheckBadge(panel, x, y, w)` function, called explicitly by every
+  caller AFTER their icon texture draw, not folded into the background/
+  border helper any more. Lesson (now the SECOND time this exact mistake
+  shape has appeared in this file): in this immediate-mode UI, nothing that
+  should visually sit "on top of" an icon may be drawn by a shared helper
+  invoked BEFORE that icon -- always draw background -> icon -> overlay/
+  badge, as 3 separate explicit steps in that order, never let a background
+  helper sneak an overlay in for you. ***
+- Procedure-details box (the fixed panel under the right-panel grid): used
+  to show either "all requirements met" (collapsing away the entire
+  breakdown once ready) or a red list of ONLY the unmet ones. Bug report
+  2026-09-26: keep the full tool/materials/skill breakdown ALWAYS visible,
+  colored per individual condition (normal color if that one condition is
+  met, red only for the ones that aren't), not all-or-nothing. Added
+  `TWAProcedures.DescribeAll(proc, player)` (shared) returning EVERY
+  requirement tagged with its own `met` flag (mirrors `CheckEligibility`'s
+  logic exactly, just without filtering out the met ones), and
+  `TWAProcScrollList:describeOne(req)` (client) formatting any single one
+  without the "Missing"/"Requires" framing that only made sense for unmet
+  items (the caller now supplies the framing via color, not the text).
+- *** RESEARCH REQUEST HANDLED (not guessed): "what does 'causes bleeding'
+  actually do" -- see the CORRECTION inside the previous round's own stat-
+  display entry above. The honest answer is it's a cosmetic-only visual
+  wound-texture selector, not a combat mechanic, verified from real Lua
+  source (`DamageModelDefinitions.lua`) rather than inferred from the field's
+  name. The stat was removed from the UI rather than mislabeled again. ***
 
 
 9. Checklist before starting any new work

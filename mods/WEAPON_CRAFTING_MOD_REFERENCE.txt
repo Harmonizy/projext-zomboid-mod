@@ -99,6 +99,43 @@ weaponpart), even if you also keep `Type=` — redundant, not conflicting. Full
 incident writeup (plus 2 more real traps hit while porting these exact 2
 reference mods' items): mods/workflow.txt section 8.8.
 
+*** CONFIRMED: two DIFFERENT, non-interchangeable crafting-recipe syntaxes
+exist in B42 ***. The OLD flat `recipe NAME { ItemA, ItemB, Result:X, ... }`
+block (SOMW's own recipes still use it, and it still works) has a much
+narrower real ingredient vocabulary than it looks — bare `/` for item
+alternatives (no brackets), `Item=N` for quantities, and only
+`keep [Recipe.GetItemTypes.Hammer/Saw/SharpKnife]` for tool categories.
+`tags[base:x]`, `mode:`, and `flags[...]` bracket syntax belong ONLY to the
+NEW `craftRecipe NAME { inputs{ item N [Type] tags[base:x] mode:keep/destroy
+flags[...] } outputs{ item N Result } }` block, which is the format vanilla's
+own recipes exclusively use. Don't mix the two. Full writeup, plus the
+confirmed-real `category = Weaponry`, `timedAction = CraftWeapon1H/2H`, and
+recipe-translation-file conventions: mods/workflow.txt section 8.9.
+
+*** CONFIRMED: vanilla's gun WeaponPart/attachWeaponPart system also works on
+melee weapons ***, since B42 stores both under the same `HandWeapon` Java
+class. `PartType = X` on a `base:weaponpart` item is an arbitrary string (not
+a fixed enum) and an empty `MountOn = ` makes it attachable to anything —
+real melee-only validation has to be added yourself via an
+`ISUpgradeWeapon:isValid` override. Melee-only stats not natively
+WeaponPart-modifiable (damage, crit, speed, etc.) need a `HandWeapon` getter-
+override loop summing bonuses from attached parts. Full writeup (plus 3 real
+mistakes caught by verification: wrong keybind translation key/file, an
+unverified sound-effect name copied from a reference mod that doesn't exist
+in vanilla, and an icon name that doesn't match its own item's real `Icon=`
+field): mods/workflow.txt section 8.10.
+
+*** NOTE: this mod's actual crafting UI was later fully replaced by a custom
+3-panel procedural system (recipe picker + shared procedure library + Cancel/
+Finish) -- the vanilla `craftRecipe`/`category = Weaponry`/"Weapon+" tab
+approach documented above and in section 8.9 was RETIRED, not just extended.
+The real recipe *design* research above (materials, skill floors, forge
+chain) is still the source of truth for what each item's crafting requires --
+only the delivery mechanism changed. Full writeup, including a real API
+pitfall (no confirmed generic Lua query exists for `tags[base:x]` from item/
+recipe scripts -- only 5 tool `ItemTag` enum members are confirmed to exist
+anywhere in vanilla's own Lua code): mods/workflow.txt section 8.11. ***
+
 
 2. Weapon item script — full real field vocabulary + worked examples
 =====================================================================================
