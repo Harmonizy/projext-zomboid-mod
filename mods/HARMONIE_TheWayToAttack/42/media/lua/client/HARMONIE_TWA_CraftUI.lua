@@ -898,7 +898,21 @@ function TWACraftWindow:createChildren()
     -- Procedure library: icon grid on top, fixed (non-scrolling) requirement
     -- details box for the clicked procedure underneath it (request
     -- 2026-09-26 -- replaces the old floating full-requirements tooltip).
-    local detailsH = 150
+    -- Bug report 2026-09-27: "มันไม่ขึ้นว่าต้องการสกิลอะไรเหมือนกรรมวิธี
+    -- อื่นๆ" -- real cause found: at the old detailsH=150, only ~4 req lines
+    -- fit before the requirement loop's own `if ty > textBottom then break`
+    -- cutoff. DescribeAll always orders light, tool, tool2, consume, skill,
+    -- forge -- so any procedure needing BOTH tool AND tool2 AND a consumed
+    -- material (WeldMetal/WeldWork/WeldWorkComplex: WELDING_MASK + BlowTorch
+    -- + ScrapMetal) already used all 4 slots on light+tool+tool2+consume,
+    -- silently pushing skill (5th) past the cutoff -- not a welding-specific
+    -- bug, just the first procedures to actually hit this space shortage.
+    -- Bumped 150 -> 190 so 7 lines fit, covering even the heaviest real case
+    -- (light+tool+tool2+consume+skill+forge = 6) with a line of headroom for
+    -- word-wrap. Costs the scrollable procedure grid above ~1 visible row
+    -- (gridH shrinks by the same 40px) -- a minor, purely cosmetic tradeoff
+    -- since that grid already scrolls.
+    local detailsH = 190
     local gridH = PANEL_H - detailsH - 8
     self.procLibrary = TWAProcScrollList:new(rightX, contentTop, RIGHT_W, gridH, self)
     self.procLibrary:initialise()

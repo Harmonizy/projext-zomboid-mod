@@ -4143,6 +4143,36 @@ explicitly requested:
   recipe data (0 missing). PROCEDURES_REFERENCE.txt regenerated with a full
   new Metallurgy section. modversion 0.22.0 -> 0.23.0.
 
+THIRTY-NINTH round (2026-09-27) -- real bug: welding procedures' skill
+requirement silently invisible in the UI:
+- User reported "มันไม่ขึ้นว่าต้องการสกิลอะไรเหมือนกรรมวิธีอื่นๆ" for
+  WeldMetal/WeldWork/WeldWorkComplex specifically. First verified the DATA
+  was actually correct (grep-confirmed skill = "MetalWelding:1"/"MetalWelding:1"/
+  "MetalWelding:2" all present in Procedures.lua, matching exactly what the
+  user described wanting) before looking for a display bug -- ruled out "the
+  skill isn't actually set" before assuming a rendering issue.
+- Real root cause found by doing the actual layout math: drawProcedureDetails'
+  requirement loop breaks once `ty > textBottom`, and at the old detailsH=150,
+  only ~4 requirement lines fit in the available vertical space before that
+  cutoff. TWAProcedures.DescribeAll always orders its reqs as light, tool,
+  tool2, consume, skill, forge -- so any procedure needing tool AND tool2 AND
+  a consumed material (WeldMetal/WeldWork/WeldWorkComplex: WELDING_MASK +
+  BlowTorch + ScrapMetal) already fills all 4 available line slots on
+  light+tool+tool2+consume, silently pushing the skill requirement (5th in
+  order) past the cutoff -- never drawn, even though DescribeAll genuinely
+  returned it. NOT a welding-specific bug -- these 3 were just the first
+  procedures in the library to actually have 2 tools + 1 material
+  simultaneously, hitting a real systemic space shortage that would affect
+  ANY procedure with that many requirements.
+- Fixed by bumping detailsH from 150 to 190 (procDetailsY's own vertical
+  budget) -- recomputed the same layout math: ~7 lines now fit before the
+  cutoff, comfortably covering even the heaviest real case (light+tool+
+  tool2+consume+skill+forge = 6) with headroom for word-wrap. Costs the
+  scrollable procedure-library grid above ~1 visible row (gridH shrinks by
+  the same 40px, since gridH = PANEL_H - detailsH - 8) -- a minor, purely
+  cosmetic tradeoff given that grid already scrolls.
+- Re-validated (brace balance clean). modversion 0.23.0 -> 0.23.1.
+
 
 9. Checklist before starting any new work
 =======================================
