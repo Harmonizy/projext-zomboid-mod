@@ -4192,6 +4192,23 @@ ui สร้าง":
 - Re-validated (brace balance clean, EN+TH JSON valid). modversion
   0.23.1 -> 0.23.2.
 
+FORTY-FIRST round (2026-09-27) -- "วัตถุดิบใดที่ใช้ชิ้นงานตั้งต้นเป็น
+แท่งแร่ชนิดต่างๆ ให้เปลี่ยนมาใช้ ก้อนวัตถุดิบ แทน":
+- Every recipe whose single collapsed base item had resolved to a real
+  vanilla Metal Ingot (Base.SteelIngot/IronIngot/CopperIngot/BrassIngot --
+  the same METAL_BASE group from the earlier "Metal Pipe substitute" round)
+  now uses this mod's OWN MaterialLump (HARMONIE_TheWayToAttack.MaterialLump,
+  from the Metallurgy chain added 3 rounds ago) as its base item instead of
+  the real vanilla ingot -- 101 of 248 recipes affected (0 recipes left
+  based on a raw ingot afterward, grep-confirmed). The MetalPipe baseAlt
+  substitute from that earlier round is left in place (not asked to be
+  removed) -- these recipes now accept MaterialLump OR MetalPipe.
+- Real effect: crafting any of these 101 weapons now requires first crafting
+  a MaterialLump via the Metallurgy chain (StartFire + MeltMetal, no base
+  item) -- a genuine new progression step, not just a cosmetic rename.
+- Re-validated (brace balance clean on regenerated RecipeData.lua). modversion
+  0.23.2 -> 0.24.0.
+
 
 9. Checklist before starting any new work
 =======================================
