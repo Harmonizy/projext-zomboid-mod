@@ -982,13 +982,23 @@ function TWACraftWindow:createChildren()
     end
     local searchY = fy + 30
 
-    -- Search box
-    self.searchBox = ISTextEntryBox:new("", leftX, searchY, LEFT_W, 24)
+    -- Search box + an explicit Search button beside it (request 2026-09-28:
+    -- "มีปุ่มกดค้นหาในช่องค้นหาทางซ้าย") -- the box already searches live as
+    -- you type (onTextChange below, unchanged), so this button is a
+    -- redundant-but-explicit way to trigger the exact same search -- plain
+    -- text, no icon, matching the "no icon" preference from the other
+    -- search button just above.
+    local searchBtnW = 60
+    self.searchBox = ISTextEntryBox:new("", leftX, searchY, LEFT_W - searchBtnW - 5, 24)
     self.searchBox:initialise()
     self.searchBox:setPlaceholderText(getText("IGUI_TWA_SearchPlaceholder"))
     local window = self
     self.searchBox.onTextChange = function(box) window.recipeList:setSearch(box:getText()) end
     self:addChild(self.searchBox)
+
+    self.searchButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW, searchY, searchBtnW, 24, getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchButtonClicked)
+    self.searchButton:initialise()
+    self:addChild(self.searchButton)
 
     -- Recipe list (fills the rest of the left column down to the same bottom
     -- edge the center/right panels use).
@@ -1262,6 +1272,14 @@ function TWACraftWindow:onSearchByProcedure()
     self.recipeList:setFilter("All")
     self.recipeList:setTierFilter("All")
     self:applySearch(getText(proc.nameKey))
+end
+
+-- Explicit Search button beside the left search box (request 2026-09-28) --
+-- the box already searches live as you type via its own onTextChange, so
+-- this just re-applies whatever text is currently in it; harmless to press
+-- any time, including with an empty/unchanged box.
+function TWACraftWindow:onSearchButtonClicked()
+    self.recipeList:setSearch(self.searchBox:getText())
 end
 
 -- Performing a procedure is now a real queued timed action (request
