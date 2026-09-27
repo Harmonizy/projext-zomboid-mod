@@ -4,7 +4,7 @@ older versions are not tracked here any more (see git history if ever
 needed).
 
 ==============================================================================
-CURRENT LIBRARY -- 43 procedures, 8 categories
+CURRENT LIBRARY -- 57 procedures, 9 categories
 ==============================================================================
 
 -- Assembly (การประกอบ) (18) --
@@ -113,6 +113,36 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
 
+-- Metallurgy (การถลุงโลหะ) (14) --
+  - StartFire
+      tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=100ms, sound=CraftFixWeapon
+  - MeltMetal
+      tool=Base.Tongs, consumes=ONE OF: IronOre x4 / CopperOre x4 / IronChunk x2 / SteelChunk x2 / CopperScrap x3, skill=(none), time=200ms, sound=CraftFixWeapon
+  - PourMold
+      tool=Base.CeramicCrucibleSmall, consumes=(none), skill=(none), time=150ms, sound=CraftFixWeapon
+  - PourMoldLarge
+      tool=Base.CeramicCrucible, consumes=(none), skill=(none), time=200ms, sound=CraftFixWeapon
+  - CoolCast
+      tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=150ms, sound=CraftFixWeapon
+  - QuenchHarden
+      tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=150ms, sound=CraftFixWeapon
+  - WeldWork
+      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=300ms, sound=CraftWelding
+  - WeldWorkComplex
+      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x2, skill=MetalWelding:2, time=400ms, sound=CraftWelding
+  - PolishMetal
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:1, time=200ms, sound=CraftFixWeapon
+  - GrindMetal
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:2, time=250ms, sound=CraftFixWeapon
+  - EngravePattern
+      tool=SHARP_KNIFE, consumes=(none), skill=Carving:1, time=200ms, sound=CraftFixWeapon
+  - ForgeFold
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:6, forgeTier=Forge, time=400ms, sound=Hammering
+  - ForgeComplex
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x3, skill=Blacksmith:8, forgeTier=AdvancedForge, time=500ms, sound=Hammering
+  - ForgeVacuum
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x4, skill=Blacksmith:10, forgeTier=AdvancedForge, time=600ms, sound=Hammering
+
 ==============================================================================
 RULES ENGINE -- how a recipe's real stats/name decide which procedures it
 needs (gen_craftdata.js addFinishingSteps() + applyAssemblyOverrides(),
@@ -184,9 +214,11 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    AssembleBoneSpike, "*_BarbedWire"/"*BarbedWire" -> WrapBarbedWireAssembly,
    etc. -- see gen_craftdata.js's ASSEMBLY_PATTERNS for the full real-name
    lists). Real result: 75 of the 248 craftable recipes get an Assembly
-   override; this also made ForgeShape currently unused alongside
-   SurfaceCoating (the only 2 craftable items that ever qualified for
-   ForgeShape, BucketMace_Metal/BucketMace_Wood, are also Assembly-matched).
+   override; this also made SurfaceCoating currently unused (the only 2
+   craftable items that ever qualified for ForgeShape, BucketMace_Metal/
+   BucketMace_Wood, are Assembly-matched instead) -- ForgeShape itself is
+   NOT unused any more since the Metallurgy chain below (2026-09-27) also
+   uses it for MaterialBar_Rare.
 
 A recipe's final procedure list is the UNION of every rule its own real
 stats/name trigger across all 8 categories -- e.g. a long, heavy-swinging,
@@ -199,3 +231,54 @@ crafting window uses to grey out a recipe in the dark) -- shown as a
 "too dark" missing-requirement line like any other, and re-checked every
 tick while the timed action is running (it stops if the light drops out
 mid-action, e.g. a torch running out).
+
+==============================================================================
+METALLURGY CHAIN (added 2026-09-27) -- 6 new material items, hand-
+authored recipes (gen_craftdata.js's METALLURGY_RECIPES, NOT generated
+from the weapon table)
+==============================================================================
+
+Read straight from real vanilla B42 blacksmithing (recipes_blacksmith_
+bar.txt / _other_metals.txt / entity_forge_i/ii/iii.txt):
+  MaterialLump          (no base item) -> StartFire, MeltMetal
+  MaterialBar_Uncommon  (base=MaterialLump) -> StartFire, PourMold, CoolCast
+  MaterialBar_Rare      (base=MaterialLump) -> StartFire, PourMold,
+                         ForgeShape, CoolCast, WeldWork
+  MaterialBar_Epic      (base=MaterialLump) -> StartFire, PourMoldLarge,
+                         ForgeFold, CoolCast, WeldWork, PolishMetal
+  MaterialBar_Elite     (base=MaterialLump) -> StartFire, PourMoldLarge,
+                         ForgeComplex, CoolCast, WeldWorkComplex, PolishMetal,
+                         GrindMetal
+  MaterialBar_Legendary (base=MaterialLump) -> StartFire, PourMoldLarge,
+                         ForgeVacuum, CoolCast, WeldWorkComplex, PolishMetal,
+                         GrindMetal, EngravePattern
+Tier is HAND-ASSIGNED (not DPS-derived -- these are materials, not
+weapons, so they have no MaxDamage/BaseSpeed at all): MaterialLump=
+Common, then Uncommon/Rare/Epic/Elite/Legendary matching each bar's own
+name exactly. `category` = "Material", not one of the weapon Categories
+tabs -- these only show under CraftUI's All/Available filters (no
+dedicated tab exists for materials yet).
+
+Skill levels are exactly as given by the user and were NOT changed;
+tools/materials for steps that didn't specify them are this mod's own
+judgment call (documented per-procedure in HARMONIE_TWA_Procedures.lua),
+using only items/tags already established real elsewhere in this file.
+QuenchHarden (Blacksmith:2) is defined but not used by any of these 6
+recipes -- same honest "currently unused" pattern as SurfaceCoating.
+
+Forge-tier gate (CoolCast/QuenchHarden need forgeTier=1 i.e. Primitive-or-
+better, ForgeFold needs forgeTier=2 i.e. Forge-or-better, ForgeComplex/
+ForgeVacuum need forgeTier=3 i.e. AdvancedForge): vanilla's REAL check is
+"is the player USING a specific placed Forge entity" (a separate Entity/
+CraftBench subsystem this mod's inventory-based UI doesn't hook into).
+Approximated instead as "is a real forge of that tier's own sprite PLACED
+within 2 tiles" (nearbyForgeTier() in HARMONIE_TWA_Procedures.lua, matched
+by real sprite names grep-confirmed from entity_forge_i/ii/iii.txt) --
+discussed with and accepted by the user as a practical, testable-and-
+fixable stand-in, not vanilla's literal mechanism.
+
+New consume shape: `{ options = { {itemType, qty}, ... } }` (MeltMetal only
+so far) needs ONE of several real materials, each with its OWN quantity --
+unlike the older `itemTypes` shape, which shares one qty across every
+alternative. MeltMetal's real options: IronOre x4 / CopperOre x4 /
+IronChunk x2 / SteelChunk x2 / CopperScrap x3.

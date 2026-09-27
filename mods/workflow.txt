@@ -4062,6 +4062,87 @@ the top, PrecisionGrind/ForgeShape shared into Piercing too:
   note under Piercing about the 2 shared procedures. Re-validated (brace
   balance clean), modversion 0.21.2 -> 0.22.0.
 
+THIRTY-EIGHTH round (2026-09-27) -- MAJOR: a new "Metallurgy" procedure
+category (14 procedures) + 6 new craftable material items (a raw lump plus
+5 rarity-tiered bars), reading real vanilla B42 blacksmithing conditions as
+explicitly requested:
+- User: "กรรมวิธี พยายามใช้ vanilla ไปอ่านเงื่อนไขในสูตรคราฟ vanilla
+  สามารถใช้เงื่อนไข ต้องการเตาตีเหล็กดั้งเดิมหรือดีกว่า/ธรรมดาหรือดีกว่า/
+  ขั้นสูง" -- researched real vanilla B42 blacksmithing before writing any
+  code: found the actual 3 real recipe Tags (PrimitiveForge/Forge/
+  AdvancedForge, grep-confirmed from recipes_blacksmith_bar.txt and
+  recipes_blacksmith_other_metals.txt) and the 3 real placed Forge entities
+  they correspond to (Forge_Primitive_Forge/Forge/Advanced_Forge, entity_
+  forge_i/ii/iii.txt) -- a higher tier's own CraftBench.Recipes always lists
+  every lower tier too, confirming "or better" semantics. Real snag found
+  and flagged BEFORE writing anything: vanilla's actual check is "is the
+  player USING this specific placed entity" -- a whole separate Entity/
+  CraftBench subsystem this mod's own standalone inventory-based UI has no
+  hook into, and there's no confirmed safe Lua path from a plain scanned
+  IsoObject to its Entity definition name. Used AskUserQuestion rather than
+  guessing on something this consequential and unverifiable from static
+  code alone -- user chose "check that a real forge is nearby" over not
+  checking at all, accepting it might need in-game testing.
+- Implemented nearbyForgeTier(player) in HARMONIE_TWA_Procedures.lua: scans
+  a 5x5 tile area around the player's square (real square:getObjects() +
+  isoObject:getSprite():getName(), both confirmed-real, widely-used vanilla
+  APIs) against each forge tier's own real sprite names (grep-confirmed
+  from entity_forge_i/ii/iii.txt's SpriteConfig blocks), returns the
+  highest tier found. FLAGGED explicitly in code comments: this is a
+  practical, testable-and-fixable approximation of vanilla's real
+  "isUsingPlayer" entity check, not the literal mechanism -- if it doesn't
+  reliably detect a real placed forge in-game, the sprite lists (possibly
+  missing an untested tile/rotation) are the first thing to check. Wired
+  into CheckEligibility/DescribeAll as a new `forgeTier` field on a
+  procedure, shown as a real missing-requirement line (new IGUI_TWA_
+  ReqForgePrimitive/Normal/Advanced keys, EN+TH, matching the user's own
+  exact wording).
+- "หลอมโลหะ...วัตถุดิบเป็นโลหะทุกประเภท โดยแต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน
+  ทำได้ไหม": yes -- added a genuinely new consume shape, `{ options =
+  { {itemType, qty}, ... } }`, needing ONE of several real materials each
+  with its OWN quantity (the existing `itemTypes` shape only supported one
+  shared qty across every alternative). Updated CheckEligibility/Consume/
+  DescribeAll in Procedures.lua and describeMissing/describeOne in
+  CraftUI.lua to handle it. Real materials used (grep-confirmed):
+  Base.IronOre x4 / Base.CopperOre x4 / Base.IronChunk x2 /
+  Base.SteelChunk x2 / Base.CopperScrap x3.
+- 14 new procedures under a new "Metallurgy" (การถลุงโลหะ) category:
+  StartFire, MeltMetal, PourMold, PourMoldLarge, CoolCast, QuenchHarden,
+  WeldWork, WeldWorkComplex, PolishMetal, GrindMetal, EngravePattern,
+  ForgeFold, ForgeComplex, ForgeVacuum. Skill levels are EXACTLY as given
+  by the user and were not changed (Blacksmith 2/2/6/8/10, MetalWelding
+  1/2, Glassmaking 1/2, Carving 1 -- kept even where the pairing looks
+  unusual, e.g. Glassmaking for metal polishing, per explicit instruction
+  not to touch skills); tools/materials for steps that didn't specify them
+  are this mod's own judgment call, using only items/tags already
+  established real elsewhere in this file (Base.Tongs, Base.CeramicCrucible/
+  CeramicCrucibleSmall -- real small/large ceramic crucibles, grep-
+  confirmed -- SHARP_KNIFE, HAMMER family, WELDING_MASK+BlowTorch,
+  Whetstone/File/SmallFileSet, Charcoal family).
+- 6 new craftable HARMONIE items (TWA_items_other.txt + Translate/TH/
+  ItemName.json, EN DisplayName in-script): MaterialLump (no base item,
+  procedures=StartFire+MeltMetal) and 5 rarity-tiered MaterialBar_
+  Uncommon/Rare/Epic/Elite/Legendary (all base=MaterialLump, procedure
+  chains exactly as given -- confirmed "ตีขึ้นรูป" in the user's own rare-
+  tier list means the EXISTING ForgeShape procedure by its own Thai display
+  name, not a new one). Hand-authored into gen_craftdata.js as
+  METALLURGY_RECIPES (bypasses the weapon-table-driven generation entirely
+  -- these aren't weapons). Tier is HAND-ASSIGNED (Common/Uncommon/Rare/
+  Epic/Elite/Legendary matching each item's own rarity word), not DPS-
+  derived, since materials have no MaxDamage/BaseSpeed at all. `category` =
+  "Material" (not a weapon Categories tab) -- flagged: these only show
+  under CraftUI's All/Available filters for now, no dedicated tab exists
+  for materials yet.
+- Real honest result: QuenchHarden ends up unused by any of the 6 new
+  recipes (defined but never required, same pattern as SurfaceCoating);
+  ForgeShape is NO LONGER unused (MaterialBar_Rare uses it) -- corrected
+  the stale claim in PROCEDURES_REFERENCE.txt's own Rule H section.
+- Re-validated: brace/paren balance clean on Procedures.lua/CraftUI.lua/
+  TWA_items_other.txt/regenerated RecipeData.lua, EN+TH+ItemName JSON all
+  valid, all 57 procedure ids cross-referenced against the regenerated
+  recipe data (0 missing). PROCEDURES_REFERENCE.txt regenerated with a full
+  new Metallurgy section. modversion 0.22.0 -> 0.23.0.
+
 
 9. Checklist before starting any new work
 =======================================

@@ -636,6 +636,29 @@ local function skillDisplayName(skillName)
     return getText("IGUI_perks_" .. skillName)
 end
 
+-- Request 2026-09-27: "หลอมโลหะ...แต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน" -- a
+-- consume slot needing ONE of several real materials, each with its OWN
+-- quantity (see the `options` shape in HARMONIE_TWA_Procedures.lua).
+local function optionsSpecName(options)
+    local names = {}
+    for _, opt in ipairs(options) do
+        local it = getItemScript(opt.itemType)
+        local name = it and it:getDisplayName() or opt.itemType
+        names[#names + 1] = name .. " x" .. opt.qty
+    end
+    return table.concat(names, " / ")
+end
+
+-- request 2026-09-27: "เตาตีเหล็กดั้งเดิมหรือดีกว่า / ธรรมดาหรือดีกว่า /
+-- ขั้นสูง" -- real vanilla forge-tier wording, see
+-- HARMONIE_TWA_Procedures.lua's nearbyForgeTier() for the real Tags this
+-- maps to (PrimitiveForge/Forge/AdvancedForge).
+local FORGE_TIER_KEYS = {
+    [1] = "IGUI_TWA_ReqForgePrimitive",
+    [2] = "IGUI_TWA_ReqForgeNormal",
+    [3] = "IGUI_TWA_ReqForgeAdvanced",
+}
+
 function TWAProcScrollList:describeMissing(missing)
     local lines = {}
     for _, m in ipairs(missing) do
@@ -646,8 +669,12 @@ function TWAProcScrollList:describeMissing(missing)
         elseif m.kind == "consume" then
             local name = consumeSpecName(m.itemTypes)
             lines[#lines + 1] = getText("IGUI_TWA_MissingItem") .. " " .. name .. " x" .. m.qty .. " (" .. m.have .. "/" .. m.qty .. ")"
+        elseif m.kind == "consume_options" then
+            lines[#lines + 1] = getText("IGUI_TWA_MissingItem") .. " " .. optionsSpecName(m.options)
         elseif m.kind == "skill" then
             lines[#lines + 1] = getText("IGUI_TWA_MissingSkill") .. " " .. skillDisplayName(m.skill) .. " " .. m.level
+        elseif m.kind == "forge" then
+            lines[#lines + 1] = getText(FORGE_TIER_KEYS[m.tier])
         end
     end
     return lines
@@ -665,8 +692,12 @@ function TWAProcScrollList:describeOne(req)
     elseif req.kind == "consume" then
         local name = consumeSpecName(req.itemTypes)
         return name .. " x" .. req.qty .. " (" .. req.have .. "/" .. req.qty .. ")"
+    elseif req.kind == "consume_options" then
+        return optionsSpecName(req.options)
     elseif req.kind == "skill" then
         return getText("IGUI_TWA_ReqSkill") .. ": " .. skillDisplayName(req.skill) .. " " .. req.level
+    elseif req.kind == "forge" then
+        return getText(FORGE_TIER_KEYS[req.tier])
     end
     return "?"
 end

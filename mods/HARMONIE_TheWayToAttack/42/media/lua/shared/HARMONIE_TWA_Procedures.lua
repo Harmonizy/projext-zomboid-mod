@@ -106,6 +106,68 @@ local function countAny(inv, types)
     return total
 end
 
+-- request 2026-09-27: "เตาตีเหล็กดั้งเดิมหรือดีกว่า / เตาตีเหล็กธรรมดา
+-- หรือดีกว่า / เตาตีเหล็กขั้นสูง" -- real vanilla B42 blacksmithing gates
+-- these on 3 tiers of PLACED forge entity (Forge_Primitive_Forge/Forge/
+-- Advanced_Forge, real recipe Tags = PrimitiveForge/Forge/AdvancedForge,
+-- grep-confirmed from entity_forge_i/ii/iii.txt and
+-- recipes_blacksmith_bar.txt) -- a higher tier forge's own CraftBench
+-- always lists every lower tier too (Forge II = "PrimitiveForge;Forge",
+-- Forge III = all 3), so "or better" just means "highest tier found nearby
+-- >= required".
+--
+-- Vanilla's REAL check is "is the player USING this specific placed
+-- entity" -- a whole separate Entity/CraftBench subsystem this mod's own
+-- standalone inventory-based UI has no hook into, and there's no confirmed
+-- safe Lua path from a plain scanned IsoObject to its Entity definition
+-- name (only found `logic:getEntity()` FROM an existing HandcraftLogic,
+-- never a raw IsoObject -> entity accessor). Approximated instead as "is a
+-- real forge of that tier's own sprite PLACED within 2 tiles", matched by
+-- each entity's own real sprite row names (grep-confirmed from
+-- entity_forge_i/ii/iii.txt's SpriteConfig blocks) via the same real
+-- isoObject:getSprite():getName() API already used throughout vanilla.
+-- FLAGGED (discussed with the user, who accepted this over not checking at
+-- all): this is a practical, testable-and-fixable stand-in, not vanilla's
+-- literal mechanism -- if it doesn't reliably detect a real placed forge
+-- in-game, these sprite lists (possibly missing a tile/rotation not seen
+-- in the entity's own multi-face SpriteConfig) are the first thing to
+-- check.
+local FORGE_TIER_SPRITES = {
+    [1] = { crafted_01_61 = true, crafted_01_20 = true, crafted_01_21 = true, crafted_01_62 = true },
+    [2] = { crafted_01_42 = true, crafted_01_116 = true, crafted_01_38 = true, crafted_01_54 = true, crafted_01_19 = true, crafted_01_36 = true },
+    [3] = {
+        crafted_02_25 = true, crafted_01_18 = true, crafted_01_39 = true, crafted_02_24 = true, crafted_02_32 = true,
+        crafted_02_26 = true, crafted_02_27 = true, crafted_02_33 = true, crafted_01_35 = true, crafted_01_55 = true,
+    },
+}
+
+local function nearbyForgeTier(player)
+    local sq = player:getCurrentSquare()
+    if not sq then return 0 end
+    local cell = getCell()
+    local px, py, pz = sq:getX(), sq:getY(), sq:getZ()
+    local best = 0
+    for dx = -2, 2 do
+        for dy = -2, 2 do
+            local s = cell:getGridSquare(px + dx, py + dy, pz)
+            if s then
+                local objs = s:getObjects()
+                for i = 0, objs:size() - 1 do
+                    local obj = objs:get(i)
+                    local sprite = obj and obj:getSprite()
+                    local name = sprite and sprite:getName()
+                    if name then
+                        for tier, set in pairs(FORGE_TIER_SPRITES) do
+                            if set[name] and tier > best then best = tier end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return best
+end
+
 -- 25 procedures, grouped into the 7 real gameplay-purpose categories the
 -- rules engine (gen_craftdata.js) actually assigns by -- Sharpness/
 -- Piercing/Handle/Balance/Structure/Toughness/WearResist. `category` here
@@ -388,6 +450,107 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "WRENCH" },
         consumes = { { itemType = "Base.SpadeHead", qty = 1 } }, time = 200, sound = "RepairWithWrench",
     },
+
+    -- ===== Metallurgy (การถลุงโลหะ) -- request 2026-09-27: "กรรมวิธี
+    -- พยายามใช้ vanilla ไปอ่านเงื่อนไขในสูตรคราฟ" -- a new raw-material
+    -- refining chain (ore/scrap -> lump -> tiered bars), read straight from
+    -- real vanilla B42 blacksmithing (recipes_blacksmith_bar.txt/
+    -- _other_metals.txt). Real items grep-confirmed: Base.IronOre/
+    -- CopperOre (raw ore), Base.IronChunk/SteelChunk/CopperScrap
+    -- (part-refined), Base.Tongs, Base.CeramicCrucibleSmall/CeramicCrucible
+    -- (real small/large ceramic crucibles). Skill levels are exactly as
+    -- given and must not change; tools/materials for steps that didn't
+    -- specify them are this mod's own judgment call, using only items/tags
+    -- already established real elsewhere in this file. =====
+    StartFire = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_StartFire", icon = "Matches",
+        tool = { { kind = "type", value = "Base.Lighter" }, { kind = "type", value = "Base.Matches" } },
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 1 } },
+        time = 100, sound = "CraftFixWeapon",
+    },
+    -- "วัตถุดิบเป็นโลหะทุกประเภท โดยแต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน" --
+    -- a new `options` consume shape (one real real material picked from a
+    -- list, each with its OWN quantity, not one shared qty across all
+    -- alternatives like the existing itemTypes shape) -- see
+    -- CheckEligibility/Consume/DescribeAll below for the matching logic.
+    MeltMetal = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_MeltMetal", icon = "IronChunk",
+        tool = { kind = "type", value = "Base.Tongs" },
+        consumes = { { options = {
+            { itemType = "Base.IronOre", qty = 4 },
+            { itemType = "Base.CopperOre", qty = 4 },
+            { itemType = "Base.IronChunk", qty = 2 },
+            { itemType = "Base.SteelChunk", qty = 2 },
+            { itemType = "Base.CopperScrap", qty = 3 },
+        } } },
+        time = 200, sound = "CraftFixWeapon",
+    },
+    PourMold = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PourMold", icon = "Ceramic_Crucible_Fired",
+        tool = { kind = "type", value = "Base.CeramicCrucibleSmall" },
+        time = 150, sound = "CraftFixWeapon",
+    },
+    PourMoldLarge = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PourMoldLarge", icon = "Ceramic_Crucible_Fired",
+        tool = { kind = "type", value = "Base.CeramicCrucible" },
+        time = 200, sound = "CraftFixWeapon",
+    },
+    CoolCast = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_CoolCast", icon = "BlacksmithTongs",
+        tool = { kind = "type", value = "Base.Tongs" },
+        skill = "Blacksmith:2", forgeTier = 1, time = 150, sound = "CraftFixWeapon",
+    },
+    QuenchHarden = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_QuenchHarden", icon = "BlacksmithTongs",
+        tool = { kind = "type", value = "Base.Tongs" },
+        skill = "Blacksmith:2", forgeTier = 1, time = 150, sound = "CraftFixWeapon",
+    },
+    WeldWork = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWork", icon = "BlowTorch",
+        tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
+        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, skill = "MetalWelding:1", time = 300, sound = "CraftWelding",
+    },
+    WeldWorkComplex = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWorkComplex", icon = "BlowTorch",
+        tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
+        consumes = { { itemType = "Base.ScrapMetal", qty = 2 } }, skill = "MetalWelding:2", time = 400, sound = "CraftWelding",
+    },
+    PolishMetal = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PolishMetal", icon = "Whetstone2",
+        tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
+        skill = "Glassmaking:1", time = 200, sound = "CraftFixWeapon",
+    },
+    GrindMetal = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_GrindMetal", icon = "Whetstone2",
+        tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
+        skill = "Glassmaking:2", time = 250, sound = "CraftFixWeapon",
+    },
+    EngravePattern = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_EngravePattern", icon = "Whetstone2",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        skill = "Carving:1", time = 200, sound = "CraftFixWeapon",
+    },
+    ForgeFold = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "Ingot_Steel",
+        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool2 = { kind = "type", value = "Base.Tongs" },
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
+        skill = "Blacksmith:6", forgeTier = 2, time = 400, sound = "Hammering",
+    },
+    ForgeComplex = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeComplex", icon = "Ingot_Steel",
+        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool2 = { kind = "type", value = "Base.Tongs" },
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 3 } },
+        skill = "Blacksmith:8", forgeTier = 3, time = 500, sound = "Hammering",
+    },
+    ForgeVacuum = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeVacuum", icon = "Ingot_Steel",
+        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool2 = { kind = "type", value = "Base.Tongs" },
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 4 } },
+        skill = "Blacksmith:10", forgeTier = 3, time = 600, sound = "Hammering",
+    },
 }
 
 -- 7 categories in display order, each with its own translated header and
@@ -419,6 +582,11 @@ TWAProcedures.Categories = {
     { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
     { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
     { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
+    { key = "Metallurgy", nameKey = "IGUI_TWA_ProcCat_Metallurgy", ids = {
+        'StartFire', 'MeltMetal', 'PourMold', 'PourMoldLarge', 'CoolCast', 'QuenchHarden',
+        'WeldWork', 'WeldWorkComplex', 'PolishMetal', 'GrindMetal', 'EngravePattern',
+        'ForgeFold', 'ForgeComplex', 'ForgeVacuum',
+    } },
 }
 
 TWAProcedures.Order = {}
@@ -449,10 +617,20 @@ function TWAProcedures.CheckEligibility(proc, player)
 
     local inv = player:getInventory()
     for _, c in ipairs(proc.consumes or {}) do
-        local types = altTypes(c)
-        local have = countAny(inv, types)
-        if have < c.qty then
-            missing[#missing + 1] = { kind = "consume", itemType = types[1], itemTypes = types, qty = c.qty, have = have }
+        if c.options then
+            local met = false
+            for _, opt in ipairs(c.options) do
+                if inv:getItemCountRecurse(opt.itemType) >= opt.qty then met = true break end
+            end
+            if not met then
+                missing[#missing + 1] = { kind = "consume_options", options = c.options }
+            end
+        else
+            local types = altTypes(c)
+            local have = countAny(inv, types)
+            if have < c.qty then
+                missing[#missing + 1] = { kind = "consume", itemType = types[1], itemTypes = types, qty = c.qty, have = have }
+            end
         end
     end
 
@@ -465,6 +643,10 @@ function TWAProcedures.CheckEligibility(proc, player)
                 missing[#missing + 1] = { kind = "skill", skill = skillName, level = lvl }
             end
         end
+    end
+
+    if proc.forgeTier and nearbyForgeTier(player) < proc.forgeTier then
+        missing[#missing + 1] = { kind = "forge", tier = proc.forgeTier }
     end
 
     return #missing == 0, missing
@@ -482,9 +664,17 @@ function TWAProcedures.DescribeAll(proc, player)
 
     local inv = player:getInventory()
     for _, c in ipairs(proc.consumes or {}) do
-        local types = altTypes(c)
-        local have = countAny(inv, types)
-        reqs[#reqs + 1] = { kind = "consume", itemType = types[1], itemTypes = types, qty = c.qty, have = have, met = have >= c.qty }
+        if c.options then
+            local met = false
+            for _, opt in ipairs(c.options) do
+                if inv:getItemCountRecurse(opt.itemType) >= opt.qty then met = true break end
+            end
+            reqs[#reqs + 1] = { kind = "consume_options", options = c.options, met = met }
+        else
+            local types = altTypes(c)
+            local have = countAny(inv, types)
+            reqs[#reqs + 1] = { kind = "consume", itemType = types[1], itemTypes = types, qty = c.qty, have = have, met = have >= c.qty }
+        end
     end
 
     if proc.skill then
@@ -497,21 +687,47 @@ function TWAProcedures.DescribeAll(proc, player)
         end
     end
 
+    if proc.forgeTier then
+        reqs[#reqs + 1] = { kind = "forge", tier = proc.forgeTier, met = nearbyForgeTier(player) >= proc.forgeTier }
+    end
+
     return reqs
+end
+
+-- request 2026-09-27: "หลอมโลหะ...แต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน" -- a
+-- consume slot shaped as `{ options = { {itemType, qty}, ... } }` needs
+-- exactly ONE of those (type, qty) pairs, each with its OWN quantity
+-- (unlike the existing `itemTypes` shape, which shares one qty across every
+-- alternative). Consumes whichever real option the player actually has.
+local function consumeOptions(inv, options)
+    for _, opt in ipairs(options) do
+        if inv:getItemCountRecurse(opt.itemType) >= opt.qty then
+            for _ = 1, opt.qty do
+                local it = inv:getFirstTypeEvalRecurse(opt.itemType, predicateNotBroken)
+                    or inv:getFirstTypeEvalRecurse(opt.itemType, function() return true end)
+                if it then inv:Remove(it) end
+            end
+            return
+        end
+    end
 end
 
 function TWAProcedures.Consume(proc, player)
     local inv = player:getInventory()
     for _, c in ipairs(proc.consumes or {}) do
-        local types = altTypes(c)
-        for _ = 1, c.qty do
-            local it = nil
-            for _, t in ipairs(types) do
-                it = inv:getFirstTypeEvalRecurse(t, predicateNotBroken)
-                    or inv:getFirstTypeEvalRecurse(t, function() return true end)
-                if it then break end
+        if c.options then
+            consumeOptions(inv, c.options)
+        else
+            local types = altTypes(c)
+            for _ = 1, c.qty do
+                local it = nil
+                for _, t in ipairs(types) do
+                    it = inv:getFirstTypeEvalRecurse(t, predicateNotBroken)
+                        or inv:getFirstTypeEvalRecurse(t, function() return true end)
+                    if it then break end
+                end
+                if it then inv:Remove(it) end
             end
-            if it then inv:Remove(it) end
         end
     end
 end
