@@ -62,11 +62,12 @@ Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
     local target = actual[1]
     local searchName, resumeItem
     if target then
-        -- Request 2026-09-27: an item previously taken out early via the
-        -- new Incomplete button carries its own saved progress in ModData
-        -- (see TWA_IncompleteCraftAction.lua) -- right-clicking THAT exact
-        -- item resumes it directly instead of just prefilling a search.
-        if target:getModData().TWA_Incomplete and target:getModData().TWA_RecipeId then
+        -- Request 2026-09-27/28: a base item previously bookmarked via the
+        -- Incomplete button carries its own saved progress in ModData (see
+        -- HARMONIE_TWA_CraftUI.lua's onIncomplete) -- right-clicking THAT
+        -- exact item resumes it directly instead of just prefilling a
+        -- search.
+        if target:getModData().TWA_RecipeId then
             resumeItem = target
         end
         searchName = TWACraftUI.autoSearchNameFor(target:getFullType())

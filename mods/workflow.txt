@@ -1828,9 +1828,12 @@ eligibility/consume/XP logic), `HARMONIE_TWA_RecipeData.lua` (shared,
 GENERATED — never hand-edit, see gen_craftdata.js below), `HARMONIE_TWA_
 CraftUI.lua` (client, the 3-panel window), `TWA_PerformProcedureAction.lua`
 (client, one procedure = one real queued timed action), `TWA_FinishCraftAction.lua`
-(client, consumes the base item(s), spawns the result, tags its tier),
-`HARMONIE_TWA_TierTooltip.lua` (client, shows tier+stats on ANY hovered melee
-weapon by looking it up in `TWARecipeData.Stats`, not just mod-crafted ones),
+(client, consumes the base item(s), spawns the result, stamps crafter name +
+rolled grade as ModData — never renames the item, see the collaborative-
+crafting paragraph below), `HARMONIE_TWA_TierTooltip.lua` (client, shows
+tier+stats on ANY hovered melee weapon — dynamically computed live off the
+item's own real stats for an actual weapon, statically looked up in
+`TWARecipeData.Stats` only for non-weapon materials, see below),
 `HARMONIE_TWA_CraftTrigger.lua` (client, opens the window). Generator:
 `scratchpad/gen_craftdata.js` (Node, not shipped) reads `twa_item_table.json`/
 `vanilla_weapon_table.json` (from `extract_items.js`/`extract_vanilla_weapons.js`)
@@ -2017,37 +2020,40 @@ first thing to check/expand — the real entities are multi-tile, so a
 rotation/tile not seen in the entity's own SpriteConfig block could be
 missing. ***
 
-Multiplayer collaborative crafting (request 2026-09-27): a recipe's result
-can now be taken out of the crafting process EARLY, before every procedure is
-done, as a real physical item — the "Incomplete" button (center panel, 3rd
-button alongside Cancel/Finish) queues `TWA_IncompleteCraftAction.lua`, which
-consumes base/base2 right then (same as a real Finish) and spawns the result
-item tagged with ModData: `TWA_Incomplete=true`, `TWA_RecipeId`,
-`TWA_DoneProcedures` (a snapshot of whichever procedures were done so far),
-`TWA_BaseName` (the item's own tier-suffixed name BEFORE the "[Incomplete]"
-suffix is appended — captured so the real Finish can restore it later without
-string-stripping a translated suffix, see 8.13). Right-clicking that exact
-item (`HARMONIE_TWA_CraftTrigger.lua`'s inventory context-menu handler checks
-`TWA_Incomplete`+`TWA_RecipeId` on the actual clicked item) reopens the
-crafting UI already resuming it (`TWACraftWindow:resumeFromItem`) — from that
-point on, `TWACraftWindow:currentDone()` reads/writes DIRECTLY into that
-item's own ModData instead of the window's own `self.progress[recipe.id]`
-table, so a second physical half-finished copy of the same recipe never
-collides with a different one, and progress is saved continuously with no
-separate "save" step (performing a procedure while resumed edits the real
-item immediately). Finishing a resumed item (`TWA_FinishCraftAction.lua`'s
-`self.resumeItem` branch) does NOT re-consume base/base2 or spawn a new item
-— it only clears the Incomplete tags, restores the pre-suffix name, and
-stamps `TWA_CraftedBy` (the FINISHING player's in-character forename+surname)
-+ `TWA_Grade` (a rolled S/A/B/C/D/E/F letter, verbatim requested odds
-0/1/3/6/15/25/50 — S is therefore never reachable by pure chance right now,
-kept exactly as given rather than adjusted, since 0% for the top grade reads
-like it's meant to require some other future condition, not plain luck; not
-read by anything else yet, purely stored for a later feature). All 3 —
-crafted-by/grade/incomplete-status — are shown on the real item's own hover
-tooltip via a new block in `HARMONIE_TWA_TierTooltip.lua`, read per-instance
-from ModData (unlike tier, which is looked up by fullType from the Stats
-table and is the same for every copy). The recipe-list search
+Multiplayer collaborative crafting (request 2026-09-27, DESIGN CORRECTED
+2026-09-28 — see 8.13's own note on the first, wrong attempt): a player can
+bookmark their current procedure progress on an in-progress recipe straight
+onto that recipe's own BASE item, without consuming or spawning anything —
+the "Incomplete" button (center panel, 3rd button alongside Cancel/Finish,
+`TWACraftWindow:onIncomplete`) just writes `TWA_RecipeId` + a
+`TWA_DoneProcedures` snapshot into the base item's own ModData directly (no
+queued timed action — nothing physically changes, so there's nothing to
+animate/consume/spawn). base2, when the recipe has one, is left untouched —
+only the PRIMARY base item ever carries the bookmark, avoiding a 2-item sync
+problem entirely. Right-clicking that exact base item later
+(`HARMONIE_TWA_CraftTrigger.lua`'s inventory handler checks `TWA_RecipeId` on
+the clicked item) reopens the crafting UI already resuming it
+(`TWACraftWindow:resumeFromItem`) — from that point on,
+`TWACraftWindow:currentDone()` reads/writes DIRECTLY into that item's own
+ModData instead of the window's own `self.progress[recipe.id]` table, so
+progress is saved continuously with no separate "save" step. Finishing
+(`TWA_FinishCraftAction.lua`) is now UNCHANGED regardless of whether the
+recipe being finished was resumed from a bookmark or started completely
+fresh — it always consumes base/base2 and spawns the result the exact same
+way, since neither was ever pre-consumed by Incomplete; the bookmarked base
+item's ModData simply ceases to exist along with it once consumed, nothing
+needs manual clearing. Finish also now stamps `TWA_CraftedBy` (the FINISHING
+player's in-character forename+surname) and `TWA_Grade` (a rolled S/A/B/C/D/
+E/F letter, verbatim requested odds 0/1/3/6/15/25/50 — S is therefore never
+reachable by pure chance, kept exactly as given since 0% for the top grade
+reads like it's meant to require some other future condition, not plain
+luck; not read by anything else yet, purely stored for a later feature) as
+ModData ONLY — request 2026-09-28 explicitly forbids renaming the item at
+any point in any of this ("ไม่ว่าจะผ่านกระบวนการไหน ไม่ต้องเปลี่ยนชื่อไอเท็ม
+เลย กันความสับสน"), which also retroactively removed the earlier
+tier-suffix-via-`item:setName()` feature from 2026-09-26 entirely — tier is
+no longer written to the item's name OR to ModData at all, see the dynamic-
+tier paragraph below for where it lives now. The recipe-list search
 (`TWARecipeScrollList:matches`) was also extended to match a recipe's
 base/base2 item name and any of its required procedures' own translated
 names, not just the result's name — this is the SAME mechanism reused by (1)
@@ -2058,9 +2064,23 @@ name), and (2) right-clicking a recognized weapon/base item in inventory
 result vs. a consumed base/base2/baseAlt, prefilling search with that item's
 name) — right-clicking anything else, or the ground/a table
 (`OnFillWorldObjectContextMenu`, added fresh, always blank), opens the UI with
-no auto-search. `TWACraftUI.open(player, searchText, resumeItem)` now takes
-these two optional context params; both nil reproduces the exact old
-behavior.
+no auto-search. `TWACraftUI.open(player, searchText, resumeItem)` takes these
+two optional context params; both nil reproduces the exact old behavior.
+
+Dynamic (live-computed) weapon stats/tier on the real item tooltip (request
+2026-09-28: "ต้องไม่ใช่ stats ตายตัว ต้องเป็นแบบ dynamic จากการคำนวน stats
+ของอาวุธนั้นจริงๆ"): `HARMONIE_TWA_TierTooltip.lua`'s hover hook now branches
+on `TWAPartSystem.IsMeleeWeapon(item)` (the same real check the weapon-
+modification UI already uses). For an actual weapon, EVERY stat shown
+(MinDamage/MaxDamage/MaxRange/ConditionMax/Weight, plus DPS and tier derived
+from them) is read fresh off the item's own live getters every render, not
+looked up from the generated `TWARecipeData.Stats` table — so a debug/admin
+edit to an item's stats shows up immediately, and this also now covers ANY
+real weapon, including ones this mod's own generator never scanned. Non-
+weapon items (this mod's own Metallurgy materials, hand-assigned a tier since
+they have no combat stats) keep the OLD static fullType-keyed lookup
+unchanged — there's no live weapon stat to read on a Normal-type item. See
+8.12 for exactly which stat getters are confirmed real vs. best-effort.
 
 
 8.12 Real B42 API/data facts confirmed while building the crafting UI (glossary)
@@ -2154,9 +2174,12 @@ createMenu(_playerNum, _objects, _x, _y)`), same as the inventory event;
 handler. `InventoryItem:getContainer():isInCharacterInventory(character)` (real,
 from `ISInventoryPaneContextMenu.lua`'s own `testItem:getContainer():
 isInCharacterInventory(playerObj)`) is the correct live re-check for "does
-this exact item instance still belong to this character right now" — used by
-`TWA_FinishCraftAction.lua`'s resumeItem branch instead of re-checking
-ownership by fullType (which wouldn't distinguish which specific copy).
+this exact item instance still belong to this character right now", as
+opposed to re-checking ownership by fullType (which wouldn't distinguish
+which specific copy) — not currently used in this mod's own code (the design
+that needed it was reworked, see 8.11's collaborative-crafting paragraph),
+but worth keeping in mind for anything that needs to track a SPECIFIC item
+instance rather than "any item of this type" again later.
 Storing a nested Lua table (not just scalars) in an item/character's own
 `getModData()` is a real, established vanilla pattern, not something risky
 this mod invented — confirmed from vanilla's own `TrapSystem.lua`
@@ -2165,6 +2188,28 @@ this mod invented — confirmed from vanilla's own `TrapSystem.lua`
 `TWA_DoneProcedures`, a `{[procId]=true, ...}` map. `ZombRand(n)` (real,
 used throughout vanilla's own TimedActions) returns an integer in `[0, n)` —
 `ZombRand(100)` for a 0-99 percentile roll.
+
+Real LIVE Lua getters on a HandWeapon/InventoryItem instance, confirmed by
+grepping actual vanilla usage — NOT guessed from Java naming conventions
+(request 2026-09-28, wanting the tooltip's stat display to read an item's
+REAL current values instead of a generated baked table): `getMinDamage()`,
+`getMaxDamage()`, `getMaxRange()`, `getConditionMax()`, `getActualWeight()`
+(NOT `getWeight`), `isTwoHandWeapon()` (NOT `isTwoHandedWeapon`),
+`getConditionLowerChance()` (NOT `...OneIn`, despite the SCRIPT field being
+named `ConditionLowerChanceOneIn`) — all confirmed from
+`client/ISUI/AdminPanel/ISItemEditPanel.lua`, the real debug/admin item-stat
+editor, which reads every one of these cold with no prior setter call needed
+(`elem.originalValue = self.item[elem.funcGet](self.item)`), confirming each
+one always reflects the item's live effective value. CONFIRMED NOT FOUND
+anywhere in vanilla's own client/shared/server lua, on an item instance, for
+BaseSpeed / CriticalChance / KnockdownMod / PushBackMod / attack-style
+SubCategory — zero call sites exist for any of these as a weapon getter (the
+only `getBaseSpeed`-like hit anywhere is `IsoPlayer:calculateBaseSpeed()`,
+character movement speed, unrelated; `getSubCategory()` exists but only on
+`SurvivalGuideEntry`, not on an item). Absence of a lua call site doesn't
+prove the underlying Java getter doesn't exist — treat any use of these 5
+specific names on an item as unconfirmed/best-effort (wrap in `pcall` with a
+safe fallback, never call bare) unless a future check finds a real site.
 
 
 8.13 Recurring bug/lesson patterns specific to this immediate-mode custom UI
@@ -2252,18 +2297,22 @@ just a one-off fix:
   code from a pasted brief, and settle disputed mechanics with real
   computed data, not by re-reading the claim more carefully.
 - **Never string-strip a suffix that came from a translated `getText()`
-  string off an item's current name to "undo" it later.** The Incomplete/
-  resume feature (2026-09-27) needs to remove an appended "[Incomplete]"-
-  style tag once an item is truly finished — a `gsub` against the literal
-  English text would silently fail to match on a Thai client, since
-  `IGUI_TWA_IncompleteSuffix` renders differently per language. Fixed by
-  capturing the PRE-suffix name into its own ModData field
-  (`TWA_BaseName`) at the moment the suffix is first appended, then
-  restoring by `item:setName(md.TWA_BaseName)` later — reconstructing from a
-  saved value, never by pattern-matching text that might be in any language.
-  Generalizes: any "temporarily rename, then rename back" flow on a real
-  item must save the ORIGINAL name/value up front, not try to reverse-parse
-  whatever the current display text happens to say.
+  string off an item's current name to "undo" it later** (general lesson,
+  kept even though the specific feature that raised it — an "[Incomplete]"
+  name suffix, 2026-09-27 — was itself removed one day later when the user
+  banned ALL item renaming outright, 2026-09-28: "ไม่ว่าจะผ่านกระบวนการไหน
+  ไม่ต้องเปลี่ยนชื่อไอเท็มเลย กันความสับสน"). While that suffix briefly
+  existed, restoring the pre-suffix name by `gsub`-stripping the CURRENT
+  name against the literal English suffix text would have silently failed on
+  a Thai client, since the translated suffix renders differently per
+  language — the real fix was capturing the pre-suffix name into its own
+  ModData field up front, then restoring by `item:setName(savedValue)`
+  later, never by pattern-matching text that might be in any language.
+  Generalizes to any FUTURE "temporarily rename, then rename back" flow on a
+  real item (there is none in this mod right now — tier/progress/crafted-by/
+  grade are all ModData-only, no renaming anywhere, per that same request):
+  save the ORIGINAL name/value up front, don't try to reverse-parse whatever
+  the current display text happens to say.
 
 
 9. Checklist before starting any new work
