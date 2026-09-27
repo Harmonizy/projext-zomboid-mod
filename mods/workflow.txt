@@ -4229,6 +4229,24 @@ FORTY-SECOND round (2026-09-27) -- "เอา optional metal pipe ออก" +
   remaining, LongLeadPipe/LongMetalPipe confirmed base=Base.MetalPipe).
   modversion 0.24.0 -> 0.24.1.
 
+FORTY-THIRD round (2026-09-27) -- "ชื่อไม้เบสบอลก็ต้องใช้ไม้เบสบอลสิ หรือ
+กิ่งไม้ขนาดใหญ่ก็ได้":
+- Reconsidered the LAST round's own "already correct" call on the 5 aluminum
+  baseball bat OVERRIDES entries (aluminiumbaseballbat/eastonb5baseballbat/
+  avengebaseballbat/louisvillevaporbaseballbat/AluminumBaseballBat, plus
+  easton_adv_360_baseball_bat) -- their real names ALL say "baseball bat",
+  so per this explicit follow-up they should base on a real bat (or a large
+  branch, per the user's own "either works"), not the generic MetalPipe
+  they'd been sitting on since early in this session. Changed their base
+  from 'Base.MetalPipe' to the array ['Base.BaseballBat', 'Base.LargeBranch']
+  -- still goes through the same pickOne() collapse as everywhere else (one
+  fixed, hash-varied choice per recipe, not a return to multi-item bases) --
+  real result: 3 resolved to Base.BaseballBat, 2 to Base.LargeBranch.
+  cold_steel_expandable_baton is untouched (stays Base.MetalPipe) -- its
+  name says "baton", not "baseball bat".
+- Re-validated (brace balance clean on regenerated RecipeData.lua, all 6
+  confirmed no longer on MetalPipe). modversion 0.24.1 -> 0.24.2.
+
 
 9. Checklist before starting any new work
 =======================================
