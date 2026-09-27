@@ -46,7 +46,7 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
-        DisplayName = Material Bar (Uncommon),
+        DisplayName = Tin Bar,
         Icon = SteelBar_Whole,
     }
 
@@ -56,7 +56,7 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
-        DisplayName = Material Bar (Rare),
+        DisplayName = Titanium Bar,
         Icon = SteelBar_Whole,
     }
 
@@ -66,7 +66,7 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
-        DisplayName = Material Bar (Epic),
+        DisplayName = Mithril Bar,
         Icon = SteelBar_Whole,
     }
 
@@ -76,7 +76,7 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
-        DisplayName = Material Bar (Elite),
+        DisplayName = Adamantium Bar,
         Icon = SteelBar_Whole,
     }
 
@@ -86,7 +86,7 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
-        DisplayName = Material Bar (Legendary),
+        DisplayName = Vibranium Bar,
         Icon = SteelBar_Whole,
     }
 
