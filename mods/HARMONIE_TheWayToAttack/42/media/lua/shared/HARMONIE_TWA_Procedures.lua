@@ -37,28 +37,20 @@
 -- ไม้ขนาดเล็ก" (carve/craft small wooden objects) -- a PERFECT match for
 -- MakeHandle/MakeLongHandle (a SHARP_KNIFE whittling a stick into a
 -- handle), which had been sitting under Woodwork only because Carving
--- wasn't known to exist yet. Also newly confirmed real: Perks.Maintenance
--- ("การดูแลรักษาอาวุธ", weapon upkeep) and Perks.Mechanics ("งานยานยนต์").
--- Re-picked EVERY procedure's skill by its own real TOOL (the strongest
--- signal for which real trade it belongs to), keeping each one's LEVEL
--- number exactly unchanged -- only the skill NAME moved:
---   file/whetstone (sharpening/honing, no forge tool) -> Maintenance
---     (SharpenEdge, StropLeather, PrecisionGrind, TaperPoint: were
---     FlintKnapping, which is for STONE-specific knapping -- KnapHead
---     stays FlintKnapping since it's the one that's actually knapping a
---     stone head with Base.HammerStone)
---   knife whittling a stick into a handle shape -> Carving
---     (MakeHandle, MakeLongHandle: were Woodwork)
---   wrench/screwdriver + bolts, or a hand drill -> Mechanics
---     (TightenBolts, DrillCore: were Blacksmith/FlintKnapping; WeaveWire,
---     pliers + wire, no forge tool: was Blacksmith)
---   hammer + metal (tin can, no wood/stone involved) -> Blacksmith
---     (CounterweightHead: was FlintKnapping)
---   hammer + nails into a wooden weapon body -> Woodwork
---     (Balance's HammerNails: was Blacksmith -- Assembly's separate,
---     noskill AssembleNails is untouched)
---   applying a protective coat/wax by hand, no forge tool -> Maintenance
---     (CoatWax, SurfaceCoating: were FlintKnapping/Blacksmith)
+-- wasn't known to exist yet -- moved to Carving:1/Carving:2 (same levels).
+-- Balance's HammerNails (Hammer+Nails into a wooden weapon body) moved
+-- Blacksmith:1 -> Woodwork:1, a real carpentry action (Assembly's separate,
+-- noskill AssembleNails is untouched). CounterweightHead (Hammer/
+-- Sledgehammer + tin can) moved FlintKnapping:1 -> Blacksmith:1, real
+-- metalworking that had nothing to do with stone.
+-- Maintenance and Mechanics were tried for several others in this same
+-- pass (file/whetstone honing, wrench/bolts, hand drill, pliers+wire) but
+-- explicitly REJECTED by the user ("ไม่อยากให้ใช้ Machanic กับ
+-- maintenance") -- those all stayed on/reverted to their original skill
+-- (FlintKnapping for the file/whetstone and drill/coating steps,
+-- Blacksmith for the wrench/bolts and pliers/wire steps), even though
+-- Maintenance/Mechanics are both real, grep-confirmed Perks -- a deliberate
+-- design choice, not an accuracy correction, so don't re-introduce them.
 -- Every OTHER procedure's skill (ForgeShape/KnapHead/MakeRivetedHandle/
 -- RivetPlate: Blacksmith with a real forge/hammer tool; ReinforcedBind/
 -- WrapLeather/StringSinew: Tailoring with cloth/leather/thread; WeldMetal:
@@ -121,7 +113,7 @@ TWAProcedures.List = {
     SharpenEdge = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_SharpenEdge", icon = "Whetstone2",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = {}, skill = "Maintenance:1", time = 100, sound = "SharpenBladeWhetstone",
+        consumes = {}, skill = "FlintKnapping:1", time = 100, sound = "SharpenBladeWhetstone",
     },
     -- Strop material widened to LeatherStrips OR RippedSheets (cloth strop
     -- is a real lower-grade substitute for a leather one) -- request
@@ -129,14 +121,14 @@ TWAProcedures.List = {
     StropLeather = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "LeatherStrips",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "Maintenance:2", time = 150, sound = "SharpenBladeWhetstone",
+        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "FlintKnapping:2", time = 150, sound = "SharpenBladeWhetstone",
     },
     -- Tool widened to any sharpening tool, not just a file (request
     -- 2026-09-27).
     PrecisionGrind = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_PrecisionGrind", icon = "HotChisel_Forged",
         tool = { { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = {}, skill = "Maintenance:3", time = 250, sound = "SharpenBladeWhetstone",
+        consumes = {}, skill = "Blacksmith:3", time = 250, sound = "SharpenBladeWhetstone",
     },
     -- Tool widened to any heavy hammering tool (request 2026-09-27) -- same
     -- real ItemTag group KnapHead/StoneKnapping already used.
@@ -162,7 +154,7 @@ TWAProcedures.List = {
     TaperPoint = {
         category = "Piercing", nameKey = "IGUI_TWA_Proc_TaperPoint", icon = "Shaft",
         tool = { { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = {}, skill = "Maintenance:2", time = 150, sound = "SharpenBladeWhetstone",
+        consumes = {}, skill = "FlintKnapping:2", time = 150, sound = "SharpenBladeWhetstone",
     },
 
     -- ===== Handle (ติดตั้งด้าม) -- by MaxRange =====
@@ -206,7 +198,7 @@ TWAProcedures.List = {
     TightenBolts = {
         category = "Handle", nameKey = "IGUI_TWA_Proc_TightenBolts", icon = "NutsBolts",
         tool = { { kind = "tag", value = "SCREWDRIVER" }, { kind = "tag", value = "WRENCH" } },
-        consumes = { { itemType = "Base.NutsBolts", qty = 2 } }, skill = "Mechanics:1", time = 150, sound = "Screwdriver",
+        consumes = { { itemType = "Base.NutsBolts", qty = 2 } }, skill = "Blacksmith:1", time = 150, sound = "Screwdriver",
     },
 
     -- ===== Balance (ถ่วงน้ำหนัก) -- by PushBackMod =====
@@ -240,7 +232,7 @@ TWAProcedures.List = {
     DrillCore = {
         category = "Structure", nameKey = "IGUI_TWA_Proc_DrillCore", icon = "Drill_OldFashioned",
         tool = { kind = "type", value = "Base.HandDrill" },
-        consumes = {}, skill = "Mechanics:1", time = 150, sound = "CraftFixWeapon",
+        consumes = {}, skill = "FlintKnapping:1", time = 150, sound = "CraftFixWeapon",
     },
 
     -- ===== Toughness (เสริมความคงทน) -- by ConditionMax =====
@@ -271,7 +263,7 @@ TWAProcedures.List = {
     WeaveWire = {
         category = "Toughness", nameKey = "IGUI_TWA_Proc_WeaveWire", icon = "Wire",
         tool = { kind = "type", value = "Base.Pliers" },
-        consumes = { { itemType = "Base.Wire", qty = 1 } }, skill = "Mechanics:2", time = 200, sound = "CraftFixWeapon",
+        consumes = { { itemType = "Base.Wire", qty = 1 } }, skill = "Blacksmith:2", time = 200, sound = "CraftFixWeapon",
     },
 
     -- ===== WearResist (ลดการสึกหรอ) -- by ConditionLowerChanceOneIn =====
@@ -289,11 +281,11 @@ TWAProcedures.List = {
     CoatWax = {
         category = "WearResist", nameKey = "IGUI_TWA_Proc_CoatWax", icon = "Candle",
         tool = { { kind = "type", value = "Base.Lighter" }, { kind = "type", value = "Base.Matches" } },
-        consumes = { { itemType = "Base.Candle", qty = 1 } }, skill = "Maintenance:1", time = 150, sound = "CraftFixWeapon",
+        consumes = { { itemType = "Base.Candle", qty = 1 } }, skill = "FlintKnapping:1", time = 150, sound = "CraftFixWeapon",
     },
     SurfaceCoating = {
         category = "WearResist", nameKey = "IGUI_TWA_Proc_SurfaceCoating", icon = "Bleach",
-        consumes = { { itemType = "Base.Bleach", qty = 1 } }, skill = "Maintenance:2", time = 250, sound = "CraftFixWeapon",
+        consumes = { { itemType = "Base.Bleach", qty = 1 } }, skill = "Blacksmith:2", time = 250, sound = "CraftFixWeapon",
     },
 
     -- ===== Assembly (การประกอบ) -- request 2026-09-27: real items whose

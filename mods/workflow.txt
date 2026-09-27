@@ -4005,6 +4005,28 @@ re-audit using the newly-confirmed real skill list:
   Re-validated (brace/paren balance clean on both edited files), modversion
   0.20.1 -> 0.21.0.
 
+THIRTY-FIFTH round (2026-09-27) -- "ไม่อยากให้ใช้ Machanic กับ maintenance":
+- User rejected the previous round's Maintenance/Mechanics reassignments
+  outright (a design preference, not a correctness complaint -- both are
+  still real, grep-confirmed Perks). Reverted the 9 procedures that had
+  moved to either one back to their pre-round skill (same level, unchanged):
+  SharpenEdge/StropLeather/TaperPoint/CoatWax: Maintenance -> FlintKnapping;
+  PrecisionGrind/TightenBolts/WeaveWire/SurfaceCoating: Maintenance/
+  Mechanics -> Blacksmith; DrillCore: Mechanics -> FlintKnapping. Left the
+  OTHER two changes from that same round alone since they weren't
+  Maintenance/Mechanics and weren't objected to: MakeHandle/MakeLongHandle
+  stay on Carving (a real vanilla skill discovery, not related to this
+  complaint), and Balance's HammerNails stays on Woodwork, CounterweightHead
+  stays on Blacksmith. The skillDisplayName() translation fix (skills now
+  showing their real Thai/English name instead of the raw internal
+  identifier) is untouched -- that was a display bug fix, not a skill
+  reassignment, so it stands regardless of which skill each procedure uses.
+- Updated Procedures.lua's own explanatory comment to record this as a
+  deliberate rejection, not an accuracy correction, so a future round
+  doesn't reintroduce Maintenance/Mechanics thinking it's fixing something.
+  Regenerated PROCEDURES_REFERENCE.txt. Re-validated (brace balance clean),
+  modversion 0.21.0 -> 0.21.1.
+
 
 9. Checklist before starting any new work
 =======================================
