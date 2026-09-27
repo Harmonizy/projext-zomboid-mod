@@ -136,7 +136,10 @@ function TWA_FinishCraftAction:new(character, recipe, doneProcedures, onComplete
     o.doneProcedures = doneProcedures
     o.onComplete = onComplete
     o.onEnd = onEnd
-    o.maxTime = 100
+    -- maxTime raised 100->300 (request 2026-09-28: "เพิ่มเวลา Actiontime
+    -- ตอนกดปุ่ม เสร็จสิ้น ไม่สมบูรณ์ ยกเลิก" -- applies to this + Incomplete/
+    -- Cancel the same way).
+    o.maxTime = 300
     o.forceProgressBar = true
     return o
 end

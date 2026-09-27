@@ -155,5 +155,6 @@
     "IGUI_TWA_Tooltip_FindRecipesForProcedure": "Search the recipe list for every recipe that needs this exact procedure.",
     "IGUI_TWA_ResumingItem": "Unfinished recipe bookmarked on this item",
     "IGUI_TWA_TooltipCraftedBy": "Crafted by: %1",
-    "IGUI_TWA_TooltipGrade": "Grade: %1"
+    "IGUI_TWA_TooltipGrade": "Grade: %1",
+    "IGUI_TWA_Material_GoldSilverJewelry": "Gold or Silver Jewelry"
 }

@@ -59,8 +59,9 @@ CURRENT LIBRARY -- 57 procedures, 10 categories, in real display order
    changed, moved to right after Assembly) (14) --
   - StartFire
       tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=100ms, sound=CraftFixWeapon
-  - MeltMetal
-      tool=Base.Tongs, consumes=ONE OF: IronOre x4 / CopperOre x4 / IronChunk x2 / SteelChunk x2 / CopperScrap x3, skill=(none), time=200ms, sound=CraftFixWeapon
+  - MeltMetal (consumes changed 2026-09-28, was IronOre/CopperOre/IronChunk/
+    SteelChunk/CopperScrap ore-tier options)
+      tool=Base.Tongs, consumes=ONE OF: ScrapMetal x1 / Gold-or-Silver Jewelry x2 (~50 real fullTypes, see JEWELRY_ITEMS in HARMONIE_TWA_Procedures.lua) / Base.SharpedStone ("Flint Shard", no exact real item) x3, skill=(none), time=200ms, sound=CraftFixWeapon
   - PourMold ("เทลงเบ้าเล็ก", renamed from "เทลงเบ้า"; icon=CeramicCast_Bar_Fired -- real item is Base.CeramicIngotCast, user's given name "CeremicIngotCast" was a typo for it)
       tool=Base.CeramicCrucibleSmall, consumes=(none), skill=(none), time=150ms, sound=CraftFixWeapon
   - PourMoldLarge
@@ -116,7 +117,7 @@ CURRENT LIBRARY -- 57 procedures, 10 categories, in real display order
       consumes=DuctTape/RippedSheets/LeatherStrips/Rope x2, skill=(none), time=100ms, sound=FixWithTape
   - MakeLongHandle
       tool=SHARP_KNIFE, consumes=LongHandle/LongStick x1, skill=Carving:2, time=200ms, sound=CraftWeaponSpearWood
-  - ReinforcedBind ("พันแน่นหนา", renamed from "พันยึดแน่นหนา"; material changed, was Thread x1 + Glue x1)
+  - ReinforcedBind ("พันแน่นหนา", renamed from "พันยึดแน่นหนา"; material changed, was Thread x1 + Glue x1; icon=FishingLine, self-referential, was FishingLinePremium -- the wrong item's icon)
       consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
   - MakeRivetedHandle
       consumes=LongHandle/LongStick x1, MetalPipe/SteelBarHalf x1, skill=Blacksmith:4, time=350ms, sound=Hammering
@@ -302,11 +303,13 @@ from entity_forge_i/ii/iii.txt) -- discussed with and accepted by the user
 as a practical, testable-and-fixable stand-in, not vanilla's literal
 mechanism.
 
-New consume shape: `{ options = { {itemType, qty}, ... } }` (MeltMetal only
-so far) needs ONE of several real materials, each with its OWN quantity --
-unlike the older `itemTypes` shape, which shares one qty across every
-alternative. MeltMetal's real options: IronOre x4 / CopperOre x4 /
-IronChunk x2 / SteelChunk x2 / CopperScrap x3.
+Consume shape: `{ options = { {itemType|itemTypes, qty}, ... } }` (MeltMetal
+only so far) needs ONE of several real materials, each with its OWN
+quantity -- unlike the older plain `itemTypes` shape, which shares one qty
+across every alternative. An option entry can ALSO itself list several
+alternative item types under one shared qty (added 2026-09-28) -- MeltMetal's
+current real options: Base.ScrapMetal x1 / ~50 real gold-or-silver jewelry
+fullTypes (any one) x2 / Base.SharpedStone x3.
 
 ==============================================================================
 MATERIAL CHANGES -- real vanilla items confirmed via grep

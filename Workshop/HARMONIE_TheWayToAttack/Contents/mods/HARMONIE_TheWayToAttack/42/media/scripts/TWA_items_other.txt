@@ -27,9 +27,9 @@ module HARMONIE_TheWayToAttack
     crafted through the procedural UI: a base "lump" (no starting item,
     made purely from raw ore/scrap via StartFire+MeltMetal) and 5 rarity-
     tiered "bars" made FROM that lump via increasingly advanced procedure
-    chains. Icons reused from real vanilla items (IronChunk, SteelBar_Whole)
-    -- no StaticModel/WorldStaticModel set, matching how the real vanilla
-    IronChunk item itself also skips them for a simple material item. ***/
+    chains. Icons reused from real vanilla items -- no StaticModel/
+    WorldStaticModel set, matching how the real vanilla IronChunk item
+    itself also skips them for a simple material item. ***/
     item MaterialLump
     {
         ItemType = base:normal,
@@ -40,6 +40,9 @@ module HARMONIE_TheWayToAttack
         Icon = IronChunk,
     }
 
+    -- Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real
+    -- item's own TYPE name, Base.IronIngot); its real Icon field is
+    -- "Ingot_Iron".
     item MaterialBar_Uncommon
     {
         ItemType = base:normal,
@@ -47,9 +50,12 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Tin Bar,
-        Icon = SteelBar_Whole,
+        Icon = Ingot_Iron,
     }
 
+    -- Icon changed (request 2026-09-28) -- user gave "CopperIngot" (the
+    -- real item's own TYPE name, Base.CopperIngot); its real Icon field is
+    -- "Ingot_Copper".
     item MaterialBar_Rare
     {
         ItemType = base:normal,
@@ -57,9 +63,12 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Titanium Bar,
-        Icon = SteelBar_Whole,
+        Icon = Ingot_Copper,
     }
 
+    -- Icon changed (request 2026-09-28) -- user gave "SilverBar" (the real
+    -- item's own TYPE name, Base.SilverBar); its real Icon field is
+    -- "Ingot_Silver".
     item MaterialBar_Epic
     {
         ItemType = base:normal,
@@ -67,9 +76,12 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Mithril Bar,
-        Icon = SteelBar_Whole,
+        Icon = Ingot_Silver,
     }
 
+    -- Icon changed (request 2026-09-28) -- user gave "BrassIngot" (the real
+    -- item's own TYPE name, Base.BrassIngot); its real Icon field is
+    -- "Ingot_Brass".
     item MaterialBar_Elite
     {
         ItemType = base:normal,
@@ -77,9 +89,12 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Adamantium Bar,
-        Icon = SteelBar_Whole,
+        Icon = Ingot_Brass,
     }
 
+    -- Icon changed (request 2026-09-28) -- user gave "GoldBar" (the real
+    -- item's own TYPE name, Base.GoldBar); its real Icon field is
+    -- "Ingot_Gold".
     item MaterialBar_Legendary
     {
         ItemType = base:normal,
@@ -87,7 +102,7 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Vibranium Bar,
-        Icon = SteelBar_Whole,
+        Icon = Ingot_Gold,
     }
 
 

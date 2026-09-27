@@ -155,5 +155,6 @@
     "IGUI_TWA_Tooltip_FindRecipesForProcedure": "ค้นหาในรายการสูตรทุกสูตรที่ต้องใช้กรรมวิธีนี้",
     "IGUI_TWA_ResumingItem": "มีสูตรที่ยังไม่สมบูรณ์จดไว้บนไอเท็มนี้",
     "IGUI_TWA_TooltipCraftedBy": "สร้างโดย: %1",
-    "IGUI_TWA_TooltipGrade": "เกรด: %1"
+    "IGUI_TWA_TooltipGrade": "เกรด: %1",
+    "IGUI_TWA_Material_GoldSilverJewelry": "เครื่องประดับทองหรือเงิน"
 }

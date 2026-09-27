@@ -737,12 +737,23 @@ end
 
 -- Request 2026-09-27: "หลอมโลหะ...แต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน" -- a
 -- consume slot needing ONE of several real materials, each with its OWN
--- quantity (see the `options` shape in HARMONIE_TWA_Procedures.lua).
+-- quantity (see the `options` shape in HARMONIE_TWA_Procedures.lua). An
+-- option entry can itself list several alternative item types under one
+-- shared qty (request 2026-09-28: ~50 real jewelry fullTypes for MeltMetal's
+-- "gold or silver jewelry" option) -- shown via a short translated nameKey
+-- instead of joining every one of those item names into an unreadable list.
 local function optionsSpecName(options)
     local names = {}
     for _, opt in ipairs(options) do
-        local it = getItemScript(opt.itemType)
-        local name = it and it:getDisplayName() or opt.itemType
+        local name
+        if opt.nameKey then
+            name = getText(opt.nameKey)
+        elseif opt.itemTypes then
+            name = consumeSpecName(opt.itemTypes)
+        else
+            local it = getItemScript(opt.itemType)
+            name = it and it:getDisplayName() or opt.itemType
+        end
         names[#names + 1] = name .. " x" .. opt.qty
     end
     return table.concat(names, " / ")

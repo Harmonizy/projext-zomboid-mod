@@ -177,6 +177,44 @@ end
 -- drives the right-panel UI grouping only; the ACTUAL per-recipe
 -- requirement logic lives in gen_craftdata.js's PROCEDURE_RULES, since it
 -- needs each recipe's own real stat values (not available in this file).
+-- MeltMetal material (request 2026-09-28: "หลอมโลหะ เปลี่ยนไปใช้วัตถุดิบ
+-- เศษโลหะ 1 อัน, เครื่องประดับทองหรือเงิน 2 อัน, Flint Shard 3 อัน") -- every
+-- real gold/silver jewelry fullType grep-confirmed against the actual
+-- installed game's Translate/EN/ItemName.json (rings/necklaces/bracelets/
+-- earrings/watches/nose+belly piercings, including every left/right and
+-- size variant vanilla ships) -- deliberately plain gold/silver pieces only,
+-- no gem-set variants (GoldDiamond/SilverRuby/etc.), matching the user's own
+-- list of plain names exactly.
+local JEWELRY_ITEMS = {
+    "Base.Ring_Left_MiddleFinger_Gold", "Base.Ring_Left_MiddleFinger_Silver",
+    "Base.Ring_Left_RingFinger_Gold", "Base.Ring_Left_RingFinger_Silver",
+    "Base.Ring_Right_MiddleFinger_Gold", "Base.Ring_Right_MiddleFinger_Silver",
+    "Base.Ring_Right_RingFinger_Gold", "Base.Ring_Right_RingFinger_Silver",
+    "Base.Necklace_Gold", "Base.Necklace_Silver",
+    "Base.NecklaceLong_Gold", "Base.NecklaceLong_Silver",
+    "Base.Necklace_SilverCrucifix",
+    "Base.Bracelet_BangleLeftGold", "Base.Bracelet_BangleLeftSilver",
+    "Base.Bracelet_BangleRightGold", "Base.Bracelet_BangleRightSilver",
+    "Base.Bracelet_ChainLeftGold", "Base.Bracelet_ChainLeftSilver",
+    "Base.Bracelet_ChainRightGold", "Base.Bracelet_ChainRightSilver",
+    "Base.Earring_LoopLrg_Gold", "Base.Earring_LoopLrg_Silver",
+    "Base.Earring_LoopMed_Gold", "Base.Earring_LoopMed_Silver",
+    "Base.Earring_LoopSmall_Gold_Both", "Base.Earring_LoopSmall_Gold_Top",
+    "Base.Earring_LoopSmall_Silver_Both", "Base.Earring_LoopSmall_Silver_Top",
+    "Base.WristWatch_Left_ClassicBlack", "Base.WristWatch_Left_ClassicBrown",
+    "Base.WristWatch_Left_ClassicGold", "Base.WristWatch_Left_ClassicMilitary",
+    "Base.WristWatch_Right_ClassicBlack", "Base.WristWatch_Right_ClassicBrown",
+    "Base.WristWatch_Right_ClassicGold", "Base.WristWatch_Right_ClassicMilitary",
+    "Base.WristWatch_Left_DigitalBlack", "Base.WristWatch_Left_DigitalRed",
+    "Base.WristWatch_Right_DigitalBlack", "Base.WristWatch_Right_DigitalRed",
+    "Base.Pocketwatch",
+    "Base.NoseRing_Gold", "Base.NoseRing_Silver",
+    "Base.NoseStud_Gold", "Base.NoseStud_Silver",
+    "Base.BellyButton_RingGold", "Base.BellyButton_RingSilver",
+    "Base.BellyButton_StudGold", "Base.BellyButton_StudSilver",
+    "Base.BellyButton_DangleGold", "Base.BellyButton_DangleSilver",
+}
+
 TWAProcedures.List = {
     -- ===== Sharpness (สร้างความคม) -- Swinging weapons =====
     SharpenEdge = {
@@ -273,11 +311,12 @@ TWAProcedures.List = {
     -- it as a thread equivalent) and Base.AnimalSinew (grep-confirmed real,
     -- NOT the same as the invented "AnimalTendon" from an earlier session's
     -- rejected pasted brief -- see workflow.txt 8.13). Skill unchanged.
-    -- Icon changed (request 2026-09-28) -- real icon for Base.
-    -- PremiumFishingLine is "FishingLinePremium", not the item's own type
-    -- name.
+    -- Icon changed (request 2026-09-28, follow-up) -- real icon for
+    -- Base.FishingLine is self-referential "FishingLine" (was
+    -- "FishingLinePremium", the wrong item's icon -- this procedure's own
+    -- material is plain FishingLine/AnimalSinew, not PremiumFishingLine).
     ReinforcedBind = {
-        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "FishingLinePremium",
+        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "FishingLine",
         consumes = { { itemTypes = { "Base.FishingLine", "Base.AnimalSinew" }, qty = 1 } },
         skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
     },
@@ -567,15 +606,19 @@ TWAProcedures.List = {
     -- list, each with its OWN quantity, not one shared qty across all
     -- alternatives like the existing itemTypes shape) -- see
     -- CheckEligibility/Consume/DescribeAll below for the matching logic.
+    -- Consumes replaced (request 2026-09-28: "หลอมโลหะ เปลี่ยนไปใช้วัตถุดิบ
+    -- เศษโลหะ 1 อัน, เครื่องประดับทองหรือเงิน 2 อัน, Flint Shard 3 อัน") --
+    -- 3 options, each its own real material + qty. "Flint Shard" has no
+    -- exact real item; Base.SharpedStone ("Sharp Flint Flake") is the
+    -- closest real match, matching this file's own established FlintNodule/
+    -- SharpedStone convention (see this file's header note).
     MeltMetal = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_MeltMetal", icon = "IronChunk",
         tool = { kind = "type", value = "Base.Tongs" },
         consumes = { { options = {
-            { itemType = "Base.IronOre", qty = 4 },
-            { itemType = "Base.CopperOre", qty = 4 },
-            { itemType = "Base.IronChunk", qty = 2 },
-            { itemType = "Base.SteelChunk", qty = 2 },
-            { itemType = "Base.CopperScrap", qty = 3 },
+            { itemType = "Base.ScrapMetal", qty = 1 },
+            { itemTypes = JEWELRY_ITEMS, qty = 2, nameKey = "IGUI_TWA_Material_GoldSilverJewelry" },
+            { itemType = "Base.SharpedStone", qty = 3 },
         } } },
         time = 200, sound = "CraftFixWeapon",
     },
@@ -811,7 +854,7 @@ function TWAProcedures.CheckEligibility(proc, player)
         if c.options then
             local met = false
             for _, opt in ipairs(c.options) do
-                if inv:getItemCountRecurse(opt.itemType) >= opt.qty then met = true break end
+                if countAny(inv, altTypes(opt)) >= opt.qty then met = true break end
             end
             if not met then
                 missing[#missing + 1] = { kind = "consume_options", options = c.options }
@@ -858,7 +901,7 @@ function TWAProcedures.DescribeAll(proc, player)
         if c.options then
             local met = false
             for _, opt in ipairs(c.options) do
-                if inv:getItemCountRecurse(opt.itemType) >= opt.qty then met = true break end
+                if countAny(inv, altTypes(opt)) >= opt.qty then met = true break end
             end
             reqs[#reqs + 1] = { kind = "consume_options", options = c.options, met = met }
         else
@@ -886,16 +929,26 @@ function TWAProcedures.DescribeAll(proc, player)
 end
 
 -- request 2026-09-27: "หลอมโลหะ...แต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน" -- a
--- consume slot shaped as `{ options = { {itemType, qty}, ... } }` needs
--- exactly ONE of those (type, qty) pairs, each with its OWN quantity
--- (unlike the existing `itemTypes` shape, which shares one qty across every
--- alternative). Consumes whichever real option the player actually has.
+-- consume slot shaped as `{ options = { {itemType|itemTypes, qty}, ... } }`
+-- needs exactly ONE of those option entries, each with its OWN quantity
+-- (unlike the plain `itemTypes` shape on a non-options consume, which shares
+-- one qty across every alternative). Consumes whichever real option the
+-- player actually has. An option entry can itself list SEVERAL alternative
+-- item types sharing that one option's qty (request 2026-09-28: "เครื่อง
+-- ประดับทองหรือเงิน 2 อัน" -- any ONE of ~50 real gold/silver jewelry types
+-- counts, see JEWELRY_ITEMS below) -- reuses the same altTypes/countAny
+-- helpers the plain itemTypes shape already uses.
 local function consumeOptions(inv, options)
     for _, opt in ipairs(options) do
-        if inv:getItemCountRecurse(opt.itemType) >= opt.qty then
+        local types = altTypes(opt)
+        if countAny(inv, types) >= opt.qty then
             for _ = 1, opt.qty do
-                local it = inv:getFirstTypeEvalRecurse(opt.itemType, predicateNotBroken)
-                    or inv:getFirstTypeEvalRecurse(opt.itemType, function() return true end)
+                local it = nil
+                for _, t in ipairs(types) do
+                    it = inv:getFirstTypeEvalRecurse(t, predicateNotBroken)
+                        or inv:getFirstTypeEvalRecurse(t, function() return true end)
+                    if it then break end
+                end
                 if it then inv:Remove(it) end
             end
             return

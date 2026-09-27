@@ -74,7 +74,8 @@ function TWA_IncompleteCraftAction:new(character, recipe, doneProcedures, onComp
     o.doneProcedures = doneProcedures
     o.onComplete = onComplete
     o.onEnd = onEnd
-    o.maxTime = 100
+    -- maxTime raised 100->300 (request 2026-09-28: see TWA_FinishCraftAction.lua).
+    o.maxTime = 300
     o.forceProgressBar = true
     return o
 end

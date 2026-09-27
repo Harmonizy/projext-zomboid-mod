@@ -1842,6 +1842,24 @@ item's own real stats for an actual weapon, statically looked up in
 and writes `HARMONIE_TWA_RecipeData.lua` — always regenerate through this
 script and copy the output into the mod; never hand-edit the generated file,
 or the next regeneration silently discards the edit.
+*** CONFIRMED STALE (2026-09-28): the scratchpad copy of gen_craftdata.js's
+own `classifyVanilla()`/`SPECIAL_CASES` still reference procedure names that
+no longer exist in the current 57-procedure library at all (e.g. 'Weld',
+'CarveBone', 'AttachHardware' -- the real current names are WeldMetal/
+WeldWork/none/AttachHardware-has-no-equivalent). This means the generator is
+currently OUT OF SYNC with what's actually shipped and must NOT be blindly
+re-run for a full regeneration without first reconciling every procedure name
+it references against the real current TWAProcedures.List -- doing so would
+silently overwrite correct data with stale procedure ids. For a SMALL,
+isolated field fix (e.g. correcting one recipe's `base` item) hand-editing
+the generated file directly is safer than trusting a known-stale generator --
+document the hand-edit with a comment at the exact line, and separately patch
+the generator's own SPECIAL_CASES table too where practical so the fix
+survives a future (reconciled) regen. Real example of this exact situation:
+JawboneBovide_Club/Axe/Morningstar had `base = "Base.AnimalBone"` (vanilla's
+own generic bone, from classifyVanilla()'s generic /bone/i rule) when the
+real vanilla base item is Base.JawboneBovide (an actual jawbone item) —
+hand-corrected directly in RecipeData.lua rather than regenerating blind.
 
 Recipe data model (`TWARecipeData.List` entries): `{ id, result, base, base2,
 category, procedures }`.
