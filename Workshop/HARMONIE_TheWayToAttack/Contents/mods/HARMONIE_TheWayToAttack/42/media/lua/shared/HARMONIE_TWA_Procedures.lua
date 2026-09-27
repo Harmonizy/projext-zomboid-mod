@@ -344,7 +344,9 @@ TWAProcedures.List = {
     },
 
     -- ===== Balance (ถ่วงน้ำหนัก) -- by PushBackMod =====
-    -- Qty trimmed 5->1 (request 2026-09-28, same as AssembleNails above).
+    -- Qty trimmed 5->1 (request 2026-09-28, same as AssembleNails above),
+    -- then raised 1->25 (request 2026-09-27: "สูตรที่ใช้ตะปู 1 อัน ให้เปลี่ยน
+    -- ไปใช้ตะปู 25 อันแทน").
     -- Tool corrected (2026-09-28, real-vanilla-tag research): this is a
     -- nail-into-wood assembly task, matching vanilla's own real "attach a
     -- component" combo (recipes_assembly.txt, `tags[base:hammer;
@@ -357,7 +359,7 @@ TWAProcedures.List = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
             { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
         },
-        consumes = { { itemType = "Base.Nails", qty = 1 } }, skill = "Woodwork:1", time = 20, sound = "Hammering",
+        consumes = { { itemType = "Base.Nails", qty = 25 } }, skill = "Woodwork:1", time = 20, sound = "Hammering",
     },
     -- Material widened to either real empty-can type (already an
     -- established real pair from this mod's own earlier AttachCan work).
@@ -508,7 +510,9 @@ TWAProcedures.List = {
         consumes = { { itemType = "Base.TinCanEmpty", qty = 1 } }, time = 10, sound = "Screwdriver",
     },
     -- Qty trimmed 5->1 (request 2026-09-28: "ประกอบตะปูและตอกตะปูให้ใช้ 1
-    -- อัน" -- applies to both this and HammerNails in Balance below).
+    -- อัน" -- applies to both this and HammerNails in Balance below), then
+    -- raised 1->25 (request 2026-09-27: "สูตรที่ใช้ตะปู 1 อัน ให้เปลี่ยนไปใช้
+    -- ตะปู 25 อันแทน") -- same for both.
     -- Icon changed to "NailsBox" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
     -- Tool widened (2026-09-28, real-vanilla-tag research): matches vanilla's
@@ -521,7 +525,7 @@ TWAProcedures.List = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
             { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
         },
-        consumes = { { itemType = "Base.Nails", qty = 1 } }, time = 10, sound = "Hammering",
+        consumes = { { itemType = "Base.Nails", qty = 25 } }, time = 10, sound = "Hammering",
     },
     AssembleRailSpike = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleRailSpike", icon = "RailroadSpike",

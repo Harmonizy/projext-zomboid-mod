@@ -35,8 +35,8 @@ A new procedure's time should be computed this same way, not picked freely.
       tool=Base.Pliers, consumes=Wire x1, skill=(none), time=10ms, sound=CraftFixWeapon
   - AssembleCan
       tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=10ms, sound=Screwdriver
-  - AssembleNails (qty trimmed 5->1; icon=NailsBox, real+self-referential)
-      tool=HAMMER, consumes=Nails x1, skill=(none), time=10ms, sound=Hammering
+  - AssembleNails (qty trimmed 5->1, then raised 1->25; icon=NailsBox, real+self-referential)
+      tool=HAMMER, consumes=Nails x25, skill=(none), time=10ms, sound=Hammering
   - AssembleRailSpike
       tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=10ms, sound=Hammering
   - AssembleBoneSpike
@@ -129,8 +129,8 @@ A new procedure's time should be computed this same way, not picked freely.
       tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x1, skill=Blacksmith:1, time=20ms, sound=Screwdriver
 
 -- Balance (ถ่วงน้ำหนัก) (3) --
-  - HammerNails (qty trimmed 5->1)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x1, skill=Woodwork:1, time=20ms, sound=Hammering
+  - HammerNails (qty trimmed 5->1, then raised 1->25)
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x25, skill=Woodwork:1, time=20ms, sound=Hammering
   - CounterweightHead (icon=BlockAnvil, real+self-referential)
       tool=HAMMER / SLEDGEHAMMER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Blacksmith:1, time=20ms, sound=Hammering
   - WeldMetal (icon=WeldingMask, real+self-referential)
