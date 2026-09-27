@@ -4209,6 +4209,26 @@ FORTY-FIRST round (2026-09-27) -- "วัตถุดิบใดที่ใช
 - Re-validated (brace balance clean on regenerated RecipeData.lua). modversion
   0.23.2 -> 0.24.0.
 
+FORTY-SECOND round (2026-09-27) -- "เอา optional metal pipe ออก" +
+"บางสูตรควรใช้ชิ้นงานตั้งต้นเป็นท่อเหล็กอยู่ ดูชื่อดีๆ":
+- Removed the `baseAlt = 'Base.MetalPipe'` substitute entirely from the 101
+  ingot-turned-MaterialLump recipes -- they now need MaterialLump only, no
+  pipe alternative (0 recipes carry baseAlt any more, grep-confirmed).
+- Separately audited EVERY recipe name (not just the 101) for one that
+  should genuinely BE Metal-Pipe-based, per the user's own "look at the
+  names carefully": found LongLeadPipe and LongMetalPipe -- both OVERRIDES
+  entries sitting on the generic Base.ScrapMetal despite their own names
+  literally saying "Pipe" (no real vanilla craftRecipe exists for either to
+  grep-confirm against -- flagged rather than guessed further -- but the
+  base material should obviously match what the item's own name says it's
+  made from). Changed both to base = Base.MetalPipe. Left LongMetalBar on
+  ScrapMetal (its name says "Bar", not "Pipe") and the already-pipe-based
+  OVERRIDES entries (easton_adv_360_baseball_bat, aluminiumbaseballbat, etc)
+  untouched -- they were already correct.
+- Re-validated (brace balance clean on regenerated RecipeData.lua, 0 baseAlt
+  remaining, LongLeadPipe/LongMetalPipe confirmed base=Base.MetalPipe).
+  modversion 0.24.0 -> 0.24.1.
+
 
 9. Checklist before starting any new work
 =======================================
