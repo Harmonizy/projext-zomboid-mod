@@ -2125,18 +2125,13 @@ can start while a procedure's own action is mid-flight either (window-side
 guard, `self.activeCenterAction`, mirrors `self.activeProcId`'s existing
 "one at a time" rule).
 
-Recipe-wide requirement summary (request 2026-09-28: "สรุปอุปกรณ์และ
-วัตถุดิบที่ใช้มาในกรรมวิธีทุกอัน"): hovering the "Required Procedures"
-header in the center panel shows a de-duplicated tool list + a quantity-
-summed material list aggregated across EVERY procedure the selected recipe
-needs (`aggregateRequirements()` in HARMONIE_TWA_CraftUI.lua) — reuses the
-existing hoverTooltip mechanism rather than adding a new permanent UI
-section, since the center panel has no real spare vertical space for one.
-Materials are summed by matching their exact DISPLAYED alternative-name
-string (e.g. two procedures both needing "Charcoal / CharcoalCrafted /
-Coke" sum correctly to one combined quantity) rather than by resolving
-which specific real item will actually be consumed, since that's only
-decided at Consume()-time based on what's actually owned.
+Recipe-wide requirement summary: requested and built 2026-09-28 (hovering
+the "Required Procedures" header would have shown an aggregated tool/
+material list across every procedure a recipe needs), then REJECTED the
+same day before shipping any further — "ไม่เอา...ฉันจะให้นายสรุปให้ฉัน" (the
+user prefers asking Claude directly for this kind of summary over having it
+as a permanent in-game feature). Reverted in full; if a similar request
+comes up again, don't re-add it as a UI feature without checking first.
 
 Investigated but NOT resolved (request 2026-09-28: "ไม่มีเสียงตอนทำ
 กรรมวิธี" — no sound while performing a procedure): TWA_PerformProcedure

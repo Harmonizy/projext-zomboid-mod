@@ -748,54 +748,6 @@ local function optionsSpecName(options)
     return table.concat(names, " / ")
 end
 
--- Request 2026-09-28: "สรุปอุปกรณ์และวัตถุดิบที่ใช้มาในกรรมวิธีทุกอัน" -- a
--- de-duplicated summary of every tool and every material a recipe's WHOLE
--- procedure list needs, aggregated across all of them at once. Tools are
--- just deduplicated by their displayed name (kept/reused across procedures,
--- never consumed, so owning one copy covers every procedure that needs it).
--- Materials are summed by quantity when the exact same alternative-name
--- text repeats across 2+ procedures -- correct because ANY combination of
--- the named alternatives covering the combined total works, the same
--- reasoning that already justifies `consumeSpecName` naming every
--- alternative as one joined string instead of picking one.
-local function aggregateRequirements(recipe)
-    local toolNames, toolSeen = {}, {}
-    local matNames, matQty = {}, {}
-    local function addTool(name)
-        if not toolSeen[name] then
-            toolSeen[name] = true
-            toolNames[#toolNames + 1] = name
-        end
-    end
-    local function addMaterial(name, qty)
-        if not matQty[name] then
-            matQty[name] = 0
-            matNames[#matNames + 1] = name
-        end
-        matQty[name] = matQty[name] + qty
-    end
-    for _, procId in ipairs(recipe.procedures) do
-        local proc = TWAProcedures.List[procId]
-        if proc then
-            if proc.tool then addTool(toolSpecName(proc.tool)) end
-            if proc.tool2 then addTool(toolSpecName(proc.tool2)) end
-            if proc.consumes then
-                for _, c in ipairs(proc.consumes) do
-                    if c.options then
-                        for _, opt in ipairs(c.options) do
-                            local it = getItemScript(opt.itemType)
-                            addMaterial(it and it:getDisplayName() or opt.itemType, opt.qty)
-                        end
-                    else
-                        addMaterial(consumeSpecName(c.itemTypes or { c.itemType }), c.qty or 1)
-                    end
-                end
-            end
-        end
-    end
-    return toolNames, matNames, matQty
-end
-
 -- request 2026-09-27: "เตาตีเหล็กดั้งเดิมหรือดีกว่า / ธรรมดาหรือดีกว่า /
 -- ขั้นสูง" -- real vanilla forge-tier wording, see
 -- HARMONIE_TWA_Procedures.lua's nearbyForgeTier() for the real Tags this
@@ -1848,34 +1800,7 @@ function TWACraftWindow:render()
     end
 
     -- Required-procedure checklist grid
-    local reqLabel = getText("IGUI_TWA_RequiredProcedures")
-    drawTextShadowed(self, reqLabel, centerX, baseY, 0.85, 0.85, 0.85, 1, UIFont.Small)
-    -- Request 2026-09-28: "สรุปอุปกรณ์และวัตถุดิบที่ใช้มาในกรรมวิธีทุกอัน"
-    -- -- hovering this exact header shows the aggregated tool/material
-    -- summary for the WHOLE recipe, reusing the same hoverTooltip mechanism
-    -- the procedure grid cells already use rather than a new permanent UI
-    -- section (there's no real spare vertical space in this panel for one).
-    do
-        local hmx, hmy = self:getMouseX(), self:getMouseY()
-        local labelW = getTextManager():MeasureStringX(UIFont.Small, reqLabel)
-        local labelH = getTextManager():getFontHeight(UIFont.Small)
-        if hmx >= centerX and hmx < centerX + labelW and hmy >= baseY and hmy < baseY + labelH then
-            local toolNames, matNames, matQty = aggregateRequirements(recipe)
-            local lines = { getText("IGUI_TWA_SummaryTools") }
-            if #toolNames > 0 then
-                for _, n in ipairs(toolNames) do lines[#lines + 1] = "  " .. n end
-            else
-                lines[#lines + 1] = "  " .. getText("IGUI_TWA_SummaryNone")
-            end
-            lines[#lines + 1] = getText("IGUI_TWA_SummaryMaterials")
-            if #matNames > 0 then
-                for _, n in ipairs(matNames) do lines[#lines + 1] = "  " .. n .. " x" .. matQty[n] end
-            else
-                lines[#lines + 1] = "  " .. getText("IGUI_TWA_SummaryNone")
-            end
-            self.hoverTooltip = { lines = lines, x = centerX, y = baseY }
-        end
-    end
+    drawTextShadowed(self, getText("IGUI_TWA_RequiredProcedures"), centerX, baseY, 0.85, 0.85, 0.85, 1, UIFont.Small)
     local gridLeft, gridTop = centerX, baseY + 20
     local cell, gap = 44, 8
     local perRow = math.max(1, math.floor((CENTER_W - 16 + gap) / (cell + gap)))
