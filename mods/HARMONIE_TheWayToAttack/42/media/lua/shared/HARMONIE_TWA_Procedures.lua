@@ -479,12 +479,25 @@ function TWAProcedures.Consume(proc, player)
     end
 end
 
+-- Balance pass 2026-09-27: "xp ที่ได้จะเฟ้อไหม ในการทำอาวุธ ปรับ balance ให้
+-- หน่อย" -- checked the real numbers before picking a fix. At lvl*10, the
+-- 248 real recipes averaged 47.9 total XP per finished weapon (up to 110 on
+-- the worst offender, Make_browning_outdoorsman_axe's 12 procedures) versus
+-- vanilla's own real single-craft xpAward range for weapons (grep-confirmed
+-- from the actual recipe files: Woodwork 10-60, Maintenance 10-50,
+-- MetalWelding a flat 25, FlintKnapping 10-70) -- our AVERAGE weapon was
+-- already sitting mid-vanilla-range, but the WORST CASE (110) exceeded
+-- vanilla's own highest observed award (70) by over 50%, because splitting
+-- one craft into many small procedures pays XP once per step where vanilla
+-- pays once per finished item. Halved the multiplier (lvl*10 -> lvl*5):
+-- recomputed average drops to ~24 and the worst case to 55, comfortably
+-- inside vanilla's real 10-70 band at both ends.
 function TWAProcedures.AwardXP(proc, player)
     if not proc.skill then return end
     local skillName, lvl = proc.skill:match("^(%a+):(%d+)$")
     lvl = tonumber(lvl)
     local perk = skillName and Perks[skillName]
     if perk then
-        player:getXp():AddXP(perk, lvl * 10)
+        player:getXp():AddXP(perk, lvl * 5)
     end
 end

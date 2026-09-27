@@ -3816,6 +3816,55 @@ questions answered by reading the actual code rather than guessing:
   regenerated with the corrected SmashBottle/BreakBranch lines and a note
   about the new universal light requirement, modversion 0.17.2 -> 0.18.0.
 
+THIRTY-FIRST round (2026-09-27) -- XP balance pass + persistent per-recipe
+procedure progress:
+- "xp ที่ได้จะเฟ้อไหม ในการทำอาวุธ ปรับ balance ให้หน่อย": checked the real
+  numbers rather than guessing. Wrote a one-off script parsing every real
+  procedure's skill level out of HARMONIE_TWA_Procedures.lua and every real
+  recipe's procedure list out of the generated HARMONIE_TWA_RecipeData.lua,
+  then summed lvl*10 per recipe across all 248: average 47.9 total XP per
+  finished weapon, worst case 110 (Make_browning_outdoorsman_axe, 12
+  procedures). Compared against vanilla's own real single-craft xpAward
+  values (grep-confirmed straight from the recipe files: Woodwork 10-60,
+  Maintenance 10-50, MetalWelding flat 25, FlintKnapping 10-70) -- our
+  average was already mid-range, but our worst case (110) beat vanilla's
+  own highest observed award (70) by 50%+, because splitting one craft into
+  several small procedures pays XP once per STEP where vanilla pays once
+  per finished ITEM. Fix: halved TWAProcedures.AwardXP's multiplier
+  (lvl*10 -> lvl*5) -- recomputed average drops to ~24, worst case to 55,
+  both comfortably inside vanilla's real 10-70 band.
+- "ถ้าหากทำกรรมวิธีไปแล้ว แต่กดยกเลิกสูตร(ไม่ใช่ปุ่มยกเลิกกรรมวิธี) ควรทำ
+  ยังไงดีกับกรรมวิธีที่ทำไปแล้ว": recommended and implemented persisting
+  progress per recipe instead of wiping it on Cancel. Reasoning: materials
+  for a completed procedure are ALREADY gone forever either way (Consume()
+  runs once at completion, never refunded on any Cancel -- established last
+  round) -- so also wiping the DONE STATUS on a plain Cancel would force the
+  player to burn a SECOND set of materials redoing a step that's already
+  legitimately finished, with zero benefit (no exploit is prevented by
+  wiping status, since the economy cost was already paid). Implemented as
+  self.progress, a table keyed by recipe.id (each holding its own done-table,
+  lazily created via the new :currentDone() helper) instead of the old
+  single self.doneProcedures reset on every selectRecipe() call. Also fixes
+  last round's "block recipe switching" workaround at its actual root:
+  tryPerformProcedure's completion callback now captures the specific
+  recipe's table directly (`local doneTable = self:currentDone()` at call
+  time, closed over by the callback) instead of reading `window.
+  doneProcedures` fresh when the action finishes -- so it always credits
+  the CORRECT recipe regardless of what's selected by then. The
+  activeProcId block on selectRecipe/onCancel from last round is kept, but
+  now purely as a UX guard (so the in-progress bar always matches the
+  selected recipe), not a correctness fix. onFinish() clears that recipe's
+  own progress entry after queueing the finish action, so crafting a SECOND
+  copy of the same weapon later (once you have another base item) starts
+  clean rather than showing every procedure pre-done.
+- Fixed an unclosed comment paren introduced while writing this round's
+  own doc-comments (caught by check_braces.js's paren-count diff against
+  the previous committed version -- harmless inside a `--` comment, Lua
+  doesn't parse parens there, but kept the file consistent with this mod's
+  own validation habit anyway).
+- Re-validated (brace/paren balance clean on CraftUI.lua/Procedures.lua),
+  modversion 0.18.0 -> 0.19.0.
+
 
 9. Checklist before starting any new work
 =======================================

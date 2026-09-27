@@ -671,7 +671,7 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
             -- procedure, done or not, which is misleading since an eligible-
             -- but-undone procedure can still be re-attempted while an
             -- already-done one for this recipe cannot).
-            local done = self.ui and self.ui.selectedRecipe and self.ui.doneProcedures[id] or false
+            local done = self.ui and self.ui.selectedRecipe and self.ui:currentDone()[id] or false
             local selected = self.ui and self.ui.selectedProcId == id
             local hovered = hoveredRow and self.hoverCol == col
             drawNeatCard(self, px, y, cs, cs, met, selected, hovered)
@@ -707,7 +707,16 @@ function TWACraftWindow:new(x, y, player)
     self.__index = self
     o.player = player or getPlayer()
     o.selectedRecipe = nil
-    o.doneProcedures = {}
+    -- Keyed by recipe.id, NOT reset on every selection (request 2026-09-27:
+    -- "ถ้าหากทำกรรมวิธีไปแล้ว แต่กดยกเลิกสูตร ควรทำยังไงดีกับกรรมวิธีที่ทำ
+    -- ไปแล้ว") -- their materials are already spent either way (Consume()
+    -- runs at procedure completion, never refunded), so wiping the DONE
+    -- STATUS too on a plain Cancel would force redoing -- and re-spending
+    -- fresh materials on -- a step that's already legitimately finished.
+    -- Only cleared when that specific recipe is actually finished (see
+    -- onFinish), so crafting a second copy of the same weapon later starts
+    -- clean.
+    o.progress = {}
     o.selectedProcId = nil
     o.activeProcId = nil
     o.activeAction = nil
@@ -854,42 +863,51 @@ function TWACraftWindow:onTierFilterClick(button)
     self.recipeList:setTierFilter(button.internal)
 end
 
--- Bug found 2026-09-27 while answering "switching recipe mid-procedure":
--- switching self.selectedRecipe/doneProcedures away while a procedure timed
--- action is still running left tryPerformProcedure's completion callback
--- (`window.doneProcedures[procId] = true`) writing into whatever table
--- window.doneProcedures happens to point to when it finishes -- the NEW
--- recipe's freshly-reset one, wrongly marking one of ITS procedures done for
--- free even though its materials/XP were spent on the OLD recipe's step.
--- Blocked here the same way tryPerformProcedure already blocks starting a
--- second procedure at once -- the in-progress one must finish or be
--- cancelled (procCancelButton) before switching recipes or backing out.
+-- Returns THIS recipe's own persistent done-table (lazily created), never a
+-- shared/reset one -- see the o.progress comment in :new() above.
+function TWACraftWindow:currentDone()
+    if not self.selectedRecipe then return {} end
+    local id = self.selectedRecipe.id
+    self.progress[id] = self.progress[id] or {}
+    return self.progress[id]
+end
+
+-- Recipe switching/backing out no longer touches progress at all (see
+-- :currentDone()) -- blocked here only while a procedure is actively being
+-- performed, purely so the right-panel "in progress" bar/button state
+-- always reads against the recipe it actually belongs to; the timed action
+-- itself now always credits the CORRECT recipe's table regardless (its
+-- completion callback captures that table directly -- see
+-- tryPerformProcedure), so this is a UX guard, not a correctness one.
 function TWACraftWindow:selectRecipe(recipe)
     if self.activeProcId then return end
     self.selectedRecipe = recipe
-    self.doneProcedures = {}
 end
 
 function TWACraftWindow:onCancel()
     if self.activeProcId then return end
     self.selectedRecipe = nil
-    self.doneProcedures = {}
 end
 
 function TWACraftWindow:allProceduresDone()
     if not self.selectedRecipe then return false end
     if not ownsBase(self.selectedRecipe, self.player) then return false end
+    local doneTable = self:currentDone()
     for _, procId in ipairs(self.selectedRecipe.procedures) do
-        if not self.doneProcedures[procId] then return false end
+        if not doneTable[procId] then return false end
     end
     return true
 end
 
 function TWACraftWindow:onFinish()
     if not self:allProceduresDone() then return end
-    ISTimedActionQueue.add(TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self.doneProcedures))
+    ISTimedActionQueue.add(TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self:currentDone()))
+    -- Cleared so crafting a SECOND copy of this same recipe later (once you
+    -- have another base item) starts with nothing pre-marked done -- the
+    -- queued finish action already holds its own reference to the table
+    -- as it stands right now, so this doesn't affect it.
+    self.progress[self.selectedRecipe.id] = nil
     self.selectedRecipe = nil
-    self.doneProcedures = {}
 end
 
 -- Performing a procedure is now a real queued timed action (request
@@ -906,13 +924,17 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
     for _, pid in ipairs(self.selectedRecipe.procedures) do
         if pid == procId then needed = true break end
     end
-    if not needed or self.doneProcedures[procId] then return end
+    -- Captured directly (not looked up again inside the callback) so
+    -- completion always credits THIS recipe's table, even if the player
+    -- has switched to a different recipe by the time it finishes.
+    local doneTable = self:currentDone()
+    if not needed or doneTable[procId] then return end
     if not TWAProcedures.CheckEligibility(proc, self.player) then return end
 
     self.activeProcId = procId
     local window = self
     local action = TWA_PerformProcedureAction:new(self.player, proc,
-        function() window.doneProcedures[procId] = true end,
+        function() doneTable[procId] = true end,
         function()
             if window.activeProcId == procId then
                 window.activeProcId = nil
@@ -1098,7 +1120,7 @@ function TWACraftWindow:drawProcedureDetails()
     drawTextShadowed(self, getText(proc.nameKey), x + 10, ty, 1, 0.9, 0.6, 1, UIFont.Medium)
     ty = ty + 22
 
-    local done = self.selectedRecipe and self.doneProcedures[self.selectedProcId]
+    local done = self.selectedRecipe and self:currentDone()[self.selectedProcId]
     local inProgress = self.activeProcId == self.selectedProcId and self.activeAction
     local reqs = TWAProcedures.DescribeAll(proc, self.player)
     local met = true
@@ -1274,7 +1296,7 @@ function TWACraftWindow:render()
                 px = gridLeft
                 py = py + cell + gap
             end
-            local done = self.doneProcedures[procId]
+            local done = self:currentDone()[procId]
             local tex2
             if proc.icon then tex2 = getItemTexture(proc.icon) end
             if not tex2 and proc.consumes and proc.consumes[1] then
