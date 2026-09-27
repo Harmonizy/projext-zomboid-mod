@@ -4037,6 +4037,31 @@ Procedures.lua's own comment to record this precisely. Regenerated
 PROCEDURES_REFERENCE.txt. Re-validated (brace balance clean), modversion
 0.21.1 -> 0.21.2.
 
+THIRTY-SEVENTH round (2026-09-27) -- right-panel UI grouping: Assembly to
+the top, PrecisionGrind/ForgeShape shared into Piercing too:
+- "อยากให้เจียระไน กับตีขึ้นรูปไปอยู่ในสร้างความแหลมด้วย": PrecisionGrind
+  and ForgeShape now appear TWICE in TWAProcedures.Categories -- once under
+  Sharpness (unchanged) and once under Piercing (added) -- so both grid
+  groupings show them. This isn't a new rule, just making the right-panel
+  UI grouping match what the rules engine (gen_craftdata.js) already does:
+  Rule A (Swinging) and Rule B (Spear/Stab) both resolve to PrecisionGrind/
+  ForgeShape at their top 2 crit bands -- they were always logically shared,
+  just previously only VISIBLE under one category header. Each procedure's
+  own canonical `category` field (used for documentation/other lookups)
+  stays "Sharpness", only the display grouping list has the duplicate
+  entry. Confirmed harmless: TWAProcScrollList:populate() builds the grid
+  straight from TWAProcedures.Categories (not the unused-elsewhere
+  TWAProcedures.Order flat list), so an id appearing under 2 category
+  headers just draws 2 independent clickable cells for the same procedure
+  -- clicking either selects the same procId, same as any other cell.
+- "เอาหมวดหมู่ การประกอบ มาไว้บนสุด": moved the Assembly category entry to
+  the front of TWAProcedures.Categories (display order only -- no effect on
+  the rules engine, recipe generation, or anything else keyed by category
+  name).
+- Regenerated PROCEDURES_REFERENCE.txt with the new category order and a
+  note under Piercing about the 2 shared procedures. Re-validated (brace
+  balance clean), modversion 0.21.2 -> 0.22.0.
+
 
 9. Checklist before starting any new work
 =======================================

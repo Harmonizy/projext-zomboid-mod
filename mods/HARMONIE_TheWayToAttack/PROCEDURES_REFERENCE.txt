@@ -7,6 +7,44 @@ needed).
 CURRENT LIBRARY -- 43 procedures, 8 categories
 ==============================================================================
 
+-- Assembly (การประกอบ) (18) --
+  - WrapClothImprov
+      consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
+  - SawWood
+      tool=SAW, consumes=(none), skill=(none), time=150ms, sound=Sawing
+  - SmashBottle
+      consumes=(none), skill=(none), time=100ms, sound=SmashStoneHit
+  - BreakBranch
+      tool=SHARP_KNIFE, consumes=(none), skill=(none), time=100ms, sound=CraftFixWeapon
+  - WrapBarbedWireAssembly
+      tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=150ms, sound=CraftFixWeapon
+  - WrapWireAssembly
+      tool=Base.Pliers, consumes=Wire x1, skill=(none), time=150ms, sound=CraftFixWeapon
+  - AssembleCan
+      tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=150ms, sound=Screwdriver
+  - AssembleNails
+      tool=HAMMER, consumes=Nails x5, skill=(none), time=150ms, sound=Hammering
+  - AssembleRailSpike
+      tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=200ms, sound=Hammering
+  - AssembleBoneSpike
+      tool=SHARP_KNIFE, consumes=AnimalBone x1, skill=(none), time=150ms, sound=SmashBoneHit
+  - AssembleSawblade
+      tool=SAW, consumes=CircularSawblade_Half x1, skill=(none), time=200ms, sound=Sawing
+  - AssembleSheetMetal
+      tool=SCREWDRIVER, consumes=SheetMetal x1, skill=(none), time=150ms, sound=Screwdriver
+  - AssembleSpike
+      tool=HAMMER, consumes=ScrapMetal x1, skill=(none), time=150ms, sound=Hammering
+  - AssembleBrake
+      tool=WRENCH, consumes=NormalBrake1 x1, skill=(none), time=200ms, sound=RepairWithWrench
+  - AssembleBucket
+      tool=HAMMER, consumes=Bucket x1, skill=(none), time=200ms, sound=Hammering
+  - AssembleKettle
+      tool=HAMMER, consumes=Kettle x1, skill=(none), time=200ms, sound=Hammering
+  - AssembleRakeHead
+      tool=WRENCH, consumes=RakeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
+  - AssembleSpadeHead
+      tool=WRENCH, consumes=SpadeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
+
 -- Sharpness (สร้างความคม) (4) --
   - SharpenEdge
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Carving:1, time=100ms, sound=SharpenBladeWhetstone
@@ -18,6 +56,10 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
       tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, time=400ms, sound=Hammering
 
 -- Piercing (สร้างความแหลม) (2) --
+   (PrecisionGrind and ForgeShape also appear here in the real
+    right-panel UI grid, shared with Sharpness below -- see rule
+    A/B's own shared top-2 crit bands. Their canonical `category`
+    field stays "Sharpness", listed once each below.)
   - KnapHead
       tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=SmashStoneHit
   - TaperPoint
@@ -70,44 +112,6 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
       tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Carving:1, time=150ms, sound=CraftFixWeapon
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
-
--- Assembly (การประกอบ) (18) --
-  - WrapClothImprov
-      consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
-  - SawWood
-      tool=SAW, consumes=(none), skill=(none), time=150ms, sound=Sawing
-  - SmashBottle
-      consumes=(none), skill=(none), time=100ms, sound=SmashStoneHit
-  - BreakBranch
-      tool=SHARP_KNIFE, consumes=(none), skill=(none), time=100ms, sound=CraftFixWeapon
-  - WrapBarbedWireAssembly
-      tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=150ms, sound=CraftFixWeapon
-  - WrapWireAssembly
-      tool=Base.Pliers, consumes=Wire x1, skill=(none), time=150ms, sound=CraftFixWeapon
-  - AssembleCan
-      tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=150ms, sound=Screwdriver
-  - AssembleNails
-      tool=HAMMER, consumes=Nails x5, skill=(none), time=150ms, sound=Hammering
-  - AssembleRailSpike
-      tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=200ms, sound=Hammering
-  - AssembleBoneSpike
-      tool=SHARP_KNIFE, consumes=AnimalBone x1, skill=(none), time=150ms, sound=SmashBoneHit
-  - AssembleSawblade
-      tool=SAW, consumes=CircularSawblade_Half x1, skill=(none), time=200ms, sound=Sawing
-  - AssembleSheetMetal
-      tool=SCREWDRIVER, consumes=SheetMetal x1, skill=(none), time=150ms, sound=Screwdriver
-  - AssembleSpike
-      tool=HAMMER, consumes=ScrapMetal x1, skill=(none), time=150ms, sound=Hammering
-  - AssembleBrake
-      tool=WRENCH, consumes=NormalBrake1 x1, skill=(none), time=200ms, sound=RepairWithWrench
-  - AssembleBucket
-      tool=HAMMER, consumes=Bucket x1, skill=(none), time=200ms, sound=Hammering
-  - AssembleKettle
-      tool=HAMMER, consumes=Kettle x1, skill=(none), time=200ms, sound=Hammering
-  - AssembleRakeHead
-      tool=WRENCH, consumes=RakeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
-  - AssembleSpadeHead
-      tool=WRENCH, consumes=SpadeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
 
 ==============================================================================
 RULES ENGINE -- how a recipe's real stats/name decide which procedures it

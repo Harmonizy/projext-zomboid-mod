@@ -394,14 +394,17 @@ TWAProcedures.List = {
 -- the ordered list of procedure ids inside it -- both `Order` and the
 -- right-panel grid grouping are derived from ONE list here so they can't
 -- drift apart.
+-- request 2026-09-27: "เอาหมวดหมู่ การประกอบ มาไว้บนสุด" -- Assembly moved
+-- to the front of this list (display order only, no effect on the rules
+-- engine). "อยากให้เจียระไน กับตีขึ้นรูปไปอยู่ในสร้างความแหลมด้วย" --
+-- PrecisionGrind/ForgeShape now also appear under Piercing's own grid, not
+-- just Sharpness -- they already show up here TWICE deliberately, matching
+-- how gen_craftdata.js's own rules engine already treats them as SHARED
+-- between the two categories (Rule A for Swinging, Rule B for Spear/Stab
+-- both resolve to PrecisionGrind/ForgeShape at their top 2 crit bands) --
+-- this just makes the right-panel UI grouping match that real behavior
+-- instead of only showing them under Sharpness.
 TWAProcedures.Categories = {
-    { key = "Sharpness", nameKey = "IGUI_TWA_ProcCat_Sharpness", ids = { 'SharpenEdge', 'StropLeather', 'PrecisionGrind', 'ForgeShape' } },
-    { key = "Piercing", nameKey = "IGUI_TWA_ProcCat_Piercing", ids = { 'KnapHead', 'TaperPoint' } },
-    { key = "Handle", nameKey = "IGUI_TWA_ProcCat_Handle", ids = { 'MakeHandle', 'WrapBind', 'MakeLongHandle', 'ReinforcedBind', 'MakeRivetedHandle', 'TightenBolts' } },
-    { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'HammerNails', 'CounterweightHead', 'WeldMetal' } },
-    { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
-    { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
-    { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
     { key = "Assembly", nameKey = "IGUI_TWA_ProcCat_Assembly", ids = {
         'WrapClothImprov', 'SawWood', 'SmashBottle', 'BreakBranch',
         'WrapBarbedWireAssembly', 'WrapWireAssembly', 'AssembleCan', 'AssembleNails',
@@ -409,6 +412,13 @@ TWAProcedures.Categories = {
         'AssembleSpike', 'AssembleBrake', 'AssembleBucket', 'AssembleKettle',
         'AssembleRakeHead', 'AssembleSpadeHead',
     } },
+    { key = "Sharpness", nameKey = "IGUI_TWA_ProcCat_Sharpness", ids = { 'SharpenEdge', 'StropLeather', 'PrecisionGrind', 'ForgeShape' } },
+    { key = "Piercing", nameKey = "IGUI_TWA_ProcCat_Piercing", ids = { 'KnapHead', 'TaperPoint', 'PrecisionGrind', 'ForgeShape' } },
+    { key = "Handle", nameKey = "IGUI_TWA_ProcCat_Handle", ids = { 'MakeHandle', 'WrapBind', 'MakeLongHandle', 'ReinforcedBind', 'MakeRivetedHandle', 'TightenBolts' } },
+    { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'HammerNails', 'CounterweightHead', 'WeldMetal' } },
+    { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
+    { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
+    { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
 }
 
 TWAProcedures.Order = {}
