@@ -3917,6 +3917,37 @@ HARMONIE_TWA_CraftUI.lua:
 - Re-validated (brace/paren balance clean, EN+TH JSON valid), modversion
   0.19.0 -> 0.20.0.
 
+THIRTY-THIRD round (2026-09-27) -- the SAME "ปุ่มยืนยันกรรมวิธี...บัง"
+z-order bug came back, and this time found the ACTUAL root cause:
+- User: "ปุ่มยืนยันกรรมวิธีโดนบังอยู่หลัง card" -- the Confirm button was
+  STILL behind the details-box background after round THIRTY's "fix". Went
+  back and actually verified the engine's real base-class contract this
+  time instead of assuming Lua call order inside render() controls draw
+  order: ISPanel:prerender() draws ITS OWN background, and
+  ISCollapsableWindow:render() draws its resize-widget AFTER children (both
+  confirmed straight from the real installed game files). This means
+  prerender() ALWAYS runs before a widget's children render, and render()
+  ALWAYS runs after -- as a whole-function contract enforced by the engine,
+  NOT something Lua call order inside render() can change. Round THIRTY's
+  "fix" (calling drawProcedureDetailsBackground() first thing inside
+  render(), before ISCollapsableWindow.render(self)) was therefore a no-op:
+  the entire render() pass, no matter what's first inside it, still runs
+  after every child (procConfirmButton/procCancelButton included) already
+  drew. That's why the exact same symptom came right back.
+- Real fix: added a genuine TWACraftWindow:prerender() override (calling
+  ISCollapsableWindow.prerender(self) first to keep the window's own real
+  background painting, then drawProcedureDetailsBackground()) -- this
+  actually runs before children, unlike anything inside render(). Removed
+  the now-dead call to drawProcedureDetailsBackground() from render()
+  itself.
+- Lesson for next time: this mod's OWN two prior z-order bugs (the hover
+  tooltip needing to draw LAST in render(), and this one) are both real,
+  but they're two DIFFERENT mechanisms -- "last vs first within render()"
+  only matters for ordering among things render() itself draws (tooltip
+  vs. other render()-time draws), while "prerender() vs render()" is what
+  actually controls before-vs-after children. Don't conflate the two again.
+- Re-validated (brace/paren balance clean), modversion 0.20.0 -> 0.20.1.
+
 
 9. Checklist before starting any new work
 =======================================

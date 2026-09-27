@@ -1241,8 +1241,24 @@ function TWACraftWindow:drawProcedureDetails()
     end
 end
 
-function TWACraftWindow:render()
+-- Real fix 2026-09-27 for "ปุ่มยืนยันกรรมวิธีโดนบังอยู่หลัง card" (still
+-- happening after last round's attempted fix): confirmed from the engine's
+-- own real base classes (ISPanel:prerender() draws its background,
+-- ISCollapsableWindow:render() draws its resize-widget AFTER children) that
+-- prerender() ALWAYS runs before a widget's children render, and render()
+-- ALWAYS runs after -- regardless of where inside render() a draw call sits.
+-- Calling drawProcedureDetailsBackground() from inside TWACraftWindow:render()
+-- (even first, before ISCollapsableWindow.render(self)) was therefore a
+-- no-op fix -- the whole render() pass, wherever the call sits in it, still
+-- happens after every child (including procConfirmButton/procCancelButton)
+-- has already drawn. The ONLY way to draw genuinely BEFORE children is a
+-- real prerender() override.
+function TWACraftWindow:prerender()
+    ISCollapsableWindow.prerender(self)
     self:drawProcedureDetailsBackground()
+end
+
+function TWACraftWindow:render()
     ISCollapsableWindow.render(self)
 
     -- Filter-section captions (request 2026-09-26: "arrange the filter
