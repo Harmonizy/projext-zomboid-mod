@@ -15,83 +15,87 @@ needed).
 ==============================================================================
 CURRENT LIBRARY -- 57 procedures, 10 categories, in real display order
 ==============================================================================
+Every procedure's `time` below is now DERIVED, not hand-picked (request
+2026-09-28: "action time กรรมวิธีต่างๆขึ้นอยู่กับเลเวลสกิลที่ต้องใช้ สกิลเลเวล
+*10 + 10 กรณีที่ไม่มีคือ 10"): time = (skill level, or 0 if no skill) * 10 + 10.
+A new procedure's time should be computed this same way, not picked freely.
 
 -- Assembly (การประกอบ) (18) --
   - WrapClothImprov ("ประกอบผ้า", renamed from "พันผ้า"; icon=SheetRope, real+self-referential)
-      consumes=RippedSheets/LeatherStrips/DuctTape x1, skill=(none), time=100ms, sound=FixWithTape
+      consumes=RippedSheets/LeatherStrips/DuctTape x1, skill=(none), time=10ms, sound=FixWithTape
   - SawWood (icon=Handsaw -- Base.GardenSaw's real icon, not its own type name)
-      tool=SAW, consumes=(none), skill=(none), time=150ms, sound=Sawing
+      tool=SAW, consumes=(none), skill=(none), time=10ms, sound=Sawing
   - SmashBottle
-      consumes=(none), skill=(none), time=100ms, sound=SmashStoneHit
+      consumes=(none), skill=(none), time=10ms, sound=SmashStoneHit
   - BreakBranch (tool removed -- snapped by hand now)
-      consumes=(none), skill=(none), time=100ms, sound=CraftFixWeapon
+      consumes=(none), skill=(none), time=10ms, sound=CraftFixWeapon
   - WrapBarbedWireAssembly
-      tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=150ms, sound=CraftFixWeapon
+      tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=10ms, sound=CraftFixWeapon
   - WrapWireAssembly
-      tool=Base.Pliers, consumes=Wire x1, skill=(none), time=150ms, sound=CraftFixWeapon
+      tool=Base.Pliers, consumes=Wire x1, skill=(none), time=10ms, sound=CraftFixWeapon
   - AssembleCan
-      tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=150ms, sound=Screwdriver
+      tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=10ms, sound=Screwdriver
   - AssembleNails (qty trimmed 5->1; icon=NailsBox, real+self-referential)
-      tool=HAMMER, consumes=Nails x1, skill=(none), time=150ms, sound=Hammering
+      tool=HAMMER, consumes=Nails x1, skill=(none), time=10ms, sound=Hammering
   - AssembleRailSpike
-      tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=200ms, sound=Hammering
+      tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=10ms, sound=Hammering
   - AssembleBoneSpike
-      tool=SHARP_KNIFE, consumes=AnimalBone x1, skill=(none), time=150ms, sound=SmashBoneHit
+      tool=SHARP_KNIFE, consumes=AnimalBone x1, skill=(none), time=10ms, sound=SmashBoneHit
   - AssembleSawblade
-      tool=SAW, consumes=CircularSawblade_Half x1, skill=(none), time=200ms, sound=Sawing
+      tool=SAW, consumes=CircularSawblade_Half x1, skill=(none), time=10ms, sound=Sawing
   - AssembleSheetMetal
-      tool=SCREWDRIVER, consumes=SheetMetal x1, skill=(none), time=150ms, sound=Screwdriver
+      tool=SCREWDRIVER, consumes=SheetMetal x1, skill=(none), time=10ms, sound=Screwdriver
   - AssembleSpike (icon=Bone_Sharpbone -- Base.SharpBoneFragment's real icon, not its own type name)
-      tool=HAMMER, consumes=ScrapMetal x1, skill=(none), time=150ms, sound=Hammering
+      tool=HAMMER, consumes=ScrapMetal x1, skill=(none), time=10ms, sound=Hammering
   - AssembleBrake (tool WRENCH->SCREWDRIVER)
-      tool=SCREWDRIVER, consumes=NormalBrake1 x1, skill=(none), time=200ms, sound=Screwdriver
+      tool=SCREWDRIVER, consumes=NormalBrake1 x1, skill=(none), time=10ms, sound=Screwdriver
   - AssembleBucket
-      tool=HAMMER, consumes=Bucket x1, skill=(none), time=200ms, sound=Hammering
+      tool=HAMMER, consumes=Bucket x1, skill=(none), time=10ms, sound=Hammering
   - AssembleKettle
-      tool=HAMMER, consumes=Kettle x1, skill=(none), time=200ms, sound=Hammering
+      tool=HAMMER, consumes=Kettle x1, skill=(none), time=10ms, sound=Hammering
   - AssembleRakeHead (tool WRENCH->SCREWDRIVER)
-      tool=SCREWDRIVER, consumes=RakeHead x1, skill=(none), time=200ms, sound=Screwdriver
+      tool=SCREWDRIVER, consumes=RakeHead x1, skill=(none), time=10ms, sound=Screwdriver
   - AssembleSpadeHead (tool WRENCH->SCREWDRIVER)
-      tool=SCREWDRIVER, consumes=SpadeHead x1, skill=(none), time=200ms, sound=Screwdriver
+      tool=SCREWDRIVER, consumes=SpadeHead x1, skill=(none), time=10ms, sound=Screwdriver
 
 -- Blacksmithing (การตีเหล็ก -- internal Lua `key`/translation KEY are still
    literally "Metallurgy"; only the displayed EN/TH text and its position
    changed, moved to right after Assembly) (14) --
   - StartFire
-      tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=100ms, sound=CraftFixWeapon
+      tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=10ms, sound=CraftFixWeapon
   - MeltMetal (consumes changed 2026-09-28, was IronOre/CopperOre/IronChunk/
     SteelChunk/CopperScrap ore-tier options)
-      tool=Base.Tongs, consumes=ONE OF: ScrapMetal x1 / Gold-or-Silver Jewelry x2 (~50 real fullTypes, see JEWELRY_ITEMS in HARMONIE_TWA_Procedures.lua) / Base.SharpedStone ("Flint Shard", no exact real item) x3, skill=(none), time=200ms, sound=CraftFixWeapon
+      tool=Base.Tongs, consumes=ONE OF: ScrapMetal x2 / Gold-or-Silver Jewelry x5 (~50 real fullTypes, see JEWELRY_ITEMS in HARMONIE_TWA_Procedures.lua) / Base.SharpedStone ("Flint Shard", no exact real item) x10, skill=(none), time=10ms, sound=CraftFixWeapon
   - PourMold ("เทลงเบ้าเล็ก", renamed from "เทลงเบ้า"; icon=CeramicCast_Bar_Fired -- real item is Base.CeramicIngotCast, user's given name "CeremicIngotCast" was a typo for it)
-      tool=Base.CeramicCrucibleSmall, consumes=(none), skill=(none), time=150ms, sound=CraftFixWeapon
+      tool=Base.CeramicCrucibleSmall, consumes=(none), skill=(none), time=10ms, sound=CraftFixWeapon
   - PourMoldLarge
-      tool=Base.CeramicCrucible, consumes=(none), skill=(none), time=200ms, sound=CraftFixWeapon
+      tool=Base.CeramicCrucible, consumes=(none), skill=(none), time=10ms, sound=CraftFixWeapon
   - CoolCast (icon=CeramicCast_Bar_Unfired -- Base.ClayIngotMoldUnfired's real icon, not its own type name)
-      tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=150ms, sound=CraftFixWeapon
+      tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=30ms, sound=CraftFixWeapon
   - WeldWork
-      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=300ms, sound=CraftWelding
+      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=20ms, sound=CraftWelding
   - WeldWorkComplex (icon=WeldingRods, real+self-referential)
-      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x2, skill=MetalWelding:2, time=400ms, sound=CraftWelding
+      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x2, skill=MetalWelding:2, time=30ms, sound=CraftWelding
   - PolishMetal (icon=LargeFile_Forged -- Base.File's real icon, not its own type name; Base.File is the SAME item already used elsewhere in this file as a tool)
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:1, time=200ms, sound=CraftFixWeapon
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:1, time=20ms, sound=CraftFixWeapon
   - GrindMetal ("เจียรโลหะ", renamed from "เจียร"; icon=StoneWheel, real+self-referential)
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:2, time=250ms, sound=CraftFixWeapon
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:2, time=30ms, sound=CraftFixWeapon
   - EngravePattern (icon=KnifeSushi, real+self-referential)
-      tool=SHARP_KNIFE, consumes=(none), skill=Carving:1, time=200ms, sound=CraftFixWeapon
+      tool=SHARP_KNIFE, consumes=(none), skill=Carving:1, time=20ms, sound=CraftFixWeapon
   - ForgeShape (moved here from Sharpness; forgeTier added -- was previously no forgeTier at all; icon changed twice, now HammerStone, real+self-referential)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, forgeTier=Forge, time=400ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, forgeTier=Forge, time=50ms, sound=Hammering
   - ForgeFold ("ตีพับทบ", renamed from "ตีพับเหล็ก"; icon=BallPeenHammer_Forged -- Base.BallPeenHammer's real icon, not its own type name)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:6, forgeTier=Forge, time=400ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:6, forgeTier=Forge, time=70ms, sound=Hammering
   - ForgeComplex ("ตีงานซับซ้อน", renamed from "ตีขึ้นรูปงานซับซ้อน"; icon=SmithingHammer, real+self-referential)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x3, skill=Blacksmith:8, forgeTier=AdvancedForge, time=500ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x3, skill=Blacksmith:8, forgeTier=AdvancedForge, time=90ms, sound=Hammering
   - ForgeVacuum ("ตีสุญญากาศ", renamed from "ตีขึ้นรูปสุญญากาศ"; icon=Sledgehamer -- real item is Base.Sledgehammer (lowercase h); ITS real icon has a genuine vanilla spelling typo, one 'm', kept exactly as the game's own compiled texture is actually named)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x4, skill=Blacksmith:10, forgeTier=AdvancedForge, time=600ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x4, skill=Blacksmith:10, forgeTier=AdvancedForge, time=110ms, sound=Hammering
 
 -- Sharpness/Bluntness (สร้างความคม/ทื่อ, renamed from "สร้างความคม") (2) --
   - SharpenEdge
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Carving:1, time=100ms, sound=SharpenBladeWhetstone
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Carving:1, time=20ms, sound=SharpenBladeWhetstone
   - StropLeather (icon=FleshingTool -- Base.Fleshing_Tool's real icon, not its own type name)
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=Carving:2, time=150ms, sound=SharpenBladeWhetstone
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=Carving:2, time=30ms, sound=SharpenBladeWhetstone
 
 -- Piercing (สร้างความแหลม) (2) --
    (PrecisionGrind removed entirely -- QuenchHarden took over its rules-
@@ -99,64 +103,64 @@ CURRENT LIBRARY -- 57 procedures, 10 categories, in real display order
     Density category below. ForgeShape's own top-band slot was then also
     handed off to AnnealMetal, likewise now under Density, not Piercing.)
   - KnapHead
-      tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=SmashStoneHit
+      tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL, consumes=(none), skill=FlintKnapping:1, time=20ms, sound=SmashStoneHit
   - TaperPoint (icon=SpearHead_Crude01 -- Base.CrudeBlade's real icon, not its own type name)
-      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=FlintKnapping:2, time=150ms, sound=SharpenBladeWhetstone
+      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=FlintKnapping:2, time=30ms, sound=SharpenBladeWhetstone
 
 -- Density (สร้างความหนาแน่น -- brand-new category, split OUT of Blacksmithing/
    Metallurgy, positioned right after Piercing) (2) --
   - QuenchHarden
-      tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=150ms, sound=CraftFixWeapon
+      tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=30ms, sound=CraftFixWeapon
   - AnnealMetal (new procedure -- takes ForgeShape's old top-crit-band slot, see RULES ENGINE below; icon=SteelMold_Ingot -- Base.SteelIngotMold's real icon, not its own type name)
-      tool=Base.Tongs, consumes=(none), skill=Blacksmith:4, forgeTier=Forge, time=250ms, sound=CraftFixWeapon
+      tool=Base.Tongs, consumes=(none), skill=Blacksmith:4, forgeTier=Forge, time=50ms, sound=CraftFixWeapon
 
 -- Handle (ติดตั้งด้าม) (6) --
   - MakeHandle ("ทำด้ามสั้น", renamed from "ทำด้าม" -- distinguishes it from MakeLongHandle; icon=Handle, real -- this is Base.SmallHandle's own real icon)
-      tool=SHARP_KNIFE, consumes=LongStick/Sapling x1, skill=Carving:1, time=150ms, sound=CraftWeaponSpearWood
+      tool=SHARP_KNIFE, consumes=LongStick/Sapling x1, skill=Carving:1, time=20ms, sound=CraftWeaponSpearWood
   - WrapBind
-      consumes=DuctTape/RippedSheets/LeatherStrips/Rope x2, skill=(none), time=100ms, sound=FixWithTape
+      consumes=DuctTape/RippedSheets/LeatherStrips/Rope x2, skill=(none), time=10ms, sound=FixWithTape
   - MakeLongHandle
-      tool=SHARP_KNIFE, consumes=LongHandle/LongStick x1, skill=Carving:2, time=200ms, sound=CraftWeaponSpearWood
+      tool=SHARP_KNIFE, consumes=LongHandle/LongStick x1, skill=Carving:2, time=30ms, sound=CraftWeaponSpearWood
   - ReinforcedBind ("พันแน่นหนา", renamed from "พันยึดแน่นหนา"; material changed, was Thread x1 + Glue x1; icon=FishingLine, self-referential, was FishingLinePremium -- the wrong item's icon)
-      consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+      consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=20ms, sound=CraftFixWeapon
   - MakeRivetedHandle
-      consumes=LongHandle/LongStick x1, MetalPipe/SteelBarHalf x1, skill=Blacksmith:4, time=350ms, sound=Hammering
+      consumes=LongHandle/LongStick x1, MetalPipe/SteelBarHalf x1, skill=Blacksmith:4, time=50ms, sound=Hammering
   - TightenBolts (qty trimmed 2->1; TH name "ขันน๊อต"->"ขันน็อต" spelling fix)
-      tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x1, skill=Blacksmith:1, time=150ms, sound=Screwdriver
+      tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x1, skill=Blacksmith:1, time=20ms, sound=Screwdriver
 
 -- Balance (ถ่วงน้ำหนัก) (3) --
   - HammerNails (qty trimmed 5->1)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x1, skill=Woodwork:1, time=150ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x1, skill=Woodwork:1, time=20ms, sound=Hammering
   - CounterweightHead (icon=BlockAnvil, real+self-referential)
-      tool=HAMMER / SLEDGEHAMMER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Blacksmith:1, time=150ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Blacksmith:1, time=20ms, sound=Hammering
   - WeldMetal (icon=WeldingMask, real+self-referential)
-      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=400ms, sound=CraftWelding
+      tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=20ms, sound=CraftWelding
 
 -- Structure (เสริมโครงสร้าง) (2) --
   - RivetPlate (material narrowed to plain ScrapMetal; tool was already Hammer)
-      tool=HAMMER, consumes=ScrapMetal x1, skill=Blacksmith:1, time=200ms, sound=Hammering
+      tool=HAMMER, consumes=ScrapMetal x1, skill=Blacksmith:1, time=20ms, sound=Hammering
   - DrillCore
-      tool=Base.HandDrill, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
+      tool=Base.HandDrill, consumes=(none), skill=FlintKnapping:1, time=20ms, sound=CraftFixWeapon
 
 -- Toughness (เสริมความคงทน) (4) --
   - WrapCloth
-      consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
+      consumes=RippedSheets x1, skill=(none), time=10ms, sound=FixWithTape
   - WrapLeather
-      consumes=LeatherStrips x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+      consumes=LeatherStrips x1, skill=Tailoring:1, time=20ms, sound=CraftFixWeapon
   - StringSinew (material changed, same as ReinforcedBind above)
-      consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+      consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=20ms, sound=CraftFixWeapon
   - WeaveWire (icon=WireBundle -- Base.WireStack's real icon, not its own type name)
-      tool=Base.Pliers, consumes=Wire x1, skill=Blacksmith:2, time=200ms, sound=CraftFixWeapon
+      tool=Base.Pliers, consumes=Wire x1, skill=Blacksmith:2, time=30ms, sound=CraftFixWeapon
 
 -- Wear Resistance (ลดการสึกหรอ) (4) --
   - CoatMud
-      consumes=Clay x1, skill=(none), time=150ms, sound=CraftFixWeapon
+      consumes=Clay x1, skill=(none), time=10ms, sound=CraftFixWeapon
   - FireTreat ("เผาหน้าผิว", renamed from "เผาไฟ")
-      consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
+      consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=20ms, sound=CraftFixWeapon
   - CoatWax
-      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Carving:1, time=150ms, sound=CraftFixWeapon
+      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Carving:1, time=20ms, sound=CraftFixWeapon
   - SurfaceCoating
-      consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
+      consumes=Bleach x1, skill=Blacksmith:2, time=30ms, sound=CraftFixWeapon
 
 ==============================================================================
 RULES ENGINE -- how a recipe's real stats/name decide which procedures it
@@ -308,8 +312,8 @@ only so far) needs ONE of several real materials, each with its OWN
 quantity -- unlike the older plain `itemTypes` shape, which shares one qty
 across every alternative. An option entry can ALSO itself list several
 alternative item types under one shared qty (added 2026-09-28) -- MeltMetal's
-current real options: Base.ScrapMetal x1 / ~50 real gold-or-silver jewelry
-fullTypes (any one) x2 / Base.SharpedStone x3.
+current real options: Base.ScrapMetal x2 / ~50 real gold-or-silver jewelry
+fullTypes (any one) x5 / Base.SharpedStone x10.
 
 ==============================================================================
 MATERIAL CHANGES -- real vanilla items confirmed via grep
