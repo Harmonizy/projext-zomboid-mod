@@ -1,4 +1,5 @@
 version=1
+id=3809350242
 title=HARMONIE - The Way To Attack (WIP)
 description=(WIP) A new melee weapon-crafting mod: 137 HARMONIE weapons plus every vanilla melee weapon with a real Weaponry-category recipe, all craftable through a custom procedural crafting UI.
 description=
@@ -11,5 +12,5 @@ description=
 description=Full English and Thai translations included.
 description=
 description=Mod ID: HARMONIE_TheWayToAttack
-tags=Build 42;Balance;Weapons;Crafting
+tags=Build 42;Balance;Weapons
 visibility=public
