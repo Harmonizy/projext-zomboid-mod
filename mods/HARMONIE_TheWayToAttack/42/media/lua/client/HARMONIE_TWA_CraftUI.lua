@@ -243,16 +243,19 @@ local PANEL_H = 520
 -- for them (a real usability gap flagged, not fixed, when they were added).
 -- Added a real "Material" tab here instead of just re-explaining the
 -- limitation.
+-- Labels are plain English, NOT translated (request 2026-09-28: "filter
+-- หมวดหมู่ให้ใช้ภาษาอังกฤษ") -- same convention already established for
+-- tier names (TIER_INFO above) and TIER_TABS's own tier labels.
 local CATEGORY_TABS = {
-    { key = "All", labelKey = "IGUI_TWA_FilterAll" },
-    { key = "Available", labelKey = "IGUI_TWA_FilterAvailable" },
-    { key = "Axe", labelKey = "IGUI_TWA_FilterAxe" },
-    { key = "SmallBlade", labelKey = "IGUI_TWA_FilterSmallBlade" },
-    { key = "Blunt", labelKey = "IGUI_TWA_FilterBlunt" },
-    { key = "SmallBlunt", labelKey = "IGUI_TWA_FilterSmallBlunt" },
-    { key = "LongBlade", labelKey = "IGUI_TWA_FilterLongBlade" },
-    { key = "Spear", labelKey = "IGUI_TWA_FilterSpear" },
-    { key = "Material", labelKey = "IGUI_TWA_FilterMaterial" },
+    { key = "All", label = "All" },
+    { key = "Available", label = "Available" },
+    { key = "Axe", label = "Axe" },
+    { key = "SmallBlade", label = "Small Blade" },
+    { key = "Blunt", label = "Blunt" },
+    { key = "SmallBlunt", label = "Small Blunt" },
+    { key = "LongBlade", label = "Long Blade" },
+    { key = "Spear", label = "Spear" },
+    { key = "Material", label = "Material" },
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
@@ -931,7 +934,7 @@ function TWACraftWindow:createChildren()
     self.categoryRowY = contentTop
     local fx, fy = leftX, contentTop + captionH
     for _, tab in ipairs(CATEGORY_TABS) do
-        local label = getText(tab.labelKey)
+        local label = tab.label
         local w = getTextManager():MeasureStringX(UIFont.Small, label) + 20
         if fx + w > leftX + LEFT_W then
             fx = leftX
@@ -1673,7 +1676,15 @@ function TWACraftWindow:render()
         drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, UIFont.Small)
     end
 
-    local statY = self:drawStatGrid(centerX + ICON + 12, centerY + 44, CENTER_W - ICON - 20)
+    -- Request 2026-09-28: "หมวดหมู่วัตถุดิบ ไม่ต้องแสดง stats สถานะ" --
+    -- Material-category recipes (the 6 Metallurgy items) have no combat
+    -- stats at all, so the grid below would only ever show placeholder "-"/
+    -- default values for them -- skipped entirely for this one category,
+    -- the base-item card/procedure grid just start higher up instead.
+    local statY = centerY + 44
+    if recipe.category ~= "Material" then
+        statY = self:drawStatGrid(centerX + ICON + 12, centerY + 44, CENTER_W - ICON - 20)
+    end
 
     -- Base-item requirement box(es) -- request 2026-09-26: the old bare-
     -- border-with-floating-text version ("looks disconnected/floaty") is
