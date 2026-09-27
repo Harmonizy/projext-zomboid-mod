@@ -1805,12 +1805,24 @@ function TWACraftUI.open(player, searchText, resumeItem)
     local win = TWACraftWindow:new(x, y, player)
     TWACraftUI.window = win
     win:initialise()
+    -- *** REAL BUG FIXED (2026-09-28, crash report: "attempted index:
+    -- setText of non-table: null" at applySearch, HARMONIE_TWA_CraftUI.lua
+    -- crash log): self.searchBox (and every other child widget) does NOT
+    -- exist yet right after :initialise() -- confirmed from the engine's
+    -- own real source: ISUIElement:initialise() only sets up self.children/
+    -- self.ID, it never calls createChildren() at all; createChildren() is
+    -- only ever called from :instantiate(), which :addToUIManager() is what
+    -- actually triggers. Calling resumeFromItem()/applySearch() (both of
+    -- which touch self.searchBox/self.recipeList) BEFORE addToUIManager()
+    -- was therefore always going to crash the very first time either one
+    -- ran against a brand new window -- moved both calls to AFTER
+    -- addToUIManager() below, once every child widget genuinely exists. ***
+    win:addToUIManager()
     if resumeItem then
         win:resumeFromItem(resumeItem)
     elseif searchText then
         win:applySearch(searchText)
     end
-    win:addToUIManager()
     win:bringToTop()
 end
 

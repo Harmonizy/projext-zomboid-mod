@@ -2319,6 +2319,28 @@ just a one-off fix:
   grade are all ModData-only, no renaming anywhere, per that same request):
   save the ORIGINAL name/value up front, don't try to reverse-parse whatever
   the current display text happens to say.
+- **`:initialise()` does NOT create a window's child widgets — only
+  `:addToUIManager()` does.** Real crash caught from an actual game log
+  (console.txt, `KahluaThread.flushErrorMessage`): "attempted index: setText
+  of non-table: null", right-clicking a weapon and picking "Craft Weapon"
+  threw every time a NEW crafting window had to be created (TWACraftUI.open
+  calling `win:resumeFromItem()`/`win:applySearch()` — both touch
+  `self.searchBox`/`self.recipeList` — right after `win:initialise()` but
+  BEFORE `win:addToUIManager()`). Confirmed from the engine's own real
+  source: `ISUIElement:initialise()` only sets up `self.children`/`self.ID`;
+  `createChildren()` (which is what actually SETS `self.searchBox` etc.) is
+  only ever called from `:instantiate()`, and `:addToUIManager()` is what
+  calls that. Any code that needs to touch a window's own child widgets
+  right after creating it — not just this mod's search/resume feature, any
+  future one too — must run AFTER `:addToUIManager()`, never in the gap
+  between `:new()`/`:initialise()` and it. The real in-game Lua console/
+  error log — `console.txt` at the Zomboid root (`C:\Users\User\Zomboid\
+  console.txt`, NOT inside `mods/`) — is the first place to check for an
+  exact stack trace + exception message whenever a user reports a crash/
+  freeze with no more specific description than that; grepping it for
+  "KahluaThread.flushErrorMessage" found this exact bug directly (exact
+  file:line + the "attempted index: ... of non-table: null" message), no
+  guessing needed.
 
 
 9. Checklist before starting any new work
