@@ -67,6 +67,22 @@ local STAT_GRID = {
       { key = "weight", labelKey = "IGUI_TWA_StatWeight", fmt = "%.1f" } },
 }
 
+-- Request 2026-09-27 (multiplayer collaborative crafting): the crafter's
+-- name (TWA_CraftedBy), rolled grade (TWA_Grade), and unfinished status
+-- (TWA_Incomplete) are all per-INSTANCE ModData -- unlike tier above (looked
+-- up by fullType, same for every copy of an item), these only exist on items
+-- that actually passed through this mod's own Finish/Incomplete actions, so
+-- they're read straight off self.item:getModData() here instead of the
+-- Stats table. Grade colors are plain -- not tied to the weapon-rarity
+-- TIER_COLOR table above, a different scale entirely (crafting quality, not
+-- weapon power) -- S/A green-ish down to F red-ish, matching the usual
+-- "better grade = warmer/cooler" convention without inventing new meaning.
+local GRADE_COLOR = {
+    S = { r = 1.0, g = 0.85, b = 0.15 }, A = { r = 0.4, g = 0.9, b = 1.0 }, B = { r = 0.4, g = 0.9, b = 0.4 },
+    C = { r = 0.75, g = 0.9, b = 0.4 }, D = { r = 0.9, g = 0.8, b = 0.4 }, E = { r = 0.95, g = 0.6, b = 0.3 },
+    F = { r = 0.85, g = 0.35, b = 0.3 },
+}
+
 -- Grows the panel's own real height to fit the extra line BEFORE drawing it
 -- (rather than drawing past the original self.height and hoping nothing
 -- clips it) -- ISScrollingListBox's own real source (read earlier this
@@ -126,5 +142,38 @@ function ISToolTipInv:render()
             end
         end
         ry = ry + rowH
+    end
+
+    -- Request 2026-09-27: crafter name / grade / unfinished status, all
+    -- per-instance ModData (see this file's own note above) -- only drawn
+    -- when at least one is actually present, so a real vanilla or otherwise-
+    -- untouched item (which only ever gets the tier+stat strips above) never
+    -- shows a blank/empty extra box.
+    local md = self.item:getModData()
+    local craftedBy = md.TWA_CraftedBy
+    local grade = md.TWA_Grade
+    local incomplete = md.TWA_Incomplete
+    if craftedBy or grade or incomplete then
+        local lines = {}
+        if incomplete then
+            lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipIncomplete"), color = { r = 1, g = 0.6, b = 0.3 } }
+        end
+        if craftedBy and craftedBy ~= "" then
+            lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipCraftedBy", craftedBy), color = { r = 0.85, g = 0.85, b = 0.85 } }
+        end
+        if grade then
+            local gc = GRADE_COLOR[grade] or { r = 1, g = 1, b = 1 }
+            lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipGrade", grade), color = gc }
+        end
+        local xy = gy + gridH
+        local xh = rowH * #lines + 4
+        self:setHeight(self.height + xh)
+        self:drawRect(2, xy, self.width - 4, xh - 2, 0.85, 0.05, 0.05, 0.05)
+        self:drawRectBorder(2, xy, self.width - 4, xh - 2, 0.6, 0.4, 0.4, 0.4)
+        local xry = xy + 3
+        for _, l in ipairs(lines) do
+            self:drawText(l.text, 6, xry, l.color.r, l.color.g, l.color.b, 1, font)
+            xry = xry + rowH
+        end
     end
 end

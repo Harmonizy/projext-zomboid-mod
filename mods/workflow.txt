@@ -2017,6 +2017,51 @@ first thing to check/expand — the real entities are multi-tile, so a
 rotation/tile not seen in the entity's own SpriteConfig block could be
 missing. ***
 
+Multiplayer collaborative crafting (request 2026-09-27): a recipe's result
+can now be taken out of the crafting process EARLY, before every procedure is
+done, as a real physical item — the "Incomplete" button (center panel, 3rd
+button alongside Cancel/Finish) queues `TWA_IncompleteCraftAction.lua`, which
+consumes base/base2 right then (same as a real Finish) and spawns the result
+item tagged with ModData: `TWA_Incomplete=true`, `TWA_RecipeId`,
+`TWA_DoneProcedures` (a snapshot of whichever procedures were done so far),
+`TWA_BaseName` (the item's own tier-suffixed name BEFORE the "[Incomplete]"
+suffix is appended — captured so the real Finish can restore it later without
+string-stripping a translated suffix, see 8.13). Right-clicking that exact
+item (`HARMONIE_TWA_CraftTrigger.lua`'s inventory context-menu handler checks
+`TWA_Incomplete`+`TWA_RecipeId` on the actual clicked item) reopens the
+crafting UI already resuming it (`TWACraftWindow:resumeFromItem`) — from that
+point on, `TWACraftWindow:currentDone()` reads/writes DIRECTLY into that
+item's own ModData instead of the window's own `self.progress[recipe.id]`
+table, so a second physical half-finished copy of the same recipe never
+collides with a different one, and progress is saved continuously with no
+separate "save" step (performing a procedure while resumed edits the real
+item immediately). Finishing a resumed item (`TWA_FinishCraftAction.lua`'s
+`self.resumeItem` branch) does NOT re-consume base/base2 or spawn a new item
+— it only clears the Incomplete tags, restores the pre-suffix name, and
+stamps `TWA_CraftedBy` (the FINISHING player's in-character forename+surname)
++ `TWA_Grade` (a rolled S/A/B/C/D/E/F letter, verbatim requested odds
+0/1/3/6/15/25/50 — S is therefore never reachable by pure chance right now,
+kept exactly as given rather than adjusted, since 0% for the top grade reads
+like it's meant to require some other future condition, not plain luck; not
+read by anything else yet, purely stored for a later feature). All 3 —
+crafted-by/grade/incomplete-status — are shown on the real item's own hover
+tooltip via a new block in `HARMONIE_TWA_TierTooltip.lua`, read per-instance
+from ModData (unlike tier, which is looked up by fullType from the Stats
+table and is the same for every copy). The recipe-list search
+(`TWARecipeScrollList:matches`) was also extended to match a recipe's
+base/base2 item name and any of its required procedures' own translated
+names, not just the result's name — this is the SAME mechanism reused by (1)
+the procedure-details "magnifying glass" button (`TWACraftWindow:
+onSearchByProcedure`, prefills search with the selected procedure's own
+name), and (2) right-clicking a recognized weapon/base item in inventory
+(`TWACraftUI.autoSearchNameFor`, classifies a fullType as a producible recipe
+result vs. a consumed base/base2/baseAlt, prefilling search with that item's
+name) — right-clicking anything else, or the ground/a table
+(`OnFillWorldObjectContextMenu`, added fresh, always blank), opens the UI with
+no auto-search. `TWACraftUI.open(player, searchText, resumeItem)` now takes
+these two optional context params; both nil reproduces the exact old
+behavior.
+
 
 8.12 Real B42 API/data facts confirmed while building the crafting UI (glossary)
 ================================================================================
@@ -2090,6 +2135,36 @@ concluding this, not guessed); a generic Lua query for a script's own
 `tags[base:x]` namespace (Java-side only); a confirmed safe path from a
 plain scanned `IsoObject` to its Entity definition name (only found
 `logic:getEntity()` FROM an already-existing HandcraftLogic object).
+
+Real APIs confirmed while building the multiplayer collaborative-crafting
+feature (request 2026-09-27): `OnFillInventoryObjectContextMenu`'s 3rd
+argument (`items`) is the RAW list `ISInventoryPaneContextMenu.createMenu`
+passes straight to `triggerEvent` — real source comment (that file, near its
+own top): "items is a list that could contain either InventoryItem objects,
+OR a table with a list of InventoryItem objects in .items. Also there is a
+duplicate entry first in the list" — `ISInventoryPane.getActualItems(items)`/
+`getActualUniqueItems(items)` (both real, `ISInventoryPane.lua`) are vanilla's
+own normalizers for exactly this; `getActualUniqueItems` is the right one for
+"classify the one item this right-click was on" (one representative real
+InventoryItem per selected stack/type). `OnFillWorldObjectContextMenu`'s 1st
+argument is ALSO playerNum (integer), not a player object — confirmed from
+its real caller (`ISMenuContextWorld.lua`: `ISWorldObjectContextMenu.
+createMenu(_playerNum, _objects, _x, _y)`), same as the inventory event;
+`getSpecificPlayer(playerNum)` on it works identically to the inventory
+handler. `InventoryItem:getContainer():isInCharacterInventory(character)` (real,
+from `ISInventoryPaneContextMenu.lua`'s own `testItem:getContainer():
+isInCharacterInventory(playerObj)`) is the correct live re-check for "does
+this exact item instance still belong to this character right now" — used by
+`TWA_FinishCraftAction.lua`'s resumeItem branch instead of re-checking
+ownership by fullType (which wouldn't distinguish which specific copy).
+Storing a nested Lua table (not just scalars) in an item/character's own
+`getModData()` is a real, established vanilla pattern, not something risky
+this mod invented — confirmed from vanilla's own `TrapSystem.lua`
+(`modData.animal = {}`) and `ISPickupFishAction.lua`
+(`character:getModData().fishing_catchedFish = {}`) — used here for
+`TWA_DoneProcedures`, a `{[procId]=true, ...}` map. `ZombRand(n)` (real,
+used throughout vanilla's own TimedActions) returns an integer in `[0, n)` —
+`ZombRand(100)` for a 0-99 percentile roll.
 
 
 8.13 Recurring bug/lesson patterns specific to this immediate-mode custom UI
@@ -2176,6 +2251,19 @@ just a one-off fix:
   grep-verify every named item/tag/mechanic independently before writing
   code from a pasted brief, and settle disputed mechanics with real
   computed data, not by re-reading the claim more carefully.
+- **Never string-strip a suffix that came from a translated `getText()`
+  string off an item's current name to "undo" it later.** The Incomplete/
+  resume feature (2026-09-27) needs to remove an appended "[Incomplete]"-
+  style tag once an item is truly finished — a `gsub` against the literal
+  English text would silently fail to match on a Thai client, since
+  `IGUI_TWA_IncompleteSuffix` renders differently per language. Fixed by
+  capturing the PRE-suffix name into its own ModData field
+  (`TWA_BaseName`) at the moment the suffix is first appended, then
+  restoring by `item:setName(md.TWA_BaseName)` later — reconstructing from a
+  saved value, never by pattern-matching text that might be in any language.
+  Generalizes: any "temporarily rename, then rename back" flow on a real
+  item must save the ORIGINAL name/value up front, not try to reverse-parse
+  whatever the current display text happens to say.
 
 
 9. Checklist before starting any new work

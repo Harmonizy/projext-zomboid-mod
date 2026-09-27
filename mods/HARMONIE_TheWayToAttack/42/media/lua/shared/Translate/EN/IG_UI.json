@@ -153,5 +153,13 @@
     "IGUI_TWA_ProcedureInProgress": "In Progress...",
     "IGUI_TWA_ProcedureNotReady": "Not Ready",
     "IGUI_TWA_ProcedureRequirementsMet": "All requirements met.",
-    "IGUI_TWA_BaseAnyOf": "Any of:"
+    "IGUI_TWA_BaseAnyOf": "Any of:",
+    "IGUI_TWA_Incomplete": "Incomplete",
+    "IGUI_TWA_Tooltip_Incomplete": "Take the item out now, even though not every procedure is done yet. Its base item(s) are consumed now, same as Finish -- the item itself remembers what's done and what isn't, so right-clicking it later (by you or someone else) picks up right where you left off.",
+    "IGUI_TWA_Tooltip_FindRecipesForProcedure": "Search the recipe list for every recipe that needs this exact procedure.",
+    "IGUI_TWA_ResumingItem": "Continuing an unfinished item -- its base item(s) were already spent",
+    "IGUI_TWA_IncompleteSuffix": "[Incomplete]",
+    "IGUI_TWA_TooltipIncomplete": "Unfinished -- some procedures still need to be done",
+    "IGUI_TWA_TooltipCraftedBy": "Crafted by: %1",
+    "IGUI_TWA_TooltipGrade": "Grade: %1"
 }

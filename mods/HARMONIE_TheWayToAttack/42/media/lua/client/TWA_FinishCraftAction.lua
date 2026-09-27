@@ -43,10 +43,24 @@ local function removeOneOf(character, fullType, altType)
     if it then inv:Remove(it) end
 end
 
+-- `self.resumeItem` (request 2026-09-27, multiplayer collaborative
+-- crafting): set when Finish is clicked while resuming a physical item that
+-- was already taken out early via TWA_IncompleteCraftAction.lua -- its base
+-- item(s) were consumed back then, not now, so the usual ownsSlot re-checks
+-- are skipped in favor of re-confirming the character still actually has
+-- THAT SPECIFIC item (it could have been dropped, traded away, or put in a
+-- container mid-action since the button was clicked) via getContainer():
+-- isInCharacterInventory(), the same real API vanilla's own
+-- ISInventoryPaneContextMenu.lua uses for this exact kind of check.
 function TWA_FinishCraftAction:isValid()
     if not self.character or not self.recipe then return false end
-    if not ownsSlot(self.character, self.recipe.base, self.recipe.baseAlt) then return false end
-    if not ownsSlot(self.character, self.recipe.base2, nil) then return false end
+    if self.resumeItem then
+        local container = self.resumeItem:getContainer()
+        if not container or not container:isInCharacterInventory(self.character) then return false end
+    else
+        if not ownsSlot(self.character, self.recipe.base, self.recipe.baseAlt) then return false end
+        if not ownsSlot(self.character, self.recipe.base2, nil) then return false end
+    end
     for _, procId in ipairs(self.recipe.procedures) do
         if not self.doneProcedures[procId] then return false end
     end
@@ -101,7 +115,13 @@ local TIER_NAMES = {
     [6] = "Elite", [7] = "Legendary", [8] = "Prototype",
 }
 
+-- Guarded by TWA_Tier already being set (request 2026-09-27) -- an
+-- Incomplete item (TWA_IncompleteCraftAction.lua) gets tagged/renamed by
+-- THIS same function when it's first taken out early, since its tier is
+-- intrinsic to its fullType and never random; without the guard, later
+-- finishing that same item here would re-append "[Tier]" a second time.
 local function applyTier(item, fullType)
+    if item:getModData().TWA_Tier then return end
     local stats = TWARecipeData.Stats[fullType]
     local tier = stats and stats.tier
     if not tier or not TIER_NAMES[tier] then return end
@@ -113,23 +133,94 @@ local function applyTier(item, fullType)
     -- 2026-09-26: "the vanilla tooltip doesn't show the item's tier").
     item:getModData().TWA_Tier = tier
 end
+-- Exported (request 2026-09-27) so TWA_IncompleteCraftAction.lua can reuse
+-- this exact same tagging/renaming logic instead of duplicating it -- both
+-- files need to agree on the identical format for the resume/strip step
+-- below to work.
+TWA_FinishCraftAction.applyTier = applyTier
+
+-- Rarity GRADE roll (request 2026-09-27, verbatim odds): "การกดเสร็จสิ้นจะมี
+-- การเก็บความแรร์ไว้ใน tooltip ความแรร์มีได้แก่ S A B C D E F โดยมีโอกาสสุ่ม
+-- ได้ตามลำดับนี้ 0,1,3,6,15,25,50" -- purely stored for now, not read by
+-- anything else yet (the request itself defers that: "ในอนาคตจะมีการให้อ่าน
+-- ค่า tooltip นี้ไปทำอย่างอื่นในภายหลัง"). S's own stated odds are exactly
+-- 0 -- kept literally as given rather than "rounded up" to something
+-- reachable, since 0% for the top grade reads like it's meant to require
+-- some other, not-yet-specified condition later, not plain chance.
+local GRADE_TABLE = {
+    { grade = "S", chance = 0 }, { grade = "A", chance = 1 }, { grade = "B", chance = 3 },
+    { grade = "C", chance = 6 }, { grade = "D", chance = 15 }, { grade = "E", chance = 25 },
+    { grade = "F", chance = 50 },
+}
+local function rollGrade()
+    local roll = ZombRand(100)
+    local cumulative = 0
+    for _, g in ipairs(GRADE_TABLE) do
+        cumulative = cumulative + g.chance
+        if roll < cumulative then return g.grade end
+    end
+    return "F"
+end
+
+-- Stamps who actually finished this item (request 2026-09-27: "tooltip มีการ
+-- สลักชื่อของผู้กดเสร็จสิ้น") and rolls its grade -- both only happen once,
+-- at the REAL finish, whether that's a fresh craft or completing a resumed
+-- Incomplete item; the in-character forename+surname is used (not
+-- getUsername(), which is MP-account-specific and can be blank/meaningless
+-- in singleplayer) -- same real identity vanilla itself already uses for
+-- signing things by player (e.g. LastStandSetup.lua, ISCharacterScreen.lua).
+local function stampFinisher(item, character)
+    local md = item:getModData()
+    local desc = character:getDescriptor()
+    md.TWA_CraftedBy = desc and (desc:getForename() .. " " .. desc:getSurname()) or ""
+    md.TWA_Grade = rollGrade()
+end
+
+-- Request 2026-09-27: finishing a RESUMED Incomplete item (self.resumeItem
+-- set) doesn't spawn a new item or consume base/base2 again -- that item
+-- already physically exists and its materials were already spent when it
+-- was first taken out early. This just clears its "unfinished" state and
+-- restores its pre-Incomplete-suffix name from TWA_BaseName (captured back
+-- when TWA_IncompleteCraftAction.lua first tagged it) -- restoring by saved
+-- name rather than string-stripping a suffix off the CURRENT name, since
+-- that suffix's own text is a translated string and would silently fail to
+-- strip for any language other than the one it was created in.
+local function finalizeResumedItem(item, character)
+    local md = item:getModData()
+    if md.TWA_BaseName then
+        item:setName(md.TWA_BaseName)
+    end
+    md.TWA_Incomplete = nil
+    md.TWA_DoneProcedures = nil
+    md.TWA_RecipeId = nil
+    md.TWA_BaseName = nil
+    stampFinisher(item, character)
+end
 
 function TWA_FinishCraftAction:perform()
     if self.finishSound and self.character:getEmitter():isPlaying(self.finishSound) then
         self.character:stopOrTriggerSound(self.finishSound)
     end
-    local inv = self.character:getInventory()
-    removeOneOf(self.character, self.recipe.base, self.recipe.baseAlt)
-    removeOneOf(self.character, self.recipe.base2, nil)
-    local newItem = inv:AddItem(self.recipe.result)
-    if newItem then applyTier(newItem, self.recipe.result) end
+    if self.resumeItem then
+        finalizeResumedItem(self.resumeItem, self.character)
+    else
+        local inv = self.character:getInventory()
+        removeOneOf(self.character, self.recipe.base, self.recipe.baseAlt)
+        removeOneOf(self.character, self.recipe.base2, nil)
+        local newItem = inv:AddItem(self.recipe.result)
+        if newItem then
+            applyTier(newItem, self.recipe.result)
+            stampFinisher(newItem, self.character)
+        end
+    end
     ISBaseTimedAction.perform(self)
 end
 
-function TWA_FinishCraftAction:new(character, recipe, doneProcedures)
+function TWA_FinishCraftAction:new(character, recipe, doneProcedures, resumeItem)
     local o = ISBaseTimedAction.new(self, character)
     o.recipe = recipe
     o.doneProcedures = doneProcedures
+    o.resumeItem = resumeItem
     o.maxTime = 100
     o.forceProgressBar = true
     return o

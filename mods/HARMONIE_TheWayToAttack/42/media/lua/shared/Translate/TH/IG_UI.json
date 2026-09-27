@@ -153,5 +153,13 @@
     "IGUI_TWA_ProcedureInProgress": "กำลังทำ...",
     "IGUI_TWA_ProcedureNotReady": "ยังไม่พร้อม",
     "IGUI_TWA_ProcedureRequirementsMet": "มีครบตามที่ต้องใช้แล้ว",
-    "IGUI_TWA_BaseAnyOf": "ใช้ได้ทุกแบบ:"
+    "IGUI_TWA_BaseAnyOf": "ใช้ได้ทุกแบบ:",
+    "IGUI_TWA_Incomplete": "ไม่สมบูรณ์",
+    "IGUI_TWA_Tooltip_Incomplete": "เอาไอเท็มออกมาตอนนี้ แม้จะยังทำกรรมวิธีไม่ครบ ชิ้นงานตั้งต้นจะถูกใช้ไปเลยเหมือนกดเสร็จสิ้น แต่ไอเท็มจะจำไว้ว่าทำอะไรไปแล้วบ้าง คลิกขวาไอเท็มนี้อีกครั้ง (โดยคุณเองหรือคนอื่น) จะทำต่อจากจุดที่ค้างไว้ได้",
+    "IGUI_TWA_Tooltip_FindRecipesForProcedure": "ค้นหาในรายการสูตรทุกสูตรที่ต้องใช้กรรมวิธีนี้",
+    "IGUI_TWA_ResumingItem": "กำลังทำไอเท็มที่ยังไม่สมบูรณ์ต่อ -- ชิ้นงานตั้งต้นถูกใช้ไปแล้ว",
+    "IGUI_TWA_IncompleteSuffix": "[ยังไม่สมบูรณ์]",
+    "IGUI_TWA_TooltipIncomplete": "ยังไม่สมบูรณ์ -- ยังมีกรรมวิธีที่ต้องทำต่อ",
+    "IGUI_TWA_TooltipCraftedBy": "สร้างโดย: %1",
+    "IGUI_TWA_TooltipGrade": "เกรด: %1"
 }

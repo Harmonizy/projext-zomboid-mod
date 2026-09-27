@@ -32,6 +32,11 @@ local TWA_NEAT = {
     btnM = getTexture("media/ui/NeatUI/Button/Button_FULL_M.png"),
     btnR = getTexture("media/ui/NeatUI/Button/Button_FULL_R.png"),
     check = getTexture("media/ui/NeatUI/ICON/ICON_Check.png"),
+    -- No dedicated small search/magnifying-glass UI glyph exists in either
+    -- NeatUI's own icon set or vanilla's UI textures (checked both before
+    -- picking this) -- reuses the real vanilla WorldItems/MagnifyingGlass.png
+    -- item sprite instead, scaled down to button size.
+    search = getTexture("media/textures/WorldItems/MagnifyingGlass.png"),
 }
 
 -- A round-trip through this UI's second real bug report: the first pass used
@@ -221,6 +226,32 @@ function TWATabButton:render()
     end
 end
 
+-- Plain icon button (request 2026-09-27: "เพิ่มปุ่มแว่นขยาย...จะทำให้
+-- สามารถไป search สูตรอาวุธที่ต้องทำกรรมวิธีนั้นๆได้" -- a magnifying-glass
+-- button in the procedure details box). Draws a texture instead of a text
+-- title -- everything else (hover/disabled alpha, flat border) mirrors
+-- TWANeatButton's own real render() pattern.
+TWAIconButton = ISButton:derive("TWAIconButton")
+
+function TWAIconButton:new(x, y, w, h, texture, target, onclick)
+    local o = ISButton:new(x, y, w, h, "", target, onclick)
+    setmetatable(o, self)
+    self.__index = self
+    o:setDisplayBackground(false)
+    o.icon = texture
+    return o
+end
+
+function TWAIconButton:render()
+    local disabled = self.enable == false
+    local alpha = disabled and 0.35 or (self:isMouseOver() and 1 or 0.85)
+    self:drawRect(0, 0, self.width, self.height, 0.6, 0.15, 0.15, 0.15)
+    self:drawRectBorder(0, 0, self.width, self.height, alpha, 0.6, 0.6, 0.6)
+    if self.icon then
+        self:drawTextureScaled(self.icon, 3, 3, self.width - 6, self.height - 6, alpha, 1, 1, 1)
+    end
+end
+
 TWACraftUI = TWACraftUI or {}
 
 local WINDOW_W = 1000
@@ -302,6 +333,55 @@ end
 local function getItemTexture(icon)
     if not icon then return nil end
     return getTexture("media/textures/Item_" .. icon .. ".png")
+end
+
+-- Lazily-built id -> recipe lookup (request 2026-09-27: resuming an
+-- Incomplete item only has the recipe's id, stamped into its own ModData --
+-- see TWACraftWindow:resumeFromItem). Not baked into the GENERATED
+-- HARMONIE_TWA_RecipeData.lua itself -- that file gets regenerated from
+-- scratch by gen_craftdata.js often enough this session that adding to it
+-- would mean also touching the generator; a small runtime cache here needs
+-- no generator change and costs nothing (built once, on first use).
+local recipeByIdCache
+local function getRecipeById(id)
+    if not recipeByIdCache then
+        recipeByIdCache = {}
+        for _, r in ipairs(TWARecipeData.List) do
+            recipeByIdCache[r.id] = r
+        end
+    end
+    return recipeByIdCache[id]
+end
+
+-- Request 2026-09-27: "คลิกขวาเปิด ui ผ่านอาวุธจะค้นหาชื่ออาวุธนั้นโดย
+-- อัตโนมัติ...คลิกขวาเปิด ui ผ่านชิ้นส่วนตั้งต้นจะค้นหาด้วยชื่อของชิ้นส่วน"
+-- -- classifies a fullType as either something this UI can PRODUCE (any
+-- recipe.result) or something it CONSUMES (any recipe's base/base2/baseAlt),
+-- returning that item's own display name to prefill the search box with --
+-- or nil for anything neither (falls through to a plain blank-search open,
+-- covering "right-click any other item/floor/table" from the same request).
+-- Checked in this order deliberately: some items (the 5 tiered MaterialBars)
+-- are BOTH a Metallurgy recipe's own result AND a weapon recipe's base2 --
+-- treating "producible" as the answer people actually want when right-
+-- clicking that exact item (how do I make more of this) rather than "what
+-- can I build WITH this", though either reading would be defensible.
+function TWACraftUI.autoSearchNameFor(fullType)
+    if not fullType then return nil end
+    local isResult, isBase = false, false
+    for _, recipe in ipairs(TWARecipeData.List) do
+        if recipe.result == fullType then isResult = true break end
+    end
+    if not isResult then
+        for _, recipe in ipairs(TWARecipeData.List) do
+            if recipe.base == fullType or recipe.base2 == fullType or recipe.baseAlt == fullType then
+                isBase = true
+                break
+            end
+        end
+    end
+    if not isResult and not isBase then return nil end
+    local it = getItemScript(fullType)
+    return it and it:getDisplayName() or fullType
 end
 
 -- `recipe.base` is either nil (no starting item needed at all) or a SINGLE
@@ -419,12 +499,34 @@ function TWARecipeScrollList:matches(recipe)
             return false
         end
     end
+    -- Request 2026-09-27 (multiplayer collaborative crafting): "การ search
+    -- ใน ui เพิ่มให้สามารถค้นหาด้วย ชื่อชิ้นส่วนตั้งต้น กรรมวิธีที่ต้องทำ" --
+    -- search now also matches the recipe's base/base2 item name(s) and every
+    -- required procedure's own translated name, not just the result's name.
+    -- This is also the exact mechanism the new procedure-details magnifying-
+    -- glass button reuses (TWACraftWindow:onSearchByProcedure) -- searching
+    -- for a procedure's own name naturally filters down to every recipe that
+    -- lists it, with no separate filter code path needed.
     if self.searchText ~= "" then
-        local item = getItemScript(recipe.result)
-        local name = item and item:getDisplayName() or recipe.result
-        if not string.find(string.lower(name), string.lower(self.searchText), 1, true) then
-            return false
+        local q = string.lower(self.searchText)
+        local function nameMatches(fullType)
+            if not fullType then return false end
+            local it = getItemScript(fullType)
+            local n = it and it:getDisplayName() or fullType
+            return string.find(string.lower(n), q, 1, true) ~= nil
         end
+        local matched = nameMatches(recipe.result) or nameMatches(recipe.base)
+            or nameMatches(recipe.base2) or nameMatches(recipe.baseAlt)
+        if not matched then
+            for _, procId in ipairs(recipe.procedures) do
+                local proc = TWAProcedures.List[procId]
+                if proc and string.find(string.lower(getText(proc.nameKey)), q, 1, true) then
+                    matched = true
+                    break
+                end
+            end
+        end
+        if not matched then return false end
     end
     return true
 end
@@ -815,6 +917,14 @@ function TWACraftWindow:new(x, y, player)
     -- onFinish), so crafting a second copy of the same weapon later starts
     -- clean.
     o.progress = {}
+    -- Request 2026-09-27 (multiplayer collaborative crafting): set only by
+    -- resumeFromItem(), when this window was opened by right-clicking a
+    -- physical item that was itself taken out early via the Incomplete
+    -- button. While set, currentDone() reads/writes straight into THAT
+    -- ITEM's own ModData instead of self.progress -- see currentDone()'s own
+    -- note below for why that's the one safe way to support several
+    -- physical half-finished copies of the same recipe existing at once.
+    o.resumeItem = nil
     o.selectedProcId = nil
     o.activeProcId = nil
     o.activeAction = nil
@@ -940,14 +1050,25 @@ function TWACraftWindow:createChildren()
     self.procDetailsY = contentTop + gridH + 8
     self.procDetailsH = detailsH
 
-    -- Cancel / Finish buttons (center panel bottom)
-    local btnW, btnH = (CENTER_W - 10) / 2, 30
+    -- Cancel / Incomplete / Finish buttons (center panel bottom). Incomplete
+    -- (request 2026-09-27, multiplayer collaborative crafting) is the new
+    -- middle button -- pulls the recipe's result out early as a real
+    -- physical item tagged with whatever progress has been made so far (see
+    -- TWA_IncompleteCraftAction.lua), so someone else can pick it up and keep
+    -- going. 3-way split of the same row Cancel/Finish already used.
+    local btnW, btnH = (CENTER_W - 20) / 3, 30
     self.cancelButton = TWANeatButton:new(centerX, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Cancel"), self, TWACraftWindow.onCancel)
     self.cancelButton:setTooltip(getText("IGUI_TWA_Tooltip_Cancel"))
     self.cancelButton:initialise()
     self:addChild(self.cancelButton)
 
-    self.finishButton = TWANeatButton:new(centerX + btnW + 10, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinish)
+    self.incompleteButton = TWANeatButton:new(centerX + btnW + 10, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Incomplete"), self, TWACraftWindow.onIncomplete)
+    self.incompleteButton.neatTint = { r = 0.55, g = 0.6, b = 0.95 }
+    self.incompleteButton:setTooltip(getText("IGUI_TWA_Tooltip_Incomplete"))
+    self.incompleteButton:initialise()
+    self:addChild(self.incompleteButton)
+
+    self.finishButton = TWANeatButton:new(centerX + 2 * (btnW + 10), panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinish)
     self.finishButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     self.finishButton:initialise()
@@ -974,6 +1095,16 @@ function TWACraftWindow:createChildren()
     self:addChild(self.procCancelButton)
     self.procBtnY = procBtnY
 
+    -- Magnifying-glass button (request 2026-09-27) -- top-right corner of
+    -- the procedure details box, beside its name line. Only meaningful once
+    -- a procedure is actually selected there -- visibility toggled in
+    -- drawProcedureDetails() the same way procConfirmButton/procCancelButton
+    -- already are.
+    self.procSearchButton = TWAIconButton:new(rightX + RIGHT_W - 30, self.procDetailsY + 6, 22, 22, TWA_NEAT.search, self, TWACraftWindow.onSearchByProcedure)
+    self.procSearchButton:setTooltip(getText("IGUI_TWA_Tooltip_FindRecipesForProcedure"))
+    self.procSearchButton:initialise()
+    self:addChild(self.procSearchButton)
+
     self.centerX = centerX
     self.contentTop = contentTop
     self.rightX = rightX
@@ -991,11 +1122,49 @@ end
 
 -- Returns THIS recipe's own persistent done-table (lazily created), never a
 -- shared/reset one -- see the o.progress comment in :new() above.
+--
+-- Request 2026-09-27 (multiplayer collaborative crafting): when
+-- self.resumeItem is set, progress lives DIRECTLY on that physical item's
+-- own ModData instead of self.progress -- keyed by recipe.id the way
+-- self.progress always has been would break the moment two different
+-- physical half-finished copies of the SAME recipe exist at once (one
+-- player's "take it out early" copy sitting in a chest while a second copy
+-- is independently being started fresh) -- both would collide on the same
+-- self.progress[id] slot. Reading/writing the item's own ModData table
+-- keeps each physical item's progress correctly separate, and doubles as the
+-- persistence itself: performing a procedure while resumed immediately
+-- updates the real item, so there's no separate "save" step and nothing is
+-- lost if the window is just closed without finishing again.
 function TWACraftWindow:currentDone()
     if not self.selectedRecipe then return {} end
+    if self.resumeItem then
+        local md = self.resumeItem:getModData()
+        md.TWA_DoneProcedures = md.TWA_DoneProcedures or {}
+        return md.TWA_DoneProcedures
+    end
     local id = self.selectedRecipe.id
     self.progress[id] = self.progress[id] or {}
     return self.progress[id]
+end
+
+-- Request 2026-09-27: reconnects this window to a physical item that was
+-- previously taken out early via the Incomplete button (see
+-- TWA_IncompleteCraftAction.lua) -- called from TWACraftUI.open() when the
+-- context menu that opened it was a right-click on that exact item. Reads
+-- the recipe id + saved progress straight off the item's own ModData
+-- (real per-item store, network-synced the same way TWA_Tier already relies
+-- on for the tier tooltip to work for ANY player hovering the item -- not a
+-- new assumption, an established one in this mod).
+function TWACraftWindow:resumeFromItem(item)
+    if self.activeProcId then return end
+    local recipeId = item:getModData().TWA_RecipeId
+    local recipe = recipeId and getRecipeById(recipeId)
+    if not recipe then return end
+    self.selectedRecipe = recipe
+    self.resumeItem = item
+    self.selectedProcId = nil
+    self.searchBox:setText("")
+    self.recipeList:setSearch("")
 end
 
 -- Recipe switching/backing out no longer touches progress at all (see
@@ -1008,16 +1177,29 @@ end
 function TWACraftWindow:selectRecipe(recipe)
     if self.activeProcId then return end
     self.selectedRecipe = recipe
+    -- Manually picking a (possibly different) recipe from the list always
+    -- detaches any resume link -- the item that was being resumed keeps
+    -- whatever progress it already has saved on it either way (currentDone()
+    -- writes straight into its ModData, never into self.progress), so
+    -- nothing is lost, this only stops crediting THIS window's future clicks
+    -- to that specific physical item.
+    self.resumeItem = nil
 end
 
 function TWACraftWindow:onCancel()
     if self.activeProcId then return end
     self.selectedRecipe = nil
+    self.resumeItem = nil
 end
 
+-- Request 2026-09-27: base items are already consumed once a recipe reaches
+-- Incomplete/resume state (see TWA_IncompleteCraftAction.lua), so the
+-- ownsBase re-check below -- which would otherwise correctly fail since the
+-- player no longer holds them -- is skipped for a resumed item; the
+-- procedure checklist is the only thing left to satisfy in that case.
 function TWACraftWindow:allProceduresDone()
     if not self.selectedRecipe then return false end
-    if not ownsBase(self.selectedRecipe, self.player) then return false end
+    if not self.resumeItem and not ownsBase(self.selectedRecipe, self.player) then return false end
     local doneTable = self:currentDone()
     for _, procId in ipairs(self.selectedRecipe.procedures) do
         if not doneTable[procId] then return false end
@@ -1027,13 +1209,58 @@ end
 
 function TWACraftWindow:onFinish()
     if not self:allProceduresDone() then return end
-    ISTimedActionQueue.add(TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self:currentDone()))
+    ISTimedActionQueue.add(TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self:currentDone(), self.resumeItem))
     -- Cleared so crafting a SECOND copy of this same recipe later (once you
     -- have another base item) starts with nothing pre-marked done -- the
     -- queued finish action already holds its own reference to the table
-    -- as it stands right now, so this doesn't affect it.
+    -- as it stands right now, so this doesn't affect it. Harmless no-op when
+    -- self.resumeItem was set (progress lived on that item's ModData, never
+    -- in self.progress, to begin with -- see currentDone()'s own note).
     self.progress[self.selectedRecipe.id] = nil
     self.selectedRecipe = nil
+    self.resumeItem = nil
+end
+
+-- Request 2026-09-27: takes the recipe's result out of the crafting process
+-- EARLY -- before every procedure is done -- as a real physical item tagged
+-- with whatever progress has been made so far, so it can be handed to (or
+-- just picked back up later by) another player to keep working on. Base
+-- item(s) are consumed right now, same as a real Finish, since the item
+-- physically exists from this point on; see TWA_IncompleteCraftAction.lua.
+function TWACraftWindow:canGoIncomplete()
+    if not self.selectedRecipe or self.resumeItem or self.activeProcId then return false end
+    return ownsBase(self.selectedRecipe, self.player)
+end
+
+function TWACraftWindow:onIncomplete()
+    if not self:canGoIncomplete() then return end
+    ISTimedActionQueue.add(TWA_IncompleteCraftAction:new(self.player, self.selectedRecipe, self:currentDone()))
+    self.progress[self.selectedRecipe.id] = nil
+    self.selectedRecipe = nil
+end
+
+-- Shared by the search box's own typing handler and anything else that wants
+-- to programmatically set the search (context-menu auto-search on open, and
+-- the procedure-details magnifying-glass button below).
+function TWACraftWindow:applySearch(text)
+    self.searchBox:setText(text or "")
+    self.recipeList:setSearch(text or "")
+end
+
+-- Request 2026-09-27: "เพิ่มปุ่มแว่นขยายในรายละเอียดกรรมวิธี...ไป search
+-- สูตรอาวุธที่ต้องทำกรรมวิธีนั้นๆ" -- reuses the exact same search mechanism
+-- as typing in the box, just pre-filled with the selected procedure's own
+-- translated name (which the extended TWARecipeScrollList:matches now also
+-- checks against every recipe's procedure list) -- no separate filter code
+-- path needed. Also resets both filter-tab rows to "All" first, so an
+-- active category/tier/Available filter never silently hides a real match.
+function TWACraftWindow:onSearchByProcedure()
+    if not self.selectedProcId then return end
+    local proc = TWAProcedures.List[self.selectedProcId]
+    if not proc then return end
+    self.recipeList:setFilter("All")
+    self.recipeList:setTierFilter("All")
+    self:applySearch(getText(proc.nameKey))
 end
 
 -- Performing a procedure is now a real queued timed action (request
@@ -1261,8 +1488,10 @@ function TWACraftWindow:drawProcedureDetails()
         drawTextShadowed(self, getText("IGUI_TWA_SelectProcedureFirst"), x + 10, y + 10, 0.7, 0.7, 0.7, 1, UIFont.Small)
         self.procConfirmButton:setVisible(false)
         self.procCancelButton:setVisible(false)
+        self.procSearchButton:setVisible(false)
         return
     end
+    self.procSearchButton:setVisible(true)
 
     local ty = y + 8
     drawTextShadowed(self, getText(proc.nameKey), x + 10, ty, 1, 0.9, 0.6, 1, UIFont.Medium)
@@ -1383,6 +1612,7 @@ function TWACraftWindow:render()
     if not self.selectedRecipe then
         drawTextShadowed(self, getText("IGUI_TWA_SelectRecipeFirst"), centerX + 16, centerY + 20, 0.75, 0.75, 0.75, 1, UIFont.Medium)
         self.finishButton.enable = false
+        self.incompleteButton.enable = false
         -- Drawn LAST so it sits on top of everything else this frame (the
         -- z-order bug from testing: drawing this before later draw calls in
         -- the same render pass put it visually behind them).
@@ -1433,7 +1663,16 @@ function TWACraftWindow:render()
     -- most ONE base item now (request 2026-09-27: "ปรับให้ทุกอันมีชิ้นงาน
     -- ตั้งต้นเพียงชิ้นเดียว"), so there's only ever one card or none.
     local baseY = math.max(centerY + ICON + 12, statY + 8)
-    if not recipe.base then
+    if self.resumeItem then
+        -- Request 2026-09-27: resuming an Incomplete item -- its base
+        -- item(s) were already consumed back when it was first taken out
+        -- early, so there's nothing left to own/show here; a plain status
+        -- card replaces the base-item card(s) instead.
+        self:drawRect(centerX, baseY, CENTER_W - 16, 30, 0.85, 0.1, 0.15, 0.2)
+        self:drawRectBorder(centerX, baseY, CENTER_W - 16, 30, 0.5, 0.5, 0.7, 0.95)
+        drawTextShadowed(self, getText("IGUI_TWA_ResumingItem"), centerX + 8, baseY + 8, 0.6, 0.8, 1, 1, UIFont.Small)
+        baseY = baseY + 30 + 10
+    elseif not recipe.base then
         self:drawRect(centerX, baseY, CENTER_W - 16, 30, 0.85, 0.08, 0.08, 0.09)
         self:drawRectBorder(centerX, baseY, CENTER_W - 16, 30, 0.4, 0.4, 0.4, 0.4)
         drawTextShadowed(self, getText("IGUI_TWA_NoBaseItemNeeded"), centerX + 8, baseY + 8, 0.75, 0.75, 0.75, 1, UIFont.Small)
@@ -1498,6 +1737,7 @@ function TWACraftWindow:render()
     end
 
     self.finishButton.enable = self:allProceduresDone()
+    self.incompleteButton.enable = self:canGoIncomplete()
 
     -- Drawn LAST, after every icon/card this frame, so the tooltip always
     -- renders on top instead of being covered by whatever draws after it
@@ -1515,10 +1755,28 @@ end
 
 -- Open / close / toggle -------------------------------------------------------
 
-function TWACraftUI.open(player)
+-- `searchText`/`resumeItem` (request 2026-09-27, multiplayer collaborative
+-- crafting): optional context from however the UI was opened -- a right-
+-- click on a recognized weapon/base item prefills the search
+-- (TWACraftUI.autoSearchNameFor, see HARMONIE_TWA_CraftTrigger.lua), and a
+-- right-click on a physical item previously taken out early via Incomplete
+-- resumes it directly (TWACraftWindow:resumeFromItem) instead. Both are nil
+-- for the plain hotkey/generic-menu-option open, which behaves exactly as
+-- before. If the window is already open, apply the new context to it in
+-- place rather than silently no-op'ing like the old version did.
+function TWACraftUI.open(player, searchText, resumeItem)
     player = player or getPlayer()
     if not player then return end
-    if TWACraftUI.window and TWACraftUI.window:getIsVisible() then return end
+    if TWACraftUI.window and TWACraftUI.window:getIsVisible() then
+        local win = TWACraftUI.window
+        win:bringToTop()
+        if resumeItem then
+            win:resumeFromItem(resumeItem)
+        elseif searchText then
+            win:applySearch(searchText)
+        end
+        return
+    end
 
     local core = getCore()
     local x = core and math.max(0, (core:getScreenWidth() - WINDOW_W) / 2) or 100
@@ -1527,6 +1785,11 @@ function TWACraftUI.open(player)
     local win = TWACraftWindow:new(x, y, player)
     TWACraftUI.window = win
     win:initialise()
+    if resumeItem then
+        win:resumeFromItem(resumeItem)
+    elseif searchText then
+        win:applySearch(searchText)
+    end
     win:addToUIManager()
     win:bringToTop()
 end
