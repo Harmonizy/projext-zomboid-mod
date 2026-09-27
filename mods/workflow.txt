@@ -1830,7 +1830,9 @@ CraftUI.lua` (client, the 3-panel window), `TWA_PerformProcedureAction.lua`
 (client, one procedure = one real queued timed action), `TWA_FinishCraftAction.lua`
 (client, consumes the base item(s), spawns the result, stamps crafter name +
 rolled grade as ModData — never renames the item, see the collaborative-
-crafting paragraph below), `HARMONIE_TWA_TierTooltip.lua` (client, shows
+crafting paragraph below), `TWA_IncompleteCraftAction.lua`/
+`TWA_CancelCraftAction.lua` (client, the center panel's other 2 buttons —
+see their own paragraph below, request 2026-09-28), `HARMONIE_TWA_TierTooltip.lua` (client, shows
 tier+stats on ANY hovered melee weapon — dynamically computed live off the
 item's own real stats for an actual weapon, statically looked up in
 `TWARecipeData.Stats` only for non-weapon materials, see below),
@@ -2094,6 +2096,65 @@ name) — right-clicking anything else, or the ground/a table
 (`OnFillWorldObjectContextMenu`, added fresh, always blank), opens the UI with
 no auto-search. `TWACraftUI.open(player, searchText, resumeItem)` takes these
 two optional context params; both nil reproduces the exact old behavior.
+
+Center-panel action redesign (request 2026-09-28, reverses part of the
+design above): "ปุ่มยกเลิกมีไว้ให้ยกเลิกการทำกรรมวิธีทั้งหมดที่ทำมาของ
+ไอเท็มนั้นๆ" — Cancel now genuinely WIPES every procedure marked done for
+the current recipe/item (materials already spent by them still aren't
+refunded — Consume() already ran, this never touches inventory) instead of
+preserving them the way the 2026-09-27 design deliberately chose to.
+"การกดเสร็จสิ้น หรือไม่สมบูรณ์ และยกเลิกให้มีเกจการทำงานเหมือนตอนทำกรรมวิธี
+และสามารถกดยกเลิกก่อนที่จะเสร็จได้ด้วยเหมือนกัน" — all 3 center buttons
+(Cancel/Incomplete/Finish) are now real queued `ISBaseTimedAction`s with a
+progress bar (same `getJobDelta()` the procedure grid's own bar already
+used) and a shared Abort button that force-stops whichever one is running
+— exploits the same real engine contract already relied on elsewhere in
+this mod (perform() only runs on NATURAL completion, never on an
+interrupted one), so aborting any of the 3 mid-action leaves everything
+completely untouched with no extra logic needed. `TWA_IncompleteCraftAction.lua`
+had to be turned BACK into a real timed action for this (it was a one-line
+instant ModData write as of the 2026-09-27 design) — its own real
+isValid/start/stop/perform are unchanged in substance, just no longer
+inlined directly into the UI click handler. `TWA_CancelCraftAction.lua` is
+brand new — its only real behavior is clearing every key of whatever
+done-procedures table reference it's handed (works identically whether
+that's `self.progress[recipe.id]` or a bookmarked item's own
+`TWA_DoneProcedures` ModData table, since both are just Lua table
+references). Only one of the 3 center actions can run at a time, and none
+can start while a procedure's own action is mid-flight either (window-side
+guard, `self.activeCenterAction`, mirrors `self.activeProcId`'s existing
+"one at a time" rule).
+
+Recipe-wide requirement summary (request 2026-09-28: "สรุปอุปกรณ์และ
+วัตถุดิบที่ใช้มาในกรรมวิธีทุกอัน"): hovering the "Required Procedures"
+header in the center panel shows a de-duplicated tool list + a quantity-
+summed material list aggregated across EVERY procedure the selected recipe
+needs (`aggregateRequirements()` in HARMONIE_TWA_CraftUI.lua) — reuses the
+existing hoverTooltip mechanism rather than adding a new permanent UI
+section, since the center panel has no real spare vertical space for one.
+Materials are summed by matching their exact DISPLAYED alternative-name
+string (e.g. two procedures both needing "Charcoal / CharcoalCrafted /
+Coke" sum correctly to one combined quantity) rather than by resolving
+which specific real item will actually be consumed, since that's only
+decided at Consume()-time based on what's actually owned.
+
+Investigated but NOT resolved (request 2026-09-28: "ไม่มีเสียงตอนทำ
+กรรมวิธี" — no sound while performing a procedure): TWA_PerformProcedure
+Action.lua's sound-playing code (`self.character:playSound(self.proc.sound)`
+in `start()`, `stopOrTriggerSound` in `stop()`/`perform()`) is byte-for-byte
+the same real pattern vanilla's own `ISCraftAction.lua` uses
+(`media/lua/shared/TimedActions/ISCraftAction.lua:45`), and every one of the
+57 procedures' own `sound = "..."` values were grep-confirmed as real
+existing sound definitions in `media/scripts/generated/sounds/**/*.txt` (NOT
+`media/sound/` — a wrong first guess that returned 0 matches for everything
+and briefly looked like it confirmed a real bug before the actual sound
+script location was found). No procedure is missing a `sound` field either
+(57 procedures, 57 `sound = ` occurrences). Could not reproduce or find a
+code-level cause — `console.txt` at the time had no related errors, but was
+also stale (predated this exact session's changes). If this comes up again,
+get a FRESH console.txt after reproducing, or ask exactly which
+procedure(s) were silent and whether vanilla's own crafting sounds are
+audible in the same session (rules out an SFX-volume/mixer explanation).
 
 Dynamic (live-computed) weapon stats/tier on the real item tooltip (request
 2026-09-28: "ต้องไม่ใช่ stats ตายตัว ต้องเป็นแบบ dynamic จากการคำนวน stats

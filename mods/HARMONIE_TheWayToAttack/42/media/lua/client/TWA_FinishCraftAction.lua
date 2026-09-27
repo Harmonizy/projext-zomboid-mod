@@ -75,6 +75,7 @@ function TWA_FinishCraftAction:stop()
     if self.finishSound and self.character:getEmitter():isPlaying(self.finishSound) then
         self.character:stopOrTriggerSound(self.finishSound)
     end
+    if self.onEnd then self.onEnd() end
     ISBaseTimedAction.stop(self)
 end
 
@@ -124,13 +125,17 @@ function TWA_FinishCraftAction:perform()
     removeOneOf(self.character, self.recipe.base2, nil)
     local newItem = inv:AddItem(self.recipe.result)
     if newItem then stampFinisher(newItem, self.character) end
+    if self.onComplete then self.onComplete() end
+    if self.onEnd then self.onEnd() end
     ISBaseTimedAction.perform(self)
 end
 
-function TWA_FinishCraftAction:new(character, recipe, doneProcedures)
+function TWA_FinishCraftAction:new(character, recipe, doneProcedures, onComplete, onEnd)
     local o = ISBaseTimedAction.new(self, character)
     o.recipe = recipe
     o.doneProcedures = doneProcedures
+    o.onComplete = onComplete
+    o.onEnd = onEnd
     o.maxTime = 100
     o.forceProgressBar = true
     return o

@@ -748,6 +748,54 @@ local function optionsSpecName(options)
     return table.concat(names, " / ")
 end
 
+-- Request 2026-09-28: "สรุปอุปกรณ์และวัตถุดิบที่ใช้มาในกรรมวิธีทุกอัน" -- a
+-- de-duplicated summary of every tool and every material a recipe's WHOLE
+-- procedure list needs, aggregated across all of them at once. Tools are
+-- just deduplicated by their displayed name (kept/reused across procedures,
+-- never consumed, so owning one copy covers every procedure that needs it).
+-- Materials are summed by quantity when the exact same alternative-name
+-- text repeats across 2+ procedures -- correct because ANY combination of
+-- the named alternatives covering the combined total works, the same
+-- reasoning that already justifies `consumeSpecName` naming every
+-- alternative as one joined string instead of picking one.
+local function aggregateRequirements(recipe)
+    local toolNames, toolSeen = {}, {}
+    local matNames, matQty = {}, {}
+    local function addTool(name)
+        if not toolSeen[name] then
+            toolSeen[name] = true
+            toolNames[#toolNames + 1] = name
+        end
+    end
+    local function addMaterial(name, qty)
+        if not matQty[name] then
+            matQty[name] = 0
+            matNames[#matNames + 1] = name
+        end
+        matQty[name] = matQty[name] + qty
+    end
+    for _, procId in ipairs(recipe.procedures) do
+        local proc = TWAProcedures.List[procId]
+        if proc then
+            if proc.tool then addTool(toolSpecName(proc.tool)) end
+            if proc.tool2 then addTool(toolSpecName(proc.tool2)) end
+            if proc.consumes then
+                for _, c in ipairs(proc.consumes) do
+                    if c.options then
+                        for _, opt in ipairs(c.options) do
+                            local it = getItemScript(opt.itemType)
+                            addMaterial(it and it:getDisplayName() or opt.itemType, opt.qty)
+                        end
+                    else
+                        addMaterial(consumeSpecName(c.itemTypes or { c.itemType }), c.qty or 1)
+                    end
+                end
+            end
+        end
+    end
+    return toolNames, matNames, matQty
+end
+
 -- request 2026-09-27: "เตาตีเหล็กดั้งเดิมหรือดีกว่า / ธรรมดาหรือดีกว่า /
 -- ขั้นสูง" -- real vanilla forge-tier wording, see
 -- HARMONIE_TWA_Procedures.lua's nearbyForgeTier() for the real Tags this
@@ -905,6 +953,13 @@ function TWACraftWindow:new(x, y, player)
     o.selectedProcId = nil
     o.activeProcId = nil
     o.activeAction = nil
+    -- Request 2026-09-28: Cancel/Incomplete/Finish (the center panel's 3
+    -- buttons) are now all real queued timed actions too, not instant
+    -- clicks -- see startCenterAction below. Only one of the 3 can run at
+    -- once, mirroring activeProcId/activeAction's own "one at a time" rule
+    -- for procedures.
+    o.activeCenterKind = nil
+    o.activeCenterAction = nil
     o.resizable = false
     o.title = getText("IGUI_TWA_CraftWindowTitle")
     return o
@@ -1040,26 +1095,43 @@ function TWACraftWindow:createChildren()
     -- Cancel / Incomplete / Finish buttons (center panel bottom). Incomplete
     -- (request 2026-09-27, multiplayer collaborative crafting) is the new
     -- middle button -- bookmarks whatever progress has been made so far
-    -- straight onto the recipe's own base item's ModData (see onIncomplete),
-    -- so someone else (or the same player later) can pick up that exact item
-    -- and keep going. 3-way split of the same row Cancel/Finish already used.
+    -- straight onto the recipe's own base item's ModData, so someone else
+    -- (or the same player later) can pick up that exact item and keep
+    -- going. 3-way split of the same row Cancel/Finish already used.
     local btnW, btnH = (CENTER_W - 20) / 3, 30
-    self.cancelButton = TWANeatButton:new(centerX, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Cancel"), self, TWACraftWindow.onCancel)
+    self.cancelButton = TWANeatButton:new(centerX, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Cancel"), self, TWACraftWindow.onCancelButtonClicked)
     self.cancelButton:setTooltip(getText("IGUI_TWA_Tooltip_Cancel"))
     self.cancelButton:initialise()
     self:addChild(self.cancelButton)
 
-    self.incompleteButton = TWANeatButton:new(centerX + btnW + 10, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Incomplete"), self, TWACraftWindow.onIncomplete)
+    self.incompleteButton = TWANeatButton:new(centerX + btnW + 10, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Incomplete"), self, TWACraftWindow.onIncompleteButtonClicked)
     self.incompleteButton.neatTint = { r = 0.55, g = 0.6, b = 0.95 }
     self.incompleteButton:setTooltip(getText("IGUI_TWA_Tooltip_Incomplete"))
     self.incompleteButton:initialise()
     self:addChild(self.incompleteButton)
 
-    self.finishButton = TWANeatButton:new(centerX + 2 * (btnW + 10), panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinish)
+    self.finishButton = TWANeatButton:new(centerX + 2 * (btnW + 10), panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinishButtonClicked)
     self.finishButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     self.finishButton:initialise()
     self:addChild(self.finishButton)
+
+    -- Request 2026-09-28: while ANY of the 3 buttons above is running as a
+    -- real timed action, they're all hidden and replaced by a progress bar
+    -- + this one Abort button in the exact same row -- mirrors
+    -- procConfirmButton/procCancelButton's own toggle pattern in the right
+    -- panel, just for the center panel's 3 actions instead of 1.
+    local abortBtnW = 70
+    self.centerAbortButton = TWANeatButton:new(centerX + (CENTER_W - 20) - abortBtnW, panelBottom - btnH, abortBtnW, btnH, getText("IGUI_TWA_AbortAction"), self, TWACraftWindow.onAbortCenterAction)
+    self.centerAbortButton.neatTint = { r = 0.9, g = 0.3, b = 0.25 }
+    self.centerAbortButton:setTooltip(getText("IGUI_TWA_Tooltip_AbortAction"))
+    self.centerAbortButton:initialise()
+    self.centerAbortButton:setVisible(false)
+    self:addChild(self.centerAbortButton)
+    self.centerProgressBarX = centerX
+    self.centerProgressBarY = panelBottom - btnH
+    self.centerProgressBarW = (CENTER_W - 20) - abortBtnW - 10
+    self.centerProgressBarH = btnH
 
     -- Confirm / Cancel buttons for the selected procedure (request
     -- 2026-09-26: "performing a procedure needs a confirm button first, and
@@ -1138,14 +1210,15 @@ function TWACraftWindow:currentDone()
 end
 
 -- Request 2026-09-27: reconnects this window to a physical BASE item that
--- was previously bookmarked via the Incomplete button (see onIncomplete
--- below) -- called from TWACraftUI.open() when the context menu that opened
--- it was a right-click on that exact item. Reads the recipe id + saved
+-- was previously bookmarked via the Incomplete button (see
+-- startCenterAction/TWA_IncompleteCraftAction.lua) -- called from
+-- TWACraftUI.open() when the context menu that opened it was a right-click
+-- on that exact item. Reads the recipe id + saved
 -- progress straight off the item's own ModData (real per-item store,
 -- network-synced -- same real mechanism vanilla itself relies on for any
 -- per-item ModData to matter across clients at all, not a new assumption).
 function TWACraftWindow:resumeFromItem(item)
-    if self.activeProcId then return end
+    if self.activeProcId or self.activeCenterAction then return end
     local recipeId = item:getModData().TWA_RecipeId
     local recipe = recipeId and getRecipeById(recipeId)
     if not recipe then return end
@@ -1164,7 +1237,7 @@ end
 -- completion callback captures that table directly -- see
 -- tryPerformProcedure), so this is a UX guard, not a correctness one.
 function TWACraftWindow:selectRecipe(recipe)
-    if self.activeProcId then return end
+    if self.activeProcId or self.activeCenterAction then return end
     self.selectedRecipe = recipe
     -- Manually picking a (possibly different) recipe from the list always
     -- detaches any resume link -- the item that was being resumed keeps
@@ -1175,16 +1248,10 @@ function TWACraftWindow:selectRecipe(recipe)
     self.resumeItem = nil
 end
 
-function TWACraftWindow:onCancel()
-    if self.activeProcId then return end
-    self.selectedRecipe = nil
-    self.resumeItem = nil
-end
-
--- Base/base2 are NEVER pre-consumed any more (request 2026-09-28 corrected
--- the earlier design -- see onIncomplete below), so ownership is always
--- re-checked here the same way regardless of whether this recipe is being
--- resumed from a bookmarked base item or started completely fresh.
+-- Base/base2 are NEVER pre-consumed by Incomplete (request 2026-09-28
+-- corrected the earlier design -- see canGoIncomplete below), so ownership
+-- is always re-checked here the same way regardless of whether this recipe
+-- is being resumed from a bookmarked base item or started completely fresh.
 function TWACraftWindow:allProceduresDone()
     if not self.selectedRecipe then return false end
     if not ownsBase(self.selectedRecipe, self.player) then return false end
@@ -1195,63 +1262,100 @@ function TWACraftWindow:allProceduresDone()
     return true
 end
 
-function TWACraftWindow:onFinish()
-    if not self:allProceduresDone() then return end
-    ISTimedActionQueue.add(TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self:currentDone()))
-    -- Cleared so crafting a SECOND copy of this same recipe later (once you
-    -- have another base item) starts with nothing pre-marked done -- the
-    -- queued finish action already holds its own reference to the table
-    -- as it stands right now, so this doesn't affect it. When resuming a
-    -- bookmarked base item, Finish consumes it (removeOneOf, in
-    -- TWA_FinishCraftAction.lua) same as any other base item -- its
-    -- TWA_RecipeId/TWA_DoneProcedures ModData simply ceases to exist along
-    -- with the item, nothing needs to be manually cleared.
-    self.progress[self.selectedRecipe.id] = nil
-    self.selectedRecipe = nil
-    self.resumeItem = nil
-end
-
 -- Request 2026-09-27 (corrected 2026-09-28 -- "ตอนกดปุ่มไม่สมบูรณ์ ให้ออกมา
 -- เป็นชิ้นส่วนตั้งต้น...จริงๆใช่ไหม" -- shouldn't the Incomplete button leave
 -- the BASE item as-is instead of spawning the finished result early?): does
 -- NOT consume anything or spawn anything -- it just writes the current
 -- procedure progress straight into the recipe's own base item's ModData
--- (TWA_RecipeId + a snapshot of done procedures), so someone (the same
--- player later, or someone else in MP) can right-click that SAME physical
--- base item to resume exactly where it was left off. Base2 (when present)
--- is intentionally left untagged and untouched -- it's just an ordinary
+-- (TWA_RecipeId + a snapshot of done procedures, see TWA_IncompleteCraft
+-- Action.lua's own perform()), so someone (the same player later, or
+-- someone else in MP) can right-click that SAME physical base item to
+-- resume exactly where it was left off. Base2 (when present) is
+-- intentionally left untagged and untouched -- it's just an ordinary
 -- required material like always, re-checked at Finish the normal way
 -- (ownsBase); only ONE item needs to carry the bookmark, and tagging just
 -- the primary base avoids 2 separate copies of the same progress data
 -- silently drifting out of sync with each other if they ever get separated.
--- No timed action needed -- nothing physically changes hands or transforms,
--- it's a pure metadata write, so this runs instantly instead of queuing.
 function TWACraftWindow:canGoIncomplete()
-    if not self.selectedRecipe or self.resumeItem or self.activeProcId then return false end
+    if not self.selectedRecipe or self.resumeItem or self.activeProcId or self.activeCenterAction then return false end
     local recipe = self.selectedRecipe
     if not recipe.base then return false end
     return self.player:getInventory():getItemCountRecurse(recipe.base) >= 1
 end
 
-function TWACraftWindow:onIncomplete()
-    if not self:canGoIncomplete() then return end
-    local recipe = self.selectedRecipe
-    local inv = self.player:getInventory()
-    local baseItem = inv:getFirstTypeEvalRecurse(recipe.base, function() return true end)
-    if not baseItem then return end
-
-    local snapshot = {}
-    for procId, done in pairs(self:currentDone()) do
-        if done then snapshot[procId] = true end
-    end
-    local md = baseItem:getModData()
-    md.TWA_RecipeId = recipe.id
-    md.TWA_DoneProcedures = snapshot
-
-    getSoundManager():playUISound("UISelectListItem")
-    self.progress[recipe.id] = nil
-    self.selectedRecipe = nil
+-- Request 2026-09-28: Cancel/Incomplete/Finish are now all real queued
+-- timed actions (progress bar + real cancelability), not instant clicks --
+-- "การกดเสร็จสิ้น หรือไม่สมบูรณ์ และยกเลิกให้มีเกจการทำงานเหมือนตอนทำ
+-- กรรมวิธี และสามารถกดยกเลิกก่อนที่จะเสร็จได้ด้วยเหมือนกัน". Only one of
+-- the 3 can run at a time (mirrors activeProcId's own rule for procedures),
+-- and none can start while a procedure is running either -- consuming/
+-- spawning/wiping progress while a procedure's own material-consuming
+-- action is mid-flight would be a real correctness risk, not just a UX
+-- nicety.
+function TWACraftWindow:canStartCenterAction()
+    return self.selectedRecipe ~= nil and not self.activeProcId and not self.activeCenterAction
 end
+
+function TWACraftWindow:startCenterAction(kind)
+    if not self:canStartCenterAction() then return end
+    local window = self
+    local onComplete = function() window:onCenterActionComplete(kind) end
+    local onEnd = function()
+        if window.activeCenterKind == kind then
+            window.activeCenterKind = nil
+            window.activeCenterAction = nil
+        end
+    end
+    local action
+    if kind == "cancel" then
+        -- Request 2026-09-28: "ปุ่มยกเลิกมีไว้ให้ยกเลิกการทำกรรมวิธีทั้งหมด
+        -- ที่ทำมาของไอเท็มนั้นๆ" -- reverses the earlier "Cancel keeps done
+        -- procedures done" design; on natural completion this really does
+        -- wipe every done flag for the current recipe/item (materials
+        -- already spent by them are still NOT refunded -- see
+        -- TWA_CancelCraftAction.lua's own note).
+        action = TWA_CancelCraftAction:new(self.player, self:currentDone(), onComplete, onEnd)
+    elseif kind == "incomplete" then
+        if not self:canGoIncomplete() then return end
+        action = TWA_IncompleteCraftAction:new(self.player, self.selectedRecipe, self:currentDone(), onComplete, onEnd)
+    elseif kind == "finish" then
+        if not self:allProceduresDone() then return end
+        action = TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self:currentDone(), onComplete, onEnd)
+    else
+        return
+    end
+    self.activeCenterKind = kind
+    self.activeCenterAction = action
+    ISTimedActionQueue.add(action)
+end
+
+-- Only ever called from inside the action's own perform() (see each action
+-- file's onComplete callback) -- never on a force-stopped/interrupted one,
+-- so an aborted Cancel/Incomplete/Finish always leaves selectedRecipe (and
+-- everything else) exactly as it was.
+function TWACraftWindow:onCenterActionComplete(kind)
+    if kind == "cancel" then
+        self.selectedRecipe = nil
+        self.resumeItem = nil
+    elseif kind == "incomplete" then
+        self.progress[self.selectedRecipe.id] = nil
+        self.selectedRecipe = nil
+    elseif kind == "finish" then
+        self.progress[self.selectedRecipe.id] = nil
+        self.selectedRecipe = nil
+        self.resumeItem = nil
+    end
+end
+
+function TWACraftWindow:onAbortCenterAction()
+    if self.activeCenterAction then
+        self.activeCenterAction:forceStop()
+    end
+end
+
+function TWACraftWindow:onCancelButtonClicked() self:startCenterAction("cancel") end
+function TWACraftWindow:onIncompleteButtonClicked() self:startCenterAction("incomplete") end
+function TWACraftWindow:onFinishButtonClicked() self:startCenterAction("finish") end
 
 -- Shared by the search box's own typing handler and anything else that wants
 -- to programmatically set the search (context-menu auto-search on open, and
@@ -1294,7 +1398,7 @@ end
 -- permanently blocks starting another one.
 function TWACraftWindow:tryPerformProcedure(procId, proc)
     if not self.selectedRecipe then return end
-    if self.activeProcId then return end
+    if self.activeProcId or self.activeCenterAction then return end
     local needed = false
     for _, pid in ipairs(self.selectedRecipe.procedures) do
         if pid == procId then needed = true break end
@@ -1602,6 +1706,33 @@ function TWACraftWindow:prerender()
     self:drawProcedureDetailsBackground()
 end
 
+-- Request 2026-09-28: Cancel/Incomplete/Finish all show a real progress bar
+-- while running, same real `getJobDelta()` value the procedure-details box
+-- already uses for its own bar, and a single Abort button (not 3 separate
+-- ones -- only one of the 3 can ever be active at once) replaces them in
+-- the exact same row while active. Called unconditionally near the top of
+-- render(), before the "no recipe selected" early-return, so the row
+-- always reflects the real current state even in that branch.
+function TWACraftWindow:drawCenterActionRow()
+    local active = self.activeCenterAction ~= nil
+    self.cancelButton:setVisible(not active)
+    self.incompleteButton:setVisible(not active)
+    self.finishButton:setVisible(not active)
+    self.centerAbortButton:setVisible(active)
+    if not active then return end
+
+    local x, y, w, h = self.centerProgressBarX, self.centerProgressBarY, self.centerProgressBarW, self.centerProgressBarH
+    local frac = self.activeCenterAction:getJobDelta() or 0
+    self:drawRect(x, y, w, h, 0.9, 0.05, 0.05, 0.05)
+    self:drawRect(x, y, w * math.max(0, math.min(1, frac)), h, 1, 1, 0.7, 0.2)
+    self:drawRectBorder(x, y, w, h, 0.8, 0.5, 0.5, 0.5)
+    local kindKey = self.activeCenterKind == "cancel" and "IGUI_TWA_Cancel"
+        or (self.activeCenterKind == "incomplete" and "IGUI_TWA_Incomplete" or "IGUI_TWA_Finish")
+    local label = getText(kindKey)
+    local textH = getTextManager():getFontHeight(UIFont.Small)
+    drawTextShadowed(self, label, x + 6, y + (h - textH) / 2, 1, 1, 1, 1, UIFont.Small)
+end
+
 function TWACraftWindow:render()
     ISCollapsableWindow.render(self)
 
@@ -1630,6 +1761,7 @@ function TWACraftWindow:render()
     self:drawRectBorder(centerX - 8, centerY - 8, CENTER_W, cardH, 0.6, 0.4, 0.4, 0.4)
 
     self:drawProcedureDetails()
+    self:drawCenterActionRow()
 
     if not self.selectedRecipe then
         drawTextShadowed(self, getText("IGUI_TWA_SelectRecipeFirst"), centerX + 16, centerY + 20, 0.75, 0.75, 0.75, 1, UIFont.Medium)
@@ -1716,7 +1848,34 @@ function TWACraftWindow:render()
     end
 
     -- Required-procedure checklist grid
-    drawTextShadowed(self, getText("IGUI_TWA_RequiredProcedures"), centerX, baseY, 0.85, 0.85, 0.85, 1, UIFont.Small)
+    local reqLabel = getText("IGUI_TWA_RequiredProcedures")
+    drawTextShadowed(self, reqLabel, centerX, baseY, 0.85, 0.85, 0.85, 1, UIFont.Small)
+    -- Request 2026-09-28: "สรุปอุปกรณ์และวัตถุดิบที่ใช้มาในกรรมวิธีทุกอัน"
+    -- -- hovering this exact header shows the aggregated tool/material
+    -- summary for the WHOLE recipe, reusing the same hoverTooltip mechanism
+    -- the procedure grid cells already use rather than a new permanent UI
+    -- section (there's no real spare vertical space in this panel for one).
+    do
+        local hmx, hmy = self:getMouseX(), self:getMouseY()
+        local labelW = getTextManager():MeasureStringX(UIFont.Small, reqLabel)
+        local labelH = getTextManager():getFontHeight(UIFont.Small)
+        if hmx >= centerX and hmx < centerX + labelW and hmy >= baseY and hmy < baseY + labelH then
+            local toolNames, matNames, matQty = aggregateRequirements(recipe)
+            local lines = { getText("IGUI_TWA_SummaryTools") }
+            if #toolNames > 0 then
+                for _, n in ipairs(toolNames) do lines[#lines + 1] = "  " .. n end
+            else
+                lines[#lines + 1] = "  " .. getText("IGUI_TWA_SummaryNone")
+            end
+            lines[#lines + 1] = getText("IGUI_TWA_SummaryMaterials")
+            if #matNames > 0 then
+                for _, n in ipairs(matNames) do lines[#lines + 1] = "  " .. n .. " x" .. matQty[n] end
+            else
+                lines[#lines + 1] = "  " .. getText("IGUI_TWA_SummaryNone")
+            end
+            self.hoverTooltip = { lines = lines, x = centerX, y = baseY }
+        end
+    end
     local gridLeft, gridTop = centerX, baseY + 20
     local cell, gap = 44, 8
     local perRow = math.max(1, math.floor((CENTER_W - 16 + gap) / (cell + gap)))
