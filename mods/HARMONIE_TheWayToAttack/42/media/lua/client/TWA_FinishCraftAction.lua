@@ -22,21 +22,30 @@ TWA_FinishCraftAction = ISBaseTimedAction:derive("TWA_FinishCraftAction")
 -- earlier base+base2 two-slot system and interchangeable-alternatives lists
 -- (e.g. "any of 4 Metal Ingot types") are gone -- gen_craftdata.js now
 -- resolves each recipe down to one specific real item at generation time.
-local function ownsSlot(character, fullType)
+-- `recipe.baseAlt`, when present, is a single OPTIONAL substitute for that
+-- same slot (request 2026-09-27: any Metal-Ingot-based recipe can also use a
+-- Metal Pipe) -- ownsSlot checks base OR baseAlt, removeOneOf consumes
+-- whichever the character actually has (base preferred).
+local function ownsSlot(character, fullType, altType)
     if not fullType then return true end
-    return character:getInventory():getItemCountRecurse(fullType) >= 1
+    local inv = character:getInventory()
+    if inv:getItemCountRecurse(fullType) >= 1 then return true end
+    return altType ~= nil and inv:getItemCountRecurse(altType) >= 1
 end
 
-local function removeOneOf(character, fullType)
+local function removeOneOf(character, fullType, altType)
     if not fullType then return end
     local inv = character:getInventory()
     local it = inv:getFirstTypeEvalRecurse(fullType, function() return true end)
+    if not it and altType then
+        it = inv:getFirstTypeEvalRecurse(altType, function() return true end)
+    end
     if it then inv:Remove(it) end
 end
 
 function TWA_FinishCraftAction:isValid()
     if not self.character or not self.recipe then return false end
-    if not ownsSlot(self.character, self.recipe.base) then return false end
+    if not ownsSlot(self.character, self.recipe.base, self.recipe.baseAlt) then return false end
     for _, procId in ipairs(self.recipe.procedures) do
         if not self.doneProcedures[procId] then return false end
     end
@@ -109,7 +118,7 @@ function TWA_FinishCraftAction:perform()
         self.character:stopOrTriggerSound(self.finishSound)
     end
     local inv = self.character:getInventory()
-    removeOneOf(self.character, self.recipe.base)
+    removeOneOf(self.character, self.recipe.base, self.recipe.baseAlt)
     local newItem = inv:AddItem(self.recipe.result)
     if newItem then applyTier(newItem, self.recipe.result) end
     ISBaseTimedAction.perform(self)

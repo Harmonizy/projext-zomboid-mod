@@ -279,9 +279,16 @@ end
 -- earlier base+base2 two-slot system and interchangeable-alternatives lists
 -- (e.g. "any of 4 Metal Ingot types") are gone -- gen_craftdata.js now
 -- resolves each recipe down to one specific real item at generation time.
+-- `recipe.baseAlt`, when present, is a single OPTIONAL substitute for that
+-- same slot -- NOT a return to multi-item lists (request 2026-09-27: "อะไรที่
+-- ใช้แท่งแร่เป็นขิ้นงานตั้งต้น ให้สามารถใช้ท่อเหล็กแทนได้" -- anything based
+-- on a Metal Ingot can also use a Metal Pipe).
 local function ownsBase(recipe, player)
     if not recipe.base then return true end
-    return player:getInventory():getItemCountRecurse(recipe.base) >= 1
+    local inv = player:getInventory()
+    if inv:getItemCountRecurse(recipe.base) >= 1 then return true end
+    if recipe.baseAlt and inv:getItemCountRecurse(recipe.baseAlt) >= 1 then return true end
+    return false
 end
 
 -- Prefer the baked icon (resolved at generation time from the item's real
@@ -296,11 +303,17 @@ local function resultIcon(fullType)
     return item and getItemTexture(item:getIcon())
 end
 
--- Readable name for the recipe's single base requirement.
-local function baseDisplayName(base)
+-- Readable name for the recipe's base requirement -- shows "X / Y" when a
+-- baseAlt substitute exists.
+local function baseDisplayName(base, baseAlt)
     if not base then return "" end
     local it = getItemScript(base)
-    return it and it:getDisplayName() or base
+    local name = it and it:getDisplayName() or base
+    if baseAlt then
+        local altIt = getItemScript(baseAlt)
+        name = name .. " / " .. (altIt and altIt:getDisplayName() or baseAlt)
+    end
+    return name
 end
 
 -- Recipe list (left panel) -- a real ISScrollingListBox, the same proven
@@ -1210,7 +1223,7 @@ function TWACraftWindow:render()
         if owned and TWA_NEAT.check then
             self:drawTextureScaled(TWA_NEAT.check, centerX + (CENTER_W - 16) - 24, baseY + 9, 16, 16, 1, 1, 1, 1)
         end
-        drawTextShadowed(self, baseDisplayName(recipe.base), centerX + 8, baseY + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+        drawTextShadowed(self, baseDisplayName(recipe.base, recipe.baseAlt), centerX + 8, baseY + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
         local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
         drawTextShadowed(self, getText(statusKey), centerX + 8, baseY + 19, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
         baseY = baseY + 34 + 6 + 4

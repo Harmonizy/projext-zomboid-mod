@@ -3704,6 +3704,47 @@ overrides' own tool/material requirements, and made them fully exclusive:
   referenced clean, same 2 honestly-unused ones as before), copied into the
   mod, modversion 0.17.0 -> 0.17.1.
 
+TWENTY-NINTH round (2026-09-27) -- Metal Pipe as a substitute base for any
+Metal-Ingot recipe, and fixed 3 misclassified "carrier + bone spike" bases:
+- User: "อะไรที่ใช้แท่งแร่เป็นขิ้นงานตั้งต้น ให้สามารถใช้ท่อเหล็กแทนได้" --
+  anything whose single collapsed base item resolved to a Metal Ingot
+  (Base.SteelIngot/IronIngot/CopperIngot/BrassIngot) should also accept a
+  Metal Pipe as a substitute. Rather than reverting the recent "one base
+  item per recipe" simplification back to arrays, added a narrow optional
+  `baseAlt` field (single item, not a list) set only when the resolved base
+  is one of the 4 ingot types -- 96 of 248 recipes got one. ownsBase/
+  ownsSlot in both HARMONIE_TWA_CraftUI.lua and TWA_FinishCraftAction.lua
+  now check base OR baseAlt, and removeOneOf consumes whichever the
+  character actually has (base preferred, baseAlt as fallback);
+  baseDisplayName shows "X / Y" when a baseAlt exists.
+- User: "บางอันมัน ชื่อกิ่งไม้ติดหนามกระดูก base มันควรเป็น กิ่งไม้ ไม่ใช่
+  กระดูก" -- pointed out TreeBranch_Bone's base had come out as AnimalBone
+  (via gen_craftdata.js's generic classifyVanilla `/bone/i.test(name)`
+  catch-all), when conceptually the item is a branch with a bone SPIKE
+  attached (already handled by the Assembly category's AssembleBoneSpike
+  procedure, which itself consumes the AnimalBone) -- the base should be the
+  branch. Checked real vanilla ground truth before changing anything:
+  recipes_bone.txt's own MakeBoneHatchet recipe requires Base.TreeBranch2
+  directly, and vanilla's own HandleMapper (used by its bone-club recipes)
+  maps Base.TreeBranch_Bone->Base.TreeBranch2 and Base.Cudgel_Bone->
+  Base.LargeBranch. Generalized the fix to all 3 real items matching this
+  exact "carrier + bone spike" pattern (TreeBranch_Bone, Cudgel_Bone,
+  Hatchet_Bone all now correctly base on their carrier item) while leaving
+  BoneClub/LargeBoneClub (genuinely solid-bone weapons, no carrier) on
+  AnimalBone/LargeAnimalBone as before -- added an explicit BONE_CARRIER_BASE
+  lookup checked BEFORE the generic /bone/i catch-all in classifyVanilla, so
+  it can never accidentally catch these 3 again. (Noted but left alone,
+  out of scope for this round: JawboneBovide_Club/Axe/Morningstar have the
+  same root issue -- real base should be Base.JawboneBovide, a distinct
+  vanilla item, not AnimalBone -- flagged for the user rather than changed
+  unasked.)
+- Regenerated HARMONIE_TWA_RecipeData.lua, verified by hand (TreeBranch_Bone/
+  Hatchet_Bone -> Base.TreeBranch2, Cudgel_Bone -> Base.LargeBranch,
+  BoneClub/LargeBoneClub unchanged; 96 ingot-based recipes now carry
+  baseAlt = Base.MetalPipe). Re-validated (brace balance clean on
+  RecipeData.lua/CraftUI.lua/FinishCraftAction.lua), copied into the mod,
+  modversion 0.17.1 -> 0.17.2.
+
 
 9. Checklist before starting any new work
 =======================================
