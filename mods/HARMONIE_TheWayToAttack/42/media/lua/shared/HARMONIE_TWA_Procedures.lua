@@ -54,7 +54,10 @@
 -- knife-work just above. TightenBolts/PrecisionGrind/WeaveWire/
 -- SurfaceCoating stayed on Blacksmith and DrillCore/TaperPoint stayed on
 -- FlintKnapping (not named in that follow-up, so left alone -- don't move
--- these to Carving without being told to).
+-- these to Carving without being told to). PrecisionGrind itself was later
+-- removed entirely (2026-09-28, see its own note further down) -- this
+-- paragraph is left as a historical record of the skill-assignment
+-- decision, not a claim it still exists.
 -- Every OTHER procedure's skill (ForgeShape/KnapHead/MakeRivetedHandle/
 -- RivetPlate: Blacksmith with a real forge/hammer tool; ReinforcedBind/
 -- WrapLeather/StringSinew: Tailoring with cloth/leather/thread; WeldMetal:
@@ -189,21 +192,18 @@ TWAProcedures.List = {
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
         consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "Carving:2", time = 150, sound = "SharpenBladeWhetstone",
     },
-    -- Tool widened to any sharpening tool, not just a file (request
-    -- 2026-09-27).
-    PrecisionGrind = {
-        category = "Sharpness", nameKey = "IGUI_TWA_Proc_PrecisionGrind", icon = "HotChisel_Forged",
-        tool = { { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = {}, skill = "Blacksmith:3", time = 250, sound = "SharpenBladeWhetstone",
-    },
-    -- Tool widened to any heavy hammering tool (request 2026-09-27) -- same
-    -- real ItemTag group KnapHead/StoneKnapping already used.
-    ForgeShape = {
-        category = "Sharpness", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "Ingot_Steel",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
-        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:4", time = 400, sound = "Hammering",
-    },
+    -- PrecisionGrind removed entirely (request 2026-09-28: "เอากรรมวิธี
+    -- เจียระไนออก แล้วเอาชุบแข็งไปแทนในเงื่อนไขเจียระไนนั้นๆ") -- QuenchHarden
+    -- (already a real Metallurgy procedure, see below, previously honestly-
+    -- unused by any recipe) takes over its exact slot in gen_craftdata.js's
+    -- crit-band rules A/B instead -- no replacement entry needed here.
+    --
+    -- ForgeShape moved to the Metallurgy category (request 2026-09-28:
+    -- "ย้ายตีขึ้นรูปไปไว้หมวดถลุงโลหะ") -- its own assignment logic in the
+    -- rules engine (still the top crit-band for Sharpness/Piercing) and its
+    -- tool/material/skill are UNCHANGED, only which UI tab groups it under
+    -- changes; see TWAProcedures.Categories below and its own entry further
+    -- down this file, kept there now instead of here.
 
     -- ===== Piercing (สร้างความแหลม) -- Spear/Stab weapons =====
     -- Tool widened to any hammering tool -- real "any hammer" group already
@@ -530,6 +530,19 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "SHARP_KNIFE" },
         skill = "Carving:1", time = 200, sound = "CraftFixWeapon",
     },
+    -- Moved here from the Sharpness category (request 2026-09-28: "ย้ายตี
+    -- ขึ้นรูปไปไว้หมวดถลุงโลหะ") -- tool/consume/skill/time/sound all
+    -- unchanged; still assigned by gen_craftdata.js's crit-band rules the
+    -- same way it always was (top Sharpness/Piercing band), just grouped
+    -- under this UI tab now instead. Tool widened to any heavy hammering
+    -- tool (request 2026-09-27) -- same real ItemTag group KnapHead/
+    -- StoneKnapping already used.
+    ForgeShape = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "Ingot_Steel",
+        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
+        skill = "Blacksmith:4", time = 400, sound = "Hammering",
+    },
     ForgeFold = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "Ingot_Steel",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
@@ -559,14 +572,14 @@ TWAProcedures.List = {
 -- drift apart.
 -- request 2026-09-27: "เอาหมวดหมู่ การประกอบ มาไว้บนสุด" -- Assembly moved
 -- to the front of this list (display order only, no effect on the rules
--- engine). "อยากให้เจียระไน กับตีขึ้นรูปไปอยู่ในสร้างความแหลมด้วย" --
--- PrecisionGrind/ForgeShape now also appear under Piercing's own grid, not
--- just Sharpness -- they already show up here TWICE deliberately, matching
--- how gen_craftdata.js's own rules engine already treats them as SHARED
--- between the two categories (Rule A for Swinging, Rule B for Spear/Stab
--- both resolve to PrecisionGrind/ForgeShape at their top 2 crit bands) --
--- this just makes the right-panel UI grouping match that real behavior
--- instead of only showing them under Sharpness.
+-- engine).
+-- request 2026-09-28: PrecisionGrind removed from Sharpness/Piercing
+-- entirely (it no longer exists as a procedure at all -- QuenchHarden took
+-- over its rules-engine slot instead, but stays displayed under Metallurgy
+-- only, not added here); ForgeShape moved OUT of Sharpness/Piercing into
+-- Metallurgy's own ids list below (it used to appear under both Sharpness
+-- AND Piercing deliberately, per an earlier request -- that dual-listing is
+-- gone now that it lives under Metallurgy instead, a single home).
 TWAProcedures.Categories = {
     { key = "Assembly", nameKey = "IGUI_TWA_ProcCat_Assembly", ids = {
         'WrapClothImprov', 'SawWood', 'SmashBottle', 'BreakBranch',
@@ -575,8 +588,8 @@ TWAProcedures.Categories = {
         'AssembleSpike', 'AssembleBrake', 'AssembleBucket', 'AssembleKettle',
         'AssembleRakeHead', 'AssembleSpadeHead',
     } },
-    { key = "Sharpness", nameKey = "IGUI_TWA_ProcCat_Sharpness", ids = { 'SharpenEdge', 'StropLeather', 'PrecisionGrind', 'ForgeShape' } },
-    { key = "Piercing", nameKey = "IGUI_TWA_ProcCat_Piercing", ids = { 'KnapHead', 'TaperPoint', 'PrecisionGrind', 'ForgeShape' } },
+    { key = "Sharpness", nameKey = "IGUI_TWA_ProcCat_Sharpness", ids = { 'SharpenEdge', 'StropLeather' } },
+    { key = "Piercing", nameKey = "IGUI_TWA_ProcCat_Piercing", ids = { 'KnapHead', 'TaperPoint' } },
     { key = "Handle", nameKey = "IGUI_TWA_ProcCat_Handle", ids = { 'MakeHandle', 'WrapBind', 'MakeLongHandle', 'ReinforcedBind', 'MakeRivetedHandle', 'TightenBolts' } },
     { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'HammerNails', 'CounterweightHead', 'WeldMetal' } },
     { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
@@ -585,7 +598,7 @@ TWAProcedures.Categories = {
     { key = "Metallurgy", nameKey = "IGUI_TWA_ProcCat_Metallurgy", ids = {
         'StartFire', 'MeltMetal', 'PourMold', 'PourMoldLarge', 'CoolCast', 'QuenchHarden',
         'WeldWork', 'WeldWorkComplex', 'PolishMetal', 'GrindMetal', 'EngravePattern',
-        'ForgeFold', 'ForgeComplex', 'ForgeVacuum',
+        'ForgeShape', 'ForgeFold', 'ForgeComplex', 'ForgeVacuum',
     } },
 }
 

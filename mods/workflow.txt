@@ -1935,11 +1935,16 @@ Rules engine (`gen_craftdata.js`'s `addFinishingSteps(r)`) — assigns
 procedures from a recipe's own real script stats:
   A) Sharpness (Swinging only, skipped entirely if CriticalChance = 0):
      single-band-select by CriticalChance (<20/<40/<60/>=60) →
-     SharpenEdge/StropLeather/PrecisionGrind/ForgeShape.
+     SharpenEdge/StropLeather/QuenchHarden/ForgeShape. (PrecisionGrind
+     occupied the 3rd band here until 2026-09-28, when it was removed
+     entirely and QuenchHarden took its exact slot — request: "เอากรรมวิธี
+     เจียระไนออก แล้วเอาชุบแข็งไปแทนในเงื่อนไขเจียระไนนั้นๆ".)
   B) Piercing (Spear/Stab only, same gate): same bands →
-     KnapHead/TaperPoint/PrecisionGrind/ForgeShape (PrecisionGrind/ForgeShape
-     are genuinely SHARED between A and B — the right-panel UI lists them
-     under both Sharpness and Piercing to match).
+     KnapHead/TaperPoint/QuenchHarden/ForgeShape (QuenchHarden/ForgeShape
+     are genuinely SHARED between A and B in the RULES, but the right-panel
+     UI groups ForgeShape under Metallurgy only now, not Sharpness/Piercing
+     — see 8.11's Metallurgy paragraph; QuenchHarden was never dual-listed
+     in the UI even before this change, only shown under Metallurgy).
   C) Handle: SINGLE-tier-select (NOT cumulative — a handle attaches only one
      way) by MaxRange: >=1.6 → MakeRivetedHandle+TightenBolts; >1.4 →
      MakeLongHandle+ReinforcedBind; >1.2 → MakeHandle+WrapBind.
@@ -1964,8 +1969,10 @@ procedures from a recipe's own real script stats:
   A recipe's final list is the UNION of every rule its own stats/name
   trigger — range across all 248 recipes is 1-12 procedures. Known honestly-
   unused procedures (defined, but no current recipe needs them — not a bug,
-  just no real item's stats/name happen to trigger them): SurfaceCoating,
-  QuenchHarden.
+  just no real item's stats/name happen to trigger them): SurfaceCoating.
+  (QuenchHarden was in this list too until 2026-09-28, when it took over
+  PrecisionGrind's old rules-engine slot — see rule A above; it's now used
+  by ~35 real recipes and no longer "honestly unused".)
 
 Tier system: `TIER_INFO`/`tierFromDps()` — DPS = `((MaxDamage+MinDamage)/2) *
 BaseSpeed` (no crit stats folded in — see 8.13 for why that was tried and
@@ -1988,8 +1995,11 @@ rarity word (MaterialLump=Common, then Uncommon/Rare/Epic/Elite/Legendary).
 Metallurgy chain (a raw-material refining system, real vanilla B42
 blacksmithing conditions read and adapted, not invented): `MaterialLump` (no
 base item, procedures StartFire+MeltMetal) → 5 rarity-tiered `MaterialBar_*`
-(each base=MaterialLump, escalating procedure chains). 14 procedures under a
-"Metallurgy" category: StartFire, MeltMetal (the `options` consume shape —
+(each base=MaterialLump, escalating procedure chains). 15 procedures under a
+"Metallurgy" category (14 originally; ForgeShape joined it 2026-09-28,
+moved out of Sharpness/Piercing — its own tool/consume/skill/rules-engine
+assignment are unchanged, only its UI category tab changed): StartFire,
+MeltMetal (the `options` consume shape —
 IronOre x4/CopperOre x4/IronChunk x2/SteelChunk x2/CopperScrap x3),
 PourMold/PourMoldLarge (real small/large ceramic crucibles as kept tools —
 `Base.CeramicCrucibleSmall`/`Base.CeramicCrucible`), CoolCast/QuenchHarden

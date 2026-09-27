@@ -1,10 +1,14 @@
 HARMONIE_TheWayToAttack -- crafting procedure library reference
-Generated 2026-09-27. Documents the CURRENT procedure library only --
-older versions are not tracked here any more (see git history if ever
-needed).
+Generated 2026-09-27, hand-updated 2026-09-28 (PrecisionGrind removed,
+ForgeShape moved to Metallurgy -- the generator pipeline that originally
+produced this file needs an intermediate JSON step no longer present in
+this session's scratchpad, so this update was applied directly against
+HARMONIE_TWA_Procedures.lua/gen_craftdata.js's own current state instead of
+regenerated). Documents the CURRENT procedure library only -- older
+versions are not tracked here any more (see git history if ever needed).
 
 ==============================================================================
-CURRENT LIBRARY -- 57 procedures, 9 categories
+CURRENT LIBRARY -- 56 procedures, 9 categories
 ==============================================================================
 
 -- Assembly (การประกอบ) (18) --
@@ -45,21 +49,18 @@ CURRENT LIBRARY -- 57 procedures, 9 categories
   - AssembleSpadeHead
       tool=WRENCH, consumes=SpadeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
 
--- Sharpness (สร้างความคม) (4) --
+-- Sharpness (สร้างความคม) (2) --
   - SharpenEdge
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Carving:1, time=100ms, sound=SharpenBladeWhetstone
   - StropLeather
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=Carving:2, time=150ms, sound=SharpenBladeWhetstone
-  - PrecisionGrind
-      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=Blacksmith:3, time=250ms, sound=SharpenBladeWhetstone
-  - ForgeShape
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, time=400ms, sound=Hammering
 
 -- Piercing (สร้างความแหลม) (2) --
-   (PrecisionGrind and ForgeShape also appear here in the real
-    right-panel UI grid, shared with Sharpness below -- see rule
-    A/B's own shared top-2 crit bands. Their canonical `category`
-    field stays "Sharpness", listed once each below.)
+   (2026-09-28: PrecisionGrind removed entirely -- QuenchHarden took over
+    its rules-engine slot instead (see RULES ENGINE below), but stays
+    listed under Metallurgy only. ForgeShape moved to Metallurgy too --
+    both used to appear here AND under Sharpness above; now they have a
+    single home each.)
   - KnapHead
       tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=SmashStoneHit
   - TaperPoint
@@ -113,7 +114,7 @@ CURRENT LIBRARY -- 57 procedures, 9 categories
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
 
--- Metallurgy (การถลุงโลหะ) (14) --
+-- Metallurgy (การถลุงโลหะ) (15) --
   - StartFire
       tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=100ms, sound=CraftFixWeapon
   - MeltMetal
@@ -136,6 +137,8 @@ CURRENT LIBRARY -- 57 procedures, 9 categories
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:2, time=250ms, sound=CraftFixWeapon
   - EngravePattern
       tool=SHARP_KNIFE, consumes=(none), skill=Carving:1, time=200ms, sound=CraftFixWeapon
+  - ForgeShape (moved here from Sharpness 2026-09-28, unchanged otherwise)
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, time=400ms, sound=Hammering
   - ForgeFold
       tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:6, forgeTier=Forge, time=400ms, sound=Hammering
   - ForgeComplex
@@ -154,14 +157,14 @@ A) Sharpness -- Swinging weapons only, and only if CriticalChance > 0
    CriticalChance (exactly one procedure, not cumulative):
      CritChance < 20        -> SharpenEdge
      20 <= CritChance < 40  -> StropLeather
-     40 <= CritChance < 60  -> PrecisionGrind
+     40 <= CritChance < 60  -> QuenchHarden (was PrecisionGrind until 2026-09-28)
      CritChance >= 60       -> ForgeShape
 
 B) Piercing -- Spear/Stab weapons only, same CritChance > 0 gate and band
    shape as A:
      CritChance < 20        -> KnapHead
      20 <= CritChance < 40  -> TaperPoint
-     40 <= CritChance < 60  -> PrecisionGrind (shared with A)
+     40 <= CritChance < 60  -> QuenchHarden (shared with A, was PrecisionGrind)
      CritChance >= 60       -> ForgeShape (shared with A)
 
 C) Handle -- SINGLE-TIER-SELECT by MaxRange (the highest qualifying tier
@@ -198,7 +201,7 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    describes a specific attached/constructed component gets that
    component's procedure INSTEAD OF whatever Sharpness/Piercing (A/B)
    would otherwise assign -- removes any of SharpenEdge/StropLeather/
-   PrecisionGrind/ForgeShape/KnapHead/TaperPoint already picked, then adds
+   QuenchHarden/ForgeShape/KnapHead/TaperPoint already picked, then adds
    the matching Assembly procedure. 4 specific named items get a fixed,
    EXCLUSIVE override -- their entire procedure list becomes just this one
    procedure, since the item itself already IS the raw material (a bottle
@@ -263,8 +266,10 @@ Skill levels are exactly as given by the user and were NOT changed;
 tools/materials for steps that didn't specify them are this mod's own
 judgment call (documented per-procedure in HARMONIE_TWA_Procedures.lua),
 using only items/tags already established real elsewhere in this file.
-QuenchHarden (Blacksmith:2) is defined but not used by any of these 6
-recipes -- same honest "currently unused" pattern as SurfaceCoating.
+QuenchHarden (Blacksmith:2) is not used by any of these 6 hand-authored
+Metallurgy recipes, but IS used broadly elsewhere since 2026-09-28 -- it
+took over PrecisionGrind's old slot in Sharpness/Piercing rules A/B (see
+RULES ENGINE above), so it's no longer an "unused" procedure overall.
 
 Forge-tier gate (CoolCast/QuenchHarden need forgeTier=1 i.e. Primitive-or-
 better, ForgeFold needs forgeTier=2 i.e. Forge-or-better, ForgeComplex/
