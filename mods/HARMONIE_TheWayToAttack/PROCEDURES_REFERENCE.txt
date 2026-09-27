@@ -1,33 +1,35 @@
 HARMONIE_TheWayToAttack -- crafting procedure library reference
-Generated 2026-09-27, hand-updated 2026-09-28 (PrecisionGrind removed,
-ForgeShape moved to Metallurgy -- the generator pipeline that originally
-produced this file needs an intermediate JSON step no longer present in
-this session's scratchpad, so this update was applied directly against
-HARMONIE_TWA_Procedures.lua/gen_craftdata.js's own current state instead of
-regenerated). Documents the CURRENT procedure library only -- older
-versions are not tracked here any more (see git history if ever needed).
+Generated 2026-09-27, hand-updated 2026-09-28 (twice -- PrecisionGrind
+removed/ForgeShape moved to Metallurgy, then a follow-up batch: AnnealMetal
+added, several material/tool/qty changes, 2 renames -- the generator
+pipeline that originally produced this file needs an intermediate JSON step
+no longer present in this session's scratchpad, so these updates were
+applied directly against HARMONIE_TWA_Procedures.lua/gen_craftdata.js's own
+current state instead of regenerated). Documents the CURRENT procedure
+library only -- older versions are not tracked here any more (see git
+history if ever needed).
 
 ==============================================================================
-CURRENT LIBRARY -- 56 procedures, 9 categories
+CURRENT LIBRARY -- 57 procedures, 9 categories
 ==============================================================================
 
 -- Assembly (การประกอบ) (18) --
-  - WrapClothImprov
-      consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
+  - WrapClothImprov ("ประกอบผ้า", renamed from "พันผ้า" 2026-09-28)
+      consumes=RippedSheets/LeatherStrips/DuctTape x1, skill=(none), time=100ms, sound=FixWithTape
   - SawWood
       tool=SAW, consumes=(none), skill=(none), time=150ms, sound=Sawing
   - SmashBottle
       consumes=(none), skill=(none), time=100ms, sound=SmashStoneHit
-  - BreakBranch
-      tool=SHARP_KNIFE, consumes=(none), skill=(none), time=100ms, sound=CraftFixWeapon
+  - BreakBranch (tool removed 2026-09-28 -- snapped by hand now)
+      consumes=(none), skill=(none), time=100ms, sound=CraftFixWeapon
   - WrapBarbedWireAssembly
       tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=150ms, sound=CraftFixWeapon
   - WrapWireAssembly
       tool=Base.Pliers, consumes=Wire x1, skill=(none), time=150ms, sound=CraftFixWeapon
   - AssembleCan
       tool=SCREWDRIVER, consumes=TinCanEmpty x1, skill=(none), time=150ms, sound=Screwdriver
-  - AssembleNails
-      tool=HAMMER, consumes=Nails x5, skill=(none), time=150ms, sound=Hammering
+  - AssembleNails (qty trimmed 5->1, 2026-09-28)
+      tool=HAMMER, consumes=Nails x1, skill=(none), time=150ms, sound=Hammering
   - AssembleRailSpike
       tool=HAMMER, consumes=RailroadSpike x1, skill=(none), time=200ms, sound=Hammering
   - AssembleBoneSpike
@@ -38,18 +40,18 @@ CURRENT LIBRARY -- 56 procedures, 9 categories
       tool=SCREWDRIVER, consumes=SheetMetal x1, skill=(none), time=150ms, sound=Screwdriver
   - AssembleSpike
       tool=HAMMER, consumes=ScrapMetal x1, skill=(none), time=150ms, sound=Hammering
-  - AssembleBrake
-      tool=WRENCH, consumes=NormalBrake1 x1, skill=(none), time=200ms, sound=RepairWithWrench
+  - AssembleBrake (tool WRENCH->SCREWDRIVER, 2026-09-28)
+      tool=SCREWDRIVER, consumes=NormalBrake1 x1, skill=(none), time=200ms, sound=Screwdriver
   - AssembleBucket
       tool=HAMMER, consumes=Bucket x1, skill=(none), time=200ms, sound=Hammering
   - AssembleKettle
       tool=HAMMER, consumes=Kettle x1, skill=(none), time=200ms, sound=Hammering
-  - AssembleRakeHead
-      tool=WRENCH, consumes=RakeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
-  - AssembleSpadeHead
-      tool=WRENCH, consumes=SpadeHead x1, skill=(none), time=200ms, sound=RepairWithWrench
+  - AssembleRakeHead (tool WRENCH->SCREWDRIVER, 2026-09-28)
+      tool=SCREWDRIVER, consumes=RakeHead x1, skill=(none), time=200ms, sound=Screwdriver
+  - AssembleSpadeHead (tool WRENCH->SCREWDRIVER, 2026-09-28)
+      tool=SCREWDRIVER, consumes=SpadeHead x1, skill=(none), time=200ms, sound=Screwdriver
 
--- Sharpness (สร้างความคม) (2) --
+-- Sharpness/Bluntness (สร้างความคม/ทื่อ, renamed from "สร้างความคม" 2026-09-28) (2) --
   - SharpenEdge
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Carving:1, time=100ms, sound=SharpenBladeWhetstone
   - StropLeather
@@ -57,10 +59,11 @@ CURRENT LIBRARY -- 56 procedures, 9 categories
 
 -- Piercing (สร้างความแหลม) (2) --
    (2026-09-28: PrecisionGrind removed entirely -- QuenchHarden took over
-    its rules-engine slot instead (see RULES ENGINE below), but stays
-    listed under Metallurgy only. ForgeShape moved to Metallurgy too --
-    both used to appear here AND under Sharpness above; now they have a
-    single home each.)
+    its rules-engine slot instead (see RULES ENGINE below). ForgeShape's own
+    slot was then also handed off to a new procedure, AnnealMetal, same day.
+    Both QuenchHarden and AnnealMetal are listed under Metallurgy only, not
+    dual-listed under Sharpness/Piercing the way ForgeShape/PrecisionGrind
+    used to be.)
   - KnapHead
       tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=SmashStoneHit
   - TaperPoint
@@ -73,24 +76,24 @@ CURRENT LIBRARY -- 56 procedures, 9 categories
       consumes=DuctTape/RippedSheets/LeatherStrips/Rope x2, skill=(none), time=100ms, sound=FixWithTape
   - MakeLongHandle
       tool=SHARP_KNIFE, consumes=LongHandle/LongStick x1, skill=Carving:2, time=200ms, sound=CraftWeaponSpearWood
-  - ReinforcedBind
-      consumes=Thread x1, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+  - ReinforcedBind (material changed 2026-09-28: was Thread x1 + Glue x1)
+      consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
   - MakeRivetedHandle
       consumes=LongHandle/LongStick x1, MetalPipe/SteelBarHalf x1, skill=Blacksmith:4, time=350ms, sound=Hammering
-  - TightenBolts
-      tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x2, skill=Blacksmith:1, time=150ms, sound=Screwdriver
+  - TightenBolts (qty trimmed 2->1, 2026-09-28; TH name "ขันน๊อต"->"ขันน็อต" spelling fix)
+      tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x1, skill=Blacksmith:1, time=150ms, sound=Screwdriver
 
 -- Balance (ถ่วงน้ำหนัก) (3) --
-  - HammerNails
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x5, skill=Woodwork:1, time=150ms, sound=Hammering
+  - HammerNails (qty trimmed 5->1, 2026-09-28)
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x1, skill=Woodwork:1, time=150ms, sound=Hammering
   - CounterweightHead
       tool=HAMMER / SLEDGEHAMMER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Blacksmith:1, time=150ms, sound=Hammering
   - WeldMetal
       tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=400ms, sound=CraftWelding
 
 -- Structure (เสริมโครงสร้าง) (2) --
-  - RivetPlate
-      tool=HAMMER, consumes=SheetMetal/SmallSheetMetal/UnusableMetal/AluminumScrap x1, skill=Blacksmith:1, time=200ms, sound=Hammering
+  - RivetPlate (material narrowed 2026-09-28 to plain ScrapMetal; tool was already Hammer)
+      tool=HAMMER, consumes=ScrapMetal x1, skill=Blacksmith:1, time=200ms, sound=Hammering
   - DrillCore
       tool=Base.HandDrill, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
 
@@ -99,27 +102,27 @@ CURRENT LIBRARY -- 56 procedures, 9 categories
       consumes=RippedSheets x1, skill=(none), time=100ms, sound=FixWithTape
   - WrapLeather
       consumes=LeatherStrips x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
-  - StringSinew
-      consumes=Thread x1, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
+  - StringSinew (material changed 2026-09-28, same as ReinforcedBind above)
+      consumes=FishingLine/AnimalSinew x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
   - WeaveWire
       tool=Base.Pliers, consumes=Wire x1, skill=Blacksmith:2, time=200ms, sound=CraftFixWeapon
 
 -- Wear Resistance (ลดการสึกหรอ) (4) --
   - CoatMud
       consumes=Clay x1, skill=(none), time=150ms, sound=CraftFixWeapon
-  - FireTreat
+  - FireTreat ("เผาหน้าผิว", renamed from "เผาไฟ" 2026-09-28)
       consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
   - CoatWax
       tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Carving:1, time=150ms, sound=CraftFixWeapon
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
 
--- Metallurgy (การถลุงโลหะ) (15) --
+-- Metallurgy (การถลุงโลหะ) (16) --
   - StartFire
       tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=100ms, sound=CraftFixWeapon
   - MeltMetal
       tool=Base.Tongs, consumes=ONE OF: IronOre x4 / CopperOre x4 / IronChunk x2 / SteelChunk x2 / CopperScrap x3, skill=(none), time=200ms, sound=CraftFixWeapon
-  - PourMold
+  - PourMold ("เทลงเบ้าเล็ก", renamed from "เทลงเบ้า" 2026-09-27)
       tool=Base.CeramicCrucibleSmall, consumes=(none), skill=(none), time=150ms, sound=CraftFixWeapon
   - PourMoldLarge
       tool=Base.CeramicCrucible, consumes=(none), skill=(none), time=200ms, sound=CraftFixWeapon
@@ -127,18 +130,20 @@ CURRENT LIBRARY -- 56 procedures, 9 categories
       tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=150ms, sound=CraftFixWeapon
   - QuenchHarden
       tool=Base.Tongs, consumes=(none), skill=Blacksmith:2, forgeTier=PrimitiveForge, time=150ms, sound=CraftFixWeapon
+  - AnnealMetal (new 2026-09-28 -- takes ForgeShape's old top-crit-band slot, see RULES ENGINE below)
+      tool=Base.Tongs, consumes=(none), skill=Blacksmith:4, forgeTier=Forge, time=250ms, sound=CraftFixWeapon
   - WeldWork
       tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=300ms, sound=CraftWelding
   - WeldWorkComplex
       tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x2, skill=MetalWelding:2, time=400ms, sound=CraftWelding
   - PolishMetal
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:1, time=200ms, sound=CraftFixWeapon
-  - GrindMetal
+  - GrindMetal ("เจียรโลหะ", renamed from "เจียร" 2026-09-27)
       tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Glassmaking:2, time=250ms, sound=CraftFixWeapon
   - EngravePattern
       tool=SHARP_KNIFE, consumes=(none), skill=Carving:1, time=200ms, sound=CraftFixWeapon
-  - ForgeShape (moved here from Sharpness 2026-09-28, unchanged otherwise)
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, time=400ms, sound=Hammering
+  - ForgeShape (moved here from Sharpness 2026-09-28; forgeTier added same day -- was previously no forgeTier at all)
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, forgeTier=Forge, time=400ms, sound=Hammering
   - ForgeFold
       tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, tool2=Base.Tongs, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:6, forgeTier=Forge, time=400ms, sound=Hammering
   - ForgeComplex
@@ -158,14 +163,14 @@ A) Sharpness -- Swinging weapons only, and only if CriticalChance > 0
      CritChance < 20        -> SharpenEdge
      20 <= CritChance < 40  -> StropLeather
      40 <= CritChance < 60  -> QuenchHarden (was PrecisionGrind until 2026-09-28)
-     CritChance >= 60       -> ForgeShape
+     CritChance >= 60       -> AnnealMetal (was ForgeShape until 2026-09-28)
 
 B) Piercing -- Spear/Stab weapons only, same CritChance > 0 gate and band
    shape as A:
      CritChance < 20        -> KnapHead
      20 <= CritChance < 40  -> TaperPoint
      40 <= CritChance < 60  -> QuenchHarden (shared with A, was PrecisionGrind)
-     CritChance >= 60       -> ForgeShape (shared with A)
+     CritChance >= 60       -> AnnealMetal (shared with A, was ForgeShape)
 
 C) Handle -- SINGLE-TIER-SELECT by MaxRange (the highest qualifying tier
    ONLY -- NOT cumulative; a handle can only be attached one way):
@@ -201,7 +206,7 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    describes a specific attached/constructed component gets that
    component's procedure INSTEAD OF whatever Sharpness/Piercing (A/B)
    would otherwise assign -- removes any of SharpenEdge/StropLeather/
-   QuenchHarden/ForgeShape/KnapHead/TaperPoint already picked, then adds
+   QuenchHarden/AnnealMetal/KnapHead/TaperPoint already picked, then adds
    the matching Assembly procedure. 4 specific named items get a fixed,
    EXCLUSIVE override -- their entire procedure list becomes just this one
    procedure, since the item itself already IS the raw material (a bottle
@@ -210,7 +215,7 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
      Handiknife/GlassShiv/Toothbrush_Shiv/HandFile -> WrapClothImprov (no tool)
      HalfPlank -> SawWood (tool only, no material consumed)
      SmashedBottle -> SmashBottle (no tool, no material -- just smashed by hand)
-     ShortTreeBranch -> BreakBranch (tool = SHARP_KNIFE, no material consumed)
+     ShortTreeBranch -> BreakBranch (no tool, no material -- snapped by hand)
    Everything else matches by real NAME SUFFIX and is ADDITIVE (only
    Sharpness/Piercing get swapped out, other categories still apply), e.g.
    any "*_Nails" item -> AssembleNails, any "*_Bone"/"BoneClub*" item ->
@@ -218,10 +223,15 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    etc. -- see gen_craftdata.js's ASSEMBLY_PATTERNS for the full real-name
    lists). Real result: 75 of the 248 craftable recipes get an Assembly
    override; this also made SurfaceCoating currently unused (the only 2
-   craftable items that ever qualified for ForgeShape, BucketMace_Metal/
-   BucketMace_Wood, are Assembly-matched instead) -- ForgeShape itself is
-   NOT unused any more since the Metallurgy chain below (2026-09-27) also
-   uses it for MaterialBar_Rare.
+   craftable items that ever qualified for the top crit band,
+   BucketMace_Metal/BucketMace_Wood, are Assembly-matched instead) --
+   AnnealMetal is therefore ALSO currently unused by any real generated
+   recipe (same real situation ForgeShape was already in before it moved,
+   confirmed by regenerating and diffing -- 0 recipes land in the top crit
+   band via this rule right now, purely a real-data outcome, not a bug).
+   ForgeShape ITSELF is not unused, since the Metallurgy chain below
+   (2026-09-27) and the "Spike" name-based override both still use it
+   directly.
 
 A recipe's final procedure list is the UNION of every rule its own real
 stats/name trigger across all 8 categories -- e.g. a long, heavy-swinging,
@@ -270,20 +280,36 @@ QuenchHarden (Blacksmith:2) is not used by any of these 6 hand-authored
 Metallurgy recipes, but IS used broadly elsewhere since 2026-09-28 -- it
 took over PrecisionGrind's old slot in Sharpness/Piercing rules A/B (see
 RULES ENGINE above), so it's no longer an "unused" procedure overall.
+AnnealMetal (Blacksmith:4) is similarly not used by these 6 recipes, and
+(unlike QuenchHarden) currently has NO real generated recipe using it
+anywhere else either -- see rule H's note above.
 
 Forge-tier gate (CoolCast/QuenchHarden need forgeTier=1 i.e. Primitive-or-
-better, ForgeFold needs forgeTier=2 i.e. Forge-or-better, ForgeComplex/
-ForgeVacuum need forgeTier=3 i.e. AdvancedForge): vanilla's REAL check is
-"is the player USING a specific placed Forge entity" (a separate Entity/
-CraftBench subsystem this mod's inventory-based UI doesn't hook into).
-Approximated instead as "is a real forge of that tier's own sprite PLACED
-within 2 tiles" (nearbyForgeTier() in HARMONIE_TWA_Procedures.lua, matched
-by real sprite names grep-confirmed from entity_forge_i/ii/iii.txt) --
-discussed with and accepted by the user as a practical, testable-and-
-fixable stand-in, not vanilla's literal mechanism.
+better, AnnealMetal/ForgeShape/ForgeFold need forgeTier=2 i.e. Forge-or-
+better, ForgeComplex/ForgeVacuum need forgeTier=3 i.e. AdvancedForge):
+vanilla's REAL check is "is the player USING a specific placed Forge
+entity" (a separate Entity/CraftBench subsystem this mod's inventory-based
+UI doesn't hook into). Approximated instead as "is a real forge of that
+tier's own sprite PLACED within 2 tiles" (nearbyForgeTier() in
+HARMONIE_TWA_Procedures.lua, matched by real sprite names grep-confirmed
+from entity_forge_i/ii/iii.txt) -- discussed with and accepted by the user
+as a practical, testable-and-fixable stand-in, not vanilla's literal
+mechanism.
 
 New consume shape: `{ options = { {itemType, qty}, ... } }` (MeltMetal only
 so far) needs ONE of several real materials, each with its OWN quantity --
 unlike the older `itemTypes` shape, which shares one qty across every
 alternative. MeltMetal's real options: IronOre x4 / CopperOre x4 /
 IronChunk x2 / SteelChunk x2 / CopperScrap x3.
+
+==============================================================================
+MATERIAL CHANGES (2026-09-28) -- real vanilla items confirmed via grep
+==============================================================================
+
+ReinforcedBind/StringSinew now consume Base.FishingLine (real, ItemType=
+base:drainable, Tags include base:thread -- vanilla itself treats it as a
+thread equivalent) OR Base.AnimalSinew (real, ItemType=base:normal,
+DisplayCategory=AnimalPart) instead of Thread+Glue. AnimalSinew is NOT the
+same as "AnimalTendon" -- an item invented by an earlier session's rejected
+pasted brief (see workflow.txt 8.13's "never trust a pasted claim" lesson);
+AnimalSinew was independently grep-confirmed real before use here.

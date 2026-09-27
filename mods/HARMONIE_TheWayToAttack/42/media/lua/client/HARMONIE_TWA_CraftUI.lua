@@ -32,11 +32,6 @@ local TWA_NEAT = {
     btnM = getTexture("media/ui/NeatUI/Button/Button_FULL_M.png"),
     btnR = getTexture("media/ui/NeatUI/Button/Button_FULL_R.png"),
     check = getTexture("media/ui/NeatUI/ICON/ICON_Check.png"),
-    -- No dedicated small search/magnifying-glass UI glyph exists in either
-    -- NeatUI's own icon set or vanilla's UI textures (checked both before
-    -- picking this) -- reuses the real vanilla WorldItems/MagnifyingGlass.png
-    -- item sprite instead, scaled down to button size.
-    search = getTexture("media/textures/WorldItems/MagnifyingGlass.png"),
 }
 
 -- A round-trip through this UI's second real bug report: the first pass used
@@ -223,32 +218,6 @@ function TWATabButton:render()
         local textW = getTextManager():MeasureStringX(font, self.title)
         local textH = getTextManager():getFontHeight(font)
         drawTextShadowed(self, self.title, (self.width - textW) / 2, (self.height - textH) / 2, 1, 1, 1, 1, font)
-    end
-end
-
--- Plain icon button (request 2026-09-27: "เพิ่มปุ่มแว่นขยาย...จะทำให้
--- สามารถไป search สูตรอาวุธที่ต้องทำกรรมวิธีนั้นๆได้" -- a magnifying-glass
--- button in the procedure details box). Draws a texture instead of a text
--- title -- everything else (hover/disabled alpha, flat border) mirrors
--- TWANeatButton's own real render() pattern.
-TWAIconButton = ISButton:derive("TWAIconButton")
-
-function TWAIconButton:new(x, y, w, h, texture, target, onclick)
-    local o = ISButton:new(x, y, w, h, "", target, onclick)
-    setmetatable(o, self)
-    self.__index = self
-    o:setDisplayBackground(false)
-    o.icon = texture
-    return o
-end
-
-function TWAIconButton:render()
-    local disabled = self.enable == false
-    local alpha = disabled and 0.35 or (self:isMouseOver() and 1 or 0.85)
-    self:drawRect(0, 0, self.width, self.height, 0.6, 0.15, 0.15, 0.15)
-    self:drawRectBorder(0, 0, self.width, self.height, alpha, 0.6, 0.6, 0.6)
-    if self.icon then
-        self:drawTextureScaled(self.icon, 3, 3, self.width - 6, self.height - 6, alpha, 1, 1, 1)
     end
 end
 
@@ -1100,12 +1069,15 @@ function TWACraftWindow:createChildren()
     self:addChild(self.procCancelButton)
     self.procBtnY = procBtnY
 
-    -- Magnifying-glass button (request 2026-09-27) -- top-right corner of
-    -- the procedure details box, beside its name line. Only meaningful once
-    -- a procedure is actually selected there -- visibility toggled in
+    -- "Find recipes" button (request 2026-09-27; request 2026-09-28: "รูปปุ่ม
+    -- ค้นหา...ไม่สวย ไม่ต้องมีรูปก็ได้" -- dropped the magnifying-glass icon
+    -- entirely in favor of a plain text button, the same TWANeatButton style
+    -- every other button in this UI already uses) -- top-right corner of the
+    -- procedure details box, beside its name line. Only meaningful once a
+    -- procedure is actually selected there -- visibility toggled in
     -- drawProcedureDetails() the same way procConfirmButton/procCancelButton
     -- already are.
-    self.procSearchButton = TWAIconButton:new(rightX + RIGHT_W - 30, self.procDetailsY + 6, 22, 22, TWA_NEAT.search, self, TWACraftWindow.onSearchByProcedure)
+    self.procSearchButton = TWANeatButton:new(rightX + RIGHT_W - 70, self.procDetailsY + 6, 60, 22, getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchByProcedure)
     self.procSearchButton:setTooltip(getText("IGUI_TWA_Tooltip_FindRecipesForProcedure"))
     self.procSearchButton:initialise()
     self:addChild(self.procSearchButton)

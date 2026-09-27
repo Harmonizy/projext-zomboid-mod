@@ -199,11 +199,17 @@ TWAProcedures.List = {
     -- crit-band rules A/B instead -- no replacement entry needed here.
     --
     -- ForgeShape moved to the Metallurgy category (request 2026-09-28:
-    -- "ย้ายตีขึ้นรูปไปไว้หมวดถลุงโลหะ") -- its own assignment logic in the
-    -- rules engine (still the top crit-band for Sharpness/Piercing) and its
-    -- tool/material/skill are UNCHANGED, only which UI tab groups it under
-    -- changes; see TWAProcedures.Categories below and its own entry further
-    -- down this file, kept there now instead of here.
+    -- "ย้ายตีขึ้นรูปไปไว้หมวดถลุงโลหะ") -- see its own entry further down this
+    -- file instead of here.
+    --
+    -- Follow-up request (2026-09-28): the top crit band (>=60, index 3 in
+    -- CRIT_BAND_SWINGING/CRIT_BAND_PIERCING) no longer uses ForgeShape either
+    -- -- a brand-new procedure, AnnealMetal (see the Metallurgy section
+    -- further down), takes that slot instead ("ขั้น 4 ให้ใช้ อบเย็น แทน
+    -- ตีขึ้นรูป"). ForgeShape itself still exists (still used by the
+    -- Metallurgy chain's MaterialBar_Rare and the name-based "Spike"
+    -- override), just no longer reachable through the generic Sharpness/
+    -- Piercing crit-band rule.
 
     -- ===== Piercing (สร้างความแหลม) -- Spear/Stab weapons =====
     -- Tool widened to any hammering tool -- real "any hammer" group already
@@ -244,13 +250,15 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "SHARP_KNIFE" },
         consumes = { { itemTypes = { "Base.LongHandle", "Base.LongStick" }, qty = 1 } }, skill = "Carving:2", time = 200, sound = "CraftWeaponSpearWood",
     },
-    -- Qty trimmed to reflect real relative scarcity (request 2026-09-27:
-    -- "จำนวนที่สมเหตุสมผลต่อความหายาก") -- Thread/Glue are both single-slot
-    -- craft materials in real play, not bulk-stackable like Nails/Charcoal,
-    -- so 1 each is the realistic ask, not 2+.
+    -- Material changed (request 2026-09-28: "พันยึดแน่นหนา ให้ใช้แค่เอ็น
+    -- ตกปลาหรือเอ็นสัตว์แทน สกิลเหมือนเดิม") -- real vanilla items
+    -- Base.FishingLine (Tags include base:thread -- vanilla itself treats
+    -- it as a thread equivalent) and Base.AnimalSinew (grep-confirmed real,
+    -- NOT the same as the invented "AnimalTendon" from an earlier session's
+    -- rejected pasted brief -- see workflow.txt 8.13). Skill unchanged.
     ReinforcedBind = {
-        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "Thread",
-        consumes = { { itemType = "Base.Thread", qty = 1 }, { itemType = "Base.Glue", qty = 1 } },
+        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "Sinew",
+        consumes = { { itemTypes = { "Base.FishingLine", "Base.AnimalSinew" }, qty = 1 } },
         skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
     },
     -- Material widened the same way as MakeLongHandle (LongHandle or raw
@@ -261,17 +269,20 @@ TWAProcedures.List = {
         consumes = { { itemTypes = { "Base.LongHandle", "Base.LongStick" }, qty = 1 }, { itemTypes = { "Base.MetalPipe", "Base.SteelBarHalf" }, qty = 1 } },
         skill = "Blacksmith:4", time = 350, sound = "Hammering",
     },
+    -- Qty trimmed 2->1 (request 2026-09-28: "ขันน๊อต...ให้ใช้น็อต 1 อัน" --
+    -- also fixed the Thai spelling "ขันน๊อต"->"ขันน็อต" in the translation).
     TightenBolts = {
         category = "Handle", nameKey = "IGUI_TWA_Proc_TightenBolts", icon = "NutsBolts",
         tool = { { kind = "tag", value = "SCREWDRIVER" }, { kind = "tag", value = "WRENCH" } },
-        consumes = { { itemType = "Base.NutsBolts", qty = 2 } }, skill = "Blacksmith:1", time = 150, sound = "Screwdriver",
+        consumes = { { itemType = "Base.NutsBolts", qty = 1 } }, skill = "Blacksmith:1", time = 150, sound = "Screwdriver",
     },
 
     -- ===== Balance (ถ่วงน้ำหนัก) -- by PushBackMod =====
+    -- Qty trimmed 5->1 (request 2026-09-28, same as AssembleNails above).
     HammerNails = {
         category = "Balance", nameKey = "IGUI_TWA_Proc_HammerNails", icon = "Nails",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
-        consumes = { { itemType = "Base.Nails", qty = 5 } }, skill = "Woodwork:1", time = 150, sound = "Hammering",
+        consumes = { { itemType = "Base.Nails", qty = 1 } }, skill = "Woodwork:1", time = 150, sound = "Hammering",
     },
     -- Material widened to either real empty-can type (already an
     -- established real pair from this mod's own earlier AttachCan work).
@@ -287,12 +298,13 @@ TWAProcedures.List = {
     },
 
     -- ===== Structure (เสริมโครงสร้าง) -- by KnockdownMod =====
-    -- Material widened to any real scrap-sheet-metal type (same established
-    -- real alt group this mod's own AttachScrapSheet already used).
+    -- Material narrowed to plain ScrapMetal (request 2026-09-28: "ตอกหมุด
+    -- ใช้เศษโลหะกับค้อนแทน สกิลเหมือนเดิม" -- tool was already Hammer,
+    -- unchanged; skill unchanged).
     RivetPlate = {
-        category = "Structure", nameKey = "IGUI_TWA_Proc_RivetPlate", icon = "SheetMetal",
+        category = "Structure", nameKey = "IGUI_TWA_Proc_RivetPlate", icon = "ScrapMetal",
         tool = { kind = "tag", value = "HAMMER" },
-        consumes = { { itemTypes = { "Base.SheetMetal", "Base.SmallSheetMetal", "Base.UnusableMetal", "Base.AluminumScrap" }, qty = 1 } },
+        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } },
         skill = "Blacksmith:1", time = 200, sound = "Hammering",
     },
     DrillCore = {
@@ -316,9 +328,11 @@ TWAProcedures.List = {
         category = "Toughness", nameKey = "IGUI_TWA_Proc_WrapLeather", icon = "LeatherStrips",
         consumes = { { itemType = "Base.LeatherStrips", qty = 1 } }, skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
     },
+    -- Material changed (request 2026-09-28: same as ReinforcedBind above --
+    -- "ร้อยเอ็น ให้ใช้แค่เอ็นตกปลาหรือเอ็นสัตว์แทน สกิลเหมือนเดิม").
     StringSinew = {
-        category = "Toughness", nameKey = "IGUI_TWA_Proc_StringSinew", icon = "Thread",
-        consumes = { { itemType = "Base.Thread", qty = 1 }, { itemType = "Base.Glue", qty = 1 } },
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_StringSinew", icon = "Sinew",
+        consumes = { { itemTypes = { "Base.FishingLine", "Base.AnimalSinew" }, qty = 1 } },
         skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
     },
     -- Qty trimmed from 2->1: Wire is scarcer than cloth/leather (usually
@@ -362,9 +376,11 @@ TWAProcedures.List = {
     -- gen_craftdata.js's applyAssemblyOverrides() for the actual name-match
     -- rules. Every one of these is explicitly noskill, one real tool, one
     -- real material named after the procedure itself. =====
+    -- Material widened + renamed "พันผ้า"->"ประกอบผ้า" (request 2026-09-28)
+    -- -- any of these 3 real wrap-type materials works now, not just cloth.
     WrapClothImprov = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapClothImprov", icon = "Rag",
-        consumes = { { itemType = "Base.RippedSheets", qty = 1 } }, time = 100, sound = "FixWithTape",
+        consumes = { { itemTypes = { "Base.RippedSheets", "Base.LeatherStrips", "Base.DuctTape" }, qty = 1 } }, time = 100, sound = "FixWithTape",
     },
     SawWood = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_SawWood", icon = "Plank",
@@ -375,9 +391,11 @@ TWAProcedures.List = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_SmashBottle", icon = "BeerBottle",
         time = 100, sound = "SmashStoneHit",
     },
+    -- Tool requirement removed (request 2026-09-28: "หักกิ่ง ไม่ต้องใช้
+    -- อุปกรณ์ มีดคม") -- snapped by hand, matching SmashBottle's own no-tool
+    -- pattern above.
     BreakBranch = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_BreakBranch", icon = "Branch",
-        tool = { kind = "tag", value = "SHARP_KNIFE" },
         time = 100, sound = "CraftFixWeapon",
     },
     WrapBarbedWireAssembly = {
@@ -395,10 +413,12 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "SCREWDRIVER" },
         consumes = { { itemType = "Base.TinCanEmpty", qty = 1 } }, time = 150, sound = "Screwdriver",
     },
+    -- Qty trimmed 5->1 (request 2026-09-28: "ประกอบตะปูและตอกตะปูให้ใช้ 1
+    -- อัน" -- applies to both this and HammerNails in Balance below).
     AssembleNails = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleNails", icon = "Nails",
         tool = { kind = "tag", value = "HAMMER" },
-        consumes = { { itemType = "Base.Nails", qty = 5 } }, time = 150, sound = "Hammering",
+        consumes = { { itemType = "Base.Nails", qty = 1 } }, time = 150, sound = "Hammering",
     },
     AssembleRailSpike = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleRailSpike", icon = "RailroadSpike",
@@ -425,10 +445,13 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "HAMMER" },
         consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, time = 150, sound = "Hammering",
     },
+    -- Tool WRENCH->SCREWDRIVER (request 2026-09-28: "ในหมวดหมู่การประกอบ
+    -- อะไรที่ใช้ประแจ เปลี่ยนเป็นไขควง" -- applies to this + AssembleRakeHead/
+    -- AssembleSpadeHead below, the only 3 Assembly procedures that used it).
     AssembleBrake = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBrake", icon = "CarBrakes",
-        tool = { kind = "tag", value = "WRENCH" },
-        consumes = { { itemType = "Base.NormalBrake1", qty = 1 } }, time = 200, sound = "RepairWithWrench",
+        tool = { kind = "tag", value = "SCREWDRIVER" },
+        consumes = { { itemType = "Base.NormalBrake1", qty = 1 } }, time = 200, sound = "Screwdriver",
     },
     AssembleBucket = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBucket", icon = "MetalBucket",
@@ -442,13 +465,13 @@ TWAProcedures.List = {
     },
     AssembleRakeHead = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleRakeHead", icon = "RakeHead",
-        tool = { kind = "tag", value = "WRENCH" },
-        consumes = { { itemType = "Base.RakeHead", qty = 1 } }, time = 200, sound = "RepairWithWrench",
+        tool = { kind = "tag", value = "SCREWDRIVER" },
+        consumes = { { itemType = "Base.RakeHead", qty = 1 } }, time = 200, sound = "Screwdriver",
     },
     AssembleSpadeHead = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpadeHead", icon = "ShovelHead_Forged",
-        tool = { kind = "tag", value = "WRENCH" },
-        consumes = { { itemType = "Base.SpadeHead", qty = 1 } }, time = 200, sound = "RepairWithWrench",
+        tool = { kind = "tag", value = "SCREWDRIVER" },
+        consumes = { { itemType = "Base.SpadeHead", qty = 1 } }, time = 200, sound = "Screwdriver",
     },
 
     -- ===== Metallurgy (การถลุงโลหะ) -- request 2026-09-27: "กรรมวิธี
@@ -537,11 +560,28 @@ TWAProcedures.List = {
     -- under this UI tab now instead. Tool widened to any heavy hammering
     -- tool (request 2026-09-27) -- same real ItemTag group KnapHead/
     -- StoneKnapping already used.
+    -- forgeTier added (request 2026-09-28: "การขึ้นรูป ให้มีเงื่อนไข
+    -- ต้องการเตาตีเหล็กธรรมดาหรือสูงกว่า") -- a real forge-SHAPING action
+    -- genuinely needing a real forge, matching the same forgeTier=2 gate
+    -- AnnealMetal below now has.
     ForgeShape = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "Ingot_Steel",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:4", time = 400, sound = "Hammering",
+        skill = "Blacksmith:4", forgeTier = 2, time = 400, sound = "Hammering",
+    },
+    -- New procedure (request 2026-09-28): "ขั้น 4 ให้ใช้ อบเย็น แทน
+    -- ตีขึ้นรูป ใช้สกิล blacksmith 4 ใช้คีมจับเหล็ก ต้องการเตาตีเหล็กธรรมดา
+    -- หรือสูงกว่า" -- takes over ForgeShape's old slot in the Sharpness/
+    -- Piercing crit-band rules (gen_craftdata.js's CRIT_BAND_SWINGING/
+    -- CRIT_BAND_PIERCING[3]) -- a real, distinct heat-treatment step
+    -- (annealing: heat then slow-cool to relieve stress, unlike QuenchHarden's
+    -- rapid-cool hardening or CoolCast's plain cast-cooling), tool/skill/
+    -- forgeTier exactly as given; no material consumption was specified.
+    AnnealMetal = {
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "BlacksmithTongs",
+        tool = { kind = "type", value = "Base.Tongs" },
+        skill = "Blacksmith:4", forgeTier = 2, time = 250, sound = "CraftFixWeapon",
     },
     ForgeFold = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "Ingot_Steel",
@@ -579,7 +619,10 @@ TWAProcedures.List = {
 -- only, not added here); ForgeShape moved OUT of Sharpness/Piercing into
 -- Metallurgy's own ids list below (it used to appear under both Sharpness
 -- AND Piercing deliberately, per an earlier request -- that dual-listing is
--- gone now that it lives under Metallurgy instead, a single home).
+-- gone now that it lives under Metallurgy instead, a single home). Follow-up
+-- same day: ForgeShape's OWN rules-engine slot (the top crit band) was then
+-- also handed off to a brand-new AnnealMetal procedure -- also Metallurgy-
+-- only, never dual-listed under Sharpness/Piercing either.
 TWAProcedures.Categories = {
     { key = "Assembly", nameKey = "IGUI_TWA_ProcCat_Assembly", ids = {
         'WrapClothImprov', 'SawWood', 'SmashBottle', 'BreakBranch',
@@ -596,7 +639,7 @@ TWAProcedures.Categories = {
     { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
     { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
     { key = "Metallurgy", nameKey = "IGUI_TWA_ProcCat_Metallurgy", ids = {
-        'StartFire', 'MeltMetal', 'PourMold', 'PourMoldLarge', 'CoolCast', 'QuenchHarden',
+        'StartFire', 'MeltMetal', 'PourMold', 'PourMoldLarge', 'CoolCast', 'QuenchHarden', 'AnnealMetal',
         'WeldWork', 'WeldWorkComplex', 'PolishMetal', 'GrindMetal', 'EngravePattern',
         'ForgeShape', 'ForgeFold', 'ForgeComplex', 'ForgeVacuum',
     } },
