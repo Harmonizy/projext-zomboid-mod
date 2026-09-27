@@ -187,8 +187,12 @@ TWAProcedures.List = {
     -- Strop material widened to LeatherStrips OR RippedSheets (cloth strop
     -- is a real lower-grade substitute for a leather one) -- request
     -- 2026-09-27: "มีอุปกรณ์และวัตถุดิบที่ยืดหยุ่น ใช้อย่างอื่นแทนได้".
+    -- Icon changed (request 2026-09-28) -- real icon for Base.Fleshing_Tool
+    -- (the user gave the item's own TYPE name, "Fleshing_Tool"; its actual
+    -- Icon field is "FleshingTool" -- grep-confirmed, same real name-vs-icon
+    -- mismatch pattern workflow.txt 8.12 already documents elsewhere).
     StropLeather = {
-        category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "LeatherStrips",
+        category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "FleshingTool",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
         consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "Carving:2", time = 150, sound = "SharpenBladeWhetstone",
     },
@@ -223,8 +227,10 @@ TWAProcedures.List = {
         },
         consumes = {}, skill = "FlintKnapping:1", time = 150, sound = "SmashStoneHit",
     },
+    -- Icon changed (request 2026-09-28) -- real icon for Base.CrudeBlade is
+    -- "SpearHead_Crude01", not the item's own type name.
     TaperPoint = {
-        category = "Piercing", nameKey = "IGUI_TWA_Proc_TaperPoint", icon = "Shaft",
+        category = "Piercing", nameKey = "IGUI_TWA_Proc_TaperPoint", icon = "SpearHead_Crude01",
         tool = { { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.SmallFileSet" } },
         consumes = {}, skill = "FlintKnapping:2", time = 150, sound = "SharpenBladeWhetstone",
     },
@@ -233,8 +239,11 @@ TWAProcedures.List = {
     -- Material widened to LongStick OR Sapling (both real "long straight
     -- wood" items, already an established equivalent pair from this mod's
     -- own real spear-shaft alternatives).
+    -- Icon changed to "Handle" (request 2026-09-28) -- real icon confirmed
+    -- (this is Base.SmallHandle's own real icon, already noted elsewhere in
+    -- this mod's history -- an item's Icon field often isn't its type name).
     MakeHandle = {
-        category = "Handle", nameKey = "IGUI_TWA_Proc_MakeHandle", icon = "Shaft",
+        category = "Handle", nameKey = "IGUI_TWA_Proc_MakeHandle", icon = "Handle",
         tool = { kind = "tag", value = "SHARP_KNIFE" },
         consumes = { { itemTypes = { "Base.LongStick", "Base.Sapling" }, qty = 1 } }, skill = "Carving:1", time = 150, sound = "CraftWeaponSpearWood",
     },
@@ -256,8 +265,11 @@ TWAProcedures.List = {
     -- it as a thread equivalent) and Base.AnimalSinew (grep-confirmed real,
     -- NOT the same as the invented "AnimalTendon" from an earlier session's
     -- rejected pasted brief -- see workflow.txt 8.13). Skill unchanged.
+    -- Icon changed (request 2026-09-28) -- real icon for Base.
+    -- PremiumFishingLine is "FishingLinePremium", not the item's own type
+    -- name.
     ReinforcedBind = {
-        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "Sinew",
+        category = "Handle", nameKey = "IGUI_TWA_Proc_ReinforcedBind", icon = "FishingLinePremium",
         consumes = { { itemTypes = { "Base.FishingLine", "Base.AnimalSinew" }, qty = 1 } },
         skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
     },
@@ -286,8 +298,10 @@ TWAProcedures.List = {
     },
     -- Material widened to either real empty-can type (already an
     -- established real pair from this mod's own earlier AttachCan work).
+    -- Icon changed to "BlockAnvil" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed (Base.BlockAnvil's own Icon = BlockAnvil).
     CounterweightHead = {
-        category = "Balance", nameKey = "IGUI_TWA_Proc_CounterweightHead", icon = "TinCanEmpty",
+        category = "Balance", nameKey = "IGUI_TWA_Proc_CounterweightHead", icon = "BlockAnvil",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" } },
         consumes = { { itemTypes = { "Base.TinCanEmpty", "Base.WaterRationCanEmpty" }, qty = 1 } }, skill = "Blacksmith:1", time = 150, sound = "Hammering",
     },
@@ -330,8 +344,10 @@ TWAProcedures.List = {
     },
     -- Material changed (request 2026-09-28: same as ReinforcedBind above --
     -- "ร้อยเอ็น ให้ใช้แค่เอ็นตกปลาหรือเอ็นสัตว์แทน สกิลเหมือนเดิม").
+    -- Icon changed (request 2026-09-28) -- real icon for Base.Thread_Sinew
+    -- is "SinewThread", not the item's own type name.
     StringSinew = {
-        category = "Toughness", nameKey = "IGUI_TWA_Proc_StringSinew", icon = "Sinew",
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_StringSinew", icon = "SinewThread",
         consumes = { { itemTypes = { "Base.FishingLine", "Base.AnimalSinew" }, qty = 1 } },
         skill = "Tailoring:1", time = 150, sound = "CraftFixWeapon",
     },
@@ -415,8 +431,10 @@ TWAProcedures.List = {
     },
     -- Qty trimmed 5->1 (request 2026-09-28: "ประกอบตะปูและตอกตะปูให้ใช้ 1
     -- อัน" -- applies to both this and HammerNails in Balance below).
+    -- Icon changed to "NailsBox" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     AssembleNails = {
-        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleNails", icon = "Nails",
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleNails", icon = "NailsBox",
         tool = { kind = "tag", value = "HAMMER" },
         consumes = { { itemType = "Base.Nails", qty = 1 } }, time = 150, sound = "Hammering",
     },
@@ -440,8 +458,10 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "SCREWDRIVER" },
         consumes = { { itemType = "Base.SheetMetal", qty = 1 } }, time = 150, sound = "Screwdriver",
     },
+    -- Icon changed (request 2026-09-28) -- real icon for Base.
+    -- SharpBoneFragment is "Bone_Sharpbone", not the item's own type name.
     AssembleSpike = {
-        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpike", icon = "ScrapMetal",
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpike", icon = "Bone_Sharpbone",
         tool = { kind = "tag", value = "HAMMER" },
         consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, time = 150, sound = "Hammering",
     },
@@ -508,8 +528,11 @@ TWAProcedures.List = {
         } } },
         time = 200, sound = "CraftFixWeapon",
     },
+    -- Icon changed (request 2026-09-28) -- user gave "CeremicIngotCast", a
+    -- typo for the real item Base.CeramicIngotCast; its real Icon field is
+    -- "CeramicCast_Bar_Fired".
     PourMold = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PourMold", icon = "Ceramic_Crucible_Fired",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PourMold", icon = "CeramicCast_Bar_Fired",
         tool = { kind = "type", value = "Base.CeramicCrucibleSmall" },
         time = 150, sound = "CraftFixWeapon",
     },
@@ -518,8 +541,11 @@ TWAProcedures.List = {
         tool = { kind = "type", value = "Base.CeramicCrucible" },
         time = 200, sound = "CraftFixWeapon",
     },
+    -- Icon changed (request 2026-09-28) -- real icon for Base.
+    -- ClayIngotMoldUnfired is "CeramicCast_Bar_Unfired", not the item's own
+    -- type name.
     CoolCast = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_CoolCast", icon = "BlacksmithTongs",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_CoolCast", icon = "CeramicCast_Bar_Unfired",
         tool = { kind = "type", value = "Base.Tongs" },
         skill = "Blacksmith:2", forgeTier = 1, time = 150, sound = "CraftFixWeapon",
     },
@@ -533,23 +559,32 @@ TWAProcedures.List = {
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
         consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, skill = "MetalWelding:1", time = 300, sound = "CraftWelding",
     },
+    -- Icon changed to "WeldingRods" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     WeldWorkComplex = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWorkComplex", icon = "BlowTorch",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWorkComplex", icon = "WeldingRods",
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
         consumes = { { itemType = "Base.ScrapMetal", qty = 2 } }, skill = "MetalWelding:2", time = 400, sound = "CraftWelding",
     },
+    -- Icon changed (request 2026-09-28) -- user gave "File" (the item's own
+    -- type name, Base.File, already used elsewhere in this file as a
+    -- tool); its real Icon field is "LargeFile_Forged".
     PolishMetal = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PolishMetal", icon = "Whetstone2",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_PolishMetal", icon = "LargeFile_Forged",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
         skill = "Glassmaking:1", time = 200, sound = "CraftFixWeapon",
     },
+    -- Icon changed to "StoneWheel" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     GrindMetal = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_GrindMetal", icon = "Whetstone2",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_GrindMetal", icon = "StoneWheel",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
         skill = "Glassmaking:2", time = 250, sound = "CraftFixWeapon",
     },
+    -- Icon changed to "KnifeSushi" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     EngravePattern = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_EngravePattern", icon = "Whetstone2",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_EngravePattern", icon = "KnifeSushi",
         tool = { kind = "tag", value = "SHARP_KNIFE" },
         skill = "Carving:1", time = 200, sound = "CraftFixWeapon",
     },
@@ -564,8 +599,10 @@ TWAProcedures.List = {
     -- ต้องการเตาตีเหล็กธรรมดาหรือสูงกว่า") -- a real forge-SHAPING action
     -- genuinely needing a real forge, matching the same forgeTier=2 gate
     -- AnnealMetal below now has.
+    -- Icon changed (request 2026-09-28) -- user gave "WoodenMallet" (the
+    -- item's own type name); its real Icon field is "WoodMallet".
     ForgeShape = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "Ingot_Steel",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "WoodMallet",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
         skill = "Blacksmith:4", forgeTier = 2, time = 400, sound = "Hammering",
@@ -578,27 +615,37 @@ TWAProcedures.List = {
     -- (annealing: heat then slow-cool to relieve stress, unlike QuenchHarden's
     -- rapid-cool hardening or CoolCast's plain cast-cooling), tool/skill/
     -- forgeTier exactly as given; no material consumption was specified.
+    -- Icon changed (request 2026-09-28) -- user gave "SteelIngotMold" (the
+    -- item's own type name); its real Icon field is "SteelMold_Ingot".
     AnnealMetal = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "BlacksmithTongs",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "SteelMold_Ingot",
         tool = { kind = "type", value = "Base.Tongs" },
         skill = "Blacksmith:4", forgeTier = 2, time = 250, sound = "CraftFixWeapon",
     },
+    -- Icon changed to "HammerStone" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     ForgeFold = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "Ingot_Steel",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "HammerStone",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
         skill = "Blacksmith:6", forgeTier = 2, time = 400, sound = "Hammering",
     },
+    -- Icon changed to "SmithingHammer" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     ForgeComplex = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeComplex", icon = "Ingot_Steel",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeComplex", icon = "SmithingHammer",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 3 } },
         skill = "Blacksmith:8", forgeTier = 3, time = 500, sound = "Hammering",
     },
+    -- Icon changed (request 2026-09-28) -- user gave "SledgeHammer"; the
+    -- real item is Base.Sledgehammer (lowercase h), whose real Icon field
+    -- is "Sledgehamer" -- a genuine vanilla spelling typo (single 'm'),
+    -- kept exactly as the game's own compiled texture is actually named.
     ForgeVacuum = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeVacuum", icon = "Ingot_Steel",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeVacuum", icon = "Sledgehamer",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 4 } },
