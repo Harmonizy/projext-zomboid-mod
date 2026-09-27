@@ -3745,6 +3745,77 @@ Metal-Ingot recipe, and fixed 3 misclassified "carrier + bone spike" bases:
   RecipeData.lua/CraftUI.lua/FinishCraftAction.lua), copied into the mod,
   modversion 0.17.1 -> 0.17.2.
 
+THIRTIETH round (2026-09-27) -- bug fixes + a real light requirement + 2
+questions answered by reading the actual code rather than guessing:
+- SmashBottle (ทุบ): "ไม่ต้องใช้เบียร์ขวด และไม่ต้องใช้อุปกรณ์" -- removed
+  both its BeerBottle consume AND its tool entirely; it's now just a timed
+  action with sound, no tool/material at all.
+- BreakBranch (หักกิ่ง): "ไม่ต้อง consume กิ่งไม้" -- removed its
+  Base.TreeBranch2 consume; kept SHARP_KNIFE as its tool.
+- Bug report "ปุ่มกดทำกรรมวิธีมันอยู่หลัง background": confirmed real --
+  TWACraftWindow:render() called ISCollapsableWindow.render(self) (which
+  draws procConfirmButton/procCancelButton, real child widgets) BEFORE
+  drawProcedureDetails(), and drawProcedureDetails() started by painting a
+  full-panel background rect over the same area those 2 buttons sit in --
+  drawn AFTER the buttons rendered, so it visually covered them (still
+  clickable since hit-testing doesn't care about draw order, matching the
+  user's own "แต่ยังดีที่กดได้" observation). Fixed by splitting the
+  background+border draw into its own drawProcedureDetailsBackground(),
+  called BEFORE ISCollapsableWindow.render(self) in render() -- everything
+  else in drawProcedureDetails (status text, requirement list, button
+  visibility) still runs after, unchanged, since none of it overlaps the
+  buttons.
+- "ตอนสร้างกรรมวิธีได้ xp เท่าไหร่": answered from TWAProcedures.AwardXP --
+  a completed procedure with a `skill = "<Perk>:<N>"` field awards
+  N * 10 XP to that Perk (e.g. "Blacksmith:4" -> 40 XP); a noskill
+  procedure awards 0.
+- "เพิ่มเงื่อนไขในการทำกรรมวิธี ต้องมีแสงสว่าง เหมือนกับตอนคราฟ": added.
+  Real vanilla check confirmed first (ISWidgetTitleHeader.lua:
+  `self.player:tooDarkToRead()`, the same one vanilla's own crafting window
+  uses to grey out a recipe in the dark) -- applied to EVERY procedure, no
+  exception, via TWAProcedures.CheckEligibility/DescribeAll, shown as a
+  "too dark" missing-requirement line the same way a missing tool/item/
+  skill already shows one (new IGUI_TWA_MissingLight/IGUI_TWA_ReqLight
+  keys, EN+TH). Also added to TWA_PerformProcedureAction:isValid() so the
+  timed action itself stops if the light drops out mid-action (torch
+  running out, etc.), re-checked every tick same as every other isValid
+  condition in this mod.
+- "การปิดจอระหว่างทำจะเป็นอย่างไร": answered by reading the code, not
+  guessed -- TWACraftWindow:close() only calls TWACraftUI.close() (removes
+  the window), it never touches self.activeAction. Since
+  TWA_PerformProcedureAction is a normal ISTimedActionQueue entry
+  independent of the UI window reference, closing the window does NOT stop
+  an in-progress procedure -- the character keeps performing it in the
+  background exactly like vanilla's own crafting actions, until it
+  finishes or is interrupted by walking/running (stopOnWalk/stopOnRun are
+  both true, matching vanilla).
+- "การกดยกเลิกจะคืนของให้การทำกรรมวิธีไหม การคืนของคืนเฉพาะที่ทำมาแล้ว
+  เท่านั้นรึเปล่า": answered -- Cancel (recipe-level) never refunds
+  anything, for either done or in-progress procedures. Materials are only
+  ever consumed in TWA_PerformProcedureAction:perform() (action
+  completion) -- an action stopped/interrupted BEFORE completion consumes
+  nothing (matches vanilla: no partial consumption), but once a procedure
+  IS done, its materials are already gone permanently and neither Cancel
+  button restores them.
+- "การกดเปลี่ยนสูตรระหว่างทำจะทำให้เกิดอะไร": found a REAL bug while
+  answering this, not just a hypothetical -- selectRecipe(recipe) reset
+  self.doneProcedures to a fresh {} unconditionally, even while a procedure
+  timed action from the PREVIOUS recipe was still running. That action's
+  completion callback (`window.doneProcedures[procId] = true`) then wrote
+  into whatever table window.doneProcedures pointed to WHEN IT FINISHED --
+  the NEW recipe's freshly-reset table -- wrongly marking one of the NEW
+  recipe's own procedures "done" for free if it happened to share the same
+  procedure id, even though the materials/XP were spent on the OLD
+  recipe's step. Fixed by blocking both selectRecipe() and onCancel()
+  (the main Cancel button, back-to-list) while self.activeProcId is set --
+  same "one thing in flight at a time" gate tryPerformProcedure already
+  uses; the in-progress procedure must finish or be cancelled via
+  procCancelButton first.
+- Re-validated (brace balance clean on CraftUI.lua/Procedures.lua/
+  TWA_PerformProcedureAction.lua, EN+TH JSON valid), PROCEDURES_REFERENCE.txt
+  regenerated with the corrected SmashBottle/BreakBranch lines and a note
+  about the new universal light requirement, modversion 0.17.2 -> 0.18.0.
+
 
 9. Checklist before starting any new work
 =======================================

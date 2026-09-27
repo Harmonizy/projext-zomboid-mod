@@ -605,7 +605,9 @@ end
 function TWAProcScrollList:describeMissing(missing)
     local lines = {}
     for _, m in ipairs(missing) do
-        if m.kind == "tool" then
+        if m.kind == "light" then
+            lines[#lines + 1] = getText("IGUI_TWA_MissingLight")
+        elseif m.kind == "tool" then
             lines[#lines + 1] = getText("IGUI_TWA_MissingTool") .. ": " .. toolSpecName(m.spec)
         elseif m.kind == "consume" then
             local name = consumeSpecName(m.itemTypes)
@@ -622,7 +624,9 @@ end
 -- since the caller colors met vs unmet lines itself -- see
 -- TWACraftWindow:drawProcedureDetails).
 function TWAProcScrollList:describeOne(req)
-    if req.kind == "tool" then
+    if req.kind == "light" then
+        return getText("IGUI_TWA_ReqLight")
+    elseif req.kind == "tool" then
         return getText("IGUI_TWA_ReqTool") .. ": " .. toolSpecName(req.spec)
     elseif req.kind == "consume" then
         local name = consumeSpecName(req.itemTypes)
@@ -850,12 +854,24 @@ function TWACraftWindow:onTierFilterClick(button)
     self.recipeList:setTierFilter(button.internal)
 end
 
+-- Bug found 2026-09-27 while answering "switching recipe mid-procedure":
+-- switching self.selectedRecipe/doneProcedures away while a procedure timed
+-- action is still running left tryPerformProcedure's completion callback
+-- (`window.doneProcedures[procId] = true`) writing into whatever table
+-- window.doneProcedures happens to point to when it finishes -- the NEW
+-- recipe's freshly-reset one, wrongly marking one of ITS procedures done for
+-- free even though its materials/XP were spent on the OLD recipe's step.
+-- Blocked here the same way tryPerformProcedure already blocks starting a
+-- second procedure at once -- the in-progress one must finish or be
+-- cancelled (procCancelButton) before switching recipes or backing out.
 function TWACraftWindow:selectRecipe(recipe)
+    if self.activeProcId then return end
     self.selectedRecipe = recipe
     self.doneProcedures = {}
 end
 
 function TWACraftWindow:onCancel()
+    if self.activeProcId then return end
     self.selectedRecipe = nil
     self.doneProcedures = {}
 end
@@ -1048,13 +1064,27 @@ end
 -- floating full-requirements tooltip, which rendered underneath the grid's
 -- own icons every other frame (the z-order bug from testing) since it drew
 -- before those icons in the same render pass instead of after.
-function TWACraftWindow:drawProcedureDetails()
+-- Bug report 2026-09-27: "ปุ่มกดทำกรรมวิธีมันอยู่หลัง background" -- the
+-- procConfirmButton/procCancelButton are real child widgets, drawn by
+-- ISCollapsableWindow.render(self) at the TOP of render(). drawProcedureDetails()
+-- used to run AFTER that and started by painting a full-panel background
+-- rect over the same area the buttons sit in, visually covering them (they
+-- stayed clickable since hit-testing doesn't care about draw order, just
+-- looked wrong). Fix: draw this backdrop BEFORE the buttons render, in its
+-- own function called first in render(); everything else (status text,
+-- requirement list, button visibility toggles) still runs after, same as
+-- before, since none of it overlaps the buttons.
+function TWACraftWindow:drawProcedureDetailsBackground()
     local x, y, w, h = self.rightX, self.procDetailsY, RIGHT_W, self.procDetailsH
     -- Flat fill only (see drawNeatCard's 2026-09-26 note above) -- NeatUI's
     -- InnerPanel_BG texture is too light-colored to sit safely under white/
     -- red text, so it's never used as a background here any more.
     self:drawRect(x, y, w, h, 0.9, 0.06, 0.06, 0.07)
     self:drawRectBorder(x, y, w, h, 0.6, 0.4, 0.4, 0.4)
+end
+
+function TWACraftWindow:drawProcedureDetails()
+    local x, y, w = self.rightX, self.procDetailsY, RIGHT_W
 
     local proc = self.selectedProcId and TWAProcedures.List[self.selectedProcId]
     if not proc then
@@ -1130,6 +1160,7 @@ function TWACraftWindow:drawProcedureDetails()
 end
 
 function TWACraftWindow:render()
+    self:drawProcedureDetailsBackground()
     ISCollapsableWindow.render(self)
 
     -- Filter-section captions (request 2026-09-26: "arrange the filter

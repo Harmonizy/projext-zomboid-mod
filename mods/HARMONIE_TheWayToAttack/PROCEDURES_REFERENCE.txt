@@ -77,9 +77,9 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - SawWood
       tool=SAW, consumes=(none), skill=(none), time=150ms, sound=Sawing
   - SmashBottle
-      tool=Base.HammerStone, consumes=BeerBottle x1, skill=(none), time=100ms, sound=SmashStoneHit
+      consumes=(none), skill=(none), time=100ms, sound=SmashStoneHit
   - BreakBranch
-      tool=SHARP_KNIFE, consumes=TreeBranch2 x1, skill=(none), time=100ms, sound=CraftFixWeapon
+      tool=SHARP_KNIFE, consumes=(none), skill=(none), time=100ms, sound=CraftFixWeapon
   - WrapBarbedWireAssembly
       tool=Base.Pliers, consumes=BarbedWire x1, skill=(none), time=150ms, sound=CraftFixWeapon
   - WrapWireAssembly
@@ -172,8 +172,8 @@ H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    cloth by hand, no tool needed) -- no other rule (C-G) applies on top:
      Handiknife/GlassShiv/Toothbrush_Shiv/HandFile -> WrapClothImprov (no tool)
      HalfPlank -> SawWood (tool only, no material consumed)
-     SmashedBottle -> SmashBottle (tool = Base.HammerStone, a real stone)
-     ShortTreeBranch -> BreakBranch (tool = SHARP_KNIFE)
+     SmashedBottle -> SmashBottle (no tool, no material -- just smashed by hand)
+     ShortTreeBranch -> BreakBranch (tool = SHARP_KNIFE, no material consumed)
    Everything else matches by real NAME SUFFIX and is ADDITIVE (only
    Sharpness/Piercing get swapped out, other categories still apply), e.g.
    any "*_Nails" item -> AssembleNails, any "*_Bone"/"BoneClub*" item ->
@@ -188,3 +188,10 @@ A recipe's final procedure list is the UNION of every rule its own real
 stats/name trigger across all 8 categories -- e.g. a long, heavy-swinging,
 high-crit sword can require procedures from A, C, D, F, and G all at once.
 Real range across all 248 recipes: 1 to 12 procedures per recipe.
+
+NOTE (2026-09-27): every procedure, with no exception, also requires the
+character not be tooDarkToRead() (the same real check vanilla's own
+crafting window uses to grey out a recipe in the dark) -- shown as a
+"too dark" missing-requirement line like any other, and re-checked every
+tick while the timed action is running (it stops if the light drops out
+mid-action, e.g. a torch running out).

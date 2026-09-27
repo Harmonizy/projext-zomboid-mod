@@ -19,6 +19,10 @@ TWA_PerformProcedureAction = ISBaseTimedAction:derive("TWA_PerformProcedureActio
 
 function TWA_PerformProcedureAction:isValid()
     if not self.character or not self.proc then return false end
+    -- Re-checked every tick, same as ownsSlot/doneProcedures elsewhere in
+    -- this mod -- if the light drops mid-action (torch runs out, etc.) the
+    -- action stops, matching vanilla's own tooDarkToRead() gate.
+    if self.character:tooDarkToRead() then return false end
     return TWAProcedures.CheckEligibility(self.proc, self.character)
 end
 

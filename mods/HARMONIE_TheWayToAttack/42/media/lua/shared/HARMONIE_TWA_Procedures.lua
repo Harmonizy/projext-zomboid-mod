@@ -284,13 +284,12 @@ TWAProcedures.List = {
     },
     SmashBottle = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_SmashBottle", icon = "BeerBottle",
-        tool = { kind = "type", value = "Base.HammerStone" },
-        consumes = { { itemType = "Base.BeerBottle", qty = 1 } }, time = 100, sound = "SmashStoneHit",
+        time = 100, sound = "SmashStoneHit",
     },
     BreakBranch = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_BreakBranch", icon = "Branch",
         tool = { kind = "tag", value = "SHARP_KNIFE" },
-        consumes = { { itemType = "Base.TreeBranch2", qty = 1 } }, time = 100, sound = "CraftFixWeapon",
+        time = 100, sound = "CraftFixWeapon",
     },
     WrapBarbedWireAssembly = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapBarbedWireAssembly", icon = "BarbedWire",
@@ -392,8 +391,17 @@ for _, cat in ipairs(TWAProcedures.Categories) do
     end
 end
 
+-- request 2026-09-27: "เพิ่มเงื่อนไขในการทำกรรมวิธี ต้องมีแสงสว่าง เหมือนกับ
+-- ตอนคราฟ มีหมายเหตุบอกด้วย" -- same real check vanilla's own crafting
+-- window uses to grey out a recipe in the dark (ISWidgetTitleHeader.lua:
+-- `self.player:tooDarkToRead()`), applied to every procedure with a "missing
+-- light" note the same way a missing tool/item/skill already shows one.
 function TWAProcedures.CheckEligibility(proc, player)
     local missing = {}
+
+    if player:tooDarkToRead() then
+        missing[#missing + 1] = { kind = "light" }
+    end
 
     if proc.tool and not hasAnyTool(proc.tool, player) then
         missing[#missing + 1] = { kind = "tool", spec = proc.tool }
@@ -427,6 +435,7 @@ end
 
 function TWAProcedures.DescribeAll(proc, player)
     local reqs = {}
+    reqs[#reqs + 1] = { kind = "light", met = not player:tooDarkToRead() }
     if proc.tool then
         reqs[#reqs + 1] = { kind = "tool", spec = proc.tool, met = hasAnyTool(proc.tool, player) }
     end
