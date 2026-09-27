@@ -47,6 +47,28 @@ local function drawTextShadowed(panel, text, x, y, r, g, b, a, font)
     panel:drawText(text, x, y, r, g, b, a, font)
 end
 
+-- Bug report 2026-09-27: "วัตถุดิบที่ใช้ในกรรมวิธีบางอันมันยาวเกินไปจนล้นออก
+-- ui" -- a long flexible-material alt-list (e.g. "Charcoal / CharcoalCrafted
+-- / Coke x2 (0/2)") drawn as one line can run past the panel's own right
+-- edge. Greedy word-wrap on spaces (every alt-list is already joined with
+-- " / ", so it wraps at a sensible point) into as many lines as needed.
+local function wrapTextLines(text, maxWidth, font)
+    local lines = {}
+    local current = ""
+    for word in text:gmatch("%S+") do
+        local candidate = (current == "") and word or (current .. " " .. word)
+        if getTextManager():MeasureStringX(font, candidate) > maxWidth and current ~= "" then
+            lines[#lines + 1] = current
+            current = word
+        else
+            current = candidate
+        end
+    end
+    if current ~= "" then lines[#lines + 1] = current end
+    if #lines == 0 then lines[1] = text end
+    return lines
+end
+
 -- Draws a card behind a list row / checklist icon, tinted by state, with a
 -- small green checkmark badge in the corner once true/owned/done.
 -- *** REAL BUG FIXED (2026-09-26): this used to draw NeatUI's own
@@ -685,10 +707,24 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
             -- the full requirement breakdown moved to the fixed details box
             -- below this grid, populated on click instead of on hover.
             if hovered and self.ui then
+                -- Bug report 2026-09-27: "tooltip...ไม่อยู่ตรงเมาส์ชี้ เวลา
+                -- เลื่อน scroll bar แล้วบัค" -- `y` here is this row's
+                -- CONTENT-space position inside the scroll list (see
+                -- ISScrollingListBox.lua's own prerender loop: `local y = 0`
+                -- incremented per row, never itself scroll-adjusted --
+                -- individual item draws made from inside this widget get an
+                -- automatic +yScroll shift applied by the engine, which is
+                -- exactly why the background fill has to draw at
+                -- `-self:getYScroll()` to CANCEL that and stay pinned). This
+                -- tooltip is drawn by a DIFFERENT widget (self.ui, the
+                -- window, which has no scroll of its own), so that automatic
+                -- shift never applies to it -- it has to be added by hand,
+                -- or the tooltip drifts away from the actually-hovered cell
+                -- by exactly the current scroll offset.
                 self.ui.hoverTooltip = {
                     lines = { getText(proc.nameKey) },
                     x = self:getAbsoluteX() - self.ui:getAbsoluteX() + px,
-                    y = self:getAbsoluteY() - self.ui:getAbsoluteY() + y,
+                    y = self:getAbsoluteY() - self.ui:getAbsoluteY() + y + self:getYScroll(),
                 }
             end
         end
@@ -740,7 +776,11 @@ function TWACraftWindow:createChildren()
     -- stored here) so it's clear at a glance which row filters by category
     -- and which by rarity (request 2026-09-26: "arrange the filter section
     -- to look nicer").
-    local captionH = 14
+    -- Bug report 2026-09-27: "คำว่าหมวดหมู่ และระดับความหายาก อยู่ต่ำไปนิดนึง
+    -- มันเลยไปบัง filter" -- UIFont.Small's real rendered height leaves only
+    -- ~2px of clearance at 14, so the caption's own text bottom edge
+    -- overlapped the button row starting right under it. Bumped to 18.
+    local captionH = 18
     self.filterButtons = {}
     self.categoryRowY = contentTop
     local fx, fy = leftX, contentTop + captionH
@@ -753,6 +793,12 @@ function TWACraftWindow:createChildren()
         end
         local btn = TWATabButton:new(fx, fy, w, 24, label, self, TWACraftWindow.onFilterClick)
         btn.internal = tab.key
+        -- Note 2026-09-27: "เขียนหมายเหตุไว้ด้วยตามปุ่มต่างๆ" -- "Available"
+        -- isn't self-explanatory from its label alone (unlike a category
+        -- name), so it gets a real tooltip explaining what it filters by.
+        if tab.key == "Available" then
+            btn:setTooltip(getText("IGUI_TWA_Tooltip_FilterAvailable"))
+        end
         btn:initialise()
         self:addChild(btn)
         self.filterButtons[#self.filterButtons + 1] = btn
@@ -821,11 +867,13 @@ function TWACraftWindow:createChildren()
     -- Cancel / Finish buttons (center panel bottom)
     local btnW, btnH = (CENTER_W - 10) / 2, 30
     self.cancelButton = TWANeatButton:new(centerX, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Cancel"), self, TWACraftWindow.onCancel)
+    self.cancelButton:setTooltip(getText("IGUI_TWA_Tooltip_Cancel"))
     self.cancelButton:initialise()
     self:addChild(self.cancelButton)
 
     self.finishButton = TWANeatButton:new(centerX + btnW + 10, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinish)
     self.finishButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
+    self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     self.finishButton:initialise()
     self:addChild(self.finishButton)
 
@@ -839,11 +887,13 @@ function TWACraftWindow:createChildren()
     local procBtnY = self.procDetailsY + detailsH - procBtnH - 8
     self.procConfirmButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_ConfirmProcedure"), self, TWACraftWindow.onConfirmProcedure)
     self.procConfirmButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
+    self.procConfirmButton:setTooltip(getText("IGUI_TWA_Tooltip_ConfirmProcedure"))
     self.procConfirmButton:initialise()
     self:addChild(self.procConfirmButton)
 
     self.procCancelButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_CancelProcedure"), self, TWACraftWindow.onCancelProcedure)
     self.procCancelButton.neatTint = { r = 0.9, g = 0.3, b = 0.25 }
+    self.procCancelButton:setTooltip(getText("IGUI_TWA_Tooltip_CancelProcedure"))
     self.procCancelButton:initialise()
     self:addChild(self.procCancelButton)
     self.procBtnY = procBtnY
@@ -1007,38 +1057,43 @@ end
 -- ข้างๆ tier" -- put it next to the tier label instead, see the center-
 -- panel render() call site below).
 local HANDEDNESS_LABELS = { [true] = "IGUI_TWA_Stat_TwoHanded", [false] = "IGUI_TWA_Stat_OneHanded" }
+-- Reordered 2026-09-27 to the exact sequence requested ("stats layout เดิม
+-- แต่เรียงตามลำดับดังนี้ ดาเมจต่ำสุด ดาเมจสูงสุด ความเร็วโจมตี น้ำหนัก
+-- ระยะโจมตี โอกาสคริติคอล ทนทาน สึกหรอ ล้มคว่ำ แรงผลัก การถือ รูปแบบ") --
+-- same 2-column-per-row layout/cell definitions as before (fmt/always/
+-- default/derive all unchanged), just filled into that order 2-at-a-time.
+-- DPS kept as its own standalone row at the top, same as before -- it
+-- wasn't named in the list, but nothing said to remove it either, and it's
+-- the one stat everything else here explains (drives the whole tier
+-- system) -- flag if you actually wanted it dropped.
 local STAT_GRID = {
-    -- BaseDPS (request 2026-09-26: "หน้ารายละเอียดของการคราฟให้ขึ้น
-    -- BaseDPS ด้วย") -- the exact real number that now drives the whole
-    -- tier system, shown first since it's the primary stat everything else
-    -- here explains.
     { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%.2f", always = true } },
     { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
       { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" } },
-    -- `always = true, default = 0` (request 2026-09-26: "ทำไมโอกาสคริติคอล
-    -- ไม่ขึ้น" -- why doesn't crit% show) -- real cause found: some real
-    -- items (e.g. roughneckgorillasledgehammer) genuinely leave
-    -- CriticalChance blank in their own script, so it baked to nil and the
-    -- row silently disappeared with no `always` flag -- same fix pattern
-    -- as BaseSpeed's own missing-value default.
-    { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%", always = true, default = 0 },
-      { key = "knockdownMod", labelKey = "IGUI_TWA_Stat_Knockdown", fmt = "%.1f" } },
     -- `always = true` (request 2026-09-26: "always show attack speed") --
     -- shown even when the baked value is missing. `default = 1.0` (request
     -- 2026-09-26: "ความเร็วโจมตีหากไม่มีให้ขึ้น 1.0 แทน" -- if missing, show
     -- 1.0 instead) -- a display/design decision, not a claim this is the
     -- real Java default (still unconfirmed, no decompiler available).
     { { key = "baseSpeed", labelKey = "IGUI_TWA_Stat_Speed", fmt = "%.2f", always = true, default = 1.0 },
-      { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" } },
+      { key = "weight", labelKey = "IGUI_TWA_StatWeight", fmt = "%.1f" } },
+    -- `always = true, default = 0` (request 2026-09-26: "ทำไมโอกาสคริติคอล
+    -- ไม่ขึ้น" -- why doesn't crit% show) -- real cause found: some real
+    -- items (e.g. roughneckgorillasledgehammer) genuinely leave
+    -- CriticalChance blank in their own script, so it baked to nil and the
+    -- row silently disappeared with no `always` flag -- same fix pattern
+    -- as BaseSpeed's own missing-value default.
+    { { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" },
+      { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%", always = true, default = 0 } },
     { { key = "conditionMax", labelKey = "IGUI_TWA_Stat_Condition", fmt = "%.0f" },
       -- Real "wear rate" mechanic (request 2026-09-26, relabeled same day:
       -- "ความทนทาน เปลี่ยนเป็น สึกหรอ ค่าก็เป็น 1:40") -- a 1-in-X chance PER
       -- HIT to lose Condition, higher = wears out slower; a different real
       -- field from `conditionMax` (max condition capacity) just above.
       { key = "conditionLowerChanceOneIn", labelKey = "IGUI_TWA_Stat_Durability", fmt = "1:%.0f" } },
-    { { key = "weight", labelKey = "IGUI_TWA_StatWeight", fmt = "%.1f" },
+    { { key = "knockdownMod", labelKey = "IGUI_TWA_Stat_Knockdown", fmt = "%.1f" },
       -- Real "push power" stagger-distance stat (request 2026-09-26) --
-      -- separate from `knockdownMod` (knockdown chance/strength) above.
+      -- separate from `knockdownMod` (knockdown chance/strength) just left.
       { key = "pushBackMod", labelKey = "IGUI_TWA_Stat_PushPower", fmt = "%.2f" } },
     { { key = "twoHanded", labelKey = "IGUI_TWA_Stat_Handedness", fmt = "%s", always = true,
         derive = function(s) return HANDEDNESS_LABELS[s.twoHanded] and getText(HANDEDNESS_LABELS[s.twoHanded]) or nil end },
@@ -1166,15 +1221,20 @@ function TWACraftWindow:drawProcedureDetails()
     -- above the Confirm/Cancel button row (self.procBtnY), not the panel's
     -- own bottom edge, so text never overlaps the button.
     local textBottom = self.procBtnY - 4
+    local reqMaxWidth = w - 20
     for _, r in ipairs(reqs) do
         if ty > textBottom then break end
         local line = self.procLibrary:describeOne(r)
-        if r.met then
-            drawTextShadowed(self, line, x + 10, ty, 0.85, 0.85, 0.85, 1, UIFont.Small)
-        else
-            drawTextShadowed(self, line, x + 10, ty, 0.95, 0.6, 0.6, 1, UIFont.Small)
+        local wrapped = wrapTextLines(line, reqMaxWidth, UIFont.Small)
+        for _, wline in ipairs(wrapped) do
+            if ty > textBottom then break end
+            if r.met then
+                drawTextShadowed(self, wline, x + 10, ty, 0.85, 0.85, 0.85, 1, UIFont.Small)
+            else
+                drawTextShadowed(self, wline, x + 10, ty, 0.95, 0.6, 0.6, 1, UIFont.Small)
+            end
+            ty = ty + 16
         end
-        ty = ty + 16
     end
     if #reqs == 0 then
         drawTextShadowed(self, getText("IGUI_TWA_ProcedureRequirementsMet"), x + 10, ty, 0.75, 0.75, 0.75, 1, UIFont.Small)
@@ -1271,15 +1331,22 @@ function TWACraftWindow:render()
         baseY = baseY + 30 + 10
     else
         local owned = ownsBase(recipe, self.player)
-        self:drawRect(centerX, baseY, CENTER_W - 16, 34, 0.85, 0.08, 0.08, 0.09)
-        self:drawRectBorder(centerX, baseY, CENTER_W - 16, 34, 0.4, 0.4, 0.4, 0.4)
+        -- Bug report 2026-09-27: "คำว่าขาดชิ้นงานตั้งต้นมันออกมาจาก card ที่
+        -- สูงไม่พอ" -- 2 lines of UIFont.Small text only had 34-19=15px of
+        -- card left below the 2nd line's own start Y, not enough clearance
+        -- for its real rendered glyph height + shadow offset, so it poked
+        -- out past the card's bottom border. Card bumped 34 -> 40, 2nd
+        -- line's Y bumped 19 -> 21 to match.
+        local CARD_H = 40
+        self:drawRect(centerX, baseY, CENTER_W - 16, CARD_H, 0.85, 0.08, 0.08, 0.09)
+        self:drawRectBorder(centerX, baseY, CENTER_W - 16, CARD_H, 0.4, 0.4, 0.4, 0.4)
         if owned and TWA_NEAT.check then
-            self:drawTextureScaled(TWA_NEAT.check, centerX + (CENTER_W - 16) - 24, baseY + 9, 16, 16, 1, 1, 1, 1)
+            self:drawTextureScaled(TWA_NEAT.check, centerX + (CENTER_W - 16) - 24, baseY + 12, 16, 16, 1, 1, 1, 1)
         end
         drawTextShadowed(self, baseDisplayName(recipe.base, recipe.baseAlt), centerX + 8, baseY + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
         local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
-        drawTextShadowed(self, getText(statusKey), centerX + 8, baseY + 19, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
-        baseY = baseY + 34 + 6 + 4
+        drawTextShadowed(self, getText(statusKey), centerX + 8, baseY + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
+        baseY = baseY + CARD_H + 6 + 4
     end
 
     -- Required-procedure checklist grid

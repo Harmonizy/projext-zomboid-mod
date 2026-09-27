@@ -3865,6 +3865,58 @@ procedure progress:
 - Re-validated (brace/paren balance clean on CraftUI.lua/Procedures.lua),
   modversion 0.18.0 -> 0.19.0.
 
+THIRTY-SECOND round (2026-09-27) -- 6 UI polish bugs/requests, all in
+HARMONIE_TWA_CraftUI.lua:
+- "เขียนหมายเหตุไว้ด้วยตามปุ่มต่างๆด้วย ให้ผู้เล่นเข้าใจ": added real
+  ISButton:setTooltip() calls (confirmed real API, widely used in vanilla's
+  own UI code the same way) to the recipe-level Cancel/Finish buttons, the
+  procedure Confirm/Cancel buttons, and the "Available" category filter tab
+  -- explaining exactly the behaviors clarified in earlier rounds (Cancel
+  keeps done-procedure progress and never refunds materials either way,
+  Finish needs the base item + every procedure done, Confirm starts a real
+  timed action that only consumes materials on completion, Cancel-procedure
+  costs nothing since it never finished). New IGUI_TWA_Tooltip_* keys,
+  EN+TH.
+- "tooltip ของกรรมวิธีทางขวาอยู่ผิดที่...เวลาเลื่อน scroll bar แล้วบัค":
+  real bug confirmed by reading ISScrollingListBox.lua's own source --
+  items inside a scrolling list are drawn at content-space Y (e.g. `local y
+  = 0` incremented per row in its prerender loop, never itself scroll-
+  adjusted in Lua) and get an automatic +yScroll shift applied by the
+  engine when THAT widget draws them (confirmed via its own background
+  fill, which has to draw at `-self:getYScroll()` specifically to CANCEL
+  that automatic shift and stay pinned to the viewport). This mod's
+  procedure-grid hover tooltip is captured inside the scroll list but drawn
+  by a DIFFERENT widget (the main window, which has no scroll of its own),
+  so that automatic shift never applied to it -- the tooltip's captured Y
+  was always off by the current scroll offset. Fixed by adding
+  `self:getYScroll()` when converting the row's content-space Y into the
+  window's own coordinate space.
+- "คำว่าหมวดหมู่ และระดับความหายาก อยู่ต่ำไปนิดนึง มันเลยไปบัง filter":
+  the caption-to-button gap (captionH) was 14px, leaving only ~2px of real
+  clearance below UIFont.Small's actual rendered height before the button
+  row directly underneath started -- bumped to 18.
+- "คำว่าขาดชิ้นงานตั้งต้นมันออกมาจาก card ที่สูงไม่พอ": the base-item status
+  card was 34px tall with its 2nd line of text starting at +19 (only 15px
+  of card left below that), not enough clearance for the real glyph height
+  + shadow offset -- card bumped to 40px, 2nd line's Y to +21.
+- "วัตถุดิบที่ใช้ในกรรมวิธีบางอันมันยาวเกินไปจนล้นออก ui": a long flexible-
+  material alt-list (e.g. "Charcoal / CharcoalCrafted / Coke x2 (0/2)")
+  drawn as a single line could run past the right panel's own edge. Added
+  a generic wrapTextLines() word-wrap helper (greedy, splits on spaces,
+  measured against the real font via getTextManager():MeasureStringX) and
+  used it in the procedure-details requirement list, wrapping onto
+  additional lines instead of overflowing.
+- "stats layout เดิม แต่เรียงตามลำดับดังนี้...": reordered STAT_GRID (same
+  2-column-per-row cell definitions/fmt/always/default/derive, unchanged)
+  into the exact requested sequence: MinDamage, MaxDamage | Speed, Weight |
+  Range, CritChance | Condition, Durability | Knockdown, PushPower |
+  Handedness, AttackStyle. DPS kept as its own standalone row at the top
+  (not named in the given order, but nothing said to drop it either, and
+  it's the stat that drives the whole tier system) -- flagged for the user
+  in case they actually wanted it removed.
+- Re-validated (brace/paren balance clean, EN+TH JSON valid), modversion
+  0.19.0 -> 0.20.0.
+
 
 9. Checklist before starting any new work
 =======================================
