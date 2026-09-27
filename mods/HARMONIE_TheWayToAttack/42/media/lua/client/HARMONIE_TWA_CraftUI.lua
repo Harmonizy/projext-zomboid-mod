@@ -624,6 +624,18 @@ local function consumeSpecName(itemTypes)
     return table.concat(names, " / ")
 end
 
+-- Request 2026-09-27: skill requirements were showing the raw internal Perk
+-- identifier (e.g. "Blacksmith") untranslated, always in English regardless
+-- of the player's language. Every one of this mod's skill names IS a real
+-- vanilla Perk, and vanilla already ships its own real translated name for
+-- every one of them under "IGUI_perks_<PerkName>" (confirmed real, e.g.
+-- IGUI_perks_Blacksmith/Carving/Maintenance/Mechanics -- same key the
+-- user's own in-game skill panel uses), so this just reuses that directly
+-- instead of inventing new duplicate keys.
+local function skillDisplayName(skillName)
+    return getText("IGUI_perks_" .. skillName)
+end
+
 function TWAProcScrollList:describeMissing(missing)
     local lines = {}
     for _, m in ipairs(missing) do
@@ -635,7 +647,7 @@ function TWAProcScrollList:describeMissing(missing)
             local name = consumeSpecName(m.itemTypes)
             lines[#lines + 1] = getText("IGUI_TWA_MissingItem") .. " " .. name .. " x" .. m.qty .. " (" .. m.have .. "/" .. m.qty .. ")"
         elseif m.kind == "skill" then
-            lines[#lines + 1] = getText("IGUI_TWA_MissingSkill") .. " " .. m.skill .. " " .. m.level
+            lines[#lines + 1] = getText("IGUI_TWA_MissingSkill") .. " " .. skillDisplayName(m.skill) .. " " .. m.level
         end
     end
     return lines
@@ -654,7 +666,7 @@ function TWAProcScrollList:describeOne(req)
         local name = consumeSpecName(req.itemTypes)
         return name .. " x" .. req.qty .. " (" .. req.have .. "/" .. req.qty .. ")"
     elseif req.kind == "skill" then
-        return getText("IGUI_TWA_ReqSkill") .. ": " .. req.skill .. " " .. req.level
+        return getText("IGUI_TWA_ReqSkill") .. ": " .. skillDisplayName(req.skill) .. " " .. req.level
     end
     return "?"
 end

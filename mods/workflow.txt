@@ -3948,6 +3948,63 @@ z-order bug came back, and this time found the ACTUAL root cause:
   actually controls before-vs-after children. Don't conflate the two again.
 - Re-validated (brace/paren balance clean), modversion 0.20.0 -> 0.20.1.
 
+THIRTY-FOURTH round (2026-09-27) -- real Thai skill names + a full skill
+re-audit using the newly-confirmed real skill list:
+- User posted a screenshot of their own real in-game skill panel (both the
+  combat section -- Maintenance/Axe/Spear/LongBlunt/SmallBlunt/LongBlade/
+  SmallBlade -- and the crafting section -- Knapping/Cooking/Glassmaking/
+  Masonry/Tailoring/Blacksmithing/Pottery/Mechanics/Welding/Carving/
+  Electrical/Woodwork) and asked to use these exact real words, and to
+  re-pick each procedure's skill to whichever is actually appropriate,
+  keeping every level number exactly the same.
+- Real bug found: skill requirement text (both the missing-requirement
+  list and the always-shown requirement list) was displaying the RAW
+  internal Perk identifier string (e.g. "Blacksmith") completely
+  untranslated, always in English regardless of the player's language --
+  never routed through getText() at all. Fixed with a new
+  skillDisplayName() helper that calls getText("IGUI_perks_"..skillName) --
+  grep-confirmed vanilla ALREADY ships a real translated name for every
+  one of this mod's skills under that exact key pattern (IGUI_perks_
+  Blacksmith/Woodwork/Tailoring/MetalWelding/FlintKnapping/Carving/
+  Maintenance/Mechanics, both EN and TH), so this reuses vanilla's own
+  strings instead of duplicating them under new keys.
+- Real discovery while re-auditing: "Carving" (งานแกะสลัก) and
+  "Maintenance" (การดูแลรักษาอาวุธ) and "Mechanics" (งานยานยนต์) are ALL
+  real vanilla Perks (grep-confirmed: server/XpSystem/XPSystem_
+  SkillBook.lua, ISRadioInteractions.lua, several vehicle TimedActions) --
+  this corrects an earlier round's own flagged judgment call ("carving has
+  NO exact real vanilla equivalent, mapped to FlintKnapping") which turns
+  out to have been wrong; Carving actually exists and its own real
+  description is literally "carve or make small wooden objects", a perfect
+  match this mod never had access to before.
+- Re-picked EVERY procedure's skill (level numbers all unchanged) using
+  its own real TOOL as the deciding signal for which real trade it
+  belongs to:
+    SharpenEdge/StropLeather/PrecisionGrind/TaperPoint: FlintKnapping ->
+      Maintenance (file/whetstone honing work, not stone-specific knapping
+      -- KnapHead stays FlintKnapping since it genuinely knaps a stone
+      head with a HammerStone)
+    MakeHandle/MakeLongHandle: Woodwork -> Carving (a knife whittling a
+      stick into a handle shape)
+    TightenBolts/DrillCore: Blacksmith/FlintKnapping -> Mechanics
+      (wrench+bolts, hand drill)
+    WeaveWire: Blacksmith -> Mechanics (pliers+wire, no forge tool)
+    CounterweightHead: FlintKnapping -> Blacksmith (hammer+tin can, real
+      metalworking, had nothing to do with stone)
+    Balance's HammerNails: Blacksmith -> Woodwork (hammer+nails into a
+      wooden weapon body, carpentry -- Assembly's separate noskill
+      AssembleNails is untouched)
+    CoatWax/SurfaceCoating: FlintKnapping/Blacksmith -> Maintenance
+      (applying a protective coat by hand, no forge tool, general weapon
+      upkeep)
+  Everything else (ForgeShape/KnapHead/MakeRivetedHandle/RivetPlate:
+  Blacksmith with a real forge/hammer tool; ReinforcedBind/WrapLeather/
+  StringSinew: Tailoring; WeldMetal: MetalWelding; FireTreat: Woodwork,
+  real fire-hardening) was already correct and untouched.
+- Regenerated PROCEDURES_REFERENCE.txt to reflect every updated skill.
+  Re-validated (brace/paren balance clean on both edited files), modversion
+  0.20.1 -> 0.21.0.
+
 
 9. Checklist before starting any new work
 =======================================

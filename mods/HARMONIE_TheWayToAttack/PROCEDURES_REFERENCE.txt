@@ -9,11 +9,11 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
 
 -- Sharpness (สร้างความคม) (4) --
   - SharpenEdge
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=FlintKnapping:1, time=100ms, sound=SharpenBladeWhetstone
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Maintenance:1, time=100ms, sound=SharpenBladeWhetstone
   - StropLeather
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=FlintKnapping:2, time=150ms, sound=SharpenBladeWhetstone
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=Maintenance:2, time=150ms, sound=SharpenBladeWhetstone
   - PrecisionGrind
-      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=Blacksmith:3, time=250ms, sound=SharpenBladeWhetstone
+      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=Maintenance:3, time=250ms, sound=SharpenBladeWhetstone
   - ForgeShape
       tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Charcoal/CharcoalCrafted/Coke x2, skill=Blacksmith:4, time=400ms, sound=Hammering
 
@@ -21,27 +21,27 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - KnapHead
       tool=Base.HammerStone / HAMMER / SLEDGEHAMMER / CLUB_HAMMER / STONE_MAUL, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=SmashStoneHit
   - TaperPoint
-      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=FlintKnapping:2, time=150ms, sound=SharpenBladeWhetstone
+      tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=Maintenance:2, time=150ms, sound=SharpenBladeWhetstone
 
 -- Handle (ติดตั้งด้าม) (6) --
   - MakeHandle
-      tool=SHARP_KNIFE, consumes=LongStick/Sapling x1, skill=Woodwork:1, time=150ms, sound=CraftWeaponSpearWood
+      tool=SHARP_KNIFE, consumes=LongStick/Sapling x1, skill=Carving:1, time=150ms, sound=CraftWeaponSpearWood
   - WrapBind
       consumes=DuctTape/RippedSheets/LeatherStrips/Rope x2, skill=(none), time=100ms, sound=FixWithTape
   - MakeLongHandle
-      tool=SHARP_KNIFE, consumes=LongHandle/LongStick x1, skill=Woodwork:2, time=200ms, sound=CraftWeaponSpearWood
+      tool=SHARP_KNIFE, consumes=LongHandle/LongStick x1, skill=Carving:2, time=200ms, sound=CraftWeaponSpearWood
   - ReinforcedBind
       consumes=Thread x1, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
   - MakeRivetedHandle
       consumes=LongHandle/LongStick x1, MetalPipe/SteelBarHalf x1, skill=Blacksmith:4, time=350ms, sound=Hammering
   - TightenBolts
-      tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x2, skill=Blacksmith:1, time=150ms, sound=Screwdriver
+      tool=SCREWDRIVER / WRENCH, consumes=NutsBolts x2, skill=Mechanics:1, time=150ms, sound=Screwdriver
 
 -- Balance (ถ่วงน้ำหนัก) (3) --
   - HammerNails
-      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x5, skill=Blacksmith:1, time=150ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER / CLUB_HAMMER, consumes=Nails x5, skill=Woodwork:1, time=150ms, sound=Hammering
   - CounterweightHead
-      tool=HAMMER / SLEDGEHAMMER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=FlintKnapping:1, time=150ms, sound=Hammering
+      tool=HAMMER / SLEDGEHAMMER, consumes=TinCanEmpty/WaterRationCanEmpty x1, skill=Blacksmith:1, time=150ms, sound=Hammering
   - WeldMetal
       tool=WELDING_MASK, tool2=Base.BlowTorch, consumes=ScrapMetal x1, skill=MetalWelding:1, time=400ms, sound=CraftWelding
 
@@ -49,7 +49,7 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - RivetPlate
       tool=HAMMER, consumes=SheetMetal/SmallSheetMetal/UnusableMetal/AluminumScrap x1, skill=Blacksmith:1, time=200ms, sound=Hammering
   - DrillCore
-      tool=Base.HandDrill, consumes=(none), skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
+      tool=Base.HandDrill, consumes=(none), skill=Mechanics:1, time=150ms, sound=CraftFixWeapon
 
 -- Toughness (เสริมความคงทน) (4) --
   - WrapCloth
@@ -59,7 +59,7 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - StringSinew
       consumes=Thread x1, Glue x1, skill=Tailoring:1, time=150ms, sound=CraftFixWeapon
   - WeaveWire
-      tool=Base.Pliers, consumes=Wire x1, skill=Blacksmith:2, time=200ms, sound=CraftFixWeapon
+      tool=Base.Pliers, consumes=Wire x1, skill=Mechanics:2, time=200ms, sound=CraftFixWeapon
 
 -- Wear Resistance (ลดการสึกหรอ) (4) --
   - CoatMud
@@ -67,9 +67,9 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - FireTreat
       consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
   - CoatWax
-      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
+      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Maintenance:1, time=150ms, sound=CraftFixWeapon
   - SurfaceCoating
-      consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
+      consumes=Bleach x1, skill=Maintenance:2, time=250ms, sound=CraftFixWeapon
 
 -- Assembly (การประกอบ) (18) --
   - WrapClothImprov
