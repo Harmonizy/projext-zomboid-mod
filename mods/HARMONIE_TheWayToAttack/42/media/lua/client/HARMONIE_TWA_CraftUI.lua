@@ -235,6 +235,14 @@ local PANEL_H = 520
 -- listed here any more -- request 2026-09-26: they're out of scope for this
 -- crafting UI entirely (still real items, attached via the separate weapon-
 -- modification UI, just no longer craftable through this one).
+-- Bug report 2026-09-27: "ไอเท็มใหม่ที่ฉันให้สร้างอยู่ไหน ทำไมไม่มีใน ui
+-- สร้าง" -- the 6 new Metallurgy material items (category = "Material")
+-- were real and present in the data all along, but had no dedicated filter
+-- tab -- they only ever showed under All/Available, which is exactly the
+-- kind of thing easy to miss while clicking through category tabs looking
+-- for them (a real usability gap flagged, not fixed, when they were added).
+-- Added a real "Material" tab here instead of just re-explaining the
+-- limitation.
 local CATEGORY_TABS = {
     { key = "All", labelKey = "IGUI_TWA_FilterAll" },
     { key = "Available", labelKey = "IGUI_TWA_FilterAvailable" },
@@ -244,6 +252,7 @@ local CATEGORY_TABS = {
     { key = "SmallBlunt", labelKey = "IGUI_TWA_FilterSmallBlunt" },
     { key = "LongBlade", labelKey = "IGUI_TWA_FilterLongBlade" },
     { key = "Spear", labelKey = "IGUI_TWA_FilterSpear" },
+    { key = "Material", labelKey = "IGUI_TWA_FilterMaterial" },
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS

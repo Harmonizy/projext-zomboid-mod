@@ -101,6 +101,7 @@
     "IGUI_TWA_FilterSmallBlunt": "กระบองสั้น",
     "IGUI_TWA_FilterLongBlade": "มีดยาว",
     "IGUI_TWA_FilterSpear": "หอก",
+    "IGUI_TWA_FilterMaterial": "วัตถุดิบ",
     "IGUI_TWA_BaseItemOwned": "มีชิ้นงานตั้งต้นแล้ว",
     "IGUI_TWA_BaseItemMissing": "ขาดชิ้นงานตั้งต้น",
     "IGUI_TWA_NoBaseItemNeeded": "ไม่ต้องมีชิ้นงานตั้งต้น",

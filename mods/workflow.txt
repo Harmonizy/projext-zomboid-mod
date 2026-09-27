@@ -4173,6 +4173,25 @@ requirement silently invisible in the UI:
   cosmetic tradeoff given that grid already scrolls.
 - Re-validated (brace balance clean). modversion 0.23.0 -> 0.23.1.
 
+FORTIETH round (2026-09-27) -- "ไอเท็มใหม่ที่ฉันให้สร้างอยู่ไหน ทำไมไม่มีใน
+ui สร้าง":
+- Verified the 6 Metallurgy material recipes/items were actually real and
+  present before assuming a bug -- grep-confirmed all 6 `Make_MaterialLump`/
+  `Make_MaterialBar_*` entries in the shipped HARMONIE_TWA_RecipeData.lua,
+  and all 6 items in TWA_items_other.txt. Confirmed this mod isn't published
+  to Workshop (no Workshop/HARMONIE_TheWayToAttack/ staging folder exists),
+  ruling out the usual "game loaded a stale Workshop copy" failure mode.
+- Real gap (already flagged, now actually fixed rather than just noted):
+  these 6 items use `category = "Material"`, which had NO matching filter
+  tab in CATEGORY_TABS -- they only ever showed under All/Available, exactly
+  the kind of thing you'd miss while clicking through the Axe/SmallBlade/
+  Blunt/etc tabs looking for them. Added a real "Material" (วัตถุดิบ) tab.
+- If they're still not visible after this: since these are brand-new ITEM
+  definitions (not just Lua), a full Project Zomboid restart is needed to
+  load them -- a Lua-only reload isn't enough for new script items.
+- Re-validated (brace balance clean, EN+TH JSON valid). modversion
+  0.23.1 -> 0.23.2.
+
 
 9. Checklist before starting any new work
 =======================================

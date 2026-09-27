@@ -101,6 +101,7 @@
     "IGUI_TWA_FilterSmallBlunt": "Small Blunt",
     "IGUI_TWA_FilterLongBlade": "Long Blade",
     "IGUI_TWA_FilterSpear": "Spear",
+    "IGUI_TWA_FilterMaterial": "Material",
     "IGUI_TWA_BaseItemOwned": "Base Item Owned",
     "IGUI_TWA_BaseItemMissing": "Base Item Missing",
     "IGUI_TWA_NoBaseItemNeeded": "No Base Item Needed",
