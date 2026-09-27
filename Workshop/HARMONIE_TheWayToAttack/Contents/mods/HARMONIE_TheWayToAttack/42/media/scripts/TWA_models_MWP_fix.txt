@@ -1,0 +1,305 @@
+module Base
+{
+    /* Model blocks MWPWeapons42 itself never declared for these 26 items,
+       even though it ships their mesh+texture files -- a genuine gap in the
+       source mod (see WEAPON_CRAFTING_MOD_REFERENCE.txt / mods/workflow.txt).
+       Filled in here using the exact same offset/rotate transform
+       MWPWeapons42 reuses across all its other 73 weapons. */
+
+    model aitormonterobowieknife
+    {
+        mesh = weapons/1handed/aitormonterobowieknife,
+        texture = weapons/1handed/aitormonterobowieknife,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model arliabutterflyknife
+    {
+        mesh = weapons/1handed/arliabutterflyknife,
+        texture = weapons/1handed/arliabutterflyknife,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model assaultvknife
+    {
+        mesh = weapons/1handed/assaultvknife,
+        texture = weapons/1handed/assaultvknife,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model blitalianstiletto
+    {
+        mesh = weapons/1handed/blitalianstiletto,
+        texture = weapons/1handed/blitalianstiletto,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model britishp1856pioneers
+    {
+        mesh = weapons/1handed/britishp1856pioneers,
+        texture = weapons/1handed/britishp1856pioneers,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model crtkkukrimachete
+    {
+        mesh = weapons/1handed/crtkkukrimachete,
+        texture = weapons/1handed/crtkkukrimachete,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model dmmiceaxe
+    {
+        mesh = weapons/1handed/dmmiceaxe,
+        texture = weapons/1handed/dmmiceaxe,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model doomsdaysurvivalaxe
+    {
+        mesh = weapons/1handed/doomsdaysurvivalaxe,
+        texture = weapons/1handed/doomsdaysurvivalaxe,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model fiskarsplittingmaul
+    {
+        mesh = weapons/2handed/fiskarsplittingmaul,
+        texture = weapons/2handed/fiskarsplittingmaul,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model gemtord42crashaxe
+    {
+        mesh = weapons/1handed/gemtord42crashaxe,
+        texture = weapons/1handed/gemtord42crashaxe,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model gerberdownrangetomahawk
+    {
+        mesh = weapons/1handed/gerberdownrangetomahawk,
+        texture = weapons/1handed/gerberdownrangetomahawk,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model gerberpackhatchet
+    {
+        mesh = weapons/1handed/gerberpackhatchet,
+        texture = weapons/1handed/gerberpackhatchet,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model kabar1245tanto
+    {
+        mesh = weapons/1handed/kabar1245tanto,
+        texture = weapons/1handed/kabar1245tanto,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model louisvillevaporbaseballbat
+    {
+        mesh = weapons/2handed/louisvillevaporbaseballbat,
+        texture = weapons/2handed/louisvillevaporbaseballbat,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model m48tacticalwarhammer
+    {
+        mesh = weapons/1handed/m48tacticalwarhammer,
+        texture = weapons/1handed/m48tacticalwarhammer,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model ontariookc10bayonet
+    {
+        mesh = weapons/1handed/ontariookc10bayonet,
+        texture = weapons/1handed/ontariookc10bayonet,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model oxnailhammer
+    {
+        mesh = weapons/1handed/oxnailhammer,
+        texture = weapons/1handed/oxnailhammer,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model pythoncampaxe
+    {
+        mesh = weapons/2handed/pythoncampaxe,
+        texture = weapons/2handed/pythoncampaxe,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model reapertacsickle
+    {
+        mesh = weapons/1handed/reapertacsickle,
+        texture = weapons/1handed/reapertacsickle,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model rexlerkunai
+    {
+        mesh = weapons/1handed/rexlerkunai,
+        texture = weapons/1handed/rexlerkunai,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model russianakmbayonet
+    {
+        mesh = weapons/1handed/russianakmbayonet,
+        texture = weapons/1handed/russianakmbayonet,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model sogbeardedcampaxe
+    {
+        mesh = weapons/1handed/sogbeardedcampaxe,
+        texture = weapons/1handed/sogbeardedcampaxe,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model sogf19nelite
+    {
+        mesh = weapons/1handed/sogf19nelite,
+        texture = weapons/1handed/sogf19nelite,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model sptesnaztacticalshovel
+    {
+        mesh = weapons/1handed/sptesnaztacticalshovel,
+        texture = weapons/1handed/sptesnaztacticalshovel,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model spydercohatchethawk
+    {
+        mesh = weapons/2handed/spydercohatchethawk,
+        texture = weapons/2handed/spydercohatchethawk,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model yangjangcolumbiabayonet
+    {
+        mesh = weapons/1handed/yangjangcolumbiabayonet,
+        texture = weapons/1handed/yangjangcolumbiabayonet,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+
+    model zhunterhookmachete
+    {
+        mesh = weapons/1handed/zhunterhookmachete,
+        texture = weapons/1handed/zhunterhookmachete,
+        attachment world
+        {
+            offset = 0.0120 0.1250 0.0000,
+            rotate = 180.0000 0.0000 180.0000,
+        }
+    }
+}

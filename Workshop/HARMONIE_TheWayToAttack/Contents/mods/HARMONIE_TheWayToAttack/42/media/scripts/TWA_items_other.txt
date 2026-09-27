@@ -1,0 +1,94 @@
+module HARMONIE_TheWayToAttack
+{
+
+	imports
+	{
+		Base,
+	}
+
+    /************************Normal************************/
+
+    item GardenShears
+    {
+        ItemType = base:normal,
+        DisplayCategory = Gardening,
+        Weight	=	1.2,
+        Type	=	Normal,
+        DisplayName	=	Garden Shears,
+        Icon	=	GardenShears,
+        MetalValue = 20,
+        StaticModel = GardenShears,
+        SurvivalGear = TRUE,
+        WorldStaticModel = GardenShears_Ground,
+		Tooltip = Tooltip_GardenSheersCanBeDisassembled,
+    }
+
+    /*** Metallurgy chain (request 2026-09-27) -- 6 new material items
+    crafted through the procedural UI: a base "lump" (no starting item,
+    made purely from raw ore/scrap via StartFire+MeltMetal) and 5 rarity-
+    tiered "bars" made FROM that lump via increasingly advanced procedure
+    chains. Icons reused from real vanilla items (IronChunk, SteelBar_Whole)
+    -- no StaticModel/WorldStaticModel set, matching how the real vanilla
+    IronChunk item itself also skips them for a simple material item. ***/
+    item MaterialLump
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 2.0,
+        Type = Normal,
+        DisplayName = Material Lump,
+        Icon = IronChunk,
+    }
+
+    item MaterialBar_Uncommon
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 2.0,
+        Type = Normal,
+        DisplayName = Tin Bar,
+        Icon = SteelBar_Whole,
+    }
+
+    item MaterialBar_Rare
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 2.0,
+        Type = Normal,
+        DisplayName = Titanium Bar,
+        Icon = SteelBar_Whole,
+    }
+
+    item MaterialBar_Epic
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 2.0,
+        Type = Normal,
+        DisplayName = Mithril Bar,
+        Icon = SteelBar_Whole,
+    }
+
+    item MaterialBar_Elite
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 2.0,
+        Type = Normal,
+        DisplayName = Adamantium Bar,
+        Icon = SteelBar_Whole,
+    }
+
+    item MaterialBar_Legendary
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 2.0,
+        Type = Normal,
+        DisplayName = Vibranium Bar,
+        Icon = SteelBar_Whole,
+    }
+
+
+}

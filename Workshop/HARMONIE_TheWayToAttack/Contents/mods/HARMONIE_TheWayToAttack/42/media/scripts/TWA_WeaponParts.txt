@@ -1,0 +1,46 @@
+module HARMONIE_TheWayToAttack
+{
+    item TWA_Grip_LeatherWrap
+    {
+        DisplayCategory = WeaponPart,
+        ItemType = base:weaponpart,
+        DisplayName = Leather-Wrapped Grip,
+        Icon = LeatherStrips,
+        Weight = 0.2,
+        WeightModifier = -0.1,
+        MountOn = ,
+        PartType = Grip,
+    }
+    item TWA_Head_SpikedTip
+    {
+        DisplayCategory = WeaponPart,
+        ItemType = base:weaponpart,
+        DisplayName = Spiked Striking Tip,
+        Icon = RailroadSpike,
+        Weight = 0.4,
+        MountOn = ,
+        PartType = Head,
+    }
+    item TWA_Tactical_HandGuard
+    {
+        DisplayCategory = WeaponPart,
+        ItemType = base:weaponpart,
+        DisplayName = Bolted Hand Guard,
+        Icon = NutsBolts,
+        Weight = 0.3,
+        MaxRangeModifier = 0.2,
+        MountOn = ,
+        PartType = Tactical,
+    }
+    item TWA_Weight_Counterweight
+    {
+        DisplayCategory = WeaponPart,
+        ItemType = base:weaponpart,
+        DisplayName = Balance Counterweight,
+        Icon = Metal_BandSmall,
+        Weight = 0.6,
+        WeightModifier = 0.5,
+        MountOn = ,
+        PartType = Weight,
+    }
+}
