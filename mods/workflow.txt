@@ -2437,6 +2437,57 @@ just a one-off fix:
   file:line + the "attempted index: ... of non-table: null" message), no
   guessing needed.
 
+8.14 Real vanilla craftRecipe tag system (HARMONIE_TheWayToAttack, 2026-09-28) —
+     researched to answer "how does vanilla let you use any hammer in a recipe"
+================================================================================
+User asked directly how real vanilla lets a crafting recipe accept "any hammer"
+and said they wanted to copy that system rather than uniformly widen tool specs.
+Confirmed the real mechanism and used it to fix 7 of this mod's own procedures
+that had drifted from vanilla's own real per-context tag choice:
+- Real syntax: `item N tags[base:x;base:y;base:z] mode:keep flags[...]` inside a
+  `craftRecipe`'s `inputs` block — the slot accepts ANY item carrying ANY ONE of
+  the listed tags. Confirmed vanilla does NOT use one universal hammer-tag list
+  everywhere — the exact combo varies by what the task actually IS:
+  - `base:hammer` alone — plain generic carpentry/hammering (most common).
+  - `base:hammer;base:clubhammer;base:mallet` — "attach a scavenged component to
+    a weapon" tasks (recipes_assembly.txt: AssembleBlade/AssembleMace/
+    AssembleShortImplement/etc., all 6 recipes in that file use this exact combo).
+  - `base:hammer;base:sledgehammer;base:clubhammer;base:hammerstone` — heavy
+    bone-smashing/forging tasks (recipes_bone.txt).
+  - `base:hammerstone;base:mallet;base:knappingtool` — stone-knapping tasks
+    specifically (recipes_bone.txt) — notably NEVER includes plain hammer/
+    sledgehammer/clubhammer; knapping is precise light-tool work, not blunt
+    force.
+  - `base:hammer;base:sledgehammer` — a few specific heavier one-off tasks.
+- Real Lua-accessible `ItemTag` constants confirmed: HAMMER, SLEDGEHAMMER,
+  CLUB_HAMMER, STONE_MAUL (plus SAW/WRENCH/SCREWDRIVER/WELDING_MASK/SHARP_KNIFE/
+  PIPE_WRENCH/PICK_AXE, already used elsewhere in this file). NOT confirmed as
+  Lua-accessible: MALLET, HAMMERSTONE, KNAPPINGTOOL — these are real SCRIPT tags
+  (`base:mallet`/`base:hammerstone`/`base:knappingtool`) with no found
+  `ItemTag.X` Lua constant anywhere in vanilla's own Lua usage. Worked around by
+  listing their real carrier ITEMS directly as `{kind="type", value=...}`
+  alternatives instead of a tag: `base:mallet` -> Base.WoodenMallet/Base.ShortBat;
+  `base:hammerstone` -> Base.HammerStone/Base.Stone2; `base:knappingtool` ->
+  Base.KnappingTool (all grep-confirmed real in media/scripts/generated/items/
+  weapon.txt and normal.txt).
+- Applied: KnapHead switched OFF the generic hammer tags entirely onto the real
+  knapping combo (HammerStone/Stone2/WoodenMallet/ShortBat/KnappingTool items) —
+  it had been conceptually mismatched, using "big hammer" tags where real
+  vanilla knapping never does. HammerNails/RivetPlate/AssembleNails/
+  AssembleRailSpike/AssembleSpike/AssembleBucket/AssembleKettle (all "attach a
+  component" tasks) switched to the real assembly combo (HAMMER+CLUB_HAMMER+
+  WoodenMallet/ShortBat items). ForgeShape/ForgeFold/ForgeComplex/ForgeVacuum
+  (heavy forging) kept their existing HAMMER/SLEDGEHAMMER/CLUB_HAMMER tags and
+  gained HammerStone/Stone2 items as extra alternatives, matching the real
+  heavy-forging combo exactly. CounterweightHead already matched a real combo
+  (HAMMER+SLEDGEHAMMER) — left unchanged.
+- Lesson for future tool-widening requests in this file: don't uniformly widen a
+  tool spec to "every hammer-like tag" as a default fix — find vanilla's own
+  real recipe for the closest matching task first (grep the real
+  media/scripts/generated/recipes/recipes_*.txt files for `tags[base:...]` near
+  a thematically similar action) and mirror THAT specific combo instead; a
+  single "widen everything" pass would have kept KnapHead's real mismatch.
+
 
 9. Checklist before starting any new work
 =======================================
@@ -2501,5 +2552,8 @@ just a one-off fix:
     needs LOCAL players (getNumActivePlayers/getSpecificPlayer) or ALL connected
     players (getOnlinePlayers), and if it's not idempotent (rolls dice/creates
     something new), always wrap it in an isClient()/isServer() gate (section 8.7).
+[ ] Widening a "which tool works" spec (hammer/wrench/etc.)? Find vanilla's own
+    real recipe for the closest matching task first and mirror its exact
+    tags[...] combo (section 8.14) — don't default to "add every related tag".
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

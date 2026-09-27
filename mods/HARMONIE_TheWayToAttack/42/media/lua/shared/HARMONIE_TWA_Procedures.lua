@@ -216,14 +216,22 @@ TWAProcedures.List = {
     -- Piercing crit-band rule.
 
     -- ===== Piercing (สร้างความแหลม) -- Spear/Stab weapons =====
-    -- Tool widened to any hammering tool -- real "any hammer" group already
-    -- confirmed from ISPickAxeGroundCoverItem.lua's own check (request
-    -- 2026-09-27).
+    -- Tool corrected (2026-09-28, real-vanilla-tag research): real vanilla
+    -- stone-knapping recipes (recipes_bone.txt, `tags[base:hammerstone;
+    -- base:mallet;base:knappingtool]`, repeated many times) NEVER use plain
+    -- Hammer/Sledgehammer/ClubHammer/StoneMaul -- knapping is precise
+    -- light-tool work, not blunt-force hammering. Switched to the real
+    -- carrier items for that exact tag combo instead: base:hammerstone
+    -- (Base.HammerStone/Stone2), base:mallet (Base.WoodenMallet/ShortBat),
+    -- base:knappingtool (Base.KnappingTool) -- all grep-confirmed real in
+    -- media/scripts/generated/items/weapon.txt. None of these 3 tags have a
+    -- confirmed Lua-side ItemTag constant, so listed as direct item types.
     KnapHead = {
         category = "Piercing", nameKey = "IGUI_TWA_Proc_KnapHead", icon = "RockSharpened",
         tool = {
-            { kind = "type", value = "Base.HammerStone" }, { kind = "tag", value = "HAMMER" },
-            { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" }, { kind = "tag", value = "STONE_MAUL" },
+            { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Stone2" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+            { kind = "type", value = "Base.KnappingTool" },
         },
         consumes = {}, skill = "FlintKnapping:1", time = 150, sound = "SmashStoneHit",
     },
@@ -291,9 +299,18 @@ TWAProcedures.List = {
 
     -- ===== Balance (ถ่วงน้ำหนัก) -- by PushBackMod =====
     -- Qty trimmed 5->1 (request 2026-09-28, same as AssembleNails above).
+    -- Tool corrected (2026-09-28, real-vanilla-tag research): this is a
+    -- nail-into-wood assembly task, matching vanilla's own real "attach a
+    -- component" combo (recipes_assembly.txt, `tags[base:hammer;
+    -- base:clubhammer;base:mallet]`, used by AssembleBlade/AssembleMace/
+    -- etc.) more closely than a heavy Sledgehammer -- dropped SLEDGEHAMMER,
+    -- added the real mallet carrier items (Base.WoodenMallet/ShortBat).
     HammerNails = {
         category = "Balance", nameKey = "IGUI_TWA_Proc_HammerNails", icon = "Nails",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.Nails", qty = 1 } }, skill = "Woodwork:1", time = 150, sound = "Hammering",
     },
     -- Material widened to either real empty-can type (already an
@@ -317,9 +334,16 @@ TWAProcedures.List = {
     -- Material narrowed to plain ScrapMetal (request 2026-09-28: "ตอกหมุด
     -- ใช้เศษโลหะกับค้อนแทน สกิลเหมือนเดิม" -- tool was already Hammer,
     -- unchanged; skill unchanged).
+    -- Tool widened (2026-09-28, real-vanilla-tag research): a rivet is an
+    -- "attach a component" task, matching vanilla's own real
+    -- `tags[base:hammer;base:clubhammer;base:mallet]` combo (recipes_
+    -- assembly.txt) -- added ClubHammer tag + the real mallet carrier items.
     RivetPlate = {
         category = "Structure", nameKey = "IGUI_TWA_Proc_RivetPlate", icon = "ScrapMetal",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.ScrapMetal", qty = 1 } },
         skill = "Blacksmith:1", time = 200, sound = "Hammering",
     },
@@ -441,14 +465,24 @@ TWAProcedures.List = {
     -- อัน" -- applies to both this and HammerNails in Balance below).
     -- Icon changed to "NailsBox" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
+    -- Tool widened (2026-09-28, real-vanilla-tag research): matches vanilla's
+    -- own real "attach a component" combo (recipes_assembly.txt, `tags[
+    -- base:hammer;base:clubhammer;base:mallet]`) -- applies to every
+    -- Assemble* procedure below that used plain HAMMER only.
     AssembleNails = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleNails", icon = "NailsBox",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.Nails", qty = 1 } }, time = 150, sound = "Hammering",
     },
     AssembleRailSpike = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleRailSpike", icon = "RailroadSpike",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.RailroadSpike", qty = 1 } }, time = 200, sound = "Hammering",
     },
     AssembleBoneSpike = {
@@ -470,7 +504,10 @@ TWAProcedures.List = {
     -- SharpBoneFragment is "Bone_Sharpbone", not the item's own type name.
     AssembleSpike = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpike", icon = "Bone_Sharpbone",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, time = 150, sound = "Hammering",
     },
     -- Tool WRENCH->SCREWDRIVER (request 2026-09-28: "ในหมวดหมู่การประกอบ
@@ -483,12 +520,18 @@ TWAProcedures.List = {
     },
     AssembleBucket = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBucket", icon = "MetalBucket",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.Bucket", qty = 1 } }, time = 200, sound = "Hammering",
     },
     AssembleKettle = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleKettle", icon = "Kettle",
-        tool = { kind = "tag", value = "HAMMER" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
+        },
         consumes = { { itemType = "Base.Kettle", qty = 1 } }, time = 200, sound = "Hammering",
     },
     AssembleRakeHead = {
@@ -614,9 +657,18 @@ TWAProcedures.List = {
     -- Icon changed twice same day: first to "WoodMallet" (from user-given
     -- "WoodenMallet", the item's own type name), then to "HammerStone"
     -- (self-referential, requested directly by that exact name).
+    -- Tool widened (2026-09-28, real-vanilla-tag research): matches vanilla's
+    -- own real heavy bone-smashing/forging combo (recipes_bone.txt, `tags[
+    -- base:hammer;base:sledgehammer;base:clubhammer;base:hammerstone]`) --
+    -- added the real hammerstone carrier items (Base.HammerStone/Stone2) as
+    -- extra alternatives, keeping the existing 3 tags. Applies to this and
+    -- the other 3 Forge* procedures below the same way.
     ForgeShape = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "HammerStone",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Stone2" },
+        },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
         skill = "Blacksmith:4", forgeTier = 2, time = 400, sound = "Hammering",
     },
@@ -642,7 +694,10 @@ TWAProcedures.List = {
     -- "ตีพับทบ".
     ForgeFold = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "BallPeenHammer_Forged",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Stone2" },
+        },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
         skill = "Blacksmith:6", forgeTier = 2, time = 400, sound = "Hammering",
@@ -651,7 +706,10 @@ TWAProcedures.List = {
     -- referential icon confirmed.
     ForgeComplex = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeComplex", icon = "SmithingHammer",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Stone2" },
+        },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 3 } },
         skill = "Blacksmith:8", forgeTier = 3, time = 500, sound = "Hammering",
@@ -662,7 +720,10 @@ TWAProcedures.List = {
     -- kept exactly as the game's own compiled texture is actually named.
     ForgeVacuum = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeVacuum", icon = "Sledgehamer",
-        tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Stone2" },
+        },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 4 } },
         skill = "Blacksmith:10", forgeTier = 3, time = 600, sound = "Hammering",
