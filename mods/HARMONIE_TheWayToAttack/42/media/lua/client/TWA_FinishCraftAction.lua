@@ -17,15 +17,15 @@ require "TimedActions/ISBaseTimedAction"
 TWA_FinishCraftAction = ISBaseTimedAction:derive("TWA_FinishCraftAction")
 
 -- `recipe.base` is either nil (no starting item needed at all) or a SINGLE
--- real fullType string -- every recipe has exactly one starting item now
--- (request 2026-09-27: "ปรับให้ทุกอันมีชิ้นงานตั้งต้นเพียงชิ้นเดียว"). The
--- earlier base+base2 two-slot system and interchangeable-alternatives lists
--- (e.g. "any of 4 Metal Ingot types") are gone -- gen_craftdata.js now
--- resolves each recipe down to one specific real item at generation time.
--- `recipe.baseAlt`, when present, is a single OPTIONAL substitute for that
--- same slot (request 2026-09-27: any Metal-Ingot-based recipe can also use a
--- Metal Pipe) -- ownsSlot checks base OR baseAlt, removeOneOf consumes
--- whichever the character actually has (base preferred).
+-- real fullType string. `recipe.baseAlt`, when present, is a single OPTIONAL
+-- substitute for that SAME slot (dead data-side since a later round removed
+-- it, but harmless to keep supporting) -- ownsSlot checks base OR baseAlt,
+-- removeOneOf consumes whichever the character actually has (base
+-- preferred). `recipe.base2`, when present, is a SEPARATE, REQUIRED second
+-- slot (request 2026-09-27: "ทำให้สูตรไอเท็ม uncommon ทุกชิ้นใช้ชิ้นส่วน
+-- ตั้งต้นชิ้นที่ 2 (ไม่ใช่ optional) เป็น แท่งวัตถุดิบ...ของ tier ตัวเอง" --
+-- a tier-matched MaterialBar) -- both base and base2 must be owned, and
+-- both get consumed on Finish; base2 has no altType of its own.
 local function ownsSlot(character, fullType, altType)
     if not fullType then return true end
     local inv = character:getInventory()
@@ -46,6 +46,7 @@ end
 function TWA_FinishCraftAction:isValid()
     if not self.character or not self.recipe then return false end
     if not ownsSlot(self.character, self.recipe.base, self.recipe.baseAlt) then return false end
+    if not ownsSlot(self.character, self.recipe.base2, nil) then return false end
     for _, procId in ipairs(self.recipe.procedures) do
         if not self.doneProcedures[procId] then return false end
     end
@@ -119,6 +120,7 @@ function TWA_FinishCraftAction:perform()
     end
     local inv = self.character:getInventory()
     removeOneOf(self.character, self.recipe.base, self.recipe.baseAlt)
+    removeOneOf(self.character, self.recipe.base2, nil)
     local newItem = inv:AddItem(self.recipe.result)
     if newItem then applyTier(newItem, self.recipe.result) end
     ISBaseTimedAction.perform(self)

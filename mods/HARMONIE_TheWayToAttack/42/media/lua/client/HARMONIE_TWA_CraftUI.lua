@@ -314,12 +314,22 @@ end
 -- same slot -- NOT a return to multi-item lists (request 2026-09-27: "อะไรที่
 -- ใช้แท่งแร่เป็นขิ้นงานตั้งต้น ให้สามารถใช้ท่อเหล็กแทนได้" -- anything based
 -- on a Metal Ingot can also use a Metal Pipe).
+-- request 2026-09-27: "ทำให้สูตรไอเท็ม uncommon ทุกชิ้นใช้ชิ้นส่วนตั้งต้น
+-- ชิ้นที่ 2 (ไม่ใช่ optional) เป็น แท่งวัตถุดิบ Uncommon...โดยใช้แท่งวัตถุดิบ
+-- ของ tier ตัวเอง" -- reintroduces a real, REQUIRED `base2` slot (both base
+-- AND base2 must be owned) -- NOT an OR-alternative like the removed
+-- MetalPipe `baseAlt`, which stays supported here too (still dead data-side
+-- since nothing emits it any more, but harmless to leave).
 local function ownsBase(recipe, player)
     if not recipe.base then return true end
     local inv = player:getInventory()
-    if inv:getItemCountRecurse(recipe.base) >= 1 then return true end
-    if recipe.baseAlt and inv:getItemCountRecurse(recipe.baseAlt) >= 1 then return true end
-    return false
+    local hasBase = inv:getItemCountRecurse(recipe.base) >= 1
+    if not hasBase and recipe.baseAlt then
+        hasBase = inv:getItemCountRecurse(recipe.baseAlt) >= 1
+    end
+    if not hasBase then return false end
+    if recipe.base2 and inv:getItemCountRecurse(recipe.base2) < 1 then return false end
+    return true
 end
 
 -- Prefer the baked icon (resolved at generation time from the item's real
@@ -1202,6 +1212,23 @@ function TWACraftWindow:drawStatGrid(x, y, w)
     return y
 end
 
+-- request 2026-09-27: reintroduced a real 2nd required base-item card
+-- (recipe.base2, tier-matched MaterialBar) -- factored the single-card draw
+-- (previously inline) into its own method so it can be called once per
+-- slot instead of duplicating the 8 draw calls.
+function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned)
+    local CARD_H = 40
+    self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
+    self:drawRectBorder(x, y, w, CARD_H, 0.4, 0.4, 0.4, 0.4)
+    if owned and TWA_NEAT.check then
+        self:drawTextureScaled(TWA_NEAT.check, x + w - 24, y + 12, 16, 16, 1, 1, 1, 1)
+    end
+    drawTextShadowed(self, baseDisplayName(fullType, altType), x + 8, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+    local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
+    drawTextShadowed(self, getText(statusKey), x + 8, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
+    return y + CARD_H + 6 + 4
+end
+
 -- Fixed (non-scrolling) box under the procedure-library grid showing exactly
 -- what the currently-selected (clicked) procedure needs -- replaces the old
 -- floating full-requirements tooltip, which rendered underneath the grid's
@@ -1412,23 +1439,20 @@ function TWACraftWindow:render()
         drawTextShadowed(self, getText("IGUI_TWA_NoBaseItemNeeded"), centerX + 8, baseY + 8, 0.75, 0.75, 0.75, 1, UIFont.Small)
         baseY = baseY + 30 + 10
     else
-        local owned = ownsBase(recipe, self.player)
-        -- Bug report 2026-09-27: "คำว่าขาดชิ้นงานตั้งต้นมันออกมาจาก card ที่
-        -- สูงไม่พอ" -- 2 lines of UIFont.Small text only had 34-19=15px of
-        -- card left below the 2nd line's own start Y, not enough clearance
-        -- for its real rendered glyph height + shadow offset, so it poked
-        -- out past the card's bottom border. Card bumped 34 -> 40, 2nd
-        -- line's Y bumped 19 -> 21 to match.
-        local CARD_H = 40
-        self:drawRect(centerX, baseY, CENTER_W - 16, CARD_H, 0.85, 0.08, 0.08, 0.09)
-        self:drawRectBorder(centerX, baseY, CENTER_W - 16, CARD_H, 0.4, 0.4, 0.4, 0.4)
-        if owned and TWA_NEAT.check then
-            self:drawTextureScaled(TWA_NEAT.check, centerX + (CENTER_W - 16) - 24, baseY + 12, 16, 16, 1, 1, 1, 1)
+        -- request 2026-09-27: "ทำให้สูตรไอเท็ม uncommon ทุกชิ้นใช้ชิ้นส่วน
+        -- ตั้งต้นชิ้นที่ 2 (ไม่ใช่ optional) เป็น แท่งวัตถุดิบ...ของ tier
+        -- ตัวเอง" -- a 2nd required card (recipe.base2, tier-matched
+        -- MaterialBar) is drawn right below the 1st when present -- both
+        -- must be owned to craft, no longer "at most one card" like the
+        -- single-base-item round assumed.
+        local inv = self.player:getInventory()
+        local owned1 = inv:getItemCountRecurse(recipe.base) >= 1
+            or (recipe.baseAlt and inv:getItemCountRecurse(recipe.baseAlt) >= 1)
+        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base, recipe.baseAlt, owned1)
+        if recipe.base2 then
+            local owned2 = inv:getItemCountRecurse(recipe.base2) >= 1
+            baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2)
         end
-        drawTextShadowed(self, baseDisplayName(recipe.base, recipe.baseAlt), centerX + 8, baseY + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
-        local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
-        drawTextShadowed(self, getText(statusKey), centerX + 8, baseY + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
-        baseY = baseY + CARD_H + 6 + 4
     end
 
     -- Required-procedure checklist grid

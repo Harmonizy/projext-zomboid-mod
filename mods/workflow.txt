@@ -4247,6 +4247,53 @@ FORTY-THIRD round (2026-09-27) -- "ชื่อไม้เบสบอลก็
 - Re-validated (brace balance clean on regenerated RecipeData.lua, all 6
   confirmed no longer on MetalPipe). modversion 0.24.1 -> 0.24.2.
 
+FORTY-FOURTH round (2026-09-27) -- MAJOR: reintroduced a real, REQUIRED
+2nd base item -- tier-matched MaterialBar:
+- User: "ทำให้สูตรไอเท็ม uncommon ทุกชิ้นใช้ชิ้นส่วนตั้งต้นชิ้นที่ 2 (ไม่ใช่
+  optional) เป็น แท่งวัตถุดิบ Uncommon และให้ทำแบบนี้กับสูตร tier rare epic
+  elite legendary โดยใช้แท่งวัตถุดิบของ tier ตัวเอง" -- every weapon recipe
+  whose own real DPS-tier is Uncommon(3)/Rare(4)/Epic(5)/Elite(6)/
+  Legendary(7) now needs that SAME tier's own MaterialBar as a second,
+  REQUIRED base item (not an OR-alternative like the removed MetalPipe
+  substitute -- both items must be owned). Real result: 239 of 248
+  craftable recipes affected (the 9 that aren't: 10 Common-tier weapons
+  minus... real breakdown: tier counts across all 248 are Common=10,
+  Uncommon=66, Rare=144, Epic=27, Elite=5, Legendary=2, so 66+144+27+5+2=244
+  minus the 5 MaterialBar items themselves (which ARE tier 3-7 but obviously
+  don't need themselves as an ingredient, excluded by running this pass
+  BEFORE the Metallurgy recipes are added) = 239).
+- Implementation: added `TIER_MATERIAL_BAR` mapping (tier 3-7 -> each
+  MaterialBar_<Name>) in gen_craftdata.js, applied via `r.base2 = bar` using
+  the SAME `tierOf` lookup (by real item name, stripped from the recipe id)
+  the Stats table itself uses -- guarantees the base2 always matches
+  whatever tier that exact recipe's row in the Stats table shows, no
+  separate/driftable tier source. This REINTRODUCES a real `base2` field
+  (the two-required-items shape from before the "collapse to one base item"
+  round) -- scoped ONLY to this tier-material requirement, not a general
+  return to multi-slot bases.
+- Reintroduced `base2` support in both Lua consumers: HARMONIE_TWA_
+  CraftUI.lua's ownsBase() now requires base2 too (when present), and the
+  center-panel base-item card rendering was factored into a reusable
+  drawBaseCard() method so a 2nd required card renders right below the 1st
+  when recipe.base2 exists (both must show "owned", not just one).
+  TWA_FinishCraftAction.lua's isValid()/perform() now also check/consume
+  base2 alongside base. Self-caught and fixed one stray `--` (Lua-style,
+  not `//`) typo in a new JS comment before it could cause a real syntax
+  error (same class of mistake flagged twice earlier this session) --
+  caught via `node -c` syntax-check before running the generator, not just
+  brace-counting after.
+- Real known follow-up, not yet addressed: the center panel's content
+  (icon/stats/base cards/procedure grid) is drawn at a FIXED height, not
+  clipped/scrollable -- a recipe with both a 2nd base card AND a large
+  procedure grid could visually overflow past the panel's own bottom edge
+  into the Cancel/Finish button row. Flagged for testing, not fixed
+  speculatively without a real report.
+- Re-validated: brace balance clean on RecipeData.lua/CraftUI.lua/
+  TWA_FinishCraftAction.lua, all 57 procedure ids cross-referenced against
+  the regenerated recipe data (0 missing), spot-checked ka_bar_knife's real
+  output (base=MaterialLump, base2=MaterialBar_Rare). modversion
+  0.24.2 -> 0.25.0.
+
 
 9. Checklist before starting any new work
 =======================================
