@@ -162,14 +162,28 @@ function ISToolTipInv:render()
     if TWAPartSystem.IsMeleeWeapon(item) then
         -- Fully live: computed fresh from the real item instance every
         -- render, not from the generated Stats table (request 2026-09-28).
+        -- Request 2026-09-28 (follow-up): "อาวุธโชว์ให้ครบทุก stats นะ ตาม
+        -- จำนวนที่แสดงใน ui เลย" -- show every one of the SAME 13 stats
+        -- HARMONIE_TWA_CraftUI.lua's own center-panel STAT_GRID shows (DPS +
+        -- 12), not just the 8 this file originally covered. The 4 added
+        -- here (ConditionLowerChance/PushBackMod/Handedness/AttackStyle)
+        -- use the same confirmed-vs-best-effort split as before:
+        -- getConditionLowerChance()/isTwoHandWeapon() are confirmed real
+        -- (see 8.12); PushBackMod/SubCategory have no confirmed live getter
+        -- anywhere in vanilla's own lua, so they go through the same
+        -- pcall+fallback path as BaseSpeed/CriticalChance/KnockdownMod.
         local stats = TWARecipeData and TWARecipeData.Stats and TWARecipeData.Stats[fullType]
         local minD, maxD = item:getMinDamage(), item:getMaxDamage()
         local maxRange = item:getMaxRange()
         local condMax = item:getConditionMax()
+        local condLower = item:getConditionLowerChance()
         local weight = item:getActualWeight()
+        local twoHanded = item:isTwoHandWeapon()
         local baseSpeed = liveOrFallback(item, "getBaseSpeed", (stats and stats.baseSpeed) or 1.0)
         local critChance = liveOrFallback(item, "getCriticalChance", (stats and stats.critChance) or 0)
         local knockdownMod = liveOrFallback(item, "getKnockdownMod", (stats and stats.knockdownMod) or 0)
+        local pushBackMod = liveOrFallback(item, "getPushBackMod", (stats and stats.pushBackMod) or 0)
+        local subCategory = liveOrFallback(item, "getSubCategory", stats and stats.subCategory)
         local dps = ((minD + maxD) / 2) * baseSpeed
         local tier = tierFromDps(dps)
         local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
@@ -179,11 +193,18 @@ function ISToolTipInv:render()
         y = y + drawStatStrip(self, 2, y, self.width - 4, label, c, font)
 
         local gridDef = {
+            { dps, "IGUI_TWA_Stat_DPS", "%.2f" },
             { minD, "IGUI_TWA_Stat_MinDamage", "%.1f" }, { maxD, "IGUI_TWA_Stat_MaxDamage", "%.1f" },
-            { critChance, "IGUI_TWA_Stat_CritChance", "%.0f%%" }, { maxRange, "IGUI_TWA_Stat_Range", "%.2f" },
-            { baseSpeed, "IGUI_TWA_Stat_Speed", "%.2f" }, { knockdownMod, "IGUI_TWA_Stat_Knockdown", "%.1f" },
-            { condMax, "IGUI_TWA_Stat_Condition", "%.0f" }, { weight, "IGUI_TWA_StatWeight", "%.1f" },
+            { baseSpeed, "IGUI_TWA_Stat_Speed", "%.2f" }, { weight, "IGUI_TWA_StatWeight", "%.1f" },
+            { maxRange, "IGUI_TWA_Stat_Range", "%.2f" }, { critChance, "IGUI_TWA_Stat_CritChance", "%.0f%%" },
+            { condMax, "IGUI_TWA_Stat_Condition", "%.0f" }, { condLower, "IGUI_TWA_Stat_Durability", "1:%.0f" },
+            { knockdownMod, "IGUI_TWA_Stat_Knockdown", "%.1f" }, { pushBackMod, "IGUI_TWA_Stat_PushPower", "%.2f" },
         }
+        local handednessKey = twoHanded and "IGUI_TWA_Stat_TwoHanded" or "IGUI_TWA_Stat_OneHanded"
+        gridDef[#gridDef + 1] = { getText(handednessKey), "IGUI_TWA_Stat_Handedness", "%s" }
+        if subCategory and subCategory ~= "" then
+            gridDef[#gridDef + 1] = { subCategory, "IGUI_TWA_Stat_AttackStyle", "%s" }
+        end
         local gridH = rowH * math.ceil(#gridDef / 2) + 4
         self:setHeight(self.height + gridH)
         drawGrid(self, 2, y, self.width - 4, gridDef, font, rowH)

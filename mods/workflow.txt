@@ -2081,6 +2081,12 @@ weapon items (this mod's own Metallurgy materials, hand-assigned a tier since
 they have no combat stats) keep the OLD static fullType-keyed lookup
 unchanged — there's no live weapon stat to read on a Normal-type item. See
 8.12 for exactly which stat getters are confirmed real vs. best-effort.
+Follow-up (same day): the weapon stat grid was extended from its original 8
+fields to all 13 HARMONIE_TWA_CraftUI.lua's own center-panel STAT_GRID shows
+(DPS + 12) — ConditionLowerChance and Handedness added via their own
+confirmed real getters (`getConditionLowerChance()`/`isTwoHandWeapon()`),
+PushBackMod and AttackStyle(SubCategory) added via the same pcall+fallback
+treatment as the 3 already-unconfirmed stats.
 
 
 8.12 Real B42 API/data facts confirmed while building the crafting UI (glossary)
