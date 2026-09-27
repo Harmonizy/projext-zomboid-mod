@@ -1998,22 +1998,30 @@ rarity word (MaterialLump=Common, then Uncommon/Rare/Epic/Elite/Legendary).
 Metallurgy chain (a raw-material refining system, real vanilla B42
 blacksmithing conditions read and adapted, not invented): `MaterialLump` (no
 base item, procedures StartFire+MeltMetal) → 5 rarity-tiered `MaterialBar_*`
-(each base=MaterialLump, escalating procedure chains). 16 procedures under a
-"Metallurgy" category (14 originally; ForgeShape joined it 2026-09-28,
-moved out of Sharpness/Piercing — its own tool/consume/skill/rules-engine
-assignment were unchanged at first, though a forgeTier=2 gate was added to
-it the same day, "การขึ้นรูป ให้มีเงื่อนไข ต้องการเตาตีเหล็กธรรมดาหรือ
-สูงกว่า" — a real forge-shaping action genuinely needing a forge, which it
-hadn't required before; AnnealMetal is a brand-new procedure added the same
-day, taking over ForgeShape's own old rules-engine slot — the TOP
-Sharpness/Piercing crit-band, "ขั้น 4 ให้ใช้ อบเย็น แทน ตีขึ้นรูป" — real
-tongs+forge annealing step, Blacksmith:4, forgeTier=2, no material
-specified): StartFire,
+(each base=MaterialLump, escalating procedure chains). 14 procedures under
+what the UI now calls "Blacksmithing" (`nameKey`/EN "Metallurgy"/
+"Blacksmithing" — the internal Lua `key` and translation KEY are still
+literally "Metallurgy", only the displayed text changed 2026-09-28, request:
+"เปลี่ยนชื่อหมวดการถลุงโลหะเป็น การตีเหล็ก เอาไปไว้ถัดจากหมวดการประกอบ" —
+also moved to right after Assembly in display order that same day). Was 16
+procedures until that same request also split QuenchHarden/AnnealMetal OUT
+into a brand-new "Density" category (positioned right after Piercing) —
+"ย้ายชุบแข็ง อบเย็น ไปหมวดใหม่ สร้างความหนาแน่น ให้อยู่ถัดจากหมวดสร้างความ
+แหลม". ForgeShape joined Blacksmithing/Metallurgy 2026-09-28, moved out of
+Sharpness/Piercing — its own tool/consume/skill/rules-engine assignment were
+unchanged at first, though a forgeTier=2 gate was added to it the same day,
+"การขึ้นรูป ให้มีเงื่อนไข ต้องการเตาตีเหล็กธรรมดาหรือสูงกว่า" — a real
+forge-shaping action genuinely needing a forge, which it hadn't required
+before; AnnealMetal is a brand-new procedure added the same day, taking
+over ForgeShape's own old rules-engine slot — the TOP Sharpness/Piercing
+crit-band, "ขั้น 4 ให้ใช้ อบเย็น แทน ตีขึ้นรูป" — real tongs+forge annealing
+step, Blacksmith:4, forgeTier=2, no material specified): StartFire,
 MeltMetal (the `options` consume shape —
 IronOre x4/CopperOre x4/IronChunk x2/SteelChunk x2/CopperScrap x3),
 PourMold/PourMoldLarge (real small/large ceramic crucibles as kept tools —
-`Base.CeramicCrucibleSmall`/`Base.CeramicCrucible`), CoolCast/QuenchHarden
-(Blacksmith:2, forgeTier=1), WeldWork/WeldWorkComplex (MetalWelding:1/2),
+`Base.CeramicCrucibleSmall`/`Base.CeramicCrucible`), CoolCast (Blacksmith:2,
+forgeTier=1; QuenchHarden lived here too until it moved to the new Density
+category, see above), WeldWork/WeldWorkComplex (MetalWelding:1/2),
 PolishMetal/GrindMetal (Glassmaking:1/2 — an unusual pairing kept exactly as
 given by explicit instruction, don't "fix" it), EngravePattern (Carving:1),
 ForgeFold (Blacksmith:6, forgeTier=2), ForgeComplex/ForgeVacuum

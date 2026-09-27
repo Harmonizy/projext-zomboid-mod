@@ -305,8 +305,10 @@ TWAProcedures.List = {
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" } },
         consumes = { { itemTypes = { "Base.TinCanEmpty", "Base.WaterRationCanEmpty" }, qty = 1 } }, skill = "Blacksmith:1", time = 150, sound = "Hammering",
     },
+    -- Icon changed to "WeldingMask" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     WeldMetal = {
-        category = "Balance", nameKey = "IGUI_TWA_Proc_WeldMetal", icon = "BlowTorch",
+        category = "Balance", nameKey = "IGUI_TWA_Proc_WeldMetal", icon = "WeldingMask",
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
         consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, skill = "MetalWelding:1", time = 400, sound = "CraftWelding",
     },
@@ -356,8 +358,10 @@ TWAProcedures.List = {
     -- is already the TOP/hardest reinforcement layer -- asking for less of
     -- the rarest material, not more, matches "reasonable relative to
     -- rarity" better than a flat qty across all 4 tiers.
+    -- Icon changed (request 2026-09-28) -- user gave "WireStack" (the
+    -- item's own type name); its real Icon field is "WireBundle".
     WeaveWire = {
-        category = "Toughness", nameKey = "IGUI_TWA_Proc_WeaveWire", icon = "Wire",
+        category = "Toughness", nameKey = "IGUI_TWA_Proc_WeaveWire", icon = "WireBundle",
         tool = { kind = "type", value = "Base.Pliers" },
         consumes = { { itemType = "Base.Wire", qty = 1 } }, skill = "Blacksmith:2", time = 200, sound = "CraftFixWeapon",
     },
@@ -394,12 +398,16 @@ TWAProcedures.List = {
     -- real material named after the procedure itself. =====
     -- Material widened + renamed "พันผ้า"->"ประกอบผ้า" (request 2026-09-28)
     -- -- any of these 3 real wrap-type materials works now, not just cloth.
+    -- Icon changed to "SheetRope" (request 2026-09-28) -- real, self-
+    -- referential icon confirmed.
     WrapClothImprov = {
-        category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapClothImprov", icon = "Rag",
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapClothImprov", icon = "SheetRope",
         consumes = { { itemTypes = { "Base.RippedSheets", "Base.LeatherStrips", "Base.DuctTape" }, qty = 1 } }, time = 100, sound = "FixWithTape",
     },
+    -- Icon changed (request 2026-09-28) -- user gave "GardenSaw" (the
+    -- item's own type name); its real Icon field is "Handsaw".
     SawWood = {
-        category = "Assembly", nameKey = "IGUI_TWA_Proc_SawWood", icon = "Plank",
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_SawWood", icon = "Handsaw",
         tool = { kind = "tag", value = "SAW" },
         time = 150, sound = "Sawing",
     },
@@ -549,8 +557,12 @@ TWAProcedures.List = {
         tool = { kind = "type", value = "Base.Tongs" },
         skill = "Blacksmith:2", forgeTier = 1, time = 150, sound = "CraftFixWeapon",
     },
+    -- Moved to its own new "Density" category (request 2026-09-28: "ย้ายชุบ
+    -- แข็ง อบเย็น ไปหมวดใหม่ สร้างความหนาแน่น ให้อยู่ถัดจากหมวดสร้างความ
+    -- แหลม") -- tool/skill/forgeTier/time/sound unchanged, only its UI
+    -- category tab changes; see TWAProcedures.Categories below.
     QuenchHarden = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_QuenchHarden", icon = "BlacksmithTongs",
+        category = "Density", nameKey = "IGUI_TWA_Proc_QuenchHarden", icon = "BlacksmithTongs",
         tool = { kind = "type", value = "Base.Tongs" },
         skill = "Blacksmith:2", forgeTier = 1, time = 150, sound = "CraftFixWeapon",
     },
@@ -599,10 +611,11 @@ TWAProcedures.List = {
     -- ต้องการเตาตีเหล็กธรรมดาหรือสูงกว่า") -- a real forge-SHAPING action
     -- genuinely needing a real forge, matching the same forgeTier=2 gate
     -- AnnealMetal below now has.
-    -- Icon changed (request 2026-09-28) -- user gave "WoodenMallet" (the
-    -- item's own type name); its real Icon field is "WoodMallet".
+    -- Icon changed twice same day: first to "WoodMallet" (from user-given
+    -- "WoodenMallet", the item's own type name), then to "HammerStone"
+    -- (self-referential, requested directly by that exact name).
     ForgeShape = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "WoodMallet",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeShape", icon = "HammerStone",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
         skill = "Blacksmith:4", forgeTier = 2, time = 400, sound = "Hammering",
@@ -617,15 +630,18 @@ TWAProcedures.List = {
     -- forgeTier exactly as given; no material consumption was specified.
     -- Icon changed (request 2026-09-28) -- user gave "SteelIngotMold" (the
     -- item's own type name); its real Icon field is "SteelMold_Ingot".
+    -- Moved to the new "Density" category same day as QuenchHarden above.
     AnnealMetal = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "SteelMold_Ingot",
+        category = "Density", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "SteelMold_Ingot",
         tool = { kind = "type", value = "Base.Tongs" },
         skill = "Blacksmith:4", forgeTier = 2, time = 250, sound = "CraftFixWeapon",
     },
-    -- Icon changed to "HammerStone" (request 2026-09-28) -- real, self-
-    -- referential icon confirmed.
+    -- Icon changed (request 2026-09-28, follow-up) -- user gave
+    -- "BallPeenHammer" (the item's own type name); its real Icon field is
+    -- "BallPeenHammer_Forged". Name also changed same day: "ตีพับเหล็ก" ->
+    -- "ตีพับทบ".
     ForgeFold = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "HammerStone",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_ForgeFold", icon = "BallPeenHammer_Forged",
         tool = { { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "SLEDGEHAMMER" }, { kind = "tag", value = "CLUB_HAMMER" } },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
@@ -662,14 +678,24 @@ TWAProcedures.List = {
 -- engine).
 -- request 2026-09-28: PrecisionGrind removed from Sharpness/Piercing
 -- entirely (it no longer exists as a procedure at all -- QuenchHarden took
--- over its rules-engine slot instead, but stays displayed under Metallurgy
--- only, not added here); ForgeShape moved OUT of Sharpness/Piercing into
--- Metallurgy's own ids list below (it used to appear under both Sharpness
--- AND Piercing deliberately, per an earlier request -- that dual-listing is
--- gone now that it lives under Metallurgy instead, a single home). Follow-up
--- same day: ForgeShape's OWN rules-engine slot (the top crit band) was then
--- also handed off to a brand-new AnnealMetal procedure -- also Metallurgy-
--- only, never dual-listed under Sharpness/Piercing either.
+-- over its rules-engine slot instead); ForgeShape moved OUT of Sharpness/
+-- Piercing into the Metallurgy/Blacksmithing category below (it used to
+-- appear under both Sharpness AND Piercing deliberately, per an earlier
+-- request -- that dual-listing is gone now that it lives under this one
+-- category instead). Follow-up same day: ForgeShape's OWN rules-engine slot
+-- (the top crit band) was then also handed off to a brand-new AnnealMetal
+-- procedure.
+-- Follow-up request, same day: "เปลี่ยนชื่อหมวดการถลุงโลหะเป็น การตีเหล็ก
+-- เอาไปไว้ถัดจากหมวดการประกอบ" -- the category formerly called Metallurgy
+-- (การถลุงโลหะ, "smelting") is renamed to Blacksmithing (การตีเหล็ก,
+-- "ironworking") and moved to right after Assembly -- the internal Lua
+-- `key`/translation key STAY "Metallurgy" (nothing else references either
+-- string, so renaming them would only add risk with no visible effect;
+-- only the actually-displayed `nameKey` text changes). "ย้ายชุบแข็ง อบเย็น
+-- ไปหมวดใหม่ สร้างความหนาแน่น ให้อยู่ถัดจากหมวดสร้างความแหลม" -- QuenchHarden/
+-- AnnealMetal (both re-tagged `category = "Density"` above) move OUT of
+-- Metallurgy/Blacksmithing into a brand-new "Density" category, positioned
+-- right after Piercing.
 TWAProcedures.Categories = {
     { key = "Assembly", nameKey = "IGUI_TWA_ProcCat_Assembly", ids = {
         'WrapClothImprov', 'SawWood', 'SmashBottle', 'BreakBranch',
@@ -678,18 +704,19 @@ TWAProcedures.Categories = {
         'AssembleSpike', 'AssembleBrake', 'AssembleBucket', 'AssembleKettle',
         'AssembleRakeHead', 'AssembleSpadeHead',
     } },
+    { key = "Metallurgy", nameKey = "IGUI_TWA_ProcCat_Metallurgy", ids = {
+        'StartFire', 'MeltMetal', 'PourMold', 'PourMoldLarge', 'CoolCast',
+        'WeldWork', 'WeldWorkComplex', 'PolishMetal', 'GrindMetal', 'EngravePattern',
+        'ForgeShape', 'ForgeFold', 'ForgeComplex', 'ForgeVacuum',
+    } },
     { key = "Sharpness", nameKey = "IGUI_TWA_ProcCat_Sharpness", ids = { 'SharpenEdge', 'StropLeather' } },
     { key = "Piercing", nameKey = "IGUI_TWA_ProcCat_Piercing", ids = { 'KnapHead', 'TaperPoint' } },
+    { key = "Density", nameKey = "IGUI_TWA_ProcCat_Density", ids = { 'QuenchHarden', 'AnnealMetal' } },
     { key = "Handle", nameKey = "IGUI_TWA_ProcCat_Handle", ids = { 'MakeHandle', 'WrapBind', 'MakeLongHandle', 'ReinforcedBind', 'MakeRivetedHandle', 'TightenBolts' } },
     { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'HammerNails', 'CounterweightHead', 'WeldMetal' } },
     { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
     { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
     { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
-    { key = "Metallurgy", nameKey = "IGUI_TWA_ProcCat_Metallurgy", ids = {
-        'StartFire', 'MeltMetal', 'PourMold', 'PourMoldLarge', 'CoolCast', 'QuenchHarden', 'AnnealMetal',
-        'WeldWork', 'WeldWorkComplex', 'PolishMetal', 'GrindMetal', 'EngravePattern',
-        'ForgeShape', 'ForgeFold', 'ForgeComplex', 'ForgeVacuum',
-    } },
 }
 
 TWAProcedures.Order = {}
