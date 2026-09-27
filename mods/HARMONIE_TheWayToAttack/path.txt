@@ -1,0 +1,203 @@
+HARMONIE_TheWayToAttack — แผนผังไฟล์ทั้งหมดของม็อดนี้ (path + มีไว้ทำไม)
+================================================================================
+ไฟล์นี้สร้างไว้เพื่อให้ Claude Code เซสชันถัดไป (หรือตัวผู้ใช้เอง) เข้าใจโครงสร้าง
+ม็อดได้เร็ว โดยไม่ต้องไล่อ่านทุกไฟล์ใหม่ทั้งหมด — อ่านไฟล์นี้ก่อน แล้วค่อยเปิด
+ไฟล์จริงที่เกี่ยวข้องกับงานที่จะทำเท่านั้น
+ควรอ่าน mods/workflow.txt คู่กันเสมอ (มีกฎ/API จริงที่ยืนยันแล้วของทั้งเกม ไม่ใช่
+แค่ม็อดนี้) — path.txt นี้บอกแค่ "ไฟล์นี้อยู่ไหน ทำหน้าที่อะไร" ส่วน workflow.txt
+บอก "กลไกจริงของเกมทำงานยังไง เคยพังตรงไหน แก้ยังไง"
+
+────────────────────────────────────────────────────────────────────────────
+ราก (mods/HARMONIE_TheWayToAttack/)
+────────────────────────────────────────────────────────────────────────────
+mod.info
+  ข้อมูลม็อด: name/id/description/modversion/versionMin/require=NeatUI_Framework
+  /poster=/icon=/author=. ต้อง bump modversion ทุกครั้งที่ไฟล์จริงของม็อดเปลี่ยน
+  (workflow.txt 8.5) แล้ว commit+push ทันที (เป็นข้อตกลงมาตรฐานของผู้ใช้แล้ว)
+
+PROCEDURES_REFERENCE.txt (339 บรรทัด)
+  เอกสารสรุปกรรมวิธี (procedure) ทั้งหมดในระบบคราฟ — 57 กรรมวิธี แบ่งเป็น
+  10 หมวดหมู่ (Assembly/Metallurgy/Sharpness/Piercing/Density/Handle/Balance/
+  Structure/Toughness/WearResist) พร้อม tool/material/skill/icon ของแต่ละอัน.
+  อัปเดตทุกครั้งที่กรรมวิธีเปลี่ยน — ใช้เช็คสถานะปัจจุบันแทนการไล่อ่าน
+  HARMONIE_TWA_Procedures.lua ทั้งไฟล์.
+
+poster.png (256x256) / icon.png (64x64)
+  รูปโปสเตอร์/ไอคอนสำหรับ Steam Workshop — ปัจจุบันเป็น placeholder ที่ generate
+  ด้วย PowerShell System.Drawing (พื้นเข้ม+ตัวอักษร "THE WAY TO ATTACK"/"WTA")
+  ยังไม่ใช่อาร์ตจริง เปลี่ยนได้ทุกเมื่อ.
+
+_reference_assets/
+  "บ่อพัก" ไฟล์อาร์ต (texture/model/script) ที่ดึงมาจาก 2 ม็อดอ้างอิงจริง —
+  ไม่ได้อยู่ใน media/ ของม็อด เกมไม่โหลดโฟลเดอร์นี้เลย ใช้เป็นที่ "หยิบไปใช้"
+  เวลาจะเพิ่มไอเทมใหม่เท่านั้น:
+    _reference_assets/MWPWeapons42/  <- จาก "[B42] MWPWeapons" (Madax's Melee
+        Weapon Pack Reworked), Workshop ID 3747202678
+    _reference_assets/SOMW/          <- จาก "Simple Overhaul: Melee Weapons",
+        Workshop ID 3052668642
+    _reference_assets/README.txt     <- บันทึกแหล่งที่มา + ต้องให้เครดิต/ขอ
+        อนุญาตก่อนเผยแพร่จริง (ดูรายละเอียดเต็มใน workflow.txt/
+        WEAPON_CRAFTING_MOD_REFERENCE.txt)
+
+────────────────────────────────────────────────────────────────────────────
+42/  (โฟลเดอร์เวอร์ชันจริงที่เกมโหลด — versionMin=42.0.0)
+────────────────────────────────────────────────────────────────────────────
+42/mod.info, 42/poster.png, 42/icon.png
+  สำเนาจริงที่เกมอ่าน (เหมือนไฟล์ที่รากแต่ path นี้คือของจริงที่ mod.info ชี้ถึง
+  — จริง ๆ คือไฟล์เดียวกัน อยู่ผิดที่ผิดคำอธิบายไม่ได้ เพราะ mod.info ต้องอยู่ใน
+  42/ เท่านั้นตามโครงสร้าง PZ).
+
+──── 42/media/lua/client/ (โค้ดที่รันฝั่ง client เท่านั้น — UI ทั้งหมด) ────
+HARMONIE_TWA_CraftUI.lua (1928 บรรทัด — ไฟล์ที่ใหญ่ที่สุดในม็อด)
+  หน้าต่าง UI คราฟหลักทั้งหมด (ISPanel แบบ custom, ไม่ใช้ vanilla 9-patch):
+  panel ซ้าย = รายชื่อสูตร+ค้นหา+filter หมวดหมู่, panel กลาง = รายละเอียดสูตร+
+  ปุ่ม Cancel/Incomplete/Finish (แต่ละปุ่มเป็น timed action จริงมีเกจ+abort ได้),
+  panel ขวา = คลังกรรมวิธีทั้งหมด (คลิกทำได้เฉพาะที่ elig­ible+อยู่ในสูตรที่เลือก).
+  เก็บ session state ไว้ในตัว UI เอง (self.activeCenterKind ฯลฯ), ไม่ persist
+  ข้ามการปิดหน้าต่าง.
+
+HARMONIE_TWA_CraftTrigger.lua (93 บรรทัด)
+  จุดเปิดหน้าต่างคราฟ: hotkey (TWA_OpenCraftUI) + คลิกขวาไอเทม (ถ้าเป็นอาวุธ/
+  base item จะ auto-search ชื่อ, ถ้ามี TWA_RecipeId ใน ModData จะ resume สูตรที่
+  ทำค้างไว้) + คลิกขวาพื้น/โต๊ะ (เปิดเปล่า).
+
+HARMONIE_TWA_PartsUI.lua (506 บรรทัด)
+  หน้าต่าง UI แยกสำหรับ "ดัดแปลงอาวุธที่มีอยู่แล้ว" — ช่องอัปเกรด Grip/Head/
+  Tactical/Weight, ใช้กับอาวุธ melee ได้ทุกชิ้น (ไม่เกี่ยวกับระบบคราฟด้านบน).
+
+HARMONIE_TWA_PartsTrigger.lua (41 บรรทัด)
+  จุดเปิดหน้าต่าง Parts UI (hotkey TWA_OpenPartsUI).
+
+HARMONIE_TWA_UpgradeAction.lua (42 บรรทัด)
+  ISBaseTimedAction สำหรับ "ติดตั้ง/ถอด part" บนอาวุธ — ใช้โดย PartsUI.
+
+HARMONIE_TWA_TierTooltip.lua (308 บรรทัด)
+  hook เข้า tooltip ของไอเทมตอนเอาเมาส์ชี้: ถ้าเป็นอาวุธจริงจะคำนวณ DPS/tier/
+  สถิติทั้ง 13 ค่าแบบ "สด" จาก getter จริงของไอเทม (ไม่ใช้เลขนิ่งที่ baked ไว้),
+  ถ้าไอเทมมี TWA_RecipeId (กำลังทำค้างอยู่) จะโชว์ checklist กรรมวิธีที่ทำไปแล้ว,
+  ถ้าทำเสร็จแล้วจะโชว์แถบชื่อผู้คราฟ+เกรด (S/A/B/C/D/E/F).
+
+TWA_PerformProcedureAction.lua (75 บรรทัด)
+  ISBaseTimedAction สำหรับ "ทำกรรมวิธี 1 อัน" — เล่นเสียง+ให้ XP+consume
+  material จริงตอน perform() เท่านั้น (หยุดกลางทางจะไม่เสียของ).
+
+TWA_FinishCraftAction.lua (142 บรรทัด)
+  ISBaseTimedAction สำหรับปุ่ม "เสร็จสิ้น" — consume base/base2 แล้ว spawn
+  ไอเทมผลลัพธ์, ประทับชื่อผู้คราฟ (TWA_CraftedBy) + สุ่มเกรด (TWA_Grade, ตาราง
+  S/A/B/C/D/E/F ที่ 0/1/3/6/15/25/50%). ห้าม setName()/เปลี่ยนชื่อไอเทมเด็ดขาด
+  (คำสั่งชัดเจนจากผู้ใช้).
+
+TWA_IncompleteCraftAction.lua (80 บรรทัด)
+  ISBaseTimedAction สำหรับปุ่ม "ไม่สมบูรณ์" — เขียน TWA_RecipeId+
+  TWA_DoneProcedures ลง ModData ของ base item เท่านั้น (ไม่ spawn/consume
+  อะไรเพิ่ม) เพื่อให้อีกคน/อีกทีหยิบมาทำต่อได้ (ระบบคราฟร่วมกันหลายคน).
+
+TWA_CancelCraftAction.lua (65 บรรทัด)
+  ISBaseTimedAction สำหรับปุ่ม "ยกเลิก" — ล้างกรรมวิธีที่ทำมาทั้งหมดของสูตร/
+  ไอเทมนั้น (ทั้ง session ปัจจุบันและ ModData ที่ bookmark ไว้).
+
+──── 42/media/lua/shared/ (โค้ด/ข้อมูลที่ทั้ง client และ server ใช้ร่วมกัน) ────
+HARMONIE_TWA_Procedures.lua (947 บรรทัด)
+  "คลังกรรมวิธี" หลักของทั้งม็อด — TWAProcedures.List (57 กรรมวิธี: tool/tool2/
+  consumes/skill/forgeTier/time/sound/icon ของแต่ละอัน) + TWAProcedures.
+  Categories (ลำดับ 10 หมวดหมู่ที่ UI ใช้แสดง) + ฟังก์ชันเช็ค/ใช้จริง
+  (CheckEligibility/DescribeAll/Consume/AwardXP) + ระบบเช็คเตาตีเหล็กใกล้ตัว
+  (nearbyForgeTier ผ่าน sprite name จริง). แก้ล่าสุด (2026-09-28): 7 กรรมวิธี
+  ปรับ tool ให้ตรงกับ tag combo จริงของ vanilla (ดู workflow.txt 8.14).
+
+HARMONIE_TWA_RecipeData.lua (759 บรรทัด — ไฟล์ GENERATED ห้ามแก้มือ)
+  ตารางสูตรคราฟทั้งหมด (base/base2/baseAlt, category, procedures ที่ต้องทำ,
+  Stats สำรอง) ของ 137 อาวุธ HARMONIE + อาวุธ vanilla ทุกชิ้นที่มีสูตร
+  Weaponry จริง. สร้างจากสคริปต์ gen_craftdata.js (อยู่นอกม็อด ใน scratchpad
+  ของเซสชัน ไม่ได้ commit ไว้ในนี้) — จะแก้กฎการ assign กรรมวิธีต้องไปแก้
+  gen_craftdata.js แล้ว generate ใหม่ ไม่ใช่แก้ไฟล์นี้ตรง ๆ.
+
+HARMONIE_TWA_PartSystem.lua (113 บรรทัด)
+  logic กลางของระบบดัดแปลงอาวุธ (Grip/Head/Tactical/Weight) — ใช้ร่วมกันโดย
+  PartsUI.lua (client) และใช้เช็ค isMeleeWeapon จาก TierTooltip.lua ด้วย.
+
+──── 42/media/lua/shared/Translate/ (คำแปล EN/TH — เติมได้อย่างเดียว ห้ามเขียนทับทั้งไฟล์) ────
+EN/IG_UI.json, TH/IG_UI.json (159 บรรทัดเท่ากัน)
+  คำแปล key ทั้งหมดของ UI คราฟ+parts (ปุ่ม, ชื่อกรรมวิธี, ชื่อหมวดหมู่,
+  tooltip ฯลฯ) รูปแบบ IGUI_TWA_*.
+
+TH/ItemName.json (149 บรรทัด — ไม่มีไฟล์ EN คู่กัน เพราะ DisplayName ในสคริปต์
+  ไอเทมเองเป็นภาษาอังกฤษอยู่แล้ว)
+  คำแปลชื่อไอเทม/อาวุธเป็นภาษาไทย.
+
+EN/UI.json, TH/UI.json (6 บรรทัดเท่ากัน)
+  label ของ keybind 2 ปุ่ม (เปิดหน้าต่างคราฟ / เปิดหน้าต่างดัดแปลงอาวุธ) —
+  key คือ UI_optionscreen_binding_*.
+
+──── 42/media/scripts/ (item script จริงของเกม — ItemType/craftRecipe ก็อยู่รูปแบบนี้) ────
+TWA_weapons_axes.txt (363 บรรทัด) / TWA_weapons_blades.txt (719) /
+TWA_weapons_blunts.txt (786) / TWA_weapons_spears.txt (1529)
+  นิยามไอเทมอาวุธ HARMONIE ของแต่ละหมวด (module HARMONIE_TheWayToAttack) —
+  stat จริงทุกตัว (MinDamage/MaxDamage/ConditionMax/CriticalChance ฯลฯ).
+
+TWA_weapons_MWP1.txt (1181 บรรทัด) / TWA_weapons_MWP2.txt (2516 บรรทัด)
+  นิยามไอเทมอาวุธที่ย้ายมาจาก MWPWeapons42 แล้ว re-namespace เป็น
+  module HARMONIE_TheWayToAttack (แยกเป็น 2 ไฟล์เพราะจำนวนมาก ไม่มีความหมาย
+  อื่นในการแบ่ง).
+
+TWA_items_other.txt (94 บรรทัด)
+  ไอเทมอื่นที่ไม่ใช่อาวุธ: เครื่องมือ (GardenShears ฯลฯ) + สายโซ่วัตถุดิบโลหะ
+  6 ชิ้นของระบบ Metallurgy (lump ดิบ 1 ชิ้น + bar ไล่เกรด 5 ชิ้น ที่คราฟได้
+  ผ่าน UI เท่านั้น ไม่มีไอเทมตั้งต้นในเกม).
+
+TWA_WeaponParts.txt (46 บรรทัด)
+  4 ไอเทม weaponpart สำหรับระบบดัดแปลงอาวุธ (Grip/Head/Tactical/Weight) —
+  ItemType = base:weaponpart, ใช้กับ PartSystem.lua.
+
+TWA_models_MWP1.txt (304) / TWA_models_MWP2.txt (561)
+  ประกาศ model (mesh+texture+attachment offset) ของอาวุธที่มาจาก MWPWeapons42
+  — ต้องอยู่ module Base เสมอ (ธรรมเนียมของเกม โมเดลไม่ namespace ตามม็อด).
+
+TWA_models_MWP_fix.txt (305 บรรทัด)
+  เติม model block ที่ MWPWeapons42 ตัวจริงลืมประกาศไว้ 26 ชิ้น (มี mesh/
+  texture ให้แล้วแต่ไม่มีบล็อก model) — ใช้ offset/rotate สูตรเดียวกับที่
+  MWPWeapons42 ใช้กับอาวุธอื่น ๆ ของตัวเอง.
+
+TWA_models_SOMW.txt (1055 บรรทัด)
+  ประกาศ model ของอาวุธที่มาจาก SOMW (module Base เหมือนกัน).
+
+TWA_attachments_SOMW.txt (46 บรรทัด)
+  เพิ่มจุด attachment "longblade_right/left" บน FemaleBody/MaleBody (module
+  Base) — จำเป็นสำหรับอาวุธหมวด longblade จาก SOMW ที่ต้องมีจุดสะพายที่ตัว
+  ละคร ซึ่ง vanilla ไม่มีให้โดย default.
+
+──── 42/media/models_X/ (ไฟล์โมเดล .fbx จริง — เนื้ออาร์ต ไม่ใช่โค้ด) ────
+weapons/1handed/  (106 ไฟล์) — โมเดลอาวุธมือเดียวทั้งหมด (มีด/ขวานเล็ก/ค้อน ฯลฯ)
+weapons/2handed/  (98 ไฟล์)  — โมเดลอาวุธสองมือทั้งหมด (ดาบยาว/ขวานใหญ่/หอก ฯลฯ)
+WorldItems/       (9 ไฟล์)   — โมเดลตอนไอเทมวางอยู่บนพื้น (ไม่ถืออยู่ในมือ)
+ราก models_X/     (4 ไฟล์)   — โมเดลเครื่องมือ (GardenSaw/Hacksaw/SharpTrowel/
+                                Trowel)
+  ไฟล์พวกนี้แค่ "เนื้อโมเดล" — ไฟล์ที่บอกว่าโมเดลไหนผูกกับไอเทมไหนคือ
+  42/media/scripts/TWA_models_*.txt ด้านบน (ชื่อไฟล์ .fbx ต้องตรงกับชื่อใน
+  `model NAME { mesh = ... }` เป๊ะ ๆ).
+
+──── 42/media/textures/ (ไฟล์ภาพ .png จริง — icon + skin ของโมเดล) ────
+weapons/1handed/ (105 ไฟล์) / weapons/2handed/ (92 ไฟล์) / WorldItems/ (8 ไฟล์)
+  texture ของโมเดลแต่ละชิ้น (ต้องตรงกับ `texture = ...` ใน model block).
+ราก textures/ (145 ไฟล์)
+  ไอคอนไอเทมในช่อง inventory (Icon = ชื่อไฟล์ ในสคริปต์ item — เคยพลาดบ่อยที่
+  ชื่อ Icon จริงไม่ตรงกับชื่อ type ของไอเทม ต้อง grep เช็คก่อนใช้เสมอ ดู
+  workflow.txt 8.12).
+
+================================================================================
+สรุปสั้น ๆ ถ้าจะแก้อะไรต่อ (เช็คตรงนี้ก่อนเปิดไฟล์จริง):
+- แก้กรรมวิธี (tool/material/skill/icon/หมวดหมู่) -> HARMONIE_TWA_Procedures.lua
+  แล้วอัปเดต PROCEDURES_REFERENCE.txt ด้วย
+- แก้ว่าสูตรไหนต้องทำกรรมวิธีอะไร (rule ตาม stat) -> ต้องไปแก้ gen_craftdata.js
+  (ไม่ได้อยู่ในม็อด อยู่ scratchpad ของเซสชัน Claude — ถ้าไฟล์นั้นหายไปต้อง
+  เขียนใหม่จาก logic ที่บันทึกไว้ใน workflow.txt 8.9/8.11) แล้ว generate
+  HARMONIE_TWA_RecipeData.lua ใหม่ ห้ามแก้ RecipeData.lua ตรง ๆ
+- แก้ UI คราฟ (ปุ่ม/ช่องค้นหา/การจัดวาง) -> HARMONIE_TWA_CraftUI.lua
+- แก้ UI ดัดแปลงอาวุธ -> HARMONIE_TWA_PartsUI.lua + PartSystem.lua
+- เพิ่มอาวุธใหม่ -> เพิ่ม item script ใน TWA_weapons_*.txt ที่ตรงหมวด + model
+  block ใน TWA_models_*.txt (ถ้ามี mesh ใหม่) + ไฟล์ .fbx/.png จริงใน
+  models_X//textures/ + ไม่ลืมเพิ่มเข้า RecipeData (generate ใหม่)
+- เพิ่ม/แก้คำแปล -> เติมท้ายไฟล์ JSON ที่เกี่ยวข้องเท่านั้น (ห้ามเขียนทับทั้งไฟล์)
+  แล้ว validate ด้วย node -e "JSON.parse(require('fs').readFileSync(...))"
+- ทำ workshop sync -> mods/check_workshop_sync.sh (เช็ค) แล้ว
+  mods/sync_to_workshop.sh HARMONIE_TheWayToAttack 42 (แก้ให้ตรงกัน)
