@@ -9,9 +9,9 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
 
 -- Sharpness (สร้างความคม) (4) --
   - SharpenEdge
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=FlintKnapping:1, time=100ms, sound=SharpenBladeWhetstone
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=(none), skill=Carving:1, time=100ms, sound=SharpenBladeWhetstone
   - StropLeather
-      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=FlintKnapping:2, time=150ms, sound=SharpenBladeWhetstone
+      tool=Base.Whetstone / Base.File / Base.SmallFileSet, consumes=LeatherStrips/RippedSheets x1, skill=Carving:2, time=150ms, sound=SharpenBladeWhetstone
   - PrecisionGrind
       tool=Base.File / Base.Whetstone / Base.SmallFileSet, consumes=(none), skill=Blacksmith:3, time=250ms, sound=SharpenBladeWhetstone
   - ForgeShape
@@ -67,7 +67,7 @@ CURRENT LIBRARY -- 43 procedures, 8 categories
   - FireTreat
       consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=200ms, sound=CraftFixWeapon
   - CoatWax
-      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=FlintKnapping:1, time=150ms, sound=CraftFixWeapon
+      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Carving:1, time=150ms, sound=CraftFixWeapon
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=250ms, sound=CraftFixWeapon
 

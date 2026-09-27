@@ -46,11 +46,15 @@
 -- Maintenance and Mechanics were tried for several others in this same
 -- pass (file/whetstone honing, wrench/bolts, hand drill, pliers+wire) but
 -- explicitly REJECTED by the user ("ไม่อยากให้ใช้ Machanic กับ
--- maintenance") -- those all stayed on/reverted to their original skill
--- (FlintKnapping for the file/whetstone and drill/coating steps,
--- Blacksmith for the wrench/bolts and pliers/wire steps), even though
--- Maintenance/Mechanics are both real, grep-confirmed Perks -- a deliberate
--- design choice, not an accuracy correction, so don't re-introduce them.
+-- maintenance") -- DON'T re-introduce either one, this was a deliberate
+-- design choice, not an accuracy correction. Follow-up request: SharpenEdge/
+-- StropLeather/CoatWax moved explicitly to Carving:1/Carving:2/Carving:1
+-- (same levels as before) instead of back to FlintKnapping -- the user's
+-- own call, given Carving already covers MakeHandle/MakeLongHandle's
+-- knife-work just above. TightenBolts/PrecisionGrind/WeaveWire/
+-- SurfaceCoating stayed on Blacksmith and DrillCore/TaperPoint stayed on
+-- FlintKnapping (not named in that follow-up, so left alone -- don't move
+-- these to Carving without being told to).
 -- Every OTHER procedure's skill (ForgeShape/KnapHead/MakeRivetedHandle/
 -- RivetPlate: Blacksmith with a real forge/hammer tool; ReinforcedBind/
 -- WrapLeather/StringSinew: Tailoring with cloth/leather/thread; WeldMetal:
@@ -113,7 +117,7 @@ TWAProcedures.List = {
     SharpenEdge = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_SharpenEdge", icon = "Whetstone2",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = {}, skill = "FlintKnapping:1", time = 100, sound = "SharpenBladeWhetstone",
+        consumes = {}, skill = "Carving:1", time = 100, sound = "SharpenBladeWhetstone",
     },
     -- Strop material widened to LeatherStrips OR RippedSheets (cloth strop
     -- is a real lower-grade substitute for a leather one) -- request
@@ -121,7 +125,7 @@ TWAProcedures.List = {
     StropLeather = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "LeatherStrips",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "FlintKnapping:2", time = 150, sound = "SharpenBladeWhetstone",
+        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "Carving:2", time = 150, sound = "SharpenBladeWhetstone",
     },
     -- Tool widened to any sharpening tool, not just a file (request
     -- 2026-09-27).
@@ -281,7 +285,7 @@ TWAProcedures.List = {
     CoatWax = {
         category = "WearResist", nameKey = "IGUI_TWA_Proc_CoatWax", icon = "Candle",
         tool = { { kind = "type", value = "Base.Lighter" }, { kind = "type", value = "Base.Matches" } },
-        consumes = { { itemType = "Base.Candle", qty = 1 } }, skill = "FlintKnapping:1", time = 150, sound = "CraftFixWeapon",
+        consumes = { { itemType = "Base.Candle", qty = 1 } }, skill = "Carving:1", time = 150, sound = "CraftFixWeapon",
     },
     SurfaceCoating = {
         category = "WearResist", nameKey = "IGUI_TWA_Proc_SurfaceCoating", icon = "Bleach",

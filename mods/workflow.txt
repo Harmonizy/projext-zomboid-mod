@@ -4027,6 +4027,16 @@ THIRTY-FIFTH round (2026-09-27) -- "ไม่อยากให้ใช้ Mach
   Regenerated PROCEDURES_REFERENCE.txt. Re-validated (brace balance clean),
   modversion 0.21.0 -> 0.21.1.
 
+THIRTY-SIXTH round (2026-09-27) -- "SharpenEdge, StropLeather, CoatWax ใช้
+carving": follow-up to the previous round's rejection -- these 3 specific
+procedures should use Carving after all (not back to FlintKnapping), same
+levels as before (Carving:1/Carving:2/Carving:1). Left TightenBolts/
+PrecisionGrind/WeaveWire/SurfaceCoating on Blacksmith and DrillCore/
+TaperPoint on FlintKnapping since they weren't named this time. Updated
+Procedures.lua's own comment to record this precisely. Regenerated
+PROCEDURES_REFERENCE.txt. Re-validated (brace balance clean), modversion
+0.21.1 -> 0.21.2.
+
 
 9. Checklist before starting any new work
 =======================================
