@@ -290,7 +290,7 @@ function TWAStrikeGame:drawRock()
     local gc = self.rockCol
     for i, t in ipairs(self.targets) do
         if t.depth > 0 then
-            local len = 30 + 70 * math.min(1, t.depth)
+            local len = 12 + 26 * math.min(1, t.depth) -- round 17: shorter ("รอยร้าวสั้นลง")
             for k = 0, 4 do
                 local a = 6.2832 * B.hash(i * 7 + k, 93)
                 local x1, y1 = t.x, t.y

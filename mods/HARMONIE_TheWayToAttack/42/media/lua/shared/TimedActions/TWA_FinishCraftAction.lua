@@ -113,7 +113,8 @@ function TWA_FinishCraftAction:complete()
     local inv = self.character:getInventory()
     -- Round 16: a rolling recipe (Gemstone) gives what the roll picked.
     local rolled = S.isRollRecipe(recipe)
-    local newItem = inv:AddItem(rolled and S.rollGemstone(recipe) or recipe.result)
+    -- Round 17: the better the overall quality, the likelier a gem.
+    local newItem = inv:AddItem(rolled and S.rollGemstone(recipe, nil, S.overall(recipe, map) or "Bad") or recipe.result)
     if newItem then
         -- Stamped BEFORE the item is sent to the client, so it arrives with
         -- its ModData already on it.
@@ -122,6 +123,9 @@ function TWA_FinishCraftAction:complete()
         -- Round 12: lets the client's grade-reveal window find THIS item
         -- once it arrives (multiplayer adds it a moment later).
         if self.token and self.token ~= "" then md.TWA_CraftToken = self.token end
+        -- Round 17 ("อัญมณีทีได้มาจากสูตรหินมณีให้ขึ้นคำในtooltip ... สถานะ:
+        -- ดิบ"): a gem from the stone is RAW -- kept for later gem cutting.
+        if rolled and S.isRolledGem(newItem:getFullType()) then md.TWA_GemState = "Raw" end
         if not S.isMaterialRecipe(recipe) and not rolled then
             local word = S.overall(recipe, map) or S.LEGACY_WORD
             md.TWA_Quality = word
@@ -156,7 +160,9 @@ function TWA_FinishCraftAction:new(character, recipeId, qualities, token)
     -- Round 6: same time as the recipe's procedures (was a flat 300).
     -- Round 9: always the sandbox "CraftButtonSeconds" (default 5 s; "action
     -- time เป็น 5วิเสมอ").
-    o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("CraftButtonSeconds", 0.1))
+    -- Round 17: Finish/Incomplete/Cancel 40 percent shorter than Start
+    -- (sandbox "EndButtonSeconds", default 1.8 s).
+    o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("EndButtonSeconds", 0.1))
     o.forceProgressBar = true
     return o
 end

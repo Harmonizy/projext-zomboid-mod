@@ -323,10 +323,14 @@ function ISToolTipInv:render()
     local craftedBy = item:getModData().TWA_CraftedBy
     local grade = item:getModData().TWA_Grade
     local quality = item:getModData().TWA_Quality
-    if craftedBy or grade or quality then
+    local gemState = item:getModData().TWA_GemState -- round 17: "Raw" from the Gemstone recipe
+    if craftedBy or grade or quality or gemState then
         local lines = {}
         if craftedBy and craftedBy ~= "" then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipCraftedBy", craftedBy), color = { r = 0.85, g = 0.85, b = 0.85 } }
+        end
+        if gemState then
+            lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipGemState", getText("IGUI_TWA_GemState_" .. gemState)), color = { r = 0.7, g = 0.85, b = 1 } }
         end
         if quality and TWACraftState.isWord(quality) then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipQuality", TWACraftState.wordText(quality)), color = TWACraftState.WORD_COLOR[quality] }
