@@ -13,6 +13,7 @@ TWAConfig.DEFAULTS = {
     ForgeSearchRadius = 3,
     MissUsesMaterials = true,
     IncompleteZeroDamage = true,
+    AllowWeaponDebug = true,
     BadBelow = 1.67,
     GoodBelow = 2.34,
     GradeChance1 = 1,

@@ -27,6 +27,8 @@
     "Sandbox_HARMONIE_TWA_MissUsesMaterials_tooltip": "A procedure scored Miss still uses up its materials (it is not counted as done either way).",
     "Sandbox_HARMONIE_TWA_IncompleteZeroDamage": "Unfinished items do 0 damage",
     "Sandbox_HARMONIE_TWA_IncompleteZeroDamage_tooltip": "An item left Incomplete (or with the window closed) has its damage set to 0 until the craft is finished.",
+    "Sandbox_HARMONIE_TWA_AllowWeaponDebug": "Weapon stat debug editor (admins / -debug)",
+    "Sandbox_HARMONIE_TWA_AllowWeaponDebug_tooltip": "Admins, and anyone running with -debug, can right-click a weapon to edit every stat it has. Off: the menu never appears.",
     "Sandbox_HARMONIE_TWA_BadBelow": "Overall Bad below",
     "Sandbox_HARMONIE_TWA_BadBelow_tooltip": "The procedures' average score (Bad=1, Good=2, Excellent=3) below this is an overall Bad.",
     "Sandbox_HARMONIE_TWA_GoodBelow": "Overall Good below",

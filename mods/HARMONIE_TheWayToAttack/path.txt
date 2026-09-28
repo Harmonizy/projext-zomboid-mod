@@ -146,6 +146,13 @@ HARMONIE_TWA_Config.lua + HARMONIE_TWA_ConfigDefaults.lua (รอบ 9)
   tools/gen_sandbox.py (อยู่นอกโฟลเดอร์ 42 ไม่ได้ส่งขึ้น Workshop) --
   จะเพิ่ม/แก้ค่า ให้แก้ตารางในสคริปต์แล้วรันใหม่ ห้ามแก้ไฟล์ที่สร้างออกมาตรงๆ
 
+HARMONIE_TWA_WeaponDebug.lua (รอบ 11) + client/HARMONIE_TWA_WeaponDebugUI.lua
+  ตัวแก้ stats อาวุธสำหรับแอดมิน/-debug: คลิกขวาอาวุธ แก้ได้ทุกค่าที่อาวุธมีจริง
+  + ค่าของม็อดเรา, MP ส่งไปปรับที่เซิร์ฟเวอร์แล้วส่งกลับ, เก็บใน ModData
+  TWA_StatOverride และใส่ซ้ำตอนถือ ตอนโหลด และก่อนตีทุกครั้ง
+media/sound/TWA_*.wav + media/scripts/TWA_sounds.txt (รอบ 11) เสียงทั้งหมดของ
+  ม็อด สังเคราะห์เองด้วย tools/gen_sounds.py (ห้ามแก้ไฟล์ .wav ตรงๆ)
+
 HARMONIE_TWA_CraftState.lua (ใหม่ 2026-09-28)
   ข้อมูล/ฟังก์ชันกลางของระบบคุณภาพ ใช้ทั้ง client (UI/tooltip) และ server
   (complete() ของ action): คำ Miss/Bad/Good/Excellent = 0/1/2/3, สูตรคุณภาพ

@@ -34,6 +34,7 @@ local ARC_STEPS = 14
 function TWASutureGame:onStart()
     self.need = math.floor(TWAConfig.num("SutureStitches", 1)) + math.floor(self.req / 2)
     self.done = 0
+    self.loopSoundName = "TWA_Sew" -- round 11
     self.band = TWAConfig.num("SutureZone", 1) * self.tol
     self.lo, self.hi = 0.55, 0.55 + 0.18 * self.tol
     self.tear = math.min(0.98, self.hi + 0.12)

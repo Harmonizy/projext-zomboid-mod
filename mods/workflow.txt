@@ -2814,6 +2814,29 @@ Round 10 (same day):
     KnifeShiv, SmashedBottle, Toothbrush_Shiv, MaterialLump, Tin and
     Titanium bars.
 
+Round 11 (same day):
+  - SILENT SOUNDS: the vanilla names used as proc.sound (Hammering, Sawing,
+    SharpenBladeWhetstone, CraftFixWeapon...) played nothing in B42 -- never
+    grep-verified. Now every sound is our own: tools/gen_sounds.py
+    synthesizes 20 WAVs (16-bit mono 44.1 kHz -- the format Casualties
+    Undead ships, so WAV works) into 42/media/sound/ and writes
+    42/media/scripts/TWA_sounds.txt (module Base; Item/3D, loop = true for
+    working loops; UI for TWA_Success/TWA_Fail). Procedures, the four craft
+    buttons and every minigame use them; Strike cuts a 260 ms burst per
+    blow. Re-run the script to change a sound.
+  - WEAPON DEBUG EDITOR (admin / -debug, sandbox AllowWeaponDebug): right-
+    click any HandWeapon. shared/HARMONIE_TWA_WeaponDebug.lua + client/
+    HARMONIE_TWA_WeaponDebugUI.lua. Every stat whose getter+setter exist
+    on the item, plus our ModData (grade, quality, crafted by, unfinished).
+    Why vanilla-debug edits "did nothing": (1) MP combat trusts the server's
+    copy -- ours goes client->server (access level checked there) and the
+    server mirrors it back; (2) per-item stats aren't guaranteed to stick --
+    ours are stored in ModData TWA_StatOverride and re-applied on equip,
+    game start and OnWeaponSwingHitPoint (the damage is rolled right after
+    it -- learned from Casualties Undead's crawl-damage code); (3) MaxDamage
+    reads back through sharpness, so the RAW value is set. Condition and
+    Sharpness are set once, not pinned. Reset restores the script values.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

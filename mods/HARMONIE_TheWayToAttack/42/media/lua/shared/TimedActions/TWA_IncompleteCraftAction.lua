@@ -46,7 +46,7 @@ end
 function TWA_IncompleteCraftAction:start()
     self:setActionAnim(CharacterActionAnims.Craft)
     if not isServer() then
-        self.actionSound = self.character:playSound("CraftFixWeapon")
+        self.actionSound = self.character:playSound("TWA_Craft")
     end
 end
 

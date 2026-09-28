@@ -32,6 +32,7 @@ local LOAD = 12
 
 function TWACoatGame:onStart()
     self.fire = self.variant == "fire"
+    self.loopSoundName = self.fire and "TWA_Weld" or "TWA_Coat" -- round 11
     self.mat = MATERIAL[self.variant] or MATERIAL.mud
     -- The surface: a long ellipse over the blade.
     self.cx, self.cy, self.rx, self.ry = 330, 170, 230, 55

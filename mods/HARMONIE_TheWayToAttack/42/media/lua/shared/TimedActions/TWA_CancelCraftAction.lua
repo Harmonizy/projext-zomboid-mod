@@ -41,14 +41,24 @@ end
 
 function TWA_CancelCraftAction:start()
     self:setActionAnim(CharacterActionAnims.Craft)
+    if not isServer() then self.actionSound = self.character:playSound("TWA_Craft") end
+end
+
+function TWA_CancelCraftAction:stopSound()
+    if self.actionSound and self.actionSound ~= 0 then
+        self.character:stopOrTriggerSound(self.actionSound)
+    end
+    self.actionSound = nil
 end
 
 function TWA_CancelCraftAction:stop()
+    self:stopSound()
     if self.onEnd then self.onEnd() end
     ISBaseTimedAction.stop(self)
 end
 
 function TWA_CancelCraftAction:perform()
+    self:stopSound()
     if self.onComplete then self.onComplete() end
     if self.onEnd then self.onEnd() end
     ISBaseTimedAction.perform(self)

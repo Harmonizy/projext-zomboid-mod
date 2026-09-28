@@ -40,6 +40,7 @@ end
 
 function TWAIncisionGame:onStart()
     self.engrave = self.variant == "engrave"
+    self.loopSoundName = "TWA_Carve" -- round 11
     self.path = pathFor(self.variant)
     self.seg, self.total = {}, 0
     for i = 1, #self.path - 1 do

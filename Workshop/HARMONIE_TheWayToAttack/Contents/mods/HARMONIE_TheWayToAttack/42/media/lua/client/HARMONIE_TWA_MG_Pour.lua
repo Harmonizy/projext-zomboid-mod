@@ -18,6 +18,7 @@ local B = TWAMinigameBase
 local C = B.COL
 
 function TWAPourGame:onStart()
+    self.loopSoundName = "TWA_Pour" -- round 11
     self.fill = 0
     self.tilt = 0
     self.flow = 0

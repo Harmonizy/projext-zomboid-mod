@@ -61,6 +61,9 @@ OPTS = [
  ("IncompleteZeroDamage", B, True, None, None, "HARMONIE_TheWayToAttack", "Unfinished items do 0 damage", "ไอเท็มที่ยังไม่เสร็จดาเมจเป็น 0",
   "An item left Incomplete (or with the window closed) has its damage set to 0 until the craft is finished.",
   "ไอเท็มที่กดไม่สมบูรณ์ (หรือปิดหน้าต่าง) จะมีดาเมจเป็น 0 จนกว่าจะทำเสร็จ"),
+ ("AllowWeaponDebug", B, True, None, None, "HARMONIE_TheWayToAttack", "Weapon stat debug editor (admins / -debug)", "ตัวแก้ stats อาวุธสำหรับดีบัก (แอดมิน / -debug)",
+  "Admins, and anyone running with -debug, can right-click a weapon to edit every stat it has. Off: the menu never appears.",
+  "แอดมิน และผู้ที่เปิดเกมด้วย -debug คลิกขวาอาวุธเพื่อแก้ stats ได้ทุกค่า ถ้าปิด เมนูนี้จะไม่แสดงเลย"),
  # ---- Quality & grade
  ("BadBelow", D, 1.67, 0.0, 3.0, "HARMONIE_TWA_Quality", "Overall Bad below", "คุณภาพรวม แย่ ถ้าต่ำกว่า",
   "The procedures' average score (Bad=1, Good=2, Excellent=3) below this is an overall Bad.",
