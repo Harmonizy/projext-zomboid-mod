@@ -185,22 +185,10 @@ function TWAWrapGame:updateGame(dt)
     self.progress = math.min(1, self.turns / self.need)
 end
 
--- A steel plate that actually reads as metal: a darker bevel, brushed
--- lines, a highlight edge, bolt heads in the corners.
+-- A steel plate with bolt heads in the corners (round 6: the shared
+-- metalPlate material).
 function TWAWrapGame:drawPlate(x, y, w, h)
-    self:rect(x - 3, y - 3, w + 6, h + 6, 1, { r = 0.22, g = 0.23, b = 0.25 })
-    self:rect(x, y, w, h, 1, { r = 0.56, g = 0.58, b = 0.62 })
-    for i = 1, math.floor(h / 6) do
-        local yy = y + i * 6
-        local shade = 0.5 + 0.12 * math.sin(i * 1.7)
-        self:line(x + 4, yy, x + w - 4, yy, 1, 0.35, { r = shade, g = shade + 0.02, b = shade + 0.05 })
-    end
-    self:line(x, y + 1, x + w, y + 1, 2, 0.8, { r = 0.85, g = 0.87, b = 0.9 })
-    self:line(x + 1, y, x + 1, y + h, 2, 0.6, { r = 0.8, g = 0.82, b = 0.86 })
-    for _, p in ipairs({ { x + 14, y + 14 }, { x + w - 14, y + 14 }, { x + 14, y + h - 14 }, { x + w - 14, y + h - 14 } }) do
-        self:disc(p[1], p[2], 6, 1, { r = 0.35, g = 0.36, b = 0.4 }, 12)
-        self:line(p[1] - 4, p[2], p[1] + 4, p[2], 2, 1, C.dark)
-    end
+    self:metalPlate(x, y, w, h, { bolts = true, seed = 3 })
 end
 
 function TWAWrapGame:renderGame()
@@ -231,7 +219,7 @@ function TWAWrapGame:renderGame()
             self:textC(getText("IGUI_TWA_MG_Wrap_LetGo"), cx, gy - 26, C.guide, pulse)
         end
     elseif self.drill then
-        self:rect(cx - 140, cy - 80, 280, 160, 1, C.wood)
+        self:woodBoard(cx - 140, cy - 80, 280, 160, { seed = 5 })
         local depth = math.min(1, self.turns / self.need)
         self:disc(cx, cy, 8 + 10 * depth, 1, C.wood2, 18)
         self:disc(cx, cy, 4 + 8 * depth, 1, C.dark, 14)
@@ -253,8 +241,9 @@ function TWAWrapGame:renderGame()
     else
         -- The handle, standing up, and the wraps laid round it so far.
         local hx, top, bot, hw = cx - 16, cy - 130, cy + 130, 32
-        self:rect(hx, top, hw, bot - top, 1, C.wood)
+        self:disc(cx, top, hw / 2 + 2, 1, C.wood2, 14)
         self:disc(cx, top, hw / 2, 1, C.wood, 14)
+        self:woodBoard(hx, top, hw, bot - top, { vertical = true, seed = 8, knots = 1 })
         local n = math.floor(self.turns)
         local pitch = (bot - top - 20) / (self.need + 1)
         for i = 1, n do

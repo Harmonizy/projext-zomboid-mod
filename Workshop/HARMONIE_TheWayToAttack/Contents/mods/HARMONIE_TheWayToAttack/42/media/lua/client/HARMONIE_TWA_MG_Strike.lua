@@ -32,6 +32,14 @@ local VARIANTS = {
     smash = { count = function() return 1 end, surface = "glass" },
 }
 
+-- Round 6 (request 2026-09-28: "การตีแต่ละระดับทำให้ยากขึ้นไหม ถ้ายังก็ทำ
+-- เลย ให้เป็นความเร็วในที่อุณหภูมิลดลงเร็วขึ้นไม่เอาความเร็วในการลดลงของวง"):
+-- each forging level cools faster -- the ring is NOT made faster. How long
+-- a full-heat bar takes to go cold (ms), before the skill bonus.
+local FORGE_COOL_MS = {
+    ForgeShape = 14000, ForgeFold = 10500, ForgeComplex = 8000, ForgeVacuum = 6000,
+}
+
 function TWAStrikeGame:onStart()
     local v = VARIANTS[self.variant] or VARIANTS.nails
     self.v = v
@@ -72,6 +80,7 @@ function TWAStrikeGame:onStart()
     self.window = 115 * (self.R0 / self.period) * self.tol -- px of ring error still "good"
     self.aim = self.Rt * self.tol            -- anywhere on the lit mark counts
     self.heat = 1
+    self.coolMs = FORGE_COOL_MS[self.procId] or 14000
     self.coal = { x = 20, y = 150, w = 100, h = 90 }
     self.timeLimit = 25000 + n * 9000
     -- Cursor (request 2026-09-28): always the ball-peen hammer, except in
@@ -174,7 +183,7 @@ function TWAStrikeGame:updateGame(dt)
     end
     self.lastRing = self:ringRadius()
     if self.surface == "hot" and not self.reheating then
-        self.heat = math.max(0, self.heat - dt / (14000 + 700 * self.have))
+        self.heat = math.max(0, self.heat - dt / (self.coolMs + 700 * self.have))
         if self.heat > 0.5 and ZombRand(6) == 0 then
             self:burst("ember", self.wx + ZombRandFloat(0, self.ww), self.wy, 1, { ttl = 500 })
         end
@@ -188,20 +197,18 @@ end
 
 function TWAStrikeGame:renderGame()
     local wx, wy, ww, wh = self.wx, self.wy, self.ww, self.wh
-    -- Anvil / bench under the work.
-    self:rect(wx - 20, wy + wh, ww + 40, 22, 1, C.dark)
-    self:line(wx - 20, wy + wh, wx + ww + 20, wy + wh, 2, 1, C.faint)
+    -- Anvil / bench under the work: dark cast iron for metal work, a
+    -- workbench top for wood.
+    if self.surface == "wood" or self.surface == "stone" or self.surface == "glass" then
+        self:woodBoard(wx - 20, wy + wh, ww + 40, 22, { tint = { r = 0.33, g = 0.22, b = 0.12 }, seed = 9, knots = 1 })
+    else
+        self:metalPlate(wx - 20, wy + wh, ww + 40, 22, { tint = { r = 0.30, g = 0.31, b = 0.33 }, seed = 8 })
+    end
 
     if self.surface == "wood" then
-        self:rect(wx, wy, ww, wh, 1, C.wood)
-        for i = 1, 5 do
-            local gy = wy + i * wh / 6
-            self:line(wx + 6, gy, wx + ww - 6, gy + ((i % 2) * 2 - 1) * 3, 1, 0.5, C.wood2)
-        end
+        self:woodBoard(wx, wy, ww, wh, { seed = 3 })
     elseif self.surface == "hot" then
-        local r, g, b = B.heatColor(self.heat)
-        self:rectRGB(wx, wy + 20, ww, wh - 40, 1, r, g, b)
-        self:frame(wx, wy + 20, ww, wh - 40, 1, C.line)
+        self:hotMetal(wx, wy + 20, ww, wh - 40, self.heat, 5)
         -- The coals.
         local c = self.coal
         self:rect(c.x, c.y, c.w, c.h, 1, C.dark)
@@ -228,8 +235,7 @@ function TWAStrikeGame:renderGame()
         self:polyline({ { cx - 35, wy + wh }, { cx - 35, wy + 20 }, { cx - 12, wy - 10 }, { cx - 12, wy - 50 },
                         { cx + 12, wy - 50 }, { cx + 12, wy - 10 }, { cx + 35, wy + 20 }, { cx + 35, wy + wh } }, 2, 1, C.steam)
     else -- metal (rivets)
-        self:rect(wx, wy, ww, wh, 1, C.metal)
-        self:frame(wx, wy, ww, wh, 1, C.line)
+        self:metalPlate(wx, wy, ww, wh, { seed = 2 })
     end
 
     -- The workpiece's own icon, faint, so you see what you are making.
@@ -240,8 +246,11 @@ function TWAStrikeGame:renderGame()
         local active = i == self.idx
         if self.surface == "wood" or self.surface == "metal" then
             local h = 30 * (1 - t.depth)
+            self:line(t.x + 1, t.y - h, t.x + 1, t.y, 3, 0.5, C.dark)
             self:line(t.x, t.y - h, t.x, t.y, 3, 1, C.metal)
-            self:rect(t.x - 7, t.y - h - 3, 14, 4, 1, t.done and C.faint or C.line)
+            self:line(t.x - 0.8, t.y - h, t.x - 0.8, t.y, 1, 0.7, C.line)
+            self:rect(t.x - 7, t.y - h - 3, 14, 4, 1, t.done and C.faint or { r = 0.7, g = 0.72, b = 0.76 })
+            self:line(t.x - 7, t.y - h - 3, t.x + 7, t.y - h - 3, 1, 0.8, C.line)
         else
             self:ring(t.x, t.y, 6, 2, t.done and 0.35 or 1, t.done and C.faint or C.line, 14)
         end

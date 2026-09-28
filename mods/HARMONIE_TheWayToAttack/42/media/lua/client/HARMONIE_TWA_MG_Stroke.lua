@@ -33,7 +33,9 @@ local VARIANTS = {
     polish  = { strokes = function() return 8 end, vmin = 0.5, vmax = 2.4, band = 14, flick = true },
     carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 6, tool = "KnifeSushi" },
     saw     = { strokes = function() return 6 end, vmax = 1.4, band = 7, tool = "Handsaw", alternate = true },
-    weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.05, band = 5, tool = "BlowTorch" },
+    -- Burning is harder (round 6: "ให้ไหม้ยากกว่าเดิม"): the too-slow limit
+    -- halved (0.05 -> 0.025) and it burns at half the rate.
+    weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.025, burnRate = 0.000125, band = 5, tool = "BlowTorch" },
     engrave = { strokes = function() return 1 end, vmax = 0.35, band = 4.5, tool = "KnifeSushi" },
 }
 
@@ -41,9 +43,14 @@ local function buildPath(variant)
     if variant == "saw" then
         return { { 170, 210 }, { 450, 210 } }
     elseif variant == "weld" then
-        -- Back to a straight seam (request 2026-09-28: "การเชื่อมกลับไปใช้
-        -- เส้นตรง") -- the zig-zag weave of the previous round is gone.
-        return { { 110, 200 }, { 510, 200 } }
+        -- Zig-zag weave along the seam again (round 6: "ให้โซนกลับไปเป็น
+        -- ฟันปลา"; round 5 had made it a straight line).
+        local pts = {}
+        for i = 0, 10 do
+            pts[#pts + 1] = { 110 + i * 40, 200 + ((i % 2 == 0) and -14 or 14) }
+        end
+        pts[1][2], pts[#pts][2] = 200, 200
+        return pts
     elseif variant == "engrave" then
         return { { 130, 230 }, { 200, 160 }, { 270, 230 }, { 340, 160 }, { 410, 230 }, { 480, 160 } }
     elseif variant == "carve" then
@@ -180,7 +187,7 @@ function TWAStrokeGame:onDrag(x, y, dt)
     if speed > self.vmax then
         self:tooFast(dt * 0.0004 * (speed / self.vmax - 1), getText("IGUI_TWA_MG_Stroke_TooFast"), x, y)
     elseif self.vmin and not self.v.flick and speed < self.vmin and self.along > 0.02 then
-        self:spend(dt * 0.00025, getText("IGUI_TWA_MG_Stroke_TooSlow"), true)
+        self:spend(dt * (self.v.burnRate or 0.00025), getText("IGUI_TWA_MG_Stroke_TooSlow"), true)
         if ZombRand(4) == 0 then self:burst("ember", x, y, 1) end
     end
 
@@ -218,14 +225,13 @@ function TWAStrokeGame:renderGame()
     local p1, p2 = self.path[1], self.path[#self.path]
     if vr == "saw" then
         -- A plank seen from the front; the cut deepens with every pass.
-        self:rect(120, 150, 380, 150, 1, C.wood)
-        for i = 1, 5 do self:line(126, 150 + i * 25, 494, 152 + i * 25, 1, 0.5, C.wood2) end
+        self:woodBoard(120, 150, 380, 150, { seed = 4 })
         local depth = 140 * self.done / self.need
         self:rect(306, 150, 8, depth, 1, C.dark)
     elseif vr == "weld" then
-        self:rect(100, 150, 420, 48, 1, C.metal)
-        self:rect(100, 202, 420, 48, 1, C.metal)
-        self:line(100, 200, 520, 200, 2, 1, C.dark)
+        self:metalPlate(100, 150, 420, 48, { seed = 1 })
+        self:metalPlate(100, 202, 420, 48, { seed = 2 })
+        self:line(100, 200, 520, 200, 3, 1, C.dark)
         for _, bd in ipairs(self.bead) do
             local x, y = self:pointAt(bd.t)
             local age = math.min(1, (self.elapsed - bd.hot) / 2500)
@@ -233,22 +239,33 @@ function TWAStrokeGame:renderGame()
             self:rectRGB(x - 4, y - 5, 8, 10, 1, r, g, b)
         end
     elseif vr == "engrave" then
-        self:rect(110, 130, 400, 130, 1, C.metal)
+        self:metalPlate(110, 130, 400, 130, { seed = 4 })
         for _, bd in ipairs(self.bead) do
             local x, y = self:pointAt(bd.t)
             self:rect(x - 1.5, y - 1.5, 3, 3, 1, C.dark)
         end
     elseif vr == "carve" then
-        self:rect(100, 186, 420, 28, 1, C.wood)
+        self:woodBoard(100, 186, 420, 28, { seed = 6, knots = 1 })
         local shaved = 420 * self.done / self.need
-        self:rect(100, 186, shaved, 28, 1, { r = 0.62, g = 0.46, b = 0.26 })
+        if shaved > 1 then self:woodBoard(100, 186, shaved, 28, { tint = { r = 0.66, g = 0.5, b = 0.3 }, seed = 7, knots = 0 }) end
     else
         -- A blade: spine above, the edge along the path, a tang at the heel.
         local sx, sy = p1[1], p1[2] - 70
         local tx, ty = p2[1], p2[2] - 20
         local shine = self.done / self.need
-        self:quad(p1[1], p1[2], p2[1], p2[2], tx, ty, sx, sy, 1, 0.45 + 0.3 * shine, 0.47 + 0.3 * shine, 0.52 + 0.3 * shine)
-        self:rect(p1[1] - 70, p1[2] - 60, 72, 40, 1, C.wood)
+        -- Steel blade: darker flat, a lighter bevel strip along the edge,
+        -- a highlight on the spine.
+        self:quad(p1[1], p1[2], p2[1], p2[2], tx, ty, sx, sy, 1, 0.42 + 0.2 * shine, 0.44 + 0.2 * shine, 0.49 + 0.2 * shine)
+        local bx1, by1 = p1[1] + (sx - p1[1]) * 0.28, p1[2] + (sy - p1[2]) * 0.28
+        local bx2, by2 = p2[1] + (tx - p2[1]) * 0.28, p2[2] + (ty - p2[2]) * 0.28
+        self:quad(p1[1], p1[2], p2[1], p2[2], bx2, by2, bx1, by1, 1, 0.62 + 0.3 * shine, 0.64 + 0.3 * shine, 0.68 + 0.3 * shine)
+        for k = 1, 6 do
+            local u = k / 7
+            self:line(p1[1] + (sx - p1[1]) * u * 0.9, p1[2] + (sy - p1[2]) * u * 0.9,
+                p2[1] + (tx - p2[1]) * u * 0.9, p2[2] + (ty - p2[2]) * u * 0.9, 1, 0.12, C.line)
+        end
+        self:line(sx, sy, tx, ty, 2, 0.6, C.line)
+        self:woodBoard(p1[1] - 70, p1[2] - 60, 72, 40, { seed = 2, knots = 0 })
         self:line(p1[1], p1[2], p2[1], p2[2], 2, 0.5 + 0.5 * shine, C.line)
     end
 

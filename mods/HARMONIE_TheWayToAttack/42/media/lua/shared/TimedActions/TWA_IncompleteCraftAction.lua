@@ -28,6 +28,7 @@
 --============================================================================
 
 require "TimedActions/ISBaseTimedAction"
+require "HARMONIE_TWA_Procedures"
 require "HARMONIE_TWA_CraftState"
 
 TWA_IncompleteCraftAction = ISBaseTimedAction:derive("TWA_IncompleteCraftAction")
@@ -82,7 +83,8 @@ end
 function TWA_IncompleteCraftAction:new(character, recipeId)
     local o = ISBaseTimedAction.new(self, character)
     o.recipeId = recipeId
-    o.maxTime = 300
+    -- Round 6: same time as the recipe's procedures (was a flat 300).
+    o.maxTime = TWACraftState.recipeActionTime(TWACraftState.getRecipeById(recipeId))
     o.forceProgressBar = true
     return o
 end

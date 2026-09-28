@@ -149,8 +149,14 @@ function TWAHeatGame:renderGame()
             local u = i / 12
             pts[#pts + 1] = { 150 + u * 360, 200 - sag * (1 - (2 * u - 1) ^ 2) }
         end
-        self:polyline(pts, 12, 1, C.wood)
-        self:polyline(pts, 2, 0.6, C.wood2)
+        -- Bark: a dark rim, the brown body, a lighter top edge and knots.
+        self:polyline(pts, 14, 1, C.wood2)
+        self:polyline(pts, 10, 1, C.wood)
+        for i = 1, #pts - 1 do
+            local a, b = pts[i], pts[i + 1]
+            self:line(a[1], a[2] - 3, b[1], b[2] - 3, 2, 0.5, { r = 0.6, g = 0.44, b = 0.26 })
+            if i % 3 == 0 then self:disc(a[1], a[2] + 1, 3, 0.8, C.wood2, 8) end
+        end
         self:disc(330, 220 - sag * 0.02, 18, 1, C.dark, 14) -- the knee
         if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
         self:rect(160, 20, 340, 10, 1, C.dark)
@@ -169,9 +175,7 @@ function TWAHeatGame:renderGame()
         end
     end
     local workY = self.cool and (self.dragging and 215 or 150) or 190
-    local wr, wg, wb = B.heatColor(self.temp)
-    self:rectRGB(230, workY, 200, 36, 1, wr, wg, wb)
-    self:frame(230, workY, 200, 36, 1, C.line)
+    self:hotMetal(230, workY, 200, 36, self.temp, 6)
     if self.workTex then self:tex(self.workTex, 300, workY - 70, 60, 60, 0.6) end
 
     -- Hold meter.

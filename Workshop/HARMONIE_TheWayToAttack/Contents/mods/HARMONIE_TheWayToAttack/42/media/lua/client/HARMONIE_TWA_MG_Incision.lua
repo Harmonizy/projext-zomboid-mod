@@ -155,11 +155,11 @@ local CLASS_COL = {
 
 function TWAIncisionGame:renderGame()
     if self.engrave then
-        self:rect(110, 130, 400, 130, 1, C.metal)
+        self:metalPlate(110, 130, 400, 130, { seed = 4 })
     else
-        self:rect(100, 182, 420, 36, 1, C.wood)
+        self:woodBoard(100, 182, 420, 36, { seed = 6, knots = 1 })
         local shaved = 420 * self.done / self.passes
-        self:rect(100, 182, shaved, 36, 1, { r = 0.62, g = 0.46, b = 0.26 })
+        if shaved > 1 then self:woodBoard(100, 182, shaved, 36, { tint = { r = 0.66, g = 0.5, b = 0.3 }, seed = 7, knots = 0 }) end
     end
     -- Guide band.
     for _, s in ipairs(self.seg) do

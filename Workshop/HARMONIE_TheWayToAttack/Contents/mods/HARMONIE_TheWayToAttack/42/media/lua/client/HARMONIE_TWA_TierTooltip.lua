@@ -153,6 +153,20 @@ end
 -- manage their own clip/stencil around their declared width/height, so
 -- drawing beyond it is not safe to assume works.
 local origRender = ISToolTipInv.render
+-- Round 6 (request 2026-09-28: "ให้ stats ใน tooltip อาวุธ ให้มี ประเภท อีก 1
+-- ค่า แสดงอยู่ก่อน dps"): the weapon's category, in plain English like the
+-- crafting window's category tabs ("SmallBlade" -> "Small Blade").
+local function weaponTypeText(item, stats)
+    local cat = stats and stats.categories
+    if (not cat or cat == "") and item.getCategories then
+        local list = item:getCategories()
+        if list and list:size() > 0 then cat = tostring(list:get(0)) end
+    end
+    if not cat or cat == "" then return nil end
+    cat = cat:match("^[^,;%s]+") or cat
+    return (cat:gsub("(%l)(%u)", "%1 %2"))
+end
+
 function ISToolTipInv:render()
     origRender(self)
     if not self.item then return end
@@ -198,14 +212,17 @@ function ISToolTipInv:render()
         self:setHeight(self.height + (textH + 6))
         y = y + drawStatStrip(self, 2, y, self.width - 4, label, c, font)
 
-        local gridDef = {
+        local gridDef = {}
+        local typeText = weaponTypeText(item, stats)
+        if typeText then gridDef[1] = { typeText, "IGUI_TWA_Stat_Type", "%s" } end
+        for _, cellDef in ipairs({
             { dps, "IGUI_TWA_Stat_DPS", "%.2f" },
             { minD, "IGUI_TWA_Stat_MinDamage", "%.1f" }, { maxD, "IGUI_TWA_Stat_MaxDamage", "%.1f" },
             { baseSpeed, "IGUI_TWA_Stat_Speed", "%.2f" }, { weight, "IGUI_TWA_StatWeight", "%.1f" },
             { maxRange, "IGUI_TWA_Stat_Range", "%.2f" }, { critChance, "IGUI_TWA_Stat_CritChance", "%.0f%%" },
             { condMax, "IGUI_TWA_Stat_Condition", "%.0f" }, { condLower, "IGUI_TWA_Stat_Durability", "1:%.0f" },
             { knockdownMod, "IGUI_TWA_Stat_Knockdown", "%.1f" }, { pushBackMod, "IGUI_TWA_Stat_PushPower", "%.2f" },
-        }
+        }) do gridDef[#gridDef + 1] = cellDef end
         local handednessKey = twoHanded and "IGUI_TWA_Stat_TwoHanded" or "IGUI_TWA_Stat_OneHanded"
         gridDef[#gridDef + 1] = { getText(handednessKey), "IGUI_TWA_Stat_Handedness", "%s" }
         if subCategory and subCategory ~= "" then
@@ -266,6 +283,9 @@ function ISToolTipInv:render()
         local header = getText("IGUI_TWA_ResumingItem") .. " (" ..
             (resultItem and resultItem:getDisplayName() or recipe.result) .. ")"
         local lines = { { text = header, color = { r = 0.6, g = 0.8, b = 1 } } }
+        if item:getModData().TWA_Incomplete then
+            lines[#lines + 1] = { text = getText("IGUI_TWA_Tooltip_Unfinished"), color = { r = 1, g = 0.45, b = 0.35 } }
+        end
         for _, procId in ipairs(recipe.procedures) do
             local proc = TWAProcedures.List[procId]
             if proc then

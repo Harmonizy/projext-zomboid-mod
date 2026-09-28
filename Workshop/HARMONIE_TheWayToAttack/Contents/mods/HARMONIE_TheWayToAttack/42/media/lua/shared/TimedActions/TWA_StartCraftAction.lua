@@ -4,7 +4,8 @@
 -- Request 2026-09-28: "ทำให้ไม่สามารถทำได้หลายสูตรพร้อมกัน เมื่อเลือกสูตรใด
 -- ไปแล้ว ให้หักวัตถุดิบตั้งต้นและชิ้นงานเสริมไปทันที". Queued by the crafting
 -- window's Start button. Takes the base item and the supplementary item
--- (base2) out of the inventory and makes the recipe the character's one
+-- (base2) out of the inventory (round 6: or the unfinished item Incomplete
+-- handed out, when resuming) and makes the recipe the character's one
 -- active craft (TWACraftState.beginActive). A bookmarked base item brings
 -- its saved progress into the active craft. The items are snapshotted
 -- (type, condition, ModData) so Cancel/Incomplete can hand them back as
@@ -26,7 +27,9 @@ function TWA_StartCraftAction:isValid()
     -- Only one craft at a time. (The server holds the record in MP; the
     -- client window enforces the same thing on its side.)
     if (isServer() or not isClient()) and S.getActive(self.character) then return false end
-    if self.recipe.base and not S.findItem(self.character, self.baseItem) then return false end
+    -- The base slot also carries an unfinished item being resumed, which a
+    -- recipe without a base item can have too.
+    if (self.recipe.base or self.baseItem) and not S.findItem(self.character, self.baseItem) then return false end
     if self.recipe.base2 and not S.findItem(self.character, self.base2Item) then return false end
     return true
 end
@@ -51,9 +54,11 @@ function TWA_StartCraftAction:complete()
     local S = TWACraftState
     local recipe = self.recipe
     if not recipe or S.getActive(self.character) then return false end
-    local base = recipe.base and S.findItem(self.character, self.baseItem)
+    local base = (recipe.base or self.baseItem) and S.findItem(self.character, self.baseItem)
     local base2 = recipe.base2 and S.findItem(self.character, self.base2Item)
-    if (recipe.base and not base) or (recipe.base2 and not base2) then return false end
+    if ((recipe.base or self.baseItem) and not base) or (recipe.base2 and not base2) then return false end
+    -- Only a bookmark for THIS recipe may be resumed through the base slot.
+    if not recipe.base and base and base:getModData().TWA_RecipeId ~= recipe.id then return false end
     local map = S.bookmarkMap(base, recipe.id)
     local baseSnap, base2Snap = S.snapshotItem(base), S.snapshotItem(base2)
     if base then S.removeItem(self.character, base) end
