@@ -489,6 +489,185 @@ function TWAMinigameBase:textC(str, x, y, c, a, font)
     self:drawTextCentre(str, self:ox() + x, self:oy() + y, c.r, c.g, c.b, a or 1, font or UIFont.Small)
 end
 
+-- Materials ----------------------------------------------------------------
+--
+-- Round 6 (request 2026-09-28: "texture เหล็กในมินิเกมบางอันไม่เหมือนเหล็ก
+-- ใส่ใจเรื่อง texture วัสดุต่างๆในมินิเกมมากกว่านี้"): flat single-colour
+-- rectangles read as "a grey box", not steel or wood. These draw a surface
+-- the way it catches light: a top-to-bottom shading gradient, the grain or
+-- brushing of the material, a soft specular sheen, and a bevelled edge.
+-- Everything is deterministic (no per-frame randomness), so nothing
+-- flickers.
+
+local function hash(i, k)
+    local v = math.sin(i * 12.9898 + (k or 0) * 78.233) * 43758.5453
+    return v - math.floor(v)
+end
+TWAMinigameBase.hash = hash
+
+local function mixc(c, f) return { r = c.r * f, g = c.g * f, b = c.b * f } end
+
+-- Vertical light-to-dark gradient in `n` strips.
+function TWAMinigameBase:gradient(x, y, w, h, top, bottom, n, a)
+    n = n or 10
+    local sh = h / n
+    for i = 0, n - 1 do
+        local k = i / math.max(1, n - 1)
+        self:rectRGB(x, y + i * sh, w, sh + 0.5, a or 1,
+            top.r + (bottom.r - top.r) * k, top.g + (bottom.g - top.g) * k, top.b + (bottom.b - top.b) * k)
+    end
+end
+
+local STEEL = { r = 0.60, g = 0.62, b = 0.66 }
+
+-- A steel (or any metal) plate. o.tint = base colour (default steel),
+-- o.brush = "h"/"v" brushing direction, o.bolts = corner bolt heads,
+-- o.seed varies the streaks between plates.
+function TWAMinigameBase:metalPlate(x, y, w, h, o)
+    o = o or {}
+    local base = o.tint or STEEL
+    local seed = o.seed or 1
+    -- Dark rim, then the body shaded lighter at the top.
+    self:rect(x - 2, y - 2, w + 4, h + 4, 1, mixc(base, 0.35))
+    self:gradient(x, y, w, h, mixc(base, 1.18), mixc(base, 0.72), math.max(6, math.floor(h / 8)))
+    -- Brushed streaks: many thin lines of slightly varying brightness.
+    if o.brush == "v" then
+        for i = 1, math.floor(w / 3) do
+            local xx = x + i * 3
+            local f = 0.8 + 0.45 * hash(i, seed)
+            self:line(xx, y + 2, xx, y + h - 2, 1, 0.22, mixc(base, f))
+        end
+    else
+        for i = 1, math.floor(h / 3) do
+            local yy = y + i * 3
+            local f = 0.8 + 0.45 * hash(i, seed)
+            local x0 = x + 2 + 30 * hash(i, seed + 3)
+            local x1 = x + w - 2 - 30 * hash(i, seed + 7)
+            self:line(x0, yy, x1, yy, 1, 0.22, mixc(base, f))
+        end
+    end
+    -- A soft diagonal sheen across the face.
+    local sw = math.min(w, h) * 0.5
+    for k = 0, 3 do
+        local off = w * 0.25 + k * sw * 0.18
+        local a = 0.07 - k * 0.012
+        local x1, x2 = x + off, x + off + sw * 0.35
+        self:quad(math.min(x + w, x1), y, math.min(x + w, x2), y,
+            math.max(x, math.min(x + w, x2 - h * 0.6)), y + h, math.max(x, math.min(x + w, x1 - h * 0.6)), y + h,
+            a, 1, 1, 1)
+    end
+    -- Bevel: light top/left, dark bottom/right.
+    self:line(x, y + 0.5, x + w, y + 0.5, 1.5, 0.7, mixc(base, 1.45))
+    self:line(x + 0.5, y, x + 0.5, y + h, 1.5, 0.5, mixc(base, 1.3))
+    self:line(x, y + h - 0.5, x + w, y + h - 0.5, 1.5, 0.8, mixc(base, 0.45))
+    self:line(x + w - 0.5, y, x + w - 0.5, y + h, 1.5, 0.7, mixc(base, 0.5))
+    if o.bolts then
+        local m = math.min(14, math.min(w, h) * 0.2)
+        for _, p in ipairs({ { x + m, y + m }, { x + w - m, y + m }, { x + m, y + h - m }, { x + w - m, y + h - m } }) do
+            self:disc(p[1] + 1, p[2] + 1.5, 6, 0.6, mixc(base, 0.3), 12)
+            self:disc(p[1], p[2], 6, 1, mixc(base, 0.8), 12)
+            self:disc(p[1] - 1.5, p[2] - 1.5, 2.5, 0.6, mixc(base, 1.4), 8)
+            self:line(p[1] - 4, p[2] + 1, p[1] + 4, p[2] - 1, 1.5, 0.9, mixc(base, 0.35))
+        end
+    end
+end
+
+-- Metal at a forging heat: the steel plate, its colour pulled toward the
+-- heat ramp, plus a glow around it while it is hot.
+function TWAMinigameBase:hotMetal(x, y, w, h, heat, seed)
+    local r, g, b = TWAMinigameBase.heatColor(heat)
+    local k = math.min(1, math.max(0, (heat - 0.2) / 0.6))
+    local tint = { r = STEEL.r + (r - STEEL.r) * k, g = STEEL.g + (g - STEEL.g) * k, b = STEEL.b + (b - STEEL.b) * k }
+    if heat > 0.35 then
+        for i = 1, 3 do
+            local e = i * 4
+            self:rectRGB(x - e, y - e, w + 2 * e, h + 2 * e, 0.08 * (heat - 0.3), r, g * 0.8, b * 0.5)
+        end
+    end
+    self:metalPlate(x, y, w, h, { tint = tint, seed = seed or 5 })
+    -- Scale flecks on cooler metal.
+    if heat < 0.6 then
+        for i = 1, 14 do
+            local fx = x + 6 + (w - 12) * hash(i, 11)
+            local fy = y + 4 + (h - 8) * hash(i, 13)
+            self:rectRGB(fx, fy, 3, 2, 0.35 * (1 - heat), 0.15, 0.13, 0.12)
+        end
+    end
+end
+
+local WOOD = { r = 0.47, g = 0.31, b = 0.16 }
+
+-- A piece of wood. o.vertical = grain runs up/down, o.tint = wood colour,
+-- o.seed varies the grain and knots.
+function TWAMinigameBase:woodBoard(x, y, w, h, o)
+    o = o or {}
+    local base = o.tint or WOOD
+    local seed = o.seed or 1
+    self:rect(x - 2, y - 2, w + 4, h + 4, 1, mixc(base, 0.45))
+    if o.vertical then
+        -- Shade across the width (a rounded-ish face).
+        local n = math.max(6, math.floor(w / 6))
+        local sw = w / n
+        for i = 0, n - 1 do
+            local k = i / (n - 1)
+            local f = 1.12 - 0.35 * math.abs(k - 0.35)
+            self:rectRGB(x + i * sw, y, sw + 0.5, h, 1, base.r * f, base.g * f, base.b * f)
+        end
+    else
+        self:gradient(x, y, w, h, mixc(base, 1.12), mixc(base, 0.82), math.max(6, math.floor(h / 8)))
+    end
+    -- Grain: long gently wavy lines, darker and lighter.
+    local lines = o.vertical and math.floor(w / 5) or math.floor(h / 5)
+    for i = 1, lines do
+        local f = (hash(i, seed) < 0.5) and 0.72 or 1.2
+        local amp = 1.5 + 3 * hash(i, seed + 1)
+        local ph = 6.28 * hash(i, seed + 2)
+        local pts = {}
+        local steps = 8
+        for j = 0, steps do
+            local u = j / steps
+            if o.vertical then
+                pts[#pts + 1] = { x + i * 5 + math.sin(u * 5 + ph) * amp * 0.6, y + u * h }
+            else
+                pts[#pts + 1] = { x + u * w, y + i * 5 + math.sin(u * 5 + ph) * amp * 0.6 }
+            end
+        end
+        self:polyline(pts, 1, 0.35, mixc(base, f))
+    end
+    -- A knot or two.
+    for k = 1, (o.knots or 2) do
+        local kx = x + w * (0.15 + 0.7 * hash(k, seed + 5))
+        local ky = y + h * (0.2 + 0.6 * hash(k, seed + 6))
+        local r = math.min(w, h) * (0.06 + 0.05 * hash(k, seed + 7))
+        if r >= 2 then
+            self:disc(kx, ky, r, 0.85, mixc(base, 0.6), 12)
+            self:ring(kx, ky, r * 1.6, 1, 0.45, mixc(base, 0.7), 14)
+            self:disc(kx - r * 0.3, ky - r * 0.3, r * 0.4, 0.8, mixc(base, 0.4), 8)
+        end
+    end
+    self:line(x, y + 0.5, x + w, y + 0.5, 1.5, 0.5, mixc(base, 1.4))
+    self:line(x, y + h - 0.5, x + w, y + h - 0.5, 1.5, 0.7, mixc(base, 0.5))
+end
+
+-- Leather: warm brown, a faint pebbled texture and stitched-looking edges.
+function TWAMinigameBase:leather(x, y, w, h, o)
+    o = o or {}
+    local base = o.tint or { r = 0.45, g = 0.27, b = 0.14 }
+    self:rect(x - 1, y - 1, w + 2, h + 2, 1, mixc(base, 0.5))
+    self:gradient(x, y, w, h, mixc(base, 1.15), mixc(base, 0.8), 8)
+    for i = 1, math.floor(w * h / 220) do
+        local px = x + 2 + (w - 4) * hash(i, 21)
+        local py = y + 2 + (h - 4) * hash(i, 23)
+        local f = hash(i, 25) < 0.5 and 0.75 or 1.25
+        self:rectRGB(px, py, 2, 2, 0.35, base.r * f, base.g * f, base.b * f)
+    end
+    -- Stitched border.
+    for sx = x + 6, x + w - 10, 10 do
+        self:line(sx, y + 4, sx + 5, y + 4, 1.2, 0.7, mixc(base, 1.7))
+        self:line(sx, y + h - 4, sx + 5, y + h - 4, 1.2, 0.7, mixc(base, 1.7))
+    end
+end
+
 -- The tool in the player's hand, drawn at the trailing hand position.
 function TWAMinigameBase:drawTool()
     if not self.hx then return end

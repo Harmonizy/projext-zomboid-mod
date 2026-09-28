@@ -286,9 +286,9 @@
     "IGUI_TWA_MG_Incision_Done": "Cut clean.",
     "IGUI_TWA_MG_Incision_Depth": "Depth",
     "IGUI_TWA_StartCraft": "Start",
-    "IGUI_TWA_Tooltip_StartCraft": "Start this recipe: the base item and the supplementary item are taken right away, and the window stays on this recipe until you Cancel, leave it Incomplete or Finish. Closing the window before it is finished counts as Incomplete: the base item comes back to your bag with the progress saved on it (right-click it to carry on) and the supplementary item is returned.",
-    "IGUI_TWA_Tooltip_CancelStarted": "Cancel this craft: the base item and the supplementary item are given back as they were and every procedure done so far is dropped (materials already used by procedures are not refunded). Takes real time and can be stopped before it finishes.",
-    "IGUI_TWA_Tooltip_IncompleteStarted": "Stop for now: the base item comes back to your bag with the progress saved on it, and the supplementary item is returned. Right-click that base item later (you or someone else) to carry on where it was left. Closing the window does the same.",
+    "IGUI_TWA_Tooltip_StartCraft": "Start this recipe: the base material and the supplementary material are taken right away, and the window stays on this recipe until you Cancel, leave it Incomplete or Finish. Closing the window before it is finished counts as Incomplete.",
+    "IGUI_TWA_Tooltip_CancelStarted": "Cancel this craft: the base material (the original one, even when resuming an unfinished item) and the supplementary material are given back and every procedure done so far is dropped (materials already used by procedures are not refunded).",
+    "IGUI_TWA_Tooltip_IncompleteStarted": "Stop for now: you get the item itself, UNFINISHED -- its damage is 0 until the craft is finished -- with the progress saved on it, and the supplementary material back. Right-click the unfinished item later (you or someone else) to carry on. Closing the window does the same.",
     "IGUI_TWA_RedoProcedure": "Redo",
     "IGUI_TWA_StartFirst": "Press Start in the middle panel first",
     "IGUI_TWA_LockedToRecipe": "A craft is in progress - Cancel it (or leave it Incomplete) to switch recipe",
@@ -297,5 +297,8 @@
     "IGUI_TWA_ExtraTaken": "Taken - in the work",
     "IGUI_TWA_ExtraItemOwned": "Supplementary item ready",
     "IGUI_TWA_ExtraItemMissing": "Missing the supplementary item",
-    "IGUI_TWA_Tooltip_ClearSearch": "Clear the search"
+    "IGUI_TWA_Tooltip_ClearSearch": "Clear the search",
+    "IGUI_TWA_ResumeItemNote": "Unfinished item - carrying on from it",
+    "IGUI_TWA_Tooltip_Unfinished": "UNFINISHED - damage 0 until the craft is finished (right-click to carry on)",
+    "IGUI_TWA_Stat_Type": "Type"
 }

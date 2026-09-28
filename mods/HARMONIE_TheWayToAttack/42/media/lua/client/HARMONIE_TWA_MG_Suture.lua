@@ -5,10 +5,14 @@
 -- StringSinew, ReinforcedBind. Idea taken from Casualties Undead's suture
 -- game (request 2026-09-28, "ชอบไอเดียมินิเกม 2"), written from scratch.
 --
+-- Round 6 ("มินิเกม ร้อยเอ็น และ พันแน่นหนา ยังดูแปลกๆ"): redrawn as what it
+-- is -- a leather wrap on a wooden handle, sewn shut along its seam with
+-- diagonal stitches -- instead of a big sideways arc across a flat box.
+--
 -- Every stitch is two moves:
---   1. PIERCE: pick the needle up at the gold ring above the seam and draw
---      it along the dashed arc -- in at the top hole, under, out at the
---      bottom hole. Stray off the arc and it costs; far off and the needle
+--   1. PIERCE: pick the needle up at the gold ring and draw it along the
+--      dashed line -- in at the hole above the seam, across, out at the
+--      hole below it. Stray off the arc and it costs; far off and the needle
 --      slips out (start the stitch again).
 --   2. PULL: hold and draw the thread away from the exit hole. The further,
 --      the tighter (the gauge). Let go inside the green band: slack and you
@@ -41,18 +45,27 @@ function TWASutureGame:onStart()
     self.hint2 = getText("IGUI_TWA_MG_Suture_Hint2")
 end
 
--- Hole pair for the current stitch, spaced along the seam, and the arc
--- the needle follows between them (bulging to the right, "under" the work).
+local SEAM_Y = 190
+
+-- Where stitch i sits: its hole above the seam and its hole below it,
+-- offset so every stitch runs on the same diagonal.
+function TWASutureGame:stitchHoles(i)
+    local x = 175 + i * (270 / math.max(1, self.need - 1))
+    return x - 12, SEAM_Y - 34, x + 12, SEAM_Y + 34
+end
+
+-- Hole pair for the current stitch, and the path the needle follows
+-- between them (a gentle curve: in, across under the seam, out).
 function TWASutureGame:layoutStitch()
-    local x = 170 + self.done * (300 / math.max(1, self.need - 1))
-    self.topX, self.topY = x, 130
-    self.botX, self.botY = x, 250
+    self.topX, self.topY, self.botX, self.botY = self:stitchHoles(self.done)
     self.arc = {}
     for i = 0, ARC_STEPS do
-        local a = math.pi * (i / ARC_STEPS)
-        self.arc[#self.arc + 1] = { x + math.sin(a) * 55, 190 - math.cos(a) * 60 }
+        local u = i / ARC_STEPS
+        local bulge = math.sin(u * math.pi) * 10
+        self.arc[#self.arc + 1] = { self.topX + (self.botX - self.topX) * u + bulge,
+                                    self.topY + (self.botY - self.topY) * u }
     end
-    self.startX, self.startY = self.topX - 30, self.topY - 40
+    self.startX, self.startY = self.topX - 22, self.topY - 30
     self.along = 0
     self.tension = 0
 end
@@ -155,29 +168,42 @@ function TWASutureGame:updateGame(dt)
     self.progress = math.min(1, (self.done + part) / self.need)
 end
 
+function TWASutureGame:drawStitch(i)
+    local tx, ty, bx, by = self:stitchHoles(i)
+    self:line(tx + 1, ty + 1.5, bx + 1, by + 1.5, 3, 0.45, C.dark)   -- shadow
+    self:line(tx, ty, bx, by, 3, 1, THREAD)
+    self:line(tx, ty - 0.8, bx, by - 0.8, 1, 0.7, { r = 1, g = 0.95, b = 0.82 })
+end
+
+function TWASutureGame:drawHole(x, y, active)
+    self:disc(x, y, 4.5, 1, { r = 0.2, g = 0.11, b = 0.05 }, 10)
+    self:ring(x, y, 5, 1, 0.8, { r = 0.62, g = 0.42, b = 0.24 }, 10)
+    if active then self:ring(x, y, 9, 2, 0.9, C.guide, 14) end
+end
+
 function TWASutureGame:renderGame()
-    -- The binding: a strap over a wooden handle, the seam running across.
-    self:rect(120, 110, 380, 160, 1, C.wood)
-    self:rect(120, 150, 380, 80, 1, { r = 0.5, g = 0.32, b = 0.17 })
-    self:line(120, 190, 500, 190, 1, 0.5, C.wood2)
+    -- The wooden handle, and the leather wrapped round it: two edges of
+    -- the wrap meet along the seam in the middle.
+    self:woodBoard(90, 140, 440, 100, { seed = 12, knots = 1 })
+    self:leather(130, 128, 360, SEAM_Y - 128 - 2)
+    self:leather(130, SEAM_Y + 2, 360, 252 - SEAM_Y - 2, { tint = { r = 0.42, g = 0.25, b = 0.13 } })
+    self:line(130, SEAM_Y, 490, SEAM_Y, 3, 0.9, { r = 0.12, g = 0.07, b = 0.03 })
     -- Stitches already set.
-    for i = 0, self.done - 1 do
-        local x = 170 + i * (300 / math.max(1, self.need - 1))
-        self:line(x, 130, x, 250, 3, 1, THREAD)
-        self:line(x - 8, 130, x + 8, 130, 2, 1, THREAD)
-        self:line(x - 8, 250, x + 8, 250, 2, 1, THREAD)
+    for i = 0, self.done - 1 do self:drawStitch(i) end
+    -- The holes still to come, faint, so the row reads as a seam.
+    for i = self.done + 1, self.need - 1 do
+        local tx, ty, bx, by = self:stitchHoles(i)
+        self:disc(tx, ty, 2, 0.5, C.dark, 8)
+        self:disc(bx, by, 2, 0.5, C.dark, 8)
     end
-    -- Current holes.
-    self:disc(self.topX, self.topY, 5, 1, C.dark, 10)
-    self:disc(self.botX, self.botY, 5, 1, C.dark, 10)
-    self:ring(self.topX, self.topY, 7, 2, 1, C.guide, 12)
-    self:ring(self.botX, self.botY, 7, 2, 1, C.guide, 12)
+    self:drawHole(self.topX, self.topY, self.phase == "pierce")
+    self:drawHole(self.botX, self.botY, self.phase == "pull")
     if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
 
     if self.phase == "pierce" and not self.word then
-        -- The arc to follow, dashed; the part already sewn solid.
+        -- The line to follow, dashed; the part already sewn solid.
         for i = 1, #self.arc - 1, 2 do
-            self:line(self.arc[i][1], self.arc[i][2], self.arc[i + 1][1], self.arc[i + 1][2], 2, 0.6, C.guide)
+            self:line(self.arc[i][1], self.arc[i][2], self.arc[i + 1][1], self.arc[i + 1][2], 2, 0.7, C.guide)
         end
         local n = math.floor(self.along * (#self.arc - 1))
         for i = 1, n do
@@ -186,11 +212,22 @@ function TWASutureGame:renderGame()
         if not self.piercing then
             local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)
             self:ring(self.startX, self.startY, 12 * pulse, 2, 1, C.guide, 18)
+            self:line(self.startX, self.startY, self.topX, self.topY, 1, 0.5, C.guide)
         end
     elseif self.phase == "pull" then
-        -- Thread from the exit hole to the hand, and the tension gauge.
+        -- This stitch's thread through its holes, and out to the hand.
+        self:drawStitch(self.done)
         if self.hx and self.pulling then
             self:line(self.botX, self.botY, self.hx, self.hy, 2, 1, THREAD)
+            -- The leather puckers round the hole as the thread tightens.
+            local t = self.tension
+            local col = t > self.hi and C.bad or { r = 0.25, g = 0.14, b = 0.06 }
+            for k = 0, 5 do
+                local a = k / 6 * 6.2832
+                local r0, r1 = 6, 6 + 16 * math.min(1.2, t)
+                self:line(self.botX + math.cos(a) * r0, self.botY + math.sin(a) * r0,
+                    self.botX + math.cos(a) * r1, self.botY + math.sin(a) * r1, 1.2, 0.6, col)
+            end
         end
         local gx, gy, gw = 150, 300, 320
         self:rect(gx, gy, gw, 12, 1, C.dark)

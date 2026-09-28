@@ -2712,6 +2712,35 @@ Round 5 (same day, play-test feedback):
     included); clicking a checklist cell selects it; the search box has an
     X to clear it.
 
+Round 6 (same day, play-test feedback):
+  - Balance and Structure: highest tier only (scripted RecipeData edit, 69
+    recipes), like Toughness/Wear.
+  - New items Oridecon / Elunium / Bradium (icons Amethyst / Crystal /
+    Diamond), base2 of the Mithril / Adamantium / Vibranium bars. NO loot
+    source yet on purpose (user: "ยังไม่ต้อง ทำแค่ไอเท็ม") -- those bars
+    can't be crafted without debug spawning until one is added.
+  - TH wording: ชิ้นงานตั้งต้น -> วัตถุดิบตั้งต้น, ชิ้นงานเสริม -> วัตถุดิบเสริม,
+    ยอดเยี่ยม -> เยี่ยม (translation values only; keys unchanged).
+  - Incomplete (and closing the window) now hands out the RESULT item,
+    unfinished: TWA_Incomplete + bookmark + TWA_OrigBase (the original base
+    snapshot), min/max damage 0 (re-applied on OnEquipPrimary/OnGameStart in
+    case per-item damage isn't saved). Resuming takes that item through the
+    base slot (also for recipes with no base); Cancel then returns the
+    ORIGINAL base. Every started recipe can now be left incomplete.
+  - Cancel/Incomplete/Finish time = the recipe's average procedure time
+    (TWACraftState.recipeActionTime), was a flat 300.
+  - Right panel split in half; overall quality shows the word only;
+    weapon tooltip has "Type" (category, English) before DPS.
+  - Forge strike: each level cools faster (14000/10500/8000/6000 ms for
+    ForgeShape/Fold/Complex/Vacuum); ring speed unchanged.
+  - Weld zig-zag again, burns at half the rate and half the too-slow limit.
+  - Suture redrawn (leather wrap on a handle, diagonal stitches, pucker on
+    pull); Extract: guide half as wide, upright block, deeper hole, bored
+    hole stays while drawing out.
+  - Materials: TWAMinigameBase:metalPlate/hotMetal/woodBoard/leather draw
+    shaded, grained, bevelled surfaces (deterministic, no flicker); used
+    across Strike/Stroke/Wrap/Heat/Coat/Incision/Suture/Extract.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

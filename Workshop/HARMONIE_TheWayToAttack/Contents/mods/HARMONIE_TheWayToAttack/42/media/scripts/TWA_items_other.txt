@@ -105,5 +105,38 @@ module HARMONIE_TheWayToAttack
         Icon = Ingot_Gold,
     }
 
+    /*** Round 6 (request 2026-09-28): three rare materials, the
+    supplementary item (base2) of the Mithril / Adamantium / Vibranium bar
+    recipes. Icons reused from vanilla gems (user's choice): Amethyst,
+    Crystal, Diamond. No loot source yet (user: "ยังไม่ต้อง ทำแค่ไอเท็ม"). ***/
+    item Oridecon
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.2,
+        Type = Normal,
+        DisplayName = Oridecon,
+        Icon = Amethyst,
+    }
+
+    item Elunium
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.2,
+        Type = Normal,
+        DisplayName = Elunium,
+        Icon = Crystal,
+    }
+
+    item Bradium
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.2,
+        Type = Normal,
+        DisplayName = Bradium,
+        Icon = Diamond,
+    }
 
 }

@@ -9,6 +9,10 @@
 --      guide to the depth line. Keep it inside the guide -- a bit that leans
 --      snags, and leaning far snaps it out of the hole (start again). Faster
 --      than the speed limit and it chatters and costs quality.
+-- Round 6: the guide is half as wide, the block stands upright (grain
+-- running up and down) and the hole goes deeper -- still stopping short
+-- of the far end -- and a bored hole stays bored while the bit comes out.
+--
 --   2. DRAW OUT: without letting go, draw it back UP out of the hole, just
 --      as straight and just as slow. Letting go half way leaves the bit
 --      jammed: take hold again at the bit and carry on.
@@ -24,9 +28,11 @@ local C = B.COL
 function TWAExtractGame:onStart()
     self.holes = math.max(1, math.min(3, 1 + math.floor(self.req / 2)))
     self.doneHoles = 0
-    self.lateral = 8 * self.tol
+    self.lateral = 4 * self.tol
     self.speedLimit = 0.12 * self.tol / self.pace
-    self.depthPx = 150
+    -- The block: upright, the hole bored from its top end.
+    self.bx, self.by, self.bw, self.bh = 230, 70, 170, 285
+    self.depthPx = 225
     self:newHole()
     self.timeLimit = 25000 + self.holes * 15000
     self.toolSize = 44
@@ -35,9 +41,14 @@ function TWAExtractGame:onStart()
     self.hint2 = getText("IGUI_TWA_MG_Extract_Hint2")
 end
 
+function TWAExtractGame:holeX(i)
+    return self.bx + self.bw * (i + 0.5) / self.holes
+end
+
 function TWAExtractGame:newHole()
-    self.hx0 = 200 + self.doneHoles * 110
-    self.topY = 120
+    self.hx0 = self:holeX(self.doneHoles)
+    self.topY = self.by
+    self.bored = 0      -- deepest the bit has gone in this hole
     self.phase = "in"
     self.depth = 0      -- 0..1 of depthPx
     self.holding = false
@@ -86,6 +97,7 @@ function TWAExtractGame:onDrag(x, y, dt)
     if self.phase == "in" then
         if want > self.depth and want - self.depth < 0.15 then
             self.depth = want
+            self.bored = math.max(self.bored, want)
             if ZombRand(3) == 0 then self:burst("dust", self.hx0 + ZombRandFloat(-6, 6), self.topY, 2) end
         end
         if self.depth >= 0.98 then
@@ -113,26 +125,42 @@ function TWAExtractGame:updateGame(dt)
 end
 
 function TWAExtractGame:renderGame()
-    -- A block of wood in section, the finished holes, and the one in work.
-    self:rect(120, self.topY, 380, self.depthPx + 40, 1, C.wood)
-    for i = 1, 6 do self:line(124, self.topY + i * 28, 496, self.topY + i * 28 + 3, 1, 0.45, C.wood2) end
-    for i = 0, self.doneHoles - 1 do
-        self:rect(200 + i * 110 - 5, self.topY, 10, self.depthPx, 1, C.dark)
+    -- An upright block, grain running up and down, the holes bored so far
+    -- and the one in work (as deep as it was bored, whether or not the bit
+    -- is still in it).
+    local bx, by, bw, bh = self.bx, self.by, self.bw, self.bh
+    self:woodBoard(bx, by, bw, bh, { vertical = true, seed = 14, knots = 2 })
+    -- End grain on top.
+    self:rect(bx, by - 8, bw, 8, 1, { r = 0.58, g = 0.42, b = 0.24 })
+    for r = 1, 4 do self:line(bx + 6, by - 4 + (r % 2), bx + bw - 6, by - 4 + (r % 2), 1, 0.25, C.wood2) end
+    local function hole(x, depth)
+        local d = depth * self.depthPx
+        if d <= 0 then return end
+        self:rect(x - 6, by, 12, d, 1, { r = 0.1, g = 0.06, b = 0.03 })
+        self:line(x - 6, by, x - 6, by + d, 1.5, 0.8, { r = 0.3, g = 0.2, b = 0.1 })
+        self:line(x + 6, by, x + 6, by + d, 1.5, 0.6, { r = 0.62, g = 0.46, b = 0.28 })
+        self:disc(x, by + d, 6, 1, { r = 0.1, g = 0.06, b = 0.03 }, 10)
     end
+    for i = 0, self.doneHoles - 1 do hole(self:holeX(i), 1) end
     local x = self.hx0
-    self:rect(x - 5, self.topY, 10, self.depth * self.depthPx, 1, C.dark)
+    hole(x, self.bored or 0)
     -- Guide and depth line.
     local col = self.holding and C.guide or C.faint
-    self:line(x - self.lateral, self.topY - 30, x - self.lateral, self.topY + self.depthPx, 1, 0.5, col)
-    self:line(x + self.lateral, self.topY - 30, x + self.lateral, self.topY + self.depthPx, 1, 0.5, col)
-    self:line(x - 30, self.topY + self.depthPx, x + 30, self.topY + self.depthPx, 2, 0.9, C.bad)
-    -- The bit.
-    local by = self:bitY()
-    self:line(x, by - 60, x, by, 4, 1, C.metal)
+    self:line(x - self.lateral, by - 40, x - self.lateral, by + self.depthPx, 1, 0.6, col)
+    self:line(x + self.lateral, by - 40, x + self.lateral, by + self.depthPx, 1, 0.6, col)
+    self:line(x - 26, by + self.depthPx, x + 26, by + self.depthPx, 2, 0.9, C.bad)
+    -- The bit: a twisted steel shank down to its tip.
+    local ty = self:bitY()
+    self:line(x, ty - 70, x, ty, 5, 1, { r = 0.5, g = 0.52, b = 0.56 })
+    for k = 0, 9 do
+        local yy = ty - 66 + k * 7
+        self:line(x - 2.5, yy, x + 2.5, yy + 4, 1.2, 0.8, { r = 0.8, g = 0.82, b = 0.86 })
+    end
+    self:quad(x - 2.5, ty, x + 2.5, ty, x + 0.5, ty + 5, x - 0.5, ty + 5, 1, 0.75, 0.77, 0.8)
     if not self.holding and not self.word then
         local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)
-        self:ring(x, by, 12 * pulse, 2, 1, C.guide, 16)
+        self:ring(x, ty, 12 * pulse, 2, 1, C.guide, 16)
     end
     if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
-    self:textC(string.format("%d / %d", self.doneHoles, self.holes), 310, 330, C.line, 0.9)
+    self:textC(string.format("%d / %d", self.doneHoles, self.holes), 480, 200, C.line, 0.9)
 end

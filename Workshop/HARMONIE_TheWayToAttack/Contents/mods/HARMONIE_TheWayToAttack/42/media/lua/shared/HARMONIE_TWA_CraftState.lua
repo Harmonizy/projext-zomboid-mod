@@ -81,6 +81,24 @@ function S.getRecipeById(id)
     return recipeByIdCache[id]
 end
 
+-- Round 6 (request 2026-09-28: "การกดปุ่มยกเลิก ไม่สมบูรณ์ เสร็จสิ้นให้
+-- action time เท่ากับตอนทำกรรมวิธี"): the Cancel/Incomplete/Finish time is
+-- the recipe's own procedures' average time -- the same scale as one
+-- procedure's gauge.
+function S.recipeActionTime(recipe)
+    local sum, n = 0, 0
+    local list = TWAProcedures and TWAProcedures.List or {}
+    for _, procId in ipairs(recipe and recipe.procedures or {}) do
+        local proc = list[procId]
+        if proc then
+            sum = sum + (proc.time or 50)
+            n = n + 1
+        end
+    end
+    if n == 0 then return 50 end
+    return math.floor(sum / n + 0.5)
+end
+
 function S.isMaterialRecipe(recipe)
     return recipe ~= nil and recipe.category == "Material"
 end
@@ -281,7 +299,8 @@ function S.getActive(character)
     return md and md.TWA_ActiveCraft or nil
 end
 
-local BOOKMARK_KEYS = { TWA_RecipeId = true, TWA_DoneProcedures = true, TWA_ProcQuality = true }
+local BOOKMARK_KEYS = { TWA_RecipeId = true, TWA_DoneProcedures = true, TWA_ProcQuality = true,
+    TWA_Incomplete = true, TWA_OrigBase = true }
 
 local function copyPlain(v, depth)
     if type(v) ~= "table" then
@@ -299,6 +318,10 @@ end
 -- grade from an earlier craft, say) minus any old bookmark.
 function S.snapshotItem(item)
     if not item then return nil end
+    -- An unfinished item handed out by Incomplete stands in for the base
+    -- item it was started from: that original is what Cancel gives back.
+    local imd = item:getModData()
+    if imd.TWA_Incomplete then return copyPlain(imd.TWA_OrigBase, 0) end
     local snap = { type = item:getFullType() }
     if item.getCondition then snap.cond = item:getCondition() end
     local md = {}
@@ -356,10 +379,22 @@ local function send(inv, it)
     if it and isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, it) end
 end
 
+-- Request 2026-09-28 (round 6): "การได้ของคืนจากการกดปุ่มไม่สมบูรณ์...ให้
+-- ออกมาเป็นของชิ้นนั้นๆไม่ใช่ชิ้นงานตั้งต้นแต่ให้ ดาเมจสูงสุดและต่ำสุดคือ 0
+-- แทน" -- an unfinished item is the RESULT item itself, with its damage at
+-- 0 until the craft is finished, carrying the progress as a bookmark and
+-- the original base item's snapshot (TWA_OrigBase) for a later Cancel.
+function S.applyIncomplete(item)
+    if not item or not item:getModData().TWA_Incomplete then return end
+    if item.setMinDamage then item:setMinDamage(0) end
+    if item.setMaxDamage then item:setMaxDamage(0) end
+end
+
 -- Hand the active craft's items back and end it.
---   kind "incomplete": the base item comes back carrying the progress as a
---                      bookmark (right-click it to resume), plus base2.
---   kind "cancel":     base and base2 come back plain; progress is dropped.
+--   kind "incomplete": the RESULT item, unfinished (0 damage, progress
+--                      bookmarked -- right-click it to carry on), plus base2.
+--   kind "cancel":     the original base and base2 come back as they were;
+--                      progress is dropped.
 -- `recipeId` must match the active craft. Returns true when it paid out.
 function S.giveBack(character, kind, recipeId)
     local act = S.getActive(character)
@@ -367,9 +402,19 @@ function S.giveBack(character, kind, recipeId)
     local recipe = S.getRecipeById(act.recipeId)
     S.clearActive(character)
     if not recipe then return false end
-    if recipe.base then
+    if kind == "incomplete" then
+        local inv = character:getInventory()
+        local it = inv:AddItem(recipe.result)
+        if it then
+            S.writeBookmark(it, recipe.id, act.map)
+            local md = it:getModData()
+            md.TWA_Incomplete = true
+            md.TWA_OrigBase = copyPlain(act.base, 0)
+            S.applyIncomplete(it)
+            send(inv, it)
+        end
+    elseif act.base then
         local it, inv = addToInventory(character, act.base, recipe.base)
-        if it and kind == "incomplete" then S.writeBookmark(it, recipe.id, act.map) end
         send(inv, it)
     end
     if recipe.base2 then
@@ -411,5 +456,22 @@ if Events and Events.OnClientCommand then
             local act = S.getActive(player)
             if act then S.giveBack(player, "incomplete", act.recipeId) end
         end
+    end)
+end
+
+-- An unfinished item's 0 damage is set on the item when Incomplete makes
+-- it; set it again whenever one is taken in hand (and for what is already
+-- in hand when a game loads), so it holds even if the weapon's per-item
+-- damage isn't kept in the save.
+if Events and Events.OnEquipPrimary then
+    Events.OnEquipPrimary.Add(function(character, item)
+        if item then S.applyIncomplete(item) end
+    end)
+end
+if Events and Events.OnGameStart and getPlayer then
+    Events.OnGameStart.Add(function()
+        local p = getPlayer()
+        local item = p and p:getPrimaryHandItem()
+        if item then S.applyIncomplete(item) end
     end)
 end

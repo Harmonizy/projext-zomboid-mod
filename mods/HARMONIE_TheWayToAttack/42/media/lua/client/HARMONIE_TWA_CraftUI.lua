@@ -1096,7 +1096,9 @@ function TWACraftWindow:createChildren()
     -- word-wrap. Costs the scrollable procedure grid above ~1 visible row
     -- (gridH shrinks by the same 40px) -- a minor, purely cosmetic tradeoff
     -- since that grid already scrolls.
-    local detailsH = 190
+    -- Round 6 (request 2026-09-28: "ui ทางขวาให้แบ่งครึ่งขนาด ส่วนบน ส่วน
+    -- ล่าง"): grid and details box now split the column in half.
+    local detailsH = math.floor((PANEL_H - 8) / 2)
     local gridH = PANEL_H - detailsH - 8
     self.procLibrary = TWAProcScrollList:new(rightX, contentTop, RIGHT_W, gridH, self)
     self.procLibrary:initialise()
@@ -1260,13 +1262,14 @@ function TWACraftWindow:pickItems()
     if not recipe then return false end
     local S = TWACraftState
     local base, base2
-    if recipe.base then
-        if self.resumeItem then
-            base = S.findItem(self.player, self.resumeItem)
-        else
-            base = S.pickFreshItem(self.player, recipe.base)
-                or (recipe.baseAlt and S.pickFreshItem(self.player, recipe.baseAlt))
-        end
+    if self.resumeItem then
+        -- The unfinished item (round 6: the result item itself) or an older
+        -- bookmarked base item -- for a recipe with or without a base.
+        base = S.findItem(self.player, self.resumeItem)
+        if not base then return false end
+    elseif recipe.base then
+        base = S.pickFreshItem(self.player, recipe.base)
+            or (recipe.baseAlt and S.pickFreshItem(self.player, recipe.baseAlt))
         if not base then return false end
     end
     if recipe.base2 then
@@ -1317,11 +1320,10 @@ function TWACraftWindow:allProceduresDone()
     return TWACraftState.allDone(self.selectedRecipe, self:currentMap())
 end
 
--- Incomplete hands the base item back with the progress bookmarked on it,
--- so it needs a recipe that HAS a base item.
+-- Incomplete hands out the unfinished result item (round 6), so every
+-- started recipe can be left incomplete, with or without a base item.
 function TWACraftWindow:canGoIncomplete()
-    if not self:isActiveRecipe() or self.activeProcId or self.activeCenterAction then return false end
-    return self.selectedRecipe.base ~= nil
+    return self:isActiveRecipe() and not self.activeProcId and not self.activeCenterAction
 end
 
 function TWACraftWindow:canStart()
@@ -1958,7 +1960,12 @@ function TWACraftWindow:render()
     -- most ONE base item now (request 2026-09-27: "ปรับให้ทุกอันมีชิ้นงาน
     -- ตั้งต้นเพียงชิ้นเดียว"), so there's only ever one card or none.
     local baseY = math.max(centerY + ICON + 12, statY + 8)
-    if not recipe.base then
+    local resumeIt = not self:isActiveRecipe() and self.resumeItem
+    if resumeIt and not recipe.base then
+        -- An unfinished item of a recipe that has no base item.
+        local owned = TWACraftState.findItem(self.player, resumeIt) ~= nil
+        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, resumeIt:getFullType(), nil, owned, "IGUI_TWA_ResumeItemNote")
+    elseif not recipe.base then
         self:drawRect(centerX, baseY, CENTER_W - 16, 30, 0.85, 0.08, 0.08, 0.09)
         self:drawRectBorder(centerX, baseY, CENTER_W - 16, 30, 0.4, 0.4, 0.4, 0.4)
         drawTextShadowed(self, getText("IGUI_TWA_NoBaseItemNeeded"), centerX + 8, baseY + 8, 0.75, 0.75, 0.75, 1, UIFont.Small)
@@ -1984,6 +1991,7 @@ function TWACraftWindow:render()
         else
             if self.resumeItem then
                 owned1 = S.findItem(self.player, self.resumeItem) ~= nil
+                note1 = "IGUI_TWA_ResumeItemNote"
             else
                 owned1 = S.pickFreshItem(self.player, recipe.base) ~= nil
                     or (recipe.baseAlt ~= nil and S.pickFreshItem(self.player, recipe.baseAlt) ~= nil)
@@ -1997,7 +2005,9 @@ function TWACraftWindow:render()
             -- ชิ้นงานเสริม".
             note2 = owned2 and "IGUI_TWA_ExtraItemOwned" or "IGUI_TWA_ExtraItemMissing"
         end
-        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base, recipe.baseAlt, owned1, note1)
+        local card1Type, card1Alt = recipe.base, recipe.baseAlt
+        if self.resumeItem and not self:isActiveRecipe() then card1Type, card1Alt = self.resumeItem:getFullType(), nil end
+        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, card1Type, card1Alt, owned1, note1)
         if recipe.base2 then
             baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2)
         end
@@ -2015,7 +2025,8 @@ function TWACraftWindow:render()
         local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap())
         if oWord then
             local oc = TWACraftState.WORD_COLOR[oWord]
-            local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord) .. string.format(" (%.2f)", oAvg))
+            -- Word only (round 6: "คุณภาพรวมให้แสดงแค่คำ ไม่ต้องแสดงตัวเลข").
+            local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord))
             local lw = getTextManager():MeasureStringX(UIFont.Small, label)
             drawTextShadowed(self, label, centerX + CENTER_W - 16 - lw, baseY, oc.r, oc.g, oc.b, 1, UIFont.Small)
         end
@@ -2138,16 +2149,10 @@ function TWACraftUI.open(player, searchText, resumeItem)
     -- self.searchBox/self.recipeList runs after it. ***
     win:addToUIManager()
 
-    -- A craft still started from before (request 2026-09-28, one craft at a
-    -- time): a recipe with no base item stays started when the window is
-    -- closed (there is nothing to hand back), and in single player the
-    -- record also survives quitting with the window open -- pick it back up.
-    -- In multiplayer the server holds the record: a craft this client kept
-    -- is restored from its own mirror, anything else the server still holds
-    -- is handed back as incomplete.
+    -- A craft still started from before (quitting with the window open):
+    -- single player picks the record back up; in multiplayer the server
+    -- holds it and hands it back as incomplete.
     local S = TWACraftState
-    local kept = TWACraftUI.kept
-    TWACraftUI.kept = nil
     local act = (not isClient()) and S.getActive(player) or nil
     if act and S.getRecipeById(act.recipeId) then
         local m = { recipeId = act.recipeId, done = {}, quality = {} }
@@ -2156,8 +2161,6 @@ function TWACraftUI.open(player, searchText, resumeItem)
             if word ~= "Miss" then m.done[procId] = true end
         end
         win.active = m
-    elseif isClient() and kept and kept.player == player then
-        win.active = kept.active
     elseif isClient() then
         S.requestReturnStale(player)
     end
@@ -2187,14 +2190,7 @@ function TWACraftUI.close()
         return
     end
     if win.active then
-        local recipe = TWACraftState.getRecipeById(win.active.recipeId)
-        if recipe and recipe.base then
-            TWACraftState.requestGiveBack(win.player, "incomplete", win.active.recipeId)
-        else
-            -- Nothing to hand back: the craft stays started and the window
-            -- picks it up again next time it opens.
-            TWACraftUI.kept = { player = win.player, active = win.active }
-        end
+        TWACraftState.requestGiveBack(win.player, "incomplete", win.active.recipeId)
     end
     win:setVisible(false)
     win:removeFromUIManager()

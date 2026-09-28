@@ -145,7 +145,13 @@ end
 function TWACoatGame:renderGame()
     -- The blade under it.
     self:quad(80, 190, 580, 150, 560, 110, 100, 120, 1, 0.5, 0.52, 0.56)
-    self:rect(20, 125, 70, 50, 1, C.wood)
+    self:quad(80, 190, 580, 150, 570, 136, 90, 170, 1, 0.64, 0.66, 0.7)
+    for k = 1, 5 do
+        local u = k / 6
+        self:line(100 - 20 * u, 120 + 70 * u, 560 + 20 * u, 110 + 40 * u, 1, 0.12, C.line)
+    end
+    self:line(100, 120, 560, 110, 2, 0.6, C.line)
+    self:woodBoard(20, 125, 70, 50, { seed = 3, knots = 0 })
     if self.workTex then self:tex(self.workTex, 540, 230, 60, 60, 0.55) end
 
     for _, c in ipairs(self.cells) do
