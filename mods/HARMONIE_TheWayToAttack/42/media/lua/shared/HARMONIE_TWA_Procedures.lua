@@ -848,10 +848,16 @@ end
 -- window uses to grey out a recipe in the dark (ISWidgetTitleHeader.lua:
 -- `self.player:tooDarkToRead()`), applied to every procedure with a "missing
 -- light" note the same way a missing tool/item/skill already shows one.
-function TWAProcedures.CheckEligibility(proc, player)
+-- `serverSide` (request 2026-09-28, multiplayer fix): the procedure's own
+-- timed action is now rebuilt and completed on the server, whose isValid()
+-- calls this too. Light and a nearby placed forge are properties of what
+-- the CLIENT sees around it (light level, loaded world squares) -- already
+-- checked there before the action was ever queued -- so the server only
+-- re-checks what it actually owns: tools, materials and skill.
+function TWAProcedures.CheckEligibility(proc, player, serverSide)
     local missing = {}
 
-    if player:tooDarkToRead() then
+    if not serverSide and player:tooDarkToRead() then
         missing[#missing + 1] = { kind = "light" }
     end
 
@@ -892,7 +898,7 @@ function TWAProcedures.CheckEligibility(proc, player)
         end
     end
 
-    if proc.forgeTier and nearbyForgeTier(player) < proc.forgeTier then
+    if not serverSide and proc.forgeTier and nearbyForgeTier(player) < proc.forgeTier then
         missing[#missing + 1] = { kind = "forge", tier = proc.forgeTier }
     end
 
@@ -951,6 +957,19 @@ end
 -- ประดับทองหรือเงิน 2 อัน" -- any ONE of ~50 real gold/silver jewelry types
 -- counts, see JEWELRY_ITEMS below) -- reuses the same altTypes/countAny
 -- helpers the plain itemTypes shape already uses.
+-- Removes from the container the item actually sits in (a bag inside the
+-- main inventory included -- getFirstTypeEvalRecurse finds those too) and,
+-- on a multiplayer server, tells the owning client (request 2026-09-28,
+-- multiplayer fix: Consume now runs inside the action's complete(), which
+-- is server-side in multiplayer).
+local function removeOne(inv, it)
+    local c = it:getContainer() or inv
+    c:Remove(it)
+    if isServer() and sendRemoveItemFromContainer then
+        sendRemoveItemFromContainer(c, it)
+    end
+end
+
 local function consumeOptions(inv, options)
     for _, opt in ipairs(options) do
         local types = altTypes(opt)
@@ -962,7 +981,7 @@ local function consumeOptions(inv, options)
                         or inv:getFirstTypeEvalRecurse(t, function() return true end)
                     if it then break end
                 end
-                if it then inv:Remove(it) end
+                if it then removeOne(inv, it) end
             end
             return
         end
@@ -983,7 +1002,7 @@ function TWAProcedures.Consume(proc, player)
                         or inv:getFirstTypeEvalRecurse(t, function() return true end)
                     if it then break end
                 end
-                if it then inv:Remove(it) end
+                if it then removeOne(inv, it) end
             end
         end
     end
@@ -1008,6 +1027,12 @@ function TWAProcedures.AwardXP(proc, player)
     lvl = tonumber(lvl)
     local perk = skillName and Perks[skillName]
     if perk then
-        player:getXp():AddXP(perk, lvl * 5)
+        -- addXp() is the B42 global that also works from a server-side
+        -- complete(); the direct AddXP call is the fallback.
+        if addXp then
+            addXp(player, perk, lvl * 5)
+        else
+            player:getXp():AddXP(perk, lvl * 5)
+        end
     end
 end

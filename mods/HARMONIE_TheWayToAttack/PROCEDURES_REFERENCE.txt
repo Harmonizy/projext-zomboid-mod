@@ -163,6 +163,19 @@ A new procedure's time should be computed this same way, not picked freely.
       consumes=Bleach x1, skill=Blacksmith:2, time=30ms, sound=CraftFixWeapon
 
 ==============================================================================
+MINIGAME / QUALITY (added 2026-09-28) -- applies to EVERY procedure above
+==============================================================================
+Each procedure is played as a minigame before its timed action runs (phase
+1: one generic needle-in-zone game for all of them). Score: Miss=0 / Bad=1 /
+Good=2 / Excellent=3. Miss uses the materials but leaves the procedure
+undone (redo allowed); XP only for non-Miss. Finish averages the words
+(Bad < 1.67 / Good < 2.34 / Excellent >= 2.34) and rolls the grade from that
+quality's pool (1/9/20/30/40): Excellent=S..D, Good=A..E, Bad=B..F. The 6
+Metallurgy material recipes skip the minigame and get no quality/grade.
+Full design + the B42 multiplayer rules: workflow.txt 8.15.
+Note: `time` below is the timed action's maxTime (game ticks), not ms.
+
+==============================================================================
 RULES ENGINE -- how a recipe's real stats/name decide which procedures it
 needs (gen_craftdata.js addFinishingSteps() + applyAssemblyOverrides(),
 the actual source of truth)

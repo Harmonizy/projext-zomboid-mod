@@ -77,24 +77,16 @@ HARMONIE_TWA_TierTooltip.lua (308 บรรทัด)
   ถ้าไอเทมมี TWA_RecipeId (กำลังทำค้างอยู่) จะโชว์ checklist กรรมวิธีที่ทำไปแล้ว,
   ถ้าทำเสร็จแล้วจะโชว์แถบชื่อผู้คราฟ+เกรด (S/A/B/C/D/E/F).
 
-TWA_PerformProcedureAction.lua (75 บรรทัด)
-  ISBaseTimedAction สำหรับ "ทำกรรมวิธี 1 อัน" — เล่นเสียง+ให้ XP+consume
-  material จริงตอน perform() เท่านั้น (หยุดกลางทางจะไม่เสียของ).
+HARMONIE_TWA_Minigame.lua (ใหม่ 2026-09-28)
+  มินิเกมทั่วไปของทุกกรรมวิธี (เฟส 1): กดเมาส์ค้างให้เข็มเลื่อน ปล่อยในโซน
+  เล็ก/กลาง/ใหญ่ = ยอดเยี่ยม/ดี/แย่, นอกโซน/เลยสุดแถบ/ยกเลิก/ESC = พลาด.
+  TWAMinigame.play(player, procId, onResult) เรียก onResult(word) ครั้งเดียว.
+  ปิดใน sandbox หรือ error = ยอดเยี่ยมทันที (ไม่มีวันค้างจับเมาส์).
+  กันเปิดซ้อนกับมินิเกมของ Casualties Undead (ISMinigameBaseUI.instance).
+  เฟส 2 จะเพิ่มเกมเฉพาะหมวดแทนตัวนี้ -- ภายนอกไฟล์นี้เห็นแค่ "คำ".
 
-TWA_FinishCraftAction.lua (142 บรรทัด)
-  ISBaseTimedAction สำหรับปุ่ม "เสร็จสิ้น" — consume base/base2 แล้ว spawn
-  ไอเทมผลลัพธ์, ประทับชื่อผู้คราฟ (TWA_CraftedBy) + สุ่มเกรด (TWA_Grade, ตาราง
-  S/A/B/C/D/E/F ที่ 0/1/3/6/15/25/50%). ห้าม setName()/เปลี่ยนชื่อไอเทมเด็ดขาด
-  (คำสั่งชัดเจนจากผู้ใช้).
-
-TWA_IncompleteCraftAction.lua (80 บรรทัด)
-  ISBaseTimedAction สำหรับปุ่ม "ไม่สมบูรณ์" — เขียน TWA_RecipeId+
-  TWA_DoneProcedures ลง ModData ของ base item เท่านั้น (ไม่ spawn/consume
-  อะไรเพิ่ม) เพื่อให้อีกคน/อีกทีหยิบมาทำต่อได้ (ระบบคราฟร่วมกันหลายคน).
-
-TWA_CancelCraftAction.lua (65 บรรทัด)
-  ISBaseTimedAction สำหรับปุ่ม "ยกเลิก" — ล้างกรรมวิธีที่ทำมาทั้งหมดของสูตร/
-  ไอเทมนั้น (ทั้ง session ปัจจุบันและ ModData ที่ bookmark ไว้).
+(timed action ทั้ง 4 ตัว -- ทำกรรมวิธี/เสร็จสิ้น/ไม่สมบูรณ์/ยกเลิก -- ย้ายไป
+ shared/TimedActions/ แล้ว 2026-09-28 เพื่อแก้บัค multiplayer ดูด้านล่าง)
 
 ──── 42/media/lua/shared/ (โค้ด/ข้อมูลที่ทั้ง client และ server ใช้ร่วมกัน) ────
 HARMONIE_TWA_Procedures.lua (947 บรรทัด)
@@ -112,6 +104,26 @@ HARMONIE_TWA_RecipeData.lua (759 บรรทัด — ไฟล์ GENERATED �
   ของเซสชัน ไม่ได้ commit ไว้ในนี้) — จะแก้กฎการ assign กรรมวิธีต้องไปแก้
   gen_craftdata.js แล้ว generate ใหม่ ไม่ใช่แก้ไฟล์นี้ตรง ๆ.
 
+HARMONIE_TWA_CraftState.lua (ใหม่ 2026-09-28)
+  ข้อมูล/ฟังก์ชันกลางของระบบคุณภาพ ใช้ทั้ง client (UI/tooltip) และ server
+  (complete() ของ action): คำ Miss/Bad/Good/Excellent = 0/1/2/3, สูตรคุณภาพ
+  รวม (bad < 1.67, good < 2.34, excellent >= 2.34), pool เกรด + โอกาส
+  1/9/20/30/40, getRecipeById, serialize คำเป็น string ข้าม network,
+  เขียน/ล้าง bookmark (TWA_RecipeId/TWA_DoneProcedures/TWA_ProcQuality),
+  findItem (หาไอเท็มชิ้นเดิมด้วย id), pickFreshItem (เลือกชิ้นที่ไม่มี
+  bookmark -- แก้บัคปั๊มเกรด).
+
+TimedActions/TWA_PerformProcedureAction.lua / TWA_FinishCraftAction.lua /
+TimedActions/TWA_IncompleteCraftAction.lua / TWA_CancelCraftAction.lua
+  (ย้ายมาจาก client/ 2026-09-28) timed action ของหน้าต่างคราฟทั้ง 4 ตัว.
+  กฎ multiplayer ของ B42: การเปลี่ยนแปลงโลกทั้งหมด (หักวัตถุดิบ/XP/ลบ-เพิ่ม
+  ไอเทม/เขียน ModData) อยู่ใน complete() (server ใน MP, เครื่องตัวเองใน SP);
+  perform() ทำแค่ callback ของ UI ฝั่ง client. พารามิเตอร์ของ new() ต้องเป็น
+  string/ตัวเลข/ไอเทม/ผู้เล่นเท่านั้น (server สร้าง action ใหม่จากพารามิเตอร์
+  ชื่อเดียวกับ field) -- ห้ามส่ง table หรือ function; callback ผูกหลังสร้าง.
+  Finish ใช้ "ชิ้นที่ระบุ" (ชิ้นที่ resume หรือชิ้นที่ไม่มี bookmark) และสุ่ม
+  เกรดจาก pool ของคุณภาพรวม (สูตรวัตถุดิบ 6 สูตรไม่มีคุณภาพ/เกรด).
+
 HARMONIE_TWA_PartSystem.lua (113 บรรทัด)
   logic กลางของระบบดัดแปลงอาวุธ (Grip/Head/Tactical/Weight) — ใช้ร่วมกันโดย
   PartsUI.lua (client) และใช้เช็ค isMeleeWeapon จาก TierTooltip.lua ด้วย.
@@ -124,6 +136,10 @@ EN/IG_UI.json, TH/IG_UI.json (159 บรรทัดเท่ากัน)
 TH/ItemName.json (149 บรรทัด — ไม่มีไฟล์ EN คู่กัน เพราะ DisplayName ในสคริปต์
   ไอเทมเองเป็นภาษาอังกฤษอยู่แล้ว)
   คำแปลชื่อไอเทม/อาวุธเป็นภาษาไทย.
+
+EN/Sandbox.json, TH/Sandbox.json (ใหม่ 2026-09-28)
+  ชื่อ/คำอธิบายของ sandbox option เปิด-ปิดมินิเกม (ดู 42/media/
+  sandbox-options.txt: HARMONIE_TheWayToAttack.EnableMinigame).
 
 EN/UI.json, TH/UI.json (6 บรรทัดเท่ากัน)
   label ของ keybind 2 ปุ่ม (เปิดหน้าต่างคราฟ / เปิดหน้าต่างดัดแปลงอาวุธ) —

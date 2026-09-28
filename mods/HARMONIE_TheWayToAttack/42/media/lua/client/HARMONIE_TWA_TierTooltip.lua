@@ -248,9 +248,14 @@ function ISToolTipInv:render()
     -- straight off ITS OWN ModData -- see HARMONIE_TWA_CraftUI.lua's
     -- onIncomplete/TWACraftUI.getRecipeById.
     local recipeId = item:getModData().TWA_RecipeId
-    local recipe = recipeId and TWACraftUI.getRecipeById(recipeId)
+    local recipe = recipeId and TWACraftState.getRecipeById(recipeId)
     if recipe then
         local doneTable = item:getModData().TWA_DoneProcedures or {}
+        -- Request 2026-09-28: each procedure's quality WORD (not a number)
+        -- next to it; a done procedure from a bookmark made before this
+        -- update has no word and reads as Good (TWACraftState.wordFor).
+        local qualityTable = item:getModData().TWA_ProcQuality or {}
+        local showWords = not TWACraftState.isMaterialRecipe(recipe)
         local resultItem = ScriptManager.instance:getItem(recipe.result)
         local header = getText("IGUI_TWA_ResumingItem") .. " (" ..
             (resultItem and resultItem:getDisplayName() or recipe.result) .. ")"
@@ -261,7 +266,13 @@ function ISToolTipInv:render()
                 local done = doneTable[procId] == true
                 local mark = done and "+" or "-"
                 local color = done and { r = 0.5, g = 0.9, b = 0.5 } or { r = 0.9, g = 0.5, b = 0.5 }
-                lines[#lines + 1] = { text = mark .. " " .. getText(proc.nameKey), color = color }
+                local text = mark .. " " .. getText(proc.nameKey)
+                local word = showWords and TWACraftState.wordFor(procId, doneTable, qualityTable)
+                if word then
+                    text = text .. ": " .. TWACraftState.wordText(word)
+                    color = TWACraftState.WORD_COLOR[word]
+                end
+                lines[#lines + 1] = { text = text, color = color }
             end
         end
         local xh = rowH * #lines + 4
@@ -279,12 +290,20 @@ function ISToolTipInv:render()
     -- Crafted-by / grade -- stamped once, at the real Finish
     -- (TWA_FinishCraftAction.lua's stampFinisher), mutually exclusive with
     -- the checklist above (a finished item never carries TWA_RecipeId).
+    -- Request 2026-09-28: the overall quality word (TWA_Quality) above the
+    -- grade; the grade is now rolled from that quality's pool at Finish
+    -- (TWACraftState.rollGrade), replacing the old flat rarity roll, and
+    -- still shows on the same line it always did.
     local craftedBy = item:getModData().TWA_CraftedBy
     local grade = item:getModData().TWA_Grade
-    if craftedBy or grade then
+    local quality = item:getModData().TWA_Quality
+    if craftedBy or grade or quality then
         local lines = {}
         if craftedBy and craftedBy ~= "" then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipCraftedBy", craftedBy), color = { r = 0.85, g = 0.85, b = 0.85 } }
+        end
+        if quality and TWACraftState.isWord(quality) then
+            lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipQuality", TWACraftState.wordText(quality)), color = TWACraftState.WORD_COLOR[quality] }
         end
         if grade then
             local GRADE_COLOR = {
