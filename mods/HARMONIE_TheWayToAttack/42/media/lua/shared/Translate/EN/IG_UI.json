@@ -339,5 +339,10 @@
     "IGUI_TWA_Debug_TWA_Grade": "TWA grade",
     "IGUI_TWA_Debug_TWA_Quality": "TWA quality",
     "IGUI_TWA_Debug_TWA_CraftedBy": "TWA crafted by",
-    "IGUI_TWA_Debug_TWA_Incomplete": "TWA unfinished (0 damage)"
+    "IGUI_TWA_Debug_TWA_Incomplete": "TWA unfinished (0 damage)",
+    "IGUI_TWA_Reveal_Title": "The final blows",
+    "IGUI_TWA_Reveal_Hint": "The smith brings the piece to life...",
+    "IGUI_TWA_Reveal_Grade": "Grade %1",
+    "IGUI_TWA_Reveal_Material": "Finished",
+    "IGUI_TWA_Reveal_Close": "Click to close"
 }

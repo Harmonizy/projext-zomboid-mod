@@ -26,6 +26,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "HARMONIE_TWA_Procedures"
 require "HARMONIE_TWA_Config"
+require "HARMONIE_TWA_Sound"
 require "HARMONIE_TWA_CraftState"
 
 TWA_CancelCraftAction = ISBaseTimedAction:derive("TWA_CancelCraftAction")
@@ -39,9 +40,14 @@ function TWA_CancelCraftAction:isValid()
     return true
 end
 
+-- Round 12: the workshop sound, replayed while the bar runs (client only).
+function TWA_CancelCraftAction:update()
+    if not isServer() then TWASound.keepPlaying(self, "TWA_Craft", "ActionSounds") end
+end
+
 function TWA_CancelCraftAction:start()
     self:setActionAnim(CharacterActionAnims.Craft)
-    if not isServer() then self.actionSound = self.character:playSound("TWA_Craft") end
+    if not isServer() then TWASound.keepPlaying(self, "TWA_Craft", "ActionSounds") end
 end
 
 function TWA_CancelCraftAction:stopSound()

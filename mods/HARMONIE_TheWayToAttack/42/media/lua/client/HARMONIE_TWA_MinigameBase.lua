@@ -27,6 +27,7 @@
 
 require "ISUI/ISPanel"
 require "HARMONIE_TWA_Config"
+require "HARMONIE_TWA_Sound"
 
 TWAMinigameBase = ISPanel:derive("TWAMinigameBase")
 
@@ -183,70 +184,40 @@ end
 --
 -- Round 9 (request 2026-09-28: "การเล่นมินิเกมอยากให้มีเสียงประกอบการทำ
 -- action ต่างๆ"): while the tool is working (the mouse held down), the
--- procedure's own working sound plays -- the same vanilla sound its timed
--- action uses (proc.sound: Hammering, Sawing, SharpenBladeWhetstone,
--- CraftWelding, Screwdriver, FixWithTape...), so no new sound files. A game
+-- game's working sound plays (loopSoundName, else the procedure's own
+-- proc.sound -- this mod's synthesized TWA_* sounds since round 11). A game
 -- can set `self.loopWhileDragging = false` and play short bursts with
 -- self:sfx() instead (the hammer, one blow at a time). Sandbox
 -- "MinigameSounds" turns it all off.
 
-function TWAMinigameBase:soundsOn()
-    return TWAConfig.on("MinigameSounds") and self.player and self.player.playSound ~= nil
-end
+-- (Round 12: every sound is a short UI one-shot replayed while working --
+-- see shared/HARMONIE_TWA_Sound.lua for why.)
 
 function TWAMinigameBase:loopName()
     return self.loopSoundName or (self.proc and self.proc.sound)
 end
 
-local function emitterPlaying(player, id)
-    local em = player.getEmitter and player:getEmitter()
-    if em and em.isPlaying then return em:isPlaying(id) end
-    return true
-end
-
 function TWAMinigameBase:updateSound()
-    if not self:soundsOn() then self:stopSounds() return end
     local want = self.dragging and not self.word and self.loopWhileDragging ~= false
-    local name = self:loopName()
-    if want and name then
-        if not self.loopId or not emitterPlaying(self.player, self.loopId) then
-            self.loopId = self.player:playSound(name)
-        end
-    elseif self.loopId then
-        self.player:stopOrTriggerSound(self.loopId)
-        self.loopId = nil
-    end
-    -- Bursts that are due to stop.
-    if self.sfxStops then
-        local keep = {}
-        for _, e in ipairs(self.sfxStops) do
-            if self.elapsed >= e.at then self.player:stopOrTriggerSound(e.id) else keep[#keep + 1] = e end
-        end
-        self.sfxStops = keep
+    if want then
+        TWASound.keepPlaying(self, self:loopName(), "MinigameSounds")
+    else
+        TWASound.stop(self)
     end
 end
 
---- A short burst of a sound: `ms` = cut it off after that long (nil = let
---- it play out).
+--- One sound, once (a hammer blow). `ms` is ignored now (kept for callers).
 function TWAMinigameBase:sfx(name, ms)
-    if not name or not self:soundsOn() then return end
-    local id = self.player:playSound(name)
-    if id and id ~= 0 and ms then
-        self.sfxStops = self.sfxStops or {}
-        self.sfxStops[#self.sfxStops + 1] = { id = id, at = self.elapsed + ms }
-    end
+    TWASound.play(name, "MinigameSounds")
 end
 
--- A result sound (not placed in the world), if sounds are on.
+-- A result sound.
 function TWAMinigameBase:uiSound(name)
-    if TWAConfig.on("MinigameSounds") and getSoundManager then getSoundManager():playUISound(name) end
+    TWASound.play(name, "MinigameSounds")
 end
 
 function TWAMinigameBase:stopSounds()
-    if not self.player or not self.player.stopOrTriggerSound then return end
-    if self.loopId then self.player:stopOrTriggerSound(self.loopId) self.loopId = nil end
-    for _, e in ipairs(self.sfxStops or {}) do self.player:stopOrTriggerSound(e.id) end
-    self.sfxStops = nil
+    TWASound.stop(self)
 end
 
 -- Result state ----------------------------------------------------------------

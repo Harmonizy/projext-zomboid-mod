@@ -4,281 +4,231 @@ module Base
 {
     sound TWA_Hammer
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Hammer.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_HammerWood
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_HammerWood.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Knap
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Knap.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_BigHit
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_BigHit.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tension
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tension.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fanfare
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fanfare.wav,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Smash
     {
-        category = Item,
-        loop = false,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Smash.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Whetstone
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Whetstone.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Saw
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Saw.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Weld
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Weld.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Screw
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Screw.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Wrap
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Wrap.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Grind
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Grind.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Bellows
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Bellows.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Quench
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Quench.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Pour
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Pour.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Coat
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Coat.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Sew
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Sew.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Drill
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Drill.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Carve
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Carve.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Craft
     {
-        category = Item,
-        loop = true,
-        is3D = true,
+        category = UI,
         clip
         {
             file = media/sound/TWA_Craft.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Success
     {
         category = UI,
-        loop = false,
-        is3D = false,
         clip
         {
             file = media/sound/TWA_Success.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 
     sound TWA_Fail
     {
         category = UI,
-        loop = false,
-        is3D = false,
         clip
         {
             file = media/sound/TWA_Fail.wav,
-            distanceMin = 2,
-            distanceMax = 20,
-            volume = 0.8,
+            distanceMax = 10,
         }
     }
 

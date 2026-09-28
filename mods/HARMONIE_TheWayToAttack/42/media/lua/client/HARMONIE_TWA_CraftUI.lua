@@ -1392,8 +1392,14 @@ function TWACraftWindow:startCenterAction(kind)
         action.onComplete = function() window:endActive() end
     elseif kind == "finish" then
         if not self:allProceduresDone() then return end
-        action = TWA_FinishCraftAction:new(self.player, recipe.id, S.serializeMap(self:currentMap()))
-        action.onComplete = function() window:endActive() end
+        -- Round 12: a token to find the new item by, and the grade-reveal
+        -- window (hammer on the anvil until the grade shows) once it's done.
+        local token = tostring(getTimestampMs()) .. "_" .. tostring(ZombRand(1000000))
+        action = TWA_FinishCraftAction:new(self.player, recipe.id, S.serializeMap(self:currentMap()), token)
+        action.onComplete = function()
+            window:endActive()
+            if TWAGradeReveal and TWAConfig.on("GradeReveal") then TWAGradeReveal.open(window.player, recipe, token) end
+        end
     else
         return
     end

@@ -34,6 +34,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "HARMONIE_TWA_Procedures"
 require "HARMONIE_TWA_Config"
+require "HARMONIE_TWA_Sound"
 require "HARMONIE_TWA_CraftState"
 
 TWA_FinishCraftAction = ISBaseTimedAction:derive("TWA_FinishCraftAction")
@@ -50,10 +51,15 @@ function TWA_FinishCraftAction:isValid()
     return (S.canFinish(self.recipe, self.qmap))
 end
 
+-- Round 12: the workshop sound, replayed while the bar runs (client only).
+function TWA_FinishCraftAction:update()
+    if not isServer() then TWASound.keepPlaying(self, "TWA_Craft", "ActionSounds") end
+end
+
 function TWA_FinishCraftAction:start()
     self:setActionAnim(CharacterActionAnims.Craft)
     if not isServer() then
-        self.finishSound = self.character:playSound("TWA_Craft")
+        TWASound.keepPlaying(self, "TWA_Craft", "ActionSounds")
     end
 end
 
@@ -107,6 +113,9 @@ function TWA_FinishCraftAction:complete()
         -- its ModData already on it.
         local md = newItem:getModData()
         md.TWA_CraftedBy = crafterName(self.character)
+        -- Round 12: lets the client's grade-reveal window find THIS item
+        -- once it arrives (multiplayer adds it a moment later).
+        if self.token and self.token ~= "" then md.TWA_CraftToken = self.token end
         if not S.isMaterialRecipe(recipe) then
             local word = S.overall(recipe, map) or S.LEGACY_WORD
             md.TWA_Quality = word
@@ -127,10 +136,13 @@ end
 -- `recipeId` -- TWARecipeData id; `qualities` -- TWACraftState.serializeMap()
 -- of every procedure's word (only the multiplayer client's isValid reads
 -- it; the result is always judged from the active-craft record).
-function TWA_FinishCraftAction:new(character, recipeId, qualities)
+-- `token` (round 12): a string the client picks; stamped on the new item so
+-- the grade-reveal window can find it.
+function TWA_FinishCraftAction:new(character, recipeId, qualities, token)
     local o = ISBaseTimedAction.new(self, character)
     o.recipeId = recipeId
     o.qualities = qualities
+    o.token = token
     o.recipe = TWACraftState.getRecipeById(recipeId)
     o.qmap = TWACraftState.parseMap(qualities)
     -- maxTime raised 100->300 (request 2026-09-28: "เพิ่มเวลา Actiontime

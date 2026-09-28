@@ -37,6 +37,8 @@ TWARecipeData = TWARecipeData or {}
 -- base Base.Stone2, baseAlt a LIST (Stone, FlintNodule, SharpedStone,
 -- LargeStone; types missing in this game version are skipped at runtime by
 -- TWACraftState.baseTypes).
+-- HAND-EDIT (round 12): the smashed bottle takes any glass bottle (beer,
+-- wine, whiskey -- empty or full; missing types skipped at runtime).
 TWARecipeData.List = {
     { id = "Make_cfa_peacemaker_tomahawk", result = "HARMONIE_TheWayToAttack.cfa_peacemaker_tomahawk", base = "HARMONIE_TheWayToAttack.MaterialLump", base2 = "HARMONIE_TheWayToAttack.MaterialBar_Rare", category = "Axe", procedures = { "SharpenEdge", "HammerNails", "RivetPlate", "WrapCloth" } },
     { id = "Make_elite_force_f712_machete", result = "HARMONIE_TheWayToAttack.elite_force_f712_machete", base = "HARMONIE_TheWayToAttack.MaterialLump", base2 = "HARMONIE_TheWayToAttack.MaterialBar_Epic", category = "LongBlade", procedures = { "StropLeather", "MakeHandle", "WrapBind", "HammerNails", "RivetPlate", "WrapLeather", "CoatWax" } },
@@ -293,7 +295,7 @@ TWARecipeData.List = {
     { id = "Make_Vanilla_LargeKnife_Scrap", result = "Base.LargeKnife_Scrap", base = "HARMONIE_TheWayToAttack.MaterialLump", base2 = "HARMONIE_TheWayToAttack.MaterialBar_Uncommon", category = "SmallBlade", procedures = { "TaperPoint", "WrapCloth" } },
     { id = "Make_Vanilla_MacheteKnife", result = "Base.MacheteKnife", base = "HARMONIE_TheWayToAttack.MaterialLump", base2 = "HARMONIE_TheWayToAttack.MaterialBar_Uncommon", category = "SmallBlade", procedures = { "TaperPoint", "WrapCloth", "CoatMud" } },
     { id = "Make_Vanilla_Screwdriver_Improvised", result = "Base.Screwdriver_Improvised", base = "Base.SteelBarQuarter", base2 = "HARMONIE_TheWayToAttack.MaterialBar_Uncommon", category = "SmallBlade", procedures = { "KnapHead" } },
-    { id = "Make_Vanilla_SmashedBottle", result = "Base.SmashedBottle", base = "Base.BeerBottle", category = "SmallBlade", procedures = { "SmashBottle" } },
+    { id = "Make_Vanilla_SmashedBottle", result = "Base.SmashedBottle", base = "Base.BeerBottle", baseAlt = { "Base.BeerEmpty", "Base.WineEmpty", "Base.WineEmpty2", "Base.WhiskeyEmpty", "Base.Wine", "Base.Wine2", "Base.WhiskeyFull", "Base.BottleEmpty" }, category = "SmallBlade", procedures = { "SmashBottle" } },
     { id = "Make_Vanilla_Toothbrush_Shiv", result = "Base.Toothbrush_Shiv", base = "Base.Toothbrush", category = "SmallBlade", procedures = { "WrapClothImprov" } },
     { id = "Make_MaterialLump", result = "HARMONIE_TheWayToAttack.MaterialLump", base = nil, category = "Material", procedures = { "StartFire", "MeltMetal" } },
     { id = "Make_MaterialBar_Uncommon", result = "HARMONIE_TheWayToAttack.MaterialBar_Uncommon", base = "HARMONIE_TheWayToAttack.MaterialLump", category = "Material", procedures = { "StartFire", "PourMold", "CoolCast" } },
