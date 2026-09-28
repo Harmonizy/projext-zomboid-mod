@@ -92,8 +92,11 @@ function TWAHeatGame:updateGame(dt)
         self.held = self.held + dt
         if ZombRand(5) == 0 then self:burst(self.cool and "steam" or "ember", 330 + ZombRandFloat(-60, 60), 250, 1) end
     else
+        -- Round 7 ("หากเข้าไปในโซนแล้ว หากออกนอกโซนหลังจากนั้นจะลดคุณภาพ"):
+        -- once the band has been reached, every moment outside it costs
+        -- quality -- a real base rate, not just in proportion to how far out.
         local over = (math.abs(off) - self.half) / 0.1
-        self:spend(dt * 0.00004 * over, nil, true)
+        self:spend(dt * (0.00006 + 0.00004 * over), nil, true)
         if self.bend and off > self.half + 0.18 then
             self:spend(dt * 0.0002, getText("IGUI_TWA_MG_Heat_Splinter"), true)
         elseif self.bend then

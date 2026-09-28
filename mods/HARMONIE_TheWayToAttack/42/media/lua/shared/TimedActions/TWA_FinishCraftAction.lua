@@ -44,9 +44,9 @@ function TWA_FinishCraftAction:isValid()
     -- by it; a multiplayer client only has the words it was handed.
     if isServer() or not isClient() then
         local act = S.getActive(self.character)
-        return act ~= nil and act.recipeId == self.recipeId and S.allDone(self.recipe, act.map)
+        return act ~= nil and act.recipeId == self.recipeId and (S.canFinish(self.recipe, act.map))
     end
-    return S.allDone(self.recipe, self.qmap)
+    return (S.canFinish(self.recipe, self.qmap))
 end
 
 function TWA_FinishCraftAction:start()
@@ -76,11 +76,15 @@ function TWA_FinishCraftAction:perform()
     ISBaseTimedAction.perform(self)
 end
 
--- The in-character forename+surname (not getUsername(), which is MP-account
--- specific and can be blank in single player).
+-- Round 7 (request 2026-09-28: "สร้างโดย สามารถแสดงชื่อไอดีแทนชื่อตัวละคร
+-- ได้ไหม"): the player's account name (getUsername(), what the server knows
+-- them by) when there is one -- multiplayer. Single player has no account
+-- name, so it falls back to the character's forename+surname as before.
 local function crafterName(character)
+    local user = character.getUsername and character:getUsername()
+    if (isServer() or isClient()) and user and user ~= "" then return user end
     local desc = character:getDescriptor()
-    return desc and (desc:getForename() .. " " .. desc:getSurname()) or ""
+    return desc and (desc:getForename() .. " " .. desc:getSurname()) or (user or "")
 end
 
 -- Server in multiplayer, local in single player.
@@ -91,7 +95,7 @@ function TWA_FinishCraftAction:complete()
     -- The base items were already taken at Start; the words come from the
     -- authoritative active-craft record, never from the client.
     local act = S.getActive(self.character)
-    if not act or act.recipeId ~= self.recipeId or not S.allDone(recipe, act.map) then return false end
+    if not act or act.recipeId ~= self.recipeId or not S.canFinish(recipe, act.map) then return false end
     local map = act.map
     S.clearActive(self.character)
 

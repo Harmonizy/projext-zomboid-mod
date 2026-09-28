@@ -146,9 +146,17 @@ function TWAWrapGame:onDrag(x, y, dt)
         local inst = dt > 0 and (d / TWO_PI) / (dt / 1000) or 0
         self.omega = self.omega + (inst - self.omega) * math.min(1, dt / 300)
         self.wheelAng = self.wheelAng + d * 3
+        if self.omega >= GRIND_LO and self.omega <= GRIND_HI then self.grindReached = true end
         if self.omega < GRIND_LO then
-            self:flash(getText("IGUI_TWA_MG_Wrap_GrindSlow"), false, 300)
-            return -- the stone isn't biting: no progress, no penalty
+            -- Getting the wheel up to speed is free; once it has been in
+            -- the band, dropping out of it costs (round 7, same rule as the
+            -- bellows).
+            if self.grindReached then
+                self:spend(dt * 0.00006, getText("IGUI_TWA_MG_Wrap_GrindSlow"), true)
+            else
+                self:flash(getText("IGUI_TWA_MG_Wrap_GrindSlow"), false, 300)
+            end
+            return -- the stone isn't biting: no progress
         elseif self.omega > GRIND_HI then
             self:tooFast(dt * 0.00035 * (self.omega / GRIND_HI), getText("IGUI_TWA_MG_Wrap_GrindFast"), x, y)
         end

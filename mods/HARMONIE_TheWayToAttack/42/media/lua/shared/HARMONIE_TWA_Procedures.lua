@@ -840,7 +840,8 @@ TWAProcedures.List = {
     -- this file's own established FlintNodule/SharpedStone convention (see
     -- this file's header note).
     MeltMetal = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_MeltMetal", icon = "IronChunk",
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_MeltMetal", icon = "CeramicCrucibleWithGlass", -- round 7 (user-given name)
+        iconItems = { "Base.CeramicCrucibleWithGlass" },
         tool = { kind = "type", value = "Base.Tongs" },
         consumes = { { options = {
             { itemType = "Base.ScrapMetal", qty = 2 },

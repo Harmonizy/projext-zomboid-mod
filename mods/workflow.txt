@@ -2741,6 +2741,26 @@ Round 6 (same day, play-test feedback):
     shaded, grained, bevelled surfaces (deterministic, no flicker); used
     across Strike/Stroke/Wrap/Heat/Coat/Incision/Suture/Extract.
 
+Round 7 (same day, play-test feedback):
+  - Suture: the gold ring sits on the first hole; pulling must start from
+    the gold ring on the exit hole.
+  - Weld "out of the zone while inside": the 5 px band was narrower than
+    the torch picture suggested. Band 8, teeth 22, the zone is drawn FILLED
+    (strip per segment + disc per joint = exactly the measured area) and
+    turns red when out; the contact point is a clear ringed dot (base
+    drawTool, all games). Lesson: players aim with the picture -- always
+    show the exact point that is measured.
+  - Crafted-by: account name (getUsername) in MP; character name in SP.
+  - Green ticks removed (recipe rows, base cards, checklist, library).
+  - MeltMetal icon CeramicCrucibleWithGlass (+iconItems fallback),
+    MaterialLump icon Shouldepad_Metal_L (both user-given names).
+  - Material Finish needs overall Good/Excellent (TWACraftState.canFinish,
+    checked in Finish isValid/complete and the UI; note + tooltip explain).
+  - Bellows/quench/bend and grind: once the band has been reached, being
+    outside it costs quality at a real base rate.
+  - Sharpen/polish: 10 flicks, vmin 0.8, no too-fast at all, a slow flick
+    costs quality and doesn't count, gauge only moves on a counted flick.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

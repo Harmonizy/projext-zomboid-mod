@@ -679,8 +679,11 @@ function TWAMinigameBase:drawTool()
     else
         self:ring(self.hx, self.hy, 6, 2, 1, TWAMinigameBase.COL.line)
     end
-    -- The exact contact point.
-    self:disc(self.hx, self.hy, 2.5, 1, TWAMinigameBase.COL.guide, 10)
+    -- The exact contact point -- what every zone is measured from, not the
+    -- picture (round 7: the weld looked "in" by the torch picture while the
+    -- point was out). A dark outline keeps it visible on any surface.
+    self:ring(self.hx, self.hy, 5, 1.5, 0.9, TWAMinigameBase.COL.dark, 12)
+    self:disc(self.hx, self.hy, 3, 1, TWAMinigameBase.COL.guide, 10)
 end
 
 function TWAMinigameBase:drawParticles()

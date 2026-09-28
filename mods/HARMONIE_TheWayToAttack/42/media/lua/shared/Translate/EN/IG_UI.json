@@ -185,8 +185,8 @@
     "IGUI_TWA_MG_Strike_Coals": "Coals (hold to reheat)",
     "IGUI_TWA_MG_Strike_Done": "All driven home.",
     "IGUI_TWA_MG_Stroke_Hint": "Pick the tool up at the gold ring and draw it along the guide, inside the lines.",
-    "IGUI_TWA_MG_Stroke_Hint_sharpen": "Even strokes, heel to tip. Too fast skids.",
-    "IGUI_TWA_MG_Stroke_Hint_polish": "Steady passes along the metal.",
+    "IGUI_TWA_MG_Stroke_Hint_sharpen": "Quick flicks, heel to tip - 10 of them. A slow stroke costs quality and doesn't count.",
+    "IGUI_TWA_MG_Stroke_Hint_polish": "Quick flicks along the metal - 10 of them. A slow stroke costs quality and doesn't count.",
     "IGUI_TWA_MG_Stroke_Hint_carve": "Shave along the stick, one pass at a time.",
     "IGUI_TWA_MG_Stroke_Hint_saw": "Back and forth without lifting - each pass cuts deeper.",
     "IGUI_TWA_MG_Stroke_Hint_weld": "One slow pass along the seam. Too fast leaves gaps, too slow burns through.",
@@ -244,7 +244,7 @@
     "IGUI_TWA_MG_Wrap_GrindSlow": "Too slow - the stone isn't biting",
     "IGUI_TWA_MG_Wrap_GrindFast": "Too fast - the steel is overheating",
     "IGUI_TWA_MG_Wrap_LetGo": "Let go now!",
-    "IGUI_TWA_MG_Stroke_Flick": "Flick it faster - too slow doesn't bite",
+    "IGUI_TWA_MG_Stroke_Flick": "Too slow - flick it faster",
     "IGUI_TWA_MG_Heat_Hint_bend": "Hold the button to bend the branch over your knee; release to ease off.",
     "IGUI_TWA_MG_Heat_Hint2_bend": "Hold it in the green band until it snaps cleanly.",
     "IGUI_TWA_MG_Heat_BendHard": "Too hard",
@@ -300,5 +300,8 @@
     "IGUI_TWA_Tooltip_ClearSearch": "Clear the search",
     "IGUI_TWA_ResumeItemNote": "Unfinished item - carrying on from it",
     "IGUI_TWA_Tooltip_Unfinished": "UNFINISHED - damage 0 until the craft is finished (right-click to carry on)",
-    "IGUI_TWA_Stat_Type": "Type"
+    "IGUI_TWA_Stat_Type": "Type",
+    "IGUI_TWA_MaterialFinishRule": "Materials: Finish needs an overall quality of Good or Excellent - redo weak procedures first.",
+    "IGUI_TWA_Tooltip_FinishMaterial": "Finish the material. Every procedure must be done AND the overall quality must be Good or Excellent; at Bad, redo the weak procedures to raise it. The material itself carries no quality or grade.",
+    "IGUI_TWA_MG_Suture_TakeThread": "Take the thread at the gold ring on the hole"
 }

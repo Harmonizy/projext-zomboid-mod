@@ -157,6 +157,20 @@ function S.allDone(recipe, map)
     return true
 end
 
+-- Round 7 (request 2026-09-28: "การกดคราฟปุ่มเสร็จสิ้นในวัตถุดิบต้องมีคุณภาพ
+-- ดี หรือเยี่ยมเท่านั้น"): every procedure done, and for a Material recipe
+-- the overall quality must also be Good or Excellent -- a Bad material has
+-- its weak procedures redone first. (Weapons can still finish at Bad; the
+-- quality then decides their grade pool.) Returns ok, reason.
+function S.canFinish(recipe, map)
+    if not S.allDone(recipe, map) then return false, "notDone" end
+    if S.isMaterialRecipe(recipe) then
+        local word = S.overall(recipe, map)
+        if word ~= "Good" and word ~= "Excellent" then return false, "materialQuality" end
+    end
+    return true
+end
+
 function S.wordForAverage(avg)
     if avg < S.BAD_BELOW then return "Bad" end
     if avg < S.GOOD_BELOW then return "Good" end
