@@ -2649,6 +2649,35 @@ Round 3 (same day, user play-test feedback):
     (getTextManager) once made every game "pass" by crashing straight to
     Excellent.
 
+Round 4 (same day, play-test feedback):
+  - Strike timing window set in TIME: 115 ms either side (perfect ~52 ms),
+    converted to ring pixels from the ring speed; the big fast ring stays.
+  - Quality reaching 0 ends the game at once as a Miss.
+  - Filter tabs "All"/"Available" translated (TH: ทั้งหมด/คราฟได้).
+  - Screw: smaller ring, a real-looking steel plate behind it, a gauge that
+    runs past the gold snug mark into orange and a red strip line, "let go"
+    prompt; the readout rounds DOWN and a release within 0.05 of the mark
+    counts (release at an on-screen "3.0" used to fail on 2.97).
+  - Weld: the guide is a zig-zag weave along the seam (straight = off band).
+  - Sharpen/polish: twice the strokes, and they are FLICKS -- a stroke only
+    counts if its AVERAGE speed over the whole stroke reaches vmin. (First
+    attempt gated each FRAME on speed: a flick starting from rest was "too
+    slow" for its first frames, ran ahead of what had counted, tripped the
+    skip rule and no stroke could ever finish -- the play simulation caught
+    it. Judge flicks per stroke, never per frame.)
+  - GrindMetal -> new Wrap "grind" (crank a grindstone; crank-speed band).
+  - BreakBranch -> new Heat "bend" (bend over the knee, hold, snap).
+  - Heat fire variants draw a bellows as the cursor (no vanilla icon).
+  - Quench ("cool"): faster plunge/rise, narrower band, drainMul 1.5.
+  - Cloth wraps: band x2.
+  - Toughness & Wear Resistance: HIGHEST tier only (were cumulative), and
+    CoatWax/FireTreat swapped wear tiers -- scripted hand-edit of
+    RecipeData.lua, verified against each recipe's stats.
+  - STILL OPEN: vanilla forge entity sprite names / craft-bench API. The
+    cloud session can't read the game install; the user's Remote Control
+    session had closed. Needs a local session to scan (prompt was given to
+    the user) or the "[TWA forge scan]" console.txt lines.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

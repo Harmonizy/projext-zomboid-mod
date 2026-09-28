@@ -247,8 +247,11 @@ local PANEL_H = 520
 -- หมวดหมู่ให้ใช้ภาษาอังกฤษ") -- same convention already established for
 -- tier names (TIER_INFO above) and TIER_TABS's own tier labels.
 local CATEGORY_TABS = {
-    { key = "All", label = "All" },
-    { key = "Available", label = "Available" },
+    -- These two are translated (request 2026-09-28: "เปลี่ยนชื่อ filter all
+    -- เป็น ทั้งหมด, avalaible เป็น คราฟได้"); the weapon categories stay
+    -- plain English as before.
+    { key = "All", labelKey = "IGUI_TWA_FilterAll" },
+    { key = "Available", labelKey = "IGUI_TWA_FilterAvailable" },
     { key = "Axe", label = "Axe" },
     { key = "SmallBlade", label = "Small Blade" },
     { key = "Blunt", label = "Blunt" },
@@ -996,7 +999,7 @@ function TWACraftWindow:createChildren()
     self.categoryRowY = contentTop
     local fx, fy = leftX, contentTop + captionH
     for _, tab in ipairs(CATEGORY_TABS) do
-        local label = tab.label
+        local label = tab.label or getText(tab.labelKey)
         local w = getTextManager():MeasureStringX(UIFont.Small, label) + 20
         if fx + w > leftX + LEFT_W then
             fx = leftX

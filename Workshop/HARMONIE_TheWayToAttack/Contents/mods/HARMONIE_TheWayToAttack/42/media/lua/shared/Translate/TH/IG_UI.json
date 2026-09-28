@@ -201,7 +201,7 @@
     "IGUI_TWA_MG_Stroke_Done": "เสร็จแล้ว",
     "IGUI_TWA_MG_Wrap_Hint": "กดค้างแล้ววนรอบชิ้นงานตามวงแหวน ไปทางเดียวกับลูกศร",
     "IGUI_TWA_MG_Wrap_Hint_wrap": "ครบหนึ่งรอบได้หนึ่งชั้น วนใกล้ไปแน่นเกิน ห่างไปหลวม",
-    "IGUI_TWA_MG_Wrap_Hint_screw": "หมุนจนแน่นแล้วปล่อยทันที หมุนเกินครึ่งรอบเกลียวจะหวาน",
+    "IGUI_TWA_MG_Wrap_Hint_screw": "หมุนจนเกจถึงขีดสีทองแล้วปล่อย เลยขีดแดงเกลียวจะหวาน",
     "IGUI_TWA_MG_Wrap_Hint_drill": "ทุกรอบจะเจาะลึกลง",
     "IGUI_TWA_MG_Wrap_TooFast": "เร็วเกินไป ช้าลงหน่อย",
     "IGUI_TWA_MG_Wrap_TooTight": "แน่นเกินไป",
@@ -237,5 +237,18 @@
     "IGUI_TWA_MG_Pour_Over": "เกินเส้นไปหน่อย",
     "IGUI_TWA_MG_Pour_Spilled": "ล้นแล้ว!",
     "IGUI_TWA_MG_Pour_Done": "เทถึงเส้นพอดี",
-    "IGUI_TWA_AcceptsAny": "ใช้อย่างใดอย่างหนึ่งได้:"
+    "IGUI_TWA_AcceptsAny": "ใช้อย่างใดอย่างหนึ่งได้:",
+    "IGUI_TWA_FilterAvailable": "คราฟได้",
+    "IGUI_TWA_MG_QualityGone": "คุณภาพหมดแล้ว!",
+    "IGUI_TWA_MG_Wrap_Hint_grind": "หมุนหินเจียรด้วยความเร็วสม่ำเสมอ คุมเข็มให้อยู่ในแถบเขียว",
+    "IGUI_TWA_MG_Wrap_GrindSlow": "ช้าไป หินยังไม่กินเหล็ก",
+    "IGUI_TWA_MG_Wrap_GrindFast": "เร็วไป เหล็กร้อนจนเสียความแข็ง",
+    "IGUI_TWA_MG_Wrap_LetGo": "ปล่อยเลย!",
+    "IGUI_TWA_MG_Stroke_Flick": "สะบัดให้เร็วกว่านี้ ช้าไปไม่กินเนื้อ",
+    "IGUI_TWA_MG_Heat_Hint_bend": "กดค้างเพื่อหักกิ่งไม้กับเข่า ปล่อยเพื่อผ่อนแรง",
+    "IGUI_TWA_MG_Heat_Hint2_bend": "คุมให้อยู่ในแถบเขียวจนกิ่งหักขาดอย่างสวย",
+    "IGUI_TWA_MG_Heat_BendHard": "แรงไป",
+    "IGUI_TWA_MG_Heat_BendSoft": "แรงไม่พอ",
+    "IGUI_TWA_MG_Heat_Splinter": "กิ่งแตกเป็นเสี้ยน!",
+    "IGUI_TWA_MG_Heat_Snapped": "หักขาดอย่างสวย"
 }

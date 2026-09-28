@@ -201,10 +201,15 @@ end
 --- A slip. `amount` is quality lost before skill forgiveness; `text` flashes.
 function TWAMinigameBase:spend(amount, text, quiet)
     if self.word or not amount or amount <= 0 then return end
-    self.quality = math.max(0, self.quality - amount * DRAIN / self.tol)
+    self.quality = math.max(0, self.quality - amount * DRAIN * (self.drainMul or 1) / self.tol)
     self.hurt = math.min(1, self.hurt + amount * 3)
     if text then self:flash(text, true) end
     if not quiet and amount >= 0.03 then self:shake(2 + amount * 30, 220) end
+    -- Request 2026-09-28: "เกจคุณภาพถึง 0 ให้ถือว่าพลาดเลย และออกจากหน้า
+    -- มินิเกม" -- an empty quality meter ends the game as a Miss at once.
+    if self.quality <= 0 then
+        self:fail(getText("IGUI_TWA_MG_QualityGone"))
+    end
 end
 
 --- Moving too fast: a real penalty AND something you can see -- the tool

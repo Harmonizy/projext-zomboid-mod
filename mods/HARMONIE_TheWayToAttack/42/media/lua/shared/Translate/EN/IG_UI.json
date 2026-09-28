@@ -201,7 +201,7 @@
     "IGUI_TWA_MG_Stroke_Done": "Finished.",
     "IGUI_TWA_MG_Wrap_Hint": "Hold the button and circle round the work along the ring, the way the arrows run.",
     "IGUI_TWA_MG_Wrap_Hint_wrap": "Each full turn lays one wrap. Too close is too tight, too far is slack.",
-    "IGUI_TWA_MG_Wrap_Hint_screw": "Turn until snug, then LET GO - half a turn more strips the thread.",
+    "IGUI_TWA_MG_Wrap_Hint_screw": "Turn until the gauge reaches the gold mark, then let go - past the red line the thread strips.",
     "IGUI_TWA_MG_Wrap_Hint_drill": "Every turn bores deeper.",
     "IGUI_TWA_MG_Wrap_TooFast": "Too fast - slow down",
     "IGUI_TWA_MG_Wrap_TooTight": "Too tight",
@@ -237,5 +237,18 @@
     "IGUI_TWA_MG_Pour_Over": "A little over the line.",
     "IGUI_TWA_MG_Pour_Spilled": "Spilled over!",
     "IGUI_TWA_MG_Pour_Done": "Filled to the line.",
-    "IGUI_TWA_AcceptsAny": "Any one of these works:"
+    "IGUI_TWA_AcceptsAny": "Any one of these works:",
+    "IGUI_TWA_FilterAvailable": "Craftable",
+    "IGUI_TWA_MG_QualityGone": "Quality ran out!",
+    "IGUI_TWA_MG_Wrap_Hint_grind": "Crank the grindstone round at a steady pace - keep the needle in the green.",
+    "IGUI_TWA_MG_Wrap_GrindSlow": "Too slow - the stone isn't biting",
+    "IGUI_TWA_MG_Wrap_GrindFast": "Too fast - the steel is overheating",
+    "IGUI_TWA_MG_Wrap_LetGo": "Let go now!",
+    "IGUI_TWA_MG_Stroke_Flick": "Flick it faster - too slow doesn't bite",
+    "IGUI_TWA_MG_Heat_Hint_bend": "Hold the button to bend the branch over your knee; release to ease off.",
+    "IGUI_TWA_MG_Heat_Hint2_bend": "Hold it in the green band until it snaps cleanly.",
+    "IGUI_TWA_MG_Heat_BendHard": "Too hard",
+    "IGUI_TWA_MG_Heat_BendSoft": "Not enough",
+    "IGUI_TWA_MG_Heat_Splinter": "It's splintering!",
+    "IGUI_TWA_MG_Heat_Snapped": "Snapped cleanly."
 }
