@@ -37,6 +37,8 @@ local VARIANTS = {
     polish  = { strokes = function() return 10 end, vmin = 0.8, band = 14, flick = true },
     carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 6, tool = "KnifeSushi" },
     saw     = { strokes = function() return 6 end, vmax = 1.4, band = 7, tool = "Handsaw", alternate = true },
+    -- Round 15: sawing a gem -- fewer, slow and careful strokes.
+    gemsaw  = { strokes = function(req) return 6 + math.floor(req / 2) end, vmax = 0.9, band = 12, tool = "Handsaw", alternate = true },
     -- Burning is harder (round 6: "ให้ไหม้ยากกว่าเดิม"): the too-slow limit
     -- halved (0.05 -> 0.025) and it burns at half the rate.
     -- Band 5 -> 8 (round 7: "มันออกนอกโซนทั้งๆที่ก็ยังอยู่") -- on the zig-zag
@@ -47,7 +49,7 @@ local VARIANTS = {
 }
 
 local function buildPath(variant)
-    if variant == "saw" then
+    if variant == "saw" or variant == "gemsaw" then
         return { { 170, 210 }, { 450, 210 } }
     elseif variant == "weld" and not TWAConfig.on("WeldZigzag") then
         return { { 110, 200 }, { 510, 200 } } -- sandbox: straight seam
@@ -110,7 +112,7 @@ function TWAStrokeGame:onStart()
     local v = VARIANTS[self.variant] or VARIANTS.sharpen
     self.v = v
     self.path = buildPath(self.variant)
-    local SND = { sharpen = "TWA_Whetstone", polish = "TWA_Whetstone", carve = "TWA_Carve", saw = "TWA_Saw", weld = "TWA_Weld", engrave = "TWA_Carve" }
+    local SND = { gemsaw = "TWA_Saw", sharpen = "TWA_Whetstone", polish = "TWA_Whetstone", carve = "TWA_Carve", saw = "TWA_Saw", weld = "TWA_Weld", engrave = "TWA_Carve" }
     self.loopSoundName = SND[self.variant or "sharpen"] -- round 11
     self.seg, self.total = measure(self.path)
     -- Round 9: the tunable values come from the sandbox.
@@ -253,7 +255,14 @@ end
 function TWAStrokeGame:renderGame()
     local vr = self.variant or "sharpen"
     local p1, p2 = self.path[1], self.path[#self.path]
-    if vr == "saw" then
+    if vr == "gemsaw" then
+        -- A rough stone in its clamp; the cut deepens with every pass.
+        self:metalPlate(150, 290, 320, 20, { tint = { r = 0.35, g = 0.36, b = 0.4 }, seed = 40 })
+        self:quad(180, 290, 440, 290, 420, 140, 200, 150, 1, 0.55, 0.3, 0.6)
+        self:quad(200, 150, 420, 140, 400, 175, 225, 185, 1, 0.75, 0.45, 0.8)
+        local depth = 140 * self.done / self.need
+        self:rect(306, 150, 6, depth, 1, C.dark)
+    elseif vr == "saw" then
         -- A plank seen from the front; the cut deepens with every pass.
         self:woodBoard(120, 150, 380, 150, { seed = 4 })
         local depth = 140 * self.done / self.need

@@ -4,7 +4,7 @@ module HARMONIE_TheWayToAttack
 	{
 		Base,
 	}
-    item cfa_peacemaker_tomahawk 
+    item TWA_cfa_peacemaker_tomahawk 
     {
 		DisplayName 						= CFA Peacemaker Tomahawk,
 		DisplayCategory 					= ToolWeapon,
@@ -56,7 +56,7 @@ module HARMONIE_TheWayToAttack
         HeadConditionLowerChanceMultiplier 	= 1.5,
     }
 
-    item elite_force_f712_machete
+    item TWA_elite_force_f712_machete
     {
 		DisplayName 						= Elite Force F712 Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -105,7 +105,7 @@ module HARMONIE_TheWayToAttack
         OnBreak 							= OnBreak.Machete,
     }
 
-         item bm_970_switchblade
+         item TWA_bm_970_switchblade
 	{
 		DisplayName 						= BM 970 Switchblade,
 		DisplayCategory 					= Weapon,
@@ -162,7 +162,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak 							= OnBreak.HuntingKnife,
     }
 
-        item m48_naginata
+        item TWA_m48_naginata
     {
 		DisplayName 						= M48 Naginata,
 		DisplayCategory 					= Weapon,
@@ -214,7 +214,7 @@ module HARMONIE_TheWayToAttack
         HeadConditionLowerChanceMultiplier 	= 1,
     }
 
-        item apoc_tactical_katana
+        item TWA_apoc_tactical_katana
     {
 		DisplayName 						= A.P.O.C. Tactical Katana,
 		DisplayCategory 					= Weapon,
@@ -263,7 +263,7 @@ module HARMONIE_TheWayToAttack
         OnBreak 							= OnBreak.Katana,
     }
 
-        item apoc_tactical_longsword
+        item TWA_apoc_tactical_longsword
     {
 		DisplayName 						= A.P.O.C. Tactical Longsword,
 		DisplayCategory 					= Weapon,
@@ -312,7 +312,7 @@ module HARMONIE_TheWayToAttack
         OnBreak 							= OnBreak.Katana,
     }
 
-        item browning_outdoorsman_axe
+        item TWA_browning_outdoorsman_axe
     {
 		DisplayName 						= Browning Outdoorsman Axe,
 		DisplayCategory 					= ToolWeapon,
@@ -369,7 +369,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak = OnBreak.WoodAxe,
     }
 
-      item easton_adv_360_baseball_bat
+      item TWA_easton_adv_360_baseball_bat
 	{
 		DisplayName 						= Easton ADV 360 Baseball Bat,
 		DisplayCategory 					= SportsWeapon,
@@ -417,7 +417,7 @@ module HARMONIE_TheWayToAttack
 		Tags 								= RepairWithGlue;RepairWithTape,
 	}
 
-        item ox_trade_sledgehammer
+        item TWA_ox_trade_sledgehammer
 	{
 		DisplayName 						= OX Trade Sledgehammer,
 		DisplayCategory 					= ToolWeapon,
@@ -469,7 +469,7 @@ module HARMONIE_TheWayToAttack
         HeadConditionLowerChanceMultiplier 	= 1,
 	}
 
-        item boker_applegate_fairbairn_knife
+        item TWA_boker_applegate_fairbairn_knife
 	{
 		DisplayName 						= Boker Applegate Fairbairn Knife,
 		DisplayCategory 					= Weapon,
@@ -524,7 +524,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak 							= OnBreak.HuntingKnife,
     }
 
-        item k25_jacob_cleaver
+        item TWA_k25_jacob_cleaver
 	{
 		DisplayName 						= K25 Jacob Cleaver,
 		DisplayCategory 					= ToolWeapon,
@@ -576,7 +576,7 @@ module HARMONIE_TheWayToAttack
         HeadConditionLowerChanceMultiplier 	= 1.5,
   	}
 
-        item ka_bar_knife
+        item TWA_ka_bar_knife
 	{
 		DisplayName 						= KA-BAR Knife,
 		DisplayCategory 					= Weapon,
@@ -631,7 +631,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak 							= OnBreak.HuntingKnife,
     }
 
-        item m48_tactical_kama
+        item TWA_m48_tactical_kama
     {
 		DisplayName 						= M48 Tactical Kama,
 		DisplayCategory 					= Weapon,
@@ -679,7 +679,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak 							= OnBreak.HandScythe,
     }
 
-        item mtech_xtreme_tactical_fighter_knife
+        item TWA_mtech_xtreme_tactical_fighter_knife
 	{
 		DisplayName 						= Mtech Xtreme Tactical Knife,
 		DisplayCategory 					= Weapon,
@@ -732,7 +732,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak 							= OnBreak.HuntingKnife,
     }
 
-        item weyland_kukri
+        item TWA_weyland_kukri
     {
 		DisplayName 						= Weyland Kukri,
 		DisplayCategory 					= GardeningWeapon,
@@ -780,7 +780,7 @@ module HARMONIE_TheWayToAttack
         OnBreak 							= OnBreak.Machete,
     }
 
-        item tops_us_combat_knife
+        item TWA_tops_us_combat_knife
 	{
 		DisplayName 						= Tops US Combat Knife,
 		DisplayCategory 					= Weapon,
@@ -833,7 +833,7 @@ module HARMONIE_TheWayToAttack
 		OnBreak 							= OnBreak.HuntingKnife,
     }
 
-        item mtech_stonewashed_tomahawk
+        item TWA_mtech_stonewashed_tomahawk
 	{
 		DisplayName 						= Mtech Stonewashed Tomahawk,
 		DisplayCategory 					= ToolWeapon,
@@ -882,7 +882,7 @@ module HARMONIE_TheWayToAttack
         HeadConditionLowerChanceMultiplier 	= 1.5,
   	}
 
-        item north_couloir_ice_axe
+        item TWA_north_couloir_ice_axe
     {
 		DisplayName 						= North Couloir Ice Axe,
 		DisplayCategory 					= GardeningWeapon,
@@ -930,7 +930,7 @@ module HARMONIE_TheWayToAttack
         OnBreak 							= OnBreak.HandScythe,
     }
 
-    	item stanley_fatmax_nailing_hammer
+    	item TWA_stanley_fatmax_nailing_hammer
 	{
 		DisplayName 						= Stanley Fatmax Nailing Hammer,
 		DisplayCategory 					= ToolWeapon,
@@ -981,7 +981,7 @@ module HARMONIE_TheWayToAttack
     }
     
 
-        item z_hunter_red_sawback_machete
+        item TWA_z_hunter_red_sawback_machete
     {
 		DisplayName 						= Z-Hunter Red Sawback Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -1029,7 +1029,7 @@ module HARMONIE_TheWayToAttack
         OnBreak 							= OnBreak.Machete,
     }
 
-        item cold_steel_expandable_baton
+        item TWA_cold_steel_expandable_baton
     {
 		DisplayName = Cold Steel Expandable Baton,
 		DisplayCategory = Weapon,
@@ -1074,7 +1074,7 @@ module HARMONIE_TheWayToAttack
 		Tags = IsFireFuel;RepairWithGlue;RepairWithTape,
     }
 
-        item reapr_11003_survival_spear
+        item TWA_reapr_11003_survival_spear
     {
 		DisplayName 						= Reapr 11003 Survival Spear,
 		DisplayCategory 					= Weapon,
@@ -1126,7 +1126,7 @@ module HARMONIE_TheWayToAttack
         HeadConditionLowerChanceMultiplier 	= 1,
     }
 
-        item finka_nkvd_knife
+        item TWA_finka_nkvd_knife
 	{
 		DisplayName 						= Finka NKVD Knife,
 		DisplayCategory 					= Weapon,

@@ -7,7 +7,7 @@ module HARMONIE_TheWayToAttack
 
     /************************ SHORT BLUNT ************************/
 
-    item HalfPlank
+    item TWA_HalfPlank
 	{
         ItemType = base:weapon,
 		Weight		=	1.0,
@@ -52,7 +52,7 @@ module HARMONIE_TheWayToAttack
         WeaponLength = 0.4,
 	}		
 		
-    item HalfPlankNails
+    item TWA_HalfPlankNails
 	{
         ItemType = base:weapon,
 		Weight		=	1.0,
@@ -98,7 +98,7 @@ module HARMONIE_TheWayToAttack
         WeaponLength = 0.4,
 	}		
 
-    item LShapedLugWrench
+    item TWA_LShapedLugWrench
     {
         ItemType = base:weapon,
 		Weight		=	0.6,
@@ -144,7 +144,7 @@ module HARMONIE_TheWayToAttack
         Tooltip = Tooltip_NotForCarService,		
 	}	
 
-    item MeatTenderizer
+    item TWA_MeatTenderizer
     {
         ItemType = base:weapon,
 		Weight		=	0.7,
@@ -190,7 +190,7 @@ module HARMONIE_TheWayToAttack
         WeaponLength = 0.4,
 	}
 
-    item FireplacePoker
+    item TWA_FireplacePoker
     {
         ItemType = base:weapon,
 		Weight		=	1.2,
@@ -236,7 +236,7 @@ module HARMONIE_TheWayToAttack
         WeaponLength = 0.5,
 	}		
 		
-    item ShortTreeBranch
+    item TWA_ShortTreeBranch
 	{
         ItemType = base:weapon,
 		Weight		=	0.5,
@@ -283,7 +283,7 @@ module HARMONIE_TheWayToAttack
 
     /************************ LONG BLUNT ************************/	
 
-    item AluminumBaseballBat
+    item TWA_AluminumBaseballBat
 	{
         ItemType = base:weapon,
 		Weight		= 1.3,
@@ -333,7 +333,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,
 	}
 
-    item CricketBat
+    item TWA_CricketBat
 	{
         ItemType = base:weapon,
 		Weight		= 1.4,
@@ -383,7 +383,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,
 	}
 	
-    item CricketBatNails
+    item TWA_CricketBatNails
 	{
         ItemType = base:weapon,
 		Weight		= 1.45,
@@ -433,7 +433,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,
 	}	
 	
-    item BaseballBatWire
+    item TWA_BaseballBatWire
 	{
         ItemType = base:weapon,
 		Weight		= 1.6,
@@ -483,7 +483,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,
 	}
 
-	item BaseballBatBarbedWire
+	item TWA_BaseballBatBarbedWire
 	{
         ItemType = base:weapon,
 		Weight		= 1.6,
@@ -533,7 +533,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,		
 	}		
 	
-    item BaseballBatScrews
+    item TWA_BaseballBatScrews
 	{
         ItemType = base:weapon,
 		Weight		= 1.56,
@@ -583,7 +583,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,
 	}	
 
-	item LongLeadPipe
+	item TWA_LongLeadPipe
     {
         ItemType = base:weapon,
 		Weight		= 2.0,
@@ -634,7 +634,7 @@ module HARMONIE_TheWayToAttack
 	
 	}		
 		
-	item LongMetalBar
+	item TWA_LongMetalBar
     {
         ItemType = base:weapon,
 		Weight		= 1.6,
@@ -685,7 +685,7 @@ module HARMONIE_TheWayToAttack
 
     }				
 	
-	item LongMetalPipe
+	item TWA_LongMetalPipe
     {
         ItemType = base:weapon,
 		Weight		= 1.6,
@@ -735,7 +735,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.5,			
 	   }		
 
-    item WalkingCane
+    item TWA_WalkingCane
 	{
         ItemType = base:weapon,
 		Weight		= 1.0,

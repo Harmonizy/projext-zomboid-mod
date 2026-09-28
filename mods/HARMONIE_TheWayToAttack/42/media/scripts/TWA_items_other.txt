@@ -8,7 +8,7 @@ module HARMONIE_TheWayToAttack
 
     /************************Normal************************/
 
-    item GardenShears
+    item TWA_GardenShears
     {
         ItemType = base:normal,
         DisplayCategory = Gardening,
@@ -30,7 +30,7 @@ module HARMONIE_TheWayToAttack
     chains. Icons reused from real vanilla items -- no StaticModel/
     WorldStaticModel set, matching how the real vanilla IronChunk item
     itself also skips them for a simple material item. ***/
-    item MaterialLump
+    item TWA_MaterialLump
     {
         ItemType = base:normal,
         DisplayCategory = Material,
@@ -46,7 +46,7 @@ module HARMONIE_TheWayToAttack
     /* Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real
        item's own TYPE name, Base.IronIngot); its real Icon field is
        "Ingot_Iron". */
-    item MaterialBar_Uncommon
+    item TWA_MaterialBar_Uncommon
     {
         ItemType = base:normal,
         DisplayCategory = Material,
@@ -59,7 +59,7 @@ module HARMONIE_TheWayToAttack
     /* Icon changed (request 2026-09-28) -- user gave "CopperIngot" (the
        real item's own TYPE name, Base.CopperIngot); its real Icon field is
        "Ingot_Copper". */
-    item MaterialBar_Rare
+    item TWA_MaterialBar_Rare
     {
         ItemType = base:normal,
         DisplayCategory = Material,
@@ -72,76 +72,247 @@ module HARMONIE_TheWayToAttack
     /* Icon changed (request 2026-09-28) -- user gave "SilverBar" (the real
        item's own TYPE name, Base.SilverBar); its real Icon field is
        "Ingot_Silver". */
-    item MaterialBar_Epic
+    item TWA_MaterialBar_Epic
     {
         ItemType = base:normal,
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
         DisplayName = Mithril Bar,
-        Icon = Ingot_Silver,
+        Icon = TWA_MaterialBar_Epic,
     }
 
     /* Icon changed (request 2026-09-28) -- user gave "BrassIngot" (the real
        item's own TYPE name, Base.BrassIngot); its real Icon field is
        "Ingot_Brass". */
-    item MaterialBar_Elite
+    item TWA_MaterialBar_Elite
     {
         ItemType = base:normal,
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
         DisplayName = Adamantium Bar,
-        Icon = Ingot_Brass,
+        Icon = TWA_MaterialBar_Elite,
     }
 
     /* Icon changed (request 2026-09-28) -- user gave "GoldBar" (the real
        item's own TYPE name, Base.GoldBar); its real Icon field is
        "Ingot_Gold". */
-    item MaterialBar_Legendary
+    item TWA_MaterialBar_Legendary
     {
         ItemType = base:normal,
         DisplayCategory = Material,
         Weight = 2.0,
         Type = Normal,
         DisplayName = Vibranium Bar,
-        Icon = Ingot_Gold,
+        Icon = TWA_MaterialBar_Legendary,
     }
 
     /*** Round 6 (request 2026-09-28): three rare materials, the
     supplementary item (base2) of the Mithril / Adamantium / Vibranium bar
     recipes. Icons reused from vanilla gems (user's choice): Amethyst,
     Crystal, Diamond. No loot source yet (user: "ยังไม่ต้อง ทำแค่ไอเท็ม"). ***/
-    item Oridecon
+    item TWA_Oridecon
     {
         ItemType = base:normal,
         DisplayCategory = Material,
         Weight = 0.2,
         Type = Normal,
-        /* round 9: display names of Oridecon and Bradium swapped */
-        DisplayName = Bradium,
-        Icon = Amethyst,
+        DisplayName = Oridecon,
+        Icon = TWA_Oridecon,
     }
 
-    item Elunium
+    item TWA_Elunium
     {
         ItemType = base:normal,
         DisplayCategory = Material,
         Weight = 0.2,
         Type = Normal,
         DisplayName = Elunium,
-        Icon = Crystal,
+        Icon = TWA_Elunium,
     }
 
-    item Bradium
+    item TWA_Bradium
     {
         ItemType = base:normal,
         DisplayCategory = Material,
         Weight = 0.2,
         Type = Normal,
-        /* round 9: display names of Oridecon and Bradium swapped */
-        DisplayName = Oridecon,
-        Icon = Diamond,
+        DisplayName = Bradium,
+        Icon = TWA_Bradium,
+    }
+
+    /*** Round 15: gemstones -- icons drawn by tools/gen_item_icons.py,
+    each its own cut and colour. No source or recipe yet. The bar/ore icons
+    above were redrawn by the same script (round 15 colours). ***/
+    item TWA_Gemstone
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Gemstone,
+        Icon = TWA_Gemstone,
+    }
+
+    item TWA_Diamond
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Diamond,
+        Icon = TWA_Diamond,
+    }
+
+    item TWA_Ruby
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Ruby,
+        Icon = TWA_Ruby,
+    }
+
+    item TWA_Sapphire
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Sapphire,
+        Icon = TWA_Sapphire,
+    }
+
+    item TWA_Emerald
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Emerald,
+        Icon = TWA_Emerald,
+    }
+
+    item TWA_Aquamarine
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Aquamarine,
+        Icon = TWA_Aquamarine,
+    }
+
+    item TWA_Garnet
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Garnet,
+        Icon = TWA_Garnet,
+    }
+
+    item TWA_Topaz
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Topaz,
+        Icon = TWA_Topaz,
+    }
+
+    item TWA_Tourmaline
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Tourmaline,
+        Icon = TWA_Tourmaline,
+    }
+
+    item TWA_Amethyst
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Amethyst,
+        Icon = TWA_Amethyst,
+    }
+
+    item TWA_Opal
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Opal,
+        Icon = TWA_Opal,
+    }
+
+    item TWA_Tanzanite
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Tanzanite,
+        Icon = TWA_Tanzanite,
+    }
+
+    item TWA_Peridot
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Peridot,
+        Icon = TWA_Peridot,
+    }
+
+    item TWA_Alexandrite
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Alexandrite,
+        Icon = TWA_Alexandrite,
+    }
+
+    item TWA_Spinel
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Spinel,
+        Icon = TWA_Spinel,
+    }
+
+    item TWA_Zircon
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Zircon,
+        Icon = TWA_Zircon,
+    }
+
+    item TWA_Jade
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.05,
+        Type = Normal,
+        DisplayName = Jade,
+        Icon = TWA_Jade,
     }
 
 }

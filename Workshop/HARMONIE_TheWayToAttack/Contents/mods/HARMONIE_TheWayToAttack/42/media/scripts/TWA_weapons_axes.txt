@@ -5,7 +5,7 @@ module HARMONIE_TheWayToAttack
 		Base,
 	}
 
-	item UniAxe
+	item TWA_UniAxe
 	{
         ItemType = base:weapon,
 		Weight	=	2.4,
@@ -58,7 +58,7 @@ module HARMONIE_TheWayToAttack
 		DamageCategory = Slash,
 	}
 
-	item ShovelAxe
+	item TWA_ShovelAxe
 	{
         ItemType = base:weapon,
 		Weight	=	1.65,
@@ -111,7 +111,7 @@ module HARMONIE_TheWayToAttack
 		DamageCategory = Slash,
 	}
 	
-	item Shovel2Axe
+	item TWA_Shovel2Axe
 	{
         ItemType = base:weapon,
 		Weight	=	1.65,
@@ -164,7 +164,7 @@ module HARMONIE_TheWayToAttack
 		DamageCategory = Slash,
 	}	
 
-	item EntrenchingShovel
+	item TWA_EntrenchingShovel
 	{
         ItemType = base:weapon,
 		Weight		=	1.2,
@@ -212,7 +212,7 @@ module HARMONIE_TheWayToAttack
       	DamageCategory = Slash,
 	}
 
-   item CampingHatchet
+   item TWA_CampingHatchet
 	{
         ItemType = base:weapon,
 		Weight		=	1.4,
@@ -261,7 +261,7 @@ module HARMONIE_TheWayToAttack
 
 	}		
 
-   item AxeHammer
+   item TWA_AxeHammer
 	{
         ItemType = base:weapon,
 		Weight		=	1.5,
@@ -312,7 +312,7 @@ module HARMONIE_TheWayToAttack
 		
 	}		
 
-   item IceAxe
+   item TWA_IceAxe
 	{
         ItemType = base:weapon,
 		Weight		=	1.0,

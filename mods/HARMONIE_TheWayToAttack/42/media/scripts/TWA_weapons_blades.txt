@@ -7,7 +7,7 @@ module HARMONIE_TheWayToAttack
 
 	/*** SHORT BLADE ***/
 
-	item TantoKnife
+	item TWA_TantoKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Tanto Knife,
@@ -64,7 +64,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.25,
 	}	
 
-	item MilitaryKnife
+	item TWA_MilitaryKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Military Knife,
@@ -121,7 +121,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.25,
 	}	
 	
-	item CombatKnife
+	item TWA_CombatKnife
 	{
         ItemType = base:weapon,
 	
@@ -179,7 +179,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.25,
 	}		
 	
-	item CampyKnife
+	item TWA_CampyKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Camping Knife,
@@ -236,7 +236,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.25,
 	}		
 	
-	item ButterflyKnife
+	item TWA_ButterflyKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Butterfly Knife,
@@ -293,7 +293,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.25,
 	}	
 	
-	item HandFile
+	item TWA_HandFile
 	{
         ItemType = base:weapon,
 		DisplayName		=	Hand File,
@@ -349,7 +349,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.25,
 	}		
 
-    item SharpTrowel
+    item TWA_SharpTrowel
 	{
         ItemType = base:weapon,
 	    DisplayCategory = WeaponCrafted,
@@ -399,7 +399,7 @@ module HARMONIE_TheWayToAttack
 
 	/*** LONG BLADE ***/	
 
-	item MilitaryMachete
+	item TWA_MilitaryMachete
     {
         ItemType = base:weapon,
 		DisplayName		=	Military Machete,
@@ -452,7 +452,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.3,
 	}
 
-	item HookMachete
+	item TWA_HookMachete
     {
         ItemType = base:weapon,
  		DisplayName		=	Billhook Machete,
@@ -505,7 +505,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.3,
 	}	 
 
-	item Kukri
+	item TWA_Kukri
     {
         ItemType = base:weapon,
  		DisplayName		=	Kukri,
@@ -558,7 +558,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.3,
 	}
 
-	item GardenShearBlade
+	item TWA_GardenShearBlade
     {
         ItemType = base:weapon,
  		DisplayName		=	Garden Shear Blade,
@@ -611,7 +611,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.2,
 	}	
 
-	item GardenScythe
+	item TWA_GardenScythe
 	{
         ItemType = base:weapon,
 		DisplayName		=	Garden Scythe,
@@ -664,7 +664,7 @@ module HARMONIE_TheWayToAttack
 		WeaponLength = 0.4,
     }		
 
-	item GardenBrushCutter
+	item TWA_GardenBrushCutter
 	{
         ItemType = base:weapon,
 		DisplayName		=	Garden Brush Cutter,

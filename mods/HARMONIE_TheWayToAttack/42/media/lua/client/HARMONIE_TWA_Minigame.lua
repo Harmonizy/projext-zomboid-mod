@@ -87,16 +87,17 @@ TWAMinigame.GAME_FOR = {
     -- (Extract "drive") and one riveted on instead.
     AssembleCan            = { "TWAExtractGame", "drive" },
     AssembleNails          = { "TWAStrikeGame", "nails" },
-    AssembleRailSpike      = { "TWAStrikeGame", "nails" },
+    -- Round 15: fewer hammering games outside blacksmithing.
+    AssembleRailSpike      = { "TWAExtractGame", "drive" },
     AssembleBoneSpike      = { "TWAStrokeGame", "carve" },
     AssembleSawblade       = { "TWAStrokeGame", "saw" },
     AssembleSheetMetal     = { "TWAExtractGame", "drive" },
-    AssembleSpike          = { "TWAStrikeGame", "nails" },
+    AssembleSpike          = { "TWAExtractGame", "drive" },
     AssembleBrake          = { "TWAWrapGame", "screw" },
-    AssembleBucket         = { "TWAStrikeGame", "rivet" },
-    AssembleKettle         = { "TWAStrikeGame", "rivet" },
+    AssembleBucket         = { "TWAWrapGame", "wire" },
+    AssembleKettle         = { "TWAWrapGame", "wire" },
     AssembleRakeHead       = { "TWAExtractGame", "drive" },
-    AssembleSpadeHead      = { "TWAStrikeGame", "rivet" },
+    AssembleSpadeHead      = { "TWAExtractGame", "drive" },
     -- Blacksmithing (internal key "Metallurgy")
     StartFire              = { "TWAHeatGame", "fire" },
     MeltMetal              = { "TWAHeatGame", "melt" },
@@ -124,11 +125,11 @@ TWAMinigame.GAME_FOR = {
     WrapBind               = { "TWAWrapGame", "tape" },
     MakeLongHandle         = { "TWAIncisionGame", "carve" },
     ReinforcedBind         = { "TWASutureGame" },
-    MakeRivetedHandle      = { "TWAStrikeGame", "rivet" },
+    MakeRivetedHandle      = { "TWAExtractGame", "drive" },
     TightenBolts           = { "TWAWrapGame", "screw" },
     -- Balance / Structure
     HammerNails            = { "TWAStrikeGame", "nails" },
-    CounterweightHead      = { "TWAStrikeGame", "rivet" },
+    CounterweightHead      = { "TWAPourGame" },   -- round 15: cast the weight on
     WeldMetal              = { "TWAStrokeGame", "weld" },
     RivetPlate             = { "TWAStrikeGame", "rivet" },
     DrillCore              = { "TWAExtractGame" },
@@ -142,6 +143,16 @@ TWAMinigame.GAME_FOR = {
     FireTreat              = { "TWACoatGame", "fire" },
     CoatWax                = { "TWACoatGame", "wax" },
     SurfaceCoating         = { "TWACoatGame", "bleach" },
+    -- Gem-cutting (round 15)
+    GemSelection           = { "TWAInspectGame", "select" },
+    GemAnalysis            = { "TWAInspectGame", "analyze" },
+    GemCutPlanning         = { "TWAInspectGame", "plan" },
+    GemSawing              = { "TWAStrokeGame", "gemsaw" },
+    GemPreforming          = { "TWAWrapGame", "grind" },
+    GemFaceting            = { "TWAFacetGame", "facet" },
+    GemPolishing           = { "TWAStrokeGame", "polish" },
+    GemFineCutting         = { "TWAFacetGame", "fine" },
+    GemQualityControl      = { "TWAInspectGame", "qc" },
 }
 
 --- Returns false (and does not call onResult) only when busy; the caller
