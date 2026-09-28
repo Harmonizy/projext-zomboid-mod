@@ -66,6 +66,7 @@
 --============================================================================
 
 require "HARMONIE_TWA_Config"
+require "HARMONIE_TWA_Sources"
 
 -- Round 11: every `sound` below is one of this mod's own synthesized sounds
 -- (media/sound/TWA_*.wav, script media/scripts/TWA_sounds.txt, both made by
@@ -188,7 +189,8 @@ function TWAProcedures.ExpandTypes(types)
 end
 
 local function hasOneTool(spec, player)
-    local inv = player:getInventory()
+    -- Round 13: carried, in a container nearby, or on the floor nearby.
+    local inv = TWASources.get(player)
     if spec.kind == "tag" then
         -- A tag constant this game version doesn't have just doesn't match
         -- (never an error: the debugger stops on those even inside pcall).
@@ -224,7 +226,7 @@ end
 
 function TWAProcedures.FindToolItem(spec, player)
     if not spec or not player then return nil end
-    local inv = player:getInventory()
+    local inv = TWASources.get(player)
     for _, s in ipairs(toolAlts(spec)) do
         if s.kind == "type" then
             for _, t in ipairs(TWAProcedures.Family(s.value)) do
@@ -233,7 +235,7 @@ function TWAProcedures.FindToolItem(spec, player)
             end
         elseif s.kind == "tag" then
             local tag = ItemTag and ItemTag[s.value]
-            local it = tag and findTagged(inv, tag)
+            local it = tag and inv:findTagged(tag)
             if it then return it end
         end
     end
@@ -597,7 +599,8 @@ TWAProcedures.List = {
     -- `tags[base:hammer;base:clubhammer;base:mallet]` combo (recipes_
     -- assembly.txt) -- added ClubHammer tag + the real mallet carrier items.
     RivetPlate = {
-        category = "Structure", nameKey = "IGUI_TWA_Proc_RivetPlate", icon = "ScrapMetal",
+        category = "Structure", nameKey = "IGUI_TWA_Proc_RivetPlate", icon = "IcePick", -- round 13 (user: IcePick)
+        iconItems = { "Base.IcePick" },
         tool = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
             { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
@@ -1092,7 +1095,7 @@ function TWAProcedures.CheckEligibility(proc, player, serverSide)
         missing[#missing + 1] = { kind = "tool", spec = proc.tool2 }
     end
 
-    local inv = player:getInventory()
+    local inv = TWASources.get(player)
     for _, c in ipairs(proc.consumes or {}) do
         if c.options then
             local met = false
@@ -1142,7 +1145,7 @@ function TWAProcedures.DescribeAll(proc, player)
         reqs[#reqs + 1] = { kind = "tool", spec = proc.tool2, met = hasAnyTool(proc.tool2, player) }
     end
 
-    local inv = player:getInventory()
+    local inv = TWASources.get(player)
     for _, c in ipairs(proc.consumes or {}) do
         if c.options then
             local met = false
@@ -1190,10 +1193,12 @@ end
 -- multiplayer fix: Consume now runs inside the action's complete(), which
 -- is server-side in multiplayer).
 local function removeOne(inv, it)
-    local c = it:getContainer() or inv
-    c:Remove(it)
-    if isServer() and sendRemoveItemFromContainer then
-        sendRemoveItemFromContainer(c, it)
+    -- Round 13: from a bag, a nearby container or the floor alike.
+    TWASources.remove(it, inv.inv or inv)
+    if inv.floor then
+        for i, f in ipairs(inv.floor) do
+            if f == it then table.remove(inv.floor, i) break end
+        end
     end
 end
 
@@ -1216,7 +1221,7 @@ local function consumeOptions(inv, options)
 end
 
 function TWAProcedures.Consume(proc, player)
-    local inv = player:getInventory()
+    local inv = TWASources.get(player)
     for _, c in ipairs(proc.consumes or {}) do
         if c.options then
             consumeOptions(inv, c.options)

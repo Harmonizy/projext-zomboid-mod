@@ -157,6 +157,10 @@ shared/HARMONIE_TWA_Sound.lua (รอบ 12) เล่นเสียงแบ�
 media/sound/TWA_*.wav + media/scripts/TWA_sounds.txt (รอบ 11) เสียงทั้งหมดของ
   ม็อด สังเคราะห์เองด้วย tools/gen_sounds.py (ห้ามแก้ไฟล์ .wav ตรงๆ)
 
+HARMONIE_TWA_Sources.lua (รอบ 13) หาของจากกระเป๋า กล่องรอบตัว และพื้น (ระยะตาม
+  sandbox NearbyRadius) และหยิบออกจากที่นั้นๆ; client/HARMONIE_TWA_Options.lua
+  ตัวปรับเสียงของม็อดใน Options > Mods
+
 HARMONIE_TWA_CraftState.lua (ใหม่ 2026-09-28)
   ข้อมูล/ฟังก์ชันกลางของระบบคุณภาพ ใช้ทั้ง client (UI/tooltip) และ server
   (complete() ของ action): คำ Miss/Bad/Good/Excellent = 0/1/2/3, สูตรคุณภาพ

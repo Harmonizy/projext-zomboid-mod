@@ -2859,6 +2859,35 @@ Round 12 (same day):
   - Smashed bottle: base BeerBottle + BeerEmpty/WineEmpty/WineEmpty2/
     WhiskeyEmpty/Wine/Wine2/WhiskeyFull/BottleEmpty (missing ones skipped).
 
+Round 13 (same day):
+  - Every action is 3 s by default: sandbox CraftButtonSeconds (Start/
+    Cancel/Incomplete/Finish) and new ProcedureSeconds (every procedure's
+    bar; proc.time no longer used; ProcedureTimeMultiplier removed).
+  - Grade reveal hammer is DRAWN (handle swinging about the hand, steel
+    head whose face lands on the piece) -- an upright item icon put the
+    handle end on the anvil. Checked by rendering the captured quads to a
+    PNG with Pillow (scratchpad render script) -- a cheap way to SEE
+    drawing code without the game.
+  - Client volume: Options > Mods slider (client/HARMONIE_TWA_Options.lua),
+    same mechanism as HARMONIE_LifestyleAudioTune (PZAPI.ModOptions +
+    GameSound:setUserVolume + GameSounds.saveINI), on our TWA_* sounds only
+    (GameSounds.getSound(name), else the UI category filtered by name); at
+    0 TWASound.play plays nothing.
+  - NEARBY ITEMS (sandbox NearbyRadius, default 1): shared/
+    HARMONIE_TWA_Sources.lua -- tools, materials and base items are found in
+    containers (IsoObject containers) and on the floor (world objects)
+    within the radius; TWASources.remove takes an item out of a bag, crate
+    or the floor (transmitRemoveItemFromSquare on a server). Start now sends
+    base item IDS (numbers) so an item outside the inventory reaches the
+    server; CraftState.resolveItem finds by id in the sources. Client scans
+    are cached 400 ms (TWASources.forget to drop).
+  - Pour: stream falls from the crucible's lip (it pivots about the lip,
+    metal glowing inside, level going down); harder -- random fill line
+    0.72-0.88, faster tip, slower recovery, more stream lag, zone 0.015.
+  - RivetPlate icon IcePick; Practice button in the procedure details (plays
+    the minigame only: no materials, XP or craft); base/supplementary cards
+    show "Have: N" (usable, un-bookmarked copies, nearby included).
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
