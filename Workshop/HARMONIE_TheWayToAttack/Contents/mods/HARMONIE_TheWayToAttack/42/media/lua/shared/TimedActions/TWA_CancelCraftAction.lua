@@ -16,6 +16,11 @@
 -- onComplete -- nothing in the world to change for it.
 --
 -- MULTIPLAYER: see TWA_PerformProcedureAction.lua's header.
+--
+-- ONE CRAFT AT A TIME (request 2026-09-28, later round): the base item and
+-- the supplementary item were taken at Start; Cancel hands both back plain
+-- (TWACraftState.giveBack) and drops the progress. Materials already used
+-- by procedures stay used.
 --============================================================================
 
 require "TimedActions/ISBaseTimedAction"
@@ -24,7 +29,12 @@ require "HARMONIE_TWA_CraftState"
 TWA_CancelCraftAction = ISBaseTimedAction:derive("TWA_CancelCraftAction")
 
 function TWA_CancelCraftAction:isValid()
-    return self.character ~= nil
+    if not self.character or not self.recipeId then return false end
+    if isServer() or not isClient() then
+        local act = TWACraftState.getActive(self.character)
+        return act ~= nil and act.recipeId == self.recipeId
+    end
+    return true
 end
 
 function TWA_CancelCraftAction:start()
@@ -43,11 +53,8 @@ function TWA_CancelCraftAction:perform()
 end
 
 function TWA_CancelCraftAction:complete()
-    if self.resumeItem then
-        local item = TWACraftState.findItem(self.character, self.resumeItem)
-        if item then TWACraftState.clearBookmark(item) end
-    end
-    return true
+    -- Pays out only against the active-craft record, and ends it.
+    return TWACraftState.giveBack(self.character, "cancel", self.recipeId)
 end
 
 function TWA_CancelCraftAction:getDuration()
@@ -55,12 +62,10 @@ function TWA_CancelCraftAction:getDuration()
     return self.maxTime
 end
 
--- `recipeId` -- TWARecipeData id; `resumeItem` -- the bookmarked item being
--- resumed, or nil for a fresh craft.
-function TWA_CancelCraftAction:new(character, recipeId, resumeItem)
+-- `recipeId` -- TWARecipeData id of the active craft.
+function TWA_CancelCraftAction:new(character, recipeId)
     local o = ISBaseTimedAction.new(self, character)
     o.recipeId = recipeId
-    o.resumeItem = resumeItem
     o.maxTime = 300
     o.forceProgressBar = true
     return o

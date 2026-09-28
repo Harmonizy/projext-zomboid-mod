@@ -29,8 +29,8 @@ local VARIANTS = {
     -- ไปไม่ส่งผล ต้องสะบัด"): twice the strokes, and they are FLICKS -- the
     -- stone only bites while it moves at least `vmin` (slower just doesn't
     -- progress), with a much higher ceiling before it skids.
-    sharpen = { strokes = function(req) return 6 + math.floor(req / 2) end, vmin = 0.5, vmax = 2.4, band = 6, tool = "Whetstone2", flick = true },
-    polish  = { strokes = function() return 8 end, vmin = 0.5, vmax = 2.4, band = 7, flick = true },
+    sharpen = { strokes = function(req) return 6 + math.floor(req / 2) end, vmin = 0.5, vmax = 2.4, band = 12, tool = "Whetstone2", flick = true }, -- band x2 (request 2026-09-28)
+    polish  = { strokes = function() return 8 end, vmin = 0.5, vmax = 2.4, band = 14, flick = true },
     carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 6, tool = "KnifeSushi" },
     saw     = { strokes = function() return 6 end, vmax = 1.4, band = 7, tool = "Handsaw", alternate = true },
     weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.05, band = 5, tool = "BlowTorch" },
@@ -41,17 +41,9 @@ local function buildPath(variant)
     if variant == "saw" then
         return { { 170, 210 }, { 450, 210 } }
     elseif variant == "weld" then
-        -- Request 2026-09-28 ("การเชื่อมอยากให้ต้องขยับเมาส์เป็นฟันปลา เหมือนกับ
-        -- การเชื่อมจริงๆที่ต้องขยับขึ้นลง"): the bead is laid in a weave, so the
-        -- guide is a zig-zag along the seam. Running straight down the seam
-        -- sits ~8 px off the zig-zag at every turn -- outside the band.
-        local pts = {}
-        local i = 0
-        for x = 110, 510, 20 do
-            pts[#pts + 1] = { x, (i % 2 == 0) and 184 or 216 }
-            i = i + 1
-        end
-        return pts
+        -- Back to a straight seam (request 2026-09-28: "การเชื่อมกลับไปใช้
+        -- เส้นตรง") -- the zig-zag weave of the previous round is gone.
+        return { { 110, 200 }, { 510, 200 } }
     elseif variant == "engrave" then
         return { { 130, 230 }, { 200, 160 }, { 270, 230 }, { 340, 160 }, { 410, 230 }, { 480, 160 } }
     elseif variant == "carve" then

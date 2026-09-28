@@ -61,6 +61,8 @@ function TWAWrapGame:onStart()
     -- Wrapping cloth: twice that again (request 2026-09-28: "กรรมวิธีพันผ้า
     -- ประกอบผ้าอยากให้โซนใหญ่กว่านี้ สองเท่า").
     if vr == "cloth" then self.band = self.band * 2 end
+    -- WrapBind ("พันยึด", the tape variant): x2 as well (request 2026-09-28).
+    if vr == "tape" then self.band = self.band * 2 end
     if self.grind then self.band = 30 * self.tol end -- grinding judges speed, not the circle
     if self.screw then
         self.need = 3

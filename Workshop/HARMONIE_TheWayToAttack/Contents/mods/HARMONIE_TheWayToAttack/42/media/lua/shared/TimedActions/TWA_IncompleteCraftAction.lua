@@ -20,6 +20,11 @@
 -- multiplayer, local in single player); the client writes the identical
 -- values into its own copy of the item through the window's onComplete.
 -- See TWA_PerformProcedureAction.lua's header for the constructor rules.
+--
+-- ONE CRAFT AT A TIME (request 2026-09-28, later round): the base item was
+-- taken at Start; Incomplete hands it back carrying the progress as a
+-- bookmark, plus the supplementary item (TWACraftState.giveBack). Closing
+-- the crafting window mid-craft does the same thing.
 --============================================================================
 
 require "TimedActions/ISBaseTimedAction"
@@ -29,7 +34,11 @@ TWA_IncompleteCraftAction = ISBaseTimedAction:derive("TWA_IncompleteCraftAction"
 
 function TWA_IncompleteCraftAction:isValid()
     if not self.character or not self.recipeId then return false end
-    return TWACraftState.findItem(self.character, self.baseItem) ~= nil
+    if isServer() or not isClient() then
+        local act = TWACraftState.getActive(self.character)
+        return act ~= nil and act.recipeId == self.recipeId
+    end
+    return true
 end
 
 function TWA_IncompleteCraftAction:start()
@@ -60,10 +69,8 @@ function TWA_IncompleteCraftAction:perform()
 end
 
 function TWA_IncompleteCraftAction:complete()
-    local item = TWACraftState.findItem(self.character, self.baseItem)
-    if not item then return false end
-    TWACraftState.writeBookmark(item, self.recipeId, TWACraftState.parseMap(self.qualities))
-    return true
+    -- Pays out only against the active-craft record, and ends it.
+    return TWACraftState.giveBack(self.character, "incomplete", self.recipeId)
 end
 
 function TWA_IncompleteCraftAction:getDuration()
@@ -71,13 +78,10 @@ function TWA_IncompleteCraftAction:getDuration()
     return self.maxTime
 end
 
--- `recipeId` -- TWARecipeData id; `baseItem` -- the exact item to bookmark;
--- `qualities` -- TWACraftState.serializeMap() of the words so far.
-function TWA_IncompleteCraftAction:new(character, recipeId, baseItem, qualities)
+-- `recipeId` -- TWARecipeData id of the active craft.
+function TWA_IncompleteCraftAction:new(character, recipeId)
     local o = ISBaseTimedAction.new(self, character)
     o.recipeId = recipeId
-    o.baseItem = baseItem
-    o.qualities = qualities
     o.maxTime = 300
     o.forceProgressBar = true
     return o

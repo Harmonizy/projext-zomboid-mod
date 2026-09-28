@@ -73,6 +73,9 @@ end
 -- category. Games live in HARMONIE_TWA_MG_*.lua on TWAMinigameBase. Any
 -- procedure not listed (or whose game class failed to load) falls back to
 -- the generic needle game below.
+-- Round 5 (request 2026-09-28, "ชอบไอเดียมินิเกม 2, 3, 6"): Suture
+-- (StringSinew, ReinforcedBind), Extract (DrillCore), Incision (MakeHandle,
+-- MakeLongHandle, EngravePattern).
 TWAMinigame.GAME_FOR = {
     -- Assembly
     WrapClothImprov        = { "TWAWrapGame", "cloth" },
@@ -103,7 +106,7 @@ TWAMinigame.GAME_FOR = {
     WeldWorkComplex        = { "TWAStrokeGame", "weld" },
     PolishMetal            = { "TWAStrokeGame", "polish" },
     GrindMetal             = { "TWAWrapGame", "grind" },
-    EngravePattern         = { "TWAStrokeGame", "engrave" },
+    EngravePattern         = { "TWAIncisionGame", "engrave" },
     ForgeShape             = { "TWAStrikeGame", "forge" },
     ForgeFold              = { "TWAStrikeGame", "forge" },
     ForgeComplex           = { "TWAStrikeGame", "forge" },
@@ -116,10 +119,10 @@ TWAMinigame.GAME_FOR = {
     QuenchHarden           = { "TWAHeatGame", "cool" },
     AnnealMetal            = { "TWAHeatGame", "anneal" },
     -- Handle
-    MakeHandle             = { "TWAStrokeGame", "carve" },
+    MakeHandle             = { "TWAIncisionGame", "carve" },
     WrapBind               = { "TWAWrapGame", "tape" },
-    MakeLongHandle         = { "TWAStrokeGame", "carve" },
-    ReinforcedBind         = { "TWAWrapGame", "sinew" },
+    MakeLongHandle         = { "TWAIncisionGame", "carve" },
+    ReinforcedBind         = { "TWASutureGame" },
     MakeRivetedHandle      = { "TWAStrikeGame", "rivet" },
     TightenBolts           = { "TWAWrapGame", "screw" },
     -- Balance / Structure
@@ -127,11 +130,11 @@ TWAMinigame.GAME_FOR = {
     CounterweightHead      = { "TWAStrikeGame", "rivet" },
     WeldMetal              = { "TWAStrokeGame", "weld" },
     RivetPlate             = { "TWAStrikeGame", "rivet" },
-    DrillCore              = { "TWAWrapGame", "drill" },
+    DrillCore              = { "TWAExtractGame" },
     -- Toughness
     WrapCloth              = { "TWAWrapGame", "cloth" },
     WrapLeather            = { "TWAWrapGame", "leather" },
-    StringSinew            = { "TWAWrapGame", "sinew" },
+    StringSinew            = { "TWASutureGame" },
     WeaveWire              = { "TWAWrapGame", "wire" },
     -- Wear resistance
     CoatMud                = { "TWACoatGame", "mud" },

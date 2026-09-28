@@ -354,6 +354,17 @@ same as "AnimalTendon" -- an item invented by an earlier session's rejected
 pasted brief (see workflow.txt 8.13's "never trust a pasted claim" lesson);
 AnimalSinew was independently grep-confirmed real before use here.
 
+Round 5 (2026-09-28, user request "ร้อยเอ็น ให้สามารถใช้ Thread_Sinew และ
+PremiumFishingLine ได้ และเอาเอ็นสัตว์ออก"): StringSinew now consumes
+Base.FishingLine / Base.Thread_Sinew / Base.PremiumFishingLine (AnimalSinew
+removed); ReinforcedBind unchanged. The two new type names come from the
+user (not grep-confirmed from this cloud session -- no game install here);
+if one does not exist it simply never matches in the inventory.
+Every rag slot (StropLeather, WrapBind, WrapCloth, WrapClothImprov) also
+takes Base.DenimStrips ("กรรมวิธีใดที่ใช้เศษผ้าได้ ให้ใช้เศษผ้ายีนต์ได้").
+Icons: AssembleSpike -> Golftee, AssembleBoneSpike -> SharpBoneFragment's
+icon, StartFire -> MatchBox (resolved at runtime through iconItems).
+
 ==============================================================================
 ICON-VS-TYPE-NAME PITFALL -- recurred repeatedly across 2 rounds of icon
 change requests (25 procedures total)
