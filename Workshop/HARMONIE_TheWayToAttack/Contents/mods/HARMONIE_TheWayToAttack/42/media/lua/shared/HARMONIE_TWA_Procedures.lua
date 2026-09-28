@@ -753,6 +753,7 @@ TWAProcedures.List = {
         -- Icon: Base.SharpBoneFragment's (request 2026-09-28).
         category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBoneSpike", icon = "Bone_Sharpbone",
         iconItems = { "Base.SharpBoneFragment" },
+        cursorIcon = true, -- round 14: the minigame cursor is this picture, not the knife
         tool = { kind = "tag", value = "SHARP_KNIFE" },
         consumes = { { itemType = "Base.AnimalBone", qty = 1 } }, time = 10, sound = "TWA_Smash",
     },

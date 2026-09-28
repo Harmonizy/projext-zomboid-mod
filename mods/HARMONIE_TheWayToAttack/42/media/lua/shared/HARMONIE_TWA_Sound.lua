@@ -20,8 +20,19 @@ TWASound = TWASound or {}
 function TWASound.play(name, switch)
     if not name or (isServer and isServer()) then return end
     if switch and not TWAConfig.on(switch) then return end
-    -- The player's own volume (Options > Mods, round 13): at 0, silence.
-    if TWASound.volume and TWASound.volume <= 0.001 then return end
+    -- The player's own volume (Options > Mods) and the craft window's mute
+    -- button. Round 14: loudness is chosen by FILE -- every sound exists at
+    -- several levels (NAME_v25 .. NAME_v200, generated), since the game's
+    -- per-sound volume didn't reach UI sounds.
+    if TWASound.muted then return end
+    local v = TWASound.volume or 1
+    if v <= 0.001 then return end
+    local pct, best, bestD = v * 100, 100, math.huge
+    for _, lvl in ipairs(TWASound.LEVELS or { 100 }) do
+        local d = math.abs(lvl - pct)
+        if d < bestD then best, bestD = lvl, d end
+    end
+    if best ~= 100 then name = name .. "_v" .. best end
     local sm = getSoundManager and getSoundManager()
     if sm and sm.playUISound then sm:playUISound(name) end
 end

@@ -349,5 +349,9 @@
     "IGUI_TWA_Practice": "Practice",
     "IGUI_TWA_Tooltip_Practice": "Play this procedure's minigame just to practise: no materials, no XP, nothing crafted.",
     "IGUI_TWA_PracticeResult": "Practice: %1",
-    "IGUI_TWA_PracticeOff": "Minigames are off in this game's sandbox settings"
+    "IGUI_TWA_PracticeOff": "Minigames are off in this game's sandbox settings",
+    "IGUI_TWA_Tooltip_Sound": "Sound on/off (this mod's sounds)",
+    "IGUI_TWA_MG_Extract_Hint_drive": "Drive each screw in: hold on the screw and draw it DOWN to the red line.",
+    "IGUI_TWA_MG_Extract_Hint2_drive": "Straight and steady -- leaning or rushing strips it.",
+    "IGUI_TWA_MG_Extract_DoneDrive": "Screwed tight."
 }

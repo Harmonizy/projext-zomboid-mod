@@ -190,6 +190,13 @@ function TWAWrapGame:onHover(x, y, dt)
 end
 
 function TWAWrapGame:updateGame(dt)
+    -- Round 14: the grindstone's right speed sways (moving zones).
+    if self.grind then
+        self.grindLo0 = self.grindLo0 or self.grindLo
+        self.grindHi0 = self.grindHi0 or self.grindHi
+        local d = self:drift(0.18, 4200)
+        self.grindLo, self.grindHi = self.grindLo0 + d, self.grindHi0 + d
+    end
     self.progress = math.min(1, self.turns / self.need)
 end
 

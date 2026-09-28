@@ -36,7 +36,8 @@ function TWASutureGame:onStart()
     self.done = 0
     self.loopSoundName = "TWA_Sew" -- round 11
     self.band = TWAConfig.num("SutureZone", 1) * self.tol
-    self.lo, self.hi = 0.55, 0.55 + 0.18 * self.tol
+    self.lo0, self.hi0 = 0.55, 0.55 + 0.18 * self.tol
+    self.lo, self.hi = self.lo0, self.hi0
     self.tear = math.min(0.98, self.hi + 0.12)
     self.phase = "pierce"
     self.timeLimit = 25000 + self.need * 9000
@@ -174,6 +175,10 @@ function TWASutureGame:onRelease()
 end
 
 function TWASutureGame:updateGame(dt)
+    -- Round 14: the right tension sways (moving zones).
+    local d = self:drift(0.1, 3200)
+    self.lo, self.hi = self.lo0 + d, self.hi0 + d
+    self.tear = math.min(1.05, self.hi + 0.12)
     local part = self.phase == "pierce" and self.along * 0.6 or (0.6 + 0.4 * math.min(1, self.tension / self.lo))
     self.progress = math.min(1, (self.done + part) / self.need)
 end

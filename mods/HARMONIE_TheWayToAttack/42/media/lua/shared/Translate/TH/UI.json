@@ -5,5 +5,7 @@
     "UI_optionscreen_binding_TWA_OpenCraftUI": "เปิดหน้าคราฟอาวุธ",
     "UI_options_HARMONIE_TWA_title": "HARMONIE - The Way To Attack",
     "UI_options_HARMONIE_TWA_volume": "ความดังเสียงการคราฟ",
-    "UI_options_HARMONIE_TWA_volume_tooltip": "ความดังของเสียงในม็อดนี้ (มินิเกม แถบเวลาคราฟ ฉากเปิดเกรด) 0 = ปิด 1 = ปกติ 2 = ดังเป็นสองเท่า"
+    "UI_options_HARMONIE_TWA_volume_tooltip": "ความดังของเสียงในม็อดนี้ (มินิเกม แถบเวลาคราฟ ฉากเปิดเกรด) ปรับเป็นขั้น: 0 = ปิด, 0.25 - 2 (1 = ปกติ)",
+    "UI_options_HARMONIE_TWA_mute": "ปิดเสียงการคราฟ",
+    "UI_options_HARMONIE_TWA_mute_tooltip": "ปิดเสียงทั้งหมดของม็อดนี้ ปุ่มรูปโทรโข่งในหน้าต่างคราฟทำแบบเดียวกัน"
 }

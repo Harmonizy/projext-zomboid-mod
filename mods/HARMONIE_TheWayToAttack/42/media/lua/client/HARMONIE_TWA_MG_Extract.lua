@@ -26,9 +26,15 @@ local B = TWAMinigameBase
 local C = B.COL
 
 function TWAExtractGame:onStart()
+    -- variant "drive" (round 14, "มีมินิเกมไขควงในกรรมวิธีต่างๆมากไป"): driving
+    -- screws in with a screwdriver -- straight and steady down to the line,
+    -- no drawing back out. Takes over several screwdriver procedures that
+    -- all used to be the turning-screw game.
+    self.drive = self.variant == "drive"
     self.holes = math.max(1, math.min(math.floor(TWAConfig.num("ExtractMaxHoles", 1)), 1 + math.floor(self.req / 2)))
+    if self.drive then self.holes = 2 + (self.req >= 3 and 1 or 0) end
     self.doneHoles = 0
-    self.loopSoundName = "TWA_Drill" -- round 11
+    self.loopSoundName = self.drive and "TWA_Screw" or "TWA_Drill" -- round 11/14
     self.lateral = TWAConfig.num("ExtractGuide", 0.5) * self.tol
     self.speedLimit = 0.12 * self.tol / self.pace
     -- The block: upright, the hole bored from its top end.
@@ -37,9 +43,9 @@ function TWAExtractGame:onStart()
     self:newHole()
     self.timeLimit = 25000 + self.holes * 15000
     self.toolSize = 44
-    if not self.realTool then self.toolTex = B.itemTex("Drill_OldFashioned") or self.toolTex end
-    self.hint = getText("IGUI_TWA_MG_Extract_Hint")
-    self.hint2 = getText("IGUI_TWA_MG_Extract_Hint2")
+    if not self.realTool and not self.drive then self.toolTex = B.itemTex("Drill_OldFashioned") or self.toolTex end
+    self.hint = getText(self.drive and "IGUI_TWA_MG_Extract_Hint_drive" or "IGUI_TWA_MG_Extract_Hint")
+    self.hint2 = getText(self.drive and "IGUI_TWA_MG_Extract_Hint2_drive" or "IGUI_TWA_MG_Extract_Hint2")
 end
 
 function TWAExtractGame:holeX(i)
@@ -101,7 +107,17 @@ function TWAExtractGame:onDrag(x, y, dt)
             self.bored = math.max(self.bored, want)
             if ZombRand(3) == 0 then self:burst("dust", self.hx0 + ZombRandFloat(-6, 6), self.topY, 2) end
         end
-        if self.depth >= 0.98 then
+        if self.depth >= 0.98 and self.drive then
+            -- The screw is home: next one.
+            self.doneHoles = self.doneHoles + 1
+            self.holding = false
+            self:burst("ring", self.hx0, self.topY, 1, { size = 8, grow = 0.1, ttl = 350, col = C.good })
+            if self.doneHoles >= self.holes then
+                self:succeed(getText("IGUI_TWA_MG_Extract_DoneDrive"))
+            else
+                self:newHole()
+            end
+        elseif self.depth >= 0.98 then
             self.depth = 1
             self.phase = "out"
             self:flash(getText("IGUI_TWA_MG_Extract_NowOut"), false, 900)
@@ -121,7 +137,7 @@ function TWAExtractGame:onDrag(x, y, dt)
 end
 
 function TWAExtractGame:updateGame(dt)
-    local part = self.phase == "in" and self.depth * 0.5 or (0.5 + (1 - self.depth) * 0.5)
+    local part = self.drive and self.depth or (self.phase == "in" and self.depth * 0.5 or (0.5 + (1 - self.depth) * 0.5))
     self.progress = math.min(1, (self.doneHoles + part) / self.holes)
 end
 
@@ -142,7 +158,16 @@ function TWAExtractGame:renderGame()
         self:line(x + 6, by, x + 6, by + d, 1.5, 0.6, { r = 0.62, g = 0.46, b = 0.28 })
         self:disc(x, by + d, 6, 1, { r = 0.1, g = 0.06, b = 0.03 }, 10)
     end
-    for i = 0, self.doneHoles - 1 do hole(self:holeX(i), 1) end
+    for i = 0, self.doneHoles - 1 do
+        if self.drive then
+            -- a driven screw: just its head flush with the top
+            local hx = self:holeX(i)
+            self:disc(hx, by - 2, 7, 1, { r = 0.55, g = 0.57, b = 0.6 }, 12)
+            self:line(hx - 5, by - 2, hx + 5, by - 2, 2, 1, C.dark)
+        else
+            hole(self:holeX(i), 1)
+        end
+    end
     local x = self.hx0
     hole(x, self.bored or 0)
     -- Guide and depth line.
@@ -150,8 +175,26 @@ function TWAExtractGame:renderGame()
     self:line(x - self.lateral, by - 40, x - self.lateral, by + self.depthPx, 1, 0.6, col)
     self:line(x + self.lateral, by - 40, x + self.lateral, by + self.depthPx, 1, 0.6, col)
     self:line(x - 26, by + self.depthPx, x + 26, by + self.depthPx, 2, 0.9, C.bad)
-    -- The bit: a twisted steel shank down to its tip.
     local ty = self:bitY()
+    if self.drive then
+        -- The screw going in: head above, threaded shank down to the tip.
+        local len = 60
+        self:line(x, ty - len, x, ty, 4, 1, { r = 0.6, g = 0.62, b = 0.66 })
+        for k = 0, 7 do
+            local yy = ty - len + 6 + k * 7
+            self:line(x - 4, yy, x + 4, yy + 3, 1.2, 0.9, { r = 0.85, g = 0.87, b = 0.9 })
+        end
+        self:disc(x, ty - len, 8, 1, { r = 0.55, g = 0.57, b = 0.6 }, 12)
+        self:line(x - 6, ty - len, x + 6, ty - len, 2, 1, C.dark)
+        if not self.holding and not self.word then
+            local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)
+            self:ring(x, ty, 12 * pulse, 2, 1, C.guide, 16)
+        end
+        if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
+        self:textC(string.format("%d / %d", self.doneHoles, self.holes), 480, 200, C.line, 0.9)
+        return
+    end
+    -- The bit: a twisted steel shank down to its tip.
     self:line(x, ty - 70, x, ty, 5, 1, { r = 0.5, g = 0.52, b = 0.56 })
     for k = 0, 9 do
         local yy = ty - 66 + k * 7

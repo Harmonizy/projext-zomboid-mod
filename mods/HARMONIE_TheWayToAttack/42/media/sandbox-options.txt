@@ -127,7 +127,7 @@ option HARMONIE_TheWayToAttack.BadBelow
     type = double,
     min = 0.0,
     max = 3.0,
-    default = 1.67,
+    default = 2.0,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_BadBelow,
 }
@@ -137,7 +137,7 @@ option HARMONIE_TheWayToAttack.GoodBelow
     type = double,
     min = 0.0,
     max = 3.0,
-    default = 2.34,
+    default = 2.5,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_GoodBelow,
 }
@@ -468,10 +468,20 @@ option HARMONIE_TheWayToAttack.SawStrokes
 {
     type = integer,
     min = 1,
-    max = 40,
-    default = 6,
+    max = 60,
+    default = 20,
     page = HARMONIE_TWA_Stroke,
     translation = HARMONIE_TWA_SawStrokes,
+}
+
+option HARMONIE_TheWayToAttack.SawZone
+{
+    type = double,
+    min = 2.0,
+    max = 80.0,
+    default = 21.0,
+    page = HARMONIE_TWA_Stroke,
+    translation = HARMONIE_TWA_SawZone,
 }
 
 option HARMONIE_TheWayToAttack.WeldZone
@@ -650,12 +660,12 @@ option HARMONIE_TheWayToAttack.HeatOutsideCosts
     translation = HARMONIE_TWA_HeatOutsideCosts,
 }
 
-option HARMONIE_TheWayToAttack.HeatDrift
+option HARMONIE_TheWayToAttack.ZoneDrift
 {
     type = boolean,
     default = true,
-    page = HARMONIE_TWA_Heat,
-    translation = HARMONIE_TWA_HeatDrift,
+    page = HARMONIE_TWA_Minigame,
+    translation = HARMONIE_TWA_ZoneDrift,
 }
 
 option HARMONIE_TheWayToAttack.CoatCoverage

@@ -108,6 +108,14 @@ function TWAMinigameBase:openFor(player, procId, recipe, onResult, variant)
     ui:bringToTop()
     ui:onStart()
     ui.timeLimit = ui.timeLimit * TWAConfig.num("TimeLimit", 0.05)
+    -- A procedure can ask for its OWN picture as the cursor instead of the
+    -- tool found (round 14: the bone spike showed the knife -- "เป็นรูปดาบ").
+    if ui.proc and ui.proc.cursorIcon then
+        for _, name in ipairs(TWAProcedures.IconNames(ui.proc)) do
+            local t = TWAMinigameBase.itemTex(name)
+            if t then ui.toolTex = t break end
+        end
+    end
     return ui
 end
 
@@ -218,6 +226,15 @@ end
 
 function TWAMinigameBase:stopSounds()
     TWASound.stop(self)
+end
+
+-- Moving zones (round 14: "ฉันชอบการที่โซนขยับได้เหมือน อบเย็น เอาไปทำใน
+-- มินิเกมอื่นด้วย"): an offset that sways a band slowly back and forth.
+-- `amp` in the band's own units, `periodMs` one full sway. Sandbox
+-- "ZoneDrift" off = no sway.
+function TWAMinigameBase:drift(amp, periodMs, phase)
+    if not TWAConfig.on("ZoneDrift") then return 0 end
+    return amp * math.sin(self.elapsed * 6.2832 / periodMs + (phase or 0))
 end
 
 -- Result state ----------------------------------------------------------------

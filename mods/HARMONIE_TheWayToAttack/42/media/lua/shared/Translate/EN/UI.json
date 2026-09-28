@@ -5,5 +5,7 @@
     "UI_optionscreen_binding_TWA_OpenCraftUI": "Open Weapon Crafting",
     "UI_options_HARMONIE_TWA_title": "HARMONIE - The Way To Attack",
     "UI_options_HARMONIE_TWA_volume": "Crafting sound volume",
-    "UI_options_HARMONIE_TWA_volume_tooltip": "Volume of this mod's own sounds (minigames, crafting bars, grade reveal). 0 = off, 1 = normal, 2 = twice as loud."
+    "UI_options_HARMONIE_TWA_volume_tooltip": "Volume of this mod's own sounds (minigames, crafting bars, grade reveal), in steps: 0 = off, 0.25 - 2 (1 = normal).",
+    "UI_options_HARMONIE_TWA_mute": "Mute crafting sounds",
+    "UI_options_HARMONIE_TWA_mute_tooltip": "Silence this mod's sounds. The megaphone button in the crafting window does the same."
 }

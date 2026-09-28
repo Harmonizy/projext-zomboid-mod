@@ -121,7 +121,9 @@ function TWAStrokeGame:onStart()
               vmin = TWAConfig.num("FlickMinSpeed", 0.01), band = TWAConfig.num(isS and "SharpenZone" or "PolishZone", 1),
               tool = v.tool, flick = true }
     elseif vr == "saw" then
-        v = { strokes = function() return TWAConfig.num("SawStrokes", 1) end, vmax = v.vmax, band = v.band, tool = v.tool, alternate = true }
+        -- Round 14 ("มินิเกมเลื่อยขยายโซนมากกว่านี้ 3 เท่า และทำซ้ำ 20 ครั้ง"):
+        -- band 7 -> 21 and 20 strokes (sandbox SawZone / SawStrokes).
+        v = { strokes = function() return TWAConfig.num("SawStrokes", 1) end, vmax = v.vmax, band = TWAConfig.num("SawZone", 1), tool = v.tool, alternate = true }
     elseif vr == "weld" then
         local burn = TWAConfig.num("WeldBurnSpeed", 0)
         v = { strokes = v.strokes, vmax = TWAConfig.num("WeldMaxSpeed", 0.01), vmin = burn > 0 and burn or nil,

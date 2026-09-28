@@ -48,8 +48,8 @@ S.WORD_COLOR = {
 
 -- Overall-quality cut points on the 1..3 average (request 2026-09-28:
 -- three equal bands).
-S.BAD_BELOW = 1.67
-S.GOOD_BELOW = 2.34
+S.BAD_BELOW = 2.0 -- round 14 (was 1.67); the sandbox "BadBelow" is used
+S.GOOD_BELOW = 2.5 -- round 14 (was 2.34); the sandbox "GoodBelow" is used
 
 -- Grade pools per overall quality, each rolled with the SAME odds in the
 -- same order (request 2026-09-28): 1% / 9% / 20% / 30% / 40%.

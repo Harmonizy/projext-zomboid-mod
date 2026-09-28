@@ -161,6 +161,14 @@ function TWAIncisionGame:onDrag(x, y, dt)
 end
 
 function TWAIncisionGame:updateGame(dt)
+    -- Round 14: the right depth sways (moving zones); not for the very
+    -- wide engraving band.
+    self.dLo0 = self.dLo0 or self.dLo
+    self.dHi0 = self.dHi0 or self.dHi
+    if not (self.engrave and TWAConfig.on("EngraveWideDepth")) then
+        local d = self:drift(0.12, 3600)
+        self.dLo, self.dHi = self.dLo0 + d, self.dHi0 + d
+    end
     if not self.active then self.depth = math.max(0, self.depth - dt / 400) end
     self.progress = math.min(1, (self.done + self.along) / self.passes)
 end
