@@ -200,6 +200,26 @@ option HARMONIE_TheWayToAttack.MaterialNeedsGood
     translation = HARMONIE_TWA_MaterialNeedsGood,
 }
 
+option HARMONIE_TheWayToAttack.GemGoodChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 25,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemGoodChance,
+}
+
+option HARMONIE_TheWayToAttack.GemDiamondShare
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 4,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemDiamondShare,
+}
+
 option HARMONIE_TheWayToAttack.MinigameExcellentAt
 {
     type = double,

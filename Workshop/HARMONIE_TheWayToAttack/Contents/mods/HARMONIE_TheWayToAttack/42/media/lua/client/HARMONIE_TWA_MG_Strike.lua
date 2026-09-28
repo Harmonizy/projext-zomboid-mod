@@ -30,6 +30,9 @@ local VARIANTS = {
     forge = { count = function(req) return 3 + math.floor(req / 2) end, surface = "hot" },
     knap  = { count = function() return 3 end, surface = "stone" },
     smash = { count = function() return 1 end, surface = "glass" },
+    -- Round 16 (Gemstone recipe, "ทุบ"): crack a rough stone open -- three
+    -- blows; the cracks spread and the gem's colour glows through them.
+    crack = { count = function() return 3 end, surface = "stone", rock = true },
 }
 
 -- Round 6 (request 2026-09-28: "การตีแต่ละระดับทำให้ยากขึ้นไหม ถ้ายังก็ทำ
@@ -230,6 +233,8 @@ function TWAStrikeGame:renderGame()
         local hr, hg, hb = B.heatColor(self.heat)
         self:rectRGB(wx, wy - 26, ww * self.heat, 8, 1, hr, hg, hb)
         self:line(wx + ww * 0.35, wy - 30, wx + ww * 0.35, wy - 14, 2, 1, C.bad)
+    elseif self.v.rock then
+        self:drawRock()
     elseif self.surface == "stone" then
         local pts = { { wx + 20, wy + wh }, { wx, wy + 40 }, { wx + 60, wy + 4 }, { wx + ww - 80, wy },
                       { wx + ww, wy + 30 }, { wx + ww - 20, wy + wh } }
@@ -263,6 +268,39 @@ function TWAStrikeGame:renderGame()
         end
         if active then
             self:ring(t.x, t.y, self.Rt, 2, 0.9, C.guide)
+        end
+    end
+end
+
+-- Round 16: the rough stone to crack open, on a leather pad. Each blow
+-- that landed spreads cracks from its mark, glowing with the stone's colour.
+function TWAStrikeGame:drawRock()
+    local wx, wy, ww, wh = self.wx, self.wy, self.ww, self.wh
+    if not self.rockPts then
+        self.rockPts = {}
+        for i = 0, 10 do
+            local a = i / 11 * 6.2832
+            local k = 0.8 + 0.25 * B.hash(i, 91)
+            self.rockPts[#self.rockPts + 1] = { wx + ww / 2 + math.cos(a) * (ww / 2 + 10) * k, wy + wh / 2 + math.sin(a) * (wh / 2 + 34) * k }
+        end
+        self.rockCol = ({ { r = 0.9, g = 0.2, b = 0.35 }, { r = 0.3, g = 0.55, b = 1 }, { r = 0.3, g = 0.85, b = 0.45 }, { r = 0.7, g = 0.4, b = 0.95 } })[ZombRand(4) + 1]
+    end
+    self:leather(wx - 30, wy + wh - 6, ww + 60, 30, { tint = { r = 0.35, g = 0.22, b = 0.12 } })
+    self:roughGem(self.rockPts, self.rockCol, { seed = 17, windows = 0 })
+    local gc = self.rockCol
+    for i, t in ipairs(self.targets) do
+        if t.depth > 0 then
+            local len = 30 + 70 * math.min(1, t.depth)
+            for k = 0, 4 do
+                local a = 6.2832 * B.hash(i * 7 + k, 93)
+                local x1, y1 = t.x, t.y
+                local mx, my = x1 + math.cos(a) * len * 0.5 + 6 * (B.hash(k, i) - 0.5), y1 + math.sin(a) * len * 0.5
+                local x2, y2 = x1 + math.cos(a + 0.25) * len, y1 + math.sin(a + 0.25) * len * 0.8
+                self:polyline({ { x1, y1 }, { mx, my }, { x2, y2 } }, 4, 0.35 * math.min(1, t.depth), gc)
+                self:polyline({ { x1, y1 }, { mx, my }, { x2, y2 } }, 1.5, 0.95, C.dark)
+            end
+            self:disc(t.x, t.y, 6 + 6 * math.min(1, t.depth), 0.5 * math.min(1, t.depth), gc, 12)
+            self:sparkle(t.x, t.y, 8 * math.min(1, t.depth), 0.4 + 0.4 * math.abs(math.sin(self.elapsed * 0.005 + i)))
         end
     end
 end

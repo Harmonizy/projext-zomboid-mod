@@ -144,6 +144,7 @@ TWAMinigame.GAME_FOR = {
     CoatWax                = { "TWACoatGame", "wax" },
     SurfaceCoating         = { "TWACoatGame", "bleach" },
     -- Gem-cutting (round 15)
+    SmashStone             = { "TWAStrikeGame", "crack" },   -- round 16
     GemSelection           = { "TWAInspectGame", "select" },
     GemAnalysis            = { "TWAInspectGame", "analyze" },
     GemCutPlanning         = { "TWAInspectGame", "plan" },

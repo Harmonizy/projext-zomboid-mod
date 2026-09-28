@@ -21,6 +21,7 @@ TWAStrokeGame = TWAMinigameBase:derive("TWAStrokeGame")
 
 local B = TWAMinigameBase
 local C = B.COL
+local atan2 = math.atan2 or math.atan
 
 -- Bands halved (request 2026-09-28: "มินิเกมมีโซนที่กว้างเกินไป ลดลงมาครึ่ง
 -- นึง"). The start mark still accepts the tool within 2.5 bands.
@@ -114,6 +115,7 @@ function TWAStrokeGame:onStart()
     self.path = buildPath(self.variant)
     local SND = { gemsaw = "TWA_Saw", sharpen = "TWA_Whetstone", polish = "TWA_Whetstone", carve = "TWA_Carve", saw = "TWA_Saw", weld = "TWA_Weld", engrave = "TWA_Carve" }
     self.loopSoundName = SND[self.variant or "sharpen"] -- round 11
+    self.gemCol = ({ { r = 0.3, g = 0.55, b = 0.95 }, { r = 0.9, g = 0.2, b = 0.32 }, { r = 0.25, g = 0.8, b = 0.45 }, { r = 0.65, g = 0.35, b = 0.9 } })[ZombRand(4) + 1]
     self.seg, self.total = measure(self.path)
     -- Round 9: the tunable values come from the sandbox.
     local vr = self.variant or "sharpen"
@@ -144,6 +146,9 @@ function TWAStrokeGame:onStart()
     self.timeLimit = 20000 + self.need * 7000 + (self.variant == "weld" and 20000 or 0)
     if v.tool and not self.realTool then self.toolTex = B.itemTex(v.tool) or self.toolTex end
     self.toolSize = 48
+    -- Round 16: sharpening/polishing happens ON the stone; the cursor is the
+    -- workpiece (the recipe's own item picture), not the stone.
+    self.onStone = self.variant == "sharpen" or self.variant == "polish" or self.variant == nil
     self.hint = getText("IGUI_TWA_MG_Stroke_Hint")
     self.hint2 = getText("IGUI_TWA_MG_Stroke_Hint_" .. (self.variant or "sharpen"))
 end
@@ -237,6 +242,8 @@ function TWAStrokeGame:onDrag(x, y, dt)
             self:burst("chip", x, y, 1, { col = C.wood, size = 3 })
         elseif self.variant == "saw" and ZombRand(3) == 0 then
             self:burst("dust", x, y + 8, 2)
+        elseif self.variant == "gemsaw" and ZombRand(3) == 0 then
+            self:burst("chip", x, y + 6, 1, { col = self.gemCol, size = 2 })
         elseif (self.variant == "sharpen" or self.variant == "polish") and ZombRand(5) == 0 then
             self:burst("spark", x, y, 1, { speed = 0.15, ttl = 250 })
         elseif self.variant == "weld" then
@@ -257,11 +264,27 @@ function TWAStrokeGame:renderGame()
     local p1, p2 = self.path[1], self.path[#self.path]
     if vr == "gemsaw" then
         -- A rough stone in its clamp; the cut deepens with every pass.
-        self:metalPlate(150, 290, 320, 20, { tint = { r = 0.35, g = 0.36, b = 0.4 }, seed = 40 })
-        self:quad(180, 290, 440, 290, 420, 140, 200, 150, 1, 0.55, 0.3, 0.6)
-        self:quad(200, 150, 420, 140, 400, 175, 225, 185, 1, 0.75, 0.45, 0.8)
+        -- Round 16: a rough stone (crust, gem showing through) clamped in a
+        -- vise; the kerf deepens and glitters with the gem's colour.
+        self:velvet(0, 0, 620, 350, { tint = { r = 0.09, g = 0.1, b = 0.13 } })
+        self:metalPlate(120, 292, 380, 26, { tint = { r = 0.35, g = 0.36, b = 0.4 }, seed = 40, bolts = true })
+        self:metalPlate(120, 200, 40, 92, { seed = 41, brush = "v" })
+        self:metalPlate(460, 200, 40, 92, { seed = 42, brush = "v" })
+        local gc = self.gemCol
+        if not self.gemPts then
+            self.gemPts = {}
+            for i = 0, 10 do
+                local a = i / 11 * 6.2832
+                local k = 0.82 + 0.22 * B.hash(i, 77)
+                self.gemPts[#self.gemPts + 1] = { 310 + math.cos(a) * 150 * k, 222 + math.sin(a) * 78 * k }
+            end
+        end
+        self:roughGem(self.gemPts, gc, { seed = 13, windows = 3 })
         local depth = 140 * self.done / self.need
-        self:rect(306, 150, 6, depth, 1, C.dark)
+        self:rect(305, 150, 10, depth, 1, C.dark)
+        self:rectRGB(305, 150, 2, depth, 0.9, gc.r, gc.g, gc.b)
+        self:rectRGB(313, 150, 2, depth, 0.9, gc.r * 0.7, gc.g * 0.7, gc.b * 0.7)
+        if depth > 10 then self:sparkle(310, 150 + depth, 7, 0.5 + 0.5 * math.abs(math.sin(self.elapsed * 0.006))) end
     elseif vr == "saw" then
         -- A plank seen from the front; the cut deepens with every pass.
         self:woodBoard(120, 150, 380, 150, { seed = 4 })
@@ -287,27 +310,34 @@ function TWAStrokeGame:renderGame()
         self:woodBoard(100, 186, 420, 28, { seed = 6, knots = 1 })
         local shaved = 420 * self.done / self.need
         if shaved > 1 then self:woodBoard(100, 186, shaved, 28, { tint = { r = 0.66, g = 0.5, b = 0.3 }, seed = 7, knots = 0 }) end
-    else
-        -- A blade: spine above, the edge along the path, a tang at the heel.
-        local sx, sy = p1[1], p1[2] - 70
-        local tx, ty = p2[1], p2[2] - 20
-        local shine = self.done / self.need
-        -- Steel blade: darker flat, a lighter bevel strip along the edge,
-        -- a highlight on the spine.
-        self:quad(p1[1], p1[2], p2[1], p2[2], tx, ty, sx, sy, 1, 0.42 + 0.2 * shine, 0.44 + 0.2 * shine, 0.49 + 0.2 * shine)
-        local bx1, by1 = p1[1] + (sx - p1[1]) * 0.28, p1[2] + (sy - p1[2]) * 0.28
-        local bx2, by2 = p2[1] + (tx - p2[1]) * 0.28, p2[2] + (ty - p2[2]) * 0.28
-        self:quad(p1[1], p1[2], p2[1], p2[2], bx2, by2, bx1, by1, 1, 0.62 + 0.3 * shine, 0.64 + 0.3 * shine, 0.68 + 0.3 * shine)
-        for k = 1, 6 do
-            local u = k / 7
-            self:line(p1[1] + (sx - p1[1]) * u * 0.9, p1[2] + (sy - p1[2]) * u * 0.9,
-                p2[1] + (tx - p2[1]) * u * 0.9, p2[2] + (ty - p2[2]) * u * 0.9, 1, 0.12, C.line)
+    elseif self.onStone then
+        -- Round 16 ("มินิเกมลับคมให้เปลี่ยนพื้นหลังเป็นหินลับมีดแทนแล้วให้เมาส์
+        -- เป็นวัตถุดิบ"): the scene IS the whetstone (a leather strop for
+        -- StropLeather, a pale fine stone for polishing), lying along the
+        -- stroke; the piece being worked rides the cursor (drawTool below).
+        local wear = self.done / self.need
+        if self.procId == "StropLeather" then
+            local x0, y0 = p1[1] - 60, math.min(p1[2], p2[2]) - 40
+            self:woodBoard(x0 - 20, y0 - 30, p2[1] - p1[1] + 160, p1[2] - p2[2] + 140, { seed = 12, knots = 1 })
+            local function S(s0, t0) -- a point on the strop: s along, t across
+                local dx, dy = p2[1] - p1[1], p2[2] - p1[2]
+                local l = math.sqrt(dx * dx + dy * dy)
+                return p1[1] + dx / l * s0 - dy / l * t0, p1[2] + dy / l * s0 + dx / l * t0
+            end
+            local l = B.dist(p1[1], p1[2], p2[1], p2[2])
+            local ax, ay = S(-50, -34); local bx, by = S(l + 50, -34); local cx, cy = S(l + 50, 34); local dx, dy = S(-50, 34)
+            self:quad(ax, ay, bx, by, cx, cy, dx, dy, 1, 0.42, 0.25, 0.13)
+            ax, ay = S(-50, -10); bx, by = S(l + 50, -10); cx, cy = S(l + 50, 10); dx, dy = S(-50, 10)
+            self:quad(ax, ay, bx, by, cx, cy, dx, dy, 0.15 + 0.25 * wear, 0.2, 0.2, 0.22)
+            for i = 1, 60 do
+                local x, y = S(-50 + (l + 100) * B.hash(i, 61), -34 + 68 * B.hash(i, 62))
+                self:rectRGB(x, y, 2, 2, 0.3, 0.55, 0.34, 0.18)
+            end
+        else
+            self:woodBoard(0, 0, 620, 350, { seed = 18, knots = 2, tint = { r = 0.3, g = 0.2, b = 0.12 } })
+            self:whetstone(p1[1], p1[2], p2[1], p2[2], 96, { fine = vr == "polish", wear = wear })
         end
-        self:line(sx, sy, tx, ty, 2, 0.6, C.line)
-        self:woodBoard(p1[1] - 70, p1[2] - 60, 72, 40, { seed = 2, knots = 0 })
-        self:line(p1[1], p1[2], p2[1], p2[2], 2, 0.5 + 0.5 * shine, C.line)
     end
-
     if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
 
     -- Guide band and the start mark. The zone is drawn FILLED -- a strip
@@ -347,4 +377,41 @@ function TWAStrokeGame:renderOverlay()
     local x, y = self:pointAt(t)
     self:disc(x, y, 3, 1, C.good, 10)
     self:textC(string.format("%d / %d", self.done, self.need), 310, 320, C.line, 0.9)
+end
+
+-- Round 16: on the stone, the hand holds the WORKPIECE -- the recipe's item
+-- picture turned to lie along the stroke with its edge on the contact point
+-- (a drawn blade when the recipe has no picture, e.g. practice).
+function TWAStrokeGame:drawTool()
+    if not self.onStone then return B.drawTool(self) end
+    if not self.hx then return end
+    local p1, p2 = self.path[1], self.path[#self.path]
+    local dx, dy = p2[1] - p1[1], p2[2] - p1[2]
+    local l = math.sqrt(dx * dx + dy * dy)
+    local ux, uy = dx / l, dy / l
+    local upx, upy = uy, -ux                       -- away from the stone's far side
+    if upy > 0 then upx, upy = -upx, -upy end
+    local red = (self.fastUntil or 0) > self.elapsed
+    local gb = red and 0.35 or 1
+    local ang = atan2(dy, dx)
+    if self.workTex then
+        local size = 84
+        local cx, cy = self.hx + upx * size * 0.22, self.hy + upy * size * 0.22
+        -- icons are drawn blade up-right (-45 degrees): turn that onto the stroke
+        self:texRot(self.workTex, cx + 5, cy + 8, size, ang + 0.785, 0.35, 0, 0, 0)
+        self:texRot(self.workTex, cx, cy, size, ang + 0.785, 1, 1, gb, gb)
+    else
+        local L, Wd = 150, 30
+        local function P(s0, t0) return self.hx + ux * s0 + upx * t0, self.hy + uy * s0 + upy * t0 end
+        local ax, ay = P(-L * 0.55, 0); local bx, by = P(L * 0.45, 0); local cx, cy = P(L * 0.3, Wd); local ex, ey = P(-L * 0.55, Wd)
+        self:quad(ax + 5, ay + 8, bx + 5, by + 8, cx + 5, cy + 8, ex + 5, ey + 8, 0.3, 0, 0, 0)
+        self:quad(ax, ay, bx, by, cx, cy, ex, ey, 1, 0.62, 0.64 * gb, 0.7 * gb)
+        local fx, fy = P(-L * 0.55, Wd * 0.3); local gx, gy = P(L * 0.38, Wd * 0.3)
+        self:quad(ax, ay, bx, by, gx, gy, fx, fy, 1, 0.85, 0.87 * gb, 0.9 * gb)
+        local h1x, h1y = P(-L * 0.55, Wd * 0.15); local h2x, h2y = P(-L * 1.05, Wd * 0.15)
+        local h3x, h3y = P(-L * 1.05, Wd * 0.85); local h4x, h4y = P(-L * 0.55, Wd * 0.85)
+        self:quad(h1x, h1y, h2x, h2y, h3x, h3y, h4x, h4y, 1, 0.36, 0.22, 0.1)
+    end
+    self:ring(self.hx, self.hy, 5, 1.5, 0.9, C.dark, 12)
+    self:disc(self.hx, self.hy, 3, 1, C.guide, 10)
 end

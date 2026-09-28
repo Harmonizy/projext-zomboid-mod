@@ -15,6 +15,7 @@ description=- Its own working sounds for every procedure and minigame (volume in
 description=- Uses tools and materials from containers and the floor around you, and a Practice button for every minigame.
 description=- A grade reveal show on the anvil when a weapon is finished.
 description=- 17 gemstones and a gem-cutting skill tree (selection, analysis, planning, sawing, preforming, faceting, polishing, fine cutting, quality control), each with its own minigame.
+description=- Gemstone recipe: smash any stone open and see what it held - a roulette reveal rolls a gem (the diamond the rarest) or clay, scrap, limestone, charcoal, coke or dung.
 description=- Admin / -debug weapon stat editor: right-click any weapon to edit every stat it has (multiplayer-safe, and the edit really counts in combat).
 description=- Detailed sandbox settings (8 pages): minigames on/off and sounds, action times, XP, light/forge rules, quality cut points, grade chances, and every zone, speed and time of every minigame.
 description=

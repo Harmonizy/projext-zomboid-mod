@@ -915,6 +915,17 @@ TWAProcedures.List = {
     -- each with its own minigame (HARMONIE_TWA_MG_Inspect / _Facet / Stroke
     -- "gemsaw" / Wrap "grind" / Stroke "polish"). No recipes use them yet.
     -- Icons are this mod's own gem pictures.
+    -- Round 16: the Gemstone recipe's "ทุบ" -- cracking a stone open with a
+    -- hammer (or a hammerstone), three well-timed blows.
+    SmashStone = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_SmashStone", icon = "TWA_Gemstone",
+        iconItems = { "Base.Stone2", "Base.LargeStone" },
+        tool = {
+            { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
+            { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Sledgehammer" },
+        },
+        consumes = {}, time = 10, sound = "TWA_Knap",
+    },
     GemSelection = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemSelection", icon = "TWA_Gemstone",
         consumes = {}, time = 20, sound = "TWA_Craft",
@@ -1111,7 +1122,7 @@ TWAProcedures.Categories = {
     { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'CoatWax', 'FireTreat', 'SurfaceCoating' } },
     -- Round 15: gem-cutting, in working order.
     { key = "Gemcutting", nameKey = "IGUI_TWA_ProcCat_Gemcutting", ids = {
-        'GemSelection', 'GemAnalysis', 'GemCutPlanning', 'GemSawing', 'GemPreforming',
+        'SmashStone', 'GemSelection', 'GemAnalysis', 'GemCutPlanning', 'GemSawing', 'GemPreforming',
         'GemFaceting', 'GemPolishing', 'GemFineCutting', 'GemQualityControl',
     } },
 }

@@ -12,6 +12,10 @@
 -- stamped as ModData (TWA_Quality / TWA_Grade) next to TWA_CraftedBy. The 6
 -- Material recipes get neither a quality nor a grade.
 --
+-- Round 16: the Gemstone recipe (recipe.roll) ROLLS the item it gives --
+-- TWACraftState.rollGemstone, here on the server -- and stamps no grade;
+-- the client's TWAGemReveal finds it by the same token.
+--
 -- Still never renames the item (request 2026-09-28: "ไม่ว่าจะผ่าน
 -- กระบวนการไหน ไม่ต้องเปลี่ยนชื่อไอเท็มเลย").
 --
@@ -107,7 +111,9 @@ function TWA_FinishCraftAction:complete()
     S.clearActive(self.character)
 
     local inv = self.character:getInventory()
-    local newItem = inv:AddItem(recipe.result)
+    -- Round 16: a rolling recipe (Gemstone) gives what the roll picked.
+    local rolled = S.isRollRecipe(recipe)
+    local newItem = inv:AddItem(rolled and S.rollGemstone(recipe) or recipe.result)
     if newItem then
         -- Stamped BEFORE the item is sent to the client, so it arrives with
         -- its ModData already on it.
@@ -116,7 +122,7 @@ function TWA_FinishCraftAction:complete()
         -- Round 12: lets the client's grade-reveal window find THIS item
         -- once it arrives (multiplayer adds it a moment later).
         if self.token and self.token ~= "" then md.TWA_CraftToken = self.token end
-        if not S.isMaterialRecipe(recipe) then
+        if not S.isMaterialRecipe(recipe) and not rolled then
             local word = S.overall(recipe, map) or S.LEGACY_WORD
             md.TWA_Quality = word
             md.TWA_Grade = S.rollGrade(word)

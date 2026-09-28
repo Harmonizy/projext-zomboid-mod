@@ -736,6 +736,287 @@ function TWAMinigameBase:leather(x, y, w, h, o)
     end
 end
 
+-- Gems and stones -----------------------------------------------------------
+--
+-- Round 16 (request 2026-09-28: "มินิเกมให้ texure สวยกว่านี้ โดยเฉพาะมณี"):
+-- a cut gem is drawn as a real brilliant seen from above -- table, star,
+-- kite and girdle facets, each lit by its own angle to the light (with the
+-- alternating light/dark pattern that makes a brilliant sparkle), an inner
+-- reflection of the table, a glow and twinkling glints. A rough stone is a
+-- chipped grey crust with the crystal's colour showing where it broke open.
+-- All deterministic from a seed, animated only by `self.elapsed`.
+
+local LIGHT_ANG = -2.3 -- light from the top-left
+local atan2 = math.atan2 or math.atan -- Kahlua has atan2; newer Lua math.atan(y, x)
+TWAMinigameBase.atan2 = atan2
+
+-- A facet colour: k < 1 darkens, k > 1 blends toward white.
+local function facetRGB(c, k)
+    if k <= 1 then return c.r * k, c.g * k, c.b * k end
+    local w = math.min(1, k - 1)
+    return c.r + (1 - c.r) * w, c.g + (1 - c.g) * w, c.b + (1 - c.b) * w
+end
+TWAMinigameBase.facetRGB = facetRGB
+
+-- A four-point star glint.
+function TWAMinigameBase:sparkle(x, y, size, a)
+    if a <= 0.02 then return end
+    local s, t = size, size * 0.18
+    self:quad(x - s, y, x, y - t, x + s, y, x, y + t, a, 1, 1, 1)
+    self:quad(x, y - s, x + t, y, x, y + s, x - t, y, a, 1, 1, 1)
+    self:disc(x, y, t * 1.4, a, { r = 1, g = 1, b = 1 }, 8)
+end
+
+-- A soft coloured glow: stacked discs, faint at the edge.
+function TWAMinigameBase:glow(cx, cy, r, col, a)
+    for i = 4, 1, -1 do
+        self:disc(cx, cy, r * (0.6 + i * 0.18), (a or 0.5) * 0.12, col, 28)
+    end
+end
+
+-- A round brilliant, top view. o.m = sides of the table (8), o.rot,
+-- o.done / o.current / o.cut = facet progress for the faceting game (kites
+-- past `done` are still frosted), o.alpha, o.glow, o.seed.
+function TWAMinigameBase:gemBrilliant(cx, cy, r, col, o)
+    o = o or {}
+    local m = o.m or 8
+    local rot = (o.rot or 0) - 1.5708
+    local a = o.alpha or 1
+    local t = self.elapsed or 0
+    local seed = o.seed or 1
+    local done = o.done or m
+    if o.glow ~= false then self:glow(cx, cy, r * 1.15, col, 0.55 * a) end
+    local step = 6.2832 / m
+    local function P(rad, ang) return cx + math.cos(ang) * rad, cy + math.sin(ang) * rad end
+    -- girdle rim (a thin darker band)
+    self:disc(cx, cy, r + 2.5, a, { r = col.r * 0.3, g = col.g * 0.3, b = col.b * 0.35 }, m * 4)
+    local frost = { r = 0.62 + col.r * 0.25, g = 0.64 + col.g * 0.25, b = 0.68 + col.b * 0.25 }
+    for j = 0, m - 1 do
+        local th = rot + j * step
+        local th2 = th + step
+        local mid = th + step / 2
+        local tx1, ty1 = P(r * 0.5, th)
+        local tx2, ty2 = P(r * 0.5, th2)
+        local sx, sy = P(r * 0.78, mid)
+        local sxp, syp = P(r * 0.78, mid - step)
+        local gx, gy = P(r, th)
+        local gmx, gmy = P(r, mid)
+        local gx2, gy2 = P(r, th2)
+        local idx = j + 1
+        local cut = idx <= done
+        local shimmer = 0.1 * math.sin(t * 0.0021 + j * 1.7 + seed)
+        local function lit(ang, alt)
+            local d = math.cos(ang - LIGHT_ANG)
+            return 0.62 + 0.42 * d + (alt and 0.18 or -0.12) + shimmer
+        end
+        local base = cut and col or frost
+        local pulse = 0
+        if o.current == idx then pulse = 0.25 + 0.25 * math.abs(math.sin(t * 0.008)) + 0.3 * (o.cut or 0) end
+        -- kite (bezel) facet
+        local r1, g1, b1 = facetRGB(base, lit(th, j % 2 == 0) + pulse)
+        self:quad(tx1, ty1, sxp, syp, gx, gy, sx, sy, a, r1, g1, b1)
+        -- star facet
+        local r2, g2, b2 = facetRGB(base, lit(mid, j % 2 == 1) * 1.08 + pulse)
+        self:quad(tx1, ty1, tx2, ty2, sx, sy, sx, sy, a, r2, g2, b2)
+        -- upper girdle facets (two per sector)
+        local r3, g3, b3 = facetRGB(base, lit(mid - 0.3, j % 2 == 1) * 0.9 + pulse)
+        self:quad(sx, sy, gx, gy, gmx, gmy, gmx, gmy, a, r3, g3, b3)
+        local r4, g4, b4 = facetRGB(base, lit(mid + 0.3, j % 2 == 0) * 0.95 + pulse)
+        self:quad(sx, sy, gmx, gmy, gx2, gy2, gx2, gy2, a, r4, g4, b4)
+        -- facet edges
+        local edge = { r = math.min(1, base.r * 1.6 + 0.2), g = math.min(1, base.g * 1.6 + 0.2), b = math.min(1, base.b * 1.6 + 0.2) }
+        self:line(tx1, ty1, gx, gy, 1, 0.35 * a, edge)
+        self:line(sx, sy, gmx, gmy, 1, 0.25 * a, edge)
+        self:line(tx1, ty1, tx2, ty2, 1, 0.5 * a, edge)
+    end
+    -- table with the pavilion's reflection inside it
+    local tbl = {}
+    for j = 0, m - 1 do tbl[#tbl + 1] = { P(r * 0.5, rot + j * step) } end
+    for j = 1, m do
+        local p1, p2 = tbl[j], tbl[j % m + 1]
+        local rr, gg, bb = facetRGB(col, 1.02 + 0.12 * math.sin(t * 0.0017 + j))
+        self:quad(cx, cy, p1[1], p1[2], p2[1], p2[2], cx, cy, a, rr, gg, bb)
+    end
+    for j = 0, m - 1 do
+        local ang = rot + (j + 0.5) * step
+        local x1, y1 = P(r * 0.36, ang)
+        local x2, y2 = P(r * 0.36, ang + step)
+        local rr, gg, bb = facetRGB(col, (j % 2 == 0) and 0.7 or 1.25)
+        self:quad(cx, cy, x1, y1, x2, y2, cx, cy, 0.55 * a, rr, gg, bb)
+    end
+    -- a broad highlight on the table, then twinkling glints
+    local hx, hy = P(r * 0.22, LIGHT_ANG)
+    self:disc(hx, hy, r * 0.13, 0.35 * a, { r = 1, g = 1, b = 1 }, 12)
+    for i = 1, 4 do
+        local ang = 6.2832 * TWAMinigameBase.hash(i, seed)
+        local rad = r * (0.25 + 0.6 * TWAMinigameBase.hash(i, seed + 3))
+        local tw = math.sin(t * 0.004 + i * 2.1 + seed)
+        local gx, gy = P(rad, ang)
+        self:sparkle(gx, gy, r * 0.16, a * math.max(0, tw) ^ 3)
+    end
+end
+
+-- A rough stone: `pts` its outline. o.clear = a see-through crystal (the
+-- inspection games look INTO it); otherwise a chipped grey crust with the
+-- gem colour peeking out of broken patches.
+function TWAMinigameBase:roughGem(pts, col, o)
+    o = o or {}
+    local seed = o.seed or 1
+    local a = o.alpha or 1
+    local t = self.elapsed or 0
+    local cx, cy = 0, 0
+    for _, p in ipairs(pts) do cx, cy = cx + p[1], cy + p[2] end
+    cx, cy = cx / #pts, cy / #pts
+    local rad = 0
+    for _, p in ipairs(pts) do rad = math.max(rad, TWAMinigameBase.dist(cx, cy, p[1], p[2])) end
+    local px, py = cx - rad * 0.12, cy - rad * 0.14 -- the ridge the faces meet at
+    local crust = o.clear and col or { r = 0.42 + col.r * 0.12, g = 0.4 + col.g * 0.12, b = 0.38 + col.b * 0.12 }
+    if o.clear then self:glow(cx, cy, rad, col, 0.4 * a) end
+    for i = 1, #pts do -- shadow, the stone's own outline
+        local p1, p2 = pts[i], pts[i % #pts + 1]
+        self:quad(cx + 5, cy + 8, p1[1] + 5, p1[2] + 8, p2[1] + 5, p2[2] + 8, cx + 5, cy + 8, 0.35 * a, 0, 0, 0)
+    end
+    for i = 1, #pts do
+        local p1, p2 = pts[i], pts[i % #pts + 1]
+        local mx, my = (p1[1] + p2[1]) / 2 - cx, (p1[2] + p2[2]) / 2 - cy
+        local d = math.cos(atan2(my, mx) - LIGHT_ANG)
+        local k = 0.62 + 0.45 * d + 0.12 * (TWAMinigameBase.hash(i, seed) - 0.5)
+        local rr, gg, bb = facetRGB(crust, k)
+        self:quad(px, py, p1[1], p1[2], p2[1], p2[2], px, py, (o.clear and 0.88 or 1) * a, rr, gg, bb)
+        self:line(px, py, p1[1], p1[2], 1.5, 0.35 * a, { r = math.min(1, crust.r * 1.6), g = math.min(1, crust.g * 1.6), b = math.min(1, crust.b * 1.6) })
+    end
+    if o.clear then
+        -- light travelling through: a pale inner core and streaks
+        for i = 1, 5 do
+            local ang = 6.2832 * TWAMinigameBase.hash(i, seed + 9)
+            local l = rad * (0.3 + 0.4 * TWAMinigameBase.hash(i, seed + 4))
+            self:line(cx, cy, cx + math.cos(ang) * l, cy + math.sin(ang) * l, 3, 0.12 * a, { r = 1, g = 1, b = 1 })
+        end
+        local rr, gg, bb = facetRGB(col, 1.35)
+        self:disc(cx - rad * 0.15, cy - rad * 0.18, rad * 0.3, 0.3 * a, { r = rr, g = gg, b = bb }, 18)
+    else
+        -- grain on the crust
+        for i = 1, math.floor(rad * 0.7) do
+            local ang = 6.2832 * TWAMinigameBase.hash(i, seed + 11)
+            local l = rad * 0.85 * math.sqrt(TWAMinigameBase.hash(i, seed + 12))
+            local f = TWAMinigameBase.hash(i, seed + 13) < 0.5 and 0.6 or 1.35
+            local rr, gg, bb = facetRGB(crust, f)
+            self:rectRGB(cx + math.cos(ang) * l, cy + math.sin(ang) * l * 0.85, 2, 2, 0.45 * a, rr, gg, bb)
+        end
+        -- broken windows showing the crystal
+        for w = 1, (o.windows or 3) do
+            local ang = 6.2832 * TWAMinigameBase.hash(w, seed + 20)
+            local l = rad * (0.15 + 0.4 * TWAMinigameBase.hash(w, seed + 21))
+            local wx, wy = cx + math.cos(ang) * l, cy + math.sin(ang) * l * 0.85
+            local wr = rad * (0.3 - 0.06 * w)
+            local rim = {}
+            for k = 0, 6 do
+                local aa = k / 7 * 6.2832 + TWAMinigameBase.hash(k, seed + w) * 0.5
+                local rr2 = wr * (0.6 + 0.4 * TWAMinigameBase.hash(k, seed + w + 30))
+                rim[#rim + 1] = { wx + math.cos(aa) * rr2, wy + math.sin(aa) * rr2 * 0.85 }
+            end
+            for k = 1, #rim do
+                local q1, q2 = rim[k], rim[k % #rim + 1]
+                self:quad(wx + 2, wy + 3, q1[1] + 2, q1[2] + 3, q2[1] + 2, q2[2] + 3, wx + 2, wy + 3, 0.6 * a, 0.08, 0.07, 0.07)
+            end
+            for k = 1, #rim do
+                local q1, q2 = rim[k], rim[k % #rim + 1]
+                local mx, my = (q1[1] + q2[1]) / 2 - wx, (q1[2] + q2[2]) / 2 - wy
+                local d = math.cos(atan2(my, mx) - LIGHT_ANG)
+                local rr, gg, bb = facetRGB(col, 0.75 + 0.55 * d + ((k % 2 == 0) and 0.2 or -0.1))
+                self:quad(wx, wy, q1[1], q1[2], q2[1], q2[2], wx, wy, a, rr, gg, bb)
+            end
+            self:polyline(rim, 1.5, 0.8 * a, { r = 0.2, g = 0.19, b = 0.18 }, true)
+            local tw = math.sin(t * 0.003 + w * 2.3 + seed)
+            self:sparkle(wx - wr * 0.25, wy - wr * 0.3, wr * 0.35, a * (0.35 + 0.65 * math.max(0, tw)))
+        end
+    end
+    self:polyline(pts, 2, a, { r = crust.r * 0.35, g = crust.g * 0.35, b = crust.b * 0.35 }, true)
+end
+
+-- Jeweller's velvet: deep cloth with a soft fold sheen.
+function TWAMinigameBase:velvet(x, y, w, h, o)
+    o = o or {}
+    local base = o.tint or { r = 0.1, g = 0.12, b = 0.26 }
+    self:rect(x - 3, y - 3, w + 6, h + 6, 1, mixc(base, 0.4))
+    self:gradient(x, y, w, h, mixc(base, 1.25), mixc(base, 0.7), 12)
+    for i = 1, 5 do
+        local fx = x + w * (i / 6) + 20 * hash(i, 41)
+        self:quad(fx - 30, y, fx + 10, y, fx - 10 - 40 * hash(i, 42), y + h, fx - 50 - 40 * hash(i, 42), y + h, 0.06, 1, 1, 1)
+    end
+    for i = 1, math.min(500, math.floor(w * h / 160)) do
+        local px, py = x + w * hash(i, 43), y + h * hash(i, 44)
+        self:rectRGB(px, py, 1.5, 1.5, 0.25, base.r * 1.6, base.g * 1.6, base.b * 1.6)
+    end
+end
+
+-- A sharpening stone lying along the line (x1,y1)->(x2,y2), `wid` across.
+-- o.fine = a pale fine-grit stone (polishing), else a grey-blue coarse one;
+-- o.wear 0..1 darkens the slurry where the blade has worked it.
+function TWAMinigameBase:whetstone(x1, y1, x2, y2, wid, o)
+    o = o or {}
+    local dx, dy = x2 - x1, y2 - y1
+    local len = math.sqrt(dx * dx + dy * dy)
+    local ux, uy = dx / len, dy / len
+    local nx, ny = -uy, ux
+    local function P(s, t) return x1 + ux * s + nx * t, y1 + uy * s + ny * t end
+    local function Q(s1, t1, s2, t2, a, r, g, b)
+        local ax, ay = P(s1, t1); local bx, by = P(s2, t1); local cx2, cy2 = P(s2, t2); local ex, ey = P(s1, t2)
+        self:quad(ax, ay, bx, by, cx2, cy2, ex, ey, a, r, g, b)
+    end
+    local h = wid / 2
+    -- wooden holder under it, then the stone's front side
+    local W0 = { r = 0.4, g = 0.26, b = 0.13 }
+    Q(-70, -h - 26, len + 70, h + 30, 1, W0.r * 0.55, W0.g * 0.55, W0.b * 0.55)
+    Q(-66, -h - 22, len + 66, h + 26, 1, W0.r, W0.g, W0.b)
+    for i = 1, 9 do
+        local tt = -h - 22 + i * (wid + 48) / 10
+        Q(-66, tt, len + 66, tt + 1.2, 0.3, W0.r * 0.6, W0.g * 0.6, W0.b * 0.6)
+    end
+    local base = o.fine and { r = 0.86, g = 0.83, b = 0.76 } or { r = 0.36, g = 0.42, b = 0.5 }
+    Q(-50, h, len + 50, h + 14, 1, base.r * 0.55, base.g * 0.55, base.b * 0.55)
+    -- the face, shaded across its width
+    local n = 12
+    for i = 0, n - 1 do
+        local k = i / (n - 1)
+        local f = 1.12 - 0.3 * k
+        Q(-50, -h + i * wid / n, len + 50, -h + (i + 1) * wid / n + 0.5, 1, base.r * f, base.g * f, base.b * f)
+    end
+    -- grit speckles
+    for i = 1, math.floor(len * wid / 90) do
+        local s = -50 + (len + 100) * hash(i, 51)
+        local tt = -h + wid * hash(i, 52)
+        local f = hash(i, 53) < 0.5 and 0.7 or 1.3
+        local ax, ay = P(s, tt)
+        self:rectRGB(ax, ay, 1.6, 1.6, 0.5, base.r * f, base.g * f, base.b * f)
+    end
+    -- worn slurry band where the edge runs, darkening with the work
+    local wear = o.wear or 0
+    Q(-20, -h * 0.35, len + 20, h * 0.35, 0.12 + 0.3 * wear, base.r * 0.4, base.g * 0.4, base.b * 0.45)
+    -- wet sheen
+    for k = 0, 2 do
+        local s0 = len * (0.15 + 0.3 * k)
+        Q(s0, -h + 4, s0 + len * 0.12, -h + wid * 0.4, 0.06, 1, 1, 1)
+    end
+    -- edges
+    local ax, ay = P(-50, -h); local bx, by = P(len + 50, -h)
+    self:line(ax, ay, bx, by, 2, 0.8, mixc(base, 1.45))
+    ax, ay = P(-50, h); bx, by = P(len + 50, h)
+    self:line(ax, ay, bx, by, 2, 0.8, mixc(base, 0.4))
+end
+
+-- A texture drawn rotated by `ang` (radians) about its centre (cx, cy).
+function TWAMinigameBase:texRot(t, cx, cy, size, ang, a, r, g, b)
+    local jo = self.javaObject
+    if not t or not jo then return end
+    local ax, ay = self:getAbsoluteX() + self:ox() + cx, self:getAbsoluteY() + self:oy() + cy
+    local h = size / 2
+    local c, s = math.cos(ang), math.sin(ang)
+    local function R(x, y) return ax + x * c - y * s, ay + x * s + y * c end
+    local x1, y1 = R(-h, -h); local x2, y2 = R(h, -h); local x3, y3 = R(h, h); local x4, y4 = R(-h, h)
+    jo:DrawTexture(t, x1, y1, x2, y2, x3, y3, x4, y4, r or 1, g or 1, b or 1, a or 1)
+end
+
 -- The tool in the player's hand, drawn at the trailing hand position.
 function TWAMinigameBase:drawTool()
     if not self.hx then return end

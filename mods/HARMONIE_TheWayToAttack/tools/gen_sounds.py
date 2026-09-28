@@ -203,6 +203,28 @@ d = 0.5; t = t_(d)
 thud = np.sin(2 * np.pi * 110 * t * (1 - t)) * np.exp(-t / 0.12) + lowpass(noise(d), 400) * np.exp(-t / 0.05)
 S["TWA_Fail"] = (norm(thud, 0.7), False)
 
+# Round 16: the gemstone reveal -- a roulette tick, a stone cracking open and
+# a glittering chime for the gem (deterministic, no rng: the earlier sounds
+# keep their exact noise).
+g16 = np.random.default_rng(16)
+d = 0.06; t = t_(d)
+tick = np.sin(2 * np.pi * 2400 * t) * np.exp(-t / 0.008) + highpass(g16.uniform(-1, 1, len(t)), 4000) * np.exp(-t / 0.004) * 0.6
+S["TWA_Tick"] = (norm(tick, 0.5), False)
+d = 0.7; t = t_(d); cr = np.zeros_like(t)
+for at in (0.0, 0.05, 0.13, 0.2):
+    n = int(0.25 * SR)
+    burst = bandpass(g16.uniform(-1, 1, n), 800, 6000) * np.exp(-np.arange(n) / SR / 0.03)
+    place(cr, burst * (1 - at * 2), at)
+cr += lowpass(g16.uniform(-1, 1, len(t)), 180) * np.exp(-t / 0.15) * 1.2
+S["TWA_Crack"] = (norm(cr, 0.75), False)
+d = 2.4; t = t_(d); sh = np.zeros_like(t)
+for k, f in enumerate((1568, 1976, 2349, 2637, 3136, 3951, 4699)):
+    at = 0.07 * k; tt = t_(d - at)
+    tone = sum(np.sin(2 * np.pi * f * m * tt) * a for m, a in ((1, 1), (2.76, 0.25), (5.4, 0.08))) * np.exp(-tt / 0.6)
+    place(sh, tone * 0.35, at)
+sh += highpass(g16.uniform(-1, 1, len(t)), 7000) * np.exp(-t / 0.5) * 0.15 * (0.5 + 0.5 * np.sin(2 * np.pi * 23 * t))
+S["TWA_Shimmer"] = (norm(sh * adsr(len(t), 0.005, 0.2), 0.6), False)
+
 # Working sounds: one grain each (see the docstring).
 GRAIN = { "TWA_Whetstone": 0.6, "TWA_Saw": 0.5, "TWA_Weld": 0.6, "TWA_Screw": 0.5, "TWA_Wrap": 0.6,
           "TWA_Grind": 0.5, "TWA_Bellows": 0.8, "TWA_Quench": 0.7, "TWA_Pour": 0.6, "TWA_Coat": 0.5,

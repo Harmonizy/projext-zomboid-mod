@@ -5,6 +5,7 @@ third-party art). Round 15:
   - Mithril / Adamantium / Vibranium ingots (clear violet, blazing orange,
     radiant gold with a rainbow sheen), one ingot shape for all,
   - Oridecon / Elunium / Bradium ore crystals.
+Round 16: TWA_Gemstone is an angular rock with gem colour peeking out.
 Writes ../42/media/textures/Item_<Icon>.png. Needs Pillow."""
 import math, os, random
 from PIL import Image, ImageDraw, ImageFilter
@@ -111,6 +112,60 @@ def rough(name, col, seed=3, cols=None):
     d.line(pts + [pts[0]], fill=(60, 55, 50, 255), width=4)
     finish(img, name)
 
+def gemrock(name, seed=7):
+    """Round 16: an angular grey rock (flat chipped faces) with patches of
+    gem colour peeking out where it broke open -- a raw, uncut gemstone."""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (W, W), (0, 0, 0, 0)); d = Pen(img)
+    cx, cy = W * 0.5, W * 0.52
+    out = [(-1.0, 0.25), (-0.75, -0.6), (0.05, -1.0), (0.9, -0.5), (1.0, 0.35), (0.35, 0.95), (-0.55, 0.85)]
+    pts = [(cx + x * W * 0.4, cy + y * W * 0.34) for x, y in out]
+    ridge = (cx - W * 0.06, cy - W * 0.08)          # top point where the faces meet
+    n = len(pts)
+    faces = []
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]
+        mx, my = (a[0] + b[0]) / 2 - cx, (a[1] + b[1]) / 2 - cy
+        l = math.hypot(mx, my) or 1
+        lit = (mx / l) * LIGHT[0] + (my / l) * LIGHT[1]
+        g = 118 + rnd.randint(-10, 10)
+        base = (g, g - 6, g - 14, 255)
+        d.polygon([a, b, ridge], fill=shade(base, 0.62 + 0.8 * lit))
+        faces.append((a, b, lit))
+    # crisp face edges
+    for a, b, lit in faces:
+        d.line([a, ridge], fill=shade((120, 114, 106), 0.9 + 0.7 * lit), width=3)
+    # stone grain speckles
+    for _ in range(60):
+        x, y = cx + rnd.uniform(-0.8, 0.8) * W * 0.4, cy + rnd.uniform(-0.7, 0.7) * W * 0.34
+        v = rnd.choice([(60, 56, 52, 90), (200, 194, 186, 70)])
+        d.ellipse([x - 3, y - 3, x + 3, y + 3], fill=v)
+    # gem windows: a jagged break with bright faceted crystal inside
+    wins = [((0.3, -0.3), 0.62, (235, 40, 90), (255, 170, 200)),
+            ((-0.45, 0.3), 0.5, (40, 130, 255), (170, 230, 255)),
+            ((0.45, 0.5), 0.34, (60, 210, 110), (200, 255, 210))]
+    for (wx, wy), r, c1, c2 in wins:
+        px, py = cx + wx * W * 0.4, cy + wy * W * 0.34
+        k = 7
+        rim = []
+        for j in range(k):
+            ang = j * 2 * math.pi / k + rnd.uniform(-0.25, 0.25)
+            rr = r * W * rnd.uniform(0.6, 1.0) * 0.5
+            rim.append((px + math.cos(ang) * rr, py + math.sin(ang) * rr * 0.85))
+        d.polygon([(x + 3, y + 4) for x, y in rim], fill=(40, 36, 34, 200))   # dark broken lip
+        for j in range(k):
+            a, b = rim[j], rim[(j + 1) % k]
+            t = j / k
+            c = mix(c1 + (255,), c2 + (255,), 0.5 + 0.5 * math.sin(t * 6.28 + 1.0))
+            d.polygon([a, b, (px, py)], fill=shade(c, 0.75 + 0.45 * math.cos(t * 6.28 + 2.3)))
+        d.line(rim + [rim[0]], fill=(55, 50, 46, 255), width=2)
+        # glint
+        gx, gy, gr = px - r * W * 0.12, py - r * W * 0.14, r * W * 0.16
+        d.polygon([(gx - gr, gy), (gx, gy - gr * 0.25), (gx + gr, gy), (gx, gy + gr * 0.25)], fill=(255, 255, 255, 235))
+        d.polygon([(gx, gy - gr), (gx + gr * 0.25, gy), (gx, gy + gr), (gx - gr * 0.25, gy)], fill=(255, 255, 255, 235))
+    d.line(pts + [pts[0]], fill=(52, 48, 44, 255), width=4)
+    finish(img, name)
+
 def crystals(name, col, seed):
     rnd = random.Random(seed)
     img = Image.new("RGBA", (W, W), (0, 0, 0, 0)); d = Pen(img)
@@ -179,7 +234,7 @@ faceted("TWA_Alexandrite", P([(-0.8, -0.8), (0, -0.95), (0.8, -0.8), (0.95, 0), 
 faceted("TWA_Spinel", P(shape_round(6, rot=math.pi / 6)), (240, 60, 130))
 faceted("TWA_Zircon", P([(-0.85, -0.85), (0.85, -0.85), (0.85, 0.85), (-0.85, 0.85)], sx=W * 0.38, sy=W * 0.38), (150, 210, 255), table=0.45)
 cabochon("TWA_Jade", 0.34, 0.34, (60, 150, 90), opaque=True)
-rough("TWA_Gemstone", (150, 140, 130), seed=5, cols=[(200, 60, 80), (80, 120, 210), (90, 180, 110), (210, 180, 70), (160, 90, 190)])
+gemrock("TWA_Gemstone")          # round 16: angular rock, gem colour peeking out
 
 # ---- ingots
 ingot("TWA_MaterialBar_Epic", (205, 160, 255), (120, 70, 190), (160, 110, 230), clear=True)        # Mithril: clear violet
