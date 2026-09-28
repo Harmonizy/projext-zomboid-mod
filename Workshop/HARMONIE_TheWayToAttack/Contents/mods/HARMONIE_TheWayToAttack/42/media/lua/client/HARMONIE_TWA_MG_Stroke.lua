@@ -29,13 +29,20 @@ local VARIANTS = {
     -- ไปไม่ส่งผล ต้องสะบัด"): twice the strokes, and they are FLICKS -- the
     -- stone only bites while it moves at least `vmin` (slower just doesn't
     -- progress), with a much higher ceiling before it skids.
-    sharpen = { strokes = function(req) return 6 + math.floor(req / 2) end, vmin = 0.5, vmax = 2.4, band = 12, tool = "Whetstone2", flick = true }, -- band x2 (request 2026-09-28)
-    polish  = { strokes = function() return 8 end, vmin = 0.5, vmax = 2.4, band = 14, flick = true },
+    -- Round 7 ("หากทำช้าไปให้ลดคุณภาพด้วย และให้ต้องใช้ความเร็วมากกว่านี้
+    -- ไม่มีการเร็วเกินไปแล้วลดความคืบหน้า ... ให้ทำการขัดซัก 10 ครั้ง"): 10
+    -- flicks, a higher minimum speed (0.5 -> 0.8 px/ms), a too-slow flick
+    -- costs quality, and there is no "too fast" at all (vmax = nil).
+    sharpen = { strokes = function() return 10 end, vmin = 0.8, band = 12, tool = "Whetstone2", flick = true },
+    polish  = { strokes = function() return 10 end, vmin = 0.8, band = 14, flick = true },
     carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 6, tool = "KnifeSushi" },
     saw     = { strokes = function() return 6 end, vmax = 1.4, band = 7, tool = "Handsaw", alternate = true },
     -- Burning is harder (round 6: "ให้ไหม้ยากกว่าเดิม"): the too-slow limit
     -- halved (0.05 -> 0.025) and it burns at half the rate.
-    weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.025, burnRate = 0.000125, band = 5, tool = "BlowTorch" },
+    -- Band 5 -> 8 (round 7: "มันออกนอกโซนทั้งๆที่ก็ยังอยู่") -- on the zig-zag
+    -- a 5 px half-width was narrower than the torch picture's own wobble;
+    -- the zone is now also drawn filled and the contact point marked.
+    weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.025, burnRate = 0.000125, band = 8, tool = "BlowTorch" },
     engrave = { strokes = function() return 1 end, vmax = 0.35, band = 4.5, tool = "KnifeSushi" },
 }
 
@@ -47,7 +54,7 @@ local function buildPath(variant)
         -- ฟันปลา"; round 5 had made it a straight line).
         local pts = {}
         for i = 0, 10 do
-            pts[#pts + 1] = { 110 + i * 40, 200 + ((i % 2 == 0) and -14 or 14) }
+            pts[#pts + 1] = { 110 + i * 40, 200 + ((i % 2 == 0) and -22 or 22) } -- deeper teeth to go with the wider band (round 7)
         end
         pts[1][2], pts[#pts][2] = 200, 200
         return pts
@@ -105,7 +112,7 @@ function TWAStrokeGame:onStart()
     self.need = math.max(1, v.strokes(self.req))
     self.done = 0
     self.band = v.band * self.tol
-    self.vmax = v.vmax * self.tol / self.pace
+    self.vmax = v.vmax and (v.vmax * self.tol / self.pace) or math.huge
     self.vmin = v.vmin
     self.dir = 1          -- saw: +1 left->right, -1 right->left
     self.along = 0        -- 0..1 progress of the current stroke, in `dir`
@@ -150,7 +157,7 @@ function TWAStrokeGame:finishStroke(x, y)
     if self.v.flick then
         local ms = math.max(1, self.elapsed - (self.strokeStart or self.elapsed))
         if (self.total * self.along) / ms < self.vmin then
-            self:flash(getText("IGUI_TWA_MG_Stroke_Flick"), false, 900)
+            self:spend(0.04, getText("IGUI_TWA_MG_Stroke_Flick"))
             self.active = false
             return
         end
@@ -217,7 +224,9 @@ function TWAStrokeGame:onDrag(x, y, dt)
 end
 
 function TWAStrokeGame:updateGame(dt)
-    self.progress = math.min(1, (self.done + (self.active and self.along or 0)) / self.need)
+    -- A flick only fills the gauge once it has counted.
+    local part = (self.active and not self.v.flick) and self.along or 0
+    self.progress = math.min(1, (self.done + part) / self.need)
 end
 
 function TWAStrokeGame:renderGame()
@@ -271,15 +280,25 @@ function TWAStrokeGame:renderGame()
 
     if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
 
-    -- Guide band and the start mark.
+    -- Guide band and the start mark. The zone is drawn FILLED -- a strip
+    -- per segment and a disc at every joint -- which is exactly the set of
+    -- points within `band` of the path that the game measures, so the
+    -- corners of a zig-zag look the way they count. It turns red while the
+    -- tool is outside it.
     local col = self.active and C.guide or C.faint
+    local offNow = self.active and self.hx and select(2, self:project(self.hx, self.hy)) > self.band
+    local fill = offNow and C.bad or col
     for i = 1, #self.path - 1 do
         local a, b = self.path[i], self.path[i + 1]
         local dx, dy = b[1] - a[1], b[2] - a[2]
         local len = math.sqrt(dx * dx + dy * dy)
         local nx, ny = -dy / len * self.band, dx / len * self.band
+        self:quad(a[1] + nx, a[2] + ny, b[1] + nx, b[2] + ny, b[1] - nx, b[2] - ny, a[1] - nx, a[2] - ny, 0.16, fill.r, fill.g, fill.b)
         self:line(a[1] + nx, a[2] + ny, b[1] + nx, b[2] + ny, 1, 0.45, col)
         self:line(a[1] - nx, a[2] - ny, b[1] - nx, b[2] - ny, 1, 0.45, col)
+    end
+    for i = 2, #self.path - 1 do
+        self:disc(self.path[i][1], self.path[i][2], self.band, 0.16, fill, 14)
     end
     local sx, sy = self:startPoint()
     local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)

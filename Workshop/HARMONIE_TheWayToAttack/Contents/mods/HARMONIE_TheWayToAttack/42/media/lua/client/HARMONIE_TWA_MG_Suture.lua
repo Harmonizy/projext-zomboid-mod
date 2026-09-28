@@ -65,7 +65,9 @@ function TWASutureGame:layoutStitch()
         self.arc[#self.arc + 1] = { self.topX + (self.botX - self.topX) * u + bulge,
                                     self.topY + (self.botY - self.topY) * u }
     end
-    self.startX, self.startY = self.topX - 22, self.topY - 30
+    -- The gold ring sits ON the first hole, where the line starts (round 7:
+    -- it used to float off to the side of it).
+    self.startX, self.startY = self.topX, self.topY
     self.along = 0
     self.tension = 0
 end
@@ -91,12 +93,19 @@ end
 
 function TWASutureGame:onGrab(x, y)
     if self.phase == "pierce" then
-        if B.dist(x, y, self.startX, self.startY) > 30 and B.dist(x, y, self.arc[1][1], self.arc[1][2]) > 30 then
+        if B.dist(x, y, self.startX, self.startY) > 22 then
             self:flash(getText("IGUI_TWA_MG_Suture_StartHere"), false, 800)
             return
         end
         self.piercing = true
     else
+        -- The thread is taken where it comes out -- the gold ring on the
+        -- exit hole -- and drawn out from there (round 7: pulling used to
+        -- start wherever you clicked).
+        if B.dist(x, y, self.botX, self.botY) > 22 then
+            self:flash(getText("IGUI_TWA_MG_Suture_TakeThread"), false, 800)
+            return
+        end
         self.pulling = true
     end
 end
@@ -212,11 +221,14 @@ function TWASutureGame:renderGame()
         if not self.piercing then
             local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)
             self:ring(self.startX, self.startY, 12 * pulse, 2, 1, C.guide, 18)
-            self:line(self.startX, self.startY, self.topX, self.topY, 1, 0.5, C.guide)
         end
     elseif self.phase == "pull" then
         -- This stitch's thread through its holes, and out to the hand.
         self:drawStitch(self.done)
+        if not self.pulling and not self.word then
+            local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)
+            self:ring(self.botX, self.botY, 12 * pulse, 2, 1, C.guide, 18)
+        end
         if self.hx and self.pulling then
             self:line(self.botX, self.botY, self.hx, self.hy, 2, 1, THREAD)
             -- The leather puckers round the hole as the thread tightens.

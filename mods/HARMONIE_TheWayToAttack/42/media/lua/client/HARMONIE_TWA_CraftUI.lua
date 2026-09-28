@@ -547,7 +547,7 @@ function TWARecipeScrollList:doDrawItem(y, entry, alt)
         self:drawRect(pad + 2, y + pad, iconSize, iconSize, 0.5, 0, 0, 0)
         self:drawTextureScaled(tex, pad + 2, y + pad, iconSize, iconSize, 1, tint, tint, tint)
     end
-    if owned then drawCheckBadge(self, 2, y + 2, self:getWidth() - 4) end
+    -- (no green tick on the row any more -- round 7: "ติ้กเขียวถูกในสูตรให้เอาออก")
     local textX = pad + iconSize + 10
     drawTextShadowed(self, entry.text, textX, y + pad, 0.95, 0.95, 0.95, 1, self.font)
     local statusKey = owned and "IGUI_TWA_BaseItemOwned"
@@ -899,7 +899,7 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
             if tex then
                 self:drawTextureScaled(tex, px + 6, y + 6, cs - 12, cs - 12, 1, tint, tint, tint)
             end
-            if done then drawCheckBadge(self, px, y, cs) end
+            -- (no green tick -- round 7)
             -- Hover shows ONLY the procedure's name (request 2026-09-26) --
             -- the full requirement breakdown moved to the fixed details box
             -- below this grid, populated on click instead of on hover.
@@ -1317,7 +1317,7 @@ end
 
 function TWACraftWindow:allProceduresDone()
     if not self:isActiveRecipe() then return false end
-    return TWACraftState.allDone(self.selectedRecipe, self:currentMap())
+    return (TWACraftState.canFinish(self.selectedRecipe, self:currentMap()))
 end
 
 -- Incomplete hands out the unfinished result item (round 6), so every
@@ -1658,9 +1658,7 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey)
     local CARD_H = 40
     self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
     self:drawRectBorder(x, y, w, CARD_H, 0.4, 0.4, 0.4, 0.4)
-    if owned and TWA_NEAT.check then
-        self:drawTextureScaled(TWA_NEAT.check, x + w - 24, y + 12, 16, 16, 1, 1, 1, 1)
-    end
+    -- (no green tick -- round 7; the status line says it)
     drawTextShadowed(self, baseDisplayName(fullType, altType), x + 8, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
     local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
     drawTextShadowed(self, getText(statusKey), x + 8, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
@@ -2020,8 +2018,10 @@ function TWACraftWindow:render()
     -- header's right. Material recipes have no quality (same request).
     local showWords = true
     local doneNow, qualityNow = self:currentDone(), self:currentQuality()
-    -- No overall quality for Material recipes: they get no quality at Finish.
-    if not TWACraftState.isMaterialRecipe(recipe) then
+    -- Material recipes show it too since round 7: their Finish needs it at
+    -- Good or better (TWACraftState.canFinish), even though the material
+    -- itself carries no quality.
+    do
         local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap())
         if oWord then
             local oc = TWACraftState.WORD_COLOR[oWord]
@@ -2056,7 +2056,7 @@ function TWACraftWindow:render()
             if tex2 then
                 self:drawTextureScaled(tex2, px + 6, py + 6, cell - 12, cell - 12, 1, tint, tint, tint)
             end
-            if done then drawCheckBadge(self, px, py, cell) end
+            -- (no green tick -- round 7; the word under the cell says it)
             local w = showWords and TWACraftState.wordFor(procId, doneNow, qualityNow)
             if w then
                 local wc = TWACraftState.WORD_COLOR[w]
@@ -2082,6 +2082,19 @@ function TWACraftWindow:render()
 
     self.finishButton.enable = self:allProceduresDone()
     self.incompleteButton.enable = self:canGoIncomplete()
+    -- The material rule, spelled out where the Finish button is (round 7).
+    if TWACraftState.isMaterialRecipe(recipe) then
+        local note = getText("IGUI_TWA_MaterialFinishRule")
+        local _, why = TWACraftState.canFinish(recipe, self:currentMap())
+        local bad = why == "materialQuality"
+        local ny = self.panelBottom - self.btnH - 34
+        for i, l in ipairs(wrapTextLines(note, CENTER_W - 24, UIFont.Small)) do
+            drawTextShadowed(self, l, centerX, ny + (i - 1) * 14 - 14, bad and 1 or 0.8, bad and 0.5 or 0.8, bad and 0.4 or 0.8, 1, UIFont.Small)
+        end
+        self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishMaterial"))
+    else
+        self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
+    end
     self:drawLockNotice()
 
     -- Drawn LAST, after every icon/card this frame, so the tooltip always

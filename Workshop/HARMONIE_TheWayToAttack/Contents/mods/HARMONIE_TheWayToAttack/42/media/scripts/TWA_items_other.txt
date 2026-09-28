@@ -37,7 +37,8 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Material Lump,
-        Icon = IronChunk,
+        /* round 7: icon changed to the user-given Shouldepad_Metal_L */
+        Icon = Shouldepad_Metal_L,
     }
 
     /* Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real

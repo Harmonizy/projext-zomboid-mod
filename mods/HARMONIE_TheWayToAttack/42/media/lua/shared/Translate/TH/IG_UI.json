@@ -185,8 +185,8 @@
     "IGUI_TWA_MG_Strike_Coals": "ถ่าน (กดค้างเพื่ออุ่น)",
     "IGUI_TWA_MG_Strike_Done": "ตอกเสร็จครบ",
     "IGUI_TWA_MG_Stroke_Hint": "เริ่มที่วงสีทอง แล้วลากเครื่องมือไปตามแนวให้อยู่ในเส้น",
-    "IGUI_TWA_MG_Stroke_Hint_sharpen": "ลากสม่ำเสมอจากโคนถึงปลาย เร็วเกินไปจะไถล",
-    "IGUI_TWA_MG_Stroke_Hint_polish": "ขัดไปตามเนื้อโลหะอย่างสม่ำเสมอ",
+    "IGUI_TWA_MG_Stroke_Hint_sharpen": "สะบัดเร็วๆ จากโคนถึงปลาย 10 ครั้ง ถ้าช้าไปจะเสียคุณภาพและไม่นับ",
+    "IGUI_TWA_MG_Stroke_Hint_polish": "สะบัดเร็วๆ ไปตามเนื้อโลหะ 10 ครั้ง ถ้าช้าไปจะเสียคุณภาพและไม่นับ",
     "IGUI_TWA_MG_Stroke_Hint_carve": "เหลาไปตามไม้ทีละครั้ง",
     "IGUI_TWA_MG_Stroke_Hint_saw": "ลากไปกลับโดยไม่ยก ทุกครั้งจะตัดลึกลง",
     "IGUI_TWA_MG_Stroke_Hint_weld": "เดินแนวเชื่อมครั้งเดียวช้าๆ เร็วไปเนื้อเชื่อมขาด ช้าไปจะไหม้ทะลุ",
@@ -244,7 +244,7 @@
     "IGUI_TWA_MG_Wrap_GrindSlow": "ช้าไป หินยังไม่กินเหล็ก",
     "IGUI_TWA_MG_Wrap_GrindFast": "เร็วไป เหล็กร้อนจนเสียความแข็ง",
     "IGUI_TWA_MG_Wrap_LetGo": "ปล่อยเลย!",
-    "IGUI_TWA_MG_Stroke_Flick": "สะบัดให้เร็วกว่านี้ ช้าไปไม่กินเนื้อ",
+    "IGUI_TWA_MG_Stroke_Flick": "ช้าไป - สะบัดให้เร็วกว่านี้",
     "IGUI_TWA_MG_Heat_Hint_bend": "กดค้างเพื่อหักกิ่งไม้กับเข่า ปล่อยเพื่อผ่อนแรง",
     "IGUI_TWA_MG_Heat_Hint2_bend": "คุมให้อยู่ในแถบเขียวจนกิ่งหักขาดอย่างสวย",
     "IGUI_TWA_MG_Heat_BendHard": "แรงไป",
@@ -300,5 +300,8 @@
     "IGUI_TWA_Tooltip_ClearSearch": "ล้างคำค้นหา",
     "IGUI_TWA_ResumeItemNote": "ไอเท็มที่ยังไม่เสร็จ - ทำต่อจากชิ้นนี้",
     "IGUI_TWA_Tooltip_Unfinished": "ยังไม่เสร็จ - ดาเมจเป็น 0 จนกว่าจะทำเสร็จ (คลิกขวาเพื่อทำต่อ)",
-    "IGUI_TWA_Stat_Type": "ประเภท"
+    "IGUI_TWA_Stat_Type": "ประเภท",
+    "IGUI_TWA_MaterialFinishRule": "วัตถุดิบ: กดเสร็จสิ้นได้เมื่อคุณภาพรวม ดี หรือ เยี่ยม เท่านั้น - ถ้าแย่ให้ทำซ้ำกรรมวิธีที่คะแนนต่ำก่อน",
+    "IGUI_TWA_Tooltip_FinishMaterial": "ทำวัตถุดิบให้เสร็จ ต้องทำกรรมวิธีครบทุกอัน และคุณภาพรวมต้องเป็น ดี หรือ เยี่ยม เท่านั้น ถ้าเป็น แย่ ให้ทำซ้ำกรรมวิธีที่คะแนนต่ำเพื่อดันคุณภาพรวมขึ้น (ตัววัตถุดิบเองไม่มีคุณภาพหรือเกรด)",
+    "IGUI_TWA_MG_Suture_TakeThread": "จับด้ายที่วงสีทองตรงรูก่อน"
 }
