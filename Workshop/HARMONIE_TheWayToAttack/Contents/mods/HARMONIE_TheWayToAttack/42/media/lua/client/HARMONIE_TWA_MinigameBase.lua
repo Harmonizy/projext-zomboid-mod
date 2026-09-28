@@ -239,13 +239,24 @@ end
 
 -- Frame loop ------------------------------------------------------------------
 
+-- Pain, panic and drink shake the hand. B42 reads these through
+-- player:getStats():get(CharacterStat.X), each 0-100 (confirmed from
+-- Casualties Undead's own B42 source, CasualtiesUndead_Physio.lua). The old
+-- MoodleType.Pain/Panic/Drunk names don't exist in B42 -- the first version
+-- of this function used them inside a pcall, and the game's debugger stops
+-- on every error even when pcall catches it (bug report 2026-09-28). So:
+-- no pcall, and every constant is checked before use; a missing one just
+-- counts as 0. Result is on the old 0..12 "moodle levels" scale.
+local function statOf(stats, key)
+    local id = CharacterStat and CharacterStat[key]
+    if not id then return 0 end
+    return stats:get(id) or 0
+end
+
 function TWAMinigameBase:tremor()
-    local ok, lvl = pcall(function()
-        local m = self.player:getMoodles()
-        return m:getMoodleLevel(MoodleType.Pain) + m:getMoodleLevel(MoodleType.Panic)
-            + m:getMoodleLevel(MoodleType.Drunk)
-    end)
-    return (ok and lvl) or 0
+    local stats = self.player.getStats and self.player:getStats()
+    if not stats or not stats.get then return 0 end
+    return (statOf(stats, "PAIN") + statOf(stats, "PANIC") + statOf(stats, "INTOXICATION")) / 25
 end
 
 function TWAMinigameBase:updateHand(dt)

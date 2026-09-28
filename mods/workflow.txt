@@ -2607,6 +2607,18 @@ mold to the line). TWAMinigame.GAME_FOR maps all 57 procedures.
     Pour's stream lagged so long after release that stopping on the line
     was guesswork. Keep this harness approach for any new game.
 
+*** pcall is NOT a safe way to "try" an API that might not exist (real bug
+report 2026-09-28, screenshot of the in-game Lua debugger stopped on
+HARMONIE_TWA_MinigameBase.lua:246): the game's debugger pauses on EVERY Lua
+error, even one pcall catches -- so a pcall that fails every frame/every
+half-second freezes debug-mode play over and over. Check first instead:
+indexing a missing method or enum value on a Java object just returns nil
+(`if obj.method then`, `if CharacterStat and CharacterStat.PAIN then`), and
+only call what exists. B42 renamed the old moodle/stat API: read pain/
+panic/drunk as player:getStats():get(CharacterStat.PAIN / PANIC /
+INTOXICATION), 0-100 (MoodleType members are UPPERCASE too, e.g.
+MoodleType.PAIN) -- confirmed from Casualties Undead's B42 source. ***
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

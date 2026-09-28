@@ -105,8 +105,14 @@ local STATIC_STAT_GRID = {
 -- defensively via pcall with a safe fallback to the baked script value
 -- rather than assumed real, so a missing/renamed method degrades gracefully
 -- instead of erroring every tooltip in the game.
+-- Checks the method exists BEFORE calling it (indexing a missing method on
+-- a Java object just gives nil) instead of calling it blind inside pcall:
+-- the game's debugger stops on every Lua error even when pcall catches it,
+-- and this runs on every tooltip render (bug report 2026-09-28).
 local function liveOrFallback(item, methodName, fallback)
-    local ok, v = pcall(function() return item[methodName](item) end)
+    local m = item[methodName]
+    if not m then return fallback end
+    local ok, v = pcall(m, item)
     if ok and v ~= nil then return v end
     return fallback
 end
