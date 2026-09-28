@@ -27,6 +27,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "HARMONIE_TWA_Procedures"
 require "HARMONIE_TWA_Config"
+require "HARMONIE_TWA_Sound"
 require "HARMONIE_TWA_CraftState"
 
 TWA_PerformProcedureAction = ISBaseTimedAction:derive("TWA_PerformProcedureAction")
@@ -45,13 +46,13 @@ end
 
 function TWA_PerformProcedureAction:update()
     self.character:setMetabolicTarget(Metabolics.UsingTools)
+    -- Round 12: the working sound, replayed while the bar runs (client only).
+    if self.proc.sound and not isServer() then TWASound.keepPlaying(self, self.proc.sound, "ActionSounds") end
 end
 
 function TWA_PerformProcedureAction:start()
     self:setActionAnim(CharacterActionAnims.Craft)
-    if self.proc.sound and not isServer() then
-        self.actionSound = self.character:playSound(self.proc.sound)
-    end
+    if self.proc.sound and not isServer() then TWASound.keepPlaying(self, self.proc.sound, "ActionSounds") end
 end
 
 function TWA_PerformProcedureAction:stopSound()

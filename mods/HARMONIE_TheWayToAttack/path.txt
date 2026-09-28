@@ -113,6 +113,8 @@ HARMONIE_TWA_MG_Pour.lua    เอียงเบ้าเทโลหะให�
   เทซ้ำ = รอยต่อเย็น
 (รอบ 6) HARMONIE_TWA_MinigameBase.lua มีตัววาดวัสดุกลาง metalPlate/hotMetal/
   woodBoard/leather -- ทุกมินิเกมใช้ตัวนี้แทนสี่เหลี่ยมสีเรียบ
+HARMONIE_TWA_GradeReveal.lua (รอบ 12) ฉากเปิดเกรดหลังกดเสร็จสิ้น: ค้อนตีทั่ง
+  เร็วขึ้นเรื่อยๆ ตัวอักษรเกรดหมุน แล้วตีครั้งสุดท้ายพร้อมแสง/สีของเกรด
 HARMONIE_TWA_MG_Suture.lua  (ใหม่ รอบ 5) ร้อยเอ็น/พันแน่นหนา: ลากเข็มตามแนวโค้ง
   ทะลุรูบนลงรูล่าง แล้วดึงด้ายให้ตึงอยู่ในแถบเขียว (หย่อน = ดึงใหม่,
   เกินเส้นแดง = ขาด)
@@ -150,6 +152,8 @@ HARMONIE_TWA_WeaponDebug.lua (รอบ 11) + client/HARMONIE_TWA_WeaponDebugUI.
   ตัวแก้ stats อาวุธสำหรับแอดมิน/-debug: คลิกขวาอาวุธ แก้ได้ทุกค่าที่อาวุธมีจริง
   + ค่าของม็อดเรา, MP ส่งไปปรับที่เซิร์ฟเวอร์แล้วส่งกลับ, เก็บใน ModData
   TWA_StatOverride และใส่ซ้ำตอนถือ ตอนโหลด และก่อนตีทุกครั้ง
+shared/HARMONIE_TWA_Sound.lua (รอบ 12) เล่นเสียงแบบ UI (playUISound) และเล่นซ้ำ
+  ระหว่างทำงาน -- วิธีเดียวกับม็อดอ้างอิง
 media/sound/TWA_*.wav + media/scripts/TWA_sounds.txt (รอบ 11) เสียงทั้งหมดของ
   ม็อด สังเคราะห์เองด้วย tools/gen_sounds.py (ห้ามแก้ไฟล์ .wav ตรงๆ)
 

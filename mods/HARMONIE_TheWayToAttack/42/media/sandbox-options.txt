@@ -88,6 +88,22 @@ option HARMONIE_TheWayToAttack.IncompleteZeroDamage
     translation = HARMONIE_TWA_IncompleteZeroDamage,
 }
 
+option HARMONIE_TheWayToAttack.ActionSounds
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_ActionSounds,
+}
+
+option HARMONIE_TheWayToAttack.GradeReveal
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_GradeReveal,
+}
+
 option HARMONIE_TheWayToAttack.AllowWeaponDebug
 {
     type = boolean,

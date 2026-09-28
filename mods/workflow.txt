@@ -2837,6 +2837,28 @@ Round 11 (same day):
     reads back through sharpness, so the RAW value is set. Condition and
     Sharpness are set once, not pinned. Reset restores the script values.
 
+Round 12 (same day):
+  - SOUND, second try: only the playUISound() sounds (success/fail) were
+    heard; every 3D "Item" sound played through character:playSound() --
+    ours included -- stayed silent. Casualties Undead declares ALL its own
+    sounds `category = UI` and plays them with getSoundManager():
+    playUISound(). Now every TWA sound is a short UI one-shot (script
+    entries: category UI + clip only), and a working sound is replayed when
+    the previous one ends (shared/HARMONIE_TWA_Sound.lua: TWASound.play /
+    keepPlaying; lengths generated into HARMONIE_TWA_SoundLengths.lua).
+    Timed actions replay theirs from update() (client only). Lesson: for a
+    mod's own sounds, copy the reference's CATEGORY and PLAY CALL, not only
+    the file format. (Only the local player hears them.)
+  - GRADE REVEAL (client/HARMONIE_TWA_GradeReveal.lua, sandbox GradeReveal):
+    after Finish, a no-input "minigame" window: hammer blows speeding up,
+    grade letters spinning, then a final blow with flash, rays and sparks in
+    the grade colour. Finish stamps TWA_CraftToken (a client-made token
+    passed as a constructor string) on the new item; the window polls the
+    inventory for it and holds the last blow until it arrives (gives up
+    with "?" at 9 s). Materials: same show, no grade.
+  - Smashed bottle: base BeerBottle + BeerEmpty/WineEmpty/WineEmpty2/
+    WhiskeyEmpty/Wine/Wine2/WhiskeyFull/BottleEmpty (missing ones skipped).
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

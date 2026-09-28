@@ -339,5 +339,10 @@
     "IGUI_TWA_Debug_TWA_Grade": "เกรด (TWA)",
     "IGUI_TWA_Debug_TWA_Quality": "คุณภาพ (TWA)",
     "IGUI_TWA_Debug_TWA_CraftedBy": "สร้างโดย (TWA)",
-    "IGUI_TWA_Debug_TWA_Incomplete": "ยังไม่เสร็จ (ดาเมจ 0) (TWA)"
+    "IGUI_TWA_Debug_TWA_Incomplete": "ยังไม่เสร็จ (ดาเมจ 0) (TWA)",
+    "IGUI_TWA_Reveal_Title": "ตีขึ้นรูปครั้งสุดท้าย",
+    "IGUI_TWA_Reveal_Hint": "ช่างตีเหล็กกำลังปลุกชีวิตให้ชิ้นงาน...",
+    "IGUI_TWA_Reveal_Grade": "เกรด %1",
+    "IGUI_TWA_Reveal_Material": "เสร็จสมบูรณ์",
+    "IGUI_TWA_Reveal_Close": "คลิกเพื่อปิด"
 }
