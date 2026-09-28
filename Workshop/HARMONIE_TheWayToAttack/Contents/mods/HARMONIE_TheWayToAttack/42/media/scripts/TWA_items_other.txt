@@ -37,8 +37,8 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Material Lump,
-        /* round 7: icon changed to the user-given Shouldepad_Metal_L */
-        Icon = Shouldepad_Metal_L,
+        /* round 9: icon ClayBrick (user-given; was Shouldepad_Metal_L) */
+        Icon = ClayBrick,
     }
 
     /* Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real
@@ -116,7 +116,8 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 0.2,
         Type = Normal,
-        DisplayName = Oridecon,
+        /* round 9: display names of Oridecon and Bradium swapped */
+        DisplayName = Bradium,
         Icon = Amethyst,
     }
 
@@ -136,7 +137,8 @@ module HARMONIE_TheWayToAttack
         DisplayCategory = Material,
         Weight = 0.2,
         Type = Normal,
-        DisplayName = Bradium,
+        /* round 9: display names of Oridecon and Bradium swapped */
+        DisplayName = Oridecon,
         Icon = Diamond,
     }
 

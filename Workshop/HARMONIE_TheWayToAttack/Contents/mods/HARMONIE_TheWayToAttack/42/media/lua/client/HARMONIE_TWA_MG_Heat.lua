@@ -32,18 +32,18 @@ function TWAHeatGame:onStart()
     -- it snaps cleanly; bend too far and it splinters.
     self.bend = self.variant == "bend"
     self.center0 = CENTER[self.variant] or 0.6
-    self.half = 0.035 * self.tol -- halved (request 2026-09-28)
+    self.half = TWAConfig.num("HeatZone", 0.001) * self.tol -- sandbox (round 9), default 0.035
     self.temp = self.cool and 1.0 or 0.05
     self.vel = 0
     self.held = 0
-    self.need = self.bend and 1500 or (4000 + 300 * self.req)
-    self.drift = (self.req >= 4 and not self.bend) and 0.08 or 0
+    self.need = self.bend and TWAConfig.num("BendHoldMs", 50) or (TWAConfig.num("HeatHoldMs", 50) + 300 * self.req)
+    self.drift = (self.req >= 4 and not self.bend and TWAConfig.on("HeatDrift")) and 0.08 or 0
     if self.cool then
         -- Request 2026-09-28 ("มินิเกมจุ่มง่ายไป อยากให้อุณหภูมิขึ้นลงเร็วกว่า
         -- นี้ และโซนเล็กลง รวมถึงเกจคุณภาพลดลงเร็วขึ้น"): a faster plunge and a
         -- faster climb back, a narrower band, and slips cost 1.5x more.
-        self.half = 0.025 * self.tol
-        self.drainMul = 1.5
+        self.half = TWAConfig.num("CoolZone", 0.001) * self.tol
+        self.drainMul = TWAConfig.num("CoolDrain", 0)
     end
     self.timeLimit = 30000 + self.need * 3
     self.toolSize = 44
@@ -96,7 +96,11 @@ function TWAHeatGame:updateGame(dt)
         -- once the band has been reached, every moment outside it costs
         -- quality -- a real base rate, not just in proportion to how far out.
         local over = (math.abs(off) - self.half) / 0.1
-        self:spend(dt * (0.00006 + 0.00004 * over), nil, true)
+        if TWAConfig.on("HeatOutsideCosts") then
+            self:spend(dt * (0.00006 + 0.00004 * over), nil, true)
+        else
+            self:spend(dt * 0.00004 * over, nil, true)
+        end
         if self.bend and off > self.half + 0.18 then
             self:spend(dt * 0.0002, getText("IGUI_TWA_MG_Heat_Splinter"), true)
         elseif self.bend then

@@ -22,7 +22,7 @@ function TWAPourGame:onStart()
     self.tilt = 0
     self.flow = 0
     self.target = 0.85
-    self.half = 0.025 * self.tol -- halved (request 2026-09-28)
+    self.half = TWAConfig.num("PourZone", 0.001) * self.tol -- sandbox (round 9), default 0.025
     self.pours = 0
     self.timeLimit = 45000
     self.toolSize = 40

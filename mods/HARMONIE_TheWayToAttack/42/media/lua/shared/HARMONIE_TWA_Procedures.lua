@@ -65,6 +65,8 @@
 -- was already correct and is unchanged.
 --============================================================================
 
+require "HARMONIE_TWA_Config"
+
 TWAProcedures = TWAProcedures or {}
 
 local function predicateNotBroken(item)
@@ -335,8 +337,9 @@ local function nearbyForgeTier(player, logIfBelow)
     local px, py, pz = sq:getX(), sq:getY(), sq:getZ()
     local best = 0
     local seen = logIfBelow and {} or nil
-    for dx = -3, 3 do
-        for dy = -3, 3 do
+    local r = math.floor(TWAConfig.num("ForgeSearchRadius", 1))
+    for dx = -r, r do
+        for dy = -r, r do
             local s = cell:getGridSquare(px + dx, py + dy, pz)
             if s then
                 local objs = s:getObjects()
@@ -1074,7 +1077,7 @@ end
 function TWAProcedures.CheckEligibility(proc, player, serverSide)
     local missing = {}
 
-    if not serverSide and player:tooDarkToRead() then
+    if not serverSide and TWAConfig.on("RequireLight") and player:tooDarkToRead() then
         missing[#missing + 1] = { kind = "light" }
     end
 
@@ -1115,7 +1118,8 @@ function TWAProcedures.CheckEligibility(proc, player, serverSide)
         end
     end
 
-    if not serverSide and proc.forgeTier and nearbyForgeTier(player, proc.forgeTier) < proc.forgeTier then
+    if not serverSide and proc.forgeTier and TWAConfig.on("RequireForge")
+            and nearbyForgeTier(player, proc.forgeTier) < proc.forgeTier then
         missing[#missing + 1] = { kind = "forge", tier = proc.forgeTier }
     end
 
@@ -1124,7 +1128,9 @@ end
 
 function TWAProcedures.DescribeAll(proc, player)
     local reqs = {}
-    reqs[#reqs + 1] = { kind = "light", met = not player:tooDarkToRead() }
+    if TWAConfig.on("RequireLight") then
+        reqs[#reqs + 1] = { kind = "light", met = not player:tooDarkToRead() }
+    end
     if proc.tool then
         reqs[#reqs + 1] = { kind = "tool", spec = proc.tool, met = hasAnyTool(proc.tool, player) }
     end
@@ -1157,7 +1163,7 @@ function TWAProcedures.DescribeAll(proc, player)
         end
     end
 
-    if proc.forgeTier then
+    if proc.forgeTier and TWAConfig.on("RequireForge") then
         reqs[#reqs + 1] = { kind = "forge", tier = proc.forgeTier, met = nearbyForgeTier(player) >= proc.forgeTier }
     end
 
@@ -1246,10 +1252,12 @@ function TWAProcedures.AwardXP(proc, player)
     if perk then
         -- addXp() is the B42 global that also works from a server-side
         -- complete(); the direct AddXP call is the fallback.
+        local xp = lvl * 5 * TWAConfig.num("ProcedureXPMultiplier", 0)
+        if xp <= 0 then return end
         if addXp then
-            addXp(player, perk, lvl * 5)
+            addXp(player, perk, xp)
         else
-            player:getXp():AddXP(perk, lvl * 5)
+            player:getXp():AddXP(perk, xp)
         end
     end
 end

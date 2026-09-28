@@ -26,6 +26,7 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "HARMONIE_TWA_Config"
 
 TWAMinigameBase = ISPanel:derive("TWAMinigameBase")
 
@@ -37,10 +38,10 @@ local CANCEL_W, CANCEL_H = 150, 30
 local RESULT_LINGER_MS = 1100
 -- Request 2026-09-28 ("การขยับเมาส์ในมินิเกมเร็วไปยังไม่เห็นผล"): the tool
 -- follows the mouse more tightly than the first version's 60 ms.
-local HAND_LAG_MS = 35
+local HAND_LAG_MS = 35 -- default; the sandbox "HandLagMs" is what is used (round 9)
 -- Request 2026-09-28: "ทำให้เกจคุณภาพลดลงเร็วขึ้นกว่านี้สองเท่า" -- every
 -- slip costs twice what it did.
-local DRAIN = 2
+local DRAIN = 2 -- default; the sandbox "QualityDrain" is what is used (round 9)
 
 TWAMinigameBase.W, TWAMinigameBase.H = W, H
 TWAMinigameBase.PW, TWAMinigameBase.PH = PW, PH
@@ -105,6 +106,7 @@ function TWAMinigameBase:openFor(player, procId, recipe, onResult, variant)
     ui:setCapture(true)
     ui:bringToTop()
     ui:onStart()
+    ui.timeLimit = ui.timeLimit * TWAConfig.num("TimeLimit", 0.05)
     return ui
 end
 
@@ -133,8 +135,12 @@ function TWAMinigameBase:new(x, y, player, procId, recipe, onResult, variant)
         have = perk and player:getPerkLevel(perk) or 0
     end
     o.req, o.have = req, have
-    o.tol = math.min(1.6, 1 + 0.06 * math.max(0, have - req))
-    o.pace = 1 + 0.04 * req
+    -- Round 9: every factor from the sandbox. `skillTol` is the skill part
+    -- alone (it also forgives quality loss); `tol` adds the zone-size
+    -- multiplier and is what every game scales its zones by.
+    o.skillTol = math.min(TWAConfig.num("SkillZoneMax", 1), 1 + TWAConfig.num("SkillZonePerLevel", 0) * math.max(0, have - req))
+    o.tol = o.skillTol * TWAConfig.num("ZoneSize", 0.05)
+    o.pace = (1 + TWAConfig.num("SpeedPerNeededLevel", 0) * req) * TWAConfig.num("GameSpeed", 0.05)
 
     o.quality = 1
     o.progress = 0
@@ -173,11 +179,76 @@ function TWAMinigameBase:new(x, y, player, procId, recipe, onResult, variant)
     return o
 end
 
+-- Sound ------------------------------------------------------------------------
+--
+-- Round 9 (request 2026-09-28: "การเล่นมินิเกมอยากให้มีเสียงประกอบการทำ
+-- action ต่างๆ"): while the tool is working (the mouse held down), the
+-- procedure's own working sound plays -- the same vanilla sound its timed
+-- action uses (proc.sound: Hammering, Sawing, SharpenBladeWhetstone,
+-- CraftWelding, Screwdriver, FixWithTape...), so no new sound files. A game
+-- can set `self.loopWhileDragging = false` and play short bursts with
+-- self:sfx() instead (the hammer, one blow at a time). Sandbox
+-- "MinigameSounds" turns it all off.
+
+function TWAMinigameBase:soundsOn()
+    return TWAConfig.on("MinigameSounds") and self.player and self.player.playSound ~= nil
+end
+
+function TWAMinigameBase:loopName()
+    return self.loopSoundName or (self.proc and self.proc.sound)
+end
+
+local function emitterPlaying(player, id)
+    local em = player.getEmitter and player:getEmitter()
+    if em and em.isPlaying then return em:isPlaying(id) end
+    return true
+end
+
+function TWAMinigameBase:updateSound()
+    if not self:soundsOn() then self:stopSounds() return end
+    local want = self.dragging and not self.word and self.loopWhileDragging ~= false
+    local name = self:loopName()
+    if want and name then
+        if not self.loopId or not emitterPlaying(self.player, self.loopId) then
+            self.loopId = self.player:playSound(name)
+        end
+    elseif self.loopId then
+        self.player:stopOrTriggerSound(self.loopId)
+        self.loopId = nil
+    end
+    -- Bursts that are due to stop.
+    if self.sfxStops then
+        local keep = {}
+        for _, e in ipairs(self.sfxStops) do
+            if self.elapsed >= e.at then self.player:stopOrTriggerSound(e.id) else keep[#keep + 1] = e end
+        end
+        self.sfxStops = keep
+    end
+end
+
+--- A short burst of a sound: `ms` = cut it off after that long (nil = let
+--- it play out).
+function TWAMinigameBase:sfx(name, ms)
+    if not name or not self:soundsOn() then return end
+    local id = self.player:playSound(name)
+    if id and id ~= 0 and ms then
+        self.sfxStops = self.sfxStops or {}
+        self.sfxStops[#self.sfxStops + 1] = { id = id, at = self.elapsed + ms }
+    end
+end
+
+function TWAMinigameBase:stopSounds()
+    if not self.player or not self.player.stopOrTriggerSound then return end
+    if self.loopId then self.player:stopOrTriggerSound(self.loopId) self.loopId = nil end
+    for _, e in ipairs(self.sfxStops or {}) do self.player:stopOrTriggerSound(e.id) end
+    self.sfxStops = nil
+end
+
 -- Result state ----------------------------------------------------------------
 
 function TWAMinigameBase:wordFromQuality()
-    if self.quality >= 0.85 then return "Excellent" end
-    if self.quality >= 0.6 then return "Good" end
+    if self.quality >= TWAConfig.num("MinigameExcellentAt") then return "Excellent" end
+    if self.quality >= TWAConfig.num("MinigameGoodAt") then return "Good" end
     return "Bad"
 end
 
@@ -207,13 +278,13 @@ end
 --- A slip. `amount` is quality lost before skill forgiveness; `text` flashes.
 function TWAMinigameBase:spend(amount, text, quiet)
     if self.word or not amount or amount <= 0 then return end
-    self.quality = math.max(0, self.quality - amount * DRAIN * (self.drainMul or 1) / self.tol)
+    self.quality = math.max(0, self.quality - amount * TWAConfig.num("QualityDrain", 0) * (self.drainMul or 1) / (self.skillTol or 1))
     self.hurt = math.min(1, self.hurt + amount * 3)
     if text then self:flash(text, true) end
     if not quiet and amount >= 0.03 then self:shake(2 + amount * 30, 220) end
     -- Request 2026-09-28: "เกจคุณภาพถึง 0 ให้ถือว่าพลาดเลย และออกจากหน้า
     -- มินิเกม" -- an empty quality meter ends the game as a Miss at once.
-    if self.quality <= 0 then
+    if self.quality <= 0 and TWAConfig.on("QualityZeroIsMiss") then
         self:fail(getText("IGUI_TWA_MG_QualityGone"))
     end
 end
@@ -292,6 +363,7 @@ local function statOf(stats, key)
 end
 
 function TWAMinigameBase:tremor()
+    if not TWAConfig.on("Tremor") then return 0 end
     local stats = self.player.getStats and self.player:getStats()
     if not stats or not stats.get then return 0 end
     return (statOf(stats, "PAIN") + statOf(stats, "PANIC") + statOf(stats, "INTOXICATION")) / 25
@@ -300,7 +372,8 @@ end
 function TWAMinigameBase:updateHand(dt)
     local tx, ty = self.mx, self.my
     if not self.rawX then self.rawX, self.rawY = tx, ty end
-    local k = 1 - math.exp(-dt / HAND_LAG_MS)
+    local lag = TWAConfig.num("HandLagMs", 0)
+    local k = lag > 0 and (1 - math.exp(-dt / lag)) or 1
     local px, py = self.rawX, self.rawY
     self.rawX = px + (tx - px) * k
     self.rawY = py + (ty - py) * k
@@ -337,6 +410,7 @@ function TWAMinigameBase:tick()
         self.tremorLevel = self:tremor()
     end
     self:updateHand(dt)
+    self:updateSound()
 
     if self.word then
         if self.elapsed - self.resultAt >= RESULT_LINGER_MS then self:deliver() return end
@@ -399,6 +473,7 @@ end
 function TWAMinigameBase:teardown()
     if self.closed then return end
     self.closed = true
+    self:stopSounds()
     pcall(function() self:onCleanup() end)
     if self.javaObject then
         self:setCapture(false)

@@ -26,6 +26,7 @@
 
 require "TimedActions/ISBaseTimedAction"
 require "HARMONIE_TWA_Procedures"
+require "HARMONIE_TWA_Config"
 require "HARMONIE_TWA_CraftState"
 
 TWA_PerformProcedureAction = ISBaseTimedAction:derive("TWA_PerformProcedureAction")
@@ -38,7 +39,7 @@ function TWA_PerformProcedureAction:isValid()
     if isServer() then
         return TWAProcedures.CheckEligibility(self.proc, self.character, true)
     end
-    if self.character:tooDarkToRead() then return false end
+    if TWAConfig.on("RequireLight") and self.character:tooDarkToRead() then return false end
     return TWAProcedures.CheckEligibility(self.proc, self.character)
 end
 
@@ -77,7 +78,9 @@ end
 
 -- Server in multiplayer, local in single player.
 function TWA_PerformProcedureAction:complete()
-    TWAProcedures.Consume(self.proc, self.character)
+    if self.quality ~= "Miss" or TWAConfig.on("MissUsesMaterials") then
+        TWAProcedures.Consume(self.proc, self.character)
+    end
     if self.quality ~= "Miss" then
         TWAProcedures.AwardXP(self.proc, self.character)
     end
@@ -100,7 +103,7 @@ function TWA_PerformProcedureAction:new(character, procId, quality)
     o.procId = procId
     o.quality = TWACraftState.isWord(quality) and quality or TWACraftState.FALLBACK_WORD
     o.proc = TWAProcedures.List[procId]
-    o.maxTime = (o.proc and o.proc.time) or 50
+    o.maxTime = math.max(1, math.floor(((o.proc and o.proc.time) or 50) * TWAConfig.num("ProcedureTimeMultiplier", 0.1) + 0.5))
     o.forceProgressBar = true
     o.stopOnWalk = true
     o.stopOnRun = true

@@ -25,6 +25,8 @@
 -- done procedures read as "Good" (request 2026-09-28).
 --============================================================================
 
+require "HARMONIE_TWA_Config"
+
 TWACraftState = TWACraftState or {}
 local S = TWACraftState
 
@@ -79,24 +81,6 @@ function S.getRecipeById(id)
         end
     end
     return recipeByIdCache[id]
-end
-
--- Round 6 (request 2026-09-28: "การกดปุ่มยกเลิก ไม่สมบูรณ์ เสร็จสิ้นให้
--- action time เท่ากับตอนทำกรรมวิธี"): the Cancel/Incomplete/Finish time is
--- the recipe's own procedures' average time -- the same scale as one
--- procedure's gauge.
-function S.recipeActionTime(recipe)
-    local sum, n = 0, 0
-    local list = TWAProcedures and TWAProcedures.List or {}
-    for _, procId in ipairs(recipe and recipe.procedures or {}) do
-        local proc = list[procId]
-        if proc then
-            sum = sum + (proc.time or 50)
-            n = n + 1
-        end
-    end
-    if n == 0 then return 50 end
-    return math.floor(sum / n + 0.5)
 end
 
 function S.isMaterialRecipe(recipe)
@@ -164,7 +148,7 @@ end
 -- quality then decides their grade pool.) Returns ok, reason.
 function S.canFinish(recipe, map)
     if not S.allDone(recipe, map) then return false, "notDone" end
-    if S.isMaterialRecipe(recipe) then
+    if S.isMaterialRecipe(recipe) and TWAConfig.on("MaterialNeedsGood") then
         local word = S.overall(recipe, map)
         if word ~= "Good" and word ~= "Excellent" then return false, "materialQuality" end
     end
@@ -172,8 +156,9 @@ function S.canFinish(recipe, map)
 end
 
 function S.wordForAverage(avg)
-    if avg < S.BAD_BELOW then return "Bad" end
-    if avg < S.GOOD_BELOW then return "Good" end
+    -- Cut points from the sandbox (round 9); S.BAD_BELOW/GOOD_BELOW are the defaults.
+    if avg < TWAConfig.num("BadBelow") then return "Bad" end
+    if avg < TWAConfig.num("GoodBelow") then return "Good" end
     return "Excellent"
 end
 
@@ -195,9 +180,16 @@ end
 
 function S.rollGrade(word)
     local pool = S.GRADE_POOLS[word] or S.GRADE_POOLS.Bad
-    local roll = ZombRand(100)
+    -- Weights from the sandbox (round 9), rolled over their own total.
+    local odds, total = {}, 0
+    for i = 1, 5 do
+        odds[i] = math.max(0, TWAConfig.num("GradeChance" .. i))
+        total = total + odds[i]
+    end
+    if total <= 0 then odds, total = S.GRADE_ODDS, 100 end
+    local roll = ZombRand(total)
     local cumulative = 0
-    for i, chance in ipairs(S.GRADE_ODDS) do
+    for i, chance in ipairs(odds) do
         cumulative = cumulative + chance
         if roll < cumulative then return pool[i] end
     end
@@ -400,6 +392,7 @@ end
 -- the original base item's snapshot (TWA_OrigBase) for a later Cancel.
 function S.applyIncomplete(item)
     if not item or not item:getModData().TWA_Incomplete then return end
+    if not TWAConfig.on("IncompleteZeroDamage") then return end
     if item.setMinDamage then item:setMinDamage(0) end
     if item.setMaxDamage then item:setMaxDamage(0) end
 end

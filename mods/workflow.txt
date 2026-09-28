@@ -2774,6 +2774,28 @@ Round 8 (same day):
     for the current feature set. The actual Steam upload is still done by
     the user from the game's Workshop menu (the cloud session can't).
 
+Round 9 (same day):
+  - SANDBOX: 73 options in 8 pages (General, Quality & grade, Minigames,
+    Hammering, Sharpen/saw/weld, Wrap/screw/grind, Heat/quench/bend, Coat/
+    pour/sew/drill/carve). ONE source table: mods/HARMONIE_TheWayToAttack/
+    tools/gen_sandbox.py writes sandbox-options.txt, shared/
+    HARMONIE_TWA_ConfigDefaults.lua and EN/TH Sandbox.json (the whole file
+    -- it is generated, so the append-only rule does not apply to it). Code
+    reads values with TWAConfig.get/num/on (shared/HARMONIE_TWA_Config.lua),
+    which falls back to the default for saves made before an option existed.
+    To add a setting: add a row, run the script, read it in code.
+  - Timed-action units: 50 per real second (from Casualties Undead's heat
+    action). Start/Cancel/Incomplete/Finish = CraftButtonSeconds (5 s = 250).
+  - Minigame sounds: while the mouse is held the procedure's own vanilla
+    working sound (proc.sound) loops; Strike plays one 260 ms burst per
+    blow instead. Stopped on release and on teardown. No new sound files.
+  - Material Lump icon ClayBrick (item script AND RecipeData Stats.icon --
+    the recipe list/preview reads Stats.icon; last round only the script
+    was changed, so the recipe kept the old picture).
+  - Oridecon and Bradium display names swapped (EN script + TH ItemName);
+    item ids and recipes unchanged.
+  - Recipe list sorted by tier (low first), then by name.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
