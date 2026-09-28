@@ -2761,6 +2761,19 @@ Round 7 (same day, play-test feedback):
   - Sharpen/polish: 10 flicks, vmin 0.8, no too-fast at all, a slow flick
     costs quality and doesn't count, gauge only moves on a counted flick.
 
+Round 8 (same day):
+  - Green tick removed ONLY on the recipe list rows; base cards, the
+    center checklist and the procedure library have it back.
+  - Weld zone: strong blue fill (alpha 0.35) with 2 px edges, red when out
+    -- the gold low-alpha fill read as white on the steel plate.
+  - EngravePattern (Incision "engrave"): a 2-turn spiral into the centre
+    (50 px between turns > slip distance), depth band 0.10..1.27 = 90% of
+    the 0..1.3 gauge (holding still settles at 1.25, inside).
+  - Base/supplementary cards show the item's own icon.
+  - Workshop/HARMONIE_TheWayToAttack/workshop.txt description rewritten
+    for the current feature set. The actual Steam upload is still done by
+    the user from the game's Workshop menu (the cloud session can't).
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

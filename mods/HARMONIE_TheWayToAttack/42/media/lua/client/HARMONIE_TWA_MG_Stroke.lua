@@ -287,18 +287,22 @@ function TWAStrokeGame:renderGame()
     -- tool is outside it.
     local col = self.active and C.guide or C.faint
     local offNow = self.active and self.hx and select(2, self:project(self.hx, self.hy)) > self.band
-    local fill = offNow and C.bad or col
+    -- Round 8: the zone was gold at low alpha and read as white on the
+    -- steel -- now a strong blue fill with solid edges, red when out.
+    local ZONE = { r = 0.15, g = 0.55, b = 1.0 }
+    local fill = offNow and C.bad or ZONE
+    if self.variant == "weld" then col = fill end
     for i = 1, #self.path - 1 do
         local a, b = self.path[i], self.path[i + 1]
         local dx, dy = b[1] - a[1], b[2] - a[2]
         local len = math.sqrt(dx * dx + dy * dy)
         local nx, ny = -dy / len * self.band, dx / len * self.band
-        self:quad(a[1] + nx, a[2] + ny, b[1] + nx, b[2] + ny, b[1] - nx, b[2] - ny, a[1] - nx, a[2] - ny, 0.16, fill.r, fill.g, fill.b)
-        self:line(a[1] + nx, a[2] + ny, b[1] + nx, b[2] + ny, 1, 0.45, col)
-        self:line(a[1] - nx, a[2] - ny, b[1] - nx, b[2] - ny, 1, 0.45, col)
+        self:quad(a[1] + nx, a[2] + ny, b[1] + nx, b[2] + ny, b[1] - nx, b[2] - ny, a[1] - nx, a[2] - ny, 0.35, fill.r, fill.g, fill.b)
+        self:line(a[1] + nx, a[2] + ny, b[1] + nx, b[2] + ny, 2, 0.9, col)
+        self:line(a[1] - nx, a[2] - ny, b[1] - nx, b[2] - ny, 2, 0.9, col)
     end
     for i = 2, #self.path - 1 do
-        self:disc(self.path[i][1], self.path[i][2], self.band, 0.16, fill, 14)
+        self:disc(self.path[i][1], self.path[i][2], self.band, 0.35, fill, 14)
     end
     local sx, sy = self:startPoint()
     local pulse = 1 + 0.15 * math.sin(self.elapsed * 0.008)
