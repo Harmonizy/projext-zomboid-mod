@@ -911,6 +911,53 @@ TWAProcedures.List = {
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
         skill = "Glassmaking:1", time = 20, sound = "TWA_Craft",
     },
+    -- Round 15: gem-cutting (การเจียระไน) -- the steps of cutting a stone,
+    -- each with its own minigame (HARMONIE_TWA_MG_Inspect / _Facet / Stroke
+    -- "gemsaw" / Wrap "grind" / Stroke "polish"). No recipes use them yet.
+    -- Icons are this mod's own gem pictures.
+    GemSelection = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemSelection", icon = "TWA_Gemstone",
+        consumes = {}, time = 20, sound = "TWA_Craft",
+    },
+    GemAnalysis = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemAnalysis", icon = "TWA_Diamond",
+        consumes = {}, skill = "Glassmaking:1", time = 20, sound = "TWA_Craft",
+    },
+    GemCutPlanning = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemCutPlanning", icon = "TWA_Sapphire",
+        tool = { kind = "tag", value = "SHARP_KNIFE" },
+        consumes = {}, skill = "Glassmaking:1", time = 20, sound = "TWA_Craft",
+    },
+    GemSawing = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemSawing", icon = "TWA_Ruby",
+        tool = { kind = "tag", value = "SAW" },
+        consumes = {}, skill = "Glassmaking:2", time = 30, sound = "TWA_Saw",
+    },
+    GemPreforming = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemPreforming", icon = "TWA_Emerald",
+        tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" } },
+        consumes = {}, skill = "Glassmaking:2", time = 30, sound = "TWA_Grind",
+    },
+    GemFaceting = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemFaceting", icon = "TWA_Topaz",
+        tool = { { kind = "type", value = "Base.SmallFileSet" }, { kind = "type", value = "Base.File" } },
+        consumes = {}, skill = "Glassmaking:4", time = 40, sound = "TWA_Grind",
+    },
+    GemPolishing = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemPolishing", icon = "TWA_Opal",
+        tool = { kind = "type", value = "Base.Whetstone" },
+        consumes = { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips", "Base.LeatherStrips" }, qty = 1 } },
+        skill = "Glassmaking:6", time = 30, sound = "TWA_Whetstone",
+    },
+    GemFineCutting = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemFineCutting", icon = "TWA_Tanzanite",
+        tool = { kind = "type", value = "Base.SmallFileSet" },
+        consumes = {}, skill = "Glassmaking:8", time = 40, sound = "TWA_Grind",
+    },
+    GemQualityControl = {
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemQualityControl", icon = "TWA_Alexandrite",
+        consumes = {}, skill = "Glassmaking:10", time = 20, sound = "TWA_Craft",
+    },
     -- Icon changed to "StoneWheel" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
     GrindMetal = {
@@ -1062,6 +1109,11 @@ TWAProcedures.Categories = {
     -- CoatWax/FireTreat swapped tiers 2026-09-28 (see RecipeData.lua's note);
     -- listed in tier order.
     { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'CoatWax', 'FireTreat', 'SurfaceCoating' } },
+    -- Round 15: gem-cutting, in working order.
+    { key = "Gemcutting", nameKey = "IGUI_TWA_ProcCat_Gemcutting", ids = {
+        'GemSelection', 'GemAnalysis', 'GemCutPlanning', 'GemSawing', 'GemPreforming',
+        'GemFaceting', 'GemPolishing', 'GemFineCutting', 'GemQualityControl',
+    } },
 }
 
 TWAProcedures.Order = {}

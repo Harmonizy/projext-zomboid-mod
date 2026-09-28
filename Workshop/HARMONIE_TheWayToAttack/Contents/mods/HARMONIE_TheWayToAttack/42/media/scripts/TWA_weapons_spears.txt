@@ -5,7 +5,7 @@ module HARMONIE_TheWayToAttack
 		Base,
 	}
 
-	item ShovelSpear
+	item TWA_ShovelSpear
 	{
         ItemType = base:weapon,
 		DisplayName		=	Improvised Metal Spear,
@@ -59,7 +59,7 @@ module HARMONIE_TheWayToAttack
         MetalValue = 30,
 	}	
 	
-	item Shovel2Spear
+	item TWA_Shovel2Spear
 	{
         ItemType = base:weapon,
 		DisplayName		=	Improvised Metal Spear,
@@ -117,7 +117,7 @@ module HARMONIE_TheWayToAttack
 
 	/*** SOMW BRANCH SPEARS***/	
 	
-	item SpearChippedStone
+	item TWA_SpearChippedStone
 	{
         ItemType = base:weapon,
 		DisplayName		=	Stone Spear,
@@ -171,7 +171,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item SpearCampyKnife
+	item TWA_SpearCampyKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Camping Knife,
@@ -226,7 +226,7 @@ module HARMONIE_TheWayToAttack
 
 	}
 
-	item SpearTantoKnife
+	item TWA_SpearTantoKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Tanto Knife,
@@ -281,7 +281,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item SpearMilitaryKnife
+	item TWA_SpearMilitaryKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Military Knife,
@@ -336,7 +336,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item SpearCombatKnife
+	item TWA_SpearCombatKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Combat Knife,
@@ -391,7 +391,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item SpearSharpTrowel
+	item TWA_SpearSharpTrowel
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Sharp Trowel,
@@ -448,7 +448,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item SpearGardenShearBlade
+	item TWA_SpearGardenShearBlade
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Garden Shear Blade,
@@ -504,7 +504,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item SpearKukri
+	item TWA_SpearKukri
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Kukri,
@@ -560,7 +560,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item SpearMilitaryMachete
+	item TWA_SpearMilitaryMachete
 	{
         ItemType = base:weapon,
 		DisplayName		=	Spear With Military Machete,
@@ -622,7 +622,7 @@ module HARMONIE_TheWayToAttack
 	
 	/*** VANILLA PLANK SPEARS ***/		
 
-	item PlankSpear
+	item TWA_PlankSpear
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear,
@@ -677,7 +677,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item PlankSpearBreadKnife
+	item TWA_PlankSpearBreadKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Bread Knife,
@@ -734,7 +734,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item PlankSpearHandFork
+	item TWA_PlankSpearHandFork
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Hand Fork,
@@ -791,7 +791,7 @@ module HARMONIE_TheWayToAttack
 
 	}
 	
-	item PlankSpearScrewdriver
+	item TWA_PlankSpearScrewdriver
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Screwdriver,
@@ -848,7 +848,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item PlankSpearHuntingKnife
+	item TWA_PlankSpearHuntingKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Hunting Knife,
@@ -905,7 +905,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item PlankSpearIcePick
+	item TWA_PlankSpearIcePick
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Ice Pick,
@@ -962,7 +962,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item PlankSpearKnife
+	item TWA_PlankSpearKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Knife,
@@ -1019,7 +1019,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item PlankSpearMachete
+	item TWA_PlankSpearMachete
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Machete,
@@ -1078,7 +1078,7 @@ module HARMONIE_TheWayToAttack
 	
 	/*** SOMW PLANK SPEARS ***/		
 	
-	item PlankSpearCampyKnife
+	item TWA_PlankSpearCampyKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Camping Knife,
@@ -1134,7 +1134,7 @@ module HARMONIE_TheWayToAttack
 
 	}
 
-	item PlankSpearTantoKnife
+	item TWA_PlankSpearTantoKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Tanto Knife,
@@ -1190,7 +1190,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 	
-	item PlankSpearMilitaryKnife
+	item TWA_PlankSpearMilitaryKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Military Knife,
@@ -1246,7 +1246,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item PlankSpearCombatKnife
+	item TWA_PlankSpearCombatKnife
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Combat Knife,
@@ -1302,7 +1302,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item PlankSpearSharpTrowel
+	item TWA_PlankSpearSharpTrowel
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Sharp Trowel,
@@ -1359,7 +1359,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item PlankSpearKukri
+	item TWA_PlankSpearKukri
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Kukri,
@@ -1415,7 +1415,7 @@ module HARMONIE_TheWayToAttack
 
 	}	
 
-	item PlankSpearMilitaryMachete
+	item TWA_PlankSpearMilitaryMachete
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Military Machete,
@@ -1471,7 +1471,7 @@ module HARMONIE_TheWayToAttack
 
 	}		
 
-	item PlankSpearGardenShearBlade
+	item TWA_PlankSpearGardenShearBlade
 	{
         ItemType = base:weapon,
 		DisplayName		=	Plank Spear With Garden Shear Blade,

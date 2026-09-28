@@ -2911,6 +2911,32 @@ Round 14 (same day):
   - proc.cursorIcon = true makes the minigame cursor the procedure's own
     picture (AssembleBoneSpike showed the knife found as its tool).
 
+Round 15 (same day):
+  - EVERY item of this mod is keyed TWA_* now (user choice, incl. the 137
+    weapons -- old saves lose the mod's items). Renamed by script: `item X`
+    declarations in the HARMONIE_TheWayToAttack module files and every
+    "HARMONIE_TheWayToAttack.X" reference (RecipeData result/base/base2/
+    Stats keys, TH ItemName). NOT renamed: model/texture names (WeaponSprite,
+    Icon, Stats.icon) and recipe ids (Make_*). New items must be TWA_*.
+  - Oridecon/Bradium keys match their names again (display names un-
+    swapped); Mithril takes TWA_Bradium, Vibranium TWA_Oridecon.
+  - Own icons (tools/gen_item_icons.py, Pillow; see its Pen class -- Pillow
+    REPLACES alpha when drawing see-through shapes on an RGBA image, so they
+    go on a layer and are composited): 17 gems TWA_Gemstone..TWA_Jade (each
+    its own cut + colour), Mithril/Adamantium/Vibranium ingots recoloured
+    (one ingot shape), Oridecon/Elunium/Bradium ore crystals.
+  - Gem cutting category (Gemcutting, TH การเจียระไน): GemSelection,
+    GemAnalysis, GemCutPlanning, GemSawing, GemPreforming, GemFaceting,
+    GemPolishing, GemFineCutting, GemQualityControl (Glassmaking 0/1/1/2/2/
+    4/6/8/10). New games: TWAInspectGame (select/analyze/qc/plan -- a loupe
+    that reveals flaws) and TWAFacetGame (facet/fine -- hold the angle
+    needle in a drifting band per facet); Stroke "gemsaw"; Wrap "grind";
+    Stroke "polish". No recipes yet.
+  - Fewer hammering games outside blacksmithing (12 -> 5): RailSpike/Spike/
+    SpadeHead/MakeRivetedHandle -> Extract "drive", Bucket/Kettle -> Wrap
+    "wire", CounterweightHead -> Pour.
+  - AssembleBoneSpike renamed "Scrape Bone" / ขูดกระดูก (key unchanged).
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

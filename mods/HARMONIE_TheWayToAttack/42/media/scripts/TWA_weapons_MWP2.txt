@@ -2,7 +2,7 @@ module HARMONIE_TheWayToAttack {
 	imports {
 		Base
 	}
-	item muelahuntingknife
+	item TWA_muelahuntingknife
 	{
 		DisplayName 						= Muela Hunting Knife,
 		DisplayCategory 					= Weapon,
@@ -54,7 +54,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item cgcombattanto
+	item TWA_cgcombattanto
 	{
 		DisplayName 						= C.G. Combat Tanto,
 		DisplayCategory 					= Weapon,
@@ -106,7 +106,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item yangjangcolumbiabayonet
+	item TWA_yangjangcolumbiabayonet
 	{
 		DisplayName 						= Yangjang Columbia Bayonet,
 		DisplayCategory 					= Weapon,
@@ -158,7 +158,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}	
-	item assaultvknife
+	item TWA_assaultvknife
 	{
 		DisplayName 						= Assault V.Knife,
 		DisplayCategory 					= Weapon,
@@ -210,7 +210,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}	
-	item khkcombatknife
+	item TWA_khkcombatknife
 	{
 		DisplayName 						= Khk Combat Knife,
 		DisplayCategory 					= Weapon,
@@ -262,7 +262,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item kabar1245tanto
+	item TWA_kabar1245tanto
 	{
 		DisplayName 						= KA-BAR 1245 Black Tanto,
 		DisplayCategory 					= Weapon,
@@ -314,7 +314,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}	
-	item aitormonterobowieknife
+	item TWA_aitormonterobowieknife
 	{
 		DisplayName 						= Aitormontero Bowieknife,
 		DisplayCategory 					= Weapon,
@@ -366,7 +366,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}	
-	item arliabutterflyknife
+	item TWA_arliabutterflyknife
 	{
 		DisplayName 						= Arlia Butterfly knife,
 		DisplayCategory 					= Weapon,
@@ -420,7 +420,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item rexlerkunai
+	item TWA_rexlerkunai
 	{
 		DisplayName 						= Rexler Kunai,
 		DisplayCategory 					= Weapon,
@@ -474,7 +474,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item ontariookc10bayonet
+	item TWA_ontariookc10bayonet
 	{
 		DisplayName 						= Ontario OKC10 Bayonet,
 		DisplayCategory 					= Weapon,
@@ -527,7 +527,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item sogf19nelite
+	item TWA_sogf19nelite
 	{
 		DisplayName 						= SOG-F19N Elite,
 		DisplayCategory 					= ToolWeapon,
@@ -578,7 +578,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item russianakmbayonet
+	item TWA_russianakmbayonet
 	{
 		DisplayName 						= Russian AKM Bayonet,
 		DisplayCategory 					= Weapon,
@@ -631,7 +631,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item blitalianstiletto
+	item TWA_blitalianstiletto
 	{
 		DisplayName 						= Blitalian Stiletto,
 		DisplayCategory 					= Weapon,
@@ -686,7 +686,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
 		OnBreak 							= OnBreak.HuntingKnife,
 	}
-	item fiskarcurvedmachete
+	item TWA_fiskarcurvedmachete
 	{
 		DisplayName 						= Fiskar Curved Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -734,7 +734,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-	item defender18machete
+	item TWA_defender18machete
 	{
 		DisplayName 						= Defender.18 Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -781,7 +781,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-	item zhunterhookmachete
+	item TWA_zhunterhookmachete
 	{
 		DisplayName 						= Zhunter Hook Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -829,7 +829,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-	item crtkkukrimachete
+	item TWA_crtkkukrimachete
 	{
 		DisplayName 						= C.R.T.K. Kukri Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -876,7 +876,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}	
-	item sogfaritantomachete
+	item TWA_sogfaritantomachete
 	{
 		DisplayName 						= SOG Sogfari Tanto Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -923,7 +923,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-	item korekmachete
+	item TWA_korekmachete
 	{
 		DisplayName 						= Korek Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -970,7 +970,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-	item taigamachete
+	item TWA_taigamachete
 	{
 		DisplayName 						= US Taiga Machete,
 		DisplayCategory 					= GardeningWeapon,
@@ -1017,7 +1017,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-		item britishp1856pioneers
+		item TWA_britishp1856pioneers
 	{
 		DisplayName 						= British 1856 Pioneers,
 		DisplayCategory 					= GardeningWeapon,
@@ -1064,7 +1064,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Machete,
 	}
-		item albtacticalkatana
+		item TWA_albtacticalkatana
 	{
 		DisplayName 						= A.L.B. Tactical Katana,
 		DisplayCategory 					= Weapon,
@@ -1112,7 +1112,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Katana,
 	}	
-	item syntheticsword
+	item TWA_syntheticsword
 	{
 		DisplayName 						= Synthetic Sword,
 		DisplayCategory 					= Weapon,
@@ -1160,7 +1160,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Katana,
 	}
-	item gothsamuraisword
+	item TWA_gothsamuraisword
 	{
 		DisplayName 						= Goth Samurai Sword,
 		DisplayCategory 					= Weapon,
@@ -1208,7 +1208,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.Katana,
 	}
-	item fatmaxbrickhammer
+	item TWA_fatmaxbrickhammer
 	{
 		DisplayName 						= Fatmax Brick Hammer,
 		DisplayCategory 					= ToolWeapon,
@@ -1257,7 +1257,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.BallPeenHammer,
         HeadConditionLowerChanceMultiplier	= 2.0,
 	}	
-	item oxnailhammer
+	item TWA_oxnailhammer
 	{
 		DisplayName 						= OX Nail Hammer,
 		DisplayCategory 					= ToolWeapon,
@@ -1307,7 +1307,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.BallPeenHammer,
         HeadConditionLowerChanceMultiplier	= 2.0,
 	}
-	item m48tacticalwarhammer
+	item TWA_m48tacticalwarhammer
 	{
 		DisplayName 						= M48 Tactical Warhammer,
 		DisplayCategory 					= ToolWeapon,
@@ -1356,7 +1356,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.BallPeenHammer,
         HeadConditionLowerChanceMultiplier	= 2.0,
 	}
-	item cwcombathatchet
+	item TWA_cwcombathatchet
 	{
 		DisplayName 						= C.W. Combat Hatchet,
 		DisplayCategory 					= ToolWeapon,
@@ -1407,7 +1407,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item crtkfreyraxe
+	item TWA_crtkfreyraxe
 	{
 		DisplayName 						= CRTK Freyr Axe,
 		DisplayCategory 					= ToolWeapon,
@@ -1458,7 +1458,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}	
-	item gerberpackhatchet
+	item TWA_gerberpackhatchet
 	{
 		DisplayName 						= Gerber Pack Hatchet,
 		DisplayCategory 					= ToolWeapon,
@@ -1509,7 +1509,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item doomsdaysurvivalaxe
+	item TWA_doomsdaysurvivalaxe
 	{
 		DisplayName 						= Doomsday Survival Axe,
 		DisplayCategory 					= ToolWeapon,
@@ -1560,7 +1560,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}	
-	item winklersurvivalhatchet
+	item TWA_winklersurvivalhatchet
 	{
 		DisplayName 						= Winkler Survival Hatchet,
 		DisplayCategory 					= ToolWeapon,
@@ -1611,7 +1611,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item sogbeardedcampaxe
+	item TWA_sogbeardedcampaxe
 	{
 		DisplayName 						= SOG Bearded Camp Axe,
 		DisplayCategory 					= ToolWeapon,
@@ -1662,7 +1662,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item gemtord42crashaxe
+	item TWA_gemtord42crashaxe
 	{
 		DisplayName 						= Gemtord42 Crash Axe,
 		DisplayCategory 					= ToolWeapon,
@@ -1713,7 +1713,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}	
-	item gerberdownrangetomahawk
+	item TWA_gerberdownrangetomahawk
 	{
 		DisplayName 						= Gerber Downrange Tomahawk,
 		DisplayCategory 					= ToolWeapon,
@@ -1764,7 +1764,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item sptesnaztacticalshovel
+	item TWA_sptesnaztacticalshovel
 	{
 		DisplayName 						= Sptesnaz Tactical Shovel,
 		DisplayCategory 					= ToolWeapon,
@@ -1815,7 +1815,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.HandAxe,
         HeadConditionLowerChanceMultiplier 	= 1.5,
 	}
-	item reapertacsickle
+	item TWA_reapertacsickle
 	{
 		DisplayName 						= Reaper Tac Sickle,
 		DisplayCategory 					= GardeningWeapon,
@@ -1862,7 +1862,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.HandScythe,
 	}
-	item dmmiceaxe
+	item TWA_dmmiceaxe
 	{
 		DisplayName 						= DMM Ice Axe,
 		DisplayCategory 					= GardeningWeapon,
@@ -1909,7 +1909,7 @@ module HARMONIE_TheWayToAttack {
         Sharpness 							= 1.0,
         OnBreak 							= OnBreak.HandScythe,
 	}
-	item aluminiumbaseballbat
+	item TWA_aluminiumbaseballbat
 	{
 		DisplayName 						= Aluminium Baseball Bat,
 		DisplayCategory 					= SportsWeapon,
@@ -1956,7 +1956,7 @@ module HARMONIE_TheWayToAttack {
 		OnBreak 							= OnBreak.BaseballBat,
 		Tags 								= IsFireFuel;RepairWithGlue;RepairWithTape,
 	}
-	item eastonb5baseballbat
+	item TWA_eastonb5baseballbat
 	{
 		DisplayName 						= EastonB5 Baseball Bat,
 		DisplayCategory 					= SportsWeapon,
@@ -2003,7 +2003,7 @@ module HARMONIE_TheWayToAttack {
 		OnBreak 							= OnBreak.BaseballBat,
 		Tags 								= IsFireFuel;RepairWithGlue;RepairWithTape,
 	}
-	item avengebaseballbat
+	item TWA_avengebaseballbat
 	{
 		DisplayName 						= Avenge Baseball Batt,
 		DisplayCategory 					= SportsWeapon,
@@ -2050,7 +2050,7 @@ module HARMONIE_TheWayToAttack {
 		OnBreak 							= OnBreak.BaseballBat,
 		Tags 								= IsFireFuel;RepairWithGlue;RepairWithTape,
 	}	
-	item louisvillevaporbaseballbat
+	item TWA_louisvillevaporbaseballbat
 	{
 		DisplayName 						= Louisville Vapor Baseball Bat,
 		DisplayCategory 					= SportsWeapon,
@@ -2097,7 +2097,7 @@ module HARMONIE_TheWayToAttack {
 		OnBreak 							= OnBreak.BaseballBat,
 		Tags 								= IsFireFuel;RepairWithGlue;RepairWithTape,
 	}	
-	item brooklynsmasher
+	item TWA_brooklynsmasher
 	{
 		DisplayName 						= Brooklyn Smasher,
 		DisplayCategory 					= SportsWeapon,
@@ -2144,7 +2144,7 @@ module HARMONIE_TheWayToAttack {
 		OnBreak 							= OnBreak.BaseballBat,
 		Tags 								= IsFireFuel;RepairWithGlue;RepairWithTape,
 	}
-		item roughneckgorillasledgehammer
+		item TWA_roughneckgorillasledgehammer
 	{
 		DisplayName 						= Roughneck Gorilla Sledgehammer,
 		DisplayCategory 					= ToolWeapon,
@@ -2195,7 +2195,7 @@ module HARMONIE_TheWayToAttack {
         HeadCondition 						= 10,
         HeadConditionLowerChanceMultiplier 	= 1,
 	}
-	item fiskarsplittingmaul
+	item TWA_fiskarsplittingmaul
 	{
 		DisplayName 						= Fiskar Splittingmaul,
 		DisplayCategory 					= ToolWeapon,
@@ -2246,7 +2246,7 @@ module HARMONIE_TheWayToAttack {
         HeadCondition 						= 10,
         HeadConditionLowerChanceMultiplier 	= 1,
 	}
-	item coldsteelspear
+	item TWA_coldsteelspear
 	{
 		DisplayName 						= Coldsteel Spear,
 		DisplayCategory 					= Weapon,
@@ -2297,7 +2297,7 @@ module HARMONIE_TheWayToAttack {
         OnBreak 							= OnBreak.SpearLong,
         HeadConditionLowerChanceMultiplier 	= 1,
 	}
-	item roughneckaxe
+	item TWA_roughneckaxe
 	{
 		DisplayName 						= Roughneck Axe,
 		DisplayCategory 					= ToolWeapon,
@@ -2351,7 +2351,7 @@ module HARMONIE_TheWayToAttack {
         HeadConditionLowerChanceMultiplier 	= 1.5,
 		OnBreak 							= OnBreak.FireAxe,
 	}		
-	item spydercohatchethawk
+	item TWA_spydercohatchethawk
 	{
 		DisplayName 						= Spyderco Hatchet Hawk,
 		DisplayCategory 					= ToolWeapon,
@@ -2405,7 +2405,7 @@ module HARMONIE_TheWayToAttack {
         HeadConditionLowerChanceMultiplier 	= 1.5,
 		OnBreak 							= OnBreak.FireAxe,
 	}	
-	item pythoncampaxe
+	item TWA_pythoncampaxe
 	{
 		DisplayName 						= Python Campaxe,
 		DisplayCategory 					= ToolWeapon,
@@ -2459,7 +2459,7 @@ module HARMONIE_TheWayToAttack {
         HeadConditionLowerChanceMultiplier 	= 1.5,
 		OnBreak 							= OnBreak.FireAxe,
 	}		
-	item reavercleaver
+	item TWA_reavercleaver
 	{
 		DisplayName 						= Reaver Cleaver,
 		DisplayCategory 					= ToolWeapon,
