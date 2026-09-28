@@ -385,5 +385,15 @@
     "IGUI_TWA_MG_Facet_Chip": "หินบิ่น!",
     "IGUI_TWA_MG_Facet_Angle": "มุมผิด",
     "IGUI_TWA_MG_Facet_Done": "เจียครบทุกเหลี่ยมแล้ว",
-    "IGUI_TWA_MG_Facet_Angle_Label": "มุม"
+    "IGUI_TWA_MG_Facet_Angle_Label": "มุม",
+    "IGUI_TWA_Proc_SmashStone": "ทุบหิน",
+    "IGUI_TWA_MG_Strike_Hint_crack": "ทุบให้ตรงจังหวะ 3 ครั้ง เพื่อผ่าหินออก",
+    "IGUI_TWA_GemFinishRule": "กดเสร็จสิ้นจะสุ่มสิ่งที่อยู่ในหิน: %1 ใน 100 ได้อัญมณี (เพชรเพียง %2 ใน 100) นอกนั้นได้ ดินเหนียว เศษโลหะ หินปูน ถ่านไม้ ถ่านโค้ก หรือมูลสัตว์",
+    "IGUI_TWA_Tooltip_FinishGem": "ผ่าหินดูว่าข้างในมีอะไร ไม่มีเกรด ของที่ได้จะสุ่มตอนกดเสร็จสิ้น",
+    "IGUI_TWA_GemReveal_Title": "ข้างในหินมีอะไร?",
+    "IGUI_TWA_GemReveal_Hint": "หินกำลังแตก... แสงข้างในเริ่มเล็ดลอดออกมา...",
+    "IGUI_TWA_GemReveal_Gem": "ได้อัญมณี!",
+    "IGUI_TWA_GemReveal_Diamond": "เพชร!!",
+    "IGUI_TWA_GemReveal_Dud": "ได้แค่นี้...",
+    "IGUI_TWA_GemReveal_Lost": "ไม่มีอะไรออกมาจากหิน"
 }

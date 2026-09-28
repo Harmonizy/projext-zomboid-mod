@@ -2937,6 +2937,36 @@ Round 15 (same day):
     "wire", CounterweightHead -> Pour.
   - AssembleBoneSpike renamed "Scrape Bone" / ขูดกระดูก (key unchanged).
 
+Round 16 (same day):
+  - TWA_Gemstone icon redrawn (gen_item_icons.py gemrock()): an angular
+    chipped rock with patches of gem colour peeking out.
+  - Sharpen/polish minigame (Stroke): the scene IS the whetstone (grey-blue
+    coarse; pale fine stone for polish; a leather strop for StropLeather)
+    lying along the stroke, and the cursor is the WORKPIECE -- the recipe's
+    own item picture turned to lie along the stroke (TWAMinigameBase:texRot
+    = javaObject:DrawTexture(tex, 4 corners...)), a drawn blade when there
+    is no picture.
+  - Gem textures: MinigameBase gemBrilliant / roughGem / sparkle / glow /
+    velvet / whetstone. Inspect (velvet tray, see-through crystal, a real
+    brilliant for QC, brass loupe), Facet (polished lap, dop stick, the
+    brilliant's kite facets turn from frosted to cut), gemsaw (stone in a
+    vise, the kerf shows its colour). Kahlua has math.atan2, Lua 5.4+ only
+    math.atan(y, x): use `math.atan2 or math.atan`.
+  - New recipe Make_Gemstone (category "Gem", new filter tab): any stone
+    (Stone2/Stone/FlintNodule/SharpedStone/LargeStone), procedures SmashStone
+    (new, Strike "crack": 3 blows, cracks glow) + GemSelection. `roll =
+    "GemRoll"`: Finish (server) gives TWACraftState.rollGemstone() instead of
+    the result -- GemGoodChance 25 percent a gem (TWARecipeData.GemRoll.gems
+    equal, the diamond GemDiamondShare 4 percent of that = 1 percent), else
+    one of 6 equal dud slots: Clay, ScrapMetal, Limestone, Charcoal
+    (+CharcoalCrafted), Coke, dung (Dung_Cow/Chicken/Pig/Sheep/Turkey/
+    Raccoon + unverified Rabbit/Deer/Mouse/Rat). Types missing from the game
+    are skipped (ScriptManager check). No grade, can finish at any quality.
+  - TWAGemReveal replaces the grade reveal for roll recipes: cracking stone,
+    a roulette strip that eases (cubic) onto the found item, a diamond teased
+    next to it, then the burst. Sounds TWA_Tick / TWA_Crack / TWA_Shimmer.
+  - Sandbox 78 -> 80 (GemGoodChance, GemDiamondShare).
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

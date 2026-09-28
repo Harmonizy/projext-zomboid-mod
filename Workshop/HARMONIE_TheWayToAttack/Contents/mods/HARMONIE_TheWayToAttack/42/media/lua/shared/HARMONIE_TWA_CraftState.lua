@@ -164,6 +164,46 @@ end
 -- the overall quality must also be Good or Excellent -- a Bad material has
 -- its weak procedures redone first. (Weapons can still finish at Bad; the
 -- quality then decides their grade pool.) Returns ok, reason.
+-- Round 16: a recipe whose Finish ROLLS the item given (the Gemstone recipe)
+-- instead of handing out its result with a grade.
+function S.isRollRecipe(recipe)
+    return recipe ~= nil and recipe.roll ~= nil
+end
+
+local function itemExists(fullType)
+    local sm = ScriptManager and ScriptManager.instance
+    return sm ~= nil and sm:getItem(fullType) ~= nil
+end
+
+-- Picks what a smashed stone held (TWARecipeData.GemRoll): GemGoodChance
+-- percent a gem -- the diamond GemDiamondShare percent of that, the other
+-- gems equal shares of the rest -- otherwise one of the `bad` slots, all
+-- equally likely. Types missing from this game are skipped. Runs where
+-- Finish's complete() runs (the server in multiplayer). Returns a fullType.
+-- `rand(n)` (0..n-1) defaults to ZombRand.
+function S.rollGemstone(recipe, rand)
+    rand = rand or ZombRand
+    local pool = TWARecipeData.GemRoll
+    local roll = rand(10000)                                    -- 0..9999, hundredths of a percent
+    local good = math.floor(TWAConfig.num("GemGoodChance", 1) * 100 + 0.5)
+    if roll < good then
+        local dia = math.floor(good * TWAConfig.num("GemDiamondShare", 1) / 100 + 0.5)
+        if roll < dia and itemExists(pool.diamond) then return pool.diamond end
+        local gems = {}
+        for _, g in ipairs(pool.gems) do if itemExists(g) then gems[#gems + 1] = g end end
+        if #gems > 0 then return gems[rand(#gems) + 1] end
+    end
+    local slots = {}
+    for _, slot in ipairs(pool.bad) do
+        local have = {}
+        for _, t in ipairs(slot) do if itemExists(t) then have[#have + 1] = t end end
+        if #have > 0 then slots[#slots + 1] = have end
+    end
+    if #slots == 0 then return recipe and recipe.result end
+    local slot = slots[rand(#slots) + 1]
+    return slot[rand(#slot) + 1]
+end
+
 function S.canFinish(recipe, map)
     if not S.allDone(recipe, map) then return false, "notDone" end
     if S.isMaterialRecipe(recipe) and TWAConfig.on("MaterialNeedsGood") then

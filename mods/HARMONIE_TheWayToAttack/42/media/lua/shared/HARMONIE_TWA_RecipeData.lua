@@ -306,6 +306,12 @@ TWARecipeData.List = {
     { id = "Make_MaterialBar_Epic", result = "HARMONIE_TheWayToAttack.TWA_MaterialBar_Epic", base = "HARMONIE_TheWayToAttack.TWA_MaterialLump", base2 = "HARMONIE_TheWayToAttack.TWA_Bradium", category = "Material", procedures = { "StartFire", "PourMoldLarge", "ForgeFold", "CoolCast", "WeldWork", "PolishMetal" } },
     { id = "Make_MaterialBar_Elite", result = "HARMONIE_TheWayToAttack.TWA_MaterialBar_Elite", base = "HARMONIE_TheWayToAttack.TWA_MaterialLump", base2 = "HARMONIE_TheWayToAttack.TWA_Elunium", category = "Material", procedures = { "StartFire", "PourMoldLarge", "ForgeComplex", "CoolCast", "WeldWorkComplex", "PolishMetal", "GrindMetal" } },
     { id = "Make_MaterialBar_Legendary", result = "HARMONIE_TheWayToAttack.TWA_MaterialBar_Legendary", base = "HARMONIE_TheWayToAttack.TWA_MaterialLump", base2 = "HARMONIE_TheWayToAttack.TWA_Oridecon", category = "Material", procedures = { "StartFire", "PourMoldLarge", "ForgeVacuum", "CoolCast", "WeldWorkComplex", "PolishMetal", "GrindMetal", "EngravePattern" } },
+    -- Round 16 ("เพิ่มสูตร หินมณี"): any stone, smashed open and sorted; what
+    -- it held is ROLLED at Finish (TWACraftState.rollGemstone, pools in
+    -- TWARecipeData.GemRoll below) instead of getting a grade -- `roll`
+    -- marks it. The result listed is the rough gemstone (its picture and
+    -- name in the UI); the item actually given is the rolled one.
+    { id = "Make_Gemstone", result = "HARMONIE_TheWayToAttack.TWA_Gemstone", base = "Base.Stone2", baseAlt = { "Base.Stone", "Base.FlintNodule", "Base.SharpedStone", "Base.LargeStone" }, category = "Gem", roll = "GemRoll", procedures = { "SmashStone", "GemSelection" } },
 }
 
 -- Static stat lookup (avoids needing to query the un-instantiated Item script
@@ -801,4 +807,42 @@ TWARecipeData.Stats = {
     ["HARMONIE_TheWayToAttack.TWA_MaterialBar_Epic"] = { maxDamage = nil, minDamage = nil, conditionMax = nil, weight = nil, critChance = nil, maxRange = nil, baseSpeed = nil, knockdownMod = nil, damageType = nil, twoHanded = nil, icon = "TWA_MaterialBar_Epic", tier = 5, dps = 0, categories = nil, subCategory = nil, conditionLowerChanceOneIn = nil, pushBackMod = nil },
     ["HARMONIE_TheWayToAttack.TWA_MaterialBar_Elite"] = { maxDamage = nil, minDamage = nil, conditionMax = nil, weight = nil, critChance = nil, maxRange = nil, baseSpeed = nil, knockdownMod = nil, damageType = nil, twoHanded = nil, icon = "TWA_MaterialBar_Elite", tier = 6, dps = 0, categories = nil, subCategory = nil, conditionLowerChanceOneIn = nil, pushBackMod = nil },
     ["HARMONIE_TheWayToAttack.TWA_MaterialBar_Legendary"] = { maxDamage = nil, minDamage = nil, conditionMax = nil, weight = nil, critChance = nil, maxRange = nil, baseSpeed = nil, knockdownMod = nil, damageType = nil, twoHanded = nil, icon = "TWA_MaterialBar_Legendary", tier = 7, dps = 0, categories = nil, subCategory = nil, conditionLowerChanceOneIn = nil, pushBackMod = nil },
+    ["HARMONIE_TheWayToAttack.TWA_Gemstone"] = { maxDamage = nil, minDamage = nil, conditionMax = nil, weight = nil, critChance = nil, maxRange = nil, baseSpeed = nil, knockdownMod = nil, damageType = nil, twoHanded = nil, icon = "TWA_Gemstone", tier = 3, dps = 0, categories = nil, subCategory = nil, conditionLowerChanceOneIn = nil, pushBackMod = nil },
+}
+
+-- Round 16: what a smashed stone can hold (the Gemstone recipe's roll).
+-- "โอกาส75% ได้ pool แย่ ประกอบด้วย ดินเหนียว, เศษโลหะ, หินปูน, ถ่านไม้,
+-- ถ่านโค้ก, มูลสัตว์ทุกประเภท 25% ได้ pool ดี ประกอบด้วยอัญมณีทุกอันเท่าๆกัน
+-- เศษเหลือให้เป็นโอกาสออกเพชรที่น้อยที่สุด". The chances are sandbox options
+-- (GemGoodChance 25, GemDiamondShare 4 -> diamond 1 percent, the other 15
+-- gems 1.6 percent each). Every `bad` slot is equally likely; a slot with
+-- several types (the dung) picks one of those that exist in this game.
+-- Types that don't exist are skipped (TWACraftState.rollGemstone checks).
+TWARecipeData.GemRoll = {
+    bad = {
+        { "Base.Clay" },
+        { "Base.ScrapMetal" },
+        { "Base.Limestone" },
+        { "Base.Charcoal", "Base.CharcoalCrafted" },
+        { "Base.Coke" },
+        { "Base.Dung_Cow", "Base.Dung_Chicken", "Base.Dung_Pig", "Base.Dung_Sheep", "Base.Dung_Turkey",
+          "Base.Dung_Raccoon", "Base.Dung_Rabbit", "Base.Dung_Deer", "Base.Dung_Mouse", "Base.Dung_Rat" },
+    },
+    diamond = "HARMONIE_TheWayToAttack.TWA_Diamond",
+    gems = {
+        "HARMONIE_TheWayToAttack.TWA_Ruby", "HARMONIE_TheWayToAttack.TWA_Sapphire", "HARMONIE_TheWayToAttack.TWA_Emerald",
+        "HARMONIE_TheWayToAttack.TWA_Aquamarine", "HARMONIE_TheWayToAttack.TWA_Garnet", "HARMONIE_TheWayToAttack.TWA_Topaz",
+        "HARMONIE_TheWayToAttack.TWA_Tourmaline", "HARMONIE_TheWayToAttack.TWA_Amethyst", "HARMONIE_TheWayToAttack.TWA_Opal",
+        "HARMONIE_TheWayToAttack.TWA_Tanzanite", "HARMONIE_TheWayToAttack.TWA_Peridot", "HARMONIE_TheWayToAttack.TWA_Alexandrite",
+        "HARMONIE_TheWayToAttack.TWA_Spinel", "HARMONIE_TheWayToAttack.TWA_Zircon", "HARMONIE_TheWayToAttack.TWA_Jade",
+    },
+    -- the reveal's colour for each gem
+    colour = {
+        TWA_Diamond = { 0.92, 0.97, 1.0 }, TWA_Ruby = { 0.9, 0.12, 0.25 }, TWA_Sapphire = { 0.18, 0.35, 0.95 },
+        TWA_Emerald = { 0.15, 0.78, 0.4 }, TWA_Aquamarine = { 0.45, 0.85, 0.95 }, TWA_Garnet = { 0.6, 0.08, 0.15 },
+        TWA_Topaz = { 0.98, 0.7, 0.2 }, TWA_Tourmaline = { 0.95, 0.4, 0.6 }, TWA_Amethyst = { 0.6, 0.3, 0.9 },
+        TWA_Opal = { 0.85, 0.9, 0.95 }, TWA_Tanzanite = { 0.35, 0.28, 0.85 }, TWA_Peridot = { 0.6, 0.85, 0.15 },
+        TWA_Alexandrite = { 0.2, 0.6, 0.55 }, TWA_Spinel = { 0.95, 0.25, 0.5 }, TWA_Zircon = { 0.6, 0.85, 1.0 },
+        TWA_Jade = { 0.25, 0.6, 0.35 },
+    },
 }

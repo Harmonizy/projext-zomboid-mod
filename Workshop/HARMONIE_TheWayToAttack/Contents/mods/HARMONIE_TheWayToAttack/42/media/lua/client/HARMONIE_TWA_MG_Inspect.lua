@@ -72,7 +72,11 @@ function TWAInspectGame:onStart()
         self.cutR = 50 * math.min(1.2, self.tol)
         self.timeLimit = 30000
     else
-        self.stone = blobPts(310, 180, 125, vr == "qc" and 11 or 5, vr == "qc" and 8 or 12)
+        self.stone = blobPts(310, 180, 125, 5, 12)
+        if vr == "qc" then -- round 16: the round brilliant's own outline
+            self.stone = {}
+            for i = 0, 23 do self.stone[#self.stone + 1] = { 310 + math.cos(i / 24 * 6.2832) * 110, 180 + math.sin(i / 24 * 6.2832) * 110 } end
+        end
         local n = (vr == "qc" and 7 or 4) + math.floor(self.req / 3)
         self.flaws = {}
         for i = 1, n do
@@ -189,18 +193,9 @@ function TWAInspectGame:updateGame(dt)
     end
 end
 
+-- Round 16: a see-through crystal (the inspection looks INTO the stone).
 function TWAInspectGame:drawStone(pts, col, alpha)
-    local cx, cy = 0, 0
-    for _, p in ipairs(pts) do cx, cy = cx + p[1], cy + p[2] end
-    cx, cy = cx / #pts, cy / #pts
-    for i = 1, #pts do
-        local a, b = pts[i], pts[i % #pts + 1]
-        local mx, my = (a[1] + b[1]) / 2 - cx, (a[2] + b[2]) / 2 - cy
-        local l = math.sqrt(mx * mx + my * my)
-        local lit = 0.7 + 0.45 * ((-mx * 0.55 - my * 0.7) / math.max(1, l))
-        self:quad(cx, cy, a[1], a[2], b[1], b[2], cx, cy, alpha or 1, col.r * lit, col.g * lit, col.b * lit)
-    end
-    self:polyline(pts, 2, 1, { r = col.r * 0.4, g = col.g * 0.4, b = col.b * 0.4 }, true)
+    self:roughGem(pts, col, { clear = true, alpha = alpha, seed = 5 })
 end
 
 local function drawFlaw(self, x, y, r, kind, a)
@@ -218,16 +213,19 @@ function TWAInspectGame:renderGame()
     local vr = self.vr
     local mx, my = self.hx or -999, self.hy or -999
     if vr == "select" then
-        self:woodBoard(40, 120, 540, 120, { seed = 30, knots = 1 })
-        for _, s in ipairs(self.stones) do
-            self:drawStone(s.pts, s.col)
+        -- Round 16: rough stones on jeweller's velvet, crust with the gem
+        -- colour showing through where they broke.
+        self:velvet(30, 95, 560, 170)
+        for i, s in ipairs(self.stones) do
+            self:roughGem(s.pts, s.col, { seed = i * 3 + self.round, windows = 2 })
             for _, f in ipairs(s.flaws) do
                 local fx, fy = s.x + f.dx, s.y + f.dy
                 if B.dist(mx, my, fx, fy) < self.loupe then drawFlaw(self, fx, fy, 5, 0, 1) end
             end
         end
     elseif vr == "plan" then
-        self:drawStone(self.stone, { r = 0.55, g = 0.62, b = 0.8 })
+        self:velvet(0, 0, 620, 350, { tint = { r = 0.08, g = 0.09, b = 0.14 } })
+        self:drawStone(self.stone, { r = 0.55, g = 0.62, b = 0.9 })
         for _, f in ipairs(self.flaws) do drawFlaw(self, f.x, f.y, f.r, 0, 0.9) end
         local px, py = mx, my
         if self.placed then px, py = self.placed.x, self.placed.y end
@@ -240,8 +238,13 @@ function TWAInspectGame:renderGame()
         self:polyline(pts, 2, 1, C.guide, true)
         for i = 1, 16, 2 do self:line(px, py, pts[i][1], pts[i][2], 1, 0.35, C.guide) end
     else
-        local col = vr == "qc" and { r = 0.4, g = 0.7, b = 0.95 } or { r = 0.75, g = 0.35, b = 0.55 }
-        self:drawStone(self.stone, col)
+        self:velvet(0, 0, 620, 350, { tint = { r = 0.08, g = 0.09, b = 0.14 } })
+        if vr == "qc" then
+            -- the finished gem: a real brilliant (round 16)
+            self:gemBrilliant(310, 180, 128, { r = 0.3, g = 0.62, b = 0.98 }, { seed = 3 })
+        else
+            self:drawStone(self.stone, { r = 0.8, g = 0.3, b = 0.55 })
+        end
         for _, f in ipairs(self.flaws) do
             if f.found then
                 self:ring(f.x, f.y, f.r + 4, 2, 1, C.good, 12)
@@ -261,8 +264,10 @@ function TWAInspectGame:drawTool()
         if self.hx then self:disc(self.hx, self.hy, 2.5, 1, C.guide, 10) end
         return
     end
-    self:ring(self.hx, self.hy, self.loupe, 3, 0.9, { r = 0.25, g = 0.25, b = 0.28 }, 32)
-    self:ring(self.hx, self.hy, self.loupe - 2, 1, 0.6, C.steam, 32)
+    self:disc(self.hx, self.hy, self.loupe, 0.08, { r = 0.7, g = 0.85, b = 1 }, 32)
+    self:ring(self.hx, self.hy, self.loupe + 1, 5, 1, { r = 0.5, g = 0.38, b = 0.14 }, 36)
+    self:ring(self.hx, self.hy, self.loupe - 1, 1.5, 0.9, { r = 0.95, g = 0.8, b = 0.45 }, 36)
+    self:line(self.hx - self.loupe * 0.55, self.hy - self.loupe * 0.35, self.hx - self.loupe * 0.2, self.hy - self.loupe * 0.7, 3, 0.35, C.steam)
     self:line(self.hx + self.loupe * 0.7, self.hy + self.loupe * 0.7, self.hx + self.loupe * 1.3, self.hy + self.loupe * 1.3, 6, 1, C.wood2)
     self:disc(self.hx, self.hy, 2, 1, C.guide, 8)
 end

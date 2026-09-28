@@ -25,6 +25,9 @@ TWASound.LENGTH = {
     TWA_Craft = 1000,
     TWA_Success = 600,
     TWA_Fail = 500,
+    TWA_Tick = 60,
+    TWA_Crack = 699,
+    TWA_Shimmer = 2400,
 }
 -- Loudness levels every sound also exists at (NAME_vNN; 100 = NAME).
 TWASound.LEVELS = { 25, 50, 75, 100, 150, 200 }

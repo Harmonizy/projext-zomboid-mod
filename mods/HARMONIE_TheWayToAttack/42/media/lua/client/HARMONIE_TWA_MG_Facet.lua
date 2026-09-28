@@ -34,7 +34,7 @@ function TWAFacetGame:onStart()
     self.loopSoundName = "TWA_Grind"
     self.hint = getText("IGUI_TWA_MG_Facet_Hint")
     self.hint2 = getText(self.fine and "IGUI_TWA_MG_Facet_Hint2_fine" or "IGUI_TWA_MG_Facet_Hint2")
-    self.gemCol = ({ { r = 0.3, g = 0.55, b = 0.95 }, { r = 0.9, g = 0.25, b = 0.35 }, { r = 0.35, g = 0.8, b = 0.5 } })[ZombRand(3) + 1]
+    self.gemCol = ({ { r = 0.3, g = 0.55, b = 0.95 }, { r = 0.9, g = 0.2, b = 0.32 }, { r = 0.25, g = 0.8, b = 0.45 }, { r = 0.65, g = 0.35, b = 0.9 }, { r = 0.95, g = 0.72, b = 0.2 } })[ZombRand(5) + 1]
 end
 
 function TWAFacetGame:centre()
@@ -66,31 +66,28 @@ end
 
 function TWAFacetGame:renderGame()
     -- The lap (a spinning disc) and the gem held on it, seen from above.
+    -- Round 16: a polished lap with turning grooves and a real brilliant
+    -- whose kite facets turn from frosted to cut one by one.
     local cx, cy, R = 280, 180, 130
-    self:disc(cx, cy, R + 6, 1, { r = 0.25, g = 0.26, b = 0.3 }, 40)
-    self:disc(cx, cy, R, 1, { r = 0.45, g = 0.47, b = 0.52 }, 40)
+    self:woodBoard(0, 0, 620, 350, { seed = 22, knots = 2, tint = { r = 0.26, g = 0.18, b = 0.11 } })
+    self:disc(cx + 5, cy + 8, R + 10, 0.4, { r = 0, g = 0, b = 0 }, 48)
+    self:disc(cx, cy, R + 8, 1, { r = 0.22, g = 0.23, b = 0.26 }, 48)
+    for i = 0, 7 do
+        local k = i / 7
+        self:disc(cx, cy, R * (1 - k * 0.85), 1, { r = 0.5 + 0.18 * math.sin(k * 5), g = 0.52 + 0.18 * math.sin(k * 5), b = 0.58 + 0.16 * math.sin(k * 5) }, 48)
+    end
     local spin = self.elapsed * 0.01
-    for i = 0, 11 do
-        local a = spin + i * 0.5236
-        self:line(cx + math.cos(a) * 20, cy + math.sin(a) * 20, cx + math.cos(a) * R, cy + math.sin(a) * R, 1, 0.25, C.line)
+    for i = 0, 17 do
+        local a = spin + i * 0.349
+        self:line(cx + math.cos(a) * 24, cy + math.sin(a) * 24, cx + math.cos(a + 0.4) * R, cy + math.sin(a + 0.4) * R, 1, 0.12, C.line)
     end
-    -- the gem: n facets around a table, cut ones bright, the current one pulsing
-    local r1, r2 = 70, 34
-    for i = 1, self.n do
-        local a1 = (i - 1) / self.n * 6.2832 - 1.5708
-        local a2 = i / self.n * 6.2832 - 1.5708
-        local col = self.gemCol
-        local k = 0.45
-        if i < self.idx then k = 0.9 + 0.2 * math.cos(a1 + 2.4) end
-        if i == self.idx then k = 0.6 + 0.3 * math.abs(math.sin(self.elapsed * 0.008)) + 0.4 * self.cut end
-        self:quad(cx + math.cos(a1) * r2, cy + math.sin(a1) * r2, cx + math.cos(a1) * r1, cy + math.sin(a1) * r1,
-            cx + math.cos(a2) * r1, cy + math.sin(a2) * r1, cx + math.cos(a2) * r2, cy + math.sin(a2) * r2,
-            1, math.min(1, col.r * k), math.min(1, col.g * k), math.min(1, col.b * k))
-        self:line(cx + math.cos(a1) * r2, cy + math.sin(a1) * r2, cx + math.cos(a1) * r1, cy + math.sin(a1) * r1, 1, 0.6, C.dark)
-    end
-    self:disc(cx, cy, r2, 1, { r = math.min(1, self.gemCol.r * 1.2), g = math.min(1, self.gemCol.g * 1.2), b = math.min(1, self.gemCol.b * 1.2) }, 24)
-    self:disc(cx - 10, cy - 12, 6, 0.8, { r = 1, g = 1, b = 1 }, 10)
+    self:quad(cx - R * 0.7, cy - R * 0.2, cx - R * 0.2, cy - R * 0.7, cx - R * 0.1, cy - R * 0.6, cx - R * 0.6, cy - R * 0.1, 0.12, 1, 1, 1)
+    -- the dop stick holding the gem
+    self:line(cx + 60, cy - 60, cx + 200, cy - 150, 12, 1, { r = 0.32, g = 0.2, b = 0.1 })
+    self:line(cx + 60, cy - 60, cx + 200, cy - 150, 3, 0.4, { r = 0.6, g = 0.42, b = 0.25 })
+    self:gemBrilliant(cx, cy, 76, self.gemCol, { m = self.n, done = self.idx - 1, current = self.idx, cut = self.cut, seed = 7 })
     -- the angle gauge
+    self:rect(GX - 3, GY - 3, 30, GH + 6, 1, { r = 0.35, g = 0.3, b = 0.22 })
     self:rect(GX, GY, 24, GH, 1, C.dark)
     local c = self:centre()
     local function yOf(v) return GY + GH * (1 - v) end

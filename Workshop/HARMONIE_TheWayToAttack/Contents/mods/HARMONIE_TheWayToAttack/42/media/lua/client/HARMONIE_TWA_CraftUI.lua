@@ -259,6 +259,7 @@ local CATEGORY_TABS = {
     { key = "LongBlade", label = "Long Blade" },
     { key = "Spear", label = "Spear" },
     { key = "Material", label = "Material" },
+    { key = "Gem", label = "Gem" }, -- round 16: the Gemstone recipe
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
@@ -1422,7 +1423,11 @@ function TWACraftWindow:startCenterAction(kind)
         action = TWA_FinishCraftAction:new(self.player, recipe.id, S.serializeMap(self:currentMap()), token)
         action.onComplete = function()
             window:endActive()
-            if TWAGradeReveal and TWAConfig.on("GradeReveal") then TWAGradeReveal.open(window.player, recipe, token) end
+            if TWAConfig.on("GradeReveal") then
+                -- Round 16: the Gemstone recipe has its own show (the roll).
+                if recipe.roll and TWAGemReveal then TWAGemReveal.open(window.player, recipe, token)
+                elseif TWAGradeReveal then TWAGradeReveal.open(window.player, recipe, token) end
+            end
         end
     else
         return
@@ -2066,7 +2071,7 @@ function TWACraftWindow:render()
     -- default values for them -- skipped entirely for this one category,
     -- the base-item card/procedure grid just start higher up instead.
     local statY = centerY + 44
-    if recipe.category ~= "Material" then
+    if recipe.category ~= "Material" and not recipe.roll then
         statY = self:drawStatGrid(centerX + ICON + 12, centerY + 44, CENTER_W - ICON - 20)
     end
 
@@ -2224,6 +2229,16 @@ function TWACraftWindow:render()
             drawTextShadowed(self, l, centerX, ny + (i - 1) * 14 - 14, bad and 1 or 0.8, bad and 0.5 or 0.8, bad and 0.4 or 0.8, 1, UIFont.Small)
         end
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishMaterial"))
+    elseif recipe.roll then
+        -- Round 16: what Finish can give, spelled out (the chances are sandbox).
+        local good = TWAConfig.num("GemGoodChance", 1)
+        local dia = good * TWAConfig.num("GemDiamondShare", 1) / 100
+        local note = getText("IGUI_TWA_GemFinishRule", tostring(good), string.format("%.1f", dia))
+        local ny = self.panelBottom - self.btnH - 34
+        for i, l in ipairs(wrapTextLines(note, CENTER_W - 24, UIFont.Small)) do
+            drawTextShadowed(self, l, centerX, ny + (i - 1) * 14 - 14, 0.75, 0.85, 1, 1, UIFont.Small)
+        end
+        self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishGem"))
     else
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     end

@@ -1382,4 +1382,184 @@ module Base
         }
     }
 
+    sound TWA_Tick_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tick_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tick_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tick_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tick_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tick_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tick
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tick.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tick_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tick_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tick_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tick_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Crack_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Crack_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Crack_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Crack_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Crack_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Crack_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Crack
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Crack.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Crack_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Crack_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Crack_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Crack_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Shimmer_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Shimmer_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Shimmer_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Shimmer_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Shimmer_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Shimmer_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Shimmer
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Shimmer.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Shimmer_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Shimmer_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Shimmer_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Shimmer_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
 }
