@@ -346,7 +346,9 @@ function TWACraftUI.autoSearchNameFor(fullType)
     end
     if not isResult then
         for _, recipe in ipairs(TWARecipeData.List) do
-            if recipe.base == fullType or recipe.base2 == fullType or recipe.baseAlt == fullType then
+            local isBase = recipe.base2 == fullType
+            for _, t in ipairs(TWACraftState.baseTypes(recipe)) do if t == fullType then isBase = true end end
+            if isBase then
                 isBase = true
                 break
             end
@@ -376,9 +378,9 @@ end
 local function ownsBase(recipe, player)
     if not recipe.base then return true end
     local inv = player:getInventory()
-    local hasBase = inv:getItemCountRecurse(recipe.base) >= 1
-    if not hasBase and recipe.baseAlt then
-        hasBase = inv:getItemCountRecurse(recipe.baseAlt) >= 1
+    local hasBase = false
+    for _, t in ipairs(TWACraftState.baseTypes(recipe)) do
+        if inv:getItemCountRecurse(t) >= 1 then hasBase = true break end
     end
     if not hasBase then return false end
     if recipe.base2 and inv:getItemCountRecurse(recipe.base2) < 1 then return false end
@@ -403,7 +405,13 @@ local function baseDisplayName(base, baseAlt)
     if not base then return "" end
     local it = getItemScript(base)
     local name = it and it:getDisplayName() or base
-    if baseAlt then
+    if type(baseAlt) == "table" then
+        -- A list ("any stone"): the first name and how many more.
+        local n = 0
+        local sm = ScriptManager.instance
+        for _, t in ipairs(baseAlt) do if sm:getItem(t) then n = n + 1 end end
+        if n > 0 then name = name .. " (+" .. n .. ")" end
+    elseif baseAlt then
         local altIt = getItemScript(baseAlt)
         name = name .. " / " .. (altIt and altIt:getDisplayName() or baseAlt)
     end
@@ -489,7 +497,7 @@ function TWARecipeScrollList:matches(recipe)
             return string.find(string.lower(n), q, 1, true) ~= nil
         end
         local matched = nameMatches(recipe.result) or nameMatches(recipe.base)
-            or nameMatches(recipe.base2) or nameMatches(recipe.baseAlt)
+            or nameMatches(recipe.base2) or (type(recipe.baseAlt) == "string" and nameMatches(recipe.baseAlt))
         if not matched then
             for _, procId in ipairs(recipe.procedures) do
                 local proc = TWAProcedures.List[procId]
@@ -1275,8 +1283,10 @@ function TWACraftWindow:pickItems()
         base = S.findItem(self.player, self.resumeItem)
         if not base then return false end
     elseif recipe.base then
-        base = S.pickFreshItem(self.player, recipe.base)
-            or (recipe.baseAlt and S.pickFreshItem(self.player, recipe.baseAlt))
+        for _, t in ipairs(S.baseTypes(recipe)) do
+            base = S.pickFreshItem(self.player, t)
+            if base then break end
+        end
         if not base then return false end
     end
     if recipe.base2 then
@@ -1679,6 +1689,18 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey)
         tx = x + 42
     end
     drawTextShadowed(self, baseDisplayName(fullType, altType), tx, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+    -- A list of accepted types ("any stone"): hovering the card lists them.
+    if type(altType) == "table" then
+        local mx, my = self:getMouseX(), self:getMouseY()
+        if mx >= x and mx < x + w and my >= y and my < y + CARD_H then
+            local lines = { getText("IGUI_TWA_AcceptsAny") }
+            for _, t in ipairs(TWACraftState.baseTypes({ base = fullType, baseAlt = altType })) do
+                local it = getItemScript(t)
+                lines[#lines + 1] = "- " .. (it and it:getDisplayName() or t)
+            end
+            self.hoverTooltip = { lines = lines, x = x, y = y + CARD_H }
+        end
+    end
     local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
     drawTextShadowed(self, getText(statusKey), tx, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
     return y + CARD_H + 6 + 4
@@ -2000,7 +2022,7 @@ function TWACraftWindow:render()
         -- bookmarked copies says so, pointing at right-click-to-resume.
         local S = TWACraftState
         local inv = self.player:getInventory()
-        local owned1, note1, owned2, note2
+        local owned1, note1, owned2, note2, anyCopy
         if self:isActiveRecipe() then
             -- Already taken at Start.
             owned1, note1 = true, "IGUI_TWA_BaseTaken"
@@ -2010,10 +2032,12 @@ function TWACraftWindow:render()
                 owned1 = S.findItem(self.player, self.resumeItem) ~= nil
                 note1 = "IGUI_TWA_ResumeItemNote"
             else
-                owned1 = S.pickFreshItem(self.player, recipe.base) ~= nil
-                    or (recipe.baseAlt ~= nil and S.pickFreshItem(self.player, recipe.baseAlt) ~= nil)
-                if not owned1 and (inv:getItemCountRecurse(recipe.base) >= 1
-                        or (recipe.baseAlt and inv:getItemCountRecurse(recipe.baseAlt) >= 1)) then
+                owned1, anyCopy = false, false
+                for _, t in ipairs(S.baseTypes(recipe)) do
+                    if S.pickFreshItem(self.player, t) then owned1 = true end
+                    if inv:getItemCountRecurse(t) >= 1 then anyCopy = true end
+                end
+                if not owned1 and anyCopy then
                     note1 = "IGUI_TWA_BaseOnlyBookmarked"
                 end
             end
