@@ -67,15 +67,96 @@ local function skillLevels(player, proc)
     return tonumber(lvl) or 0, perk and player:getPerkLevel(perk) or 0
 end
 
+-- Phase 2 (request 2026-09-28: "เริ่มทำ minigame เพิ่ม ให้แยบยลเหมือน
+-- ม็อดอ้างอิง"): which game -- and which variant of it -- each procedure
+-- plays, chosen by what the procedure physically IS rather than just its UI
+-- category. Games live in HARMONIE_TWA_MG_*.lua on TWAMinigameBase. Any
+-- procedure not listed (or whose game class failed to load) falls back to
+-- the generic needle game below.
+TWAMinigame.GAME_FOR = {
+    -- Assembly
+    WrapClothImprov        = { "TWAWrapGame", "cloth" },
+    SawWood                = { "TWAStrokeGame", "saw" },
+    SmashBottle            = { "TWAStrikeGame", "smash" },
+    BreakBranch            = { "TWAStrikeGame", "smash" },
+    WrapBarbedWireAssembly = { "TWAWrapGame", "wire" },
+    WrapWireAssembly       = { "TWAWrapGame", "wire" },
+    AssembleCan            = { "TWAWrapGame", "screw" },
+    AssembleNails          = { "TWAStrikeGame", "nails" },
+    AssembleRailSpike      = { "TWAStrikeGame", "nails" },
+    AssembleBoneSpike      = { "TWAStrokeGame", "carve" },
+    AssembleSawblade       = { "TWAStrokeGame", "saw" },
+    AssembleSheetMetal     = { "TWAWrapGame", "screw" },
+    AssembleSpike          = { "TWAStrikeGame", "nails" },
+    AssembleBrake          = { "TWAWrapGame", "screw" },
+    AssembleBucket         = { "TWAStrikeGame", "rivet" },
+    AssembleKettle         = { "TWAStrikeGame", "rivet" },
+    AssembleRakeHead       = { "TWAWrapGame", "screw" },
+    AssembleSpadeHead      = { "TWAWrapGame", "screw" },
+    -- Blacksmithing (internal key "Metallurgy")
+    StartFire              = { "TWAHeatGame", "fire" },
+    MeltMetal              = { "TWAHeatGame", "melt" },
+    PourMold               = { "TWAPourGame" },
+    PourMoldLarge          = { "TWAPourGame" },
+    CoolCast               = { "TWAHeatGame", "cool" },
+    WeldWork               = { "TWAStrokeGame", "weld" },
+    WeldWorkComplex        = { "TWAStrokeGame", "weld" },
+    PolishMetal            = { "TWAStrokeGame", "polish" },
+    GrindMetal             = { "TWAStrokeGame", "polish" },
+    EngravePattern         = { "TWAStrokeGame", "engrave" },
+    ForgeShape             = { "TWAStrikeGame", "forge" },
+    ForgeFold              = { "TWAStrikeGame", "forge" },
+    ForgeComplex           = { "TWAStrikeGame", "forge" },
+    ForgeVacuum            = { "TWAStrikeGame", "forge" },
+    -- Sharpness / Piercing / Density
+    SharpenEdge            = { "TWAStrokeGame", "sharpen" },
+    StropLeather           = { "TWAStrokeGame", "sharpen" },
+    KnapHead               = { "TWAStrikeGame", "knap" },
+    TaperPoint             = { "TWAStrokeGame", "sharpen" },
+    QuenchHarden           = { "TWAHeatGame", "cool" },
+    AnnealMetal            = { "TWAHeatGame", "anneal" },
+    -- Handle
+    MakeHandle             = { "TWAStrokeGame", "carve" },
+    WrapBind               = { "TWAWrapGame", "tape" },
+    MakeLongHandle         = { "TWAStrokeGame", "carve" },
+    ReinforcedBind         = { "TWAWrapGame", "sinew" },
+    MakeRivetedHandle      = { "TWAStrikeGame", "rivet" },
+    TightenBolts           = { "TWAWrapGame", "screw" },
+    -- Balance / Structure
+    HammerNails            = { "TWAStrikeGame", "nails" },
+    CounterweightHead      = { "TWAStrikeGame", "rivet" },
+    WeldMetal              = { "TWAStrokeGame", "weld" },
+    RivetPlate             = { "TWAStrikeGame", "rivet" },
+    DrillCore              = { "TWAWrapGame", "drill" },
+    -- Toughness
+    WrapCloth              = { "TWAWrapGame", "cloth" },
+    WrapLeather            = { "TWAWrapGame", "leather" },
+    StringSinew            = { "TWAWrapGame", "sinew" },
+    WeaveWire              = { "TWAWrapGame", "wire" },
+    -- Wear resistance
+    CoatMud                = { "TWACoatGame", "mud" },
+    FireTreat              = { "TWACoatGame", "fire" },
+    CoatWax                = { "TWACoatGame", "wax" },
+    SurfaceCoating         = { "TWACoatGame", "bleach" },
+}
+
 --- Returns false (and does not call onResult) only when busy; the caller
---- then just doesn't start the procedure.
-function TWAMinigame.play(player, procId, onResult)
+--- then just doesn't start the procedure. `recipe` (optional) lets a game
+--- show the item being made.
+function TWAMinigame.play(player, procId, onResult, recipe)
     if not TWAMinigame.enabled() then
         onResult(TWACraftState.FALLBACK_WORD)
         return true
     end
     if TWAMinigame.busy() then return false end
-    local ok, err = pcall(TWAMinigame.open, player, procId, onResult)
+    local spec = TWAMinigame.GAME_FOR[procId]
+    local cls = spec and _G[spec[1]]
+    local ok, err
+    if cls and cls.openFor then
+        ok, err = pcall(cls.openFor, cls, player, procId, recipe, onResult, spec[2])
+    else
+        ok, err = pcall(TWAMinigame.open, player, procId, onResult)
+    end
     if not ok then
         print("[HARMONIE_TheWayToAttack] minigame failed to open (" .. tostring(err) .. "), scoring Excellent")
         local ui = TWAMinigame.instance

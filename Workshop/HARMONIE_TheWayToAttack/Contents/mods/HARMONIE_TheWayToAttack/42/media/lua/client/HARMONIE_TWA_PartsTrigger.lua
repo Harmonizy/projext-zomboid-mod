@@ -29,8 +29,14 @@ Events.OnKeyPressed.Add(function(key)
 end)
 
 -- Context menu handler
+-- Switched OFF for now (request 2026-09-28: "ปิดการคลิกขวาดัดแปลงอาวุธไป
+-- ก่อน เดี๋ยวค่อยพัฒนาต่อ") -- flip this back to true to bring the
+-- right-click "Modify Weapon" option back. The hotkey above is untouched.
+local CONTEXT_MENU_ENABLED = false
+
 -- B42 passes playerNum (integer) as the first argument, not the player object.
 Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+    if not CONTEXT_MENU_ENABLED then return end
     local player = getSpecificPlayer(playerNum)
     if not player then return end
     local weapon = player:getPrimaryHandItem()

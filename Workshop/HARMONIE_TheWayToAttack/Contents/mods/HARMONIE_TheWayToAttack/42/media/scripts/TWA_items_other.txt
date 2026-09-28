@@ -40,9 +40,9 @@ module HARMONIE_TheWayToAttack
         Icon = IronChunk,
     }
 
-    -- Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real
-    -- item's own TYPE name, Base.IronIngot); its real Icon field is
-    -- "Ingot_Iron".
+    /* Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real
+       item's own TYPE name, Base.IronIngot); its real Icon field is
+       "Ingot_Iron". */
     item MaterialBar_Uncommon
     {
         ItemType = base:normal,
@@ -53,9 +53,9 @@ module HARMONIE_TheWayToAttack
         Icon = Ingot_Iron,
     }
 
-    -- Icon changed (request 2026-09-28) -- user gave "CopperIngot" (the
-    -- real item's own TYPE name, Base.CopperIngot); its real Icon field is
-    -- "Ingot_Copper".
+    /* Icon changed (request 2026-09-28) -- user gave "CopperIngot" (the
+       real item's own TYPE name, Base.CopperIngot); its real Icon field is
+       "Ingot_Copper". */
     item MaterialBar_Rare
     {
         ItemType = base:normal,
@@ -66,9 +66,9 @@ module HARMONIE_TheWayToAttack
         Icon = Ingot_Copper,
     }
 
-    -- Icon changed (request 2026-09-28) -- user gave "SilverBar" (the real
-    -- item's own TYPE name, Base.SilverBar); its real Icon field is
-    -- "Ingot_Silver".
+    /* Icon changed (request 2026-09-28) -- user gave "SilverBar" (the real
+       item's own TYPE name, Base.SilverBar); its real Icon field is
+       "Ingot_Silver". */
     item MaterialBar_Epic
     {
         ItemType = base:normal,
@@ -79,9 +79,9 @@ module HARMONIE_TheWayToAttack
         Icon = Ingot_Silver,
     }
 
-    -- Icon changed (request 2026-09-28) -- user gave "BrassIngot" (the real
-    -- item's own TYPE name, Base.BrassIngot); its real Icon field is
-    -- "Ingot_Brass".
+    /* Icon changed (request 2026-09-28) -- user gave "BrassIngot" (the real
+       item's own TYPE name, Base.BrassIngot); its real Icon field is
+       "Ingot_Brass". */
     item MaterialBar_Elite
     {
         ItemType = base:normal,
@@ -92,9 +92,9 @@ module HARMONIE_TheWayToAttack
         Icon = Ingot_Brass,
     }
 
-    -- Icon changed (request 2026-09-28) -- user gave "GoldBar" (the real
-    -- item's own TYPE name, Base.GoldBar); its real Icon field is
-    -- "Ingot_Gold".
+    /* Icon changed (request 2026-09-28) -- user gave "GoldBar" (the real
+       item's own TYPE name, Base.GoldBar); its real Icon field is
+       "Ingot_Gold". */
     item MaterialBar_Legendary
     {
         ItemType = base:normal,
