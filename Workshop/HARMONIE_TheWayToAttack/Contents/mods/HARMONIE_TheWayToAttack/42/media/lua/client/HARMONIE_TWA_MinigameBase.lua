@@ -237,6 +237,11 @@ function TWAMinigameBase:sfx(name, ms)
     end
 end
 
+-- A result sound (not placed in the world), if sounds are on.
+function TWAMinigameBase:uiSound(name)
+    if TWAConfig.on("MinigameSounds") and getSoundManager then getSoundManager():playUISound(name) end
+end
+
 function TWAMinigameBase:stopSounds()
     if not self.player or not self.player.stopOrTriggerSound then return end
     if self.loopId then self.player:stopOrTriggerSound(self.loopId) self.loopId = nil end
@@ -260,7 +265,7 @@ function TWAMinigameBase:succeed(text)
     self.resultAt = self.elapsed
     self.dragging = false
     self:burst("ring", PW / 2, PH / 2, 1, { size = 10, grow = 0.35, ttl = 700 })
-    getSoundManager():playUISound("UISelectListItem")
+    self:uiSound("TWA_Success")
 end
 
 function TWAMinigameBase:fail(text)
@@ -272,7 +277,7 @@ function TWAMinigameBase:fail(text)
     self.dragging = false
     self:shake(8, 400)
     self.hurt = 1
-    getSoundManager():playUISound("UISelectListItem")
+    self:uiSound("TWA_Fail")
 end
 
 --- A slip. `amount` is quality lost before skill forgiveness; `text` flashes.

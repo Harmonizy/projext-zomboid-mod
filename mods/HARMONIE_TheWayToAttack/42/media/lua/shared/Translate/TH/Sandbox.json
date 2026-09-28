@@ -27,6 +27,8 @@
     "Sandbox_HARMONIE_TWA_MissUsesMaterials_tooltip": "กรรมวิธีที่ได้ พลาด ยังเสียวัตถุดิบ (และไม่นับว่าทำแล้วอยู่ดี)",
     "Sandbox_HARMONIE_TWA_IncompleteZeroDamage": "ไอเท็มที่ยังไม่เสร็จดาเมจเป็น 0",
     "Sandbox_HARMONIE_TWA_IncompleteZeroDamage_tooltip": "ไอเท็มที่กดไม่สมบูรณ์ (หรือปิดหน้าต่าง) จะมีดาเมจเป็น 0 จนกว่าจะทำเสร็จ",
+    "Sandbox_HARMONIE_TWA_AllowWeaponDebug": "ตัวแก้ stats อาวุธสำหรับดีบัก (แอดมิน / -debug)",
+    "Sandbox_HARMONIE_TWA_AllowWeaponDebug_tooltip": "แอดมิน และผู้ที่เปิดเกมด้วย -debug คลิกขวาอาวุธเพื่อแก้ stats ได้ทุกค่า ถ้าปิด เมนูนี้จะไม่แสดงเลย",
     "Sandbox_HARMONIE_TWA_BadBelow": "คุณภาพรวม แย่ ถ้าต่ำกว่า",
     "Sandbox_HARMONIE_TWA_BadBelow_tooltip": "ค่าเฉลี่ยคะแนนกรรมวิธี (แย่=1 ดี=2 เยี่ยม=3) ที่ต่ำกว่าค่านี้ = คุณภาพรวม แย่",
     "Sandbox_HARMONIE_TWA_GoodBelow": "คุณภาพรวม ดี ถ้าต่ำกว่า",

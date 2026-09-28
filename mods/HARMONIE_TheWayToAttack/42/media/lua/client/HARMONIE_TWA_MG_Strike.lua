@@ -134,7 +134,9 @@ function TWAStrikeGame:onGrab(x, y)
     local oneBlow = self.variant == "smash" and TWAConfig.on("SmashOneBlow")
     -- The blow's sound: the procedure's own (hammering, stone on stone...),
     -- cut short so each blow is one knock.
-    self:sfx(self.proc and self.proc.sound, 260)
+    local knock = (self.surface == "wood" and "TWA_HammerWood") or (self.surface == "stone" and "TWA_Knap")
+        or (self.surface == "glass" and "TWA_Smash") or "TWA_Hammer"
+    self:sfx(knock, self.surface == "glass" and nil or 260)
     if err <= self.window * 0.45 then
         t.depth = oneBlow and 1 or (t.depth + 0.55)
         self:flash(getText("IGUI_TWA_MG_Strike_Perfect"), false, 500)

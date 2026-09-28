@@ -110,6 +110,8 @@ function TWAStrokeGame:onStart()
     local v = VARIANTS[self.variant] or VARIANTS.sharpen
     self.v = v
     self.path = buildPath(self.variant)
+    local SND = { sharpen = "TWA_Whetstone", polish = "TWA_Whetstone", carve = "TWA_Carve", saw = "TWA_Saw", weld = "TWA_Weld", engrave = "TWA_Carve" }
+    self.loopSoundName = SND[self.variant or "sharpen"] -- round 11
     self.seg, self.total = measure(self.path)
     -- Round 9: the tunable values come from the sandbox.
     local vr = self.variant or "sharpen"

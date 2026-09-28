@@ -32,6 +32,8 @@ function TWAHeatGame:onStart()
     -- it snaps cleanly; bend too far and it splinters.
     self.bend = self.variant == "bend"
     self.center0 = CENTER[self.variant] or 0.6
+    -- Round 11 sound: bellows (hiss of the water for "cool", wood for "bend").
+    self.loopSoundName = self.cool and "TWA_Quench" or (self.bend and "TWA_Carve" or "TWA_Bellows")
     self.half = TWAConfig.num("HeatZone", 0.001) * self.tol -- sandbox (round 9), default 0.035
     self.temp = self.cool and 1.0 or 0.05
     self.vel = 0

@@ -48,6 +48,8 @@ function TWAWrapGame:onStart()
     self.screw = vr == "screw"
     self.drill = vr == "drill"
     self.grind = vr == "grind"
+    -- Round 11 sound for the variant (the procedure's own for the rest).
+    self.loopSoundName = (self.screw and "TWA_Screw") or (self.drill and "TWA_Drill") or (self.grind and "TWA_Grind") or "TWA_Wrap"
     self.cx, self.cy = 310, 180
     -- The screw ring was bigger than the plate behind it (bug report
     -- 2026-09-28): smaller ring, bigger plate (see renderGame).
