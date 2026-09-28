@@ -37,8 +37,10 @@ module HARMONIE_TheWayToAttack
         Weight = 2.0,
         Type = Normal,
         DisplayName = Material Lump,
-        /* round 9: icon ClayBrick (user-given; was Shouldepad_Metal_L) */
-        Icon = ClayBrick,
+        /* round 10: our own icon, textures/Item_TWA_MaterialLump.png (drawn by
+           tools/gen_lump_icon.py) -- the vanilla names tried before did not
+           show up in game. */
+        Icon = TWA_MaterialLump,
     }
 
     /* Icon changed (request 2026-09-28) -- user gave "IronIngot" (the real

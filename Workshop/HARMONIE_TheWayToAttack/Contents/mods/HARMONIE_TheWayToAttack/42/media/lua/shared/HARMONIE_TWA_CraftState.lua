@@ -83,6 +83,23 @@ function S.getRecipeById(id)
     return recipeByIdCache[id]
 end
 
+-- Every item type that can fill a recipe's base slot: `base` itself, then
+-- `baseAlt` -- a single type, or (round 10) a list of them, e.g. the chipped
+-- stone spear's "any stone" ("หอกหินให้ใช้วัตถุดิบตั้งต้นเป็นหินอะไรก็ได้").
+-- Types this game version doesn't have are left out (base itself always
+-- stays, so a recipe never ends up with an empty slot).
+function S.baseTypes(recipe)
+    if not recipe or not recipe.base then return {} end
+    local out = { recipe.base }
+    local alts = recipe.baseAlt
+    if type(alts) == "string" then alts = { alts } end
+    local sm = ScriptManager and ScriptManager.instance
+    for _, t in ipairs(alts or {}) do
+        if not sm or sm:getItem(t) then out[#out + 1] = t end
+    end
+    return out
+end
+
 function S.isMaterialRecipe(recipe)
     return recipe ~= nil and recipe.category == "Material"
 end

@@ -2796,6 +2796,24 @@ Round 9 (same day):
     item ids and recipes unchanged.
   - Recipe list sorted by tier (low first), then by name.
 
+Round 10 (same day):
+  - Material Lump now has its OWN icon, textures/Item_TWA_MaterialLump.png
+    (32x32 like every other icon), drawn from scratch by
+    mods/HARMONIE_TheWayToAttack/tools/gen_lump_icon.py (Pillow; not
+    shipped). Vanilla icon names given for it (Shouldepad_Metal_L,
+    ClayBrick) never showed in game -- when a user-given vanilla icon
+    doesn't appear, drawing our own avoids guessing names we can't grep.
+  - recipe.baseAlt may now be a LIST (TWACraftState.baseTypes: base + alts,
+    missing types skipped); used by pickItems/ownsBase/cards/auto-search.
+    The base card shows "first (+N)" and lists them on hover.
+    Make_SpearChippedStone: base Base.Stone2 + Stone/FlintNodule/
+    SharpedStone/LargeStone ("any stone").
+  - Recipes with no base material left: only Make_MaterialLump (made from
+    raw ore by design). No supplementary material: HandFile, HalfPlank,
+    ShortTreeBranch, IceHockeyStick_BarbedWire, Spear_Plunger, GlassShiv,
+    KnifeShiv, SmashedBottle, Toothbrush_Shiv, MaterialLump, Tin and
+    Titanium bars.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
