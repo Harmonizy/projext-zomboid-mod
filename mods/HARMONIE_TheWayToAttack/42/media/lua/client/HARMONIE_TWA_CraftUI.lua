@@ -676,19 +676,44 @@ local TOOL_TAG_LABELS = {
 -- `spec` is either a single tool spec `{kind=.., value=..}` or a LIST of
 -- alternative specs (request 2026-09-26: "some procedures can use several
 -- different tools") -- names every alternative, joined with " / ".
-local function toolSpecName(spec)
-    local specs = TWAProcedures.ToolAlts(spec)
-    local names = {}
-    for _, s in ipairs(specs) do
+--
+-- Request 2026-09-28 ("...ให้สามารถใช้ได้ทุกอันในสูตร แต่ไม่ต้องเขียนแสดงทุก
+-- อัน มี tooltip ขึ้นบอกก็พอว่าใช้อะไรแทนได้"): with item families
+-- (TWAProcedures.Family) a slot can accept many items, so the line shows only
+-- the first name plus "(+N)", and hovering the line lists every accepted item
+-- (see drawProcedureDetails). Duplicate display names (e.g. NormalBrake1/2/3
+-- all being "Brakes") collapse to one.
+local function addUnique(names, seen, n)
+    if n and not seen[n] then seen[n] = true; names[#names + 1] = n end
+end
+
+local function compactNames(names)
+    if #names == 0 then return "?" end
+    if #names == 1 then return names[1] end
+    return names[1] .. " (+" .. (#names - 1) .. ")"
+end
+
+local function toolNames(spec)
+    local names, seen = {}, {}
+    for _, s in ipairs(TWAProcedures.ToolAlts(spec)) do
         if s.kind == "type" then
-            local it = getItemScript(s.value)
-            names[#names + 1] = it and it:getDisplayName() or s.value
+            for _, t in ipairs(TWAProcedures.Family(s.value)) do
+                local it = getItemScript(t)
+                addUnique(names, seen, it and it:getDisplayName() or t)
+            end
         elseif s.kind == "tag" then
-            local key = TOOL_TAG_LABELS[s.value]
-            names[#names + 1] = key and getText(key) or s.value
+            -- A tag this game version doesn't have can never match: don't list it.
+            if ItemTag and ItemTag[s.value] then
+                local key = TOOL_TAG_LABELS[s.value]
+                addUnique(names, seen, key and getText(key) or s.value)
+            end
         end
     end
-    return #names > 0 and table.concat(names, " / ") or "?"
+    return names
+end
+
+local function toolSpecName(spec)
+    return compactNames(toolNames(spec))
 end
 
 -- *** REAL BUG FIXED (2026-09-26, console warning
@@ -706,13 +731,17 @@ end
 -- format-string indirection needed at all. ***
 -- `itemTypes` is a list of alternative real fullTypes for one consume slot
 -- -- names every alternative, joined with " / ", exactly like toolSpecName.
-local function consumeSpecName(itemTypes)
-    local names = {}
-    for _, t in ipairs(itemTypes) do
+local function consumeNames(itemTypes)
+    local names, seen = {}, {}
+    for _, t in ipairs(TWAProcedures.ExpandTypes(itemTypes)) do
         local it = getItemScript(t)
-        names[#names + 1] = it and it:getDisplayName() or t
+        addUnique(names, seen, it and it:getDisplayName() or t)
     end
-    return table.concat(names, " / ")
+    return names
+end
+
+local function consumeSpecName(itemTypes)
+    return compactNames(consumeNames(itemTypes))
 end
 
 -- Request 2026-09-27: skill requirements were showing the raw internal Perk
@@ -786,6 +815,23 @@ end
 -- requirement regardless of met/unmet (no "Missing"/"Requires" framing,
 -- since the caller colors met vs unmet lines itself -- see
 -- TWACraftWindow:drawProcedureDetails).
+-- Every item a requirement line accepts, for its hover tooltip.
+function TWAProcScrollList:altsOf(req)
+    if req.kind == "tool" then
+        return toolNames(req.spec)
+    elseif req.kind == "consume" then
+        return consumeNames(req.itemTypes)
+    elseif req.kind == "consume_options" then
+        local out = {}
+        for _, opt in ipairs(req.options) do
+            local names = consumeNames(TWAProcedures.AltTypes(opt))
+            for _, n in ipairs(names) do out[#out + 1] = n .. " x" .. opt.qty end
+        end
+        return out
+    end
+    return {}
+end
+
 function TWAProcScrollList:describeOne(req)
     if req.kind == "light" then
         return getText("IGUI_TWA_ReqLight")
@@ -1472,10 +1518,13 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
         ISTimedActionQueue.add(action)
     end
 
+    -- Material recipes play the minigame too (request 2026-09-28: "ทุกอันใน
+    -- หมวดหมู่การตีเหล็กยังไม่ขึ้นมินิเกม" -- the Blacksmithing procedures are
+    -- almost all used by the 6 Material recipes, which skipped it). Their
+    -- words still matter (a Miss must be redone); only Finish gives them no
+    -- quality/grade.
     self.activeProcId = procId
-    if TWACraftState.isMaterialRecipe(self.selectedRecipe) then
-        queue(TWACraftState.FALLBACK_WORD)
-    elseif not TWAMinigame.play(self.player, procId, queue, self.selectedRecipe) then
+    if not TWAMinigame.play(self.player, procId, queue, self.selectedRecipe) then
         self.activeProcId = nil
     end
 end
@@ -1696,7 +1745,7 @@ function TWACraftWindow:drawProcedureDetails()
     -- Request 2026-09-28: the quality word this procedure scored for the
     -- selected recipe, on the same line as its status (keeps every
     -- requirement line below it in view -- see detailsH's own note).
-    local word = self.selectedRecipe and not TWACraftState.isMaterialRecipe(self.selectedRecipe)
+    local word = self.selectedRecipe
         and TWACraftState.wordFor(self.selectedProcId, self:currentDone(), self:currentQuality())
     if word then
         local wc = TWACraftState.WORD_COLOR[word]
@@ -1741,9 +1790,20 @@ function TWACraftWindow:drawProcedureDetails()
     -- own bottom edge, so text never overlaps the button.
     local textBottom = self.procBtnY - 4
     local reqMaxWidth = w - 20
+    local mx, my = self:getMouseX(), self:getMouseY()
     for _, r in ipairs(reqs) do
         if ty > textBottom then break end
         local line = self.procLibrary:describeOne(r)
+        -- Hovering a line that accepts several items lists them all.
+        local alts = self.procLibrary:altsOf(r)
+        if #alts > 1 and mx >= x and mx < x + w and my >= ty and my < ty + 16 then
+            local tipLines = { getText("IGUI_TWA_AcceptsAny") }
+            for i, n in ipairs(alts) do
+                if i > 20 then tipLines[#tipLines + 1] = "... (+" .. (#alts - 20) .. ")" break end
+                tipLines[#tipLines + 1] = "- " .. n
+            end
+            self.hoverTooltip = { lines = tipLines, x = x, y = ty }
+        end
         local wrapped = wrapTextLines(line, reqMaxWidth, UIFont.Small)
         for _, wline in ipairs(wrapped) do
             if ty > textBottom then break end
@@ -1937,9 +1997,10 @@ function TWACraftWindow:render()
     -- Request 2026-09-28: every procedure's quality word under its icon, and
     -- the running overall quality (average of what's scored so far) on the
     -- header's right. Material recipes have no quality (same request).
-    local showWords = not TWACraftState.isMaterialRecipe(recipe)
+    local showWords = true
     local doneNow, qualityNow = self:currentDone(), self:currentQuality()
-    if showWords then
+    -- No overall quality for Material recipes: they get no quality at Finish.
+    if not TWACraftState.isMaterialRecipe(recipe) then
         local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap())
         if oWord then
             local oc = TWACraftState.WORD_COLOR[oWord]

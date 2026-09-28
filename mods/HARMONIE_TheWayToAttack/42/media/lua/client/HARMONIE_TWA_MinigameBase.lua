@@ -35,7 +35,12 @@ local PX, PY, PW, PH = 20, 84, 620, 350
 local FOOT_Y = 448
 local CANCEL_W, CANCEL_H = 150, 30
 local RESULT_LINGER_MS = 1100
-local HAND_LAG_MS = 60
+-- Request 2026-09-28 ("การขยับเมาส์ในมินิเกมเร็วไปยังไม่เห็นผล"): the tool
+-- follows the mouse more tightly than the first version's 60 ms.
+local HAND_LAG_MS = 35
+-- Request 2026-09-28: "ทำให้เกจคุณภาพลดลงเร็วขึ้นกว่านี้สองเท่า" -- every
+-- slip costs twice what it did.
+local DRAIN = 2
 
 TWAMinigameBase.W, TWAMinigameBase.H = W, H
 TWAMinigameBase.PW, TWAMinigameBase.PH = PW, PH
@@ -141,7 +146,20 @@ function TWAMinigameBase:new(x, y, player, procId, recipe, onResult, variant)
     o.shakeAmt, o.shakeUntil, o.shakeX, o.shakeY = 0, 0, 0, 0
     o.hurt = 0
     o.mx, o.my = 0, 0
-    o.toolTex = TWAMinigameBase.itemTex(o.proc and o.proc.icon)
+    -- The cursor is the tool the player is REALLY using (request 2026-09-28:
+    -- "ขันน็อตอยากให้ตรงเมาส์เป็นรูปประแจหรือไขควงตามที่อุปกรณ์ในกรรมวิธีนั้น
+    -- ต้องการ") -- the actual inventory item that satisfies the procedure's
+    -- tool requirement, drawn with that item's own texture. For welding the
+    -- torch (tool2) is what's in the hand, not the mask. Games only fall back
+    -- to their own stock icon when no real tool item was found.
+    local toolItem
+    if o.proc then
+        local first, second = o.proc.tool, o.proc.tool2
+        if first and first.kind == "tag" and first.value == "WELDING_MASK" then first, second = second, first end
+        toolItem = TWAProcedures.FindToolItem(first, player) or TWAProcedures.FindToolItem(second, player)
+    end
+    o.realTool = toolItem ~= nil
+    o.toolTex = (toolItem and toolItem:getTexture()) or TWAMinigameBase.itemTex(o.proc and o.proc.icon)
     local stats = recipe and TWARecipeData.Stats[recipe.result]
     o.workTex = TWAMinigameBase.itemTex(stats and stats.icon)
     o.hint = ""
@@ -183,10 +201,19 @@ end
 --- A slip. `amount` is quality lost before skill forgiveness; `text` flashes.
 function TWAMinigameBase:spend(amount, text, quiet)
     if self.word or not amount or amount <= 0 then return end
-    self.quality = math.max(0, self.quality - amount / self.tol)
+    self.quality = math.max(0, self.quality - amount * DRAIN / self.tol)
     self.hurt = math.min(1, self.hurt + amount * 3)
     if text then self:flash(text, true) end
     if not quiet and amount >= 0.03 then self:shake(2 + amount * 30, 220) end
+end
+
+--- Moving too fast: a real penalty AND something you can see -- the tool
+--- flashes red, sparks fly, the scene jolts.
+function TWAMinigameBase:tooFast(amount, text, x, y)
+    self:spend(amount, text, true)
+    self.fastUntil = self.elapsed + 220
+    if x and ZombRand(2) == 0 then self:burst("spark", x, y, 3, { speed = 0.35, ttl = 300, col = TWAMinigameBase.COL.bad }) end
+    self:shake(3, 120)
 end
 
 function TWAMinigameBase:flash(text, bad, ms)
@@ -457,7 +484,8 @@ function TWAMinigameBase:drawTool()
     local s = self.toolSize or 44
     local lift = self.toolLift or 0
     if self.toolTex then
-        self:tex(self.toolTex, self.hx - s * 0.25, self.hy - s * 0.85 - lift, s, s, 1)
+        local red = (self.fastUntil or 0) > self.elapsed
+        self:tex(self.toolTex, self.hx - s * 0.25, self.hy - s * 0.85 - lift, s, s, 1, 1, red and 0.35 or 1, red and 0.35 or 1)
     else
         self:ring(self.hx, self.hy, 6, 2, 1, TWAMinigameBase.COL.line)
     end
@@ -524,18 +552,31 @@ function TWAMinigameBase:draw()
     end
 
     -- Footer: progress, live quality word, time left, cancel.
+    -- Bug report 2026-09-28 ("ui เกจ ไปบังคำที่อยู่ข้างหน้า เพราะคำยาว"): the
+    -- bars used to start at a fixed x, under a long (Thai) label. Now they
+    -- start after the WIDEST label, measured, and the time readout sits
+    -- after the bars.
     local fy = FOOT_Y
-    self:drawText(getText("IGUI_TWA_MG_Progress"), 20, fy, 0.7, 0.7, 0.7, 1, UIFont.Small)
-    self:drawRect(110, fy + 3, 300, 12, 1, 0.12, 0.12, 0.13)
-    self:drawRect(110, fy + 3, 300 * clamp(self.progress, 0, 1), 12, 1, 0.9, 0.65, 0.2)
-    self:drawRectBorder(110, fy + 3, 300, 12, 1, 0.45, 0.45, 0.45)
+    local tm = getTextManager()
     local live = self.word or self:wordFromQuality()
     local wc = S.WORD_COLOR[live]
-    self:drawText(getText("IGUI_TWA_TooltipQuality", S.wordText(live)), 20, fy + 22, wc.r, wc.g, wc.b, 1, UIFont.Small)
-    self:drawRect(110, fy + 25, 300, 8, 1, 0.12, 0.12, 0.13)
-    self:drawRect(110, fy + 25, 300 * clamp(self.quality, 0, 1), 8, 1, wc.r, wc.g, wc.b)
+    local progLabel = getText("IGUI_TWA_MG_Progress")
+    local qualLabel = getText("IGUI_TWA_TooltipQuality", S.wordText(live))
+    local widest = math.max(tm:MeasureStringX(UIFont.Small, progLabel),
+        tm:MeasureStringX(UIFont.Small, getText("IGUI_TWA_TooltipQuality", S.wordText("Excellent"))),
+        tm:MeasureStringX(UIFont.Small, getText("IGUI_TWA_TooltipQuality", S.wordText("Miss"))))
+    local bx = 20 + widest + 12
     local left = math.max(0, (self.timeLimit - self.elapsed) / 1000)
-    self:drawText(getText("IGUI_TWA_MG_TimeLeft", string.format("%.0f", left)), 430, fy, 0.7, 0.7, 0.7, 1, UIFont.Small)
+    local timeText = getText("IGUI_TWA_MG_TimeLeft", string.format("%.0f", left))
+    local bw = math.max(80, W - 20 - tm:MeasureStringX(UIFont.Small, timeText) - 16 - bx)
+    self:drawText(progLabel, 20, fy, 0.7, 0.7, 0.7, 1, UIFont.Small)
+    self:drawRect(bx, fy + 3, bw, 12, 1, 0.12, 0.12, 0.13)
+    self:drawRect(bx, fy + 3, bw * clamp(self.progress, 0, 1), 12, 1, 0.9, 0.65, 0.2)
+    self:drawRectBorder(bx, fy + 3, bw, 12, 1, 0.45, 0.45, 0.45)
+    self:drawText(qualLabel, 20, fy + 22, wc.r, wc.g, wc.b, 1, UIFont.Small)
+    self:drawRect(bx, fy + 25, bw, 8, 1, 0.12, 0.12, 0.13)
+    self:drawRect(bx, fy + 25, bw * clamp(self.quality, 0, 1), 8, 1, wc.r, wc.g, wc.b)
+    self:drawText(timeText, bx + bw + 16, fy, 0.7, 0.7, 0.7, 1, UIFont.Small)
 
     if self.word then
         local c = S.WORD_COLOR[self.word]

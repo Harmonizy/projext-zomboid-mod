@@ -51,15 +51,25 @@ function TWAStrikeGame:onStart()
     end
     self.idx = 1
     self.ringT = 0
-    self.period = 1150 / self.pace          -- ms for the ring to close
-    self.R0, self.Rt = 70, 13
+    -- Request 2026-09-28 ("มินิเกมการตีง่ายเกินไป ทำให้วงกลมหดเร็วขึ้น และ
+    -- วงกลมเริ่มต้นใหญ่ขึ้น2เท่า"): the ring starts twice as big (70 -> 140
+    -- px) and closes in 900 ms instead of 1150 -- about 3x faster across
+    -- the target, so the timing window is ~45 ms (perfect ~20 ms) instead
+    -- of ~115 ms. The ring-error window itself is NOT also halved: at this
+    -- speed half of it would be under one frame, i.e. luck, not skill. The
+    -- "zones half as wide" request applies to how close the hammer must be
+    -- to the mark instead (22 -> 11 px).
+    self.period = 900 / self.pace           -- ms for the ring to close
+    self.R0, self.Rt = 140, 13
     self.lastRing = self.R0
     self.window = 7 * self.tol               -- px of ring error still "good"
-    self.aim = 22 * self.tol                 -- how close the hammer must be
+    self.aim = 11 * self.tol                 -- how close the hammer must be
     self.heat = 1
     self.coal = { x = 20, y = 150, w = 100, h = 90 }
     self.timeLimit = 25000 + n * 9000
-    self.toolTex = B.itemTex(self.surface == "stone" and "HammerStone" or (self.surface == "hot" and "SmithingHammer" or "BallPeenHammer_Forged")) or self.toolTex
+    if not self.realTool then
+        self.toolTex = B.itemTex(self.surface == "stone" and "HammerStone" or (self.surface == "hot" and "SmithingHammer" or "BallPeenHammer_Forged")) or self.toolTex
+    end
     self.toolSize = 52
 
     local key = "IGUI_TWA_MG_Strike_Hint_" .. (self.variant or "nails")

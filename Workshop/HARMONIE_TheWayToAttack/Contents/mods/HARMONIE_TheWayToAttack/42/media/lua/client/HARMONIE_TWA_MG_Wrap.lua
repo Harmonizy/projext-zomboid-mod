@@ -42,7 +42,7 @@ function TWAWrapGame:onStart()
     self.drill = vr == "drill"
     self.cx, self.cy = 310, 180
     self.R = (self.screw or self.drill) and 70 or 105
-    self.band = 20 * self.tol
+    self.band = 10 * self.tol -- halved (request 2026-09-28)
     if self.screw then
         self.need = 3
     elseif self.drill then
@@ -58,7 +58,7 @@ function TWAWrapGame:onStart()
     -- (No screwdriver override: Base.Screwdriver has no single Icon field,
     -- only IconsForTexture -- workflow.txt 8.12 -- so the procedure's own
     -- icon is used.)
-    if self.drill then self.toolTex = B.itemTex("Drill_OldFashioned") or self.toolTex end
+    if self.drill and not self.realTool then self.toolTex = B.itemTex("Drill_OldFashioned") or self.toolTex end
     self.hint = getText("IGUI_TWA_MG_Wrap_Hint")
     self.hint2 = getText(self.screw and "IGUI_TWA_MG_Wrap_Hint_screw"
         or (self.drill and "IGUI_TWA_MG_Wrap_Hint_drill" or "IGUI_TWA_MG_Wrap_Hint_wrap"))
@@ -90,7 +90,7 @@ function TWAWrapGame:onDrag(x, y, dt)
     if r < 18 then return end -- too near the centre to read a direction
 
     if math.abs(d) > TWO_PI / 6 then
-        self:spend(0.03, getText("IGUI_TWA_MG_Wrap_TooFast"))
+        self:tooFast(0.03, getText("IGUI_TWA_MG_Wrap_TooFast"), x, y)
         return
     end
 

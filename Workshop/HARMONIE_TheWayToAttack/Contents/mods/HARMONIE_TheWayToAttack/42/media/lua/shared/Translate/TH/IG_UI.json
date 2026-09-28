@@ -236,5 +236,6 @@
     "IGUI_TWA_MG_Pour_Short": "ยังไม่เต็ม เทเพิ่มอีกนิด",
     "IGUI_TWA_MG_Pour_Over": "เกินเส้นไปหน่อย",
     "IGUI_TWA_MG_Pour_Spilled": "ล้นแล้ว!",
-    "IGUI_TWA_MG_Pour_Done": "เทถึงเส้นพอดี"
+    "IGUI_TWA_MG_Pour_Done": "เทถึงเส้นพอดี",
+    "IGUI_TWA_AcceptsAny": "ใช้อย่างใดอย่างหนึ่งได้:"
 }

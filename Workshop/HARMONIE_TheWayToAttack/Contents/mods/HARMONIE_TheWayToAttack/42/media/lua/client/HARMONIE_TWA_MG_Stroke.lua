@@ -22,13 +22,15 @@ TWAStrokeGame = TWAMinigameBase:derive("TWAStrokeGame")
 local B = TWAMinigameBase
 local C = B.COL
 
+-- Bands halved (request 2026-09-28: "มินิเกมมีโซนที่กว้างเกินไป ลดลงมาครึ่ง
+-- นึง"). The start mark still accepts the tool within 2.5 bands.
 local VARIANTS = {
-    sharpen = { strokes = function(req) return 3 + math.floor(req / 2) end, vmax = 0.9, band = 12, tool = "Whetstone2" },
-    polish  = { strokes = function() return 4 end, vmax = 0.9, band = 14 },
-    carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 12, tool = "KnifeSushi" },
-    saw     = { strokes = function() return 6 end, vmax = 1.4, band = 14, tool = "Handsaw", alternate = true },
-    weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.05, band = 10, tool = "BlowTorch" },
-    engrave = { strokes = function() return 1 end, vmax = 0.35, band = 9, tool = "KnifeSushi" },
+    sharpen = { strokes = function(req) return 3 + math.floor(req / 2) end, vmax = 0.9, band = 6, tool = "Whetstone2" },
+    polish  = { strokes = function() return 4 end, vmax = 0.9, band = 7 },
+    carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 6, tool = "KnifeSushi" },
+    saw     = { strokes = function() return 6 end, vmax = 1.4, band = 7, tool = "Handsaw", alternate = true },
+    weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.05, band = 5, tool = "BlowTorch" },
+    engrave = { strokes = function() return 1 end, vmax = 0.35, band = 4.5, tool = "KnifeSushi" },
 }
 
 local function buildPath(variant)
@@ -97,7 +99,7 @@ function TWAStrokeGame:onStart()
     self.active = false
     self.bead = {}        -- weld/engrave: fractions laid so far
     self.timeLimit = 20000 + self.need * 7000 + (self.variant == "weld" and 20000 or 0)
-    if v.tool then self.toolTex = B.itemTex(v.tool) or self.toolTex end
+    if v.tool and not self.realTool then self.toolTex = B.itemTex(v.tool) or self.toolTex end
     self.toolSize = 48
     self.hint = getText("IGUI_TWA_MG_Stroke_Hint")
     self.hint2 = getText("IGUI_TWA_MG_Stroke_Hint_" .. (self.variant or "sharpen"))
@@ -156,15 +158,17 @@ function TWAStrokeGame:onDrag(x, y, dt)
 
     local speed = self.handSpeed or 0
     if speed > self.vmax then
-        self:spend(dt * 0.0004 * (speed / self.vmax - 1), getText("IGUI_TWA_MG_Stroke_TooFast"), true)
-        if ZombRand(3) == 0 then self:burst("spark", x, y, 2, { speed = 0.3 }) end
+        self:tooFast(dt * 0.0004 * (speed / self.vmax - 1), getText("IGUI_TWA_MG_Stroke_TooFast"), x, y)
     elseif self.vmin and speed < self.vmin and self.along > 0.02 then
         self:spend(dt * 0.00025, getText("IGUI_TWA_MG_Stroke_TooSlow"), true)
         if ZombRand(4) == 0 then self:burst("ember", x, y, 1) end
     end
 
-    -- Forward only, and no skipping ahead across the work.
-    if t > self.along and t - self.along < 0.2 then
+    -- Forward only, and no skipping ahead across the work -- a swipe that
+    -- jumps ahead is "too fast" and costs, instead of silently not counting.
+    if t - self.along >= 0.2 then
+        self:tooFast(0.02, getText("IGUI_TWA_MG_Stroke_TooFast"), x, y)
+    elseif t > self.along then
         self.along = t
         if self.variant == "weld" or self.variant == "engrave" then
             self.bead[#self.bead + 1] = { t = self.dir == 1 and t or 1 - t, hot = self.elapsed, off = d <= self.band }

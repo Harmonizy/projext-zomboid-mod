@@ -22,11 +22,11 @@ function TWAPourGame:onStart()
     self.tilt = 0
     self.flow = 0
     self.target = 0.85
-    self.half = 0.05 * self.tol
+    self.half = 0.025 * self.tol -- halved (request 2026-09-28)
     self.pours = 0
     self.timeLimit = 45000
     self.toolSize = 40
-    self.toolTex = B.itemTex("BlacksmithTongs") or self.toolTex
+    if not self.realTool then self.toolTex = B.itemTex("BlacksmithTongs") or self.toolTex end
     self.hint = getText("IGUI_TWA_MG_Pour_Hint")
     self.hint2 = getText("IGUI_TWA_MG_Pour_Hint2")
 end
