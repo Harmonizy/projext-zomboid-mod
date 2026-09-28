@@ -66,7 +66,9 @@ HARMONIE_TWA_PartsUI.lua (506 บรรทัด)
   Tactical/Weight, ใช้กับอาวุธ melee ได้ทุกชิ้น (ไม่เกี่ยวกับระบบคราฟด้านบน).
 
 HARMONIE_TWA_PartsTrigger.lua (41 บรรทัด)
-  จุดเปิดหน้าต่าง Parts UI (hotkey TWA_OpenPartsUI).
+  จุดเปิดหน้าต่าง Parts UI (hotkey TWA_OpenPartsUI). เมนูคลิกขวา "ดัดแปลง
+  อาวุธ" ปิดไว้ก่อน (2026-09-28, CONTEXT_MENU_ENABLED = false) -- hotkey
+  ยังใช้ได้.
 
 HARMONIE_TWA_UpgradeAction.lua (42 บรรทัด)
   ISBaseTimedAction สำหรับ "ติดตั้ง/ถอด part" บนอาวุธ — ใช้โดย PartsUI.
@@ -84,6 +86,31 @@ HARMONIE_TWA_Minigame.lua (ใหม่ 2026-09-28)
   ปิดใน sandbox หรือ error = ยอดเยี่ยมทันที (ไม่มีวันค้างจับเมาส์).
   กันเปิดซ้อนกับมินิเกมของ Casualties Undead (ISMinigameBaseUI.instance).
   เฟส 2 จะเพิ่มเกมเฉพาะหมวดแทนตัวนี้ -- ภายนอกไฟล์นี้เห็นแค่ "คำ".
+
+  เฟส 2 (2026-09-28): TWAMinigame.GAME_FOR จับคู่กรรมวิธีทั้ง 57 อันกับเกม
+  + variant ด้านล่าง เกมนี้ (เข็ม) เหลือเป็นตัวสำรองเท่านั้น
+
+HARMONIE_TWA_MinigameBase.lua (ใหม่ 2026-09-28)
+  คลาสแม่ของมินิเกมเฟส 2: หน้าต่างจับเมาส์, เครื่องมือที่ตามเมาส์แบบหน่วง
+  + สั่นตาม moodle เจ็บ/ตื่นตระหนก/เมา (เกมอ่านตำแหน่งเครื่องมือ ไม่ใช่
+  เมาส์ดิบ), คะแนนคุณภาพ 0-1 ที่ลดเมื่อพลาด (ผ่อนตามสกิล), particle/จอ
+  สั่น/ข้อความแจ้ง/ขอบแดงตอนพลาด, วาดเส้น/วงกลมเองผ่าน DrawTexture 4 จุด
+  + ไอคอนไอเทม vanilla ตอนรัน (ไม่มีไฟล์ภาพของม็อดอื่น). คุณภาพ >= 0.85 =
+  ยอดเยี่ยม, >= 0.6 = ดี, ต่ำกว่า = แย่, fail/ยกเลิก = พลาด.
+
+HARMONIE_TWA_MG_Strike.lua  ตีค้อน: วงแหวนหดเข้าหาจุด คลิกให้ตรงจังหวะ
+  (nails/rivet/forge -- เหล็กเย็นลงเรื่อยๆ ต้องกดค้างที่ถ่านเพื่ออุ่น/
+  knap/smash)
+HARMONIE_TWA_MG_Stroke.lua  ลากเครื่องมือตามแนวในแถบ ความเร็วพอดี
+  (sharpen/polish/carve/saw ไปกลับ/weld ช้าๆ/engrave ซิกแซก)
+HARMONIE_TWA_MG_Wrap.lua    วนรอบชิ้นงานตามวงแหวน (cloth/leather/tape/wire/
+  sinew, screw -- หมุนจนแน่นแล้วต้องปล่อย เกินครึ่งรอบเกลียวหวาน, drill)
+HARMONIE_TWA_MG_Coat.lua    ตักจากหม้อแล้วทาให้ทั่ว (mud/wax/bleach) หรือ
+  ลนไฟทีละจุด ลนนานไปไหม้ดำ (fire)
+HARMONIE_TWA_MG_Heat.lua    สูบลมคุมเข็มอุณหภูมิในแถบจนเต็ม (fire/melt/
+  anneal) หรือกลับด้าน จุ่มน้ำ (cool) -- ช่วงอุ่นเครื่องครั้งแรกไม่หักคะแนน
+HARMONIE_TWA_MG_Pour.lua    เอียงเบ้าเทโลหะให้ถึงเส้น ล้น = พลาด,
+  เทซ้ำ = รอยต่อเย็น
 
 (timed action ทั้ง 4 ตัว -- ทำกรรมวิธี/เสร็จสิ้น/ไม่สมบูรณ์/ยกเลิก -- ย้ายไป
  shared/TimedActions/ แล้ว 2026-09-28 เพื่อแก้บัค multiplayer ดูด้านล่าง)

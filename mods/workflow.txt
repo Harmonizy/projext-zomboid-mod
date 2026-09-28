@@ -2578,6 +2578,35 @@ verified on a real dedicated server by this repo) ***
     checked client-side before queueing; the server's isValid only re-checks
     tools/materials/skill (CheckEligibility(proc, player, true)).
 
+Phase 2 (same day, "ให้แยบยลเหมือนม็อดอ้างอิง"): six real games on a shared
+base (client/HARMONIE_TWA_MinigameBase.lua) -- Strike (ring-timing hammer
+blows; forge heat that must be kept up at the coals), Stroke (draw a tool
+along a path inside a band at the right speed; saw goes back and forth,
+weld is one slow pass), Wrap (circle round the work; screw must be let go
+at snug or the thread strips), Coat (load from a pot and cover an area;
+fire variant chars spot by spot and burns if held), Heat (bellows keep a
+needle in a band; "cool" variant inverted), Pour (tip a crucible to fill a
+mold to the line). TWAMinigame.GAME_FOR maps all 57 procedures.
+  - Art: the user offered Casualties Undead's own PNGs; NOT used -- they are
+    that author's work and this repo is public/Workshop-published, which
+    would redistribute them. Everything is drawn in code (quads via
+    javaObject:DrawTexture(nil, 4 corners...), CU's own technique) plus
+    VANILLA item icons loaded at runtime (Whetstone2, KnifeSushi, Handsaw,
+    BlowTorch, SmithingHammer, BallPeenHammer_Forged, HammerStone,
+    BlacksmithTongs, Drill_OldFashioned -- all already grep-confirmed real in
+    this file's earlier icon work). Never use "Screwdriver" as an icon name
+    (IconsForTexture-only item, 8.12).
+  - Kahlua is Lua 5.1: math.atan2 exists there but not in Lua 5.4+ -- use
+    `local atan2 = math.atan2 or math.atan` so the same file runs in tests.
+  - Balance was set by SIMULATING play, not guessed: a scripted "skilled
+    player" and "sloppy player" drive each game frame by frame (real
+    prerender/render, draw calls mocked). Every game: skilled -> Excellent,
+    sloppy -> clearly worse. Real bugs this caught: the Wrap wrong-way
+    counter never reset (random back-jitter added up to a penalty), Heat
+    penalised the unavoidable warm-up before first reaching the band, and
+    Pour's stream lagged so long after release that stopping on the line
+    was guesswork. Keep this harness approach for any new game.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
@@ -2588,6 +2617,10 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 =======================================
 [ ] Always read this file (mods/workflow.txt) first.
 [ ] `git fetch` + `git status` + `git log --oneline -5` to check the repo's latest state.
+[ ] STANDING RULE (user, 2026-09-28: "ทำ pr เสมอ"): after pushing work, ALWAYS
+    open a pull request for it (or update the branch's existing open one) --
+    don't wait to be asked. If the branch's previous PR was already merged,
+    open a NEW PR for the follow-up commits.
 [ ] Patching someone else's mod? Find their real files in the Steam Workshop
     content cache first (section 7) — never guess.
 [ ] Building something "adjustable while playing"? Use PZAPI.ModOptions, not a

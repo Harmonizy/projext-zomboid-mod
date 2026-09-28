@@ -1475,7 +1475,7 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
     self.activeProcId = procId
     if TWACraftState.isMaterialRecipe(self.selectedRecipe) then
         queue(TWACraftState.FALLBACK_WORD)
-    elseif not TWAMinigame.play(self.player, procId, queue) then
+    elseif not TWAMinigame.play(self.player, procId, queue, self.selectedRecipe) then
         self.activeProcId = nil
     end
 end
