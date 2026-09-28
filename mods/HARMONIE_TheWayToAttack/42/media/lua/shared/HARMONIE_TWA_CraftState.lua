@@ -259,3 +259,157 @@ function S.pickFreshItem(character, fullType)
         return not S.isBookmarked(it)
     end)
 end
+
+-- Active craft (request 2026-09-28: "ทำให้ไม่สามารถทำได้หลายสูตรพร้อมกัน
+-- เมื่อเลือกสูตรใดไปแล้ว ให้หักวัตถุดิบตั้งต้นและชิ้นงานเสริมไปทันที และไม่
+-- สามารถเปลี่ยนไปทำสูตรอื่นได้จนกว่าจะกดยกเลิก การปิดหน้าต่างก่อนจะเสร็จจะถือ
+-- ว่าเป็นการทำไม่สมบูรณ์ ได้ชิ้นงานไม่สมบูรณ์มาในกระเป๋าและคืนชิ้นงานเสริม
+-- กลับมา") -----------------------------------------------------------------
+--
+-- Pressing Start takes the base item and the supplementary item (base2)
+-- AWAY, and the craft becomes the character's one active craft until it is
+-- finished, cancelled or left incomplete. The authoritative record lives in
+-- the character's own ModData where the timed actions' complete() runs --
+-- the server in multiplayer, this machine in single player:
+--   TWA_ActiveCraft = { recipeId = "...", map = { [procId] = word, ... } }
+-- Every way out goes through giveBack() below, which only ever pays out
+-- against that record and clears it in the same step, so a client can't
+-- make the server hand the same items back twice.
+
+function S.getActive(character)
+    local md = character and character:getModData()
+    return md and md.TWA_ActiveCraft or nil
+end
+
+local BOOKMARK_KEYS = { TWA_RecipeId = true, TWA_DoneProcedures = true, TWA_ProcQuality = true }
+
+local function copyPlain(v, depth)
+    if type(v) ~= "table" then
+        local t = type(v)
+        return (t == "string" or t == "number" or t == "boolean") and v or nil
+    end
+    if depth > 4 then return nil end
+    local out = {}
+    for k, x in pairs(v) do out[k] = copyPlain(x, depth + 1) end
+    return out
+end
+
+-- What a taken item has to come back as: its own type (a family variant,
+-- not just the recipe's listed type), its condition, and its ModData (a
+-- grade from an earlier craft, say) minus any old bookmark.
+function S.snapshotItem(item)
+    if not item then return nil end
+    local snap = { type = item:getFullType() }
+    if item.getCondition then snap.cond = item:getCondition() end
+    local md = {}
+    for k, v in pairs(item:getModData()) do
+        if not BOOKMARK_KEYS[k] then md[k] = copyPlain(v, 0) end
+    end
+    snap.md = md
+    return snap
+end
+
+function S.beginActive(character, recipeId, map, baseSnap, base2Snap)
+    local m = {}
+    for k, v in pairs(map or {}) do if S.isWord(v) then m[k] = v end end
+    character:getModData().TWA_ActiveCraft = { recipeId = recipeId, map = m, base = baseSnap, base2 = base2Snap }
+end
+
+-- The progress a base item carries as a bookmark for `recipeId` (resuming),
+-- or an empty map.
+function S.bookmarkMap(item, recipeId)
+    if not item then return {} end
+    local md = item:getModData()
+    if md.TWA_RecipeId ~= recipeId then return {} end
+    local recipe = S.getRecipeById(recipeId)
+    if not recipe then return {} end
+    return S.collectMap(recipe, md.TWA_DoneProcedures, md.TWA_ProcQuality)
+end
+
+function S.clearActive(character)
+    character:getModData().TWA_ActiveCraft = nil
+end
+
+-- One procedure's word, recorded into the active craft (only if that craft's
+-- recipe actually has the procedure).
+function S.recordActive(character, procId, word)
+    local act = S.getActive(character)
+    local recipe = act and S.getRecipeById(act.recipeId)
+    if not recipe or not S.isWord(word) then return end
+    for _, pid in ipairs(recipe.procedures) do
+        if pid == procId then act.map[procId] = word return end
+    end
+end
+
+local function addToInventory(character, snap, fallbackType)
+    local inv = character:getInventory()
+    local it = inv:AddItem((snap and snap.type) or fallbackType)
+    if it and snap then
+        if snap.cond and it.setCondition then it:setCondition(snap.cond) end
+        local md = it:getModData()
+        for k, v in pairs(snap.md or {}) do md[k] = copyPlain(v, 0) end
+    end
+    return it, inv
+end
+
+local function send(inv, it)
+    if it and isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, it) end
+end
+
+-- Hand the active craft's items back and end it.
+--   kind "incomplete": the base item comes back carrying the progress as a
+--                      bookmark (right-click it to resume), plus base2.
+--   kind "cancel":     base and base2 come back plain; progress is dropped.
+-- `recipeId` must match the active craft. Returns true when it paid out.
+function S.giveBack(character, kind, recipeId)
+    local act = S.getActive(character)
+    if not act or act.recipeId ~= recipeId then return false end
+    local recipe = S.getRecipeById(act.recipeId)
+    S.clearActive(character)
+    if not recipe then return false end
+    if recipe.base then
+        local it, inv = addToInventory(character, act.base, recipe.base)
+        if it and kind == "incomplete" then S.writeBookmark(it, recipe.id, act.map) end
+        send(inv, it)
+    end
+    if recipe.base2 then
+        local it, inv = addToInventory(character, act.base2, recipe.base2)
+        send(inv, it)
+    end
+    return true
+end
+
+-- Client -> authority: used when the crafting window is CLOSED mid-craft
+-- (no timed action can run then). The authority re-checks everything
+-- against its own record.
+S.NET_MODULE = "HARMONIE_TWA"
+
+function S.requestGiveBack(player, kind, recipeId)
+    if isClient() then
+        sendClientCommand(player, S.NET_MODULE, "giveBack", { kind = kind, recipeId = recipeId })
+    else
+        S.giveBack(player, kind, recipeId)
+    end
+end
+
+-- Stale active craft (the game was left with the window open): hand it
+-- back as incomplete. Multiplayer only -- in single player the window
+-- restores the craft instead (see TWACraftUI.open).
+function S.requestReturnStale(player)
+    if isClient() then
+        sendClientCommand(player, S.NET_MODULE, "returnStale", {})
+    end
+end
+
+if Events and Events.OnClientCommand then
+    Events.OnClientCommand.Add(function(module, command, player, args)
+        if module ~= S.NET_MODULE or not player then return end
+        args = args or {}
+        if command == "giveBack" and (args.kind == "incomplete" or args.kind == "cancel") then
+            S.giveBack(player, args.kind, args.recipeId)
+        elseif command == "returnStale" then
+            local act = S.getActive(player)
+            if act then S.giveBack(player, "incomplete", act.recipeId) end
+        end
+    end)
+end

@@ -159,7 +159,13 @@ function TWAMinigameBase:new(x, y, player, procId, recipe, onResult, variant)
         toolItem = TWAProcedures.FindToolItem(first, player) or TWAProcedures.FindToolItem(second, player)
     end
     o.realTool = toolItem ~= nil
-    o.toolTex = (toolItem and toolItem:getTexture()) or TWAMinigameBase.itemTex(o.proc and o.proc.icon)
+    o.toolTex = toolItem and toolItem:getTexture()
+    if not o.toolTex and o.proc then
+        for _, name in ipairs(TWAProcedures.IconNames(o.proc)) do
+            o.toolTex = TWAMinigameBase.itemTex(name)
+            if o.toolTex then break end
+        end
+    end
     local stats = recipe and TWARecipeData.Stats[recipe.result]
     o.workTex = TWAMinigameBase.itemTex(stats and stats.icon)
     o.hint = ""

@@ -156,6 +156,20 @@ function TWAProcedures.Family(fullType)
     return list
 end
 
+-- Icon names to try for a procedure, in order: its own `icon`, then the
+-- real script Icon of each `iconItems` entry that exists.
+function TWAProcedures.IconNames(proc)
+    local out = {}
+    if proc.icon then out[1] = proc.icon end
+    local sm = ScriptManager and ScriptManager.instance
+    for _, t in ipairs(proc.iconItems or {}) do
+        local it = sm and sm:getItem(t)
+        local ic = it and it.getIcon and it:getIcon()
+        if ic and ic ~= "" and ic ~= "None" then out[#out + 1] = ic end
+    end
+    return out
+end
+
 -- A list of item types with every one's family folded in (no duplicates).
 function TWAProcedures.ExpandTypes(types)
     local out, seen = {}, {}
@@ -275,7 +289,12 @@ end
 local FORGE_TIER_SPRITES = {
     [1] = { crafted_01_61 = true, crafted_01_20 = true, crafted_01_21 = true, crafted_01_62 = true },
     [2] = { crafted_01_42 = true, crafted_01_116 = true, crafted_01_38 = true, crafted_01_54 = true, crafted_01_19 = true, crafted_01_36 = true },
+    -- crafted_02_8/9/10/11 added 2026-09-28 from the user's own console.txt
+    -- "[TWA forge scan]" line: a real Advanced Forge placed in-game showed up
+    -- as these four tiles (a rotation missing from the SpriteConfig names
+    -- read earlier), while CoolCast's Primitive Forge was crafted_01_21/62.
     [3] = {
+        crafted_02_8 = true, crafted_02_9 = true, crafted_02_10 = true, crafted_02_11 = true,
         crafted_02_25 = true, crafted_01_18 = true, crafted_01_39 = true, crafted_02_24 = true, crafted_02_32 = true,
         crafted_02_26 = true, crafted_02_27 = true, crafted_02_33 = true, crafted_01_35 = true, crafted_01_55 = true,
     },
@@ -399,6 +418,13 @@ local JEWELRY_ITEMS = {
 -- same formula, no separate case needed). This REPLACED the earlier
 -- hand-picked time values entirely -- when adding a new procedure, compute
 -- its time this same way instead of picking an arbitrary number.
+-- Request 2026-09-28: "กรรมวิธีใดที่ใช้เศษผ้าได้ ให้ใช้เศษผ้ายีนต์ได้" --
+-- every consume slot that takes Base.RippedSheets also takes
+-- Base.DenimStrips (StropLeather, WrapBind, WrapCloth, WrapClothImprov).
+--
+-- `iconItems` (optional): item types whose OWN script Icon is tried when
+-- `icon` has no texture -- the icon is then read from the real item at
+-- runtime instead of guessed (TWAProcedures.IconNames).
 TWAProcedures.List = {
     -- ===== Sharpness (สร้างความคม) -- Swinging weapons =====
     SharpenEdge = {
@@ -416,7 +442,7 @@ TWAProcedures.List = {
     StropLeather = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "FleshingTool",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets" }, qty = 1 } }, skill = "Carving:2", time = 30, sound = "SharpenBladeWhetstone",
+        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets", "Base.DenimStrips" }, qty = 1 } }, skill = "Carving:2", time = 30, sound = "SharpenBladeWhetstone",
     },
     -- PrecisionGrind removed entirely (request 2026-09-28: "เอากรรมวิธี
     -- เจียระไนออก แล้วเอาชุบแข็งไปแทนในเงื่อนไขเจียระไนนั้นๆ") -- QuenchHarden
@@ -479,7 +505,7 @@ TWAProcedures.List = {
     },
     WrapBind = {
         category = "Handle", nameKey = "IGUI_TWA_Proc_WrapBind", icon = "DuctTape",
-        consumes = { { itemTypes = { "Base.DuctTape", "Base.RippedSheets", "Base.LeatherStrips", "Base.Rope" }, qty = 2 } },
+        consumes = { { itemTypes = { "Base.DuctTape", "Base.RippedSheets", "Base.DenimStrips", "Base.LeatherStrips", "Base.Rope" }, qty = 2 } },
         time = 10, sound = "FixWithTape",
     },
     -- Material widened to accept a raw LongStick too (more work, same
@@ -584,7 +610,7 @@ TWAProcedures.List = {
     -- cheap option it represents (request 2026-09-27: reasonable qty).
     WrapCloth = {
         category = "Toughness", nameKey = "IGUI_TWA_Proc_WrapCloth", icon = "Rag",
-        consumes = { { itemType = "Base.RippedSheets", qty = 1 } }, time = 10, sound = "FixWithTape",
+        consumes = { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips" }, qty = 1 } }, time = 10, sound = "FixWithTape",
     },
     -- Qty trimmed from 2->1 -- LeatherStrips is scarcer than cloth (needs a
     -- real leather source + cutting first), so this 2nd reinforcement layer
@@ -598,8 +624,10 @@ TWAProcedures.List = {
     -- Icon changed (request 2026-09-28) -- real icon for Base.Thread_Sinew
     -- is "SinewThread", not the item's own type name.
     StringSinew = {
+        -- Request 2026-09-28: "ร้อยเอ็น ให้สามารถใช้ Thread_Sinew และ
+        -- PremiumFishingLine ได้ และเอาเอ็นสัตว์ออก".
         category = "Toughness", nameKey = "IGUI_TWA_Proc_StringSinew", icon = "SinewThread",
-        consumes = { { itemTypes = { "Base.FishingLine", "Base.AnimalSinew" }, qty = 1 } },
+        consumes = { { itemTypes = { "Base.FishingLine", "Base.Thread_Sinew", "Base.PremiumFishingLine" }, qty = 1 } },
         skill = "Tailoring:1", time = 20, sound = "CraftFixWeapon",
     },
     -- Qty trimmed from 2->1: Wire is scarcer than cloth/leather (usually
@@ -650,7 +678,7 @@ TWAProcedures.List = {
     -- referential icon confirmed.
     WrapClothImprov = {
         category = "Assembly", nameKey = "IGUI_TWA_Proc_WrapClothImprov", icon = "SheetRope",
-        consumes = { { itemTypes = { "Base.RippedSheets", "Base.LeatherStrips", "Base.DuctTape" }, qty = 1 } }, time = 10, sound = "FixWithTape",
+        consumes = { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips", "Base.LeatherStrips", "Base.DuctTape" }, qty = 1 } }, time = 10, sound = "FixWithTape",
     },
     -- Icon changed (request 2026-09-28) -- user gave "GardenSaw" (the
     -- item's own type name); its real Icon field is "Handsaw".
@@ -712,7 +740,9 @@ TWAProcedures.List = {
         consumes = { { itemType = "Base.RailroadSpike", qty = 1 } }, time = 10, sound = "Hammering",
     },
     AssembleBoneSpike = {
-        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBoneSpike", icon = "Bone",
+        -- Icon: Base.SharpBoneFragment's (request 2026-09-28).
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleBoneSpike", icon = "Bone_Sharpbone",
+        iconItems = { "Base.SharpBoneFragment" },
         tool = { kind = "tag", value = "SHARP_KNIFE" },
         consumes = { { itemType = "Base.AnimalBone", qty = 1 } }, time = 10, sound = "SmashBoneHit",
     },
@@ -729,7 +759,9 @@ TWAProcedures.List = {
     -- Icon changed (request 2026-09-28) -- real icon for Base.
     -- SharpBoneFragment is "Bone_Sharpbone", not the item's own type name.
     AssembleSpike = {
-        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpike", icon = "Bone_Sharpbone",
+        -- Icon: Golftee (request 2026-09-28).
+        category = "Assembly", nameKey = "IGUI_TWA_Proc_AssembleSpike", icon = "Golftee",
+        iconItems = { "Base.Golftee" },
         tool = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
             { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
@@ -787,7 +819,10 @@ TWAProcedures.List = {
         -- ขีดไฟออกจากทุกสูตร"), and any charcoal x5 ("ก่อไฟ ใช้ถ่านอะไรก็ได้
         -- 5 อัน") -- the 3 real base:charcoal items, any mix. Icon moved off
         -- Matches for the same reason.
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_StartFire", icon = "Charcoal",
+        -- Icon: MatchBox (request 2026-09-28) -- purely the picture; matches
+        -- are still not required.
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_StartFire", icon = "MatchBox",
+        iconItems = { "Base.MatchBox", "Base.Matchbox", "Base.Matches" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 5 } },
         time = 10, sound = "CraftFixWeapon",
     },

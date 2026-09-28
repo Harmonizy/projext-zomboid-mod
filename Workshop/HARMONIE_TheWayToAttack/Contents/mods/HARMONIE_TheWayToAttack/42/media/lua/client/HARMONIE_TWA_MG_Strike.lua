@@ -60,7 +60,9 @@ function TWAStrikeGame:onStart()
     -- "zones half as wide" request applies to how close the hammer must be
     -- to the mark instead (22 -> 11 px).
     self.period = 900 / self.pace           -- ms for the ring to close
-    self.R0, self.Rt = 140, 13
+    -- The lit mark is bigger (request 2026-09-28: "ทำจุดสว่างให้ใหญ่ขึ้น")
+    -- -- 13 -> 22 px, and the hammer may land anywhere on it.
+    self.R0, self.Rt = 140, 22
     self.lastRing = self.R0
     -- Follow-up request (same day): "มินิเกมตอกตะปูพลาดทุกครั้ง ปรับให้ช่วง
     -- เวลาที่กดแล้วนับว่าตรงจังหวะ 115 เหมือนเดิม" -- the timing window is set
@@ -68,13 +70,17 @@ function TWAStrikeGame:onStart()
     -- into ring pixels from the ring's own speed, so it stays 115 ms however
     -- fast the ring closes. The big fast ring stays.
     self.window = 115 * (self.R0 / self.period) * self.tol -- px of ring error still "good"
-    self.aim = 11 * self.tol                 -- how close the hammer must be
+    self.aim = self.Rt * self.tol            -- anywhere on the lit mark counts
     self.heat = 1
     self.coal = { x = 20, y = 150, w = 100, h = 90 }
     self.timeLimit = 25000 + n * 9000
-    if not self.realTool then
-        self.toolTex = B.itemTex(self.surface == "stone" and "HammerStone" or (self.surface == "hot" and "SmithingHammer" or "BallPeenHammer_Forged")) or self.toolTex
-    end
+    -- Cursor (request 2026-09-28): always the ball-peen hammer, except in
+    -- Blacksmithing (internal category "Metallurgy"), where it's the hammer
+    -- pictured on the procedure itself (ForgeShape = hammerstone, ForgeFold =
+    -- ball-peen, ForgeComplex = smithing hammer, ForgeVacuum = sledgehammer).
+    local picture = "BallPeenHammer_Forged"
+    if self.proc and self.proc.category == "Metallurgy" and self.proc.icon then picture = self.proc.icon end
+    self.toolTex = B.itemTex(picture) or self.toolTex
     self.toolSize = 52
 
     local key = "IGUI_TWA_MG_Strike_Hint_" .. (self.variant or "nails")
@@ -111,16 +117,20 @@ function TWAStrikeGame:onGrab(x, y)
     end
     local err = math.abs(self.lastRing - self.Rt)
     local cold = self.surface == "hot" and self.heat < 0.35
+    -- Smashing is one blow (request 2026-09-28: "กรรมวิธี ทุบ ให้ทุบครั้งเดียว
+    -- พอ"): any timed hit on the mark finishes it; the timing still decides
+    -- how much quality it costs.
+    local oneBlow = self.variant == "smash"
     if err <= self.window * 0.45 then
-        t.depth = t.depth + 0.55
+        t.depth = oneBlow and 1 or (t.depth + 0.55)
         self:flash(getText("IGUI_TWA_MG_Strike_Perfect"), false, 500)
         self:shake(5, 180)
     elseif err <= self.window then
-        t.depth = t.depth + 0.35
+        t.depth = oneBlow and 1 or (t.depth + 0.35)
         self:spend(0.035)
         self:shake(3, 150)
     else
-        t.depth = math.max(0, t.depth - 0.1)
+        t.depth = oneBlow and 1 or math.max(0, t.depth - 0.1)
         local key = self.surface == "wood" and "IGUI_TWA_MG_Strike_Bent" or "IGUI_TWA_MG_Strike_BadTiming"
         self:spend(0.11, getText(key))
     end

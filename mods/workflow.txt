@@ -2678,6 +2678,40 @@ Round 4 (same day, play-test feedback):
     session had closed. Needs a local session to scan (prompt was given to
     the user) or the "[TWA forge scan]" console.txt lines.
 
+Round 5 (same day, play-test feedback):
+  - Forge scan answered: the user's console.txt listed crafted_02_8..11
+    (advanced forge) -> FORGE_TIER_SPRITES tier 3. Tier-2 (normal forge)
+    sprites are STILL unverified -- ask for more "[TWA forge scan]" lines.
+  - New games (ideas from Casualties Undead, code written from scratch):
+    Suture (StringSinew, ReinforcedBind -- pierce along an arc, pull into a
+    tension band), Extract (DrillCore -- drill down and back out, straight
+    and slow), Incision (MakeHandle/MakeLongHandle "carve", EngravePattern
+    "engrave" -- depth follows speed, keep it in the band).
+  - Weld back to a straight seam; strike aim spot bigger; WrapBind and
+    cloth bands x2 again; smash = one blow; hammer cursor is always the
+    ball-peen hammer except Metallurgy (the procedure's own icon).
+  - Icons: AssembleSpike=Golftee, AssembleBoneSpike=SharpBoneFragment,
+    StartFire=MatchBox (TWAProcedures.IconNames: proc.icon + iconItems'
+    real script icons). StringSinew takes FishingLine/Thread_Sinew/
+    PremiumFishingLine (no animal sinew); every rag slot also takes
+    DenimStrips.
+  - ONE CRAFT AT A TIME: Start (TWA_StartCraftAction) takes the base item
+    and the supplementary item (base2, now labelled "ชิ้นงานเสริม") at once
+    and records the craft on the character's ModData (TWA_ActiveCraft,
+    TWACraftState active-craft API) where complete() runs. Procedures
+    record into it, Finish pays out from it (never from client-claimed
+    words), Cancel/Incomplete hand the items back through
+    TWACraftState.giveBack, which clears the record in the same step (no
+    double payout). Items come back as snapshots: same type, condition and
+    ModData. Closing the window mid-craft = Incomplete, sent as the client
+    command HARMONIE_TWA/giveBack in MP (the server re-checks its record);
+    refused while a procedure/minigame/center action runs. Recipes with no
+    base item stay started across a close. On open: SP restores the record;
+    MP asks the server to hand back any stale craft (returnStale).
+  - Done procedures can be redone (the new word replaces the old, a Miss
+    included); clicking a checklist cell selects it; the search box has an
+    X to clear it.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

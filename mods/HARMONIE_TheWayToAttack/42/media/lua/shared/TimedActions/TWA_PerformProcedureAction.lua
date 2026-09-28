@@ -81,14 +81,11 @@ function TWA_PerformProcedureAction:complete()
     if self.quality ~= "Miss" then
         TWAProcedures.AwardXP(self.proc, self.character)
     end
-    -- Resuming a bookmarked base item: the result goes straight onto THAT
-    -- item's ModData, here where the authoritative copy of it lives. (The
-    -- client writes the same deterministic values into its own copy through
-    -- the window's onComplete, so both ends agree without a sync round-trip.)
-    if self.resumeItem then
-        local item = TWACraftState.findItem(self.character, self.resumeItem)
-        if item then TWACraftState.recordOnItem(item, self.procId, self.quality) end
-    end
+    -- The word goes into the character's active craft (request 2026-09-28:
+    -- one craft at a time, started with TWA_StartCraftAction), held here
+    -- where the authoritative record lives. A redo simply replaces the
+    -- procedure's earlier word.
+    TWACraftState.recordActive(self.character, self.procId, self.quality)
     return true
 end
 
@@ -97,13 +94,11 @@ function TWA_PerformProcedureAction:getDuration()
     return self.maxTime
 end
 
--- `procId` -- a TWAProcedures.List key; `quality` -- the minigame's word;
--- `resumeItem` -- the bookmarked base item being resumed, or nil.
-function TWA_PerformProcedureAction:new(character, procId, quality, resumeItem)
+-- `procId` -- a TWAProcedures.List key; `quality` -- the minigame's word.
+function TWA_PerformProcedureAction:new(character, procId, quality)
     local o = ISBaseTimedAction.new(self, character)
     o.procId = procId
     o.quality = TWACraftState.isWord(quality) and quality or TWACraftState.FALLBACK_WORD
-    o.resumeItem = resumeItem
     o.proc = TWAProcedures.List[procId]
     o.maxTime = (o.proc and o.proc.time) or 50
     o.forceProgressBar = true

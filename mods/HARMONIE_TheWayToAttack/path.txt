@@ -111,8 +111,15 @@ HARMONIE_TWA_MG_Heat.lua    สูบลมคุมเข็มอุณหภ�
   anneal) หรือกลับด้าน จุ่มน้ำ (cool) -- ช่วงอุ่นเครื่องครั้งแรกไม่หักคะแนน
 HARMONIE_TWA_MG_Pour.lua    เอียงเบ้าเทโลหะให้ถึงเส้น ล้น = พลาด,
   เทซ้ำ = รอยต่อเย็น
+HARMONIE_TWA_MG_Suture.lua  (ใหม่ รอบ 5) ร้อยเอ็น/พันแน่นหนา: ลากเข็มตามแนวโค้ง
+  ทะลุรูบนลงรูล่าง แล้วดึงด้ายให้ตึงอยู่ในแถบเขียว (หย่อน = ดึงใหม่,
+  เกินเส้นแดง = ขาด)
+HARMONIE_TWA_MG_Extract.lua (ใหม่ รอบ 5) เจาะแกน: กดค้างลากสว่านลงตรงๆ
+  ช้าๆ ถึงเส้นลึก แล้วถอนขึ้นแบบเดียวกัน (เอียง/เร็วเกิน = เสียคะแนน)
+HARMONIE_TWA_MG_Incision.lua (ใหม่ รอบ 5) ทำด้าม/แกะลาย: ลากมีดตามแนว ความ
+  ลึกขึ้นกับความเร็ว (ช้า = ลึก) ต้องคุมเข็มความลึกในแถบเขียว
 
-(timed action ทั้ง 4 ตัว -- ทำกรรมวิธี/เสร็จสิ้น/ไม่สมบูรณ์/ยกเลิก -- ย้ายไป
+(timed action -- ทำกรรมวิธี/เสร็จสิ้น/ไม่สมบูรณ์/ยกเลิก (+ เริ่มทำ รอบ 5) -- อยู่ที่
  shared/TimedActions/ แล้ว 2026-09-28 เพื่อแก้บัค multiplayer ดูด้านล่าง)
 
 ──── 42/media/lua/shared/ (โค้ด/ข้อมูลที่ทั้ง client และ server ใช้ร่วมกัน) ────
@@ -139,9 +146,16 @@ HARMONIE_TWA_CraftState.lua (ใหม่ 2026-09-28)
   เขียน/ล้าง bookmark (TWA_RecipeId/TWA_DoneProcedures/TWA_ProcQuality),
   findItem (หาไอเท็มชิ้นเดิมด้วย id), pickFreshItem (เลือกชิ้นที่ไม่มี
   bookmark -- แก้บัคปั๊มเกรด).
+  (รอบ 5) active craft: ทำได้ทีละสูตร -- TWA_ActiveCraft บน ModData ของ
+  ตัวละคร (server ใน MP) เก็บสูตร + คำคุณภาพ + snapshot ของชิ้นงานตั้งต้น/
+  ชิ้นงานเสริมที่ถูกหักไปตอนเริ่ม; giveBack คืนของ (ไม่สมบูรณ์ = มี bookmark,
+  ยกเลิก = ของเปล่า) แล้วล้าง record ทันที (จ่ายซ้ำไม่ได้); client command
+  HARMONIE_TWA/giveBack + returnStale สำหรับตอนปิดหน้าต่าง.
 
 TimedActions/TWA_PerformProcedureAction.lua / TWA_FinishCraftAction.lua /
-TimedActions/TWA_IncompleteCraftAction.lua / TWA_CancelCraftAction.lua
+TimedActions/TWA_IncompleteCraftAction.lua / TWA_CancelCraftAction.lua /
+TimedActions/TWA_StartCraftAction.lua (ใหม่ รอบ 5 -- ปุ่มเริ่มทำ หักชิ้นงาน
+  ตั้งต้น + ชิ้นงานเสริมทันที)
   (ย้ายมาจาก client/ 2026-09-28) timed action ของหน้าต่างคราฟทั้ง 4 ตัว.
   กฎ multiplayer ของ B42: การเปลี่ยนแปลงโลกทั้งหมด (หักวัตถุดิบ/XP/ลบ-เพิ่ม
   ไอเทม/เขียน ModData) อยู่ใน complete() (server ใน MP, เครื่องตัวเองใน SP);
