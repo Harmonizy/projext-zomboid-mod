@@ -349,5 +349,9 @@
     "IGUI_TWA_Practice": "ฝึก",
     "IGUI_TWA_Tooltip_Practice": "เล่นมินิเกมของกรรมวิธีนี้เพื่อฝึกอย่างเดียว ไม่ใช้วัตถุดิบ ไม่ได้ XP ไม่ได้สร้างอะไร",
     "IGUI_TWA_PracticeResult": "ผลการฝึก: %1",
-    "IGUI_TWA_PracticeOff": "มินิเกมถูกปิดในค่า sandbox ของเกมนี้"
+    "IGUI_TWA_PracticeOff": "มินิเกมถูกปิดในค่า sandbox ของเกมนี้",
+    "IGUI_TWA_Tooltip_Sound": "เปิด/ปิดเสียง (เสียงของม็อดนี้)",
+    "IGUI_TWA_MG_Extract_Hint_drive": "ขันสกรูทีละตัว: กดค้างที่สกรูแล้วลากลงไปถึงเส้นแดง",
+    "IGUI_TWA_MG_Extract_Hint2_drive": "ตรงและสม่ำเสมอ ถ้าเอียงหรือรีบจะหวาน",
+    "IGUI_TWA_MG_Extract_DoneDrive": "ขันแน่นแล้ว"
 }

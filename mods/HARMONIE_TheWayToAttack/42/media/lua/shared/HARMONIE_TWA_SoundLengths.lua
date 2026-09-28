@@ -26,3 +26,5 @@ TWASound.LENGTH = {
     TWA_Success = 600,
     TWA_Fail = 500,
 }
+-- Loudness levels every sound also exists at (NAME_vNN; 100 = NAME).
+TWASound.LEVELS = { 25, 50, 75, 100, 150, 200 }

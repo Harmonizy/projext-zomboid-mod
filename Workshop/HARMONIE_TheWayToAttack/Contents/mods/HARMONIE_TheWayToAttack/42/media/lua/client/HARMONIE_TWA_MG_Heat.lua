@@ -39,7 +39,9 @@ function TWAHeatGame:onStart()
     self.vel = 0
     self.held = 0
     self.need = self.bend and TWAConfig.num("BendHoldMs", 50) or (TWAConfig.num("HeatHoldMs", 50) + 300 * self.req)
-    self.drift = (self.req >= 4 and not self.bend and TWAConfig.on("HeatDrift")) and 0.08 or 0
+    -- Round 14: every variant's band sways (it used to be only the harder
+    -- ones) -- the move players liked; sandbox "ZoneDrift".
+    self.drift = TWAConfig.on("ZoneDrift") and (self.bend and 0.05 or 0.08) or 0
     if self.cool then
         -- Request 2026-09-28 ("มินิเกมจุ่มง่ายไป อยากให้อุณหภูมิขึ้นลงเร็วกว่า
         -- นี้ และโซนเล็กลง รวมถึงเกจคุณภาพลดลงเร็วขึ้น"): a faster plunge and a

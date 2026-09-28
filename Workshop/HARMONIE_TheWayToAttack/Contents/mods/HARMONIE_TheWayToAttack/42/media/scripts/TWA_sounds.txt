@@ -2,12 +2,92 @@
    sound here is synthesized by that script (no recorded audio). */
 module Base
 {
+    sound TWA_Hammer_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Hammer_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Hammer_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Hammer_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Hammer_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Hammer_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Hammer
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Hammer.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Hammer_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Hammer_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Hammer_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Hammer_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_HammerWood_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_HammerWood_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_HammerWood_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_HammerWood_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_HammerWood_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_HammerWood_v75.wav,
             distanceMax = 10,
         }
     }
@@ -22,12 +102,112 @@ module Base
         }
     }
 
+    sound TWA_HammerWood_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_HammerWood_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_HammerWood_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_HammerWood_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Knap_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Knap_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Knap_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Knap_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Knap_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Knap_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Knap
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Knap.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Knap_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Knap_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Knap_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Knap_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_BigHit_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_BigHit_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_BigHit_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_BigHit_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_BigHit_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_BigHit_v75.wav,
             distanceMax = 10,
         }
     }
@@ -42,12 +222,112 @@ module Base
         }
     }
 
+    sound TWA_BigHit_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_BigHit_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_BigHit_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_BigHit_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tension_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tension_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tension_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tension_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tension_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tension_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Tension
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Tension.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tension_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tension_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Tension_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Tension_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fanfare_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fanfare_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fanfare_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fanfare_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fanfare_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fanfare_v75.wav,
             distanceMax = 10,
         }
     }
@@ -62,12 +342,112 @@ module Base
         }
     }
 
+    sound TWA_Fanfare_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fanfare_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fanfare_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fanfare_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Smash_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Smash_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Smash_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Smash_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Smash_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Smash_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Smash
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Smash.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Smash_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Smash_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Smash_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Smash_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Whetstone_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Whetstone_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Whetstone_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Whetstone_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Whetstone_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Whetstone_v75.wav,
             distanceMax = 10,
         }
     }
@@ -82,12 +462,112 @@ module Base
         }
     }
 
+    sound TWA_Whetstone_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Whetstone_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Whetstone_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Whetstone_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Saw_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Saw_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Saw_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Saw_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Saw_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Saw_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Saw
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Saw.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Saw_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Saw_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Saw_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Saw_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Weld_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Weld_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Weld_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Weld_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Weld_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Weld_v75.wav,
             distanceMax = 10,
         }
     }
@@ -102,12 +582,112 @@ module Base
         }
     }
 
+    sound TWA_Weld_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Weld_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Weld_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Weld_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Screw_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Screw_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Screw_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Screw_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Screw_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Screw_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Screw
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Screw.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Screw_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Screw_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Screw_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Screw_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Wrap_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Wrap_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Wrap_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Wrap_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Wrap_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Wrap_v75.wav,
             distanceMax = 10,
         }
     }
@@ -122,12 +702,112 @@ module Base
         }
     }
 
+    sound TWA_Wrap_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Wrap_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Wrap_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Wrap_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Grind_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Grind_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Grind_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Grind_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Grind_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Grind_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Grind
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Grind.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Grind_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Grind_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Grind_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Grind_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Bellows_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Bellows_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Bellows_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Bellows_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Bellows_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Bellows_v75.wav,
             distanceMax = 10,
         }
     }
@@ -142,12 +822,112 @@ module Base
         }
     }
 
+    sound TWA_Bellows_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Bellows_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Bellows_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Bellows_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Quench_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Quench_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Quench_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Quench_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Quench_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Quench_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Quench
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Quench.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Quench_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Quench_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Quench_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Quench_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Pour_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Pour_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Pour_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Pour_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Pour_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Pour_v75.wav,
             distanceMax = 10,
         }
     }
@@ -162,12 +942,112 @@ module Base
         }
     }
 
+    sound TWA_Pour_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Pour_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Pour_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Pour_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Coat_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Coat_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Coat_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Coat_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Coat_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Coat_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Coat
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Coat.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Coat_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Coat_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Coat_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Coat_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Sew_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Sew_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Sew_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Sew_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Sew_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Sew_v75.wav,
             distanceMax = 10,
         }
     }
@@ -182,12 +1062,112 @@ module Base
         }
     }
 
+    sound TWA_Sew_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Sew_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Sew_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Sew_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Drill_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Drill_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Drill_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Drill_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Drill_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Drill_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Drill
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Drill.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Drill_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Drill_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Drill_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Drill_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Carve_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Carve_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Carve_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Carve_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Carve_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Carve_v75.wav,
             distanceMax = 10,
         }
     }
@@ -202,12 +1182,112 @@ module Base
         }
     }
 
+    sound TWA_Carve_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Carve_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Carve_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Carve_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Craft_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Craft_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Craft_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Craft_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Craft_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Craft_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Craft
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Craft.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Craft_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Craft_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Craft_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Craft_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Success_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Success_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Success_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Success_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Success_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Success_v75.wav,
             distanceMax = 10,
         }
     }
@@ -222,12 +1302,82 @@ module Base
         }
     }
 
+    sound TWA_Success_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Success_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Success_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Success_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fail_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fail_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fail_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fail_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fail_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fail_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
     sound TWA_Fail
     {
         category = UI,
         clip
         {
             file = media/sound/TWA_Fail.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fail_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fail_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Fail_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Fail_v200.wav,
             distanceMax = 10,
         }
     }

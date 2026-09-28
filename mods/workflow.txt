@@ -2888,6 +2888,29 @@ Round 13 (same day):
     the minigame only: no materials, XP or craft); base/supplementary cards
     show "Have: N" (usable, un-bookmarked copies, nearby included).
 
+Round 14 (same day):
+  - VOLUME, second try: GameSound:setUserVolume did nothing audible for our
+    UI sounds ("มีแค่เปิดกับปิด"). Now loudness is chosen by FILE: gen_sounds.py
+    writes every sound at 25/50/75/100/150/200 (NAME_vNN, 100 = NAME;
+    soft-limited above 100; 22.05 kHz to keep 138 files ~4.7 MB) and
+    TWASound.play picks the level nearest the player's volume. Options >
+    Mods: volume slider in 0.25 steps + a mute tickbox; the craft window's
+    megaphone button (bottom-right, icons drawn by tools/gen_ui_icons.py)
+    flips the same mute.
+  - Quality cut points: Bad below 2.0, Good below 2.5 (sandbox defaults and
+    CraftState constants).
+  - Moving zones everywhere (sandbox ZoneDrift, was HeatDrift for level 4+
+    heat only): TWAMinigameBase:drift(amp, period) sways the heat bands (all
+    variants), sewing tension, carving depth, grindstone speed and the pour
+    line.
+  - Saw: zone 7 -> 21, 20 strokes (sandbox SawZone / SawStrokes).
+  - Fewer turning-screw games: AssembleCan/SheetMetal/RakeHead -> new
+    Extract "drive" (drive screws straight down; screw drawn, TWA_Screw);
+    AssembleSpadeHead -> Strike "rivet". Screw game stays for TightenBolts
+    and AssembleBrake.
+  - proc.cursorIcon = true makes the minigame cursor the procedure's own
+    picture (AssembleBoneSpike showed the knife found as its tool).
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

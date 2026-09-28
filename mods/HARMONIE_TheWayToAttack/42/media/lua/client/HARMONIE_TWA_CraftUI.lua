@@ -1216,6 +1216,19 @@ function TWACraftWindow:createChildren()
     self.procSearchButton:initialise()
     self:addChild(self.procSearchButton)
 
+    -- Round 14 ("ให้มีปุ่มปิดเสียงใน ui คราฟ กดซ้ำจะกลายเป็นเปิดเสียง ปุ่มให้
+    -- เป็นรูปโทรโข่ง ซ่อนไว้ซักมุมใน ui"): a small megaphone in the bottom-
+    -- right corner; the same switch as Options > Mods > mute.
+    self.soundOnTex = getTexture("media/textures/TWA_UI_SoundOn.png")
+    self.soundOffTex = getTexture("media/textures/TWA_UI_SoundOff.png")
+    self.soundButton = ISButton:new(WINDOW_W - 34, WINDOW_H - 34, 26, 26, "", self, TWACraftWindow.onSoundToggle)
+    self.soundButton:initialise()
+    self.soundButton:setDisplayBackground(false)
+    if self.soundButton.forceImageSize then self.soundButton:forceImageSize(24, 24) end
+    self.soundButton:setImage(TWASound.muted and self.soundOffTex or self.soundOnTex)
+    self.soundButton:setTooltip(getText("IGUI_TWA_Tooltip_Sound"))
+    self:addChild(self.soundButton)
+
     self.centerX = centerX
     self.contentTop = contentTop
     self.rightX = rightX
@@ -1439,6 +1452,15 @@ function TWACraftWindow:onStartButtonClicked() self:startCenterAction("start") e
 function TWACraftWindow:onCancelButtonClicked() self:startCenterAction("cancel") end
 function TWACraftWindow:onIncompleteButtonClicked() self:startCenterAction("incomplete") end
 function TWACraftWindow:onFinishButtonClicked() self:startCenterAction("finish") end
+
+function TWACraftWindow:onSoundToggle()
+    if TWAOptions and TWAOptions.toggleMute then
+        TWAOptions.toggleMute()
+    else
+        TWASound.muted = not TWASound.muted
+    end
+    self.soundButton:setImage(TWASound.muted and self.soundOffTex or self.soundOnTex)
+end
 
 function TWACraftWindow:onSearchClearClicked()
     self:applySearch("")
@@ -1959,6 +1981,11 @@ end
 
 function TWACraftWindow:render()
     ISCollapsableWindow.render(self)
+    -- Keep the megaphone in step with Options > Mods.
+    if self.soundButton then
+        local want = TWASound.muted and self.soundOffTex or self.soundOnTex
+        if self.soundButton.image ~= want then self.soundButton:setImage(want) end
+    end
 
     -- Filter-section captions (request 2026-09-26: "arrange the filter
     -- section to look nicer") -- small labels above each tab row so it

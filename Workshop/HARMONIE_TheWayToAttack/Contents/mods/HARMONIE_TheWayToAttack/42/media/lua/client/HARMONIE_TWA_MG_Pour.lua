@@ -43,6 +43,9 @@ function TWAPourGame:onGrab()
 end
 
 function TWAPourGame:updateGame(dt)
+    -- Round 14: the fill line sways a little (moving zones).
+    self.target0 = self.target0 or self.target
+    self.target = self.target0 + self:drift(0.03, 5000)
     local s = dt / 1000
     if self.dragging then
         self.tilt = math.min(1, self.tilt + s * 0.8 * self.pace)
