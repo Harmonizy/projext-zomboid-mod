@@ -261,7 +261,7 @@ function ISToolTipInv:render()
         -- next to it; a done procedure from a bookmark made before this
         -- update has no word and reads as Good (TWACraftState.wordFor).
         local qualityTable = item:getModData().TWA_ProcQuality or {}
-        local showWords = not TWACraftState.isMaterialRecipe(recipe)
+        local showWords = true
         local resultItem = ScriptManager.instance:getItem(recipe.result)
         local header = getText("IGUI_TWA_ResumingItem") .. " (" ..
             (resultItem and resultItem:getDisplayName() or recipe.result) .. ")"

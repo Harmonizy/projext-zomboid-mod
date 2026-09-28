@@ -2619,6 +2619,36 @@ panic/drunk as player:getStats():get(CharacterStat.PAIN / PANIC /
 INTOXICATION), 0-100 (MoodleType members are UPPERCASE too, e.g.
 MoodleType.PAIN) -- confirmed from Casualties Undead's B42 source. ***
 
+Round 3 (same day, user play-test feedback):
+  - Material recipes now play the minigame too (the Blacksmithing
+    procedures are almost only used by them); they still get no quality or
+    grade at Finish.
+  - Harder: every zone/band halved, quality drains 2x per slip, Strike ring
+    starts 140 px (was 70) and closes in 900 ms (was 1150). The Strike
+    ring-error window was deliberately NOT halved -- at that speed half of
+    it is under one frame (luck, not skill); the hammer's aim radius was
+    halved instead. The hand trails the mouse by 35 ms (was 60) and moving
+    too fast now visibly flashes the tool red, throws red sparks and jolts
+    the scene (TWAMinigameBase:tooFast), and a Stroke swipe that jumps ahead
+    costs quality instead of silently not counting.
+  - Cursor = the REAL tool: TWAProcedures.FindToolItem finds the inventory
+    item satisfying the procedure's tool spec and the game draws
+    item:getTexture() (wrench vs screwdriver for TightenBolts, etc.).
+  - Item families: TWAProcedures.Family(fullType) = same-stem item scripts
+    (trailing digits and "Forged" dropped, from ScriptManager getAllItems,
+    scanned once) + EXTRA_FAMILY, filtered to scripts that exist. Used by
+    consumes and kind="type" tools; UI shows "first (+N)" with a hover list.
+  - ItemTag[x] is checked before use (a missing constant never errors).
+  - Forge detection still unverified for tiers 2/3 (user: an Advanced Forge
+    didn't satisfy ForgeShape..ForgeVacuum; a Primitive Forge did satisfy
+    CoolCast). Now scans 3 tiles, also reads the sprite's CustomName
+    property, and logs "[TWA forge scan]" lines with every nearby sprite
+    name to console.txt when a forge requirement fails -- get those lines
+    from the user to fix FORGE_TIER_SPRITES properly.
+  - Test suites must fail on the Excellent crash-fallback: a missing mock
+    (getTextManager) once made every game "pass" by crashing straight to
+    Excellent.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

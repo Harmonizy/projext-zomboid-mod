@@ -236,5 +236,6 @@
     "IGUI_TWA_MG_Pour_Short": "Not full yet - pour a little more",
     "IGUI_TWA_MG_Pour_Over": "A little over the line.",
     "IGUI_TWA_MG_Pour_Spilled": "Spilled over!",
-    "IGUI_TWA_MG_Pour_Done": "Filled to the line."
+    "IGUI_TWA_MG_Pour_Done": "Filled to the line.",
+    "IGUI_TWA_AcceptsAny": "Any one of these works:"
 }

@@ -36,7 +36,7 @@ local GAUGE_X, GAUGE_Y, GAUGE_W, GAUGE_H = 30, 118, 480, 30
 local CANCEL_W, CANCEL_H = 150, 28
 -- Zone widths as a fraction of the gauge (request 2026-09-28: smallest =
 -- Excellent, middle = Good, widest = Bad).
-local ZONE_W = { Bad = 0.30, Good = 0.15, Excellent = 0.06 }
+local ZONE_W = { Bad = 0.15, Good = 0.075, Excellent = 0.03 } -- halved (request 2026-09-28)
 local RESULT_LINGER_MS = 900
 
 local ZONE_COLOR = {

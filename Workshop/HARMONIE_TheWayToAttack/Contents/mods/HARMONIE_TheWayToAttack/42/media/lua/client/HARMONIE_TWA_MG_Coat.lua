@@ -52,7 +52,7 @@ function TWACoatGame:onStart()
     self.rubLimit = 0.9 * self.tol
     self.timeLimit = 55000
     self.toolSize = 44
-    if self.fire then self.toolTex = B.itemTex("BlowTorch") or self.toolTex end
+    if self.fire and not self.realTool then self.toolTex = B.itemTex("BlowTorch") or self.toolTex end
     self.hint = getText(self.fire and "IGUI_TWA_MG_Coat_Hint_fire" or "IGUI_TWA_MG_Coat_Hint")
     self.hint2 = getText(self.fire and "IGUI_TWA_MG_Coat_Hint2_fire" or "IGUI_TWA_MG_Coat_Hint2")
 end
@@ -112,7 +112,7 @@ function TWACoatGame:onDrag(x, y, dt)
         return
     end
     if (self.handSpeed or 0) > self.rubLimit then
-        self:spend((self.handSpeed - self.rubLimit) * dt * 0.0004, getText("IGUI_TWA_MG_Coat_Uneven"), true)
+        self:tooFast((self.handSpeed - self.rubLimit) * dt * 0.0004, getText("IGUI_TWA_MG_Coat_Uneven"), x, y)
     end
     for _, c in ipairs(self.cells) do
         if not c.on and self.load > 0 and B.dist(x, y, c.x, c.y) <= self.cellR then

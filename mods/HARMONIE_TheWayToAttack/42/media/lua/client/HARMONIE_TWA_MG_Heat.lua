@@ -27,7 +27,7 @@ local CENTER = { fire = 0.45, melt = 0.78, anneal = 0.6, cool = 0.3 }
 function TWAHeatGame:onStart()
     self.cool = self.variant == "cool"
     self.center0 = CENTER[self.variant] or 0.6
-    self.half = 0.07 * self.tol
+    self.half = 0.035 * self.tol -- halved (request 2026-09-28)
     self.temp = self.cool and 1.0 or 0.05
     self.vel = 0
     self.held = 0
@@ -35,7 +35,7 @@ function TWAHeatGame:onStart()
     self.drift = self.req >= 4 and 0.08 or 0
     self.timeLimit = 30000 + self.need * 3
     self.toolSize = 44
-    if self.cool then
+    if self.cool and not self.realTool then
         self.toolTex = B.itemTex("BlacksmithTongs") or self.toolTex
     end
     self.hint = getText(self.cool and "IGUI_TWA_MG_Heat_Hint_cool" or "IGUI_TWA_MG_Heat_Hint")

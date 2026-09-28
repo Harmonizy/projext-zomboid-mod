@@ -78,14 +78,146 @@ local function toolAlts(spec)
 end
 TWAProcedures.ToolAlts = toolAlts
 
+-- Item families (request 2026-09-28: "ไอเท็มระบบเบรก ถัง กาต้มน้ำ กระดูก หัว
+-- พลั่ว และอื่นๆ มีหลายอัน หลายคีย์ ให้สามารถใช้ได้ทุกอันในสูตร" and "ไอเท็ม
+-- ค้อน ไขควง มีด สว่านมือ และอื่นๆ มีหลายประเภท ให้ใช้ได้ทุกประเภท"):
+-- anywhere a procedure names ONE concrete item type (a material, or a
+-- kind="type" tool), every variant of that item counts too.
+-- A variant is (a) any item script in the same module whose type name has
+-- the same stem once trailing digits and a "Forged"/"_Forged" suffix are
+-- dropped (NormalBrake1/2/3, SpadeHead/SpadeHead_Forged, Stone/Stone2...),
+-- found by scanning the game's own loaded item scripts once; plus (b) the
+-- EXTRA_FAMILY lists below for variants that don't share a stem. Every
+-- candidate is kept ONLY if the game actually has that item script, so a
+-- name in EXTRA_FAMILY that doesn't exist in this game version is simply
+-- ignored -- never shown, never required. Tag-based tools (HAMMER,
+-- SCREWDRIVER, SHARP_KNIFE...) already accept every item carrying the tag.
+local EXTRA_FAMILY = {
+    ["Base.NormalBrake1"] = { "Base.OldBrake1", "Base.OldBrake2", "Base.OldBrake3",
+                              "Base.ModernBrake1", "Base.ModernBrake2", "Base.ModernBrake3" },
+    ["Base.AnimalBone"]   = { "Base.LargeAnimalBone", "Base.SmallAnimalBone", "Base.JawboneBovide" },
+    ["Base.Kettle"]       = { "Base.Kettle_Copper" },
+    ["Base.Bucket"]       = { "Base.BucketEmpty", "Base.BucketForged" },
+    ["Base.SheetMetal"]   = { "Base.SmallSheetMetal" },
+}
+
+local function stemOf(name)
+    name = name:gsub("_?Forged$", "")
+    name = name:gsub("%d+$", "")
+    return name
+end
+
+local function scriptExists(fullType)
+    local sm = ScriptManager and ScriptManager.instance
+    return sm ~= nil and sm:getItem(fullType) ~= nil
+end
+
+-- module -> stem -> { fullType, ... }, built once from every loaded item script.
+local stemIndex
+local function buildStemIndex()
+    stemIndex = {}
+    local sm = ScriptManager and ScriptManager.instance
+    local all = sm and sm.getAllItems and sm:getAllItems()
+    if not all or not all.size then return end
+    for i = 0, all:size() - 1 do
+        local it = all:get(i)
+        local full = it and it.getFullName and it:getFullName()
+        if full then
+            local module, name = full:match("^([^.]+)%.(.+)$")
+            if module then
+                stemIndex[module] = stemIndex[module] or {}
+                local st = stemOf(name)
+                stemIndex[module][st] = stemIndex[module][st] or {}
+                table.insert(stemIndex[module][st], full)
+            end
+        end
+    end
+end
+
+local familyCache = {}
+function TWAProcedures.Family(fullType)
+    if not fullType then return {} end
+    local cached = familyCache[fullType]
+    if cached then return cached end
+    if not stemIndex then buildStemIndex() end
+    local list, seen = {}, {}
+    local function add(t)
+        if not seen[t] and (t == fullType or scriptExists(t)) then
+            seen[t] = true
+            list[#list + 1] = t
+        end
+    end
+    add(fullType) -- the named item always first
+    local module, name = fullType:match("^([^.]+)%.(.+)$")
+    local byStem = module and stemIndex[module] and stemIndex[module][stemOf(name)]
+    for _, t in ipairs(byStem or {}) do add(t) end
+    for _, t in ipairs(EXTRA_FAMILY[fullType] or {}) do add(t) end
+    familyCache[fullType] = list
+    return list
+end
+
+-- A list of item types with every one's family folded in (no duplicates).
+function TWAProcedures.ExpandTypes(types)
+    local out, seen = {}, {}
+    for _, t in ipairs(types) do
+        for _, v in ipairs(TWAProcedures.Family(t)) do
+            if not seen[v] then seen[v] = true; out[#out + 1] = v end
+        end
+    end
+    return out
+end
+
 local function hasOneTool(spec, player)
     local inv = player:getInventory()
     if spec.kind == "tag" then
-        return inv:containsTagEvalRecurse(ItemTag[spec.value], predicateNotBroken)
+        -- A tag constant this game version doesn't have just doesn't match
+        -- (never an error: the debugger stops on those even inside pcall).
+        local tag = ItemTag and ItemTag[spec.value]
+        if not tag then return false end
+        return inv:containsTagEvalRecurse(tag, predicateNotBroken)
     elseif spec.kind == "type" then
-        return inv:getFirstTypeEvalRecurse(spec.value, predicateNotBroken) ~= nil
+        for _, t in ipairs(TWAProcedures.Family(spec.value)) do
+            if inv:getFirstTypeEvalRecurse(t, predicateNotBroken) ~= nil then return true end
+        end
+        return false
     end
     return true
+end
+
+-- The actual item in the player's inventory that satisfies a tool spec (a
+-- single spec or a list of alternatives) -- for the minigame to show the
+-- tool really being used (request 2026-09-28: "ขันน็อตอยากให้ตรงเมาส์เป็น
+-- รูปประแจหรือไขควงตามที่อุปกรณ์ในกรรมวิธีนั้นต้องการ").
+local function findTagged(container, tag)
+    local items = container and container:getItems()
+    if not items then return nil end
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and not it:isBroken() and it.hasTag and it:hasTag(tag) then return it end
+        if it and instanceof(it, "InventoryContainer") then
+            local inner = findTagged(it:getInventory(), tag)
+            if inner then return inner end
+        end
+    end
+    return nil
+end
+
+function TWAProcedures.FindToolItem(spec, player)
+    if not spec or not player then return nil end
+    local inv = player:getInventory()
+    for _, s in ipairs(toolAlts(spec)) do
+        if s.kind == "type" then
+            for _, t in ipairs(TWAProcedures.Family(s.value)) do
+                local it = inv:getFirstTypeEvalRecurse(t, predicateNotBroken)
+                if it then return it end
+            end
+        elseif s.kind == "tag" then
+            local tag = ItemTag and ItemTag[s.value]
+            local it = tag and findTagged(inv, tag)
+            if it then return it end
+        end
+    end
+    return nil
 end
 
 local function hasAnyTool(spec, player)
@@ -96,10 +228,15 @@ local function hasAnyTool(spec, player)
     return false
 end
 
+-- Every item type that satisfies a consume slot (or an options entry),
+-- families included -- computed once per slot table.
 local function altTypes(c)
-    if c.itemTypes then return c.itemTypes end
-    return { c.itemType }
+    if not c.expanded then
+        c.expanded = TWAProcedures.ExpandTypes(c.itemTypes or { c.itemType })
+    end
+    return c.expanded
 end
+TWAProcedures.AltTypes = altTypes
 
 local function countAny(inv, types)
     local total = 0
@@ -144,14 +281,43 @@ local FORGE_TIER_SPRITES = {
     },
 }
 
-local function nearbyForgeTier(player)
+-- Bug report 2026-09-28: a real placed Advanced Forge (and a simple
+-- furnace) left ForgeShape/ForgeFold/ForgeComplex/ForgeVacuum red, while a
+-- Primitive Forge DID satisfy CoolCast -- so tier 1's sprite list is right
+-- but tiers 2/3 are missing the tiles/rotations the game actually placed.
+-- Three changes: (1) scan 3 tiles out instead of 2 (the bigger forges are
+-- multi-tile); (2) also classify by the sprite's own "CustomName" property
+-- when the game provides one ("Advanced ..." = 3, "Primitive ..." = 1,
+-- anything else with "Forge" in it = 2) -- read without pcall and only if
+-- the methods exist; (3) when a forge requirement is NOT met, print every
+-- sprite name (and CustomName) within range to console.txt, at most once
+-- every 10 s, tagged [TWA forge scan] -- send those lines so the exact
+-- sprite names can be added to FORGE_TIER_SPRITES.
+local function customNameOf(sprite)
+    local props = sprite.getProperties and sprite:getProperties()
+    if not props or not props.Val then return nil end
+    return props:Val("CustomName")
+end
+
+local function tierFromCustomName(cn)
+    if not cn then return 0 end
+    local l = string.lower(cn)
+    if not l:find("forge", 1, true) then return 0 end
+    if l:find("advanced", 1, true) then return 3 end
+    if l:find("primitive", 1, true) then return 1 end
+    return 2
+end
+
+local lastForgeScanLog = -1e9
+local function nearbyForgeTier(player, logIfBelow)
     local sq = player:getCurrentSquare()
     if not sq then return 0 end
     local cell = getCell()
     local px, py, pz = sq:getX(), sq:getY(), sq:getZ()
     local best = 0
-    for dx = -2, 2 do
-        for dy = -2, 2 do
+    local seen = logIfBelow and {} or nil
+    for dx = -3, 3 do
+        for dy = -3, 3 do
             local s = cell:getGridSquare(px + dx, py + dy, pz)
             if s then
                 local objs = s:getObjects()
@@ -163,9 +329,20 @@ local function nearbyForgeTier(player)
                         for tier, set in pairs(FORGE_TIER_SPRITES) do
                             if set[name] and tier > best then best = tier end
                         end
+                        local cn = customNameOf(sprite)
+                        local t = tierFromCustomName(cn)
+                        if t > best then best = t end
+                        if seen then seen[#seen + 1] = name .. (cn and (" [" .. cn .. "]") or "") end
                     end
                 end
             end
+        end
+    end
+    if seen and best < logIfBelow then
+        local now = getTimestampMs and getTimestampMs() or 0
+        if now - lastForgeScanLog > 10000 then
+            lastForgeScanLog = now
+            print("[TWA forge scan] need tier " .. logIfBelow .. ", found " .. best .. "; nearby sprites: " .. table.concat(seen, ", "))
         end
     end
     return best
@@ -448,11 +625,10 @@ TWAProcedures.List = {
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 1 } },
         skill = "Woodwork:1", time = 20, sound = "CraftFixWeapon",
     },
-    -- Tool widened: Matches is a real, common alternative fire-starter to
-    -- a Lighter (request 2026-09-27).
+    -- Lighter/Matches tool REMOVED (request 2026-09-28: "เอาไฟแช็กและไม้
+    -- ขีดไฟออกจากทุกสูตร") -- was added 2026-09-27.
     CoatWax = {
         category = "WearResist", nameKey = "IGUI_TWA_Proc_CoatWax", icon = "Candle",
-        tool = { { kind = "type", value = "Base.Lighter" }, { kind = "type", value = "Base.Matches" } },
         consumes = { { itemType = "Base.Candle", qty = 1 } }, skill = "Carving:1", time = 20, sound = "CraftFixWeapon",
     },
     SurfaceCoating = {
@@ -607,9 +783,12 @@ TWAProcedures.List = {
     -- specify them are this mod's own judgment call, using only items/tags
     -- already established real elsewhere in this file. =====
     StartFire = {
-        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_StartFire", icon = "Matches",
-        tool = { { kind = "type", value = "Base.Lighter" }, { kind = "type", value = "Base.Matches" } },
-        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 1 } },
+        -- Request 2026-09-28: no Lighter/Matches any more ("เอาไฟแช็กและไม้
+        -- ขีดไฟออกจากทุกสูตร"), and any charcoal x5 ("ก่อไฟ ใช้ถ่านอะไรก็ได้
+        -- 5 อัน") -- the 3 real base:charcoal items, any mix. Icon moved off
+        -- Matches for the same reason.
+        category = "Metallurgy", nameKey = "IGUI_TWA_Proc_StartFire", icon = "Charcoal",
+        consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 5 } },
         time = 10, sound = "CraftFixWeapon",
     },
     -- "วัตถุดิบเป็นโลหะทุกประเภท โดยแต่ละประเภทก็มีจำนวนที่ใช้ต่างกัน" --
@@ -898,7 +1077,7 @@ function TWAProcedures.CheckEligibility(proc, player, serverSide)
         end
     end
 
-    if not serverSide and proc.forgeTier and nearbyForgeTier(player) < proc.forgeTier then
+    if not serverSide and proc.forgeTier and nearbyForgeTier(player, proc.forgeTier) < proc.forgeTier then
         missing[#missing + 1] = { kind = "forge", tier = proc.forgeTier }
     end
 

@@ -61,8 +61,8 @@ A new procedure's time should be computed this same way, not picked freely.
 -- Blacksmithing (การตีเหล็ก -- internal Lua `key`/translation KEY are still
    literally "Metallurgy"; only the displayed EN/TH text and its position
    changed, moved to right after Assembly) (14) --
-  - StartFire
-      tool=Base.Lighter / Base.Matches, consumes=Charcoal/CharcoalCrafted/Coke x1, skill=(none), time=10ms, sound=CraftFixWeapon
+  - StartFire (2026-09-28: lighter/matches removed, charcoal 1->5; icon=Charcoal)
+      consumes=Charcoal/CharcoalCrafted/Coke x5, skill=(none), time=10ms, sound=CraftFixWeapon
   - MeltMetal (consumes changed 2026-09-28, was IronOre/CopperOre/IronChunk/
     SteelChunk/CopperScrap ore-tier options)
       tool=Base.Tongs, consumes=ONE OF: ScrapMetal x2 / Gold-or-Silver Jewelry x5 (~50 real fullTypes, see JEWELRY_ITEMS in HARMONIE_TWA_Procedures.lua) / Base.SharpedStone ("Flint Shard", no exact real item) x10, skill=(none), time=10ms, sound=CraftFixWeapon
@@ -157,8 +157,8 @@ A new procedure's time should be computed this same way, not picked freely.
       consumes=Clay x1, skill=(none), time=10ms, sound=CraftFixWeapon
   - FireTreat ("เผาหน้าผิว", renamed from "เผาไฟ")
       consumes=Charcoal/CharcoalCrafted/Coke x1, skill=Woodwork:1, time=20ms, sound=CraftFixWeapon
-  - CoatWax
-      tool=Base.Lighter / Base.Matches, consumes=Candle x1, skill=Carving:1, time=20ms, sound=CraftFixWeapon
+  - CoatWax (2026-09-28: lighter/matches removed)
+      consumes=Candle x1, skill=Carving:1, time=20ms, sound=CraftFixWeapon
   - SurfaceCoating
       consumes=Bleach x1, skill=Blacksmith:2, time=30ms, sound=CraftFixWeapon
 
@@ -178,6 +178,11 @@ of Strike / Stroke / Wrap / Coat / Heat / Pour plus a variant (e.g.
 HammerNails = Strike "nails", SharpenEdge = Stroke "sharpen", TightenBolts =
 Wrap "screw", FireTreat = Coat "fire", QuenchHarden = Heat "cool",
 PourMold = Pour). The needle game is only the fallback now.
+Item families (2026-09-28): wherever a procedure names ONE item type (a
+material or a kind="type" tool), every variant of it counts too --
+TWAProcedures.Family(): same-stem items (NormalBrake1/2/3, SpadeHead/
+SpadeHead_Forged...) plus EXTRA_FAMILY lists, only items that really exist.
+The UI shows the first name "(+N)" and lists them all on hover.
 Full design + the B42 multiplayer rules: workflow.txt 8.15.
 Note: `time` below is the timed action's maxTime (game ticks), not ms.
 
