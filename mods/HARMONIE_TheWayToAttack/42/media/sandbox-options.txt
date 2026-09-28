@@ -1,0 +1,9 @@
+VERSION = 1,
+
+option HARMONIE_TheWayToAttack.EnableMinigame
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_EnableMinigame,
+}

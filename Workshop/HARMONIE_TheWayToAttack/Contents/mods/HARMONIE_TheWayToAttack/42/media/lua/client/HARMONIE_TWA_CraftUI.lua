@@ -314,21 +314,13 @@ end
 -- scratch by gen_craftdata.js often enough this session that adding to it
 -- would mean also touching the generator; a small runtime cache here needs
 -- no generator change and costs nothing (built once, on first use).
-local recipeByIdCache
+-- Moved to shared/HARMONIE_TWA_CraftState.lua (request 2026-09-28,
+-- multiplayer fix): the server-side complete() of the crafting actions needs
+-- the same lookup from the plain recipe id it is handed. Kept exported here
+-- under its old name for anything still calling it through TWACraftUI.
 local function getRecipeById(id)
-    if not recipeByIdCache then
-        recipeByIdCache = {}
-        for _, r in ipairs(TWARecipeData.List) do
-            recipeByIdCache[r.id] = r
-        end
-    end
-    return recipeByIdCache[id]
+    return TWACraftState.getRecipeById(id)
 end
--- Exported so HARMONIE_TWA_TierTooltip.lua can resolve a bookmarked base
--- item's TWA_RecipeId into a real recipe too, for its own procedure-progress
--- checklist display -- both files are client Lua with no guaranteed load
--- order relative to each other, so this needs to be a real public field
--- rather than assumed reachable as a bare local.
 TWACraftUI.getRecipeById = getRecipeById
 
 -- Request 2026-09-27: "คลิกขวาเปิด ui ผ่านอาวุธจะค้นหาชื่ออาวุธนั้นโดย
@@ -906,6 +898,12 @@ function TWACraftWindow:new(x, y, player)
     -- onFinish), so crafting a second copy of the same weapon later starts
     -- clean.
     o.progress = {}
+    -- Request 2026-09-28 (procedure minigame): the quality WORD each
+    -- procedure scored (Miss/Bad/Good/Excellent), keyed by recipe.id then
+    -- procId -- a parallel table to self.progress, NOT stored in it, because
+    -- the done-table's values must stay plain `true` (the item tooltip and
+    -- older bookmarks read them that way). See currentQuality().
+    o.quality = {}
     -- Request 2026-09-27 (multiplayer collaborative crafting): set only by
     -- resumeFromItem(), when this window was opened by right-clicking a
     -- base item that was previously bookmarked via the Incomplete button
@@ -1172,6 +1170,52 @@ function TWACraftWindow:currentDone()
     return self.progress[id]
 end
 
+-- The quality-word table matching currentDone(): a resumed item's own
+-- TWA_ProcQuality ModData, or this window's session table.
+function TWACraftWindow:currentQuality()
+    if not self.selectedRecipe then return {} end
+    if self.resumeItem then
+        local md = self.resumeItem:getModData()
+        md.TWA_ProcQuality = md.TWA_ProcQuality or {}
+        return md.TWA_ProcQuality
+    end
+    local id = self.selectedRecipe.id
+    self.quality[id] = self.quality[id] or {}
+    return self.quality[id]
+end
+
+-- Every procedure's current word for the selected recipe (done-without-a-
+-- word from an older bookmark reads as Good -- TWACraftState.wordFor).
+function TWACraftWindow:currentMap()
+    if not self.selectedRecipe then return {} end
+    return TWACraftState.collectMap(self.selectedRecipe, self:currentDone(), self:currentQuality())
+end
+
+-- The exact base item(s) a Finish/Incomplete would use right now
+-- (request 2026-09-28, exact-item fix): the bookmarked item itself while
+-- resuming, otherwise copies WITHOUT a bookmark on them. `ok` is false when
+-- a required slot has no usable copy.
+function TWACraftWindow:pickItems()
+    local recipe = self.selectedRecipe
+    if not recipe then return false end
+    local S = TWACraftState
+    local base, base2
+    if recipe.base then
+        if self.resumeItem then
+            base = S.findItem(self.player, self.resumeItem)
+        else
+            base = S.pickFreshItem(self.player, recipe.base)
+                or (recipe.baseAlt and S.pickFreshItem(self.player, recipe.baseAlt))
+        end
+        if not base then return false end
+    end
+    if recipe.base2 then
+        base2 = S.pickFreshItem(self.player, recipe.base2)
+        if not base2 then return false end
+    end
+    return true, base, base2
+end
+
 -- Request 2026-09-27: reconnects this window to a physical BASE item that
 -- was previously bookmarked via the Incomplete button (see
 -- startCenterAction/TWA_IncompleteCraftAction.lua) -- called from
@@ -1217,12 +1261,8 @@ end
 -- is being resumed from a bookmarked base item or started completely fresh.
 function TWACraftWindow:allProceduresDone()
     if not self.selectedRecipe then return false end
-    if not ownsBase(self.selectedRecipe, self.player) then return false end
-    local doneTable = self:currentDone()
-    for _, procId in ipairs(self.selectedRecipe.procedures) do
-        if not doneTable[procId] then return false end
-    end
-    return true
+    if not self:pickItems() then return false end
+    return TWACraftState.allDone(self.selectedRecipe, self:currentMap())
 end
 
 -- Request 2026-09-27 (corrected 2026-09-28 -- "ตอนกดปุ่มไม่สมบูรณ์ ให้ออกมา
@@ -1243,7 +1283,8 @@ function TWACraftWindow:canGoIncomplete()
     if not self.selectedRecipe or self.resumeItem or self.activeProcId or self.activeCenterAction then return false end
     local recipe = self.selectedRecipe
     if not recipe.base then return false end
-    return self.player:getInventory():getItemCountRecurse(recipe.base) >= 1
+    -- Only onto a copy that doesn't already carry someone's bookmark.
+    return TWACraftState.pickFreshItem(self.player, recipe.base) ~= nil
 end
 
 -- Request 2026-09-28: Cancel/Incomplete/Finish are now all real queued
@@ -1269,24 +1310,48 @@ function TWACraftWindow:startCenterAction(kind)
             window.activeCenterAction = nil
         end
     end
+    -- Request 2026-09-28 (multiplayer fix): the actions are rebuilt on the
+    -- server from their constructor arguments, so those are only ids,
+    -- strings and real item objects -- the window's own tables and
+    -- callbacks are attached afterwards and stay client-side.
+    local S = TWACraftState
+    local recipe = self.selectedRecipe
     local action
     if kind == "cancel" then
         -- Request 2026-09-28: "ปุ่มยกเลิกมีไว้ให้ยกเลิกการทำกรรมวิธีทั้งหมด
-        -- ที่ทำมาของไอเท็มนั้นๆ" -- reverses the earlier "Cancel keeps done
-        -- procedures done" design; on natural completion this really does
-        -- wipe every done flag for the current recipe/item (materials
-        -- already spent by them are still NOT refunded -- see
-        -- TWA_CancelCraftAction.lua's own note).
-        action = TWA_CancelCraftAction:new(self.player, self:currentDone(), onComplete, onEnd)
+        -- ที่ทำมาของไอเท็มนั้นๆ" -- on natural completion this wipes every
+        -- done flag AND quality word for the current recipe/item (materials
+        -- already spent are still NOT refunded -- see
+        -- TWA_CancelCraftAction.lua's own note). A resumed item loses its
+        -- bookmark entirely (server side in complete(), mirrored here).
+        local doneTable, qualityTable, resumeItem = self:currentDone(), self:currentQuality(), self.resumeItem
+        action = TWA_CancelCraftAction:new(self.player, recipe.id, resumeItem)
+        action.onComplete = function()
+            for k in pairs(doneTable) do doneTable[k] = nil end
+            for k in pairs(qualityTable) do qualityTable[k] = nil end
+            if resumeItem then S.clearBookmark(resumeItem) end
+            onComplete()
+        end
     elseif kind == "incomplete" then
         if not self:canGoIncomplete() then return end
-        action = TWA_IncompleteCraftAction:new(self.player, self.selectedRecipe, self:currentDone(), onComplete, onEnd)
+        local baseItem = S.pickFreshItem(self.player, recipe.base)
+        local map = self:currentMap()
+        action = TWA_IncompleteCraftAction:new(self.player, recipe.id, baseItem, S.serializeMap(map))
+        action.onComplete = function()
+            -- Same values complete() wrote server-side, into this client's
+            -- own copy of the item.
+            S.writeBookmark(baseItem, recipe.id, map)
+            onComplete()
+        end
     elseif kind == "finish" then
         if not self:allProceduresDone() then return end
-        action = TWA_FinishCraftAction:new(self.player, self.selectedRecipe, self:currentDone(), onComplete, onEnd)
+        local _, baseItem, base2Item = self:pickItems()
+        action = TWA_FinishCraftAction:new(self.player, recipe.id, baseItem, base2Item, S.serializeMap(self:currentMap()))
+        action.onComplete = onComplete
     else
         return
     end
+    action.onEnd = onEnd
     self.activeCenterKind = kind
     self.activeCenterAction = action
     ISTimedActionQueue.add(action)
@@ -1302,9 +1367,11 @@ function TWACraftWindow:onCenterActionComplete(kind)
         self.resumeItem = nil
     elseif kind == "incomplete" then
         self.progress[self.selectedRecipe.id] = nil
+        self.quality[self.selectedRecipe.id] = nil
         self.selectedRecipe = nil
     elseif kind == "finish" then
         self.progress[self.selectedRecipe.id] = nil
+        self.quality[self.selectedRecipe.id] = nil
         self.selectedRecipe = nil
         self.resumeItem = nil
     end
@@ -1370,21 +1437,47 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
     -- completion always credits THIS recipe's table, even if the player
     -- has switched to a different recipe by the time it finishes.
     local doneTable = self:currentDone()
+    local qualityTable = self:currentQuality()
     if not needed or doneTable[procId] then return end
     if not TWAProcedures.CheckEligibility(proc, self.player) then return end
 
-    self.activeProcId = procId
+    -- Request 2026-09-28 (procedure minigame): the procedure is played as a
+    -- minigame FIRST (HARMONIE_TWA_Minigame.lua), and its result word then
+    -- rides into the timed action as a plain constructor argument -- so the
+    -- server copy of the action (multiplayer) never has to wait on a
+    -- minigame it can't see. The 6 Material recipes have no quality at all
+    -- (same request), so they skip the minigame.
     local window = self
-    local action = TWA_PerformProcedureAction:new(self.player, proc,
-        function() doneTable[procId] = true end,
-        function()
+    local resumeItem = self.resumeItem
+    local function queue(word)
+        -- Anything could have changed while the minigame was up (a material
+        -- dropped, the light gone): re-check, or the action would never
+        -- start and the one-at-a-time lock would never clear.
+        if not TWAProcedures.CheckEligibility(proc, window.player) then
+            window.activeProcId = nil
+            return
+        end
+        local action = TWA_PerformProcedureAction:new(window.player, procId, word, resumeItem)
+        action.onComplete = function(w)
+            qualityTable[procId] = w
+            if w ~= "Miss" then doneTable[procId] = true end
+        end
+        action.onEnd = function()
             if window.activeProcId == procId then
                 window.activeProcId = nil
                 window.activeAction = nil
             end
-        end)
-    self.activeAction = action
-    ISTimedActionQueue.add(action)
+        end
+        window.activeAction = action
+        ISTimedActionQueue.add(action)
+    end
+
+    self.activeProcId = procId
+    if TWACraftState.isMaterialRecipe(self.selectedRecipe) then
+        queue(TWACraftState.FALLBACK_WORD)
+    elseif not TWAMinigame.play(self.player, procId, queue) then
+        self.activeProcId = nil
+    end
 end
 
 -- Clicking an icon in the procedure-library grid only SELECTS it now
@@ -1532,7 +1625,8 @@ end
 -- (recipe.base2, tier-matched MaterialBar) -- factored the single-card draw
 -- (previously inline) into its own method so it can be called once per
 -- slot instead of duplicating the 8 draw calls.
-function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned)
+-- `noteKey` (optional) replaces the owned/missing status line.
+function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey)
     local CARD_H = 40
     self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
     self:drawRectBorder(x, y, w, CARD_H, 0.4, 0.4, 0.4, 0.4)
@@ -1540,7 +1634,7 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned)
         self:drawTextureScaled(TWA_NEAT.check, x + w - 24, y + 12, 16, 16, 1, 1, 1, 1)
     end
     drawTextShadowed(self, baseDisplayName(fullType, altType), x + 8, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
-    local statusKey = owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing"
+    local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
     drawTextShadowed(self, getText(statusKey), x + 8, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
     return y + CARD_H + 6 + 4
 end
@@ -1591,10 +1685,24 @@ function TWACraftWindow:drawProcedureDetails()
     local reqs = TWAProcedures.DescribeAll(proc, self.player)
     local met = true
     for _, r in ipairs(reqs) do if not r.met then met = false break end end
-    local statusKey = inProgress and "IGUI_TWA_ProcedureInProgress" or (done and "IGUI_TWA_ProcedureDone" or (met and "IGUI_TWA_ProcedureReady" or "IGUI_TWA_ProcedureNotReady"))
+    -- "busy" also covers the minigame being up (activeProcId set, no timed
+    -- action queued yet), not just the action itself running.
+    local busy = self.activeProcId == self.selectedProcId
+    local statusKey = busy and "IGUI_TWA_ProcedureInProgress" or (done and "IGUI_TWA_ProcedureDone" or (met and "IGUI_TWA_ProcedureReady" or "IGUI_TWA_ProcedureNotReady"))
     local statusColor = (done or met) and { r = 0.5, g = 0.9, b = 0.5 } or { r = 0.95, g = 0.45, b = 0.45 }
-    if inProgress then statusColor = { r = 1, g = 0.8, b = 0.3 } end
-    drawTextShadowed(self, getText(statusKey), x + 10, ty, statusColor.r, statusColor.g, statusColor.b, 1, UIFont.Small)
+    if busy then statusColor = { r = 1, g = 0.8, b = 0.3 } end
+    local statusText = getText(statusKey)
+    drawTextShadowed(self, statusText, x + 10, ty, statusColor.r, statusColor.g, statusColor.b, 1, UIFont.Small)
+    -- Request 2026-09-28: the quality word this procedure scored for the
+    -- selected recipe, on the same line as its status (keeps every
+    -- requirement line below it in view -- see detailsH's own note).
+    local word = self.selectedRecipe and not TWACraftState.isMaterialRecipe(self.selectedRecipe)
+        and TWACraftState.wordFor(self.selectedProcId, self:currentDone(), self:currentQuality())
+    if word then
+        local wc = TWACraftState.WORD_COLOR[word]
+        local wx = x + 10 + getTextManager():MeasureStringX(UIFont.Small, statusText) + 8
+        drawTextShadowed(self, getText("IGUI_TWA_TooltipQuality", TWACraftState.wordText(word)), wx, ty, wc.r, wc.g, wc.b, 1, UIFont.Small)
+    end
     ty = ty + 20
 
     -- Confirm/Cancel buttons (request 2026-09-26: "performing a procedure
@@ -1800,20 +1908,49 @@ function TWACraftWindow:render()
         -- MaterialBar) is drawn right below the 1st when present -- both
         -- must be owned to craft, no longer "at most one card" like the
         -- single-base-item round assumed.
+        -- Request 2026-09-28 (exact-item fix): "owned" means a copy this
+        -- craft can actually USE -- the resumed item itself, or for a fresh
+        -- craft a copy WITHOUT someone's bookmark on it. Holding only
+        -- bookmarked copies says so, pointing at right-click-to-resume.
+        local S = TWACraftState
         local inv = self.player:getInventory()
-        local owned1 = inv:getItemCountRecurse(recipe.base) >= 1
-            or (recipe.baseAlt and inv:getItemCountRecurse(recipe.baseAlt) >= 1)
-        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base, recipe.baseAlt, owned1)
+        local owned1, note1
+        if self.resumeItem then
+            owned1 = S.findItem(self.player, self.resumeItem) ~= nil
+        else
+            owned1 = S.pickFreshItem(self.player, recipe.base) ~= nil
+                or (recipe.baseAlt ~= nil and S.pickFreshItem(self.player, recipe.baseAlt) ~= nil)
+            if not owned1 and (inv:getItemCountRecurse(recipe.base) >= 1
+                    or (recipe.baseAlt and inv:getItemCountRecurse(recipe.baseAlt) >= 1)) then
+                note1 = "IGUI_TWA_BaseOnlyBookmarked"
+            end
+        end
+        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base, recipe.baseAlt, owned1, note1)
         if recipe.base2 then
-            local owned2 = inv:getItemCountRecurse(recipe.base2) >= 1
+            local owned2 = S.pickFreshItem(self.player, recipe.base2) ~= nil
             baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2)
         end
     end
 
     -- Required-procedure checklist grid
     drawTextShadowed(self, getText("IGUI_TWA_RequiredProcedures"), centerX, baseY, 0.85, 0.85, 0.85, 1, UIFont.Small)
+    -- Request 2026-09-28: every procedure's quality word under its icon, and
+    -- the running overall quality (average of what's scored so far) on the
+    -- header's right. Material recipes have no quality (same request).
+    local showWords = not TWACraftState.isMaterialRecipe(recipe)
+    local doneNow, qualityNow = self:currentDone(), self:currentQuality()
+    if showWords then
+        local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap())
+        if oWord then
+            local oc = TWACraftState.WORD_COLOR[oWord]
+            local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord) .. string.format(" (%.2f)", oAvg))
+            local lw = getTextManager():MeasureStringX(UIFont.Small, label)
+            drawTextShadowed(self, label, centerX + CENTER_W - 16 - lw, baseY, oc.r, oc.g, oc.b, 1, UIFont.Small)
+        end
+    end
     local gridLeft, gridTop = centerX, baseY + 20
     local cell, gap = 44, 8
+    local wordH = showWords and 16 or 0
     local perRow = math.max(1, math.floor((CENTER_W - 16 + gap) / (cell + gap)))
     local px, py = gridLeft, gridTop
     local mx, my = self:getMouseX(), self:getMouseY()
@@ -1822,7 +1959,7 @@ function TWACraftWindow:render()
         if proc then
             if i > 1 and (i - 1) % perRow == 0 then
                 px = gridLeft
-                py = py + cell + gap
+                py = py + cell + gap + wordH
             end
             local done = self:currentDone()[procId]
             local tex2
@@ -1838,6 +1975,11 @@ function TWACraftWindow:render()
                 self:drawTextureScaled(tex2, px + 6, py + 6, cell - 12, cell - 12, 1, tint, tint, tint)
             end
             if done then drawCheckBadge(self, px, py, cell) end
+            local w = showWords and TWACraftState.wordFor(procId, doneNow, qualityNow)
+            if w then
+                local wc = TWACraftState.WORD_COLOR[w]
+                drawTextShadowed(self, TWACraftState.wordText(w), px, py + cell + 1, wc.r, wc.g, wc.b, 1, UIFont.Small)
+            end
             -- These are plain drawn rects, not widgets, so hover has no free
             -- isMouseOver() -- check bounds directly and hand the name up
             -- the same way the procedure library does, so it isn't clipped

@@ -1,0 +1,5 @@
+{
+    "Sandbox_HARMONIE_TheWayToAttack": "HARMONIE: The Way To Attack",
+    "Sandbox_HARMONIE_TWA_EnableMinigame": "Procedure minigame",
+    "Sandbox_HARMONIE_TWA_EnableMinigame_tooltip": "Play a minigame for every crafting procedure and score it Miss/Bad/Good/Excellent. When off, every procedure runs as a plain progress bar and always scores Excellent."
+}

@@ -155,6 +155,9 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
      script before running it, tier/balance tuning discipline (compute real
      distributions, don't guess), and never trusting a pasted external claim
      about game mechanics without grep/data-verifying it first.
+8.15 Procedure minigame + quality/grade system + B42 multiplayer timed-action
+     rules (HARMONIE_TheWayToAttack, 2026-09-28) — learned from Casualties
+     Undead's real source.
 9.   Checklist to run through before starting any new work.
 
 
@@ -2505,6 +2508,80 @@ that had drifted from vanilla's own real per-context tag choice:
   media/scripts/generated/recipes/recipes_*.txt files for `tags[base:...]` near
   a thematically similar action) and mirror THAT specific combo instead; a
   single "widen everything" pass would have kept KnapHead's real mismatch.
+
+
+8.15 Procedure minigame + quality/grade + B42 multiplayer timed actions (HARMONIE_TheWayToAttack, 2026-09-28)
+================================================================================
+Design (all decided by the user, 2026-09-28):
+  - Every procedure is played as a minigame first (phase 1 = ONE generic game
+    for all procedures, client/HARMONIE_TWA_Minigame.lua: hold LMB, needle
+    moves, release inside nested zones). Result word: Miss=0 / Bad=1 /
+    Good=2 / Excellent=3. Miss (outside zones, past the end, Cancel, ESC,
+    right-click) uses the materials anyway but leaves the procedure NOT done
+    (redo allowed). XP only for non-Miss (this mod's own call, not specified).
+  - Minigame off in sandbox (HARMONIE_TheWayToAttack.EnableMinigame) or any
+    error opening/running it -> Excellent, panel never left holding the mouse.
+  - Words shown on the crafting UI (under each checklist icon + running
+    overall on the header + next to the selected procedure's status) and on
+    a bookmarked item's tooltip (Incomplete). Translated: พลาด/แย่/ดี/ยอดเยี่ยม.
+  - Finish: average of the words (1..3) -> Bad < 1.67 / Good < 2.34 /
+    Excellent >= 2.34 -> grade rolled from that quality's pool, odds 1/9/20/
+    30/40 in order: Excellent=(S,A,B,C,D), Good=(A,B,C,D,E), Bad=(B,C,D,E,F).
+    REPLACED the old flat 0/1/3/6/15/25/50 roll. Stamped as ModData
+    TWA_Quality + TWA_Grade (tooltip shows both). Material recipes (6):
+    no minigame, no quality, no grade.
+  - A bookmark made before this update has no words: its done procedures
+    read as Good.
+  - Words live in a SEPARATE table (window self.quality / item ModData
+    TWA_ProcQuality) -- NOT in the done-table, whose values must stay `true`
+    (older tooltip/bookmark code reads `== true`).
+  - Minigame is played BEFORE the timed action is queued; the word rides
+    into the action as a constructor string. This keeps the server copy of
+    the action (MP) from ever needing to wait on a minigame it can't see --
+    Casualties Undead instead pins the action clock and sets the server
+    duration to -1 with a begin/result handshake, far more machinery.
+
+Exact-item fix: Finish/Incomplete used to act on "the first base item of that
+type in the bag". With 2 copies, a bookmarked copy could survive while an
+unbookmarked twin was consumed (progress/grade farming). Now: resuming ->
+that exact item; fresh craft -> a copy WITHOUT a bookmark
+(TWACraftState.pickFreshItem); only bookmarked copies -> base card says so.
+Cancel on a resumed item now removes its bookmark entirely.
+
+*** B42 multiplayer timed-action rules (read from Casualties Undead's own
+real source, CUMedicalAction.lua/CasualtiesUndead_Botch.lua -- NOT yet
+verified on a real dedicated server by this repo) ***
+  - complete() runs on the SERVER in multiplayer (skipped on clients) and
+    locally in single player (before perform()). perform() runs on the
+    client only. => every world change (remove/add items, XP, ModData on an
+    item) goes in complete(); perform() only does UI callbacks.
+  - The action class must exist on the server: put it in
+    media/lua/shared/TimedActions/, not client/.
+  - The server rebuilds the action by calling new() with the fields named
+    like new()'s parameters -> store every parameter under its own name, and
+    only pass strings/numbers/booleans/items/players. Tables and functions
+    don't survive: serialize tables to a string; attach UI callbacks after
+    construction (client only).
+  - On the server, look the item up again by id (inventory:getItemById /
+    getItemWithIDRecursiv) -- the object the action was rebuilt with is not
+    necessarily the one the server's inventory holds.
+  - Server-side inventory changes must be sent: sendRemoveItemFromContainer
+    (container, item) after Remove, sendAddItemToContainer(container, item)
+    after AddItem (stamp ModData BEFORE sending). XP via the addXp(player,
+    perk, amount) global.
+  - ModData written on an existing item server-side is not pushed to the
+    client by the above; this mod writes the SAME deterministic values on
+    both ends (complete() server-side + the window's onComplete client-side)
+    instead of relying on a sync call. Random rolls (grade) happen only in
+    complete().
+  - Light (tooDarkToRead) and nearby placed forge are client-world checks:
+    checked client-side before queueing; the server's isValid only re-checks
+    tools/materials/skill (CheckEligibility(proc, player, true)).
+
+Testing without the game: `pip install lupa` gives a real Lua runtime in
+Python; used to syntax-check every .lua file and to run mocked behaviour
+tests of CraftState/actions/minigame. Much better than brace counting (see
+8.13's `--` lesson).
 
 
 9. Checklist before starting any new work
