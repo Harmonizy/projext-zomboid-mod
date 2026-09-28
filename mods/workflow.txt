@@ -2617,6 +2617,10 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 =======================================
 [ ] Always read this file (mods/workflow.txt) first.
 [ ] `git fetch` + `git status` + `git log --oneline -5` to check the repo's latest state.
+[ ] STANDING RULE (user, 2026-09-28: "ทำ pr เสมอ"): after pushing work, ALWAYS
+    open a pull request for it (or update the branch's existing open one) --
+    don't wait to be asked. If the branch's previous PR was already merged,
+    open a NEW PR for the follow-up commits.
 [ ] Patching someone else's mod? Find their real files in the Steam Workshop
     content cache first (section 7) — never guess.
 [ ] Building something "adjustable while playing"? Use PZAPI.ModOptions, not a
