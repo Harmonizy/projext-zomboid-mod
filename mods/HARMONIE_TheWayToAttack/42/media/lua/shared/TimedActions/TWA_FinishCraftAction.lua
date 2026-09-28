@@ -33,6 +33,7 @@
 
 require "TimedActions/ISBaseTimedAction"
 require "HARMONIE_TWA_Procedures"
+require "HARMONIE_TWA_Config"
 require "HARMONIE_TWA_CraftState"
 
 TWA_FinishCraftAction = ISBaseTimedAction:derive("TWA_FinishCraftAction")
@@ -135,7 +136,9 @@ function TWA_FinishCraftAction:new(character, recipeId, qualities)
     -- maxTime raised 100->300 (request 2026-09-28: "เพิ่มเวลา Actiontime
     -- ตอนกดปุ่ม เสร็จสิ้น ไม่สมบูรณ์ ยกเลิก" -- same for Incomplete/Cancel).
     -- Round 6: same time as the recipe's procedures (was a flat 300).
-    o.maxTime = TWACraftState.recipeActionTime(o.recipe)
+    -- Round 9: always the sandbox "CraftButtonSeconds" (default 5 s; "action
+    -- time เป็น 5วิเสมอ").
+    o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("CraftButtonSeconds", 0.1))
     o.forceProgressBar = true
     return o
 end

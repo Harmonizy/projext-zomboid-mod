@@ -32,9 +32,9 @@ local PULL_FULL = 220      -- px of pull for a full gauge
 local ARC_STEPS = 14
 
 function TWASutureGame:onStart()
-    self.need = 3 + math.floor(self.req / 2)
+    self.need = math.floor(TWAConfig.num("SutureStitches", 1)) + math.floor(self.req / 2)
     self.done = 0
-    self.band = 12 * self.tol
+    self.band = TWAConfig.num("SutureZone", 1) * self.tol
     self.lo, self.hi = 0.55, 0.55 + 0.18 * self.tol
     self.tear = math.min(0.98, self.hi + 0.12)
     self.phase = "pierce"

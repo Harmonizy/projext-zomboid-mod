@@ -49,6 +49,8 @@ local VARIANTS = {
 local function buildPath(variant)
     if variant == "saw" then
         return { { 170, 210 }, { 450, 210 } }
+    elseif variant == "weld" and not TWAConfig.on("WeldZigzag") then
+        return { { 110, 200 }, { 510, 200 } } -- sandbox: straight seam
     elseif variant == "weld" then
         -- Zig-zag weave along the seam again (round 6: "ให้โซนกลับไปเป็น
         -- ฟันปลา"; round 5 had made it a straight line).
@@ -109,7 +111,22 @@ function TWAStrokeGame:onStart()
     self.v = v
     self.path = buildPath(self.variant)
     self.seg, self.total = measure(self.path)
-    self.need = math.max(1, v.strokes(self.req))
+    -- Round 9: the tunable values come from the sandbox.
+    local vr = self.variant or "sharpen"
+    if vr == "sharpen" or vr == "polish" then
+        local isS = vr == "sharpen"
+        v = { strokes = function() return TWAConfig.num(isS and "SharpenStrokes" or "PolishStrokes", 1) end,
+              vmin = TWAConfig.num("FlickMinSpeed", 0.01), band = TWAConfig.num(isS and "SharpenZone" or "PolishZone", 1),
+              tool = v.tool, flick = true }
+    elseif vr == "saw" then
+        v = { strokes = function() return TWAConfig.num("SawStrokes", 1) end, vmax = v.vmax, band = v.band, tool = v.tool, alternate = true }
+    elseif vr == "weld" then
+        local burn = TWAConfig.num("WeldBurnSpeed", 0)
+        v = { strokes = v.strokes, vmax = TWAConfig.num("WeldMaxSpeed", 0.01), vmin = burn > 0 and burn or nil,
+              burnRate = v.burnRate, band = TWAConfig.num("WeldZone", 1), tool = v.tool }
+    end
+    self.v = v
+    self.need = math.max(1, math.floor(v.strokes(self.req)))
     self.done = 0
     self.band = v.band * self.tol
     self.vmax = v.vmax and (v.vmax * self.tol / self.pace) or math.huge

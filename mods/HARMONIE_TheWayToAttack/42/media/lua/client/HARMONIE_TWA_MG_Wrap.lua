@@ -38,14 +38,9 @@ local TWO_PI = 6.2832
 -- Kahlua (PZ) is Lua 5.1 and has math.atan2; newer Lua folds it into math.atan.
 local atan2 = math.atan2 or math.atan
 
--- Screw: how far past snug the gauge shows, and where the thread strips.
-local STRIP_AT = 0.5
--- A release this close under the mark still counts as snug (the readout
--- rounds to one decimal -- "3.0" on screen must be releasable).
-local SNUG_SLACK = 0.05
-
--- Grind: crank speed band, turns per second.
-local GRIND_LO, GRIND_HI = 0.55, 1.25
+-- Screw strip point, snug allowance and the grindstone's speed band come
+-- from the sandbox (round 9): ScrewStripAt (0.5 turns past snug),
+-- ScrewSnugSlack (0.05), GrindMinSpeed/GrindMaxSpeed (0.55/1.25 turns/s).
 
 function TWAWrapGame:onStart()
     local vr = self.variant or "cloth"
@@ -57,15 +52,18 @@ function TWAWrapGame:onStart()
     -- The screw ring was bigger than the plate behind it (bug report
     -- 2026-09-28): smaller ring, bigger plate (see renderGame).
     self.R = self.screw and 55 or (self.drill and 70 or 105)
-    self.band = 10 * self.tol -- halved (request 2026-09-28)
+    self.band = TWAConfig.num("WrapZone", 1) * self.tol -- sandbox (round 9), default 10
+    self.stripAt = TWAConfig.num("ScrewStripAt", 0.01)
+    self.snugSlack = TWAConfig.num("ScrewSnugSlack", 0)
+    self.grindLo, self.grindHi = TWAConfig.num("GrindMinSpeed", 0.01), TWAConfig.num("GrindMaxSpeed", 0.02)
     -- Wrapping cloth: twice that again (request 2026-09-28: "กรรมวิธีพันผ้า
     -- ประกอบผ้าอยากให้โซนใหญ่กว่านี้ สองเท่า").
-    if vr == "cloth" then self.band = self.band * 2 end
+    if vr == "cloth" then self.band = self.band * TWAConfig.num("ClothZoneMultiplier", 0.05) end
     -- WrapBind ("พันยึด", the tape variant): x2 as well (request 2026-09-28).
-    if vr == "tape" then self.band = self.band * 2 end
+    if vr == "tape" then self.band = self.band * TWAConfig.num("TapeZoneMultiplier", 0.05) end
     if self.grind then self.band = 30 * self.tol end -- grinding judges speed, not the circle
     if self.screw then
-        self.need = 3
+        self.need = TWAConfig.num("ScrewTurns", 0.5)
     elseif self.drill then
         self.need = 4
     elseif self.grind then
@@ -100,7 +98,7 @@ end
 
 function TWAWrapGame:onRelease()
     self.lastAng = nil
-    if self.screw and self.turns >= self.need - SNUG_SLACK then
+    if self.screw and self.turns >= self.need - self.snugSlack then
         self:succeed(getText(self.stripped and "IGUI_TWA_MG_Wrap_Stripped" or "IGUI_TWA_MG_Wrap_Snug"))
     end
 end
@@ -146,19 +144,19 @@ function TWAWrapGame:onDrag(x, y, dt)
         local inst = dt > 0 and (d / TWO_PI) / (dt / 1000) or 0
         self.omega = self.omega + (inst - self.omega) * math.min(1, dt / 300)
         self.wheelAng = self.wheelAng + d * 3
-        if self.omega >= GRIND_LO and self.omega <= GRIND_HI then self.grindReached = true end
-        if self.omega < GRIND_LO then
+        if self.omega >= self.grindLo and self.omega <= self.grindHi then self.grindReached = true end
+        if self.omega < self.grindLo then
             -- Getting the wheel up to speed is free; once it has been in
             -- the band, dropping out of it costs (round 7, same rule as the
             -- bellows).
-            if self.grindReached then
+            if self.grindReached and TWAConfig.on("HeatOutsideCosts") then
                 self:spend(dt * 0.00006, getText("IGUI_TWA_MG_Wrap_GrindSlow"), true)
             else
                 self:flash(getText("IGUI_TWA_MG_Wrap_GrindSlow"), false, 300)
             end
             return -- the stone isn't biting: no progress
-        elseif self.omega > GRIND_HI then
-            self:tooFast(dt * 0.00035 * (self.omega / GRIND_HI), getText("IGUI_TWA_MG_Wrap_GrindFast"), x, y)
+        elseif self.omega > self.grindHi then
+            self:tooFast(dt * 0.00035 * (self.omega / self.grindHi), getText("IGUI_TWA_MG_Wrap_GrindFast"), x, y)
         end
         if ZombRand(2) == 0 then
             self:burst("spark", self.cx + 62, self.cy - 10, 2, { speed = 0.3, ttl = 350 })
@@ -175,7 +173,7 @@ function TWAWrapGame:onDrag(x, y, dt)
     end
 
     if self.screw then
-        if self.turns > self.need + STRIP_AT and not self.stripped then
+        if self.turns > self.need + self.stripAt and not self.stripped then
             self.stripped = true
             self:spend(0.35, getText("IGUI_TWA_MG_Wrap_Stripped"))
             self:burst("spark", self.cx, self.cy, 10)
@@ -213,16 +211,16 @@ function TWAWrapGame:renderGame()
         -- clear): the bar runs PAST the gold "snug" mark into an orange zone
         -- and a red strip line, and the fill keeps going with you.
         local gx, gy, gw, gh = cx - 150, cy + 125, 300, 14
-        local maxT = self.need + STRIP_AT + 0.25
+        local maxT = self.need + self.stripAt + 0.25
         local function xAt(t) return gx + gw * math.min(1, t / maxT) end
         self:rect(gx, gy, gw, gh, 1, C.dark)
-        self:rect(xAt(self.need), gy, xAt(self.need + STRIP_AT) - xAt(self.need), gh, 0.35, { r = 0.95, g = 0.55, b = 0.1 })
-        self:rect(xAt(self.need + STRIP_AT), gy, gx + gw - xAt(self.need + STRIP_AT), gh, 0.45, C.bad)
-        local fillCol = self.stripped and C.bad or (self.turns >= self.need - SNUG_SLACK and { r = 0.95, g = 0.6, b = 0.1 } or C.good)
+        self:rect(xAt(self.need), gy, xAt(self.need + self.stripAt) - xAt(self.need), gh, 0.35, { r = 0.95, g = 0.55, b = 0.1 })
+        self:rect(xAt(self.need + self.stripAt), gy, gx + gw - xAt(self.need + self.stripAt), gh, 0.45, C.bad)
+        local fillCol = self.stripped and C.bad or (self.turns >= self.need - self.snugSlack and { r = 0.95, g = 0.6, b = 0.1 } or C.good)
         self:rect(gx, gy + 3, xAt(self.turns) - gx, gh - 6, 1, fillCol)
         self:line(xAt(self.need), gy - 8, xAt(self.need), gy + gh + 8, 3, 1, C.guide)
-        self:line(xAt(self.need + STRIP_AT), gy - 6, xAt(self.need + STRIP_AT), gy + gh + 6, 2, 1, C.bad)
-        if self.turns >= self.need - SNUG_SLACK and not self.stripped and not self.word then
+        self:line(xAt(self.need + self.stripAt), gy - 6, xAt(self.need + self.stripAt), gy + gh + 6, 2, 1, C.bad)
+        if self.turns >= self.need - self.snugSlack and not self.stripped and not self.word then
             local pulse = 0.6 + 0.4 * math.sin(self.elapsed * 0.02)
             self:textC(getText("IGUI_TWA_MG_Wrap_LetGo"), cx, gy - 26, C.guide, pulse)
         end
@@ -244,7 +242,7 @@ function TWAWrapGame:renderGame()
         local mx, my, mw = cx - 150, cy + 125, 300
         local function xAt(v) return mx + mw * math.min(1, v / 2) end
         self:rect(mx, my, mw, 12, 1, C.dark)
-        self:rect(xAt(GRIND_LO), my, xAt(GRIND_HI) - xAt(GRIND_LO), 12, 0.8, C.good)
+        self:rect(xAt(self.grindLo), my, xAt(self.grindHi) - xAt(self.grindLo), 12, 0.8, C.good)
         self:line(xAt(self.omega), my - 6, xAt(self.omega), my + 18, 3, 1, C.line)
     else
         -- The handle, standing up, and the wraps laid round it so far.

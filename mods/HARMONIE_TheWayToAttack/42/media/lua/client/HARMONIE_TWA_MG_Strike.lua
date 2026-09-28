@@ -36,9 +36,8 @@ local VARIANTS = {
 -- เลย ให้เป็นความเร็วในที่อุณหภูมิลดลงเร็วขึ้นไม่เอาความเร็วในการลดลงของวง"):
 -- each forging level cools faster -- the ring is NOT made faster. How long
 -- a full-heat bar takes to go cold (ms), before the skill bonus.
-local FORGE_COOL_MS = {
-    ForgeShape = 14000, ForgeFold = 10500, ForgeComplex = 8000, ForgeVacuum = 6000,
-}
+-- (Round 9: the times come from the sandbox, "ForgeCool1".."ForgeCool4".)
+local FORGE_LEVEL = { ForgeShape = 1, ForgeFold = 2, ForgeComplex = 3, ForgeVacuum = 4 }
 
 function TWAStrikeGame:onStart()
     local v = VARIANTS[self.variant] or VARIANTS.nails
@@ -67,20 +66,23 @@ function TWAStrikeGame:onStart()
     -- speed half of it would be under one frame, i.e. luck, not skill. The
     -- "zones half as wide" request applies to how close the hammer must be
     -- to the mark instead (22 -> 11 px).
-    self.period = 900 / self.pace           -- ms for the ring to close
+    self.period = TWAConfig.num("StrikeRingMs", 50) / self.pace -- ms for the ring to close (sandbox, round 9)
     -- The lit mark is bigger (request 2026-09-28: "ทำจุดสว่างให้ใหญ่ขึ้น")
     -- -- 13 -> 22 px, and the hammer may land anywhere on it.
-    self.R0, self.Rt = 140, 22
+    self.R0, self.Rt = TWAConfig.num("StrikeRingSize", 10), TWAConfig.num("StrikeMarkSize", 2)
     self.lastRing = self.R0
     -- Follow-up request (same day): "มินิเกมตอกตะปูพลาดทุกครั้ง ปรับให้ช่วง
     -- เวลาที่กดแล้วนับว่าตรงจังหวะ 115 เหมือนเดิม" -- the timing window is set
     -- in TIME (115 ms either side, perfect = 45% of it, ~52 ms) and turned
     -- into ring pixels from the ring's own speed, so it stays 115 ms however
     -- fast the ring closes. The big fast ring stays.
-    self.window = 115 * (self.R0 / self.period) * self.tol -- px of ring error still "good"
+    self.window = TWAConfig.num("StrikeWindowMs", 1) * (self.R0 / self.period) * self.tol -- px of ring error still "good"
     self.aim = self.Rt * self.tol            -- anywhere on the lit mark counts
     self.heat = 1
-    self.coolMs = FORGE_COOL_MS[self.procId] or 14000
+    self.coolMs = TWAConfig.num("ForgeCool" .. (FORGE_LEVEL[self.procId] or 1), 100)
+    self.reheatMs = TWAConfig.num("ForgeReheatMs", 50)
+    -- Sound: one burst per blow, not a loop while the button is down.
+    self.loopWhileDragging = false
     self.coal = { x = 20, y = 150, w = 100, h = 90 }
     self.timeLimit = 25000 + n * 9000
     -- Cursor (request 2026-09-28): always the ball-peen hammer, except in
@@ -129,7 +131,10 @@ function TWAStrikeGame:onGrab(x, y)
     -- Smashing is one blow (request 2026-09-28: "กรรมวิธี ทุบ ให้ทุบครั้งเดียว
     -- พอ"): any timed hit on the mark finishes it; the timing still decides
     -- how much quality it costs.
-    local oneBlow = self.variant == "smash"
+    local oneBlow = self.variant == "smash" and TWAConfig.on("SmashOneBlow")
+    -- The blow's sound: the procedure's own (hammering, stone on stone...),
+    -- cut short so each blow is one knock.
+    self:sfx(self.proc and self.proc.sound, 260)
     if err <= self.window * 0.45 then
         t.depth = oneBlow and 1 or (t.depth + 0.55)
         self:flash(getText("IGUI_TWA_MG_Strike_Perfect"), false, 500)
@@ -164,7 +169,7 @@ end
 function TWAStrikeGame:onDrag(x, y, dt)
     if self.reheating then
         if self:inCoal(x, y) then
-            self.heat = math.min(1, self.heat + dt / 1800)
+            self.heat = math.min(1, self.heat + dt / self.reheatMs)
             if ZombRand(3) == 0 then self:burst("ember", x, y, 1) end
         else
             self.reheating = false

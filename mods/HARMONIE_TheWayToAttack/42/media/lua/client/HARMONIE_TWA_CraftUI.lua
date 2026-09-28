@@ -514,10 +514,16 @@ function TWARecipeScrollList:refresh()
         if self:matches(recipe) then
             local item = getItemScript(recipe.result)
             local name = item and item:getDisplayName() or recipe.result
-            matched[#matched + 1] = { name = name, recipe = recipe }
+            local st = TWARecipeData.Stats and TWARecipeData.Stats[recipe.result]
+            matched[#matched + 1] = { name = name, recipe = recipe, tier = (st and st.tier) or 99 }
         end
     end
-    table.sort(matched, function(a, b) return a.name < b.name end)
+    -- Round 9 ("สูตรอยากให้เรียงจาก tier ต่ำไปสูง ก่อนแล้วค่อยเรียงตามตัวอักษร"):
+    -- lowest tier first, then by name within a tier.
+    table.sort(matched, function(a, b)
+        if a.tier ~= b.tier then return a.tier < b.tier end
+        return a.name < b.name
+    end)
     for _, m in ipairs(matched) do
         self:addItem(m.name, m.recipe)
     end

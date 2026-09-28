@@ -50,13 +50,13 @@ function TWAIncisionGame:onStart()
     end
     self.passes = self.engrave and 1 or (2 + math.floor(self.req / 3))
     self.done = 0
-    self.band = 8 * self.tol
+    self.band = TWAConfig.num("IncisionZone", 1) * self.tol
     -- Depth model: the depth eases towards 1.25 - speed/vref. Around
     -- 0.35-0.65 x vref lands in the band.
     self.vref = 0.9 / self.pace
     self.dLo, self.dHi = 0.45, 0.45 + 0.3 * self.tol
     self.through = 1.05
-    if self.engrave then
+    if self.engrave and TWAConfig.on("EngraveWideDepth") then
         -- Round 8: the depth band covers 90% of the gauge (0..1.3).
         -- (0.10..1.27 = 1.17 of 1.3; holding still settles at 1.25, inside.)
         self.dLo, self.dHi = 0.10, 1.27

@@ -26,9 +26,9 @@ local B = TWAMinigameBase
 local C = B.COL
 
 function TWAExtractGame:onStart()
-    self.holes = math.max(1, math.min(3, 1 + math.floor(self.req / 2)))
+    self.holes = math.max(1, math.min(math.floor(TWAConfig.num("ExtractMaxHoles", 1)), 1 + math.floor(self.req / 2)))
     self.doneHoles = 0
-    self.lateral = 4 * self.tol
+    self.lateral = TWAConfig.num("ExtractGuide", 0.5) * self.tol
     self.speedLimit = 0.12 * self.tol / self.pace
     -- The block: upright, the hole bored from its top end.
     self.bx, self.by, self.bw, self.bh = 230, 70, 170, 285

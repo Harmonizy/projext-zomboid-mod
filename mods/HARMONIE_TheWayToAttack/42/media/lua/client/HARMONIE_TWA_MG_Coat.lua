@@ -27,7 +27,7 @@ local MATERIAL = {
 }
 
 local COLS, ROWS = 14, 5
-local DONE = 0.9
+local DONE = 0.9 -- default; the sandbox "CoatCoverage" is used (round 9)
 local LOAD = 12
 
 function TWACoatGame:onStart()
@@ -124,8 +124,9 @@ end
 
 function TWACoatGame:updateGame(dt)
     local cov = self:coverage()
-    self.progress = math.min(1, cov / DONE)
-    if cov >= DONE then
+    local done = TWAConfig.num("CoatCoverage", 0.05)
+    self.progress = math.min(1, cov / done)
+    if cov >= done then
         self:succeed(getText("IGUI_TWA_MG_Coat_Done"))
     end
     if self.fire and not self.dragging then

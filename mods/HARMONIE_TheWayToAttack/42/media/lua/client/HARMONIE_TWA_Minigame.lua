@@ -27,6 +27,7 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "HARMONIE_TWA_Config"
 
 TWAMinigame = ISPanel:derive("TWAMinigame")
 TWAMinigame.instance = nil
@@ -46,9 +47,7 @@ local ZONE_COLOR = {
 }
 
 function TWAMinigame.enabled()
-    local sv = SandboxVars and SandboxVars.HARMONIE_TheWayToAttack
-    if sv and sv.EnableMinigame == false then return false end
-    return true
+    return TWAConfig.on("EnableMinigame")
 end
 
 -- Something else holds the mouse right now: another TWA minigame, or a
