@@ -918,7 +918,7 @@ TWAProcedures.List = {
     -- Round 16: the Gemstone recipe's "ทุบ" -- cracking a stone open with a
     -- hammer (or a hammerstone), three well-timed blows.
     SmashStone = {
-        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_SmashStone", icon = "TWA_Gemstone",
+        category = "Gemcutting", nameKey = "IGUI_TWA_Proc_SmashStone", icon = "TWA_Rock", -- round 17: a plain stone
         iconItems = { "Base.Stone2", "Base.LargeStone" },
         tool = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },

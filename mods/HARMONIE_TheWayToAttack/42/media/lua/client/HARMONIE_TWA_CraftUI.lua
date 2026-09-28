@@ -2231,9 +2231,9 @@ function TWACraftWindow:render()
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishMaterial"))
     elseif recipe.roll then
         -- Round 16: what Finish can give, spelled out (the chances are sandbox).
-        local good = TWAConfig.num("GemGoodChance", 1)
-        local dia = good * TWAConfig.num("GemDiamondShare", 1) / 100
-        local note = getText("IGUI_TWA_GemFinishRule", tostring(good), string.format("%.1f", dia))
+        -- Round 17: the gem chance follows the overall quality.
+        local S = TWACraftState
+        local note = getText("IGUI_TWA_GemFinishRule", tostring(S.gemChance("Excellent")), tostring(S.gemChance("Good")), tostring(S.gemChance("Bad")))
         local ny = self.panelBottom - self.btnH - 34
         for i, l in ipairs(wrapTextLines(note, CENTER_W - 24, UIFont.Small)) do
             drawTextShadowed(self, l, centerX, ny + (i - 1) * 14 - 14, 0.75, 0.85, 1, 1, UIFont.Small)

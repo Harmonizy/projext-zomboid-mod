@@ -26,6 +26,16 @@ option HARMONIE_TheWayToAttack.CraftButtonSeconds
     translation = HARMONIE_TWA_CraftButtonSeconds,
 }
 
+option HARMONIE_TheWayToAttack.EndButtonSeconds
+{
+    type = double,
+    min = 0.1,
+    max = 60.0,
+    default = 1.8,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_EndButtonSeconds,
+}
+
 option HARMONIE_TheWayToAttack.ProcedureSeconds
 {
     type = double,
@@ -127,7 +137,7 @@ option HARMONIE_TheWayToAttack.BadBelow
     type = double,
     min = 0.0,
     max = 3.0,
-    default = 2.0,
+    default = 2.5,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_BadBelow,
 }
@@ -137,7 +147,7 @@ option HARMONIE_TheWayToAttack.GoodBelow
     type = double,
     min = 0.0,
     max = 3.0,
-    default = 2.5,
+    default = 2.9,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_GoodBelow,
 }
@@ -147,7 +157,7 @@ option HARMONIE_TheWayToAttack.GradeChance1
     type = integer,
     min = 0,
     max = 100,
-    default = 1,
+    default = 10,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_GradeChance1,
 }
@@ -157,7 +167,7 @@ option HARMONIE_TheWayToAttack.GradeChance2
     type = integer,
     min = 0,
     max = 100,
-    default = 9,
+    default = 30,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_GradeChance2,
 }
@@ -167,29 +177,9 @@ option HARMONIE_TheWayToAttack.GradeChance3
     type = integer,
     min = 0,
     max = 100,
-    default = 20,
+    default = 60,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_GradeChance3,
-}
-
-option HARMONIE_TheWayToAttack.GradeChance4
-{
-    type = integer,
-    min = 0,
-    max = 100,
-    default = 30,
-    page = HARMONIE_TWA_Quality,
-    translation = HARMONIE_TWA_GradeChance4,
-}
-
-option HARMONIE_TheWayToAttack.GradeChance5
-{
-    type = integer,
-    min = 0,
-    max = 100,
-    default = 40,
-    page = HARMONIE_TWA_Quality,
-    translation = HARMONIE_TWA_GradeChance5,
 }
 
 option HARMONIE_TheWayToAttack.MaterialNeedsGood
@@ -200,14 +190,34 @@ option HARMONIE_TheWayToAttack.MaterialNeedsGood
     translation = HARMONIE_TWA_MaterialNeedsGood,
 }
 
-option HARMONIE_TheWayToAttack.GemGoodChance
+option HARMONIE_TheWayToAttack.GemChanceExcellent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 50,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemChanceExcellent,
+}
+
+option HARMONIE_TheWayToAttack.GemChanceGood
 {
     type = integer,
     min = 0,
     max = 100,
     default = 25,
     page = HARMONIE_TWA_Quality,
-    translation = HARMONIE_TWA_GemGoodChance,
+    translation = HARMONIE_TWA_GemChanceGood,
+}
+
+option HARMONIE_TheWayToAttack.GemChanceBad
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 0,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemChanceBad,
 }
 
 option HARMONIE_TheWayToAttack.GemDiamondShare

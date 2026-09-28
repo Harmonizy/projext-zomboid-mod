@@ -48,17 +48,19 @@ S.WORD_COLOR = {
 
 -- Overall-quality cut points on the 1..3 average (request 2026-09-28:
 -- three equal bands).
-S.BAD_BELOW = 2.0 -- round 14 (was 1.67); the sandbox "BadBelow" is used
-S.GOOD_BELOW = 2.5 -- round 14 (was 2.34); the sandbox "GoodBelow" is used
+-- Round 17 ("ปรับให้ คุณภาพรวม แย่ หากต่ำกว่า 2.5 และ คุณภาพรวมดีหากต่ำกว่า 2.9"):
+S.BAD_BELOW = 2.5 -- round 17 (was 2.0); the sandbox "BadBelow" is used
+S.GOOD_BELOW = 2.9 -- round 17 (was 2.5); the sandbox "GoodBelow" is used
 
 -- Grade pools per overall quality, each rolled with the SAME odds in the
--- same order (request 2026-09-28): 1% / 9% / 20% / 30% / 40%.
+-- same order. Round 17 ("(S,A,B),(B,C,D),(D,E,F) ... 10,30,60"): three
+-- grades per pool, 10 / 30 / 60 percent (sandbox GradeChance1..3).
 S.GRADE_POOLS = {
-    Excellent = { "S", "A", "B", "C", "D" },
-    Good      = { "A", "B", "C", "D", "E" },
-    Bad       = { "B", "C", "D", "E", "F" },
+    Excellent = { "S", "A", "B" },
+    Good      = { "B", "C", "D" },
+    Bad       = { "D", "E", "F" },
 }
-S.GRADE_ODDS = { 1, 9, 20, 30, 40 }
+S.GRADE_ODDS = { 10, 30, 60 }
 
 function S.isWord(w)
     return S.SCORE[w] ~= nil
@@ -175,19 +177,36 @@ local function itemExists(fullType)
     return sm ~= nil and sm:getItem(fullType) ~= nil
 end
 
--- Picks what a smashed stone held (TWARecipeData.GemRoll): GemGoodChance
+-- Picks what a smashed stone held (TWARecipeData.GemRoll). Round 17: the
+-- gem chance follows the overall quality `word` ("เยี่ยม,ดี,แย่ ... 100:0,
+-- 75:25, 50:50 ยิ่งคุณภาพรวมสูงเท่าไหร่ โอกาสที่จะได้ pool อัญมณีก็มีมากขึ้น"):
+-- sandbox GemChanceExcellent 50 / GemChanceGood 25 / GemChanceBad 0
 -- percent a gem -- the diamond GemDiamondShare percent of that, the other
 -- gems equal shares of the rest -- otherwise one of the `bad` slots, all
 -- equally likely. Types missing from this game are skipped. Runs where
 -- Finish's complete() runs (the server in multiplayer). Returns a fullType.
 -- `rand(n)` (0..n-1) defaults to ZombRand.
-function S.rollGemstone(recipe, rand)
+S.GEM_CHANCE_KEY = { Excellent = "GemChanceExcellent", Good = "GemChanceGood", Bad = "GemChanceBad" }
+
+function S.gemChance(word)
+    return TWAConfig.num(S.GEM_CHANCE_KEY[word] or "GemChanceBad", 0) -- 0 allowed (floor 1 made 0 read as 1)
+end
+
+-- Is `fullType` one of the gems a stone can hold (diamond included)?
+function S.isRolledGem(fullType)
+    local pool = TWARecipeData.GemRoll
+    if fullType == pool.diamond then return true end
+    for _, g in ipairs(pool.gems) do if g == fullType then return true end end
+    return false
+end
+
+function S.rollGemstone(recipe, rand, word)
     rand = rand or ZombRand
     local pool = TWARecipeData.GemRoll
     local roll = rand(10000)                                    -- 0..9999, hundredths of a percent
-    local good = math.floor(TWAConfig.num("GemGoodChance", 1) * 100 + 0.5)
+    local good = math.floor(S.gemChance(word) * 100 + 0.5)
     if roll < good then
-        local dia = math.floor(good * TWAConfig.num("GemDiamondShare", 1) / 100 + 0.5)
+        local dia = math.floor(good * TWAConfig.num("GemDiamondShare", 0) / 100 + 0.5)
         if roll < dia and itemExists(pool.diamond) then return pool.diamond end
         local gems = {}
         for _, g in ipairs(pool.gems) do if itemExists(g) then gems[#gems + 1] = g end end
@@ -240,7 +259,7 @@ function S.rollGrade(word)
     local pool = S.GRADE_POOLS[word] or S.GRADE_POOLS.Bad
     -- Weights from the sandbox (round 9), rolled over their own total.
     local odds, total = {}, 0
-    for i = 1, 5 do
+    for i = 1, #pool do
         odds[i] = math.max(0, TWAConfig.num("GradeChance" .. i))
         total = total + odds[i]
     end

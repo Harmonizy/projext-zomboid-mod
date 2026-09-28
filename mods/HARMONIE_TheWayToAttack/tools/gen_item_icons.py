@@ -6,6 +6,7 @@ third-party art). Round 15:
     radiant gold with a rainbow sheen), one ingot shape for all,
   - Oridecon / Elunium / Bradium ore crystals.
 Round 16: TWA_Gemstone is an angular rock with gem colour peeking out.
+Round 17: TWA_Rock, the same rock without the gems (SmashStone's icon).
 Writes ../42/media/textures/Item_<Icon>.png. Needs Pillow."""
 import math, os, random
 from PIL import Image, ImageDraw, ImageFilter
@@ -112,7 +113,7 @@ def rough(name, col, seed=3, cols=None):
     d.line(pts + [pts[0]], fill=(60, 55, 50, 255), width=4)
     finish(img, name)
 
-def gemrock(name, seed=7):
+def gemrock(name, seed=7, gems=True):
     """Round 16: an angular grey rock (flat chipped faces) with patches of
     gem colour peeking out where it broke open -- a raw, uncut gemstone."""
     rnd = random.Random(seed)
@@ -144,7 +145,7 @@ def gemrock(name, seed=7):
     wins = [((0.3, -0.3), 0.62, (235, 40, 90), (255, 170, 200)),
             ((-0.45, 0.3), 0.5, (40, 130, 255), (170, 230, 255)),
             ((0.45, 0.5), 0.34, (60, 210, 110), (200, 255, 210))]
-    for (wx, wy), r, c1, c2 in wins:
+    for (wx, wy), r, c1, c2 in (wins if gems else []):
         px, py = cx + wx * W * 0.4, cy + wy * W * 0.34
         k = 7
         rim = []
@@ -235,6 +236,7 @@ faceted("TWA_Spinel", P(shape_round(6, rot=math.pi / 6)), (240, 60, 130))
 faceted("TWA_Zircon", P([(-0.85, -0.85), (0.85, -0.85), (0.85, 0.85), (-0.85, 0.85)], sx=W * 0.38, sy=W * 0.38), (150, 210, 255), table=0.45)
 cabochon("TWA_Jade", 0.34, 0.34, (60, 150, 90), opaque=True)
 gemrock("TWA_Gemstone")          # round 16: angular rock, gem colour peeking out
+gemrock("TWA_Rock", seed=11, gems=False)  # round 17: plain stone -- the SmashStone procedure's picture
 
 # ---- ingots
 ingot("TWA_MaterialBar_Epic", (205, 160, 255), (120, 70, 190), (160, 110, 230), clear=True)        # Mithril: clear violet

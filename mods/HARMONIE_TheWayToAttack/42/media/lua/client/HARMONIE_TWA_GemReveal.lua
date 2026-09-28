@@ -289,7 +289,16 @@ function TWAGemReveal:renderGame()
         if #R > 2 then self:roughGem(R, res.col, { seed = 4, windows = 0, alpha = 0.9 }) end
         local rise = math.min(1, since / 600)
         local y = cy + 10 - 20 * rise
-        if res.kind == "gem" or res.kind == "diamond" then
+        if (res.kind == "gem" or res.kind == "diamond") and res.tex then
+            -- round 17: the gem's own picture, big, breathing, glinting
+            local sz = 104 + 8 * math.sin(since * 0.003)
+            self:disc(cx, y, 58, 0.45, res.col, 32)
+            self:tex(res.tex, cx - sz / 2, y - sz / 2, sz, sz, 1)
+            for k = 1, 3 do
+                local tw = math.sin(since * 0.004 + k * 2.1)
+                self:sparkle(cx + 34 * math.cos(k * 2.2), y + 30 * math.sin(k * 2.2), 12, math.max(0, tw) ^ 2)
+            end
+        elseif res.kind == "gem" or res.kind == "diamond" then
             self:gemBrilliant(cx, y, 58 + 6 * math.sin(since * 0.003), res.col, { seed = 11, rot = since * 0.0004 })
         elseif res.tex then
             self:disc(cx, y, 44, 0.4, res.col, 28)
@@ -332,7 +341,13 @@ function TWAGemReveal:drawStrip()
         local kindCol = (c.kind == "diamond" and { r = 0.9, g = 0.95, b = 1 }) or (c.kind == "gem" and c.col) or { r = 0.35, g = 0.32, b = 0.3 }
         self:rectRGB(x - CELL / 2 + 3, y + 4, CELL - 6, h - 8, isWin and 0.55 or 0.3, kindCol.r * 0.5, kindCol.g * 0.5, kindCol.b * 0.5)
         self:rectRGB(x - CELL / 2 + 3, y + h - 8, CELL - 6, 4, 1, kindCol.r, kindCol.g, kindCol.b)
-        if c.kind == "gem" or c.kind == "diamond" then
+        -- Round 17 ("เปลี่ยนรูปอัญมณีเก่าเป็นรูปอัญมณีของม็อดเราทั้งหมด"): every gem
+        -- is its own item picture (tools/gen_item_icons.py), on a soft glow.
+        if (c.kind == "gem" or c.kind == "diamond") and c.tex then
+            self:disc(x, y + h / 2 - 2, 22, 0.35, c.col, 20)
+            self:tex(c.tex, x - 24, y + h / 2 - 26, 48, 48, 1)
+            self:sparkle(x - 10, y + h / 2 - 14, 5, 0.4 + 0.6 * math.max(0, math.sin(self.elapsed * 0.006 + i)))
+        elseif c.kind == "gem" or c.kind == "diamond" then
             self:gemBrilliant(x, y + h / 2 - 2, 20, c.col, { glow = false, seed = i })
         elseif c.tex then
             self:tex(c.tex, x - 24, y + h / 2 - 26, 48, 48, 1)

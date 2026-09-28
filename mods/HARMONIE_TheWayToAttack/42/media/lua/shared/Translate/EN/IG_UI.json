@@ -388,12 +388,14 @@
     "IGUI_TWA_MG_Facet_Angle_Label": "Angle",
     "IGUI_TWA_Proc_SmashStone": "Smash the Stone",
     "IGUI_TWA_MG_Strike_Hint_crack": "Three well-timed blows to crack the stone open.",
-    "IGUI_TWA_GemFinishRule": "Finish rolls what the stone held: %1 in 100 a gem (the diamond only %2 in 100), otherwise clay, scrap metal, limestone, charcoal, coke or dung.",
+    "IGUI_TWA_GemFinishRule": "Finish rolls what the stone held. Chance of a gem (the diamond the rarest) by overall quality: Excellent %1, Good %2, Bad %3 in 100; otherwise clay, scrap metal, limestone, charcoal, coke or dung.",
     "IGUI_TWA_Tooltip_FinishGem": "Crack the stone open and see what it held. No grade: what you get is rolled when you finish.",
     "IGUI_TWA_GemReveal_Title": "What is inside the stone?",
     "IGUI_TWA_GemReveal_Hint": "The stone cracks... the light inside flickers through...",
     "IGUI_TWA_GemReveal_Gem": "A gem!",
     "IGUI_TWA_GemReveal_Diamond": "A DIAMOND!",
     "IGUI_TWA_GemReveal_Dud": "Only this...",
-    "IGUI_TWA_GemReveal_Lost": "Nothing came out of the stone."
+    "IGUI_TWA_GemReveal_Lost": "Nothing came out of the stone.",
+    "IGUI_TWA_TooltipGemState": "Status: %1",
+    "IGUI_TWA_GemState_Raw": "Raw"
 }

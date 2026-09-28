@@ -814,7 +814,8 @@ TWARecipeData.Stats = {
 -- "โอกาส75% ได้ pool แย่ ประกอบด้วย ดินเหนียว, เศษโลหะ, หินปูน, ถ่านไม้,
 -- ถ่านโค้ก, มูลสัตว์ทุกประเภท 25% ได้ pool ดี ประกอบด้วยอัญมณีทุกอันเท่าๆกัน
 -- เศษเหลือให้เป็นโอกาสออกเพชรที่น้อยที่สุด". The chances are sandbox options
--- (GemGoodChance 25, GemDiamondShare 4 -> diamond 1 percent, the other 15
+-- (round 17: GemChanceExcellent 50 / GemChanceGood 25 / GemChanceBad 0 by
+-- overall quality; GemDiamondShare 4 -> diamond 1 percent at Good, the other 15
 -- gems 1.6 percent each). Every `bad` slot is equally likely; a slot with
 -- several types (the dung) picks one of those that exist in this game.
 -- Types that don't exist are skipped (TWACraftState.rollGemstone checks).

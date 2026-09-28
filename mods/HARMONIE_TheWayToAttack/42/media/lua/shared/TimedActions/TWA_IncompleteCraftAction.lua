@@ -93,7 +93,9 @@ function TWA_IncompleteCraftAction:new(character, recipeId)
     -- Round 6: same time as the recipe's procedures (was a flat 300).
     -- Round 9: always the sandbox "CraftButtonSeconds" (default 5 s; "action
     -- time เป็น 5วิเสมอ").
-    o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("CraftButtonSeconds", 0.1))
+    -- Round 17: Finish/Incomplete/Cancel 40 percent shorter than Start
+    -- (sandbox "EndButtonSeconds", default 1.8 s).
+    o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("EndButtonSeconds", 0.1))
     o.forceProgressBar = true
     return o
 end

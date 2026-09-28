@@ -2967,6 +2967,29 @@ Round 16 (same day):
     next to it, then the burst. Sounds TWA_Tick / TWA_Crack / TWA_Shimmer.
   - Sandbox 78 -> 80 (GemGoodChance, GemDiamondShare).
 
+Round 17 (same day):
+  - Overall quality cut points: Bad below 2.5, Good below 2.9 (sandbox
+    BadBelow/GoodBelow, CraftState BAD_BELOW/GOOD_BELOW).
+  - Grade pools are three grades each: Excellent S/A/B, Good B/C/D, Bad
+    D/E/F, odds 10/30/60 (sandbox GradeChance1..3; 4 and 5 removed).
+  - Finish/Incomplete/Cancel take 40 percent less than Start: new sandbox
+    EndButtonSeconds 1.8 (CraftButtonSeconds 3.0 is Start only now).
+  - Gemstone roll follows the overall quality: gem chance Excellent 50 /
+    Good 25 / Bad 0 percent (sandbox GemChanceExcellent/Good/Bad replace
+    GemGoodChance). The user wrote "เยี่ยม,ดี,แย่ ... แย่:ดี 100:0, 75:25,
+    50:50" AND "the higher the quality the more gems" -- the literal pairs
+    contradict the stated goal, so they were applied in the order that
+    matches the goal (Excellent 50:50 ... Bad 100:0); flagged in the report.
+  - TWAConfig.num(key, floor): the floor is a MINIMUM -- floor 1 made a
+    sandbox 0 read as 1 (a 1 percent gem at Bad). Chances use floor 0.
+  - A gem from the Gemstone recipe is stamped TWA_GemState = "Raw"; the
+    item tooltip shows "Status: Raw" / "สถานะ: ดิบ" under Crafted by (for
+    later gem-cutting recipes).
+  - SmashStone's icon is our own plain stone, TWA_Rock (gemrock(gems=False)).
+  - Crack game cracks shorter (12 + 26 px); GemPolishing zone x2 (Stroke,
+    procId check, metal polishing unchanged); the gem reveal's strip and
+    result show the mod's own gem pictures instead of drawn brilliants.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
