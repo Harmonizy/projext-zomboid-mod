@@ -21,19 +21,29 @@ option HARMONIE_TheWayToAttack.CraftButtonSeconds
     type = double,
     min = 0.1,
     max = 60.0,
-    default = 5.0,
+    default = 3.0,
     page = HARMONIE_TheWayToAttack,
     translation = HARMONIE_TWA_CraftButtonSeconds,
 }
 
-option HARMONIE_TheWayToAttack.ProcedureTimeMultiplier
+option HARMONIE_TheWayToAttack.ProcedureSeconds
 {
     type = double,
     min = 0.1,
-    max = 10.0,
-    default = 1.0,
+    max = 60.0,
+    default = 3.0,
     page = HARMONIE_TheWayToAttack,
-    translation = HARMONIE_TWA_ProcedureTimeMultiplier,
+    translation = HARMONIE_TWA_ProcedureSeconds,
+}
+
+option HARMONIE_TheWayToAttack.NearbyRadius
+{
+    type = integer,
+    min = 0,
+    max = 3,
+    default = 1,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_NearbyRadius,
 }
 
 option HARMONIE_TheWayToAttack.ProcedureXPMultiplier
@@ -661,9 +671,9 @@ option HARMONIE_TheWayToAttack.CoatCoverage
 option HARMONIE_TheWayToAttack.PourZone
 {
     type = double,
-    min = 0.005,
+    min = 0.003,
     max = 0.2,
-    default = 0.025,
+    default = 0.015,
     page = HARMONIE_TWA_Other,
     translation = HARMONIE_TWA_PourZone,
 }

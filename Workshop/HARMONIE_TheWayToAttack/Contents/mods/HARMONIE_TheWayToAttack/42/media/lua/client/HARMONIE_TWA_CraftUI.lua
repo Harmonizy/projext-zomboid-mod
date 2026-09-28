@@ -377,7 +377,7 @@ end
 -- since nothing emits it any more, but harmless to leave).
 local function ownsBase(recipe, player)
     if not recipe.base then return true end
-    local inv = player:getInventory()
+    local inv = TWASources.get(player) -- round 13: nearby containers/floor too
     local hasBase = false
     for _, t in ipairs(TWACraftState.baseTypes(recipe)) do
         if inv:getItemCountRecurse(t) >= 1 then hasBase = true break end
@@ -1181,13 +1181,22 @@ function TWACraftWindow:createChildren()
     -- drawProcedureDetails, are the only way to actually start/stop one).
     local procBtnH = 26
     local procBtnY = self.procDetailsY + detailsH - procBtnH - 8
-    self.procConfirmButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_ConfirmProcedure"), self, TWACraftWindow.onConfirmProcedure)
+    -- Round 13 ("เพิ่มปุ่มฝึกในรายละเอียดกรรมวิธีแต่ละอัน"): a Practice button
+    -- at the left of the row -- plays the procedure's minigame for nothing
+    -- (no materials, no XP, no craft), any time.
+    local practiceW = 80
+    self.procPracticeButton = TWANeatButton:new(rightX + 10, procBtnY, practiceW, procBtnH, getText("IGUI_TWA_Practice"), self, TWACraftWindow.onPracticeProcedure)
+    self.procPracticeButton.neatTint = { r = 0.55, g = 0.8, b = 0.55 }
+    self.procPracticeButton:setTooltip(getText("IGUI_TWA_Tooltip_Practice"))
+    self.procPracticeButton:initialise()
+    self:addChild(self.procPracticeButton)
+    self.procConfirmButton = TWANeatButton:new(rightX + 20 + practiceW, procBtnY, RIGHT_W - 30 - practiceW, procBtnH, getText("IGUI_TWA_ConfirmProcedure"), self, TWACraftWindow.onConfirmProcedure)
     self.procConfirmButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.procConfirmButton:setTooltip(getText("IGUI_TWA_Tooltip_ConfirmProcedure"))
     self.procConfirmButton:initialise()
     self:addChild(self.procConfirmButton)
 
-    self.procCancelButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_CancelProcedure"), self, TWACraftWindow.onCancelProcedure)
+    self.procCancelButton = TWANeatButton:new(rightX + 20 + practiceW, procBtnY, RIGHT_W - 30 - practiceW, procBtnH, getText("IGUI_TWA_CancelProcedure"), self, TWACraftWindow.onCancelProcedure)
     self.procCancelButton.neatTint = { r = 0.9, g = 0.3, b = 0.25 }
     self.procCancelButton:setTooltip(getText("IGUI_TWA_Tooltip_CancelProcedure"))
     self.procCancelButton:initialise()
@@ -1377,7 +1386,9 @@ function TWACraftWindow:startCenterAction(kind)
         -- A bookmarked base item brings its saved words along (the server
         -- reads the same bookmark off its own copy in complete()).
         local map = S.bookmarkMap(baseItem, recipe.id)
-        action = TWA_StartCraftAction:new(self.player, recipe.id, baseItem, base2Item)
+        -- Ids, not items (round 13): an item in a crate or on the floor nearby
+        -- has to be found again by the server.
+        action = TWA_StartCraftAction:new(self.player, recipe.id, baseItem and baseItem:getID(), base2Item and base2Item:getID())
         action.onComplete = function()
             window.active = mirrorFrom(recipe.id, map)
             window.resumeItem = nil
@@ -1548,6 +1559,27 @@ function TWACraftWindow:onConfirmProcedure()
     self:tryPerformProcedure(self.selectedProcId, proc)
 end
 
+function TWACraftWindow:onPracticeProcedure()
+    local procId = self.selectedProcId
+    if not procId or self.activeProcId or self.activeCenterAction or self.practicing then return end
+    if not TWAMinigame.enabled() then
+        self:flashLocked("IGUI_TWA_PracticeOff")
+        return
+    end
+    local window = self
+    self.practicing = true
+    local ok = TWAMinigame.play(self.player, procId, function(word)
+        window.practicing = false
+        window.practiceWord, window.practiceProc = word, procId
+        window.practiceUntil = getTimestampMs() + 5000
+    end, self.selectedRecipe)
+    if not ok then
+        self.practicing = false
+    elseif TWAMinigame.instance then
+        TWAMinigame.instance.title = TWAMinigame.instance.title .. " - " .. getText("IGUI_TWA_Practice")
+    end
+end
+
 function TWACraftWindow:onCancelProcedure()
     if self.activeAction then
         self.activeAction:forceStop()
@@ -1677,7 +1709,7 @@ end
 -- (previously inline) into its own method so it can be called once per
 -- slot instead of duplicating the 8 draw calls.
 -- `noteKey` (optional) replaces the owned/missing status line.
-function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey)
+function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey, count)
     local CARD_H = 40
     self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
     self:drawRectBorder(x, y, w, CARD_H, 0.4, 0.4, 0.4, 0.4)
@@ -1695,6 +1727,11 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey)
         tx = x + 42
     end
     drawTextShadowed(self, baseDisplayName(fullType, altType), tx, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+    if count then
+        local ct = getText("IGUI_TWA_HaveCount", tostring(count))
+        local cw = getTextManager():MeasureStringX(UIFont.Small, ct)
+        drawTextShadowed(self, ct, x + w - 30 - cw, y + 21, count > 0 and 0.75 or 0.95, count > 0 and 0.85 or 0.5, count > 0 and 1 or 0.45, 1, UIFont.Small)
+    end
     -- A list of accepted types ("any stone"): hovering the card lists them.
     if type(altType) == "table" then
         local mx, my = self:getMouseX(), self:getMouseY()
@@ -1745,6 +1782,7 @@ function TWACraftWindow:drawProcedureDetails()
         self.procConfirmButton:setVisible(false)
         self.procCancelButton:setVisible(false)
         self.procSearchButton:setVisible(false)
+        self.procPracticeButton:setVisible(false)
         return
     end
     self.procSearchButton:setVisible(true)
@@ -1789,6 +1827,13 @@ function TWACraftWindow:drawProcedureDetails()
         end
     end
     self.procCancelButton:setVisible(inProgress and true or false)
+    self.procPracticeButton:setVisible(true)
+    self.procPracticeButton.enable = not self.activeProcId and not self.activeCenterAction and not self.practicing
+    -- The last practice result for this procedure, for a few seconds.
+    if self.practiceWord and self.practiceProc == self.selectedProcId and getTimestampMs() < (self.practiceUntil or 0) then
+        local pc = TWACraftState.WORD_COLOR[self.practiceWord] or { r = 1, g = 1, b = 1 }
+        drawTextShadowed(self, getText("IGUI_TWA_PracticeResult", TWACraftState.wordText(self.practiceWord)), x + 10, self.procBtnY - 18, pc.r, pc.g, pc.b, 1, UIFont.Small)
+    end
     local canConfirm = belongsToRecipe and self:isActiveRecipe() and not inProgress
         and not self.activeProcId and not self.activeCenterAction
     self.procConfirmButton:setVisible(canConfirm)
@@ -1798,7 +1843,7 @@ function TWACraftWindow:drawProcedureDetails()
     -- Picked from the checklist before the craft is started: say why the
     -- button isn't there.
     if belongsToRecipe and not self:isActiveRecipe() and not inProgress then
-        drawTextShadowed(self, getText("IGUI_TWA_StartFirst"), x + 10, self.procBtnY + 4, 1, 0.8, 0.3, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_StartFirst"), x + 100, self.procBtnY + 4, 1, 0.8, 0.3, 1, UIFont.Small)
     end
 
     -- Progress bar while the timed action is actually running (request
@@ -2027,8 +2072,19 @@ function TWACraftWindow:render()
         -- craft a copy WITHOUT someone's bookmark on it. Holding only
         -- bookmarked copies says so, pointing at right-click-to-resume.
         local S = TWACraftState
-        local inv = self.player:getInventory()
+        local inv = TWASources.get(self.player) -- round 13: nearby too
         local owned1, note1, owned2, note2, anyCopy
+        -- Round 13 ("บอกจำนวน วัตถุดิบตั้งต้น และ วัตถุดิบเสริม ที่มีอยู่"):
+        -- how many usable copies (no one's bookmark on them) are at hand.
+        local function freeCount(types)
+            local n = 0
+            for _, t in ipairs(types) do
+                n = n + inv:countEval(t, function(it) return not S.isBookmarked(it) end)
+            end
+            return n
+        end
+        local count1 = freeCount(S.baseTypes(recipe))
+        local count2 = recipe.base2 and freeCount({ recipe.base2 }) or 0
         if self:isActiveRecipe() then
             -- Already taken at Start.
             owned1, note1 = true, "IGUI_TWA_BaseTaken"
@@ -2054,9 +2110,9 @@ function TWACraftWindow:render()
         end
         local card1Type, card1Alt = recipe.base, recipe.baseAlt
         if self.resumeItem and not self:isActiveRecipe() then card1Type, card1Alt = self.resumeItem:getFullType(), nil end
-        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, card1Type, card1Alt, owned1, note1)
+        baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, card1Type, card1Alt, owned1, note1, count1)
         if recipe.base2 then
-            baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2)
+            baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2, count2)
         end
     end
 

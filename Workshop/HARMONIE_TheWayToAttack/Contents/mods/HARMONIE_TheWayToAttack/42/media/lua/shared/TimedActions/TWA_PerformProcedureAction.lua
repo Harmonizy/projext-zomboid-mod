@@ -104,7 +104,9 @@ function TWA_PerformProcedureAction:new(character, procId, quality)
     o.procId = procId
     o.quality = TWACraftState.isWord(quality) and quality or TWACraftState.FALLBACK_WORD
     o.proc = TWAProcedures.List[procId]
-    o.maxTime = math.max(1, math.floor(((o.proc and o.proc.time) or 50) * TWAConfig.num("ProcedureTimeMultiplier", 0.1) + 0.5))
+    -- Round 13 ("Action time ทุกอย่างเป็น 3 วินาที"): every procedure takes the
+    -- sandbox "ProcedureSeconds" (default 3 s); proc.time is no longer used.
+    o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("ProcedureSeconds", 0.1))
     o.forceProgressBar = true
     o.stopOnWalk = true
     o.stopOnRun = true

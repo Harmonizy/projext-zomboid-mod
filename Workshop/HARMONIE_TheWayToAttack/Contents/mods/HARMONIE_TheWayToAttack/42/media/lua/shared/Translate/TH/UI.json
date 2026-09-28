@@ -2,5 +2,8 @@
     "UI_optionscreen_binding_KeySetting_TWAParts": "ตั้งค่าปุ่ม HARMONIE - TheWayToAttack",
     "UI_optionscreen_binding_TWA_OpenPartsUI": "เปิดหน้าดัดแปลงอาวุธ",
     "UI_optionscreen_binding_KeySetting_TWACraft": "ตั้งค่าปุ่ม HARMONIE - TheWayToAttack",
-    "UI_optionscreen_binding_TWA_OpenCraftUI": "เปิดหน้าคราฟอาวุธ"
+    "UI_optionscreen_binding_TWA_OpenCraftUI": "เปิดหน้าคราฟอาวุธ",
+    "UI_options_HARMONIE_TWA_title": "HARMONIE - The Way To Attack",
+    "UI_options_HARMONIE_TWA_volume": "ความดังเสียงการคราฟ",
+    "UI_options_HARMONIE_TWA_volume_tooltip": "ความดังของเสียงในม็อดนี้ (มินิเกม แถบเวลาคราฟ ฉากเปิดเกรด) 0 = ปิด 1 = ปกติ 2 = ดังเป็นสองเท่า"
 }

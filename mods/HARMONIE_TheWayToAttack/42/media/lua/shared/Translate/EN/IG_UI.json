@@ -344,5 +344,10 @@
     "IGUI_TWA_Reveal_Hint": "The smith brings the piece to life...",
     "IGUI_TWA_Reveal_Grade": "Grade %1",
     "IGUI_TWA_Reveal_Material": "Finished",
-    "IGUI_TWA_Reveal_Close": "Click to close"
+    "IGUI_TWA_Reveal_Close": "Click to close",
+    "IGUI_TWA_HaveCount": "Have: %1",
+    "IGUI_TWA_Practice": "Practice",
+    "IGUI_TWA_Tooltip_Practice": "Play this procedure's minigame just to practise: no materials, no XP, nothing crafted.",
+    "IGUI_TWA_PracticeResult": "Practice: %1",
+    "IGUI_TWA_PracticeOff": "Minigames are off in this game's sandbox settings"
 }

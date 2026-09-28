@@ -20,6 +20,8 @@ TWASound = TWASound or {}
 function TWASound.play(name, switch)
     if not name or (isServer and isServer()) then return end
     if switch and not TWAConfig.on(switch) then return end
+    -- The player's own volume (Options > Mods, round 13): at 0, silence.
+    if TWASound.volume and TWASound.volume <= 0.001 then return end
     local sm = getSoundManager and getSoundManager()
     if sm and sm.playUISound then sm:playUISound(name) end
 end

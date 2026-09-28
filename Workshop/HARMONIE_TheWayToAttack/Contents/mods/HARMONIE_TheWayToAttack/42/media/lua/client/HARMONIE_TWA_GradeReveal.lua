@@ -183,11 +183,47 @@ function TWAGradeReveal:renderGame()
         self:tex(self.resultTex, cx - s / 2, 120 - s / 2, s, s, 1)
     end
     -- The hammer.
-    if self.toolTex and not self.revealAt then
-        local lift = self:hammerLift()
-        local s = 96
-        self:tex(self.toolTex, cx - 10, cy - s + 18 - lift, s, s, 1)
-    end
+    if not self.revealAt then self:drawHammer(cx, self:hammerLift()) end
+end
+
+-- Round 13 ("มันเอาด้ามทุบทั่ง ไม่ใช่หัว"): the item icon drawn upright
+-- put the handle's end on the anvil. The hammer is drawn instead: a handle
+-- swinging about the smith's hand (upper right) and a steel head across its
+-- end whose FACE lands on the piece.
+function TWAGradeReveal:drawHammer(cx, lift)
+    local px, py = cx + 150, 128              -- the hand (pivot)
+    local faceX, faceY = cx, 190              -- where the face lands
+    local half = 26                           -- half the head's length
+    -- At the strike the head stands upright, face down.
+    local sx, sy = faceX - px, (faceY - half) - py
+    local a0 = math.atan2 and math.atan2(sy, sx) or math.atan(sy, sx)
+    local L = math.sqrt(sx * sx + sy * sy)
+    local a = a0 + math.min(1.3, lift / 100)  -- raised = turned up
+    local ux, uy = math.cos(a), math.sin(a)   -- along the handle
+    local vx, vy = -uy, ux                    -- along the head
+    if vy > 0 then vx, vy = -vx, -vy end      -- keep "up" pointing up
+    local hx, hy = px + ux * L, py + uy * L   -- head centre
+    -- Handle: dark edge, wood, a highlight, a leather grip at the hand.
+    self:line(px, py, hx, hy, 10, 1, { r = 0.22, g = 0.14, b = 0.07 })
+    self:line(px, py, hx, hy, 7, 1, { r = 0.52, g = 0.35, b = 0.18 })
+    self:line(px - vx * 1.5, py - vy * 1.5, hx - vx * 1.5, hy - vy * 1.5, 2, 0.6, { r = 0.75, g = 0.56, b = 0.33 })
+    self:line(px, py, px + ux * 40, py + uy * 40, 11, 1, { r = 0.3, g = 0.18, b = 0.1 })
+    -- Head: a steel block across the handle's end, face down.
+    local w = 12
+    local function corner(sv, su) return hx + vx * half * sv + ux * w * su, hy + vy * half * sv + uy * w * su end
+    local x1, y1 = corner(1, -1)
+    local x2, y2 = corner(1, 1)
+    local x3, y3 = corner(-1, 1)
+    local x4, y4 = corner(-1, -1)
+    self:quad(x1, y1, x2, y2, x3, y3, x4, y4, 1, 0.42, 0.44, 0.48)
+    -- lit top half, darker striking end, a bright rim on the face
+    local mx1, my1 = corner(0.2, -1)
+    local mx2, my2 = corner(0.2, 1)
+    self:quad(x1, y1, x2, y2, mx2, my2, mx1, my1, 1, 0.58, 0.6, 0.65)
+    self:line(x3, y3, x4, y4, 3, 1, { r = 0.85, g = 0.87, b = 0.9 })
+    self:polyline({ { x1, y1 }, { x2, y2 }, { x3, y3 }, { x4, y4 } }, 1.5, 1, { r = 0.15, g = 0.15, b = 0.17 }, true)
+    -- The wedge where the handle goes through.
+    self:disc(hx, hy, 3, 1, { r = 0.3, g = 0.2, b = 0.1 }, 8)
 end
 
 function TWAGradeReveal:renderOverlay()

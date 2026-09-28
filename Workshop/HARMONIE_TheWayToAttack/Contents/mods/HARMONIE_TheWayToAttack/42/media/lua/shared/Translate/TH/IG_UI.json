@@ -344,5 +344,10 @@
     "IGUI_TWA_Reveal_Hint": "ช่างตีเหล็กกำลังปลุกชีวิตให้ชิ้นงาน...",
     "IGUI_TWA_Reveal_Grade": "เกรด %1",
     "IGUI_TWA_Reveal_Material": "เสร็จสมบูรณ์",
-    "IGUI_TWA_Reveal_Close": "คลิกเพื่อปิด"
+    "IGUI_TWA_Reveal_Close": "คลิกเพื่อปิด",
+    "IGUI_TWA_HaveCount": "มีอยู่ %1",
+    "IGUI_TWA_Practice": "ฝึก",
+    "IGUI_TWA_Tooltip_Practice": "เล่นมินิเกมของกรรมวิธีนี้เพื่อฝึกอย่างเดียว ไม่ใช้วัตถุดิบ ไม่ได้ XP ไม่ได้สร้างอะไร",
+    "IGUI_TWA_PracticeResult": "ผลการฝึก: %1",
+    "IGUI_TWA_PracticeOff": "มินิเกมถูกปิดในค่า sandbox ของเกมนี้"
 }

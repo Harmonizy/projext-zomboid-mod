@@ -26,6 +26,7 @@
 --============================================================================
 
 require "HARMONIE_TWA_Config"
+require "HARMONIE_TWA_Sources"
 
 TWACraftState = TWACraftState or {}
 local S = TWACraftState
@@ -272,21 +273,25 @@ function S.findItem(character, item)
     end
     local c = item.getContainer and item:getContainer()
     if c and c:isInCharacterInventory(character) then return item end
-    return nil
+    -- Round 13: or in a container / on the floor nearby.
+    return id and TWASources.get(character):findById(id) or nil
+end
+
+--- `ref` is an item, or (round 13) just its id -- what the Start action
+--- passes, so an item in a crate or on the floor survives the trip to a
+--- multiplayer server.
+function S.resolveItem(character, ref)
+    if type(ref) == "number" then return TWASources.get(character):findById(ref) end
+    return S.findItem(character, ref)
 end
 
 -- Remove one specific item wherever in the character's inventory it sits
 -- (a bag inside the main inventory included), and tell the owning client
 -- when this runs on a server.
 function S.removeItem(character, item)
-    local it = S.findItem(character, item)
+    local it = S.resolveItem(character, item)
     if not it then return false end
-    local c = it:getContainer() or character:getInventory()
-    c:Remove(it)
-    if isServer() and sendRemoveItemFromContainer then
-        sendRemoveItemFromContainer(c, it)
-    end
-    return true
+    return TWASources.remove(it, character:getInventory())
 end
 
 -- A base item to use for a FRESH craft (not resuming a bookmark): never one
@@ -296,7 +301,7 @@ end
 -- place (the old "farm the grade" exploit).
 function S.pickFreshItem(character, fullType)
     if not character or not fullType then return nil end
-    return character:getInventory():getFirstTypeEvalRecurse(fullType, function(it)
+    return TWASources.get(character):getFirstTypeEvalRecurse(fullType, function(it)
         return not S.isBookmarked(it)
     end)
 end
