@@ -62,7 +62,12 @@ function TWAStrikeGame:onStart()
     self.period = 900 / self.pace           -- ms for the ring to close
     self.R0, self.Rt = 140, 13
     self.lastRing = self.R0
-    self.window = 7 * self.tol               -- px of ring error still "good"
+    -- Follow-up request (same day): "มินิเกมตอกตะปูพลาดทุกครั้ง ปรับให้ช่วง
+    -- เวลาที่กดแล้วนับว่าตรงจังหวะ 115 เหมือนเดิม" -- the timing window is set
+    -- in TIME (115 ms either side, perfect = 45% of it, ~52 ms) and turned
+    -- into ring pixels from the ring's own speed, so it stays 115 ms however
+    -- fast the ring closes. The big fast ring stays.
+    self.window = 115 * (self.R0 / self.period) * self.tol -- px of ring error still "good"
     self.aim = 11 * self.tol                 -- how close the hammer must be
     self.heat = 1
     self.coal = { x = 20, y = 150, w = 100, h = 90 }

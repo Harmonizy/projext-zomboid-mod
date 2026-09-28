@@ -22,24 +22,37 @@ TWAHeatGame = TWAMinigameBase:derive("TWAHeatGame")
 local B = TWAMinigameBase
 local C = B.COL
 
-local CENTER = { fire = 0.45, melt = 0.78, anneal = 0.6, cool = 0.3 }
+local CENTER = { fire = 0.45, melt = 0.78, anneal = 0.6, cool = 0.3, bend = 0.7 }
 
 function TWAHeatGame:onStart()
     self.cool = self.variant == "cool"
+    -- variant "bend" (request 2026-09-28: breaking a branch must not be the
+    -- bottle-smashing game): the same held-force control, themed as bending
+    -- a branch over the knee -- bend it to the band and hold it there until
+    -- it snaps cleanly; bend too far and it splinters.
+    self.bend = self.variant == "bend"
     self.center0 = CENTER[self.variant] or 0.6
     self.half = 0.035 * self.tol -- halved (request 2026-09-28)
     self.temp = self.cool and 1.0 or 0.05
     self.vel = 0
     self.held = 0
-    self.need = 4000 + 300 * self.req
-    self.drift = self.req >= 4 and 0.08 or 0
+    self.need = self.bend and 1500 or (4000 + 300 * self.req)
+    self.drift = (self.req >= 4 and not self.bend) and 0.08 or 0
+    if self.cool then
+        -- Request 2026-09-28 ("มินิเกมจุ่มง่ายไป อยากให้อุณหภูมิขึ้นลงเร็วกว่า
+        -- นี้ และโซนเล็กลง รวมถึงเกจคุณภาพลดลงเร็วขึ้น"): a faster plunge and a
+        -- faster climb back, a narrower band, and slips cost 1.5x more.
+        self.half = 0.025 * self.tol
+        self.drainMul = 1.5
+    end
     self.timeLimit = 30000 + self.need * 3
     self.toolSize = 44
     if self.cool and not self.realTool then
         self.toolTex = B.itemTex("BlacksmithTongs") or self.toolTex
     end
-    self.hint = getText(self.cool and "IGUI_TWA_MG_Heat_Hint_cool" or "IGUI_TWA_MG_Heat_Hint")
-    self.hint2 = getText("IGUI_TWA_MG_Heat_Hint2")
+    self.hint = getText(self.cool and "IGUI_TWA_MG_Heat_Hint_cool"
+        or (self.bend and "IGUI_TWA_MG_Heat_Hint_bend" or "IGUI_TWA_MG_Heat_Hint"))
+    self.hint2 = getText(self.bend and "IGUI_TWA_MG_Heat_Hint2_bend" or "IGUI_TWA_MG_Heat_Hint2")
 end
 
 function TWAHeatGame:bandCenter()
@@ -54,7 +67,7 @@ function TWAHeatGame:updateGame(dt)
     local fall = 0.7
     local acc
     if self.cool then
-        acc = self.dragging and -push or (0.35 - self.temp) * 0.6 + 0.1
+        acc = self.dragging and -2.6 or (0.35 - self.temp) * 1.1 + 0.28
     else
         acc = push - fall
     end
@@ -81,7 +94,11 @@ function TWAHeatGame:updateGame(dt)
     else
         local over = (math.abs(off) - self.half) / 0.1
         self:spend(dt * 0.00004 * over, nil, true)
-        if not self.cool and off > self.half + 0.18 then
+        if self.bend and off > self.half + 0.18 then
+            self:spend(dt * 0.0002, getText("IGUI_TWA_MG_Heat_Splinter"), true)
+        elseif self.bend then
+            self:flash(getText(off > 0 and "IGUI_TWA_MG_Heat_BendHard" or "IGUI_TWA_MG_Heat_BendSoft"), true, 300)
+        elseif not self.cool and off > self.half + 0.18 then
             self:spend(dt * 0.0002, getText("IGUI_TWA_MG_Heat_TooHot"), true)
         elseif self.cool and off < -(self.half + 0.18) then
             self:spend(dt * 0.0002, getText("IGUI_TWA_MG_Heat_Brittle"), true)
@@ -95,7 +112,10 @@ function TWAHeatGame:updateGame(dt)
         self:burst(self.cool and "steam" or "spark", 330 + ZombRandFloat(-80, 80), 260, 1, { speed = 0.12 })
     end
     self.progress = math.min(1, self.held / self.need)
-    if self.held >= self.need then self:succeed(getText("IGUI_TWA_MG_Heat_Done")) end
+    if self.held >= self.need then
+        if self.bend then self:burst("chip", 330, 200, 14, { col = C.wood, speed = 0.3 }) end
+        self:succeed(getText(self.bend and "IGUI_TWA_MG_Heat_Snapped" or "IGUI_TWA_MG_Heat_Done"))
+    end
 end
 
 function TWAHeatGame:onTimeout()
@@ -120,7 +140,24 @@ function TWAHeatGame:renderGame()
     self:line(gx - 8, ty, gx + gw + 8, ty, 3, 1, C.line)
     self:frame(gx, gy, gw, gh, 1, C.faint)
 
-    -- The scene: coals and the work, or the water tub.
+    -- The scene: a branch over the knee, coals and the work, or the water tub.
+    if self.bend then
+        -- The branch bows more the harder you push.
+        local sag = 110 * math.min(1.2, self.temp)
+        local pts = {}
+        for i = 0, 12 do
+            local u = i / 12
+            pts[#pts + 1] = { 150 + u * 360, 200 - sag * (1 - (2 * u - 1) ^ 2) }
+        end
+        self:polyline(pts, 12, 1, C.wood)
+        self:polyline(pts, 2, 0.6, C.wood2)
+        self:disc(330, 220 - sag * 0.02, 18, 1, C.dark, 14) -- the knee
+        if self.workTex then self:tex(self.workTex, 540, 20, 60, 60, 0.55) end
+        self:rect(160, 20, 340, 10, 1, C.dark)
+        self:rect(160, 20, 340 * self.progress, 10, 1, C.good)
+        self:frame(160, 20, 340, 10, 1, C.faint)
+        return
+    end
     if self.cool then
         self:rect(160, 230, 340, 90, 1, { r = 0.12, g = 0.2, b = 0.3 })
         self:line(160, 230, 500, 230, 2, 1, C.steam)
@@ -141,4 +178,35 @@ function TWAHeatGame:renderGame()
     self:rect(160, 20, 340, 10, 1, C.dark)
     self:rect(160, 20, 340 * self.progress, 10, 1, C.good)
     self:frame(160, 20, 340, 10, 1, C.faint)
+end
+
+-- Bellows at the hand for the fire variants (request 2026-09-28: "มินิเกม
+-- การเป่าลม ตรงเมาส์อยากให้เป็นรูปที่เป่าลม") -- drawn, since there's no
+-- vanilla bellows icon to borrow: two wooden boards hinged at a brass
+-- nozzle, leather between them; they squeeze shut while you pump.
+function TWAHeatGame:drawTool()
+    if self.cool or self.bend then return B.drawTool(self) end
+    if not self.hx then return end
+    local x, y = self.hx, self.hy
+    local open = self.dragging and (0.12 + 0.1 * math.abs(math.sin(self.elapsed * 0.012))) or 0.32
+    local L = 58
+    -- Nozzle points down-left at the contact point.
+    local nx, ny = x, y
+    local ax, ay = x + 18, y - 18                     -- hinge
+    local function arm(a)
+        local base = -0.78                            -- pointing up-right
+        return ax + math.cos(base + a) * L, ay + math.sin(base + a) * L
+    end
+    local tx1, ty1 = arm(open)
+    local tx2, ty2 = arm(-open)
+    self:quad(ax, ay, tx1, ty1, tx2, ty2, ax, ay, 1, 0.45, 0.3, 0.16)        -- leather
+    self:line(ax, ay, tx1, ty1, 7, 1, C.wood)                              -- top board
+    self:line(ax, ay, tx2, ty2, 7, 1, C.wood)                              -- bottom board
+    self:line(tx1, ty1, tx1 + 10, ty1 - 10, 4, 1, C.wood2)                 -- handles
+    self:line(tx2, ty2, tx2 + 10, ty2 - 10, 4, 1, C.wood2)
+    self:line(nx, ny, ax, ay, 5, 1, { r = 0.78, g = 0.62, b = 0.2 })       -- nozzle
+    if self.dragging and ZombRand(2) == 0 then
+        self:burst("steam", nx - 4, ny + 4, 1, { col = C.faint, grow = 0.01 })
+    end
+    self:disc(x, y, 2.5, 1, C.guide, 10)
 end

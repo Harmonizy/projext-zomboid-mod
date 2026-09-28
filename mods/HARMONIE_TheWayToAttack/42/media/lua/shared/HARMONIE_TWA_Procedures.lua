@@ -1012,7 +1012,9 @@ TWAProcedures.Categories = {
     { key = "Balance", nameKey = "IGUI_TWA_ProcCat_Balance", ids = { 'HammerNails', 'CounterweightHead', 'WeldMetal' } },
     { key = "Structure", nameKey = "IGUI_TWA_ProcCat_Structure", ids = { 'RivetPlate', 'DrillCore' } },
     { key = "Toughness", nameKey = "IGUI_TWA_ProcCat_Toughness", ids = { 'WrapCloth', 'WrapLeather', 'StringSinew', 'WeaveWire' } },
-    { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'FireTreat', 'CoatWax', 'SurfaceCoating' } },
+    -- CoatWax/FireTreat swapped tiers 2026-09-28 (see RecipeData.lua's note);
+    -- listed in tier order.
+    { key = "WearResist", nameKey = "IGUI_TWA_ProcCat_WearResist", ids = { 'CoatMud', 'CoatWax', 'FireTreat', 'SurfaceCoating' } },
 }
 
 TWAProcedures.Order = {}

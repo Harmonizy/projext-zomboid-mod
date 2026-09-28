@@ -222,20 +222,23 @@ E) Structure -- CUMULATIVE by KnockdownMod:
      KnockdownMod >= 2  -> + RivetPlate
      KnockdownMod >= 3  -> + DrillCore
 
-F) Toughness -- CUMULATIVE by ConditionMax:
-     ConditionMax > 5   -> + WrapCloth
-     ConditionMax > 10  -> + WrapLeather
-     ConditionMax > 15  -> + StringSinew
-     ConditionMax > 20  -> + WeaveWire
+F) Toughness -- HIGHEST TIER ONLY by ConditionMax (changed 2026-09-28, was
+   cumulative -- "ไม่อยากให้ต้องทำทั้ง พันผ้า พันหนัง ร้อยด้าย ถักลวดพร้อมกัน"):
+     ConditionMax > 20  -> WeaveWire
+     else > 15          -> StringSinew
+     else > 10          -> WrapLeather
+     else > 5           -> WrapCloth
 
-G) Wear Resistance -- CUMULATIVE by ConditionLowerChanceOneIn:
-     ConditionLowerChanceOneIn > 10  -> + CoatMud
-     ConditionLowerChanceOneIn > 20  -> + FireTreat
-     ConditionLowerChanceOneIn > 30  -> + CoatWax
-     ConditionLowerChanceOneIn > 40  -> + SurfaceCoating
-     (real note: nothing in the current 248-recipe craftable pool
-      actually exceeds 40, so SurfaceCoating is defined but currently
-      never required by any real recipe.)
+G) Wear Resistance -- HIGHEST TIER ONLY by ConditionLowerChanceOneIn (changed
+   2026-09-28, was cumulative; CoatWax and FireTreat also SWAPPED tiers):
+     > 40  -> SurfaceCoating
+     else > 30  -> FireTreat
+     else > 20  -> CoatWax
+     else > 10  -> CoatMud
+     (nothing in the current pool exceeds 40, so SurfaceCoating is still
+      defined but unused.)
+   Applied as a scripted hand-edit of HARMONIE_TWA_RecipeData.lua (the
+   generator is stale), checked against each recipe's own stats.
 
 H) Assembly -- NAME-BASED, not stat-based. A real item whose OWN NAME
    describes a specific attached/constructed component gets that

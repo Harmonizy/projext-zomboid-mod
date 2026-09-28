@@ -25,8 +25,12 @@ local C = B.COL
 -- Bands halved (request 2026-09-28: "มินิเกมมีโซนที่กว้างเกินไป ลดลงมาครึ่ง
 -- นึง"). The start mark still accepts the tool within 2.5 bands.
 local VARIANTS = {
-    sharpen = { strokes = function(req) return 3 + math.floor(req / 2) end, vmax = 0.9, band = 6, tool = "Whetstone2" },
-    polish  = { strokes = function() return 4 end, vmax = 0.9, band = 7 },
+    -- Request 2026-09-28 ("การลับหรือการขัดอยากให้ต้องทำเยอะกว่านี้ และทำช้า
+    -- ไปไม่ส่งผล ต้องสะบัด"): twice the strokes, and they are FLICKS -- the
+    -- stone only bites while it moves at least `vmin` (slower just doesn't
+    -- progress), with a much higher ceiling before it skids.
+    sharpen = { strokes = function(req) return 6 + math.floor(req / 2) end, vmin = 0.5, vmax = 2.4, band = 6, tool = "Whetstone2", flick = true },
+    polish  = { strokes = function() return 8 end, vmin = 0.5, vmax = 2.4, band = 7, flick = true },
     carve   = { strokes = function(req) return 3 + req end, vmax = 0.8, band = 6, tool = "KnifeSushi" },
     saw     = { strokes = function() return 6 end, vmax = 1.4, band = 7, tool = "Handsaw", alternate = true },
     weld    = { strokes = function() return 1 end, vmax = 0.22, vmin = 0.05, band = 5, tool = "BlowTorch" },
@@ -37,7 +41,17 @@ local function buildPath(variant)
     if variant == "saw" then
         return { { 170, 210 }, { 450, 210 } }
     elseif variant == "weld" then
-        return { { 110, 200 }, { 510, 200 } }
+        -- Request 2026-09-28 ("การเชื่อมอยากให้ต้องขยับเมาส์เป็นฟันปลา เหมือนกับ
+        -- การเชื่อมจริงๆที่ต้องขยับขึ้นลง"): the bead is laid in a weave, so the
+        -- guide is a zig-zag along the seam. Running straight down the seam
+        -- sits ~8 px off the zig-zag at every turn -- outside the band.
+        local pts = {}
+        local i = 0
+        for x = 110, 510, 20 do
+            pts[#pts + 1] = { x, (i % 2 == 0) and 184 or 216 }
+            i = i + 1
+        end
+        return pts
     elseif variant == "engrave" then
         return { { 130, 230 }, { 200, 160 }, { 270, 230 }, { 340, 160 }, { 410, 230 }, { 480, 160 } }
     elseif variant == "carve" then
@@ -118,6 +132,7 @@ function TWAStrokeGame:onGrab(x, y)
     end
     self.active = true
     self.along = 0
+    self.strokeStart = self.elapsed
 end
 
 function TWAStrokeGame:onRelease()
@@ -128,6 +143,19 @@ function TWAStrokeGame:onRelease()
 end
 
 function TWAStrokeGame:finishStroke(x, y)
+    -- Sharpening/polishing are flicks: a stroke that took too long on average
+    -- (slower than vmin over its whole length) simply doesn't bite -- no
+    -- penalty, it just doesn't count (request 2026-09-28: "ทำช้าไปไม่ส่งผล
+    -- ต้องสะบัด"). Judged over the whole stroke, not frame by frame, so the
+    -- first frames of a flick starting from rest aren't held against it.
+    if self.v.flick then
+        local ms = math.max(1, self.elapsed - (self.strokeStart or self.elapsed))
+        if (self.total * self.along) / ms < self.vmin then
+            self:flash(getText("IGUI_TWA_MG_Stroke_Flick"), false, 900)
+            self.active = false
+            return
+        end
+    end
     self.done = self.done + 1
     self:burst("ring", x, y, 1, { size = 6, grow = 0.1, ttl = 350, col = C.good })
     if self.done >= self.need then
@@ -159,14 +187,16 @@ function TWAStrokeGame:onDrag(x, y, dt)
     local speed = self.handSpeed or 0
     if speed > self.vmax then
         self:tooFast(dt * 0.0004 * (speed / self.vmax - 1), getText("IGUI_TWA_MG_Stroke_TooFast"), x, y)
-    elseif self.vmin and speed < self.vmin and self.along > 0.02 then
+    elseif self.vmin and not self.v.flick and speed < self.vmin and self.along > 0.02 then
         self:spend(dt * 0.00025, getText("IGUI_TWA_MG_Stroke_TooSlow"), true)
         if ZombRand(4) == 0 then self:burst("ember", x, y, 1) end
     end
 
     -- Forward only, and no skipping ahead across the work -- a swipe that
     -- jumps ahead is "too fast" and costs, instead of silently not counting.
-    if t - self.along >= 0.2 then
+    -- (A flick is fast by design, so it may cover ground quickly; it is
+    -- judged on its average speed when it reaches the end instead.)
+    if t - self.along >= 0.2 and not self.v.flick then
         self:tooFast(0.02, getText("IGUI_TWA_MG_Stroke_TooFast"), x, y)
     elseif t > self.along then
         self.along = t
