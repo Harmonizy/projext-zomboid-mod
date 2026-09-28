@@ -547,7 +547,8 @@ function TWARecipeScrollList:doDrawItem(y, entry, alt)
         self:drawRect(pad + 2, y + pad, iconSize, iconSize, 0.5, 0, 0, 0)
         self:drawTextureScaled(tex, pad + 2, y + pad, iconSize, iconSize, 1, tint, tint, tint)
     end
-    -- (no green tick on the row any more -- round 7: "ติ้กเขียวถูกในสูตรให้เอาออก")
+    -- No green tick on the recipe row (round 7: "ติ้กเขียวถูกในสูตรให้เอาออก";
+    -- round 8 clarified it is ONLY this one -- the others are back).
     local textX = pad + iconSize + 10
     drawTextShadowed(self, entry.text, textX, y + pad, 0.95, 0.95, 0.95, 1, self.font)
     local statusKey = owned and "IGUI_TWA_BaseItemOwned"
@@ -899,7 +900,7 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
             if tex then
                 self:drawTextureScaled(tex, px + 6, y + 6, cs - 12, cs - 12, 1, tint, tint, tint)
             end
-            -- (no green tick -- round 7)
+            if done then drawCheckBadge(self, px, y, cs) end
             -- Hover shows ONLY the procedure's name (request 2026-09-26) --
             -- the full requirement breakdown moved to the fixed details box
             -- below this grid, populated on click instead of on hover.
@@ -1658,10 +1659,22 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey)
     local CARD_H = 40
     self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
     self:drawRectBorder(x, y, w, CARD_H, 0.4, 0.4, 0.4, 0.4)
-    -- (no green tick -- round 7; the status line says it)
-    drawTextShadowed(self, baseDisplayName(fullType, altType), x + 8, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+    if owned and TWA_NEAT.check then
+        self:drawTextureScaled(TWA_NEAT.check, x + w - 24, y + 12, 16, 16, 1, 1, 1, 1)
+    end
+    -- The item's own picture at the left of the card (round 8: "มีรูปไอเท็ม
+    -- นั้นๆแสดงในวัตถุดิบตั้งต้นและวัตถุดิบเสริม").
+    local tx = x + 8
+    local script = fullType and getItemScript(fullType)
+    local icon = script and getItemTexture(script:getIcon())
+    if icon then
+        self:drawRect(x + 4, y + 4, 32, 32, 0.6, 0, 0, 0)
+        self:drawTextureScaled(icon, x + 4, y + 4, 32, 32, owned and 1 or 0.55, 1, 1, 1)
+        tx = x + 42
+    end
+    drawTextShadowed(self, baseDisplayName(fullType, altType), tx, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
     local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
-    drawTextShadowed(self, getText(statusKey), x + 8, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
+    drawTextShadowed(self, getText(statusKey), tx, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
     return y + CARD_H + 6 + 4
 end
 
@@ -2056,7 +2069,7 @@ function TWACraftWindow:render()
             if tex2 then
                 self:drawTextureScaled(tex2, px + 6, py + 6, cell - 12, cell - 12, 1, tint, tint, tint)
             end
-            -- (no green tick -- round 7; the word under the cell says it)
+            if done then drawCheckBadge(self, px, py, cell) end
             local w = showWords and TWACraftState.wordFor(procId, doneNow, qualityNow)
             if w then
                 local wc = TWACraftState.WORD_COLOR[w]

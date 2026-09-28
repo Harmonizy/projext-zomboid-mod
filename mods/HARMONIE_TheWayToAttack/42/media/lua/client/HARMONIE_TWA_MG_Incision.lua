@@ -22,7 +22,18 @@ local C = B.COL
 
 local function pathFor(variant)
     if variant == "engrave" then
-        return { { 130, 230 }, { 200, 160 }, { 270, 230 }, { 340, 160 }, { 410, 230 }, { 480, 160 } }
+        -- Round 8 ("สลักลวดลายให้วาดเป็นก้นหอยไปหาตรงกลาง"): a spiral from
+        -- the outside in to the centre, two turns, 50 px between turns --
+        -- wider than the slip distance, so the cut can't jump a turn.
+        local pts, cx, cy = {}, 310, 195
+        local turns, r0, r1, n = 2, 110, 10, 64
+        for i = 0, n do
+            local u = i / n
+            local a = -math.pi / 2 + u * turns * 2 * math.pi
+            local r = r0 + (r1 - r0) * u
+            pts[#pts + 1] = { cx + math.cos(a) * r, cy + math.sin(a) * r }
+        end
+        return pts
     end
     return { { 110, 200 }, { 510, 200 } }
 end
@@ -45,6 +56,12 @@ function TWAIncisionGame:onStart()
     self.vref = 0.9 / self.pace
     self.dLo, self.dHi = 0.45, 0.45 + 0.3 * self.tol
     self.through = 1.05
+    if self.engrave then
+        -- Round 8: the depth band covers 90% of the gauge (0..1.3).
+        -- (0.10..1.27 = 1.17 of 1.3; holding still settles at 1.25, inside.)
+        self.dLo, self.dHi = 0.10, 1.27
+        self.through = 1.29
+    end
     self.depth = 0
     self.timeLimit = 25000 + self.passes * 12000
     self.toolSize = 44
@@ -155,7 +172,7 @@ local CLASS_COL = {
 
 function TWAIncisionGame:renderGame()
     if self.engrave then
-        self:metalPlate(110, 130, 400, 130, { seed = 4 })
+        self:metalPlate(180, 65, 260, 260, { seed = 4 })
     else
         self:woodBoard(100, 182, 420, 36, { seed = 6, knots = 1 })
         local shaved = 420 * self.done / self.passes
@@ -190,5 +207,5 @@ function TWAIncisionGame:renderGame()
     self:line(gx - 6, yOf(self.depth), gx + 22, yOf(self.depth), 3, 1, C.line)
     self:textC(getText("IGUI_TWA_MG_Incision_Depth"), gx + 8, gy - 18, C.faint)
     if self.workTex then self:tex(self.workTex, 540, 20, 50, 50, 0.55) end
-    self:textC(string.format("%d / %d", self.done, self.passes), 310, 320, C.line, 0.9)
+    self:textC(string.format("%d / %d", self.done, self.passes), 310, 335, C.line, 0.9)
 end
