@@ -454,7 +454,7 @@
     "IGUI_TWA_MG_Purify_Hint2_find": "Flaws show on the side facing you; the microscope shows what is under the cursor.",
     "IGUI_TWA_MG_Purify_Hint_method": "Choose how to treat this flaw.",
     "IGUI_TWA_MG_Purify_Hint2_method": "The guide on the right says which treatment suits which flaw.",
-    "IGUI_TWA_MG_Purify_Hint_control": "Hold the button and keep the needle in the green band.",
+    "IGUI_TWA_MG_Purify_Hint_control": "Let go, then press and hold: keep the needle (your mouse height) in the green band.",
     "IGUI_TWA_MG_Purify_Hint_check": "Checking the purity...",
     "IGUI_TWA_MG_Purify_Clean": "Nothing there",
     "IGUI_TWA_MG_Purify_WrongMethod": "Wrong treatment",
@@ -492,5 +492,6 @@
     "IGUI_TWA_MG_Purify_Gauge_Cleaning": "Agent",
     "IGUI_TWA_MG_Purify_Gauge_Oil": "Agent",
     "IGUI_TWA_MG_Purify_Gauge_Laser": "Power",
-    "IGUI_TWA_MG_Purify_Gauge_Mechanical": "Force"
+    "IGUI_TWA_MG_Purify_Gauge_Mechanical": "Force",
+    "IGUI_TWA_MG_Purify_Hint2_control": "Size = how long it takes (small, medium, large). Deep flaws have a narrower band."
 }
