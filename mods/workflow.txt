@@ -3048,6 +3048,26 @@ Round 19 (same day):
     Control renamed Gemology / อัญมณีศาสตร์. Gemstone recipe tier Common.
     Diamond and Jade icons redrawn.
 
+Round 20 (same day):
+  - Kahlua has no next(): TWAGemSocketUI opened with an error at
+    "if next(total)". Test for an empty table with a pairs() loop. (lupa's
+    real Lua has next, so the tests could not catch it.)
+  - Procedure details: Practice moved to the top row, left of Find; no
+    separate cancel button -- the main button turns into Stop while the
+    procedure (or its practice) runs. Practice now ends with a real,
+    stoppable action time (shared/TimedActions/TWA_PracticeAction.lua,
+    sandbox ProcedureSeconds; complete() does nothing).
+  - Gem minigames all use the faceting game's brilliant (gemBrilliant):
+    Inspect select/analyze/plan, gem saw. Gem polishing: the cursor is the
+    gem (the craft's base gem picture in single player, else the recipe's).
+  - Cut planning through any flaw = Bad (TWAMinigameBase maxWord).
+  - GemQualityControl (Gemology) plays the new TWAPurifyGame, "Gem
+    Purification / การชำระมณี": turn the gem (arrows held / wheel), find
+    flaws (front side only, microscope view of the cursor), identify each
+    (kind, depth, size) -> pick the treatment (Heat / Cleaning / Oil / Laser
+    / Mechanical, TWAPurifyGame.methodFor, on-screen guide) -> hold the
+    gauge in the drifting band -> purity check.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

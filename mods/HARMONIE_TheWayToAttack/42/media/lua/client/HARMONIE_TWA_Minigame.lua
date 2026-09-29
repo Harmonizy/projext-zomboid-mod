@@ -153,7 +153,7 @@ TWAMinigame.GAME_FOR = {
     GemFaceting            = { "TWAFacetGame", "facet" },
     GemPolishing           = { "TWAStrokeGame", "polish" },
     GemFineCutting         = { "TWAFacetGame", "fine" },
-    GemQualityControl      = { "TWAInspectGame", "qc" },
+    GemQualityControl      = { "TWAPurifyGame", "purify" },   -- round 20: Gem Purification
 }
 
 --- Returns false (and does not call onResult) only when busy; the caller
