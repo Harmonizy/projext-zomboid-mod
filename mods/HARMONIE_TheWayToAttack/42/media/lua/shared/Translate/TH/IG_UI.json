@@ -52,7 +52,7 @@
     "IGUI_TWA_ReqForgeAdvanced": "ต้องการเตาตีเหล็กขั้นสูง",
     "IGUI_TWA_Proc_WrapClothImprov": "ประกอบผ้า",
     "IGUI_TWA_Proc_SawWood": "เลื่อยไม้",
-    "IGUI_TWA_Proc_SmashBottle": "ทุบ",
+    "IGUI_TWA_Proc_SmashBottle": "ทุบขวด",
     "IGUI_TWA_Proc_BreakBranch": "หักกิ่ง",
     "IGUI_TWA_Proc_WrapBarbedWireAssembly": "พันลวดหนาม",
     "IGUI_TWA_Proc_WrapWireAssembly": "พันลวด",
@@ -494,5 +494,6 @@
     "IGUI_TWA_MG_Purify_Gauge_Laser": "พลังงาน",
     "IGUI_TWA_MG_Purify_Gauge_Mechanical": "แรง",
     "IGUI_TWA_MG_Purify_Hint2_control": "ขนาด = ใช้เวลาชำระนานแค่ไหน (เล็ก กลาง ใหญ่) ตำหนิลึก แถบเขียวจะแคบกว่า",
-    "IGUI_TWA_MG_Purify_AllFound": "พบตำหนิครบทุกจุดแล้ว"
+    "IGUI_TWA_MG_Purify_AllFound": "พบตำหนิครบทุกจุดแล้ว",
+    "IGUI_TWA_Tooltip_PracticeLocked": "ฝึกได้หลังจากทำกรรมวิธีนี้จริงอย่างน้อย 1 ครั้ง"
 }

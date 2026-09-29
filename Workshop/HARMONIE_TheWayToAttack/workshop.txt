@@ -1,7 +1,7 @@
 version=1
 id=3809350242
 title=HARMONIE - The Way To Attack (WIP)
-description=(WIP) A melee weapon-crafting mod for Build 42: 137 HARMONIE weapons plus every vanilla melee weapon with a real Weaponry recipe, all crafted through a custom procedural crafting window.
+description=(WIP) A melee weapon-crafting mod for Build 42: 172 HARMONIE weapons plus every vanilla melee weapon with a real Weaponry recipe, all crafted through a custom procedural crafting window.
 description=
 description=HOW IT WORKS
 description=- Pick a recipe and press Start: the base material and the supplementary material are taken right away, and the window stays on that recipe until you Cancel, stop it (Incomplete) or Finish.
@@ -16,6 +16,7 @@ description=- Uses tools and materials from containers and the floor around you,
 description=- A grade reveal show on the anvil when a weapon is finished.
 description=- 17 gemstones and a gem-cutting skill tree (selection, analysis, planning, sawing, preforming, faceting, polishing, fine cutting, quality control), each with its own minigame.
 description=- Gemstone recipe: smash any stone open and see what it held - a roulette reveal rolls a raw gem (the better your work, the better the odds; the diamond the rarest) or clay, scrap, limestone, charcoal, coke or dung.
+description=- Every weapon type now has Epic, Elite and Legendary weapons to forge (35 new, realistic survival weapons).
 description=- Gem refining: raise a gem from Raw through Refined, Cut, Fine and Radiant to Pure (each a higher tier) - careless work can shatter it.
 description=- Weapon modification: right-click a weapon you crafted with a grade and set gems into its sockets (F none, E 1 ... A 5, S 5 plus a removable special socket). A gem adds damage by its state (Raw none up to Pure +0.5); the diamond adds 100 condition.
 description=- Admin / -debug weapon stat editor: right-click any weapon to edit every stat it has (multiplayer-safe, and the edit really counts in combat).

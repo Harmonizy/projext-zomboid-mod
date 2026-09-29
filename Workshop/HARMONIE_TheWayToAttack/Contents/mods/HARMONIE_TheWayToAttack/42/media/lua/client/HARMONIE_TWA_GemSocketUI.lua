@@ -450,7 +450,7 @@ function TWAGemSocketUI:drawLeft(i)
         shadowText(self, i.tierName, tx2, y + 30, i.tierCol, 1)
         tx2 = tx2 + textW(i.tierName) + 12
     end
-    if i.type ~= "" then shadowText(self, i.type, tx2, y + 30, { r = 0.55, g = 0.75, b = 1 }, 1) end
+    if i.type ~= "" then shadowText(self, i.type, tx2, y + 30, i.tierCol, 1) end -- round 23: in the tier's colour
     shadowText(self, getText("IGUI_TWA_Socket_Grade"), nx, y + 56, { r = 0.85, g = 0.85, b = 0.85 }, 1)
     self:gradeBadge(nx + textW(getText("IGUI_TWA_Socket_Grade")) + 10, y + 53, i.grade, i.gradeCol)
     y = y + 104
@@ -571,7 +571,7 @@ function TWAGemSocketUI:drawRight(i)
         shadowText(self, getText(r[1]), x, y, { r = 0.8, g = 0.8, b = 0.8 }, 1)
         if r[2] then
             local v = fitText(r[2], RX + RW - 12 - vx)
-            shadowText(self, v, vx, y, WHITE, 1)
+            shadowText(self, v, vx, y, r[1] == "IGUI_TWA_Stat_Type" and i.tierCol or WHITE, 1) -- round 23: type in the tier colour
         else
             self:gradeBadge(vx, y - 3, i.grade, i.gradeCol)
         end

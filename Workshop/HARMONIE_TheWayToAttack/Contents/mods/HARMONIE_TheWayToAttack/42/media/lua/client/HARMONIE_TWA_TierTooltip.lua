@@ -153,6 +153,56 @@ end
 -- manage their own clip/stencil around their declared width/height, so
 -- drawing beyond it is not safe to assume works.
 local origRender = ISToolTipInv.render
+
+-- Round 23 ("tooltip ที่บอกว่าไม่สมบูรณ์ยาวเกินไปจนล้น"): split a line to fit
+-- `maxW` pixels -- at spaces, and inside a long word by whole UTF-8
+-- characters (Thai runs long without spaces).
+local function wrapLine(text, maxW, font)
+    local tm = getTextManager()
+    if tm:MeasureStringX(font, text) <= maxW then return { text } end
+    local out, cur = {}, ""
+    local function push(w)
+        local cand = cur == "" and w or (cur .. " " .. w)
+        if tm:MeasureStringX(font, cand) <= maxW or cur == "" and tm:MeasureStringX(font, w) <= maxW then
+            cur = cand
+            return
+        end
+        if cur ~= "" then out[#out + 1] = cur; cur = "" end
+        if tm:MeasureStringX(font, w) <= maxW then cur = w return end
+        -- one word wider than the line: cut it by characters
+        local piece = ""
+        -- a character is 1 unit in the game (Kahlua strings are Java
+        -- strings) and 1-4 bytes in plain UTF-8 Lua: step by the lead byte
+        local i = 1
+        while i <= #w do
+            local c = w:byte(i)
+            local n = (c >= 0xF0 and c <= 0xF4 and 4) or (c >= 0xE0 and c < 0xF0 and 3) or (c >= 0xC0 and c < 0xE0 and 2) or 1
+            local c2 = w:byte(i + 1)
+            if n > 1 and not (c2 and c2 >= 0x80 and c2 < 0xC0) then n = 1 end -- not a UTF-8 sequence
+            local ch = w:sub(i, i + n - 1)
+            i = i + n
+            if tm:MeasureStringX(font, piece .. ch) > maxW and piece ~= "" then
+                out[#out + 1] = piece
+                piece = ch
+            else
+                piece = piece .. ch
+            end
+        end
+        cur = piece
+    end
+    for w in text:gmatch("%S+") do push(w) end
+    if cur ~= "" then out[#out + 1] = cur end
+    return out
+end
+
+-- Every { text, color } line wrapped to the tooltip's width.
+local function wrapAll(lines, maxW, font)
+    local out = {}
+    for _, l in ipairs(lines) do
+        for _, t in ipairs(wrapLine(l.text, maxW, font)) do out[#out + 1] = { text = t, color = l.color } end
+    end
+    return out
+end
 -- Round 6 (request 2026-09-28: "ให้ stats ใน tooltip อาวุธ ให้มี ประเภท อีก 1
 -- ค่า แสดงอยู่ก่อน dps"): the weapon's category, in plain English like the
 -- crafting window's category tabs ("SmallBlade" -> "Small Blade").
@@ -286,8 +336,8 @@ function ISToolTipInv:render()
         local qualityTable = item:getModData().TWA_ProcQuality or {}
         local showWords = true
         local resultItem = ScriptManager.instance:getItem(recipe.result)
-        local header = getText("IGUI_TWA_ResumingItem") .. " (" ..
-            (resultItem and resultItem:getDisplayName() or recipe.result) .. ")"
+        local rname = recipe.nameKey and getText(recipe.nameKey) or (resultItem and resultItem:getDisplayName() or recipe.result)
+        local header = getText("IGUI_TWA_ResumingItem") .. " (" .. rname .. ")"
         local lines = { { text = header, color = { r = 0.6, g = 0.8, b = 1 } } }
         if item:getModData().TWA_Incomplete then
             lines[#lines + 1] = { text = getText("IGUI_TWA_Tooltip_Unfinished"), color = { r = 1, g = 0.45, b = 0.35 } }
@@ -307,6 +357,7 @@ function ISToolTipInv:render()
                 lines[#lines + 1] = { text = text, color = color }
             end
         end
+        lines = wrapAll(lines, self.width - 12, font)
         local xh = rowH * #lines + 4
         self:setHeight(self.height + xh)
         self:drawRect(2, y, self.width - 4, xh - 2, 0.85, 0.05, 0.05, 0.05)
