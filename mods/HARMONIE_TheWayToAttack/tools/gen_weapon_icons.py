@@ -54,6 +54,7 @@ class Pen:
     def line(self, *a, **k): self._go("line", a, k)
     def ellipse(self, *a, **k): self._go("ellipse", a, k)
     def rectangle(self, *a, **k): self._go("rectangle", a, k)
+    def rounded_rectangle(self, *a, **k): self._go("rounded_rectangle", a, k)
 
 def rgba(c, a=255): return tuple(c[:3]) + (a,)
 
@@ -320,6 +321,155 @@ def bat(name, fin, grip_style, rnd):
         d.line([(xx, CY - 20 - k * 2), (xx, CY + 20 + k * 2)], fill=rgba(c), width=5)
     return img
 
+# ---- round 24: Legendary "tech" pieces ----------------------------------------
+# Sci-fi but real: machined titanium, tungsten carbide, technical ceramic and
+# carbon-fibre parts, anodised accent lines, lightening holes -- the look of a
+# modern high-end tool, no glow and nothing that couldn't be made today.
+TECH = {
+    "titanium": ((196, 204, 222), (138, 148, 170), (84, 92, 112)),   # bead-blasted Ti, cool blue-grey
+    "tungsten": ((150, 152, 160), (98, 100, 108), (54, 55, 62)),     # gunmetal carbide
+    "ceramic":  ((236, 234, 228), (196, 194, 188), (140, 138, 134)), # white zirconia
+}
+ACCENT = (255, 130, 30)      # anodised orange
+ACCENT2 = (60, 200, 230)     # anodised cyan
+OL = (20, 20, 24)
+
+def carbon(d, x0, x1, y0, y1):
+    """Carbon-fibre twill: a dark bar with a small diagonal checker."""
+    d.rectangle([x0, y0, x1, y1], fill=rgba((34, 36, 40)))
+    step = 8
+    for i, x in enumerate(range(int(x0), int(x1), step)):
+        for j, y in enumerate(range(int(y0), int(y1), step)):
+            if (i + j) % 2 == 0:
+                d.polygon([(x, y), (min(x1, x + step), y), (x, min(y1, y + step))], fill=rgba((70, 74, 82)))
+            else:
+                d.polygon([(min(x1, x + step), y), (min(x1, x + step), min(y1, y + step)), (x, min(y1, y + step))], fill=rgba((52, 55, 62)))
+    d.line([(x0, y0 + 2), (x1, y0 + 2)], fill=rgba((120, 126, 138), 200), width=2)
+    d.rectangle([x0, y0, x1, y1], outline=rgba(OL), width=2)
+
+def holes(d, xs, cy, r, col=(12, 12, 14)):
+    for x in xs:
+        d.ellipse([x - r, cy - r, x + r, cy + r], fill=rgba(col), outline=rgba((200, 206, 220), 160), width=1)
+
+def tech_knife(rnd):
+    img = Image.new("RGBA", (C, C), (0, 0, 0, 0)); d = Pen(img)
+    L = 316; x0 = (C - L) / 2; gx1 = x0 + L * 0.36
+    ti = TECH["titanium"]
+    # skeleton tang in titanium, carbon scales over it
+    d.rectangle([x0 + 4, CY - 17, gx1, CY + 17], fill=rgba(ti[1]), outline=rgba(OL), width=2)
+    carbon(d, x0 + 16, gx1 - 6, CY - 13, CY + 13)
+    holes(d, (x0 + 34, x0 + 62, x0 + 90), CY, 4, (18, 18, 20))
+    d.line([(x0 + 6, CY), (x0 + 14, CY)], fill=rgba(ACCENT), width=4)            # lanyard insert
+    d.line([(gx1 - 4, CY - 17), (gx1 - 4, CY + 17)], fill=rgba(ACCENT), width=3)  # accent ring
+    # compact guard
+    d.polygon([(gx1, CY - 22), (gx1 + 10, CY - 22), (gx1 + 10, CY + 24), (gx1, CY + 30)], fill=rgba(ti[2]), outline=rgba(OL))
+    # blade: modified tanto, titanium body with a tungsten-carbide edge band
+    b0 = gx1 + 10; b1 = x0 + L; top, bot = CY - 26, CY + 22; BL = b1 - b0
+    body = [(b0, top), (b1 - BL * 0.22, top), (b1, CY - 10), (b1 - BL * 0.1, bot - 4), (b0, bot)]
+    d.polygon(body, fill=rgba(ti[1]))
+    d.polygon([(b0, top), (b1 - BL * 0.22, top), (b1 - 6, CY - 10), (b0, CY - 8)], fill=rgba(ti[0]))
+    edge = [(b0, bot - 9), (b1 - BL * 0.1 - 4, bot - 12), (b1 - 2, CY - 10), (b1 - BL * 0.1, bot - 4), (b0, bot)]
+    d.polygon(edge, fill=rgba(TECH["tungsten"][0]))
+    d.line([(b0, bot), (b1 - BL * 0.1, bot - 4), (b1, CY - 10)], fill=rgba((250, 252, 255)), width=2)
+    d.line([(b0 + 20, CY - 16), (b1 - BL * 0.3, CY - 16)], fill=rgba(ti[2]), width=2)   # fuller
+    holes(d, (b0 + 22,), CY - 2, 6)
+    d.polygon(body, outline=rgba(OL))
+    return img
+
+def tech_hammer(rnd):
+    img = Image.new("RGBA", (C, C), (0, 0, 0, 0)); d = Pen(img)
+    L = 320; x0 = (C - L) / 2; hx = x0 + L - 42
+    ti, w = TECH["titanium"], TECH["tungsten"]
+    # I-beam titanium handle with lightening slots, carbon grip
+    d.rectangle([x0 + 20, CY - 11, hx + 8, CY + 11], fill=rgba(ti[1]), outline=rgba(OL), width=2)
+    d.line([(x0 + 20, CY - 7), (hx + 8, CY - 7)], fill=rgba(ti[0]), width=3)
+    for x in range(int(x0 + 150), int(hx - 20), 26):
+        d.rounded_rectangle([x, CY - 4, x + 18, CY + 4], radius=4, fill=rgba((14, 14, 16)))
+    carbon(d, x0 + 8, x0 + 132, CY - 15, CY + 15)
+    d.line([(x0 + 134, CY - 15), (x0 + 134, CY + 15)], fill=rgba(ACCENT), width=4)
+    # head: tungsten striking face + chisel-pry back, machined titanium body
+    d.rectangle([hx - 18, CY - 26, hx + 18, CY + 40], fill=rgba(ti[1]), outline=rgba(OL), width=3)
+    holes(d, (hx,), CY - 6, 7)
+    d.rectangle([hx - 24, CY + 36, hx + 24, CY + 62], fill=rgba(w[1]), outline=rgba(OL), width=3)   # face
+    for k in range(3):                                                                             # waffle face
+        d.line([(hx - 20 + k * 14, CY + 58), (hx - 14 + k * 14, CY + 62)], fill=rgba(w[2]), width=3)
+    d.line([(hx - 24, CY + 38), (hx + 24, CY + 38)], fill=rgba(w[0]), width=2)
+    d.polygon([(hx - 14, CY - 26), (hx + 14, CY - 26), (hx + 6, CY - 78), (hx - 2, CY - 80)], fill=rgba(w[1]), outline=rgba(OL))  # pry blade
+    d.line([(hx + 5, CY - 30), (hx + 3, CY - 76)], fill=rgba(w[0]), width=2)
+    d.line([(hx - 18, CY + 26), (hx + 18, CY + 26)], fill=rgba(ACCENT2), width=3)
+    return img
+
+def tech_spear(rnd):
+    img = Image.new("RGBA", (C, C), (0, 0, 0, 0)); d = Pen(img)
+    x0, x1 = 6, C - 6; head0 = x1 - 112
+    ce, ti = TECH["ceramic"], TECH["titanium"]
+    carbon(d, x0, head0 - 20, CY - 8, CY + 8)                       # carbon-fibre shaft
+    for xx in (x0 + 50, x0 + 120):                                   # grip sleeves
+        d.rectangle([xx, CY - 11, xx + 34, CY + 11], fill=rgba((44, 46, 50)), outline=rgba(OL), width=2)
+        for gx in range(xx + 4, xx + 32, 6): d.line([(gx, CY - 9), (gx, CY + 9)], fill=rgba((66, 68, 74)), width=2)
+    d.rectangle([x0, CY - 10, x0 + 12, CY + 10], fill=rgba(ti[1]), outline=rgba(OL), width=2)   # butt cap
+    d.rectangle([head0 - 30, CY - 12, head0 + 4, CY + 12], fill=rgba(ti[1]), outline=rgba(OL), width=2)   # titanium ferrule
+    d.line([(head0 - 26, CY - 12), (head0 - 26, CY + 12)], fill=rgba(ACCENT), width=3)
+    pts = [(head0, CY - 13), (head0 + 44, CY - 22), (x1, CY), (head0 + 44, CY + 22), (head0, CY + 13)]
+    d.polygon(pts, fill=rgba(ce[1]))                                 # white ceramic head
+    d.polygon([(head0, CY - 11), (head0 + 44, CY - 20), (x1 - 4, CY), (head0, CY)], fill=rgba(ce[0]))
+    d.line([(head0 + 6, CY), (x1 - 8, CY)], fill=rgba(ce[2]), width=2)
+    d.polygon(pts, outline=rgba(OL))
+    return img
+
+def tech_axe(rnd):
+    img = Image.new("RGBA", (C, C), (0, 0, 0, 0)); d = Pen(img)
+    L = 300; x0 = (C - L) / 2; hx = x0 + L - 40
+    ti, w = TECH["titanium"], TECH["tungsten"]
+    carbon(d, x0, hx + 22, CY - 11, CY + 11)                        # composite haft
+    d.rectangle([x0 + 4, CY - 14, x0 + 92, CY + 14], fill=rgba((46, 48, 52)), outline=rgba(OL), width=2)
+    for gx in range(int(x0 + 10), int(x0 + 90), 7): d.line([(gx, CY - 12), (gx, CY + 12)], fill=rgba((70, 72, 78)), width=2)
+    d.line([(x0 + 94, CY - 14), (x0 + 94, CY + 14)], fill=rgba(ACCENT), width=4)
+    d.rectangle([hx - 16, CY - 22, hx + 16, CY + 22], fill=rgba(ti[1]), outline=rgba(OL), width=2)
+    def bit(sign):
+        h = 92; back, front = hx - 36, hx + 44
+        edge = [(back + (front - back) * t, CY + sign * (h + 8 * math.sin(math.pi * t))) for t in [i / 8 for i in range(9)]]
+        pts = [(hx - 20, CY + sign * 18), (hx - 24, CY + sign * (h * 0.45))] + edge + [(hx + 28, CY + sign * (h * 0.45)), (hx + 22, CY + sign * 18)]
+        d.polygon(pts, fill=rgba(ti[1]))
+        bev = [(x, y - sign * 16) for x, y in edge]
+        d.polygon(edge + bev[::-1], fill=rgba(w[0]))                # carbide edge insert
+        d.line(edge, fill=rgba((250, 252, 255)), width=3)
+        holes(d, (hx + 2,), CY + sign * 46, 9)                        # machined lightening hole
+        d.line([(hx - 18, CY + sign * 30), (hx + 22, CY + sign * 30)], fill=rgba(ACCENT2), width=2)
+        d.polygon(pts, outline=rgba(OL))
+    bit(1); bit(-1)
+    return img
+
+def tech_maul(rnd):
+    img = Image.new("RGBA", (C, C), (0, 0, 0, 0)); d = Pen(img)
+    L = 360; x0 = (C - L) / 2; hx = x0 + L - 44
+    ti, w = TECH["titanium"], TECH["tungsten"]
+    carbon(d, x0, hx + 10, CY - 11, CY + 11)
+    # shock-absorbing overmould grip
+    d.rounded_rectangle([x0 + 2, CY - 16, x0 + 96, CY + 16], radius=8, fill=rgba((40, 42, 46)), outline=rgba(OL), width=2)
+    for gx in range(int(x0 + 12), int(x0 + 90), 10): d.ellipse([gx, CY - 4, gx + 6, CY + 4], fill=rgba((24, 24, 26)))
+    d.line([(x0 + 98, CY - 16), (x0 + 98, CY + 16)], fill=rgba(ACCENT), width=4)
+    # tungsten wedge on a titanium collar
+    d.rectangle([hx - 22, CY - 20, hx + 22, CY + 20], fill=rgba(ti[1]), outline=rgba(OL), width=2)
+    pts = [(hx - 28, CY + 18), (hx + 28, CY + 18), (hx + 26, CY + 30), (hx, CY + 80), (hx - 26, CY + 30)]
+    d.polygon(pts, fill=rgba(w[1]))
+    d.polygon([(hx - 28, CY + 18), (hx - 6, CY + 18), (hx - 4, CY + 36), (hx, CY + 80), (hx - 26, CY + 30)], fill=rgba(w[0]))
+    d.polygon(pts, outline=rgba(OL))
+    d.rectangle([hx - 30, CY - 58, hx + 30, CY - 18], fill=rgba(w[1]), outline=rgba(OL), width=3)   # striking poll
+    d.rectangle([hx - 30, CY - 58, hx + 30, CY - 50], fill=rgba(w[0]), outline=rgba(OL), width=2)
+    d.line([(hx - 30, CY - 30), (hx + 30, CY - 30)], fill=rgba(ACCENT2), width=3)
+    holes(d, (hx - 14, hx + 14), CY, 5)
+    return img
+
+def shrink(img, f):
+    """Scaled about the centre, so a wide head stays inside the icon."""
+    n = int(C * f)
+    out = Image.new("RGBA", (C, C), (0, 0, 0, 0))
+    out.alpha_composite(img.resize((n, n), Image.LANCZOS), ((C - n) // 2, (C - n) // 2))
+    return out
+
+TECH_DRAW = {"knife": tech_knife, "hammer": tech_hammer, "spear": tech_spear, "axe": tech_axe, "maul": tech_maul}
+
 def finish(img, name):
     img = img.rotate(45, resample=Image.BICUBIC, center=(C / 2, C / 2))
     off = (C - W) // 2
@@ -334,6 +484,7 @@ def finish(img, name):
 def draw(w):
     rnd = random.Random(hash(w["key"]) & 0xffff)
     k, st = w["look"][0], w["look"][1:]
+    if k == "tech": return shrink(TECH_DRAW[st[0]](rnd), 0.72 if st[0] == "axe" else 0.8)
     if k == "knife":
         style, fin, gs = st[0], st[1], st[2]
         opts = st[3] if len(st) > 3 else {}

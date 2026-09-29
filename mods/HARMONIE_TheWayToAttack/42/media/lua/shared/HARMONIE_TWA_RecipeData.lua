@@ -914,6 +914,13 @@ TWARecipeData.GemRoll = {
         { "Base.Limestone" },
         { "Base.Charcoal", "Base.CharcoalCrafted" },
         { "Base.Coke" },
+        -- round 24 ("pool แย่ ... เพิ่ม เศษเหล็ก เศษโลหะ เศษทองคำ เศษเงิน เศษทองแดง
+        -- เศษอลูมิเนียม"; scrap metal already had its own slot above)
+        { "Base.IronScrap" },
+        { "Base.GoldScrap" },
+        { "Base.SilverScrap" },
+        { "Base.CopperScrap" },
+        { "Base.AluminumScrap" },
         { "Base.Dung_Cow", "Base.Dung_Chicken", "Base.Dung_Pig", "Base.Dung_Sheep", "Base.Dung_Turkey",
           "Base.Dung_Raccoon", "Base.Dung_Rabbit", "Base.Dung_Deer", "Base.Dung_Mouse", "Base.Dung_Rat" },
     },

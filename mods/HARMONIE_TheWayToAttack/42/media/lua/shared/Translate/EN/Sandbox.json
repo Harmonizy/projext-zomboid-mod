@@ -50,7 +50,7 @@
     "Sandbox_HARMONIE_TWA_MaterialNeedsGood": "Materials need Good or better to finish",
     "Sandbox_HARMONIE_TWA_MaterialNeedsGood_tooltip": "Material recipes can only be finished at an overall quality of Good or Excellent.",
     "Sandbox_HARMONIE_TWA_GemChanceExcellent": "Gemstone: gem chance at Excellent (percent)",
-    "Sandbox_HARMONIE_TWA_GemChanceExcellent_tooltip": "Finishing the Gemstone recipe rolls what the stone held: at an overall Excellent, this percent gives a gem (every gem equal, the diamond the rarest); the rest gives clay, scrap metal, limestone, charcoal, coke or dung.",
+    "Sandbox_HARMONIE_TWA_GemChanceExcellent_tooltip": "Finishing the Gemstone recipe rolls what the stone held: at an overall Excellent, this percent gives a gem (every gem equal, the diamond the rarest); the rest gives clay, scrap metal, limestone, charcoal, coke, iron/gold/silver/copper/aluminum scrap or dung.",
     "Sandbox_HARMONIE_TWA_GemChanceGood": "Gemstone: gem chance at Good (percent)",
     "Sandbox_HARMONIE_TWA_GemChanceGood_tooltip": "The same at an overall Good.",
     "Sandbox_HARMONIE_TWA_GemChanceBad": "Gemstone: gem chance at Bad (percent)",

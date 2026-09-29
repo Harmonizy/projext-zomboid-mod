@@ -394,35 +394,15 @@ end
 -- scrap metal, iron scrap and steel scrap stand in for each other.
 local SCRAP_METALS = { "Base.ScrapMetal", "Base.IronScrap", "Base.SteelScrap" }
 
-local JEWELRY_ITEMS = {
-    "Base.Ring_Left_MiddleFinger_Gold", "Base.Ring_Left_MiddleFinger_Silver",
-    "Base.Ring_Left_RingFinger_Gold", "Base.Ring_Left_RingFinger_Silver",
-    "Base.Ring_Right_MiddleFinger_Gold", "Base.Ring_Right_MiddleFinger_Silver",
-    "Base.Ring_Right_RingFinger_Gold", "Base.Ring_Right_RingFinger_Silver",
-    "Base.Necklace_Gold", "Base.Necklace_Silver",
-    "Base.NecklaceLong_Gold", "Base.NecklaceLong_Silver",
-    "Base.Necklace_SilverCrucifix",
-    "Base.Bracelet_BangleLeftGold", "Base.Bracelet_BangleLeftSilver",
-    "Base.Bracelet_BangleRightGold", "Base.Bracelet_BangleRightSilver",
-    "Base.Bracelet_ChainLeftGold", "Base.Bracelet_ChainLeftSilver",
-    "Base.Bracelet_ChainRightGold", "Base.Bracelet_ChainRightSilver",
-    "Base.Earring_LoopLrg_Gold", "Base.Earring_LoopLrg_Silver",
-    "Base.Earring_LoopMed_Gold", "Base.Earring_LoopMed_Silver",
-    "Base.Earring_LoopSmall_Gold_Both", "Base.Earring_LoopSmall_Gold_Top",
-    "Base.Earring_LoopSmall_Silver_Both", "Base.Earring_LoopSmall_Silver_Top",
-    "Base.WristWatch_Left_ClassicBlack", "Base.WristWatch_Left_ClassicBrown",
-    "Base.WristWatch_Left_ClassicGold", "Base.WristWatch_Left_ClassicMilitary",
-    "Base.WristWatch_Right_ClassicBlack", "Base.WristWatch_Right_ClassicBrown",
-    "Base.WristWatch_Right_ClassicGold", "Base.WristWatch_Right_ClassicMilitary",
-    "Base.WristWatch_Left_DigitalBlack", "Base.WristWatch_Left_DigitalRed",
-    "Base.WristWatch_Right_DigitalBlack", "Base.WristWatch_Right_DigitalRed",
-    "Base.Pocketwatch",
-    "Base.NoseRing_Gold", "Base.NoseRing_Silver",
-    "Base.NoseStud_Gold", "Base.NoseStud_Silver",
-    "Base.BellyButton_RingGold", "Base.BellyButton_RingSilver",
-    "Base.BellyButton_StudGold", "Base.BellyButton_StudSilver",
-    "Base.BellyButton_DangleGold", "Base.BellyButton_DangleSilver",
-}
+-- Round 24 ("กรรมวิธีที่ใช้เศษโลหะได้ ให้สามารถใช้ เศษอลูมิเนียม เศษทองแดง"):
+-- aluminum and copper scrap count as scrap metal too.
+SCRAP_METALS[#SCRAP_METALS + 1] = "Base.AluminumScrap"
+SCRAP_METALS[#SCRAP_METALS + 1] = "Base.CopperScrap"
+
+-- Round 24 ("เปลี่ยนเครื่องประดับทองหรือเงิน ... เป็น เศษทองคำ/เศษเงิน 5 อัน
+-- แทน"): MeltMetal now takes vanilla gold or silver fragments (B42
+-- Base.GoldScrap / Base.SilverScrap) x5 instead of jewelry.
+local GOLD_SILVER_SCRAP = { "Base.GoldScrap", "Base.SilverScrap" }
 
 -- Every procedure's `time` (request 2026-09-28: "action time กรรมวิธีต่างๆ
 -- ขึ้นอยู่กับเลเวลสกิลที่ต้องใช้ สกิลเลเวล*10 + 10 กรณีที่ไม่มีคือ 10") is
@@ -860,7 +840,8 @@ TWAProcedures.List = {
         tool = { kind = "type", value = "Base.Tongs" },
         -- Round 23 ("หลอมโลหะให้ใข้วัตถุดิบเพียงเครื่องประดับเงินหรือทอง 5 อัน
         -- เท่านั้น"): gold or silver jewelry x5, nothing else.
-        consumes = { { itemTypes = JEWELRY_ITEMS, qty = 5, nameKey = "IGUI_TWA_Material_GoldSilverJewelry" } },
+        -- Round 24: gold or silver fragments x5 (was jewelry).
+        consumes = { { itemTypes = GOLD_SILVER_SCRAP, qty = 5, nameKey = "IGUI_TWA_Material_GoldSilverScrap" } },
         time = 10, sound = "TWA_Craft",
     },
     -- Icon changed (request 2026-09-28) -- user gave "CeremicIngotCast", a

@@ -304,3 +304,7 @@ weapons/1handed/ (105 ไฟล์) / weapons/2handed/ (92 ไฟล์) / World
   "round 23 weapons") และชื่อไทยใน ItemName.json -- แก้ตารางแล้วรันใหม่ได้
 (รอบ 23) tools/gen_weapon_icons.py -- วาดไอคอนอาวุธใหม่ (มีด ค้อน กระบอง หอก ขวาน
   ค้อนปอนด์ ไม้เบสบอลเหล็ก) เอง อ่านรายการจาก gen_new_weapons.py
+(รอบ 24) gen_weapon_icons.py มีแบบ "tech" (ไทเทเนียม/ทังสเตนคาร์ไบด์/เซรามิก/คาร์บอนไฟเบอร์)
+  ใช้กับอาวุธ Legendary 5 ชิ้นของรอบ 23 (ชื่อใหม่ Ti-7/W-7/CF-7 แต่ key เดิม)
+(รอบ 24) ผลสุ่มหินมณี: FinishCraftAction ประทับ TWA_RollWord/TWA_RollChance บนไอเท็ม
+  และ print ลง console.txt -- GemReveal แสดงบรรทัด "คุณภาพรวม ... โอกาสได้อัญมณี ..."
