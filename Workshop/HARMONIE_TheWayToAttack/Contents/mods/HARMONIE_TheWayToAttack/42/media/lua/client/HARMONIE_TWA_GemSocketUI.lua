@@ -594,7 +594,10 @@ function TWAGemSocketUI:drawRight(i)
     end
     local total = G.totalBonus(wpn)
     y = y + 4
-    if next(total) then
+    -- (Kahlua has no next(): an explicit loop -- round 19's error at open)
+    local any = false
+    for _ in pairs(total) do any = true break end
+    if any then
         shadowText(self, fitText(getText("IGUI_TWA_Socket_EffectTotalAll", G.describe(total)), RW - 30), x, y, { r = 0.45, g = 1, b = 0.5 }, 1)
     end
     -- the two rules

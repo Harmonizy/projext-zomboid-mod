@@ -240,6 +240,9 @@ end
 -- Result state ----------------------------------------------------------------
 
 function TWAMinigameBase:wordFromQuality()
+    -- a game can cap its word whatever the meter says (round 20: a cut plan
+    -- through a flaw is Bad outright)
+    if self.maxWord == "Bad" then return "Bad" end
     if self.quality >= TWAConfig.num("MinigameExcellentAt") then return "Excellent" end
     if self.quality >= TWAConfig.num("MinigameGoodAt") then return "Good" end
     return "Bad"

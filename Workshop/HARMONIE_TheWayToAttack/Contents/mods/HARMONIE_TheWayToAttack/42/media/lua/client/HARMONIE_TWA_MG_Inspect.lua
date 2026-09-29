@@ -60,7 +60,8 @@ function TWAInspectGame:onStart()
         self:newTray()
         self.timeLimit = 40000
     elseif vr == "plan" then
-        self.stone = blobPts(310, 180, 120, 7, 14)
+        self.stone = {}
+        for i = 0, 23 do self.stone[#self.stone + 1] = { 310 + math.cos(i / 24 * 6.2832) * 118, 180 + math.sin(i / 24 * 6.2832) * 118 } end
         self.flaws = {}
         for i = 1, 3 + math.floor(self.req / 3) do
             local x, y
@@ -72,11 +73,11 @@ function TWAInspectGame:onStart()
         self.cutR = 50 * math.min(1.2, self.tol)
         self.timeLimit = 30000
     else
-        self.stone = blobPts(310, 180, 125, 5, 12)
-        if vr == "qc" then -- round 16: the round brilliant's own outline
-            self.stone = {}
-            for i = 0, 23 do self.stone[#self.stone + 1] = { 310 + math.cos(i / 24 * 6.2832) * 110, 180 + math.sin(i / 24 * 6.2832) * 110 } end
-        end
+        -- Round 20 ("ชอบ texture มณีในมินิเกมเจียระไน ... เอาไปใช้ในมินิเกมอื่น
+        -- ด้วย"): every gem here is the faceting game's brilliant, so the
+        -- stone is its round outline.
+        self.stone = {}
+        for i = 0, 23 do self.stone[#self.stone + 1] = { 310 + math.cos(i / 24 * 6.2832) * 110, 180 + math.sin(i / 24 * 6.2832) * 110 } end
         local n = (vr == "qc" and 7 or 4) + math.floor(self.req / 3)
         self.flaws = {}
         for i = 1, n do
@@ -149,7 +150,12 @@ function TWAInspectGame:onGrab(x, y)
         end
         self.placed = { x = x, y = y }
         if out > 0 then self:spend(0.03 * out, getText("IGUI_TWA_MG_Inspect_OutOfStone")) end
-        if bad > 0 then self:spend(0.07 * bad, getText("IGUI_TWA_MG_Inspect_FlawInCut")) end
+        -- Round 20 ("หากโดนตำหนิ 1 อัน ให้ถือว่าแย่เลย"): one flaw in the cut
+        -- and the plan is Bad.
+        if bad > 0 then
+            self:spend(0.07 * bad, getText("IGUI_TWA_MG_Inspect_FlawInCut"))
+            self.maxWord = "Bad"
+        end
         self:succeed(getText("IGUI_TWA_MG_Inspect_Planned"))
     else
         if B.dist(x, y, self.hx or x, self.hy or y) > 999 then return end
@@ -195,7 +201,12 @@ end
 
 -- Round 16: a see-through crystal (the inspection looks INTO the stone).
 function TWAInspectGame:drawStone(pts, col, alpha)
-    self:roughGem(pts, col, { clear = true, alpha = alpha, seed = 5 })
+    -- round 20: the faceting game's brilliant (centre and size from the outline)
+    local cx, cy, r = 0, 0, 0
+    for _, p in ipairs(pts) do cx, cy = cx + p[1], cy + p[2] end
+    cx, cy = cx / #pts, cy / #pts
+    for _, p in ipairs(pts) do r = math.max(r, B.dist(cx, cy, p[1], p[2])) end
+    self:gemBrilliant(cx, cy, r * 1.05, col, { seed = 5, alpha = alpha })
 end
 
 local function drawFlaw(self, x, y, r, kind, a)
@@ -217,7 +228,7 @@ function TWAInspectGame:renderGame()
         -- colour showing through where they broke.
         self:velvet(30, 95, 560, 170)
         for i, s in ipairs(self.stones) do
-            self:roughGem(s.pts, s.col, { seed = i * 3 + self.round, windows = 2 })
+            self:gemBrilliant(s.x, s.y, 34, s.col, { seed = i * 3 + self.round, glow = false })
             for _, f in ipairs(s.flaws) do
                 local fx, fy = s.x + f.dx, s.y + f.dy
                 if B.dist(mx, my, fx, fy) < self.loupe then drawFlaw(self, fx, fy, 5, 0, 1) end

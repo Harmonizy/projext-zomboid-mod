@@ -16,6 +16,7 @@ require "ISUI/ISCollapsableWindow"
 require "ISUI/ISTextEntryBox"
 require "ISUI/ISScrollingListBox"
 require "ISUI/ISContextMenu"
+require "TimedActions/TWA_PracticeAction"
 require "TimedActions/ISTimedActionQueue"
 
 -- NeatUI Framework (Workshop 3508537032, require=NeatUI_Framework in
@@ -1203,19 +1204,22 @@ function TWACraftWindow:createChildren()
     -- Round 13 ("เพิ่มปุ่มฝึกในรายละเอียดกรรมวิธีแต่ละอัน"): a Practice button
     -- at the left of the row -- plays the procedure's minigame for nothing
     -- (no materials, no XP, no craft), any time.
-    local practiceW = 80
-    self.procPracticeButton = TWANeatButton:new(rightX + 10, procBtnY, practiceW, procBtnH, getText("IGUI_TWA_Practice"), self, TWACraftWindow.onPracticeProcedure)
+    -- Round 20 ("ย้ายปุ่มฝึกอยู่ข้างหน้าปุ่มค้นหา"): Practice sits on the top
+    -- row, just left of the Find button; the main button takes the whole
+    -- bottom row.
+    local practiceW = 0
+    self.procPracticeButton = TWANeatButton:new(rightX + RIGHT_W - 70 - 8 - 60, self.procDetailsY + 6, 60, 22, getText("IGUI_TWA_Practice"), self, TWACraftWindow.onPracticeProcedure)
     self.procPracticeButton.neatTint = { r = 0.55, g = 0.8, b = 0.55 }
     self.procPracticeButton:setTooltip(getText("IGUI_TWA_Tooltip_Practice"))
     self.procPracticeButton:initialise()
     self:addChild(self.procPracticeButton)
-    self.procConfirmButton = TWANeatButton:new(rightX + 20 + practiceW, procBtnY, RIGHT_W - 30 - practiceW, procBtnH, getText("IGUI_TWA_ConfirmProcedure"), self, TWACraftWindow.onConfirmProcedure)
+    self.procConfirmButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_ConfirmProcedure"), self, TWACraftWindow.onConfirmProcedure)
     self.procConfirmButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.procConfirmButton:setTooltip(getText("IGUI_TWA_Tooltip_ConfirmProcedure"))
     self.procConfirmButton:initialise()
     self:addChild(self.procConfirmButton)
 
-    self.procCancelButton = TWANeatButton:new(rightX + 20 + practiceW, procBtnY, RIGHT_W - 30 - practiceW, procBtnH, getText("IGUI_TWA_CancelProcedure"), self, TWACraftWindow.onCancelProcedure)
+    self.procCancelButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_CancelProcedure"), self, TWACraftWindow.onCancelProcedure)
     self.procCancelButton.neatTint = { r = 0.9, g = 0.3, b = 0.25 }
     self.procCancelButton:setTooltip(getText("IGUI_TWA_Tooltip_CancelProcedure"))
     self.procCancelButton:initialise()
@@ -1647,6 +1651,11 @@ end
 
 function TWACraftWindow:onConfirmProcedure()
     if not self.selectedProcId then return end
+    -- round 20: the running action's own button stops it
+    if self.activeAction and self.activeProcId == self.selectedProcId then
+        self.activeAction:forceStop()
+        return
+    end
     local proc = TWAProcedures.List[self.selectedProcId]
     if not proc then return end
     self:tryPerformProcedure(self.selectedProcId, proc)
@@ -1662,10 +1671,24 @@ function TWACraftWindow:onPracticeProcedure()
     end
     local window = self
     self.practicing = true
+    -- Round 20: after the minigame, a real (stoppable) action time like the
+    -- procedure's own -- nothing is used up and nothing is recorded.
     local ok = TWAMinigame.play(self.player, procId, function(word)
-        window.practicing = false
-        window.practiceWord, window.practiceProc = word, procId
-        window.practiceUntil = getTimestampMs() + 5000
+        local action = TWA_PracticeAction:new(window.player, procId)
+        action.onComplete = function()
+            window.practiceWord, window.practiceProc = word, procId
+            window.practiceUntil = getTimestampMs() + 5000
+        end
+        action.onEnd = function()
+            window.practicing = false
+            if window.activeProcId == procId then
+                window.activeProcId = nil
+                window.activeAction = nil
+            end
+        end
+        window.activeProcId = procId
+        window.activeAction = action
+        ISTimedActionQueue.add(action)
     end, self.selectedRecipe)
     if not ok then
         self.practicing = false
@@ -1923,7 +1946,11 @@ function TWACraftWindow:drawProcedureDetails()
             if pid == self.selectedProcId then belongsToRecipe = true break end
         end
     end
-    self.procCancelButton:setVisible(inProgress and true or false)
+    -- Round 20 ("ไม่อยากให้มีปุ่มยกเลิกกรรมวิธีในส่วนรายละเอียดกรรมวิธี" /
+    -- "การกดทำซ้ำให้มี action time และสามารถกดหยุดได้"): no separate cancel
+    -- button -- while the procedure (or its practice) runs, the main button
+    -- turns into Stop.
+    self.procCancelButton:setVisible(false)
     -- Round 18: Practice only for a procedure this character has done before.
     self.procPracticeButton:setVisible(TWACraftState.hasTried(self.player, self.selectedProcId))
     self.procPracticeButton.enable = not self.activeProcId and not self.activeCenterAction and not self.practicing
@@ -1934,10 +1961,17 @@ function TWACraftWindow:drawProcedureDetails()
     end
     local canConfirm = belongsToRecipe and self:isActiveRecipe() and not inProgress
         and not self.activeProcId and not self.activeCenterAction
-    self.procConfirmButton:setVisible(canConfirm)
-    self.procConfirmButton.enable = canConfirm and met
-    -- Done already -> the same button redoes it (request 2026-09-28).
-    self.procConfirmButton:setTitle(getText(done and "IGUI_TWA_RedoProcedure" or "IGUI_TWA_ConfirmProcedure"))
+    self.procConfirmButton:setVisible(canConfirm or inProgress and true or false)
+    self.procConfirmButton.enable = (canConfirm and met) or (inProgress and true or false)
+    -- Done already -> the same button redoes it (request 2026-09-28); while
+    -- running it stops it (round 20).
+    if inProgress then
+        self.procConfirmButton:setTitle(getText("IGUI_TWA_StopProcedure"))
+        self.procConfirmButton.neatTint = { r = 0.9, g = 0.3, b = 0.25 }
+    else
+        self.procConfirmButton:setTitle(getText(done and "IGUI_TWA_RedoProcedure" or "IGUI_TWA_ConfirmProcedure"))
+        self.procConfirmButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
+    end
     -- Picked from the checklist before the craft is started: say why the
     -- button isn't there.
     if belongsToRecipe and not self:isActiveRecipe() and not inProgress then

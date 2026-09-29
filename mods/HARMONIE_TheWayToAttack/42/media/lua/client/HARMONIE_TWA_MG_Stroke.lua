@@ -151,6 +151,19 @@ function TWAStrokeGame:onStart()
     -- Round 16: sharpening/polishing happens ON the stone; the cursor is the
     -- workpiece (the recipe's own item picture), not the stone.
     self.onStone = self.variant == "sharpen" or self.variant == "polish" or self.variant == nil
+    -- Round 20 ("มินิเกมขัดมณีตรงเมาส์ให้เป็นรูปอัญมณี"): polishing a gem, the
+    -- hand holds the gem itself -- the one in the craft (its own picture),
+    -- else the recipe's picture, else a diamond.
+    if self.procId == "GemPolishing" then
+        local gemTex
+        local act = TWACraftState.getActive and TWACraftState.getActive(self.player)
+        local t = act and act.base and act.base.type
+        local sm = ScriptManager and ScriptManager.instance
+        local sc = t and sm and sm:getItem(t)
+        if sc then gemTex = B.itemTex(sc:getIcon()) end
+        if not gemTex and self.recipe and self.recipe.stats then gemTex = B.itemTex(self.recipe.stats.icon) end
+        self.gemCursor = gemTex or B.itemTex("TWA_Diamond")
+    end
     self.hint = getText("IGUI_TWA_MG_Stroke_Hint")
     self.hint2 = getText("IGUI_TWA_MG_Stroke_Hint_" .. (self.variant or "sharpen"))
 end
@@ -281,7 +294,7 @@ function TWAStrokeGame:renderGame()
                 self.gemPts[#self.gemPts + 1] = { 310 + math.cos(a) * 150 * k, 222 + math.sin(a) * 78 * k }
             end
         end
-        self:roughGem(self.gemPts, gc, { seed = 13, windows = 3 })
+        self:gemBrilliant(310, 222, 76, gc, { seed = 13 }) -- round 20: the faceting game's gem
         local depth = 140 * self.done / self.need
         self:rect(305, 150, 10, depth, 1, C.dark)
         self:rectRGB(305, 150, 2, depth, 0.9, gc.r, gc.g, gc.b)
@@ -396,7 +409,14 @@ function TWAStrokeGame:drawTool()
     local red = (self.fastUntil or 0) > self.elapsed
     local gb = red and 0.35 or 1
     local ang = atan2(dy, dx)
-    if self.workTex then
+    if self.gemCursor then
+        -- the gem, upright, its bottom facet on the stone
+        local size = 64
+        local cx, cy = self.hx + upx * size * 0.4, self.hy + upy * size * 0.4
+        self:texRot(self.gemCursor, cx + 4, cy + 6, size, 0, 0.35, 0, 0, 0)
+        self:texRot(self.gemCursor, cx, cy, size, 0, 1, 1, gb, gb)
+        self:sparkle(cx - size * 0.15, cy - size * 0.2, 7, 0.5 + 0.5 * math.max(0, math.sin(self.elapsed * 0.006)))
+    elseif self.workTex then
         local size = 84
         local cx, cy = self.hx + upx * size * 0.22, self.hy + upy * size * 0.22
         -- icons are drawn blade up-right (-45 degrees): turn that onto the stroke
