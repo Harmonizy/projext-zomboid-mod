@@ -238,10 +238,15 @@ function TWAGemReveal:reveal()
     if e and e.kind ~= "dud" and e.kind ~= "none" then
         self:burst("spark", 310, 128, 70, { speed = 0.55, ttl = 1300, col = col })
         TWASound.play("TWA_Shimmer", "MinigameSounds")
-        if e.kind == "diamond" then TWASound.play("TWA_Fanfare", "MinigameSounds") end
+        if e.kind == "diamond" then
+            TWASound.play("TWA_Fanfare", "MinigameSounds")
+            TWASound.play("TWA_Applause", "MinigameSounds") -- round 18: the crowd cheers
+        end
     else
         self:burst("dust", 310, 150, 30, { speed = 0.3, ttl = 1200 })
         TWASound.play("TWA_Fail", "MinigameSounds")
+        -- round 18: dung gets booed
+        if e and e.type and e.type:find("^Base%.Dung_") then TWASound.play("TWA_Boo", "MinigameSounds") end
     end
 end
 

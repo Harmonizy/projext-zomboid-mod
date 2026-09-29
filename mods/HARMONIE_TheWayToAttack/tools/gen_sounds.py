@@ -225,6 +225,35 @@ for k, f in enumerate((1568, 1976, 2349, 2637, 3136, 3951, 4699)):
 sh += highpass(g16.uniform(-1, 1, len(t)), 7000) * np.exp(-t / 0.5) * 0.15 * (0.5 + 0.5 * np.sin(2 * np.pi * 23 * t))
 S["TWA_Shimmer"] = (norm(sh * adsr(len(t), 0.005, 0.2), 0.6), False)
 
+# Round 18: a crowd -- applause for an S grade or a diamond, booing for an F
+# grade or dung (deterministic, own rng).
+g18 = np.random.default_rng(18)
+d = 3.2; t = t_(d); ap = np.zeros_like(t)
+for k in range(900):                       # ~40 people clapping, loose rhythm
+    at = g18.uniform(0, d - 0.05)
+    n = int(0.03 * SR)
+    clap = bandpass(g18.uniform(-1, 1, n), 700 + g18.uniform(0, 900), 4500) * np.exp(-np.arange(n) / SR / 0.006)
+    place(ap, clap * g18.uniform(0.3, 1.0), at)
+ap *= np.minimum(1, t / 0.25) * np.minimum(1, (d - t) / 1.2)
+cheer = np.zeros_like(t)
+for k in range(6):                         # a few whoops in the crowd
+    at = g18.uniform(0.1, 1.6); n = int(0.5 * SR); tt = np.arange(n) / SR
+    f = g18.uniform(500, 900) * (1 + 0.4 * np.sin(np.pi * tt / 0.5))
+    v = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * tt / 0.5)
+    place(cheer, v * 0.12, at)
+S["TWA_Applause"] = (norm(ap + cheer, 0.7), False)
+d = 2.6; t = t_(d); boo = np.zeros_like(t)
+for k in range(16):                        # many voices going "boooo"
+    f0 = g18.uniform(95, 190); at = g18.uniform(0, 0.4)
+    tt = t_(d - at)
+    f = f0 * (1 - 0.12 * tt / d) * (1 + 0.02 * np.sin(2 * np.pi * g18.uniform(4, 6) * tt))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    src = sum(np.sin(m * ph) / m for m in range(1, 12))
+    voice = bandpass(src, 200, 1000) * np.minimum(1, tt / 0.15) * np.minimum(1, (d - at - tt) / 0.5)
+    place(boo, voice * g18.uniform(0.5, 1.0), at)
+boo += lowpass(g18.uniform(-1, 1, len(t)), 500) * 0.05
+S["TWA_Boo"] = (norm(boo, 0.7), False)
+
 # Working sounds: one grain each (see the docstring).
 GRAIN = { "TWA_Whetstone": 0.6, "TWA_Saw": 0.5, "TWA_Weld": 0.6, "TWA_Screw": 0.5, "TWA_Wrap": 0.6,
           "TWA_Grind": 0.5, "TWA_Bellows": 0.8, "TWA_Quench": 0.7, "TWA_Pour": 0.6, "TWA_Coat": 0.5,

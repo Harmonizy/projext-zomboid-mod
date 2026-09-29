@@ -2990,6 +2990,31 @@ Round 17 (same day):
     procId check, metal polishing unchanged); the gem reveal's strip and
     result show the mod's own gem pictures instead of drawn brilliants.
 
+Round 18 (next day):
+  - GemPolishing zone back to normal (round 17's x2 removed).
+  - Crowd sounds (gen_sounds.py, synthesized): TWA_Applause for an S grade
+    (GradeReveal) or a diamond (GemReveal), TWA_Boo for an F grade or dung.
+  - Practice button only for a procedure the character has done for real:
+    TWACraftState.markTried/hasTried, ModData TWA_ProcTried, written in the
+    procedure action's complete() (server) AND perform() (client).
+  - Weapon modification (gem sockets): shared/HARMONIE_TWA_GemSocket.lua +
+    client/HARMONIE_TWA_GemSocketUI.lua. Right-click a weapon carrying
+    TWA_Grade -> "ดัดแปลงอาวุธ". Sockets by grade F0 E1 D2 C3 B4 A5, S 5 +
+    special. ModData TWA_Gems = {["1"]..["5"], sp, spState} (string keys).
+    Normal socket: can't be emptied, a new gem replaces (old one lost);
+    special: removable (gem returned, keeps TWA_GemState). Only this mod's 16
+    cut gems (not the rough TWA_Gemstone). Bonus: every gem +0.1 min & max
+    damage, the diamond +1, on top of the base (debug override if any, else
+    the item script's value) -- applied in TWAWeaponDebug.reapply (equip,
+    game start, every swing) so it holds in combat and after reloads.
+    MP: client sendClientCommand gemSocket {op, id, key, gem} -> server
+    re-checks (gem must be in the player's own inventory), moves items,
+    sendServerCommand gemSocketSync back to the owner.
+  - The window is a TWAMinigameBase subclass (same drawing kit, ox/oy = 0)
+    with TWANeatButton buttons; ISUIElement:instantiate() calls
+    createChildren(). Live stats as the tooltip shows (TierTooltip exports
+    TWATierInfo). Item tooltip shows "Gem sockets: n / m".
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
