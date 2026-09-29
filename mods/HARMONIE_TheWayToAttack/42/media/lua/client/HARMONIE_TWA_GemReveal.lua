@@ -22,6 +22,7 @@
 
 require "HARMONIE_TWA_MinigameBase"
 require "HARMONIE_TWA_Sound"
+require "HARMONIE_TWA_CraftState"
 
 TWAGemReveal = TWAMinigameBase:derive("TWAGemReveal")
 
@@ -44,6 +45,10 @@ local DUD_COL = {
     ["Base.Clay"] = { 0.62, 0.42, 0.3 }, ["Base.ScrapMetal"] = { 0.58, 0.6, 0.66 },
     ["Base.Limestone"] = { 0.86, 0.84, 0.74 }, ["Base.Charcoal"] = { 0.22, 0.21, 0.22 },
     ["Base.CharcoalCrafted"] = { 0.22, 0.21, 0.22 }, ["Base.Coke"] = { 0.3, 0.3, 0.34 },
+    -- round 24 scraps
+    ["Base.IronScrap"] = { 0.45, 0.4, 0.38 }, ["Base.GoldScrap"] = { 0.95, 0.78, 0.3 },
+    ["Base.SilverScrap"] = { 0.8, 0.82, 0.86 }, ["Base.CopperScrap"] = { 0.78, 0.45, 0.28 },
+    ["Base.AluminumScrap"] = { 0.7, 0.74, 0.78 },
 }
 local DUNG_COL = { 0.42, 0.3, 0.15 }
 
@@ -396,6 +401,13 @@ function TWAGemReveal:renderOverlay()
     local tc = res.kind == "dud" and C.faint or res.col
     self:textC(getText(title), cx, 12, tc, 1, res.kind == "dud" and UIFont.Medium or BIG)
     self:textC(res.name, cx, 206, res.kind == "dud" and C.line or tc, 1, UIFont.Medium)
+    -- Round 24: the quality and gem chance the server's roll really used.
+    local md = self.found and self.found:getModData()
+    if md and md.TWA_RollWord then
+        local wk = TWACraftState.WORD_KEY[md.TWA_RollWord]
+        self:textC(getText("IGUI_TWA_GemReveal_Odds", wk and getText(wk) or md.TWA_RollWord, tostring(md.TWA_RollChance or "?")),
+            cx, 334, C.faint, 1, UIFont.Small)
+    end
     if since > 900 then
         self:textC(getText("IGUI_TWA_Reveal_Close"), cx, 232, C.faint, 0.6 + 0.4 * math.sin(self.elapsed * 0.006), UIFont.Small)
     end

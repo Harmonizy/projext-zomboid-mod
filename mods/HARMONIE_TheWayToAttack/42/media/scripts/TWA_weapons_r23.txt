@@ -452,7 +452,7 @@ module HARMONIE_TheWayToAttack
 	/* round 23: SmallBlade tier 7, from TWA_mtech_xtreme_tactical_fighter_knife */
 	item TWA_master_forged_combat_knife
 	{
-		DisplayName 						= Master-Forged Combat Knife,
+		DisplayName 						= Ti-7 Carbide Combat Knife,
 		DisplayCategory 					= Weapon,
 		ItemType 								= base:weapon,
 		Weight 								= 0.7,
@@ -907,7 +907,7 @@ module HARMONIE_TheWayToAttack
 	/* round 23: SmallBlunt tier 7, from TWA_m48tacticalwarhammer */
 	item TWA_master_forged_breaching_hammer
 	{
-		DisplayName 						= Master-Forged Breaching Hammer,
+		DisplayName 						= W-7 Tungsten Breaching Hammer,
 		DisplayCategory 					= ToolWeapon,
 		ItemType 								= base:weapon,
 		Weight 								= 1.5,
@@ -1382,7 +1382,7 @@ module HARMONIE_TheWayToAttack
 	/* round 23: Spear tier 7, from TWA_coldsteelspear */
 	item TWA_master_forged_hunting_spear
 	{
-		DisplayName 						= Master-Forged Hunting Spear,
+		DisplayName 						= CF-7 Carbon Ceramic Spear,
 		DisplayCategory 					= Weapon,
 		ItemType 								= base:weapon,
 		Weight 								= 1.7,
@@ -1602,7 +1602,7 @@ module HARMONIE_TheWayToAttack
 	/* round 23: Axe tier 7, from TWA_browning_outdoorsman_axe */
 	item TWA_master_forged_double_bit_axe
 	{
-		DisplayName 						= Master-Forged Double Bit Axe,
+		DisplayName 						= Ti-7 Composite Double-Bit Axe,
 		DisplayCategory 					= ToolWeapon,
 		ItemType 								= base:weapon,
 		Weight 								= 3,
@@ -1815,7 +1815,7 @@ module HARMONIE_TheWayToAttack
 	/* round 23: Blunt tier 7, from TWA_fiskarsplittingmaul */
 	item TWA_master_forged_splitting_maul
 	{
-		DisplayName 						= Master-Forged Splitting Maul,
+		DisplayName 						= W-7 Tungsten Splitting Maul,
 		DisplayCategory 					= ToolWeapon,
 		ItemType 								= base:weapon,
 		Weight 								= 6,

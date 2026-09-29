@@ -135,7 +135,8 @@ function TWA_FinishCraftAction:complete()
     -- Round 16: a rolling recipe (Gemstone) gives what the roll picked.
     local rolled = S.isRollRecipe(recipe)
     -- Round 17: the better the overall quality, the likelier a gem.
-    local newItem = inv:AddItem(rolled and S.rollGemstone(recipe, nil, S.overall(recipe, map) or "Bad") or recipe.result)
+    local rollWord = rolled and (S.overall(recipe, map) or "Bad") or nil
+    local newItem = inv:AddItem(rolled and S.rollGemstone(recipe, nil, rollWord) or recipe.result)
     if newItem then
         -- Stamped BEFORE the item is sent to the client, so it arrives with
         -- its ModData already on it.
@@ -147,6 +148,15 @@ function TWA_FinishCraftAction:complete()
         -- Round 17 ("อัญมณีทีได้มาจากสูตรหินมณีให้ขึ้นคำในtooltip ... สถานะ:
         -- ดิบ"): a gem from the stone is RAW -- kept for later gem cutting.
         if rolled and S.isRolledGem(newItem:getFullType()) then md.TWA_GemState = "Raw" end
+        -- Round 24 ("ทำได้คุณภาพรวมเยี่ยมแต่ออก pool แย่ตลอด"): the quality
+        -- and gem chance the roll really used, shown by the reveal window and
+        -- written to console.txt, so a wrong sandbox value is easy to spot.
+        if rolled then
+            md.TWA_RollWord = rollWord
+            md.TWA_RollChance = S.gemChance(rollWord)
+            print("[TWA] Gemstone roll: quality=" .. tostring(rollWord) .. " gemChance=" .. tostring(md.TWA_RollChance)
+                .. " -> " .. tostring(newItem:getFullType()))
+        end
         if not S.isMaterialRecipe(recipe) and not rolled then
             local word = S.overall(recipe, map) or S.LEGACY_WORD
             md.TWA_Quality = word

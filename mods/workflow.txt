@@ -3117,6 +3117,30 @@ Round 23 (same day):
     engine A-G) and TH names in ItemName.json. Icons are drawn in code
     (realistic steel, no fantasy); the 3D model is the template's.
 
+Round 24 (same day):
+  - MeltMetal takes gold or silver fragments x5 (vanilla B42 Base.GoldScrap /
+    Base.SilverScrap, nameKey IGUI_TWA_Material_GoldSilverScrap) instead of
+    jewelry; the JEWELRY_ITEMS list is gone. SCRAP_METALS also takes
+    Base.AluminumScrap and Base.CopperScrap.
+  - Gemstone bad pool: 5 more slots (IronScrap, GoldScrap, SilverScrap,
+    CopperScrap, AluminumScrap) -> 11 equal slots; GemReveal DUD_COL has
+    their colours.
+  - TH gem names (no clash with vanilla): ไดมอนด์ รูบี้ เอเมอรัลด์ แซฟไฟร์
+    มาเจนต้า (Diamond/Ruby/Emerald/Sapphire/Amethyst).
+  - "Excellent but always the bad pool": a lupa run of the real flow (Start ->
+    Excellent x2 -> Finish complete) gave 146/300 gems at Excellent -- the roll
+    is right (10 misses in a row at 50% is about 1 in 1000). To catch a wrong
+    sandbox value / old install in game, Finish now stamps TWA_RollWord and
+    TWA_RollChance on the rolled item and prints "[TWA] Gemstone roll: ..."
+    to console.txt; the reveal window shows "Overall quality X: gem chance Y
+    in 100" under the strip.
+  - The 5 Legendary weapons of round 23 renamed and redrawn "sci-fi but
+    possible": Ti-7 Carbide Combat Knife, W-7 Tungsten Breaching Hammer,
+    CF-7 Carbon Ceramic Spear, Ti-7 Composite Double-Bit Axe, W-7 Tungsten
+    Splitting Maul (titanium / tungsten carbide / zirconia ceramic / carbon
+    fibre, anodised accents, lightening holes -- gen_weapon_icons.py "tech"
+    looks). Item keys unchanged (TWA_master_forged_*) so saves keep them.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

@@ -18,6 +18,11 @@ For every weapon below this script writes:
     PROCEDURES_REFERENCE.txt (A-G) from the new stats;
   * its Thai name in Translate/TH/ItemName.json.
 Icons: tools/gen_weapon_icons.py (reads WEAPONS from here).
+Round 24 ("เปลี่ยนชื่อและรูปอาวุธ ... tier legendary ให้มีความไซไฟมากกว่านี้ แต่
+ยังอยู่บนกรอบแบบเป็นไปได้จริง"): the five Legendary weapons are now modern
+materials-science pieces (titanium, tungsten carbide, carbon fibre, technical
+ceramic) with a model code -- names only; their item keys stay the same so
+saved games keep them.
 """
 import json, os, re
 
@@ -43,7 +48,7 @@ WEAPONS = [
     W("forged_military_fighting_knife", "SmallBlade", 6, 4.8, "TWA_tops_us_combat_knife", "Forged Military Fighting Knife", "มีดต่อสู้ทหารตีขึ้นรูป", ("knife", "fighter", "black", "olive")),
     W("damascus_hunting_bowie", "SmallBlade", 6, 5.6, "TWA_aitormonterobowieknife", "Damascus Hunting Bowie", "มีดโบวี่ล่าสัตว์ดามัสกัส", ("knife", "bowie", "damascus", "wood")),
     W("titanium_tactical_tanto", "SmallBlade", 6, 6.4, "TWA_kabar1245tanto", "Titanium Tactical Tanto", "มีดแทนโต้ยุทธวิธีไทเทเนียม", ("knife", "tanto", "black", "cord", {"cord": True})),
-    W("master_forged_combat_knife", "SmallBlade", 7, 8.8, "TWA_mtech_xtreme_tactical_fighter_knife", "Master-Forged Combat Knife", "มีดต่อสู้ตีขึ้นรูปชั้นครู", ("knife", "fighter", "mirror", "darkwood")),
+    W("master_forged_combat_knife", "SmallBlade", 7, 8.8, "TWA_mtech_xtreme_tactical_fighter_knife", "Ti-7 Carbide Combat Knife", "มีดต่อสู้คาร์ไบด์ Ti-7", ("tech", "knife")),
     # ---- Small Blunt -- Epic x5, Elite x3, Legendary x1
     W("steel_framing_hammer", "SmallBlunt", 5, 2.7, "TWA_oxnailhammer", "Steel Framing Hammer", "ค้อนตีโครงเหล็ก", ("hammer", "claw", "steel", "black")),
     W("weighted_riot_baton", "SmallBlunt", 5, 2.9, "TWA_cold_steel_expandable_baton", "Weighted Riot Baton", "กระบองปราบจลาจลถ่วงน้ำหนัก", ("baton", "black", "rubber")),
@@ -53,7 +58,7 @@ WEAPONS = [
     W("forged_tactical_war_hammer", "SmallBlunt", 6, 4.8, "TWA_m48tacticalwarhammer", "Forged Tactical War Hammer", "ค้อนศึกยุทธวิธีตีขึ้นรูป", ("hammer", "war", "steel", "olive")),
     W("tungsten_riot_baton", "SmallBlunt", 6, 5.6, "TWA_cold_steel_expandable_baton", "Tungsten Riot Baton", "กระบองปราบจลาจลทังสเตน", ("baton", "steel", "rubber")),
     W("heavy_framing_hammer", "SmallBlunt", 6, 6.4, "TWA_oxnailhammer", "Heavy Framing Hammer", "ค้อนตีโครงงานหนัก", ("hammer", "claw", "black", "wood")),
-    W("master_forged_breaching_hammer", "SmallBlunt", 7, 8.8, "TWA_m48tacticalwarhammer", "Master-Forged Breaching Hammer", "ค้อนพังประตูตีขึ้นรูปชั้นครู", ("hammer", "war", "mirror", "darkwood")),
+    W("master_forged_breaching_hammer", "SmallBlunt", 7, 8.8, "TWA_m48tacticalwarhammer", "W-7 Tungsten Breaching Hammer", "ค้อนทะลวงทังสเตน W-7", ("tech", "hammer")),
     # ---- Spear -- Epic x5, Elite x3, Legendary x1
     W("steel_boar_spear", "Spear", 5, 2.7, "TWA_coldsteelspear", "Steel Boar Spear", "หอกล่าหมูป่าเหล็กกล้า", ("spear", "boar", "steel", "wood")),
     W("firefighter_pike_pole", "Spear", 5, 2.9, "TWA_reapr_11003_survival_spear", "Firefighter Pike Pole", "ตะขอดับเพลิง", ("spear", "pike", "steel", "red")),
@@ -63,17 +68,17 @@ WEAPONS = [
     W("forged_boar_spear", "Spear", 6, 4.8, "TWA_coldsteelspear", "Forged Boar Spear", "หอกล่าหมูป่าตีขึ้นรูป", ("spear", "boar", "black", "darkwood")),
     W("hardened_naginata", "Spear", 6, 5.6, "TWA_m48_naginata", "Hardened Naginata", "ง้าวนางินาตะชุบแข็ง", ("spear", "naginata", "steel", "black")),
     W("forged_pike_pole", "Spear", 6, 6.4, "TWA_reapr_11003_survival_spear", "Forged Pike Pole", "ตะขอดับเพลิงตีขึ้นรูป", ("spear", "pike", "black", "red")),
-    W("master_forged_hunting_spear", "Spear", 7, 8.8, "TWA_coldsteelspear", "Master-Forged Hunting Spear", "หอกล่าสัตว์ตีขึ้นรูปชั้นครู", ("spear", "leaf", "mirror", "darkwood")),
+    W("master_forged_hunting_spear", "Spear", 7, 8.8, "TWA_coldsteelspear", "CF-7 Carbon Ceramic Spear", "หอกคาร์บอนเซรามิก CF-7", ("tech", "spear")),
     # ---- Axe -- Elite x3, Legendary x1 (Epic already there)
     W("forged_felling_axe", "Axe", 6, 4.8, "TWA_browning_outdoorsman_axe", "Forged Felling Axe", "ขวานโค่นไม้ตีขึ้นรูป", ("axe", "felling", "steel", "wood")),
     W("hardened_breaching_axe", "Axe", 6, 5.6, "TWA_roughneckaxe", "Hardened Breaching Axe", "ขวานพังประตูชุบแข็ง", ("axe", "breach", "black", "black")),
     W("steel_tactical_tomahawk", "Axe", 6, 6.4, "TWA_gerberdownrangetomahawk", "Steel Tactical Tomahawk", "ขวานโทมาฮอว์กยุทธวิธีเหล็กกล้า", ("axe", "tomahawk", "steel", "black")),
-    W("master_forged_double_bit_axe", "Axe", 7, 8.8, "TWA_browning_outdoorsman_axe", "Master-Forged Double Bit Axe", "ขวานสองคมตีขึ้นรูปชั้นครู", ("axe", "doublebit", "mirror", "darkwood")),
+    W("master_forged_double_bit_axe", "Axe", 7, 8.8, "TWA_browning_outdoorsman_axe", "Ti-7 Composite Double-Bit Axe", "ขวานสองคมคอมโพสิต Ti-7", ("tech", "axe")),
     # ---- Blunt -- Elite x3, Legendary x1 (Epic already there)
     W("forged_sledgehammer", "Blunt", 6, 4.8, "TWA_ox_trade_sledgehammer", "Forged Sledgehammer", "ค้อนปอนด์ตีขึ้นรูป", ("sledge", "sledge", "steel", "wood")),
     W("steel_demolition_maul", "Blunt", 6, 5.6, "TWA_fiskarsplittingmaul", "Steel Demolition Maul", "ค้อนผ่ารื้อถอนเหล็กกล้า", ("sledge", "maul", "black", "black")),
     W("reinforced_steel_bat", "Blunt", 6, 6.4, "TWA_avengebaseballbat", "Reinforced Steel Bat", "ไม้เบสบอลเหล็กเสริมแกน", ("bat", "steel", "black")),
-    W("master_forged_splitting_maul", "Blunt", 7, 8.8, "TWA_fiskarsplittingmaul", "Master-Forged Splitting Maul", "ค้อนผ่าฟืนตีขึ้นรูปชั้นครู", ("sledge", "maul", "mirror", "darkwood")),
+    W("master_forged_splitting_maul", "Blunt", 7, 8.8, "TWA_fiskarsplittingmaul", "W-7 Tungsten Splitting Maul", "ค้อนผ่าทังสเตน W-7", ("tech", "maul")),
 ]
 
 # ---- the rules engine (PROCEDURES_REFERENCE.txt, A-G) ----------------------
