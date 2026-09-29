@@ -32,7 +32,8 @@ local VARIANTS = {
     smash = { count = function() return 1 end, surface = "glass" },
     -- Round 16 (Gemstone recipe, "ทุบ"): crack a rough stone open -- three
     -- blows; the cracks spread and the gem's colour glows through them.
-    crack = { count = function() return 3 end, surface = "stone", rock = true },
+    -- Round 19 ("เหลือ 1 จุด 5 ครั้ง"): one point, struck five times.
+    crack = { count = function() return 5 end, surface = "stone", rock = true, onePoint = true },
 }
 
 -- Round 6 (request 2026-09-28: "การตีแต่ละระดับทำให้ยากขึ้นไหม ถ้ายังก็ทำ
@@ -59,6 +60,10 @@ function TWAStrikeGame:onStart()
             depth = 0,
         }
     end
+    if v.onePoint then
+        local px, py = self.wx + self.ww * 0.5 + ZombRandFloat(-30, 30), self.wy + self.wh * 0.45 + ZombRandFloat(-10, 10)
+        for _, t in ipairs(self.targets) do t.x, t.y = px, py end
+    end
     self.idx = 1
     self.ringT = 0
     -- Request 2026-09-28 ("มินิเกมการตีง่ายเกินไป ทำให้วงกลมหดเร็วขึ้น และ
@@ -70,6 +75,8 @@ function TWAStrikeGame:onStart()
     -- "zones half as wide" request applies to how close the hammer must be
     -- to the mark instead (22 -> 11 px).
     self.period = TWAConfig.num("StrikeRingMs", 50) / self.pace -- ms for the ring to close (sandbox, round 9)
+    -- Round 19 ("ปรับให้หดเร็วขึ้น 25"): smashing a stone, the ring closes 25 percent faster.
+    if v.rock then self.period = self.period / 1.25 end
     -- The lit mark is bigger (request 2026-09-28: "ทำจุดสว่างให้ใหญ่ขึ้น")
     -- -- 13 -> 22 px, and the hammer may land anywhere on it.
     self.R0, self.Rt = TWAConfig.num("StrikeRingSize", 10), TWAConfig.num("StrikeMarkSize", 2)
@@ -134,7 +141,7 @@ function TWAStrikeGame:onGrab(x, y)
     -- Smashing is one blow (request 2026-09-28: "กรรมวิธี ทุบ ให้ทุบครั้งเดียว
     -- พอ"): any timed hit on the mark finishes it; the timing still decides
     -- how much quality it costs.
-    local oneBlow = self.variant == "smash" and TWAConfig.on("SmashOneBlow")
+    local oneBlow = (self.variant == "smash" and TWAConfig.on("SmashOneBlow")) or (self.v and self.v.onePoint)
     -- The blow's sound: the procedure's own (hammering, stone on stone...),
     -- cut short so each blow is one knock.
     local knock = (self.surface == "wood" and "TWA_HammerWood") or (self.surface == "stone" and "TWA_Knap")
@@ -277,11 +284,13 @@ end
 function TWAStrikeGame:drawRock()
     local wx, wy, ww, wh = self.wx, self.wy, self.ww, self.wh
     if not self.rockPts then
+        -- Round 19 ("เปลี่ยนรูปร่างหินใหม่"): a tall, angular boulder with
+        -- flat broken faces instead of the round pebble.
         self.rockPts = {}
-        for i = 0, 10 do
-            local a = i / 11 * 6.2832
-            local k = 0.8 + 0.25 * B.hash(i, 91)
-            self.rockPts[#self.rockPts + 1] = { wx + ww / 2 + math.cos(a) * (ww / 2 + 10) * k, wy + wh / 2 + math.sin(a) * (wh / 2 + 34) * k }
+        local cx, cy = wx + ww / 2, wy + wh / 2 - 6
+        for _, p in ipairs({ { -0.95, 0.62 }, { -1.0, -0.05 }, { -0.62, -0.72 }, { -0.1, -1.05 }, { 0.5, -0.86 },
+                             { 0.92, -0.3 }, { 1.0, 0.35 }, { 0.62, 0.7 }, { -0.2, 0.78 } }) do
+            self.rockPts[#self.rockPts + 1] = { cx + p[1] * 150, cy + p[2] * 92 }
         end
         self.rockCol = ({ { r = 0.9, g = 0.2, b = 0.35 }, { r = 0.3, g = 0.55, b = 1 }, { r = 0.3, g = 0.85, b = 0.45 }, { r = 0.7, g = 0.4, b = 0.95 } })[ZombRand(4) + 1]
     end

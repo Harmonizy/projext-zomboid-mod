@@ -7,6 +7,7 @@ third-party art). Round 15:
   - Oridecon / Elunium / Bradium ore crystals.
 Round 16: TWA_Gemstone is an angular rock with gem colour peeking out.
 Round 17: TWA_Rock, the same rock without the gems (SmashStone's icon).
+Round 19: TWA_Diamond (side-view brilliant) and TWA_Jade (carved bi disc) redrawn.
 Writes ../42/media/textures/Item_<Icon>.png. Needs Pillow."""
 import math, os, random
 from PIL import Image, ImageDraw, ImageFilter
@@ -167,6 +168,90 @@ def gemrock(name, seed=7, gems=True):
     d.line(pts + [pts[0]], fill=(52, 48, 44, 255), width=4)
     finish(img, name)
 
+def diamond_side(name):
+    """Round 19 ("รูปไอเท็มเพชร ... ไม่สวยเลย สร้างใหม่ให้โดดเด่น"): the classic
+    diamond seen from the side -- a flat table, a faceted crown, a long
+    pointed pavilion -- ice white with blue shadows, rainbow fire and a big
+    four-point glint."""
+    img = Image.new("RGBA", (W, W), (0, 0, 0, 0)); d = Pen(img)
+    cx = W / 2
+    top, girdle, tip = W * 0.2, W * 0.42, W * 0.9
+    tw, gw = W * 0.2, W * 0.44          # half widths: table, girdle
+    # soft blue glow behind
+    for k in range(6, 0, -1):
+        r = W * (0.3 + k * 0.03)
+        d.ellipse([cx - r, W * 0.5 - r, cx + r, W * 0.5 + r], fill=(150, 200, 255, 12))
+    crown = [(cx - tw, top), (cx + tw, top), (cx + gw, girdle), (cx - gw, girdle)]
+    # crown facets: table, then kites
+    xs = [cx - gw, cx - gw * 0.55, cx - gw * 0.12, cx + gw * 0.12, cx + gw * 0.55, cx + gw]
+    ts = [cx - tw, cx - tw * 0.4, cx, cx, cx + tw * 0.4, cx + tw]
+    shades = [(205, 225, 250), (245, 250, 255), (170, 200, 240), (235, 245, 255), (190, 215, 250)]
+    for i in range(5):
+        d.polygon([(ts[i], top), (ts[i + 1], top), (xs[i + 1], girdle), (xs[i], girdle)], fill=shades[i] + (255,))
+    d.polygon([(cx - tw * 0.8, top + 2), (cx + tw * 0.8, top + 2), (cx + tw * 0.5, top + 14), (cx - tw * 0.5, top + 14)], fill=(255, 255, 255, 255))
+    # pavilion: long facets meeting at the tip
+    pav = [(40, 70, 130), (120, 170, 230), (225, 240, 255), (90, 140, 210), (170, 205, 245), (60, 100, 170)]
+    px = [cx - gw, cx - gw * 0.62, cx - gw * 0.2, cx + gw * 0.2, cx + gw * 0.62, cx + gw]
+    for i in range(5):
+        d.polygon([(px[i], girdle), (px[i + 1], girdle), (cx, tip)], fill=pav[i] + (255,))
+    # rainbow fire
+    for (fx, fy, c) in [(0.36, 0.55, (255, 90, 120)), (0.6, 0.6, (90, 255, 160)), (0.47, 0.7, (120, 160, 255)), (0.55, 0.5, (255, 220, 90))]:
+        r = W * 0.035
+        d.polygon([(W * fx, W * fy - r), (W * fx + r * 0.6, W * fy), (W * fx, W * fy + r), (W * fx - r * 0.6, W * fy)], fill=c + (200,))
+    # girdle line and outline
+    d.line([(cx - gw, girdle), (cx + gw, girdle)], fill=(255, 255, 255, 255), width=3)
+    d.line(crown + [crown[0]], fill=(40, 60, 100, 255), width=3)
+    d.line([(cx - gw, girdle), (cx, tip), (cx + gw, girdle)], fill=(40, 60, 100, 255), width=3)
+    # big glint
+    gx, gy, r = cx - W * 0.13, top + W * 0.1, W * 0.11
+    d.polygon([(gx - r, gy), (gx, gy - r * 0.16), (gx + r, gy), (gx, gy + r * 0.16)], fill=(255, 255, 255, 255))
+    d.polygon([(gx, gy - r), (gx + r * 0.16, gy), (gx, gy + r), (gx - r * 0.16, gy)], fill=(255, 255, 255, 255))
+    gx, gy, r = cx + W * 0.2, W * 0.66, W * 0.07
+    d.polygon([(gx - r, gy), (gx, gy - r * 0.2), (gx + r, gy), (gx, gy + r * 0.2)], fill=(255, 255, 255, 230))
+    d.polygon([(gx, gy - r), (gx + r * 0.2, gy), (gx, gy + r), (gx - r * 0.2, gy)], fill=(255, 255, 255, 230))
+    finish(img, name)
+
+def jade_disc(name, seed=4):
+    """Round 19 ("หยกไม่สวยเลย สร้างใหม่ให้โดดเด่น"): a carved jade bi -- a
+    polished disc with a hole -- deep green, cloudy lighter veins, a carved
+    ring and a glossy highlight."""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (W, W), (0, 0, 0, 0)); d = Pen(img)
+    cx, cy = W / 2, W / 2 + W * 0.02
+    R, r0 = W * 0.42, W * 0.13
+    # body: rings from dark rim to lighter inner band
+    for k in range(40, 0, -1):
+        t = k / 40
+        rr = r0 + (R - r0) * t
+        g = (int(30 + 60 * (1 - abs(t - 0.45) * 1.6)), int(110 + 90 * (1 - abs(t - 0.45) * 1.6)), int(60 + 50 * (1 - abs(t - 0.45) * 1.6)))
+        d.ellipse([cx - rr, cy - rr * 0.92, cx + rr, cy + rr * 0.92], fill=g + (255,))
+    # cloudy veins
+    for _ in range(18):
+        a = rnd.uniform(0, 6.283); dist = rnd.uniform(r0 + 8, R - 8)
+        x, y = cx + math.cos(a) * dist, cy + math.sin(a) * dist * 0.92
+        rr = rnd.uniform(6, 16)
+        d.ellipse([x - rr, y - rr * 0.6, x + rr, y + rr * 0.6], fill=(170, 235, 190, rnd.randint(40, 90)))
+    # carved groove ring
+    rg = (R + r0) * 0.55
+    d.ellipse([cx - rg, cy - rg * 0.92, cx + rg, cy + rg * 0.92], outline=(20, 70, 40, 255), width=4)
+    d.ellipse([cx - rg + 3, cy - rg * 0.92 + 3, cx + rg - 3, cy + rg * 0.92 - 3], outline=(150, 230, 170, 200), width=2)
+    # the hole
+    d.ellipse([cx - r0, cy - r0 * 0.92, cx + r0, cy + r0 * 0.92], fill=(0, 0, 0, 0))
+    hole = Image.new("L", (W, W), 0)
+    ImageDraw.Draw(hole).ellipse([cx - r0, cy - r0 * 0.92, cx + r0, cy + r0 * 0.92], fill=255)
+    a = img.split()[3]
+    a.paste(0, mask=hole)
+    img.putalpha(a)
+    d = Pen(img)
+    d.ellipse([cx - r0, cy - r0 * 0.92, cx + r0, cy + r0 * 0.92], outline=(15, 55, 30, 255), width=3)
+    # rims and gloss
+    d.ellipse([cx - R, cy - R * 0.92, cx + R, cy + R * 0.92], outline=(15, 55, 30, 255), width=4)
+    d.ellipse([cx - R * 0.8, cy - R * 0.85, cx - R * 0.05, cy - R * 0.45], fill=(255, 255, 255, 110))
+    gx, gy, r = cx - R * 0.45, cy - R * 0.62, W * 0.07
+    d.polygon([(gx - r, gy), (gx, gy - r * 0.2), (gx + r, gy), (gx, gy + r * 0.2)], fill=(255, 255, 255, 235))
+    d.polygon([(gx, gy - r), (gx + r * 0.2, gy), (gx, gy + r), (gx - r * 0.2, gy)], fill=(255, 255, 255, 235))
+    finish(img, name)
+
 def crystals(name, col, seed):
     rnd = random.Random(seed)
     img = Image.new("RGBA", (W, W), (0, 0, 0, 0)); d = Pen(img)
@@ -219,7 +304,7 @@ def ingot(name, top, side, front, rainbow=False, clear=False):
 
 # ---- gems: (item, cut, colour)
 P = lambda sh, **k: poly(sh, **k)
-faceted("TWA_Diamond", P(shape_round(16)), (225, 240, 255))
+diamond_side("TWA_Diamond")        # round 19: side-view brilliant with fire
 faceted("TWA_Ruby", P(shape_round(14, 0.8, 1.0)), (205, 20, 50))
 faceted("TWA_Sapphire", P([(math.copysign(abs(math.cos(a)) ** 0.5, math.cos(a)), math.copysign(abs(math.sin(a)) ** 0.5, math.sin(a))) for a in [i * 2 * math.pi / 16 for i in range(16)]], sx=W * 0.36, sy=W * 0.36), (25, 60, 200))
 faceted("TWA_Emerald", P([(-0.62, -0.9), (0.62, -0.9), (0.82, -0.7), (0.82, 0.7), (0.62, 0.9), (-0.62, 0.9), (-0.82, 0.7), (-0.82, -0.7)], sx=W * 0.34, sy=W * 0.44), (20, 150, 70), table=0.6)
@@ -234,7 +319,7 @@ faceted("TWA_Peridot", P(shape_round(8, rot=math.pi / 8)), (150, 205, 40))
 faceted("TWA_Alexandrite", P([(-0.8, -0.8), (0, -0.95), (0.8, -0.8), (0.95, 0), (0.8, 0.8), (0, 0.95), (-0.8, 0.8), (-0.95, 0)]), (30, 150, 140), second=(150, 60, 170))
 faceted("TWA_Spinel", P(shape_round(6, rot=math.pi / 6)), (240, 60, 130))
 faceted("TWA_Zircon", P([(-0.85, -0.85), (0.85, -0.85), (0.85, 0.85), (-0.85, 0.85)], sx=W * 0.38, sy=W * 0.38), (150, 210, 255), table=0.45)
-cabochon("TWA_Jade", 0.34, 0.34, (60, 150, 90), opaque=True)
+jade_disc("TWA_Jade")               # round 19: a carved jade bi disc
 gemrock("TWA_Gemstone")          # round 16: angular rock, gem colour peeking out
 gemrock("TWA_Rock", seed=11, gems=False)  # round 17: plain stone -- the SmashStone procedure's picture
 

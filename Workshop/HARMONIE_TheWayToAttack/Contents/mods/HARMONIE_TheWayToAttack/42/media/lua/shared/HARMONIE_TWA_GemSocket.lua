@@ -33,8 +33,28 @@ local MODULE = "HARMONIE_TWA"
 
 G.SLOTS_BY_GRADE = { F = 0, E = 1, D = 2, C = 3, B = 4, A = 5, S = 5 }
 G.SPECIAL_GRADE = "S"
-G.DEFAULT_BONUS = { min = 0.1, max = 0.1 }
-G.DIAMOND_BONUS = { min = 1, max = 1 }
+
+-- Round 19 ("อัญมณีแต่ละอันให้ ... ดาเมจต่ำสุดและดาเมจสูงสุดตามสถานะมณี ดิบ
+-- +0.0 ขัดเกลา +0.1 เจียระไน +0.2 ประณีต +0.3 เจิดจรัส +0.4 บริสุทธิ์ +0.5"
+-- and "เพชรเปลี่ยนเป็น เพิ่มความทนทาน 100 แทน"): what a gem gives depends on
+-- WHICH gem and its STATE. G.ABILITIES maps a gem's short name to a
+-- function(state) returning { Field = amount }; a gem without an entry uses
+-- `default`. ("ทำระบบให้รองรับในอนาคต อัญมณีแต่ละอันจะให้ความสามารถที่ต่าง
+-- กัน": give a gem its own entry here -- any field of G.FIELDS.)
+G.STATE_DAMAGE = { Raw = 0, Refined = 0.1, Cut = 0.2, Fine = 0.3, Radiant = 0.4, Pure = 0.5 }
+G.ABILITIES = {
+    default = function(state)
+        local d = G.STATE_DAMAGE[state] or 0
+        return { MinDamage = d, MaxDamage = d }
+    end,
+    TWA_Diamond = function(state) return { ConditionMax = 100 } end,
+}
+-- The weapon fields a gem can raise: getter/setter names and the label key.
+G.FIELDS = {
+    { key = "MinDamage", get = "getMinDamage", set = "setMinDamage", label = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
+    { key = "MaxDamage", get = "getMaxDamage", set = "setMaxDamage", label = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" },
+    { key = "ConditionMax", get = "getConditionMax", set = "setConditionMax", label = "IGUI_TWA_Stat_Condition", fmt = "%.0f" },
+}
 
 -- The gems that fit: every cut gem of this mod (the rough TWA_Gemstone is a
 -- stone, not a gem).
@@ -50,9 +70,36 @@ function G.isGem(fullType)
     return fullType ~= nil and TWACraftState.isRolledGem(fullType)
 end
 
-function G.bonus(fullType)
-    if fullType == TWARecipeData.GemRoll.diamond then return G.DIAMOND_BONUS end
-    return G.DEFAULT_BONUS
+-- What one gem gives: { Field = amount }.
+function G.ability(fullType, state)
+    local short = fullType and fullType:match("%.([^%.]+)$") or ""
+    local f = G.ABILITIES[short] or G.ABILITIES.default
+    return f(state or "Raw") or {}
+end
+
+-- "Min damage +0.1, Max damage +0.1" -- what an ability gives, in words.
+function G.describe(ab)
+    local parts = {}
+    ab = ab or {}
+    local both = ab.MinDamage and ab.MinDamage ~= 0 and ab.MinDamage == ab.MaxDamage
+    if both then parts[1] = getText("IGUI_TWA_Socket_Damage") .. " +" .. string.format("%.1f", ab.MinDamage) end
+    for _, f in ipairs(G.FIELDS) do
+        local v = ab[f.key]
+        local skip = both and (f.key == "MinDamage" or f.key == "MaxDamage")
+        if v and v ~= 0 and not skip then parts[#parts + 1] = getText(f.label) .. " +" .. string.format(f.fmt, v) end
+    end
+    if #parts == 0 then return getText("IGUI_TWA_Socket_NoAbility") end
+    return table.concat(parts, ", ")
+end
+
+-- A socket holds "fullType|State" (round 19; a plain fullType from round 18
+-- reads as Raw, or the special socket's old separate spState).
+function G.pack(fullType, state) return fullType .. "|" .. (state or "Raw") end
+function G.unpack(v, oldState)
+    if not v then return nil end
+    local t, st = v:match("^([^|]+)|(.+)$")
+    if t then return t, st end
+    return v, oldState or "Raw"
 end
 
 function G.grade(weapon)
@@ -79,9 +126,11 @@ function G.sockets(weapon)
     return (weapon and weapon:getModData().TWA_Gems) or {}
 end
 
--- The gem in socket `key` ("1".."5" or "sp"), or nil.
+-- The gem in socket `key` ("1".."5" or "sp"): fullType, state (or nil).
 function G.gemIn(weapon, key)
-    return G.sockets(weapon)[tostring(key)]
+    local s = G.sockets(weapon)
+    key = tostring(key)
+    return G.unpack(s[key], key == "sp" and s.spState or nil)
 end
 
 function G.filledCount(weapon)
@@ -102,16 +151,35 @@ function G.validKey(weapon, key)
     return i ~= nil and i >= 1 and i <= G.slotCount(weapon) and math.floor(i) == i
 end
 
--- Sum of the socketed gems' bonuses.
-function G.totalBonus(weapon)
-    local s = G.sockets(weapon)
-    local mn, mx = 0, 0
-    local function add(t)
-        if t then local b = G.bonus(t); mn, mx = mn + b.min, mx + b.max end
+-- Every socketed gem: list of { key, type, state }.
+function G.list(weapon)
+    local out = {}
+    for i = 1, G.slotCount(weapon) do
+        local t, st = G.gemIn(weapon, i)
+        if t then out[#out + 1] = { key = tostring(i), type = t, state = st } end
     end
-    for i = 1, G.slotCount(weapon) do add(s[tostring(i)]) end
-    if G.hasSpecial(weapon) then add(s.sp) end
-    return mn, mx
+    if G.hasSpecial(weapon) then
+        local t, st = G.gemIn(weapon, "sp")
+        if t then out[#out + 1] = { key = "sp", type = t, state = st } end
+    end
+    return out
+end
+
+-- Sum of the socketed gems' abilities: { Field = amount }. `swap` (optional)
+-- = { key, type, state } pretends that gem sits in that socket (the preview).
+function G.totalBonus(weapon, swap)
+    local sum = {}
+    local list = G.list(weapon)
+    if swap then
+        local kept = {}
+        for _, g in ipairs(list) do if g.key ~= swap.key then kept[#kept + 1] = g end end
+        kept[#kept + 1] = swap
+        list = kept
+    end
+    for _, g in ipairs(list) do
+        for f, v in pairs(G.ability(g.type, g.state)) do sum[f] = (sum[f] or 0) + v end
+    end
+    return sum
 end
 
 -- Put the base damage + the gems' bonus on the weapon. No socket table at all:
@@ -123,12 +191,27 @@ function G.applyDamage(item)
     if not (item.setMinDamage and item.setMaxDamage) then return end
     local ov = md.TWA_StatOverride or {}
     local script = item.getScriptItem and item:getScriptItem()
-    local baseMin = ov.MinDamage or (script and script.getMinDamage and script:getMinDamage())
-    local baseMax = ov.MaxDamage or (script and script.getMaxDamage and script:getMaxDamage())
-    if not baseMin or not baseMax then return end
-    local bmin, bmax = G.totalBonus(item)
-    item:setMinDamage(baseMin + bmin)
-    item:setMaxDamage(baseMax + bmax)
+    local bonus = G.totalBonus(item)
+    for _, f in ipairs(G.FIELDS) do
+        local base = ov[f.key]
+        if base == nil and script and script[f.get] then base = script[f.get](script) end
+        if base ~= nil and item[f.set] then item[f.set](item, base + (bonus[f.key] or 0)) end
+    end
+    -- never more condition than the (possibly lowered) maximum
+    if item.getCondition and item.getConditionMax and item.setCondition and item:getCondition() > item:getConditionMax() then
+        item:setCondition(item:getConditionMax())
+    end
+end
+
+-- A change of ConditionMax from a gem also moves the current condition by
+-- the same amount (a diamond set in makes the weapon that much tougher now).
+local function applyKeepingCondition(weapon)
+    local before = weapon.getConditionMax and weapon:getConditionMax()
+    G.applyDamage(weapon)
+    local after = weapon.getConditionMax and weapon:getConditionMax()
+    if before and after and after > before and weapon.setCondition then
+        weapon:setCondition(math.min(after, weapon:getCondition() + (after - before)))
+    end
 end
 
 -- Server-side (or single player) work -------------------------------------
@@ -141,7 +224,7 @@ end
 -- A gem item of the player's (inventory, bags included) by id.
 local function findGem(player, id)
     local it = id and TWACraftState.resolveItem(player, id)
-    if not it or not G.isGem(it:getFullType()) then return nil end
+    if not it or not G.isGem(it:getFullType()) or TWACraftState.isBookmarked(it) then return nil end
     local c = it.getContainer and it:getContainer()
     if not c or not c:isInCharacterInventory(player) then return nil end -- the player's own gems only
     return it
@@ -155,18 +238,17 @@ function G.doInsert(player, weapon, key, gemId)
     if not gem then return false end
     local md = weapon:getModData()
     md.TWA_Gems = md.TWA_Gems or {}
-    local old = md.TWA_Gems[key]
-    local oldState = key == "sp" and md.TWA_Gems.spState or nil
+    local oldType, oldState = G.gemIn(weapon, key)
     local gemType = gem:getFullType()
-    local gemState = gem:getModData().TWA_GemState
+    local gemState = TWACraftState.gemState(gem) or "Raw"
     TWASources.remove(gem, player:getInventory())
-    md.TWA_Gems[key] = gemType
+    md.TWA_Gems[key] = G.pack(gemType, gemState)
     if key == "sp" then
-        md.TWA_Gems.spState = gemState
+        md.TWA_Gems.spState = nil
         -- the special socket's old gem comes back; a normal socket's is lost
-        if old then G.giveGem(player, old, oldState) end
+        if oldType then G.giveGem(player, oldType, oldState) end
     end
-    G.applyDamage(weapon)
+    applyKeepingCondition(weapon)
     return true
 end
 
@@ -174,12 +256,11 @@ end
 function G.doRemove(player, weapon)
     if not G.canUse(weapon) or not G.hasSpecial(weapon) then return false end
     local md = weapon:getModData()
-    local old = md.TWA_Gems and md.TWA_Gems.sp
+    local old, st = G.gemIn(weapon, "sp")
     if not old then return false end
-    local st = md.TWA_Gems.spState
     md.TWA_Gems.sp, md.TWA_Gems.spState = nil, nil
     G.giveGem(player, old, st)
-    G.applyDamage(weapon)
+    applyKeepingCondition(weapon)
     return true
 end
 

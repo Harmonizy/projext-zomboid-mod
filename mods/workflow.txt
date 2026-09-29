@@ -3015,6 +3015,39 @@ Round 18 (next day):
     createChildren(). Live stats as the tooltip shows (TierTooltip exports
     TWATierInfo). Item tooltip shows "Gem sockets: n / m".
 
+Round 19 (same day):
+  - PZ draws a panel's render() AFTER its children: a window painted in
+    render() covers its own buttons. TWAGemSocketUI now paints in
+    prerender() (render() only for the hover tag).
+  - Text shortening must cut whole UTF-8 characters (Thai is 3 bytes a
+    letter) -- GemSocketUI fitText(). A middle dot in a label can show as
+    "?" in the game font: avoided.
+  - Gem STATES: TWA_GemState Raw/Refined/Cut/Fine/Radiant/Pure (none = Raw),
+    tiers Common..Legendary (TWACraftState.GEM_STATES/GEM_STATE_TIER); the
+    tooltip shows the state's tier strip, "Status" and what it gives in a
+    weapon.
+  - Socket abilities: TWAGemSocket.ABILITIES[short name](state) -> {Field =
+    amount}; default = Min/MaxDamage by state (0 / .1 / .2 / .3 / .4 / .5);
+    TWA_Diamond = ConditionMax +100 (and the current condition up by the
+    same on insert). G.FIELDS lists the fields a gem can raise. Sockets now
+    store "fullType|State" (a plain round-18 value reads as Raw).
+  - Gem refining recipes Make_GemRefined/Cut/Fine/Radiant/Pure (category
+    Gem): base = any of the 16 gems in state recipe.gemFrom
+    (TWACraftState.baseOk -- also checked by the server at Start), Fine/
+    Radiant/Pure need Bradium/Elunium/Oridecon; recipe.keepType: Finish
+    gives back the SAME gem with recipe.gemTo, or breaks (sandbox
+    GemBreakBad 50 / Good 5 / Excellent 0) -- reported to the client with
+    sendServerCommand "gemRefine" (TWACraftState.reportRefine), where
+    TWAGemBreak.watch opens the short shatter window or chimes. Incomplete
+    keeps the gem's type. Recipes may carry nameKey / stats (icon, tier).
+  - Base chooser: clicking the base card lists every usable base type
+    (ISContextMenu with item icons) -- works for any recipe with several
+    base types (stones, gems).
+  - SmashStone: one point hit 5 times (targets share one spot, each timed
+    hit counts), ring 25 percent faster, a new angular boulder. GemQuality-
+    Control renamed Gemology / อัญมณีศาสตร์. Gemstone recipe tier Common.
+    Diamond and Jade icons redrawn.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

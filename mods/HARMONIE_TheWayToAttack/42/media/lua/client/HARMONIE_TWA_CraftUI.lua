@@ -15,6 +15,7 @@ require "ISUI/ISButton"
 require "ISUI/ISCollapsableWindow"
 require "ISUI/ISTextEntryBox"
 require "ISUI/ISScrollingListBox"
+require "ISUI/ISContextMenu"
 require "TimedActions/ISTimedActionQueue"
 
 -- NeatUI Framework (Workshop 3508537032, require=NeatUI_Framework in
@@ -381,7 +382,8 @@ local function ownsBase(recipe, player)
     local inv = TWASources.get(player) -- round 13: nearby containers/floor too
     local hasBase = false
     for _, t in ipairs(TWACraftState.baseTypes(recipe)) do
-        if inv:getItemCountRecurse(t) >= 1 then hasBase = true break end
+        -- round 19: a copy that really fits (gem state, not someone's bookmark)
+        if TWACraftState.countBase(player, recipe, t) >= 1 then hasBase = true break end
     end
     if not hasBase then return false end
     if recipe.base2 and inv:getItemCountRecurse(recipe.base2) < 1 then return false end
@@ -398,6 +400,23 @@ local function resultIcon(fullType)
     if stats and stats.icon then return getItemTexture(stats.icon) end
     local item = getItemScript(fullType)
     return item and getItemTexture(item:getIcon())
+end
+
+-- Round 19: a recipe can carry its own name, picture and tier (the gem-
+-- refining recipes, whose `result` is only a stand-in -- the gem you get is
+-- the gem you put in). Everything that shows a recipe goes through these.
+local function recipeStats(recipe)
+    return recipe.stats or TWARecipeData.Stats[recipe.result]
+end
+local function recipeName(recipe)
+    if recipe.nameKey then return getText(recipe.nameKey) end
+    local item = getItemScript(recipe.result)
+    return item and item:getDisplayName() or recipe.result
+end
+local function recipeIcon(recipe)
+    local st = recipeStats(recipe)
+    if st and st.icon then return getItemTexture(st.icon) end
+    return resultIcon(recipe.result)
 end
 
 -- Readable name for the recipe's base requirement -- shows "X / Y" when a
@@ -476,7 +495,7 @@ function TWARecipeScrollList:matches(recipe)
         return false
     end
     if self.filterTier ~= "All" then
-        local stats = TWARecipeData.Stats[recipe.result]
+        local stats = recipeStats(recipe)
         if not stats or stats.tier ~= self.filterTier then
             return false
         end
@@ -497,7 +516,7 @@ function TWARecipeScrollList:matches(recipe)
             local n = it and it:getDisplayName() or fullType
             return string.find(string.lower(n), q, 1, true) ~= nil
         end
-        local matched = nameMatches(recipe.result) or nameMatches(recipe.base)
+        local matched = string.find(string.lower(recipeName(recipe)), q, 1, true) ~= nil or nameMatches(recipe.base)
             or nameMatches(recipe.base2) or (type(recipe.baseAlt) == "string" and nameMatches(recipe.baseAlt))
         if not matched then
             for _, procId in ipairs(recipe.procedures) do
@@ -521,9 +540,8 @@ function TWARecipeScrollList:refresh()
     local matched = {}
     for _, recipe in ipairs(TWARecipeData.List) do
         if self:matches(recipe) then
-            local item = getItemScript(recipe.result)
-            local name = item and item:getDisplayName() or recipe.result
-            local st = TWARecipeData.Stats and TWARecipeData.Stats[recipe.result]
+            local name = recipeName(recipe)
+            local st = recipeStats(recipe)
             matched[#matched + 1] = { name = name, recipe = recipe, tier = (st and st.tier) or 99 }
         end
     end
@@ -550,12 +568,12 @@ function TWARecipeScrollList:doDrawItem(y, entry, alt)
     -- 2026-09-26: "color the recipe list by tier") -- a thin bar rather than
     -- tinting the whole card, so it stays legible alongside the owned/
     -- selected/hovered card-background states above.
-    local stats = TWARecipeData.Stats[recipe.result]
+    local stats = recipeStats(recipe)
     local tierInfo = stats and stats.tier and TIER_INFO[stats.tier]
     if tierInfo then
         self:drawRect(2, y + 2, 4, h - 4, 1, tierInfo.r, tierInfo.g, tierInfo.b)
     end
-    local tex = resultIcon(recipe.result)
+    local tex = recipeIcon(recipe)
     local iconSize = h - 4 * pad
     local tint = owned and 1 or 0.4
     if tex then
@@ -1306,9 +1324,15 @@ function TWACraftWindow:pickItems()
         base = S.findItem(self.player, self.resumeItem)
         if not base then return false end
     elseif recipe.base then
-        for _, t in ipairs(S.baseTypes(recipe)) do
-            base = S.pickFreshItem(self.player, t)
-            if base then break end
+        -- Round 19: the base the player chose (any base type the recipe
+        -- takes), else the first that fits.
+        local chosen = self:baseChoiceType(recipe)
+        if chosen then base = S.pickBase(self.player, recipe, chosen) end
+        if not base then
+            for _, t in ipairs(S.baseTypes(recipe)) do
+                base = S.pickBase(self.player, recipe, t)
+                if base then break end
+            end
         end
         if not base then return false end
     end
@@ -1317,6 +1341,45 @@ function TWACraftWindow:pickItems()
         if not base2 then return false end
     end
     return true, base, base2
+end
+
+-- Round 19 ("ทำให้สามารถเลือกอัญมณีที่ใช้เป็นวัตถุดิบตั้งต้นได้ ทำในสูตรอื่นๆ
+-- ได้ก็ดีนะ แสดงให้เลือกเฉพาะที่ใช้ในสูตรได้ก็พอ"): every base type of the
+-- recipe the player has a usable copy of, and the one chosen (clicking the
+-- base card lists them -- onMouseDown / openBaseChooser).
+function TWACraftWindow:baseChoices(recipe)
+    local out = {}
+    for _, t in ipairs(TWACraftState.baseTypes(recipe)) do
+        local n = TWACraftState.countBase(self.player, recipe, t)
+        if n > 0 then out[#out + 1] = { type = t, count = n } end
+    end
+    return out
+end
+
+function TWACraftWindow:baseChoiceType(recipe)
+    self.baseChoice = self.baseChoice or {}
+    local want = self.baseChoice[recipe.id]
+    local choices = self:baseChoices(recipe)
+    for _, c in ipairs(choices) do if c.type == want then return want end end
+    return choices[1] and choices[1].type or nil
+end
+
+function TWACraftWindow:openBaseChooser(recipe)
+    local choices = self:baseChoices(recipe)
+    if #choices == 0 then return end
+    local ctx = ISContextMenu.get(self.player:getPlayerNum(), getMouseX(), getMouseY())
+    local title = ctx:addOption(getText("IGUI_TWA_ChooseBaseTitle"), nil, nil)
+    title.notAvailable = true
+    local window = self
+    for _, c in ipairs(choices) do
+        local it = getItemScript(c.type)
+        local label = (it and it:getDisplayName() or c.type) .. "  x" .. tostring(c.count)
+        local opt = ctx:addOption(label, window, function(w, t)
+            w.baseChoice = w.baseChoice or {}
+            w.baseChoice[recipe.id] = t
+        end, c.type)
+        opt.iconTexture = it and getItemTexture(it:getIcon()) or nil
+    end
 end
 
 -- Request 2026-09-28: "ไม่สามารถเปลี่ยนไปทำสูตรอื่นได้จนกว่าจะกดยกเลิก" --
@@ -1423,6 +1486,9 @@ function TWACraftWindow:startCenterAction(kind)
         action = TWA_FinishCraftAction:new(self.player, recipe.id, S.serializeMap(self:currentMap()), token)
         action.onComplete = function()
             window:endActive()
+            -- Round 19: gem refining -- watch for the result (a break opens
+            -- the short shatter window).
+            if recipe.keepType and TWAGemBreak then TWAGemBreak.watch(window.player, token) return end
             if TWAConfig.on("GradeReveal") then
                 -- Round 16: the Gemstone recipe has its own show (the roll).
                 if recipe.roll and TWAGemReveal then TWAGemReveal.open(window.player, recipe, token)
@@ -1765,6 +1831,7 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey,
         local mx, my = self:getMouseX(), self:getMouseY()
         if mx >= x and mx < x + w and my >= y and my < y + CARD_H then
             local lines = { getText("IGUI_TWA_AcceptsAny") }
+            if self.baseCardRect and self.baseCardRect.y == y then lines[1] = getText("IGUI_TWA_ChooseBase") end
             for _, t in ipairs(TWACraftState.baseTypes({ base = fullType, baseAlt = altType })) do
                 local it = getItemScript(t)
                 lines[#lines + 1] = "- " .. (it and it:getDisplayName() or t)
@@ -1773,7 +1840,9 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey,
         end
     end
     local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
-    drawTextShadowed(self, getText(statusKey), tx, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
+    local statusText = getText(statusKey, self.baseStateText)
+    if statusKey == "IGUI_TWA_BaseNeedsState" then self.baseStateText = nil end
+    drawTextShadowed(self, statusText, tx, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
     return y + CARD_H + 6 + 4
 end
 
@@ -1975,6 +2044,18 @@ end
 
 -- "Locked to this recipe" / "busy" notice, drawn over the bottom of the
 -- center card for a moment.
+-- Round 19 ("คำอธิบาย ... อยู่บนปุ่ม action เอาขึ้นอีกประมาณนึง มันทะลุออกมา
+-- จากการ์ด"): a note ends a clear gap above the button row, however many
+-- lines it wraps to.
+function TWACraftWindow:drawNoteAboveButtons(note, x)
+    local lines = wrapTextLines(note, CENTER_W - 24, UIFont.Small)
+    local bottom = self.panelBottom - self.btnH - 30 -- the card ends at -18
+    local y0 = bottom - #lines * 14
+    for i, l in ipairs(lines) do
+        drawTextShadowed(self, l, x, y0 + (i - 1) * 14, 0.75, 0.85, 1, 1, UIFont.Small)
+    end
+end
+
 function TWACraftWindow:drawLockNotice()
     if getTimestampMs() >= (self.lockMsgUntil or 0) then return end
     local text = getText(self.lockMsgKey or "IGUI_TWA_LockedToRecipe")
@@ -2034,9 +2115,8 @@ function TWACraftWindow:render()
     end
 
     local recipe = self.selectedRecipe
-    local item = getItemScript(recipe.result)
-    local name = item and item:getDisplayName() or recipe.result
-    local tex = resultIcon(recipe.result)
+    local name = recipeName(recipe)
+    local tex = recipeIcon(recipe)
 
     -- Big, prominent icon (request 2026-09-26: "make the icon bigger, make
     -- it stand out") with the item name beside it. The icon's own border is
@@ -2044,7 +2124,7 @@ function TWACraftWindow:render()
     -- by tier"), and the tier name itself is shown under the item name in
     -- that same color.
     local ICON = 100
-    local stats = TWARecipeData.Stats[recipe.result]
+    local stats = recipeStats(recipe)
     local tierInfo = stats and stats.tier and TIER_INFO[stats.tier]
     self:drawRect(centerX, centerY, ICON, ICON, 0.6, 0, 0, 0)
     if tex then
@@ -2073,7 +2153,7 @@ function TWACraftWindow:render()
     -- default values for them -- skipped entirely for this one category,
     -- the base-item card/procedure grid just start higher up instead.
     local statY = centerY + 44
-    if recipe.category ~= "Material" and not recipe.roll then
+    if recipe.category ~= "Material" and not recipe.roll and not recipe.keepType then
         statY = self:drawStatGrid(centerX + ICON + 12, centerY + 44, CENTER_W - ICON - 20)
     end
 
@@ -2117,7 +2197,10 @@ function TWACraftWindow:render()
             end
             return n
         end
-        local count1 = freeCount(S.baseTypes(recipe))
+        -- Round 19: the base counts only copies that fit (a gem's state too),
+        -- and shows the one chosen.
+        local chosen = self:baseChoiceType(recipe)
+        local count1 = chosen and S.countBase(self.player, recipe, chosen) or 0
         local count2 = recipe.base2 and freeCount({ recipe.base2 }) or 0
         if self:isActiveRecipe() then
             -- Already taken at Start.
@@ -2128,12 +2211,11 @@ function TWACraftWindow:render()
                 owned1 = S.findItem(self.player, self.resumeItem) ~= nil
                 note1 = "IGUI_TWA_ResumeItemNote"
             else
-                owned1, anyCopy = false, false
+                owned1, anyCopy = chosen ~= nil, false
                 for _, t in ipairs(S.baseTypes(recipe)) do
-                    if S.pickFreshItem(self.player, t) then owned1 = true end
                     if inv:getItemCountRecurse(t) >= 1 then anyCopy = true end
                 end
-                if not owned1 and anyCopy then
+                if not owned1 and anyCopy and not recipe.gemFrom then
                     note1 = "IGUI_TWA_BaseOnlyBookmarked"
                 end
             end
@@ -2143,7 +2225,15 @@ function TWACraftWindow:render()
             note2 = owned2 and "IGUI_TWA_ExtraItemOwned" or "IGUI_TWA_ExtraItemMissing"
         end
         local card1Type, card1Alt = recipe.base, recipe.baseAlt
+        if chosen then card1Type = chosen end
         if self.resumeItem and not self:isActiveRecipe() then card1Type, card1Alt = self.resumeItem:getFullType(), nil end
+        -- the base card can be clicked to choose (not once started / resuming)
+        local choosable = not self:isActiveRecipe() and not self.resumeItem and #self:baseChoices(recipe) > 0 and #S.baseTypes(recipe) > 1
+        self.baseCardRect = choosable and { x = centerX, y = baseY, w = CENTER_W - 16, h = 40, recipe = recipe } or nil
+        if recipe.gemFrom and not owned1 and not self:isActiveRecipe() then
+            note1 = "IGUI_TWA_BaseNeedsState"
+        end
+        self.baseStateText = recipe.gemFrom and getText("IGUI_TWA_GemState_" .. recipe.gemFrom) or nil
         baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, card1Type, card1Alt, owned1, note1, count1)
         if recipe.base2 then
             baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2, count2)
@@ -2226,9 +2316,10 @@ function TWACraftWindow:render()
         local note = getText("IGUI_TWA_MaterialFinishRule")
         local _, why = TWACraftState.canFinish(recipe, self:currentMap())
         local bad = why == "materialQuality"
-        local ny = self.panelBottom - self.btnH - 34
-        for i, l in ipairs(wrapTextLines(note, CENTER_W - 24, UIFont.Small)) do
-            drawTextShadowed(self, l, centerX, ny + (i - 1) * 14 - 14, bad and 1 or 0.8, bad and 0.5 or 0.8, bad and 0.4 or 0.8, 1, UIFont.Small)
+        local lines = wrapTextLines(note, CENTER_W - 24, UIFont.Small)
+        local ny = self.panelBottom - self.btnH - 30 - #lines * 14 -- round 19: inside the card (it ends at -18)
+        for i, l in ipairs(lines) do
+            drawTextShadowed(self, l, centerX, ny + (i - 1) * 14, bad and 1 or 0.8, bad and 0.5 or 0.8, bad and 0.4 or 0.8, 1, UIFont.Small)
         end
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishMaterial"))
     elseif recipe.roll then
@@ -2236,11 +2327,15 @@ function TWACraftWindow:render()
         -- Round 17: the gem chance follows the overall quality.
         local S = TWACraftState
         local note = getText("IGUI_TWA_GemFinishRule", tostring(S.gemChance("Excellent")), tostring(S.gemChance("Good")), tostring(S.gemChance("Bad")))
-        local ny = self.panelBottom - self.btnH - 34
-        for i, l in ipairs(wrapTextLines(note, CENTER_W - 24, UIFont.Small)) do
-            drawTextShadowed(self, l, centerX, ny + (i - 1) * 14 - 14, 0.75, 0.85, 1, 1, UIFont.Small)
-        end
+        self:drawNoteAboveButtons(note, centerX)
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishGem"))
+    elseif recipe.keepType then
+        -- Round 19: gem refining -- the state needed and the break chances.
+        local S = TWACraftState
+        local note = getText("IGUI_TWA_GemRefineRule", getText("IGUI_TWA_GemState_" .. (recipe.gemFrom or "Raw")),
+            tostring(S.gemBreakChance("Bad")), tostring(S.gemBreakChance("Good")), tostring(S.gemBreakChance("Excellent")))
+        self:drawNoteAboveButtons(note, centerX)
+        self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     else
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     end
@@ -2257,6 +2352,11 @@ function TWACraftWindow:update()
 end
 
 function TWACraftWindow:onMouseDown(x, y)
+    local r = self.baseCardRect
+    if r and self.selectedRecipe == r.recipe and x >= r.x and x < r.x + r.w and y >= r.y and y < r.y + r.h then
+        self:openBaseChooser(r.recipe)
+        return true
+    end
     if self.selectedRecipe and self.checklistCells then
         for _, c in ipairs(self.checklistCells) do
             if x >= c.x and x < c.x + c.w and y >= c.y and y < c.y + c.h then

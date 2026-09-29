@@ -4,6 +4,6 @@ description=(WIP) New melee weapon-crafting mod. 137 HARMONIE weapons + every va
 poster=poster.png
 icon=icon.png
 author=HARMONIE
-modversion=0.50.0
+modversion=0.51.0
 versionMin=42.0.0
 require=NeatUI_Framework

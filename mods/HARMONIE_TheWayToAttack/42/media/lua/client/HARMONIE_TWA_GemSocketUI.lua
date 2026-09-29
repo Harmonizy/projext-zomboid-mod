@@ -52,6 +52,19 @@ end
 
 local function textW(text, font) return getTextManager():MeasureStringX(font or UIFont.Small, text) end
 
+-- Shorten `text` to `maxW` pixels by whole characters (Thai is 3 bytes a
+-- letter in UTF-8 -- cutting bytes would leave a broken letter).
+local function fitText(text, maxW, font)
+    if textW(text, font) <= maxW then return text end
+    local s = text
+    while #s > 0 and textW(s .. "..", font) > maxW do
+        local i = #s
+        while i > 1 and s:byte(i) >= 0x80 and s:byte(i) < 0xC0 do i = i - 1 end
+        s = s:sub(1, i - 1)
+    end
+    return s .. ".."
+end
+
 local function gemColour(fullType)
     local short = fullType and fullType:match("%.([^%.]+)$")
     local c = short and TWARecipeData.GemRoll.colour[short]
@@ -89,7 +102,7 @@ function TWAGemSocketUI.open(player, weapon)
     o.particles, o.flashes = {}, {}
     o.shakeX, o.shakeY = 0, 0
     o.selKey = nil
-    o.pickType = nil
+    o.pick = nil          -- { type, state } of the gem picked in the picker
     o:initialise()
     o:instantiate()
     o:addToUIManager()
@@ -129,16 +142,42 @@ function TWAGemSocketUI:weaponOk()
     return c ~= nil and c:isInCharacterInventory(self.player)
 end
 
--- Gems in the player's own bags, by type: { type, count, item }.
+-- Gems in the player's own bags (bags inside included), one entry per type
+-- AND state (round 19): { type, state, count, item }. Bookmarked
+-- (unfinished) gems are left out.
+local STATE_ORDER = {}
+for i, st in ipairs(TWACraftState.GEM_STATES) do STATE_ORDER[st] = i end
 function TWAGemSocketUI:ownedGems()
-    local inv = self.player:getInventory()
-    local out = {}
-    for _, t in ipairs(G.gemTypes()) do
-        local n = inv:getItemCountRecurse(t) or 0
-        local it = n > 0 and inv:getFirstTypeEvalRecurse(t, function() return true end) or nil
-        out[#out + 1] = { type = t, count = n, item = it }
+    local groups, list = {}, {}
+    local order = {}
+    for i, t in ipairs(G.gemTypes()) do order[t] = i end
+    local function walk(cont, depth)
+        local items = cont and cont:getItems()
+        if not items then return end
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            local t = it:getFullType()
+            if order[t] and not TWACraftState.isBookmarked(it) then
+                local st = TWACraftState.gemState(it) or "Raw"
+                local k = t .. "|" .. st
+                local g = groups[k]
+                if not g then
+                    g = { type = t, state = st, count = 0, item = it }
+                    groups[k] = g
+                    list[#list + 1] = g
+                end
+                g.count = g.count + 1
+            elseif depth < 3 and it.getInventory and (not instanceof or instanceof(it, "InventoryContainer")) then
+                walk(it:getInventory(), depth + 1)
+            end
+        end
     end
-    return out
+    walk(self.player:getInventory(), 0)
+    table.sort(list, function(a, b)
+        if order[a.type] ~= order[b.type] then return order[a.type] < order[b.type] end
+        return (STATE_ORDER[a.state] or 0) > (STATE_ORDER[b.state] or 0)
+    end)
+    return list
 end
 
 -- Socket keys in drawing order: "1".."n", then "sp".
@@ -162,14 +201,11 @@ function TWAGemSocketUI:pickCellPos(i)
     return CX + (CW - total) / 2 + col * (CELL + GAP), PICK_Y + 22 + row * (CELL + GAP)
 end
 
--- Damage bonus now, and what it would be with the picked gem in the picked socket.
+-- The gems' bonus now, and with the picked gem in the picked socket.
 function TWAGemSocketUI:bonusNowAndPreview()
-    local mn, mx = G.totalBonus(self.weapon)
-    if not (self.selKey and self.pickType) then return mn, mx, mn, mx end
-    local old = G.gemIn(self.weapon, self.selKey)
-    local ob = old and G.bonus(old) or { min = 0, max = 0 }
-    local nb = G.bonus(self.pickType)
-    return mn, mx, mn - ob.min + nb.min, mx - ob.max + nb.max
+    local now = G.totalBonus(self.weapon)
+    if not (self.selKey and self.pick) then return now, now end
+    return now, G.totalBonus(self.weapon, { key = self.selKey, type = self.pick.type, state = self.pick.state })
 end
 
 -- Input ----------------------------------------------------------------------
@@ -185,16 +221,33 @@ function TWAGemSocketUI:onMouseDown(x, y)
             return true
         end
     end
-    for i, g in ipairs(self:ownedGems()) do
+    for i, g in ipairs(self:visibleGems()) do
         local gx, gy = self:pickCellPos(i)
         if x >= gx and x <= gx + CELL and y >= gy and y <= gy + CELL and g.count > 0 then
-            self.pickType = (self.pickType == g.type) and nil or g.type
+            local same = self.pick and self.pick.type == g.type and self.pick.state == g.state
+            self.pick = (not same) and { type = g.type, state = g.state } or nil
             TWASound.play("TWA_Tick", "MinigameSounds")
             return true
         end
     end
     if x >= W - 44 and x <= W - 12 and y >= 10 and y <= 42 then self:close() return true end
     return ISPanel.onMouseDown(self, x, y)
+end
+
+-- The picker shows 3 rows; the wheel scrolls through more.
+local PICK_ROWS = 3
+function TWAGemSocketUI:visibleGems()
+    local all = self:ownedGems()
+    local maxOff = math.max(0, math.ceil(#all / PER_ROW) - PICK_ROWS)
+    self.pickRow = math.max(0, math.min(self.pickRow or 0, maxOff))
+    local out = {}
+    for i = self.pickRow * PER_ROW + 1, math.min(#all, (self.pickRow + PICK_ROWS) * PER_ROW) do out[#out + 1] = all[i] end
+    return out, maxOff
+end
+
+function TWAGemSocketUI:onMouseWheel(del)
+    self.pickRow = (self.pickRow or 0) + (del > 0 and 1 or -1)
+    return true
 end
 
 function TWAGemSocketUI:onMouseUp(x, y) return ISPanel.onMouseUp(self, x, y) end
@@ -210,7 +263,7 @@ function TWAGemSocketUI:onKeyRelease(key) if key == Keyboard.KEY_ESCAPE then sel
 -- What the confirm button would do now: "insert", "remove" or nil.
 function TWAGemSocketUI:pendingOp()
     if not self:weaponOk() or not self.selKey then return nil end
-    if self.pickType then return "insert" end
+    if self.pick then return "insert" end
     if self.selKey == "sp" and G.gemIn(self.weapon, "sp") then return "remove" end
     return nil
 end
@@ -218,15 +271,18 @@ end
 function TWAGemSocketUI:onConfirm()
     local op = self:pendingOp()
     if op == "insert" then
-        local inv = self.player:getInventory()
-        local gem = inv:getFirstTypeEvalRecurse(self.pickType, function() return true end)
+        local gem
+        for _, g in ipairs(self:ownedGems()) do
+            if g.type == self.pick.type and g.state == self.pick.state then gem = g.item break end
+        end
         if not gem then return end
         G.requestInsert(self.player, self.weapon, self.selKey, gem)
         local sx, sy = self:selectedSocketXY()
-        self:burst("spark", sx, sy, 40, { speed = 0.35, ttl = 900, col = gemColour(self.pickType) })
-        self:burst("ring", sx, sy, 1, { size = 20, grow = 0.25, ttl = 700, col = gemColour(self.pickType) })
+        local col = gemColour(self.pick.type)
+        self:burst("spark", sx, sy, 40, { speed = 0.35, ttl = 900, col = col })
+        self:burst("ring", sx, sy, 1, { size = 20, grow = 0.25, ttl = 700, col = col })
         TWASound.play("TWA_Shimmer", "MinigameSounds")
-        self.pickType = nil
+        self.pick = nil
     elseif op == "remove" then
         G.requestRemove(self.player, self.weapon)
         TWASound.play("TWA_Tick", "MinigameSounds")
@@ -272,13 +328,25 @@ function TWAGemSocketUI:prerender()
     else
         self.confirmBtn:setTooltip(nil)
     end
-end
-
-function TWAGemSocketUI:render()
+    -- Round 19 ("ปุ่มดัดแปลงอาวุธ และปุ่มปิดโดนบังอยู่หลังหน้าต่าง"): a panel's
+    -- render() runs AFTER its children, so the window drawn there covered
+    -- the buttons. Everything is drawn here, before the children.
     local ok, err = pcall(self.drawAll, self)
     if not ok then
         print("[HARMONIE_TheWayToAttack] gem socket window error: " .. tostring(err))
         self:close()
+    end
+end
+
+-- Only the little name tag at the mouse goes over the buttons.
+function TWAGemSocketUI:render()
+    if self.hoverName then
+        local mx2, my2 = self:getMouseX(), self:getMouseY()
+        local w = textW(self.hoverName) + 12
+        self:drawRect(mx2 + 12, my2 + 12, w, 20, 0.95, 0.05, 0.05, 0.06)
+        self:drawRectBorder(mx2 + 12, my2 + 12, w, 20, 1, 0.5, 0.5, 0.5)
+        shadowText(self, self.hoverName, mx2 + 18, my2 + 14, WHITE, 1)
+        self.hoverName = nil
     end
 end
 
@@ -326,15 +394,15 @@ function TWAGemSocketUI:weaponInfo()
     i.minD, i.maxD = wpn:getMinDamage(), wpn:getMaxDamage()
     i.speed = lf(wpn, "getBaseSpeed", (stats and stats.baseSpeed) or 1.0)
     i.dps = ((i.minD + i.maxD) / 2) * i.speed
-    i.tier = T and T.tierFromDps(i.dps) or 1
-    i.tierName = T and T.TIER_NAMES[i.tier] or "?"
-    i.tierCol = T and T.TIER_COLOR[i.tier] or WHITE
+    i.tier = T and T.tierFromDps(i.dps) or nil
+    i.tierName = (T and i.tier and T.TIER_NAMES[i.tier]) or ""
+    i.tierCol = (T and i.tier and T.TIER_COLOR[i.tier]) or WHITE
     i.type = T and T.weaponTypeText(wpn, stats) or ""
     i.grade = G.grade(wpn)
     i.gradeCol = GRADE_COLOR[i.grade] or WHITE
-    local _, _, pmn, pmx = self:bonusNowAndPreview()
-    local nmn, nmx = G.totalBonus(wpn)
-    i.dMin, i.dMax = pmn - nmn, pmx - nmx
+    local now, prev = self:bonusNowAndPreview()
+    local function d(f) return (prev[f] or 0) - (now[f] or 0) end
+    i.dMin, i.dMax, i.dCond = d("MinDamage"), d("MaxDamage"), d("ConditionMax")
     i.rows = {
         { "IGUI_TWA_Stat_DPS", string.format("%.2f", i.dps), (i.dMin ~= 0 or i.dMax ~= 0) and string.format("%.2f", ((i.minD + i.dMin + i.maxD + i.dMax) / 2) * i.speed) },
         { "IGUI_TWA_Stat_MinDamage", string.format("%.1f", i.minD), i.dMin ~= 0 and string.format("%.1f", i.minD + i.dMin) },
@@ -343,7 +411,7 @@ function TWAGemSocketUI:weaponInfo()
         { "IGUI_TWA_StatWeight", string.format("%.1f", wpn:getActualWeight()) },
         { "IGUI_TWA_Stat_Range", string.format("%.2f", wpn:getMaxRange()) },
         { "IGUI_TWA_Stat_CritChance", string.format("%.0f", lf(wpn, "getCriticalChance", (stats and stats.critChance) or 0)) .. "%" },
-        { "IGUI_TWA_Stat_Condition", string.format("%.0f", wpn:getConditionMax()) },
+        { "IGUI_TWA_Stat_Condition", string.format("%.0f", wpn:getConditionMax()), i.dCond ~= 0 and string.format("%.0f", wpn:getConditionMax() + i.dCond) },
         { "IGUI_TWA_Stat_Durability", "1:" .. string.format("%.0f", wpn:getConditionLowerChance()) },
         { "IGUI_TWA_Stat_Knockdown", string.format("%.1f", lf(wpn, "getKnockdownMod", (stats and stats.knockdownMod) or 0)) },
         { "IGUI_TWA_Stat_PushPower", string.format("%.2f", lf(wpn, "getPushBackMod", (stats and stats.pushBackMod) or 0)) },
@@ -370,8 +438,14 @@ function TWAGemSocketUI:drawLeft(i)
     if tex then self:drawTextureScaled(tex, x + 6, y + 6, 72, 72, 1, 1, 1, 1) end
     local nx = x + 98
     shadowText(self, wpn:getDisplayName(), nx, y + 2, WHITE, 1, UIFont.Medium)
-    local tline = i.tierName .. (i.type ~= "" and (" · " .. i.type) or "")
-    shadowText(self, tline, nx, y + 30, i.tierCol, 1)
+    -- Round 19 ("ไม่อยากให้มี ? ในจุดแสดง tier"): no middle dot (the game
+    -- font may not have it), the tier and the type drawn side by side.
+    local tx2 = nx
+    if i.tierName ~= "" then
+        shadowText(self, i.tierName, tx2, y + 30, i.tierCol, 1)
+        tx2 = tx2 + textW(i.tierName) + 12
+    end
+    if i.type ~= "" then shadowText(self, i.type, tx2, y + 30, { r = 0.55, g = 0.75, b = 1 }, 1) end
     shadowText(self, getText("IGUI_TWA_Socket_Grade"), nx, y + 56, { r = 0.85, g = 0.85, b = 0.85 }, 1)
     self:gradeBadge(nx + textW(getText("IGUI_TWA_Socket_Grade")) + 10, y + 53, i.grade, i.gradeCol)
     y = y + 104
@@ -392,7 +466,7 @@ end
 -- One socket: a dark setting, the gem's picture, a lock for a filled normal
 -- socket, a bright rim and an open lock for the special one.
 function TWAGemSocketUI:drawSocket(sx, sy, r, key)
-    local gem = G.gemIn(self.weapon, key)
+    local gem, gemState = G.gemIn(self.weapon, key)
     local special = key == "sp"
     local sel = self.selKey == key
     local rim = special and { r = 0.95, g = 0.95, b = 1 } or { r = 0.4, g = 0.4, b = 0.44 }
@@ -404,13 +478,14 @@ function TWAGemSocketUI:drawSocket(sx, sy, r, key)
     self:disc(sx, sy, r, 1, { r = 0.07, g = 0.07, b = 0.08 }, 28)
     self:disc(sx, sy, r - 5, 1, { r = 0.03, g = 0.03, b = 0.035 }, 28)
     self:ring(sx, sy, r, special and 2.5 or 2, 1, sel and GOLD or rim, 28)
-    local show = gem
-    if sel and self.pickType then show = self.pickType end
+    local show, showState = gem, gemState
+    if sel and self.pick then show, showState = self.pick.type, self.pick.state end
     if show then
         local t = gemTex(show)
-        local a = (sel and self.pickType) and (0.55 + 0.35 * math.sin(self.elapsed * 0.01)) or 1
+        local a = (sel and self.pick) and (0.55 + 0.35 * math.sin(self.elapsed * 0.01)) or 1
         if t then self:tex(t, sx - r * 0.72, sy - r * 0.72, r * 1.44, r * 1.44, a) end
         self:sparkle(sx - r * 0.3, sy - r * 0.35, 5, math.max(0, math.sin(self.elapsed * 0.004 + sx)) ^ 2)
+        self:stateDot(sx - r * 0.7, sy + r * 0.5, showState)
     else
         -- an empty setting: a faint cross
         self:line(sx - 6, sy, sx + 6, sy, 1, 0.4, rim)
@@ -447,10 +522,17 @@ function TWAGemSocketUI:drawCentre(i)
     -- the gem picker
     self:line(CX + 12, PICK_Y - 6, CX + CW - 12, PICK_Y - 6, 1, 0.7, { r = 0.25, g = 0.24, b = 0.24 })
     shadowText(self, getText("IGUI_TWA_Socket_PickGem"), CX + 16, PICK_Y, { r = 0.9, g = 0.9, b = 0.9 }, 1)
-    for n, g in ipairs(self:ownedGems()) do
+    local vis, maxOff = self:visibleGems()
+    if #vis == 0 then
+        shadowText(self, getText("IGUI_TWA_Socket_NoGems"), CX + 16, PICK_Y + 30, { r = 0.6, g = 0.6, b = 0.6 }, 1)
+    end
+    if maxOff > 0 then
+        shadowText(self, string.format("%d / %d", self.pickRow + 1, maxOff + 1), CX + CW - 50, PICK_Y, { r = 0.6, g = 0.6, b = 0.6 }, 1)
+    end
+    for n, g in ipairs(vis) do
         local gx, gy = self:pickCellPos(n)
         local have = g.count > 0
-        local sel = self.pickType == g.type
+        local sel = self.pick ~= nil and self.pick.type == g.type and self.pick.state == g.state
         local mx, my = self:getMouseX(), self:getMouseY()
         local hover = mx >= gx and mx <= gx + CELL and my >= gy and my <= gy + CELL
         self:drawRect(gx, gy, CELL, CELL, 1, sel and 0.25 or (hover and have and 0.14 or 0.08), sel and 0.18 or 0.08, sel and 0.04 or (hover and have and 0.14 or 0.08))
@@ -461,7 +543,10 @@ function TWAGemSocketUI:drawCentre(i)
             local ct = "x" .. tostring(g.count)
             shadowText(self, ct, gx + CELL - textW(ct) - 3, gy + CELL - 15, WHITE, 1)
         end
-        if hover then self.hoverName = gemName(g.type) end
+        self:stateDot(gx + 5, gy + CELL - 9, g.state)
+        if hover then
+            self.hoverName = gemName(g.type) .. " (" .. getText("IGUI_TWA_GemState_" .. g.state) .. "): " .. G.describe(G.ability(g.type, g.state))
+        end
     end
 end
 
@@ -476,14 +561,11 @@ function TWAGemSocketUI:drawRight(i)
         { "IGUI_TWA_Socket_WeaponName", wpn:getDisplayName() },
         { "IGUI_TWA_Stat_Type", i.type ~= "" and i.type or "-" },
         { "IGUI_TWA_Socket_Grade", nil },
-        { "IGUI_TWA_Socket_Total", tostring(G.totalSlots(wpn)) },
-        { "IGUI_TWA_Socket_Filled", tostring(G.filledCount(wpn)) .. " / " .. tostring(G.totalSlots(wpn)) },
     }
     for _, r in ipairs(rows) do
         shadowText(self, getText(r[1]), x, y, { r = 0.8, g = 0.8, b = 0.8 }, 1)
         if r[2] then
-            local v = r[2]
-            while textW(v) > RX + RW - 12 - vx and #v > 4 do v = v:sub(1, -2) end
+            local v = fitText(r[2], RX + RW - 12 - vx)
             shadowText(self, v, vx, y, WHITE, 1)
         else
             self:gradeBadge(vx, y - 3, i.grade, i.gradeCol)
@@ -495,40 +577,38 @@ function TWAGemSocketUI:drawRight(i)
     y = y + 10
     shadowText(self, getText("IGUI_TWA_Socket_Effects"), x, y, WHITE, 1)
     y = y + 24
-    -- per gem type: how many and what they give
-    local counts, order = {}, {}
-    local s = G.sockets(wpn)
-    local function add(t) if t then if not counts[t] then counts[t] = 0; order[#order + 1] = t end counts[t] = counts[t] + 1 end end
-    for k = 1, G.slotCount(wpn) do add(s[tostring(k)]) end
-    if G.hasSpecial(wpn) then add(s.sp) end
-    if #order == 0 then
+    -- every socketed gem and what it gives (round 19: by gem and state)
+    local list = G.list(wpn)
+    if #list == 0 then
         shadowText(self, getText("IGUI_TWA_Socket_NoEffects"), x + 4, y, { r = 0.6, g = 0.6, b = 0.6 }, 1)
         y = y + 22
     end
-    for _, t in ipairs(order) do
-        local c = gemColour(t)
+    for _, g in ipairs(list) do
+        local c = gemColour(g.type)
         self:quad(x + 6, y + 2, x + 12, y + 8, x + 6, y + 14, x, y + 8, 1, c.r, c.g, c.b)
-        local b = G.bonus(t)
-        local line = getText("IGUI_TWA_Socket_EffectLine", gemName(t) .. " x" .. counts[t], string.format("%.1f", b.min * counts[t]))
-        shadowText(self, line, x + 20, y, { r = 0.9, g = 0.9, b = 0.9 }, 1)
-        y = y + 22
+        local nm = gemName(g.type) .. " (" .. getText("IGUI_TWA_GemState_" .. g.state) .. ")"
+        shadowText(self, nm, x + 20, y, { r = 0.9, g = 0.9, b = 0.9 }, 1)
+        local ax = x + 26 + textW(nm)
+        shadowText(self, fitText(G.describe(G.ability(g.type, g.state)), RX + RW - 12 - ax), ax, y, { r = 0.6, g = 0.9, b = 0.65 }, 1)
+        y = y + 19
     end
-    local mn, mx = G.totalBonus(wpn)
-    shadowText(self, getText("IGUI_TWA_Socket_EffectTotal1", string.format("%.1f", mn)), x, y + 2, { r = 0.45, g = 1, b = 0.5 }, 1)
-    shadowText(self, getText("IGUI_TWA_Socket_EffectTotal2", string.format("%.1f", mx)), x, y + 20, { r = 0.45, g = 1, b = 0.5 }, 1)
+    local total = G.totalBonus(wpn)
+    y = y + 4
+    if next(total) then
+        shadowText(self, fitText(getText("IGUI_TWA_Socket_EffectTotalAll", G.describe(total)), RW - 30), x, y, { r = 0.45, g = 1, b = 0.5 }, 1)
+    end
     -- the two rules
     local by = BOTTOM_Y - 12 - 166
     self:notice(RX + 10, by, RW - 20, 76, { r = 1, g = 0.6, b = 0.2 }, "IGUI_TWA_Socket_RuleNormal", "IGUI_TWA_Socket_RuleNormal2", false)
     self:notice(RX + 10, by + 82, RW - 20, 76, { r = 0.35, g = 0.65, b = 1 }, "IGUI_TWA_Socket_RuleSpecial", "IGUI_TWA_Socket_RuleSpecial2", not G.hasSpecial(wpn))
-    -- the hovered gem's name, as a small tag at the mouse
-    if self.hoverName then
-        local mx2, my2 = self:getMouseX(), self:getMouseY()
-        local w = textW(self.hoverName) + 12
-        self:drawRect(mx2 + 12, my2 + 12, w, 20, 0.95, 0.05, 0.05, 0.06)
-        self:drawRectBorder(mx2 + 12, my2 + 12, w, 20, 1, 0.5, 0.5, 0.5)
-        shadowText(self, self.hoverName, mx2 + 18, my2 + 14, WHITE, 1)
-        self.hoverName = nil
-    end
+end
+
+-- A small coloured dot for a gem's state (its tier colour).
+function TWAGemSocketUI:stateDot(x, y, state)
+    local tier = TWACraftState.GEM_STATE_TIER[state or "Raw"] or 2
+    local c = (TWATierInfo and TWATierInfo.TIER_COLOR[tier]) or WHITE
+    self:disc(x, y, 4, 1, { r = 0, g = 0, b = 0 }, 10)
+    self:disc(x, y, 3, 1, c, 10)
 end
 
 function TWAGemSocketUI:notice(x, y, w, h, c, k1, k2, dim)

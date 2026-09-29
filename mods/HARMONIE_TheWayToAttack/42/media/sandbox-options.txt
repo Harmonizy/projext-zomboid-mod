@@ -230,6 +230,36 @@ option HARMONIE_TheWayToAttack.GemDiamondShare
     translation = HARMONIE_TWA_GemDiamondShare,
 }
 
+option HARMONIE_TheWayToAttack.GemBreakBad
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 50,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemBreakBad,
+}
+
+option HARMONIE_TheWayToAttack.GemBreakGood
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 5,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemBreakGood,
+}
+
+option HARMONIE_TheWayToAttack.GemBreakExcellent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 0,
+    page = HARMONIE_TWA_Quality,
+    translation = HARMONIE_TWA_GemBreakExcellent,
+}
+
 option HARMONIE_TheWayToAttack.MinigameExcellentAt
 {
     type = double,

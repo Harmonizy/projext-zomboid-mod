@@ -166,6 +166,48 @@ end
 -- the overall quality must also be Good or Excellent -- a Bad material has
 -- its weak procedures redone first. (Weapons can still finish at Bad; the
 -- quality then decides their grade pool.) Returns ok, reason.
+-- Round 19: a gem's STATE, raised one step at a time by the gem-refining
+-- recipes (recipe.gemFrom -> recipe.gemTo). Each state has its own tier
+-- (the tooltip's colour strip) and socket strength (TWAGemSocket).
+S.GEM_STATES = { "Raw", "Refined", "Cut", "Fine", "Radiant", "Pure" }
+S.GEM_STATE_TIER = { Raw = 2, Refined = 3, Cut = 4, Fine = 5, Radiant = 6, Pure = 7 }
+
+-- A gem's state ("Raw" for a gem that never got one); nil for a non-gem.
+function S.gemState(item)
+    if not item or not S.isRolledGem(item:getFullType()) then return nil end
+    return item:getModData().TWA_GemState or "Raw"
+end
+
+-- Can `item` be this recipe's (fresh) base item? Not someone's bookmark,
+-- one of the recipe's base types, and for a gem-refining recipe a gem in
+-- the recipe's starting state.
+function S.baseOk(recipe, item)
+    if not recipe or not item or S.isBookmarked(item) then return false end
+    local t = item:getFullType()
+    local okType = false
+    for _, bt in ipairs(S.baseTypes(recipe)) do if bt == t then okType = true break end end
+    if not okType then return false end
+    if recipe.gemFrom and S.gemState(item) ~= recipe.gemFrom then return false end
+    return true
+end
+
+-- A usable base item of `fullType` for `recipe` (nearby containers too).
+function S.pickBase(character, recipe, fullType)
+    if not character or not fullType then return nil end
+    return TWASources.get(character):getFirstTypeEvalRecurse(fullType, function(it) return S.baseOk(recipe, it) end)
+end
+
+function S.countBase(character, recipe, fullType)
+    return TWASources.get(character):countEval(fullType, function(it) return S.baseOk(recipe, it) end)
+end
+
+-- Round 19: a refined gem can break at Finish -- chance by overall quality
+-- (sandbox GemBreakBad 50 / GemBreakGood 5 / GemBreakExcellent 0 percent).
+S.GEM_BREAK_KEY = { Excellent = "GemBreakExcellent", Good = "GemBreakGood", Bad = "GemBreakBad" }
+function S.gemBreakChance(word)
+    return TWAConfig.num(S.GEM_BREAK_KEY[word] or "GemBreakBad", 0)
+end
+
 -- Round 18 ("ปุ่มฝึกกรรมวิธีจะขึ้นเฉพาะคนที่เคยทำกรรมวิธีนั้นๆแล้วเท่านั้น"):
 -- every procedure a character has ever carried out for real (the timed
 -- action finished, whatever its word), kept on the character's ModData.
@@ -513,7 +555,9 @@ function S.giveBack(character, kind, recipeId)
     if not recipe then return false end
     if kind == "incomplete" then
         local inv = character:getInventory()
-        local it = inv:AddItem(recipe.result)
+        -- Round 19: a gem-refining recipe keeps the gem's own type (its
+        -- `result` is only a stand-in picture) -- the same gem, unfinished.
+        local it = (recipe.keepType and act.base) and addToInventory(character, act.base, recipe.result) or inv:AddItem(recipe.result)
         if it then
             S.writeBookmark(it, recipe.id, act.map)
             local md = it:getModData()
@@ -584,3 +628,18 @@ if Events and Events.OnGameStart and getPlayer then
         if item then S.applyIncomplete(item) end
     end)
 end
+
+-- Round 19: how a gem-refining Finish went, for the client that pressed it
+-- (the break window). Server -> that player's client; single player -> kept
+-- here for the client code on this same machine.
+S.REFINE_RESULTS = S.REFINE_RESULTS or {}
+function S.reportRefine(character, token, broken, fullType, state)
+    if not token or token == "" then return end
+    local res = { token = token, broken = broken and true or false, type = fullType, state = state }
+    if isServer() and sendServerCommand then
+        sendServerCommand(character, "HARMONIE_TWA", "gemRefine", res)
+    else
+        S.REFINE_RESULTS[token] = res
+    end
+end
+
