@@ -238,6 +238,12 @@ function ISToolTipInv:render()
         -- have no combat stats to derive one from).
         local stats = TWARecipeData and TWARecipeData.Stats and TWARecipeData.Stats[fullType]
         local tier = stats and stats.tier
+        -- Round 19 ("อัญมณีแต่ละอันมี tier ตามสถานะ"): a gem's tier is its state's.
+        local gemSt = TWACraftState.gemState and TWACraftState.gemState(item)
+        if gemSt then
+            tier = TWACraftState.GEM_STATE_TIER[gemSt] or 2
+            stats = { tier = tier }
+        end
         if tier and TIER_NAMES[tier] then
             local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
             local label = TIER_NAMES[tier]
@@ -323,7 +329,9 @@ function ISToolTipInv:render()
     local craftedBy = item:getModData().TWA_CraftedBy
     local grade = item:getModData().TWA_Grade
     local quality = item:getModData().TWA_Quality
-    local gemState = item:getModData().TWA_GemState -- round 17: "Raw" from the Gemstone recipe
+    -- round 17: "Raw" from the Gemstone recipe; round 19: every gem has a
+    -- state (none stored = Raw) and shows what it gives in a weapon socket.
+    local gemState = TWACraftState.gemState and TWACraftState.gemState(item) or item:getModData().TWA_GemState
     if craftedBy or grade or quality or gemState then
         local lines = {}
         if craftedBy and craftedBy ~= "" then
@@ -335,6 +343,9 @@ function ISToolTipInv:render()
         end
         if gemState then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipGemState", getText("IGUI_TWA_GemState_" .. gemState)), color = { r = 0.7, g = 0.85, b = 1 } }
+            if TWAGemSocket and TWACraftState.isRolledGem(fullType) then
+                lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipGemAbility", TWAGemSocket.describe(TWAGemSocket.ability(fullType, gemState))), color = { r = 0.45, g = 1, b = 0.5 } }
+            end
         end
         if quality and TWACraftState.isWord(quality) then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipQuality", TWACraftState.wordText(quality)), color = TWACraftState.WORD_COLOR[quality] }

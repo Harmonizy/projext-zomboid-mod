@@ -76,6 +76,9 @@ function TWA_StartCraftAction:complete()
     if ((recipe.base or self.baseItem) and not base) or (recipe.base2 and not base2) then return false end
     -- Only a bookmark for THIS recipe may be resumed through the base slot.
     if not recipe.base and base and base:getModData().TWA_RecipeId ~= recipe.id then return false end
+    -- Round 19: a fresh base must really fit the recipe (its type, and for
+    -- gem refining the gem's state) -- the client's choice is checked here.
+    if recipe.base and base and base:getModData().TWA_RecipeId ~= recipe.id and not S.baseOk(recipe, base) then return false end
     local map = S.bookmarkMap(base, recipe.id)
     local baseSnap, base2Snap = S.snapshotItem(base), S.snapshotItem(base2)
     if base then S.removeItem(self.character, base) end

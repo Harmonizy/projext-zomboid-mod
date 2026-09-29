@@ -111,6 +111,27 @@ function TWA_FinishCraftAction:complete()
     S.clearActive(self.character)
 
     local inv = self.character:getInventory()
+    -- Round 19: a gem-refining recipe gives back THE SAME gem one state up
+    -- -- unless it breaks (chance by the overall quality).
+    if recipe.keepType then
+        local snap = act.base
+        if not snap or not snap.type then return false end
+        local word = S.overall(recipe, map) or "Bad"
+        if ZombRand(100) < S.gemBreakChance(word) then
+            S.reportRefine(self.character, self.token, true, snap.type, snap.md and snap.md.TWA_GemState)
+            return true
+        end
+        local gem = inv:AddItem(snap.type)
+        if gem then
+            local md = gem:getModData()
+            for k, v in pairs(snap.md or {}) do md[k] = v end
+            md.TWA_GemState = recipe.gemTo
+            md.TWA_CraftToken = (self.token ~= "" and self.token) or nil
+            if isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, gem) end
+        end
+        S.reportRefine(self.character, self.token, false, snap.type, recipe.gemTo)
+        return true
+    end
     -- Round 16: a rolling recipe (Gemstone) gives what the roll picked.
     local rolled = S.isRollRecipe(recipe)
     -- Round 17: the better the overall quality, the likelier a gem.
