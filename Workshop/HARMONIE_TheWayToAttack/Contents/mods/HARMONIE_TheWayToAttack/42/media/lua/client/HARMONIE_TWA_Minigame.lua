@@ -146,7 +146,7 @@ TWAMinigame.GAME_FOR = {
     -- Gem-cutting (round 15)
     SmashStone             = { "TWAStrikeGame", "crack" },   -- round 16
     GemSelection           = { "TWAInspectGame", "select" },
-    GemAnalysis            = { "TWAInspectGame", "analyze" },
+    GemAnalysis            = { "TWAPurifyGame", "find" },     -- round 22: find 12 flaws, no treatment
     GemCutPlanning         = { "TWAInspectGame", "plan" },
     GemSawing              = { "TWAStrokeGame", "gemsaw" },
     GemPreforming          = { "TWAWrapGame", "grind" },

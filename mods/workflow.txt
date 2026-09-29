@@ -3068,6 +3068,26 @@ Round 20 (same day):
     / Mechanical, TWAPurifyGame.methodFor, on-screen guide) -> hold the
     gauge in the drifting band -> purity check.
 
+Round 21 (same day):
+  - Purification drained quality right after the correct method was picked:
+    the picking click was still held, so the gauge read the mouse at the
+    button row (the gauge's bottom) as far out of the band. The gauge now
+    counts only after a NEW press (TWAPurifyGame.armed). General lesson:
+    when a click moves a game to a hold-to-play phase, require a fresh press.
+  - Flaw size now = treatment time (small 1x, medium 1.5x, large 2x), depth
+    = band width (deep 0.07, shallow 0.1, times the skill tolerance); the
+    control hint says so.
+
+Round 22 (same day):
+  - GemAnalysis plays TWAPurifyGame variant "find": the purification's
+    find stage only, 12 flaws, done when all are found (time out with 60
+    percent found = pass, quality scaled).
+  - Weapon modification uses TWASources (bags, containers nearby, floor,
+    sandbox NearbyRadius) for the gems AND the weapon; the server checks
+    the same way. New Multi:forEachItem walks every item at hand. The gem
+    list is cached 0.3 s (it walks every nearby container).
+  - The gem picker sorts by the state's tier, highest first, then by name.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

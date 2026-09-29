@@ -454,7 +454,7 @@
     "IGUI_TWA_MG_Purify_Hint2_find": "ตำหนิเห็นเฉพาะด้านที่หันเข้าหาเรา กล้องจุลทรรศน์ขยายจุดที่อยู่ใต้เมาส์",
     "IGUI_TWA_MG_Purify_Hint_method": "เลือกวิธีชำระตำหนินี้",
     "IGUI_TWA_MG_Purify_Hint2_method": "ดูคู่มือทางขวาว่าตำหนิแบบไหนใช้วิธีใด",
-    "IGUI_TWA_MG_Purify_Hint_control": "กดค้างแล้วคุมเข็มให้อยู่ในแถบเขียว",
+    "IGUI_TWA_MG_Purify_Hint_control": "ปล่อยเมาส์ก่อน แล้วกดค้างใหม่ คุมเข็ม (ความสูงของเมาส์) ให้อยู่ในแถบเขียว",
     "IGUI_TWA_MG_Purify_Hint_check": "กำลังตรวจความบริสุทธิ์...",
     "IGUI_TWA_MG_Purify_Clean": "ตรงนี้ไม่มีตำหนิ",
     "IGUI_TWA_MG_Purify_WrongMethod": "วิธีไม่เหมาะ",
@@ -492,5 +492,7 @@
     "IGUI_TWA_MG_Purify_Gauge_Cleaning": "สาร",
     "IGUI_TWA_MG_Purify_Gauge_Oil": "สาร",
     "IGUI_TWA_MG_Purify_Gauge_Laser": "พลังงาน",
-    "IGUI_TWA_MG_Purify_Gauge_Mechanical": "แรง"
+    "IGUI_TWA_MG_Purify_Gauge_Mechanical": "แรง",
+    "IGUI_TWA_MG_Purify_Hint2_control": "ขนาด = ใช้เวลาชำระนานแค่ไหน (เล็ก กลาง ใหญ่) ตำหนิลึก แถบเขียวจะแคบกว่า",
+    "IGUI_TWA_MG_Purify_AllFound": "พบตำหนิครบทุกจุดแล้ว"
 }

@@ -138,45 +138,48 @@ end
 function TWAGemSocketUI:weaponOk()
     local wpn = self.weapon
     if not wpn or not G.canUse(wpn) then return false end
-    local c = wpn.getContainer and wpn:getContainer()
-    return c ~= nil and c:isInCharacterInventory(self.player)
+    -- round 22: in the bags, a container nearby or on the floor
+    if (self.nextCheck or 0) > self.elapsed then return self.lastOk end
+    self.nextCheck = self.elapsed + 500
+    self.lastOk = TWASources.get(self.player):findById(wpn:getID()) ~= nil
+    return self.lastOk
 end
 
--- Gems in the player's own bags (bags inside included), one entry per type
--- AND state (round 19): { type, state, count, item }. Bookmarked
--- (unfinished) gems are left out.
+-- Gems at hand -- the bags, containers nearby and the floor (round 22) --
+-- one entry per type AND state (round 19): { type, state, count, item }.
+-- Bookmarked (unfinished) gems are left out. Kept for 0.3 s: it walks every
+-- container nearby and is asked for several times a frame.
 local STATE_ORDER = {}
 for i, st in ipairs(TWACraftState.GEM_STATES) do STATE_ORDER[st] = i end
 function TWAGemSocketUI:ownedGems()
+    if self.gemCache and (self.gemCacheAt or 0) > self.elapsed then return self.gemCache end
     local groups, list = {}, {}
     local order = {}
     for i, t in ipairs(G.gemTypes()) do order[t] = i end
-    local function walk(cont, depth)
-        local items = cont and cont:getItems()
-        if not items then return end
-        for i = 0, items:size() - 1 do
-            local it = items:get(i)
-            local t = it:getFullType()
-            if order[t] and not TWACraftState.isBookmarked(it) then
-                local st = TWACraftState.gemState(it) or "Raw"
-                local k = t .. "|" .. st
-                local g = groups[k]
-                if not g then
-                    g = { type = t, state = st, count = 0, item = it }
-                    groups[k] = g
-                    list[#list + 1] = g
-                end
-                g.count = g.count + 1
-            elseif depth < 3 and it.getInventory and (not instanceof or instanceof(it, "InventoryContainer")) then
-                walk(it:getInventory(), depth + 1)
+    -- round 22: the bags, containers nearby and the floor
+    TWASources.get(self.player):forEachItem(function(it)
+        local t = it:getFullType()
+        if order[t] and not TWACraftState.isBookmarked(it) then
+            local st = TWACraftState.gemState(it) or "Raw"
+            local k = t .. "|" .. st
+            local g = groups[k]
+            if not g then
+                g = { type = t, state = st, count = 0, item = it, name = gemName(t) }
+                groups[k] = g
+                list[#list + 1] = g
             end
+            g.count = g.count + 1
         end
-    end
-    walk(self.player:getInventory(), 0)
-    table.sort(list, function(a, b)
-        if order[a.type] ~= order[b.type] then return order[a.type] < order[b.type] end
-        return (STATE_ORDER[a.state] or 0) > (STATE_ORDER[b.state] or 0)
     end)
+    -- Round 22 ("เรียงจาก tier สูงไปต่ำ แล้วค่อยเรียงตามตัวอักษร"): the
+    -- state's tier, highest first, then the gem's name.
+    local TIER = TWACraftState.GEM_STATE_TIER
+    table.sort(list, function(a, b)
+        local ta, tb = TIER[a.state] or 0, TIER[b.state] or 0
+        if ta ~= tb then return ta > tb end
+        return a.name < b.name
+    end)
+    self.gemCache, self.gemCacheAt = list, self.elapsed + 300
     return list
 end
 
@@ -277,6 +280,7 @@ function TWAGemSocketUI:onConfirm()
         end
         if not gem then return end
         G.requestInsert(self.player, self.weapon, self.selKey, gem)
+        self.gemCache = nil
         local sx, sy = self:selectedSocketXY()
         local col = gemColour(self.pick.type)
         self:burst("spark", sx, sy, 40, { speed = 0.35, ttl = 900, col = col })
@@ -285,6 +289,7 @@ function TWAGemSocketUI:onConfirm()
         self.pick = nil
     elseif op == "remove" then
         G.requestRemove(self.player, self.weapon)
+        self.gemCache = nil
         TWASound.play("TWA_Tick", "MinigameSounds")
     end
 end
@@ -642,8 +647,8 @@ if Events and Events.OnFillInventoryObjectContextMenu then
         local item = items and items[1]
         if item and type(item) == "table" and item.items then item = item.items[1] end
         if not item or not G.canUse(item) then return end
-        local c = item.getContainer and item:getContainer()
-        if not c or not c:isInCharacterInventory(player) then return end
+        -- round 22: a weapon in the bags, a container nearby or on the floor
+        if not TWASources.get(player):findById(item:getID()) then return end
         context:addOption(getText("IGUI_TWA_Socket_Menu"), player, TWAGemSocketUI.open, item)
     end)
 end

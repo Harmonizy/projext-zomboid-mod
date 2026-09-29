@@ -55,7 +55,11 @@ function TWAPurifyGame:onStart()
     self.toolSize = 36
     self.loopWhileDragging = false
     self.gemCol = ({ { r = 0.3, g = 0.55, b = 0.95 }, { r = 0.9, g = 0.2, b = 0.32 }, { r = 0.25, g = 0.8, b = 0.45 }, { r = 0.65, g = 0.35, b = 0.9 } })[ZombRand(4) + 1]
-    local n = 3 + math.floor(self.req / 4)
+    -- Round 22 ("มินิเกมวิเคราะห์มณีอยากให้หาตำหนิเหมือนอัญมณีศาสตร์แต่ให้หา
+    -- 12 จุด และไม่ต้องหาวิธีกำจัด แค่หา"): variant "find" (Gem Analysis) is
+    -- the first stage alone, with 12 flaws.
+    self.findOnly = self.variant == "find"
+    local n = self.findOnly and 12 or (3 + math.floor(self.req / 4))
     self.flaws = {}
     for i = 1, n do
         local kind = KINDS[ZombRand(#KINDS) + 1]
@@ -69,7 +73,7 @@ function TWAPurifyGame:onStart()
     self.chosen = nil       -- its chosen method
     self.hold = 0           -- control progress 0..1
     self.gaugeC = 0.5
-    self.timeLimit = 45000 + n * 14000
+    self.timeLimit = self.findOnly and (40000 + n * 5000) or (45000 + n * 14000)
     self.hint = getText("IGUI_TWA_MG_Purify_Hint_find")
     self.hint2 = getText("IGUI_TWA_MG_Purify_Hint2_find")
 end
@@ -81,6 +85,20 @@ function TWAPurifyGame:flawPos(f)
 end
 
 function TWAPurifyGame:flawRadius(f) return 4 + f.size * 2.5 end
+
+-- Round 21 ("เล็กกลางใหญ่หมายถึงอะไร"): a flaw's SIZE is how much there is to
+-- treat -- a bigger one takes longer in the gauge (small 1x, medium 1.5x,
+-- large 2x) -- and its DEPTH how delicate it is: a deep one has a narrower
+-- band to hold.
+function TWAPurifyGame:treatMs()
+    local f = self.cur
+    return 1300 * (f and (1 + (f.size - 1) * 0.5) or 1)
+end
+
+function TWAPurifyGame:bandHalf()
+    local f = self.cur
+    return (f and f.deep and 0.07 or 0.1) * self.tol
+end
 
 -- The arrows that turn the gem.
 function TWAPurifyGame:arrowAt(x, y)
@@ -119,13 +137,18 @@ function TWAPurifyGame:onGrab(x, y)
                 f.found = true
                 self:burst("ring", fx, fy, 1, { size = 6, grow = 0.1, ttl = 400, col = C.good })
                 self:uiSound("TWA_Tick")
-                if self:allFound() then self:toMethod() end
+                if self:allFound() then
+                    if self.findOnly then self:succeed(getText("IGUI_TWA_MG_Purify_AllFound")) else self:toMethod() end
+                end
                 return
             end
         end
         if B.dist(x, y, GX, GY) <= GR then
             self:spend(0.06, getText("IGUI_TWA_MG_Purify_Clean"))
         end
+    elseif self.phase == "control" then
+        self.armed = true
+        return
     elseif self.phase == "method" then
         for i, m in ipairs(METHODS) do
             local bx, by, bw, bh = self:methodRect(i)
@@ -133,9 +156,14 @@ function TWAPurifyGame:onGrab(x, y)
                 if m == TWAPurifyGame.methodFor(self.cur.kind, self.cur.deep) then
                     self.chosen = m
                     self.phase = "control"
+                    -- Round 21 ("เลือกถูกแล้วมันลดตลอด"): the click that picked
+                    -- the method is still held -- the needle would read the
+                    -- button row, the bottom of the gauge, and drain. The gauge
+                    -- only counts after a NEW press.
+                    self.armed = false
                     self.hold = 0
                     self.hint = getText("IGUI_TWA_MG_Purify_Hint_control")
-                    self.hint2 = getText("IGUI_TWA_MG_Purify_Gauge_" .. m)
+                    self.hint2 = getText("IGUI_TWA_MG_Purify_Hint2_control")
                     self:uiSound("TWA_Tick")
                 else
                     self:spend(0.1, getText("IGUI_TWA_MG_Purify_WrongMethod"))
@@ -146,7 +174,7 @@ function TWAPurifyGame:onGrab(x, y)
     end
 end
 
-function TWAPurifyGame:onRelease() self.turning = nil end
+function TWAPurifyGame:onRelease() self.turning = nil; self.armed = false end
 
 function TWAPurifyGame:toMethod()
     self.cur = self:nextToTreat()
@@ -170,7 +198,7 @@ function TWAPurifyGame:gaugeCentre()
 end
 
 function TWAPurifyGame:updateGame(dt)
-    local total = #self.flaws * 3
+    local total = #self.flaws * (self.findOnly and 1 or 3)
     local done = 0
     for _, f in ipairs(self.flaws) do
         if f.found then done = done + 1 end
@@ -181,13 +209,13 @@ function TWAPurifyGame:updateGame(dt)
         self.turning = (self.dragging and self.hx) and self:arrowAt(self.hx, self.hy) or nil
         if self.turning then self.rot = self.rot + self.turning * dt * 0.0022 end
     elseif self.phase == "control" then
-        local half = 0.1 * self.tol
-        if self.dragging and self.hy then
+        local half = self:bandHalf()
+        if self.dragging and self.armed and self.hy then
             local v = B.clamp(1 - (self.hy - GAUGE_Y) / GAUGE_H, 0, 1)
             self.needle = v
             local off = math.abs(v - self:gaugeCentre())
             if off <= half then
-                self.hold = self.hold + dt / (1300 / self.pace)
+                self.hold = self.hold + dt / (self:treatMs() / self.pace)
                 if ZombRand(3) == 0 then
                     local fx, fy = self:flawPos(self.cur)
                     self:burst("spark", fx, fy, 1, { speed = 0.12, ttl = 300, col = METHOD_COL[self.chosen] })
@@ -361,7 +389,7 @@ end
 -- The heat / force / agent gauge (control phase).
 function TWAPurifyGame:drawGauge()
     local c = METHOD_COL[self.chosen] or C.guide
-    local half = 0.1 * self.tol
+    local half = self:bandHalf()
     local function yOf(v) return GAUGE_Y + GAUGE_H * (1 - v) end
     local cen = self:gaugeCentre()
     self:rect(GAUGE_X - 3, GAUGE_Y - 3, 36, GAUGE_H + 6, 1, { r = 0.3, g = 0.28, b = 0.24 })
@@ -372,4 +400,19 @@ function TWAPurifyGame:drawGauge()
     -- treatment progress
     self:rect(380, 90, 70, 8, 1, C.dark)
     self:rect(380, 90, 70 * math.min(1, self.hold), 8, 1, C.good)
+end
+
+-- Gem Analysis (find only): out of time with most flaws found still passes,
+-- the quality scaled by how many were found (as the old analysis game did).
+function TWAPurifyGame:onTimeout()
+    if self.findOnly then
+        local found = 0
+        for _, f in ipairs(self.flaws) do if f.found then found = found + 1 end end
+        if found >= #self.flaws * 0.6 then
+            self.quality = self.quality * (found / #self.flaws)
+            self:succeed(getText("IGUI_TWA_MG_Purify_AllFound"))
+            return
+        end
+    end
+    self:fail(getText("IGUI_TWA_MG_TimeUp"))
 end
