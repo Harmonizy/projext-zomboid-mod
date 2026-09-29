@@ -1589,6 +1589,7 @@ end
 function TWACraftWindow:onPracticeProcedure()
     local procId = self.selectedProcId
     if not procId or self.activeProcId or self.activeCenterAction or self.practicing then return end
+    if not TWACraftState.hasTried(self.player, procId) then return end
     if not TWAMinigame.enabled() then
         self:flashLocked("IGUI_TWA_PracticeOff")
         return
@@ -1854,7 +1855,8 @@ function TWACraftWindow:drawProcedureDetails()
         end
     end
     self.procCancelButton:setVisible(inProgress and true or false)
-    self.procPracticeButton:setVisible(true)
+    -- Round 18: Practice only for a procedure this character has done before.
+    self.procPracticeButton:setVisible(TWACraftState.hasTried(self.player, self.selectedProcId))
     self.procPracticeButton.enable = not self.activeProcId and not self.activeCenterAction and not self.practicing
     -- The last practice result for this procedure, for a few seconds.
     if self.practiceWord and self.practiceProc == self.selectedProcId and getTimestampMs() < (self.practiceUntil or 0) then

@@ -120,6 +120,8 @@ function W.reapply(item)
             if v ~= nil and W.hasField(item, f) then item[f.set](item, v) end
         end
     end
+    -- Round 18: socketed gems add their damage on top (TWAGemSocket).
+    if TWAGemSocket and TWAGemSocket.applyDamage then TWAGemSocket.applyDamage(item) end
     TWACraftState.applyIncomplete(item)
 end
 
@@ -139,6 +141,7 @@ function W.apply(item, values, reset)
                 end
             end
         end
+        if TWAGemSocket and TWAGemSocket.applyDamage then TWAGemSocket.applyDamage(item) end -- round 18
         return
     end
     md.TWA_StatOverride = md.TWA_StatOverride or {}

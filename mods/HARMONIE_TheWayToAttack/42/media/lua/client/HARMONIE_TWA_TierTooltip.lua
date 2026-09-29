@@ -329,6 +329,10 @@ function ISToolTipInv:render()
         if craftedBy and craftedBy ~= "" then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipCraftedBy", craftedBy), color = { r = 0.85, g = 0.85, b = 0.85 } }
         end
+        local nGems = TWAGemSocket and TWAGemSocket.canUse(item) and TWAGemSocket.totalSlots(item) or 0
+        if nGems > 0 then -- round 18: sockets filled / total
+            lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipSockets", tostring(TWAGemSocket.filledCount(item)), tostring(nGems)), color = { r = 0.75, g = 0.6, b = 1 } }
+        end
         if gemState then
             lines[#lines + 1] = { text = getText("IGUI_TWA_TooltipGemState", getText("IGUI_TWA_GemState_" .. gemState)), color = { r = 0.7, g = 0.85, b = 1 } }
         end
@@ -355,3 +359,10 @@ function ISToolTipInv:render()
         end
     end
 end
+
+-- Round 18: shared with the weapon modification window (TWAGemSocketUI),
+-- which shows the same live stats, tier and type.
+TWATierInfo = {
+    TIER_NAMES = TIER_NAMES, TIER_COLOR = TIER_COLOR,
+    tierFromDps = tierFromDps, weaponTypeText = weaponTypeText, liveOrFallback = liveOrFallback,
+}

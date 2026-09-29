@@ -16,6 +16,7 @@ description=- Uses tools and materials from containers and the floor around you,
 description=- A grade reveal show on the anvil when a weapon is finished.
 description=- 17 gemstones and a gem-cutting skill tree (selection, analysis, planning, sawing, preforming, faceting, polishing, fine cutting, quality control), each with its own minigame.
 description=- Gemstone recipe: smash any stone open and see what it held - a roulette reveal rolls a raw gem (the better your work, the better the odds; the diamond the rarest) or clay, scrap, limestone, charcoal, coke or dung.
+description=- Weapon modification: right-click a weapon you crafted with a grade and set gems into its sockets (F none, E 1 ... A 5, S 5 plus a removable special socket). Every gem adds 0.1 damage, the diamond 1.
 description=- Admin / -debug weapon stat editor: right-click any weapon to edit every stat it has (multiplayer-safe, and the edit really counts in combat).
 description=- Detailed sandbox settings (8 pages): minigames on/off and sounds, action times, XP, light/forge rules, quality cut points, grade chances, and every zone, speed and time of every minigame.
 description=

@@ -131,6 +131,9 @@ function TWAGradeReveal:updateGame(dt)
         else
             TWASound.play("TWA_Success", "MinigameSounds")
         end
+        -- Round 18: a crowd -- applause for S, booing for F.
+        if self.found and self.grade == "S" then TWASound.play("TWA_Applause", "MinigameSounds")
+        elseif self.found and self.grade == "F" then TWASound.play("TWA_Boo", "MinigameSounds") end
     end
 end
 

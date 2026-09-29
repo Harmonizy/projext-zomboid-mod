@@ -1562,4 +1562,124 @@ module Base
         }
     }
 
+    sound TWA_Applause_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Applause_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Applause_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Applause_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Applause_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Applause_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Applause
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Applause.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Applause_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Applause_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Applause_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Applause_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Boo_v25
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Boo_v25.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Boo_v50
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Boo_v50.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Boo_v75
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Boo_v75.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Boo
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Boo.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Boo_v150
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Boo_v150.wav,
+            distanceMax = 10,
+        }
+    }
+
+    sound TWA_Boo_v200
+    {
+        category = UI,
+        clip
+        {
+            file = media/sound/TWA_Boo_v200.wav,
+            distanceMax = 10,
+        }
+    }
+
 }

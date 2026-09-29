@@ -137,9 +137,8 @@ function TWAStrokeGame:onStart()
     self.need = math.max(1, math.floor(v.strokes(self.req)))
     self.done = 0
     self.band = v.band * self.tol
-    -- Round 17 ("มินิเกมขัดมณีให้โซนมากกว่านี้ 2 เท่า"): polishing a gem has
-    -- twice the zone of polishing metal.
-    if self.procId == "GemPolishing" then self.band = self.band * 2 end
+    -- (Round 17 doubled GemPolishing's zone; round 18 put it back: "ปรับโซน
+    -- ขัดมณีไปเท่าเดิม".)
     self.vmax = v.vmax and (v.vmax * self.tol / self.pace) or math.huge
     self.vmin = v.vmin
     self.dir = 1          -- saw: +1 left->right, -1 right->left

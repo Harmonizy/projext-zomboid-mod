@@ -28,6 +28,8 @@ TWASound.LENGTH = {
     TWA_Tick = 60,
     TWA_Crack = 699,
     TWA_Shimmer = 2400,
+    TWA_Applause = 3200,
+    TWA_Boo = 2600,
 }
 -- Loudness levels every sound also exists at (NAME_vNN; 100 = NAME).
 TWASound.LEVELS = { 25, 50, 75, 100, 150, 200 }

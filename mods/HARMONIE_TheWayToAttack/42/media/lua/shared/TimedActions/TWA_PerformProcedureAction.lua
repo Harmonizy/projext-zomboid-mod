@@ -72,6 +72,7 @@ end
 -- bookkeeping only. Nothing in the world changes here any more.
 function TWA_PerformProcedureAction:perform()
     self:stopSound()
+    TWACraftState.markTried(self.character, self.procId) -- round 18: unlocks Practice
     if self.onComplete then self.onComplete(self.quality) end
     if self.onEnd then self.onEnd() end
     ISBaseTimedAction.perform(self)
@@ -90,6 +91,7 @@ function TWA_PerformProcedureAction:complete()
     -- where the authoritative record lives. A redo simply replaces the
     -- procedure's earlier word.
     TWACraftState.recordActive(self.character, self.procId, self.quality)
+    TWACraftState.markTried(self.character, self.procId)
     return true
 end
 

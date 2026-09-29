@@ -166,6 +166,27 @@ end
 -- the overall quality must also be Good or Excellent -- a Bad material has
 -- its weak procedures redone first. (Weapons can still finish at Bad; the
 -- quality then decides their grade pool.) Returns ok, reason.
+-- Round 18 ("ปุ่มฝึกกรรมวิธีจะขึ้นเฉพาะคนที่เคยทำกรรมวิธีนั้นๆแล้วเท่านั้น"):
+-- every procedure a character has ever carried out for real (the timed
+-- action finished, whatever its word), kept on the character's ModData.
+-- Written both where complete() runs and in the client's perform(), so the
+-- multiplayer client -- which draws the Practice button -- knows it too.
+function S.markTried(character, procId)
+    if not character or not procId then return end
+    local md = character:getModData()
+    md.TWA_ProcTried = md.TWA_ProcTried or {}
+    md.TWA_ProcTried[procId] = true
+end
+
+function S.hasTried(character, procId)
+    if not character or not procId then return false end
+    local t = character:getModData().TWA_ProcTried
+    if t and t[procId] then return true end
+    -- also anything already scored in the craft in hand
+    local act = S.getActive and S.getActive(character)
+    return act ~= nil and act.map ~= nil and act.map[procId] ~= nil
+end
+
 -- Round 16: a recipe whose Finish ROLLS the item given (the Gemstone recipe)
 -- instead of handing out its result with a grade.
 function S.isRollRecipe(recipe)
