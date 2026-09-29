@@ -3088,6 +3088,35 @@ Round 22 (same day):
     list is cached 0.3 s (it walks every nearby container).
   - The gem picker sorts by the state's tier, highest first, then by name.
 
+Round 23 (same day):
+  - Small fixes: the unfinished-item tooltip lines wrap to the tooltip width
+    (TierTooltip wrapLine -- steps characters by UTF-8 lead byte, which also
+    works in Kahlua where a string is a Java string and a Thai letter is ONE
+    unit); SmashBottle TH = ทุบขวด; the overall-quality label sits on a small
+    badge in its colour; Practice is always shown, greyed out with a tooltip
+    until the procedure was done for real; the tier filter's "All" tab
+    lights up (it had no tier colour); weapon type text uses the tier colour
+    (modification window); the craft window's "tier - category" line no
+    longer uses a middle dot.
+  - MeltMetal takes gold/silver jewelry x5 only. Every ScrapMetal consume
+    accepts Base.IronScrap and Base.SteelScrap too (SCRAP_METALS in
+    Procedures). The Material Lump recipe now takes the stones (Stone2/
+    Stone/FlintNodule/SharpedStone/LargeStone); the Gemstone recipe takes a
+    Material Lump. No recipe has base = nil any more (the code path stays).
+  - Lesson: an inline "-- comment" in the middle of a one-line recipe table
+    comments out the rest of the line -- put comments on their own line.
+  - 35 new weapons (tools/gen_new_weapons.py + tools/gen_weapon_icons.py):
+    Epic x5 for SmallBlade/SmallBlunt/Spear, Elite x3 and Legendary x1 for
+    SmallBlade/SmallBlunt/Spear/Axe/Blunt (LongBlade already had them).
+    New items are NOT picked up by any generator automatically: the script
+    writes scripts/TWA_weapons_r23.txt (each copies an existing weapon's
+    script -- model, anims, sounds, tags -- with its own name, icon and tier
+    stats; IconsForTexture wins over Icon, so both are set), the recipes and
+    Stats between "round 23 weapons" markers in RecipeData (base Material
+    Lump, base2 the tier's bar, procedures by the PROCEDURES_REFERENCE rules
+    engine A-G) and TH names in ItemName.json. Icons are drawn in code
+    (realistic steel, no fantasy); the 3D model is the template's.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

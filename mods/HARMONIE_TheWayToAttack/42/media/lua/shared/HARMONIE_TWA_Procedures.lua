@@ -390,6 +390,10 @@ end
 -- size variant vanilla ships) -- deliberately plain gold/silver pieces only,
 -- no gem-set variants (GoldDiamond/SilverRuby/etc.), matching the user's own
 -- list of plain names exactly.
+-- Round 23 ("กรรมวิธีใดที่ใช้เศษโลหะ ให้สามารถใช้เศษเหล็กและเศษเหล็กกล้าได้"):
+-- scrap metal, iron scrap and steel scrap stand in for each other.
+local SCRAP_METALS = { "Base.ScrapMetal", "Base.IronScrap", "Base.SteelScrap" }
+
 local JEWELRY_ITEMS = {
     "Base.Ring_Left_MiddleFinger_Gold", "Base.Ring_Left_MiddleFinger_Silver",
     "Base.Ring_Left_RingFinger_Gold", "Base.Ring_Left_RingFinger_Silver",
@@ -587,7 +591,7 @@ TWAProcedures.List = {
     WeldMetal = {
         category = "Balance", nameKey = "IGUI_TWA_Proc_WeldMetal", icon = "WeldingMask",
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, skill = "MetalWelding:1", time = 20, sound = "TWA_Weld",
+        consumes = { { itemTypes = SCRAP_METALS, qty = 1 } }, skill = "MetalWelding:1", time = 20, sound = "TWA_Weld",
     },
 
     -- ===== Structure (เสริมโครงสร้าง) -- by KnockdownMod =====
@@ -605,7 +609,7 @@ TWAProcedures.List = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
             { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
         },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } },
+        consumes = { { itemTypes = SCRAP_METALS, qty = 1 } },
         skill = "Blacksmith:1", time = 20, sound = "TWA_Hammer",
     },
     DrillCore = {
@@ -777,7 +781,7 @@ TWAProcedures.List = {
             { kind = "tag", value = "HAMMER" }, { kind = "tag", value = "CLUB_HAMMER" },
             { kind = "type", value = "Base.WoodenMallet" }, { kind = "type", value = "Base.ShortBat" },
         },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, time = 10, sound = "TWA_Hammer",
+        consumes = { { itemTypes = SCRAP_METALS, qty = 1 } }, time = 10, sound = "TWA_Hammer",
     },
     -- Tool WRENCH->SCREWDRIVER (request 2026-09-28: "ในหมวดหมู่การประกอบ
     -- อะไรที่ใช้ประแจ เปลี่ยนเป็นไขควง" -- applies to this + AssembleRakeHead/
@@ -854,11 +858,9 @@ TWAProcedures.List = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_MeltMetal", icon = "CeramicCrucibleWithGlass", -- round 7 (user-given name)
         iconItems = { "Base.CeramicCrucibleWithGlass" },
         tool = { kind = "type", value = "Base.Tongs" },
-        consumes = { { options = {
-            { itemType = "Base.ScrapMetal", qty = 2 },
-            { itemTypes = JEWELRY_ITEMS, qty = 5, nameKey = "IGUI_TWA_Material_GoldSilverJewelry" },
-            { itemType = "Base.SharpedStone", qty = 10 },
-        } } },
+        -- Round 23 ("หลอมโลหะให้ใข้วัตถุดิบเพียงเครื่องประดับเงินหรือทอง 5 อัน
+        -- เท่านั้น"): gold or silver jewelry x5, nothing else.
+        consumes = { { itemTypes = JEWELRY_ITEMS, qty = 5, nameKey = "IGUI_TWA_Material_GoldSilverJewelry" } },
         time = 10, sound = "TWA_Craft",
     },
     -- Icon changed (request 2026-09-28) -- user gave "CeremicIngotCast", a
@@ -894,14 +896,14 @@ TWAProcedures.List = {
     WeldWork = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWork", icon = "BlowTorch",
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 1 } }, skill = "MetalWelding:1", time = 20, sound = "TWA_Weld",
+        consumes = { { itemTypes = SCRAP_METALS, qty = 1 } }, skill = "MetalWelding:1", time = 20, sound = "TWA_Weld",
     },
     -- Icon changed to "WeldingRods" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
     WeldWorkComplex = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWorkComplex", icon = "WeldingRods",
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
-        consumes = { { itemType = "Base.ScrapMetal", qty = 2 } }, skill = "MetalWelding:2", time = 30, sound = "TWA_Weld",
+        consumes = { { itemTypes = SCRAP_METALS, qty = 2 } }, skill = "MetalWelding:2", time = 30, sound = "TWA_Weld",
     },
     -- Icon changed (request 2026-09-28) -- user gave "File" (the item's own
     -- type name, Base.File, already used elsewhere in this file as a

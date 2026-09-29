@@ -298,3 +298,9 @@ weapons/1handed/ (105 ไฟล์) / weapons/2handed/ (92 ไฟล์) / World
   แล้ว validate ด้วย node -e "JSON.parse(require('fs').readFileSync(...))"
 - ทำ workshop sync -> mods/check_workshop_sync.sh (เช็ค) แล้ว
   mods/sync_to_workshop.sh HARMONIE_TheWayToAttack 42 (แก้ให้ตรงกัน)
+
+(รอบ 23) tools/gen_new_weapons.py -- ตารางอาวุธใหม่ 35 ชิ้น (Epic/Elite/Legendary ที่ยัง
+  ขาด) สร้าง scripts/TWA_weapons_r23.txt, สูตร + Stats ใน RecipeData (ระหว่าง marker
+  "round 23 weapons") และชื่อไทยใน ItemName.json -- แก้ตารางแล้วรันใหม่ได้
+(รอบ 23) tools/gen_weapon_icons.py -- วาดไอคอนอาวุธใหม่ (มีด ค้อน กระบอง หอก ขวาน
+  ค้อนปอนด์ ไม้เบสบอลเหล็ก) เอง อ่านรายการจาก gen_new_weapons.py

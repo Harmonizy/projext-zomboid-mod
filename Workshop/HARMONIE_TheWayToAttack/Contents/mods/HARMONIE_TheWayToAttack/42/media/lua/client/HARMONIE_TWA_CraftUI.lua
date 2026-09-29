@@ -178,7 +178,8 @@ end
 function TWATierTabButton:render()
     local active = self:isActiveTab()
     local hovered = self:isMouseOver()
-    local t = self.neatTint
+    -- Round 23: "All" has no tier colour -- it lit nothing when chosen.
+    local t = self.neatTint or { r = 1, g = 0.6, b = 0.15 }
     local r, g, b, a = 0.18, 0.18, 0.18, 0.9
     if active and t then
         r, g, b, a = t.r, t.g, t.b, 1
@@ -192,7 +193,7 @@ function TWATierTabButton:render()
     -- (request 2026-09-26: "arrange the filter section to look nicer") --
     -- so the rarity color reads at a glance instead of only appearing once a
     -- tab is clicked, same idea as the recipe list's own tier-color strip.
-    if t then
+    if self.neatTint then
         self:drawRect(0, self.height - 3, self.width, 3, 1, t.r, t.g, t.b)
     end
     if self.title and self.title ~= "" then
@@ -1952,8 +1953,12 @@ function TWACraftWindow:drawProcedureDetails()
     -- turns into Stop.
     self.procCancelButton:setVisible(false)
     -- Round 18: Practice only for a procedure this character has done before.
-    self.procPracticeButton:setVisible(TWACraftState.hasTried(self.player, self.selectedProcId))
-    self.procPracticeButton.enable = not self.activeProcId and not self.activeCenterAction and not self.practicing
+    -- Round 23 ("ให้ปุ่มฝึกอยู่ตลอดแต่กดไม่ได้ถ้ายังไม่เคยทำ พร้อมมี hover
+    -- คำอธิบาย"): always there; greyed out until done once for real.
+    local tried = TWACraftState.hasTried(self.player, self.selectedProcId)
+    self.procPracticeButton:setVisible(true)
+    self.procPracticeButton.enable = tried and not self.activeProcId and not self.activeCenterAction and not self.practicing
+    self.procPracticeButton:setTooltip(getText(tried and "IGUI_TWA_Tooltip_Practice" or "IGUI_TWA_Tooltip_PracticeLocked"))
     -- The last practice result for this procedure, for a few seconds.
     if self.practiceWord and self.practiceProc == self.selectedProcId and getTimestampMs() < (self.practiceUntil or 0) then
         local pc = TWACraftState.WORD_COLOR[self.practiceWord] or { r = 1, g = 1, b = 1 }
@@ -2176,7 +2181,7 @@ function TWACraftWindow:render()
         -- beside the tier), not in the generic stat grid below.
         local tierLabel = tierInfo.name
         if stats and stats.categories then
-            tierLabel = tierLabel .. "  \194\183  " .. stats.categories
+            tierLabel = tierLabel .. "  -  " .. stats.categories -- round 23: no middle dot (can show as "?")
         end
         drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, UIFont.Small)
     end
@@ -2291,7 +2296,12 @@ function TWACraftWindow:render()
             -- Word only (round 6: "คุณภาพรวมให้แสดงแค่คำ ไม่ต้องแสดงตัวเลข").
             local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord))
             local lw = getTextManager():MeasureStringX(UIFont.Small, label)
-            drawTextShadowed(self, label, centerX + CENTER_W - 16 - lw, baseY, oc.r, oc.g, oc.b, 1, UIFont.Small)
+            -- Round 23 ("หัวข้อคุณภาพรวมโดดเด่นกว่านี้ แต่ไม่ต้องเด่นมากเกิน"): a
+            -- small badge in the word's colour behind it.
+            local bx, bw = centerX + CENTER_W - 16 - lw - 8, lw + 12
+            self:drawRect(bx, baseY - 2, bw, 18, 0.9, oc.r * 0.18, oc.g * 0.18, oc.b * 0.18)
+            self:drawRectBorder(bx, baseY - 2, bw, 18, 0.9, oc.r, oc.g, oc.b)
+            drawTextShadowed(self, label, bx + 6, baseY, oc.r, oc.g, oc.b, 1, UIFont.Small)
         end
     end
     local gridLeft, gridTop = centerX, baseY + 20
