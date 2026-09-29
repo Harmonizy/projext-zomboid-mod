@@ -55,7 +55,11 @@ function TWAPurifyGame:onStart()
     self.toolSize = 36
     self.loopWhileDragging = false
     self.gemCol = ({ { r = 0.3, g = 0.55, b = 0.95 }, { r = 0.9, g = 0.2, b = 0.32 }, { r = 0.25, g = 0.8, b = 0.45 }, { r = 0.65, g = 0.35, b = 0.9 } })[ZombRand(4) + 1]
-    local n = 3 + math.floor(self.req / 4)
+    -- Round 22 ("มินิเกมวิเคราะห์มณีอยากให้หาตำหนิเหมือนอัญมณีศาสตร์แต่ให้หา
+    -- 12 จุด และไม่ต้องหาวิธีกำจัด แค่หา"): variant "find" (Gem Analysis) is
+    -- the first stage alone, with 12 flaws.
+    self.findOnly = self.variant == "find"
+    local n = self.findOnly and 12 or (3 + math.floor(self.req / 4))
     self.flaws = {}
     for i = 1, n do
         local kind = KINDS[ZombRand(#KINDS) + 1]
@@ -69,7 +73,7 @@ function TWAPurifyGame:onStart()
     self.chosen = nil       -- its chosen method
     self.hold = 0           -- control progress 0..1
     self.gaugeC = 0.5
-    self.timeLimit = 45000 + n * 14000
+    self.timeLimit = self.findOnly and (40000 + n * 5000) or (45000 + n * 14000)
     self.hint = getText("IGUI_TWA_MG_Purify_Hint_find")
     self.hint2 = getText("IGUI_TWA_MG_Purify_Hint2_find")
 end
@@ -133,7 +137,9 @@ function TWAPurifyGame:onGrab(x, y)
                 f.found = true
                 self:burst("ring", fx, fy, 1, { size = 6, grow = 0.1, ttl = 400, col = C.good })
                 self:uiSound("TWA_Tick")
-                if self:allFound() then self:toMethod() end
+                if self:allFound() then
+                    if self.findOnly then self:succeed(getText("IGUI_TWA_MG_Purify_AllFound")) else self:toMethod() end
+                end
                 return
             end
         end
@@ -192,7 +198,7 @@ function TWAPurifyGame:gaugeCentre()
 end
 
 function TWAPurifyGame:updateGame(dt)
-    local total = #self.flaws * 3
+    local total = #self.flaws * (self.findOnly and 1 or 3)
     local done = 0
     for _, f in ipairs(self.flaws) do
         if f.found then done = done + 1 end
@@ -394,4 +400,19 @@ function TWAPurifyGame:drawGauge()
     -- treatment progress
     self:rect(380, 90, 70, 8, 1, C.dark)
     self:rect(380, 90, 70 * math.min(1, self.hold), 8, 1, C.good)
+end
+
+-- Gem Analysis (find only): out of time with most flaws found still passes,
+-- the quality scaled by how many were found (as the old analysis game did).
+function TWAPurifyGame:onTimeout()
+    if self.findOnly then
+        local found = 0
+        for _, f in ipairs(self.flaws) do if f.found then found = found + 1 end end
+        if found >= #self.flaws * 0.6 then
+            self.quality = self.quality * (found / #self.flaws)
+            self:succeed(getText("IGUI_TWA_MG_Purify_AllFound"))
+            return
+        end
+    end
+    self:fail(getText("IGUI_TWA_MG_TimeUp"))
 end

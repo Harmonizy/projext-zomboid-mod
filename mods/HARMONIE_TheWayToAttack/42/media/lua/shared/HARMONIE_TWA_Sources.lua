@@ -144,6 +144,23 @@ function Multi:findTagged(tag)
     return nil
 end
 
+-- Round 22: every item at hand (bags inside containers too, 3 deep), once.
+function Multi:forEachItem(fn)
+    local function walk(cont, depth)
+        local items = cont and cont:getItems()
+        if not items then return end
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            fn(it)
+            if depth < 3 and it.getInventory and (not instanceof or instanceof(it, "InventoryContainer")) then
+                walk(it:getInventory(), depth + 1)
+            end
+        end
+    end
+    for _, c in ipairs(self.conts) do walk(c, 0) end
+    for _, it in ipairs(self.floor) do fn(it) end
+end
+
 function Multi:findById(id)
     if not id then return nil end
     for _, c in ipairs(self.conts) do

@@ -216,17 +216,20 @@ end
 
 -- Server-side (or single player) work -------------------------------------
 
+-- Round 22 ("สามารถเห็นไอเท็มบนพื้นแล้วกล่องรอบตัวได้"): the weapon and the
+-- gems may be in the player's bags, a container nearby or on the floor
+-- (TWASources, sandbox NearbyRadius).
 local function findWeapon(player, id)
-    if TWAWeaponDebug and TWAWeaponDebug.findById then return TWAWeaponDebug.findById(player, id) end
-    return nil
+    local w = TWAWeaponDebug and TWAWeaponDebug.findById and TWAWeaponDebug.findById(player, id)
+    if w then return w end
+    return TWASources and TWASources.get(player):findById(id) or nil
 end
+G.findWeapon = findWeapon
 
 -- A gem item of the player's (inventory, bags included) by id.
 local function findGem(player, id)
-    local it = id and TWACraftState.resolveItem(player, id)
+    local it = id and TWASources.get(player):findById(id)
     if not it or not G.isGem(it:getFullType()) or TWACraftState.isBookmarked(it) then return nil end
-    local c = it.getContainer and it:getContainer()
-    if not c or not c:isInCharacterInventory(player) then return nil end -- the player's own gems only
     return it
 end
 

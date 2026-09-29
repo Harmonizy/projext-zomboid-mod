@@ -493,5 +493,6 @@
     "IGUI_TWA_MG_Purify_Gauge_Oil": "สาร",
     "IGUI_TWA_MG_Purify_Gauge_Laser": "พลังงาน",
     "IGUI_TWA_MG_Purify_Gauge_Mechanical": "แรง",
-    "IGUI_TWA_MG_Purify_Hint2_control": "ขนาด = ใช้เวลาชำระนานแค่ไหน (เล็ก กลาง ใหญ่) ตำหนิลึก แถบเขียวจะแคบกว่า"
+    "IGUI_TWA_MG_Purify_Hint2_control": "ขนาด = ใช้เวลาชำระนานแค่ไหน (เล็ก กลาง ใหญ่) ตำหนิลึก แถบเขียวจะแคบกว่า",
+    "IGUI_TWA_MG_Purify_AllFound": "พบตำหนิครบทุกจุดแล้ว"
 }

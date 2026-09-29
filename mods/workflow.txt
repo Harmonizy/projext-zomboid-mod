@@ -3078,6 +3078,16 @@ Round 21 (same day):
     = band width (deep 0.07, shallow 0.1, times the skill tolerance); the
     control hint says so.
 
+Round 22 (same day):
+  - GemAnalysis plays TWAPurifyGame variant "find": the purification's
+    find stage only, 12 flaws, done when all are found (time out with 60
+    percent found = pass, quality scaled).
+  - Weapon modification uses TWASources (bags, containers nearby, floor,
+    sandbox NearbyRadius) for the gems AND the weapon; the server checks
+    the same way. New Multi:forEachItem walks every item at hand. The gem
+    list is cached 0.3 s (it walks every nearby container).
+  - The gem picker sorts by the state's tier, highest first, then by name.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see
