@@ -3032,5 +3032,9 @@
     "UI_options_HARMONIE_HomeMedic_deliriumVolume": "ระดับเสียงอาการเพ้อ (delirium)",
     "UI_options_HARMONIE_HomeMedic_deliriumVolume_tooltip": "ความดังของเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ (100 = เท่าเดิม) ไม่มีผลต่อภาพหลอน คำพูด และการกระทำแปลกๆ",
     "UI_options_HARMONIE_HomeMedic_deliriumMute": "ปิดเสียงอาการเพ้อ",
-    "UI_options_HARMONIE_HomeMedic_deliriumMute_tooltip": "ปิดเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ"
+    "UI_options_HARMONIE_HomeMedic_deliriumMute_tooltip": "ปิดเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ",
+    "UI_options_HARMONIE_HomeMedic_bloodVision": "ภาพมืดเมื่อเสียเลือด",
+    "UI_options_HARMONIE_HomeMedic_bloodVision_tooltip": "ขอบจอจะมืดลงเมื่อเสียเลือด ถ้าต่ำกว่าเกณฑ์ปานกลาง ทั้งจอจะมืดลงและกระพือตามจังหวะหัวใจ เฉพาะจอของคุณ",
+    "UI_options_HARMONIE_HomeMedic_bloodVisionStrength": "ความเข้มภาพมืดเมื่อเสียเลือด",
+    "UI_options_HARMONIE_HomeMedic_bloodVisionStrength_tooltip": "ความเข้มของความมืดเมื่อเสียเลือด (1 = ปกติ)"
 }

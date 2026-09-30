@@ -5,6 +5,7 @@ description=A complete health overhaul for Build 42, built on Extensive Health R
 description=
 description=HARMONIE ADDITIONS
 description=- Traditional/folk medicine: craft real remedies from herbs, everyday materials and even vanilla insects to treat Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus.
+description=- Blood loss you can feel: your stamina ceiling drops with blood volume, the screen edges darken, and below the moderate threshold the view dims and throbs with your heartbeat (vision can be turned down or off in Options -> Mods).
 description=- Delirium sound volume and mute, per player (Options -> Mods -> HARMONIE - Home Medic). Only your own machine is affected; visions, lines and impulses are unchanged.
 description=
 description=IMPORTANT: this mod REPLACES Extensive Health Rework Evolved. Do NOT enable both. Existing EHR saves keep their health data (the same data keys are used).

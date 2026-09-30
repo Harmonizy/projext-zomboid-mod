@@ -71,23 +71,6 @@ function A.setMuted(on)
     A.apply()
 end
 
-if PZAPI and PZAPI.ModOptions and not A.options then
-    A.options = PZAPI.ModOptions:create("HARMONIE_HomeMedic", getText("UI_options_HARMONIE_HomeMedic_title"))
-    A.volumeOpt = A.options:addSlider("deliriumVolume", getText("UI_options_HARMONIE_HomeMedic_deliriumVolume"),
-        0, 1.5, 0.25, 1, getText("UI_options_HARMONIE_HomeMedic_deliriumVolume_tooltip"))
-    A.volumeOpt.onChange = function(_, value) A.setVolume(value) end
-    A.volumeOpt.onChangeApply = function(_, value) A.setVolume(value) end
-    A.muteOpt = A.options:addTickBox("deliriumMuted", getText("UI_options_HARMONIE_HomeMedic_deliriumMute"), false,
-        getText("UI_options_HARMONIE_HomeMedic_deliriumMute_tooltip"))
-    A.muteOpt.onChange = function(_, value) A.setMuted(value) end
-    A.muteOpt.onChangeApply = function(_, value) A.setMuted(value) end
-    if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
-end
-
-local function readSaved()
-    if A.volumeOpt and A.volumeOpt.getValue then A.volume = tonumber(A.volumeOpt:getValue()) or 1 end
-    if A.muteOpt and A.muteOpt.getValue then A.muted = A.muteOpt:getValue() == true end
-    A.apply()
-end
-readSaved()
-if Events and Events.OnGameStart then Events.OnGameStart.Add(readSaved) end
+-- The Options -> Mods page (volume slider, mute) is HARMONIE_ModOptions.lua;
+-- it calls A.setVolume / A.setMuted.
+A.apply()
