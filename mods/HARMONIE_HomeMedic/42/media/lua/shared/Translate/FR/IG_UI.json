@@ -1,3 +1,22 @@
 {
+    "IGUI_Yes": "Oui",
+    "IGUI_No": "Non",
+    "IGUI_perks_Amputations": "Amputations",
+    "IGUI_perks_Side_R": "Côté droit",
+    "IGUI_perks_Side_L": "Côté gauche",
+    "IGUI_perks_Right Side_Description": "Connaissance des amputations sur le côté droit du corps",
+    "IGUI_perks_Left Side_Description": "Connaissance des amputations sur le côté gauche du corps",
+    "IGUI_perks_Prosthesis Familiarity_Description": "Connaissance des prothèses de membres",
+    "IGUI_perks_Prosthesis": "Prothèse",
+    "IGUI_perks_ProstFamiliarity": "Familiarité",
+    "IGUI_ItemCat_Prosthesis": "Prothèse",
+    "IGUI_ItemCat_Surgery": "Chirurgie",
+    "IGUI_ItemCat_Amputation": "Amputation",
+    "IGUI_HealthPanel_Cicatrization": "Cicatrisation",
+    "IGUI_HealthPanel_Cicatrized": "Cicatrisé",
+    "IGUI_HealthPanel_Cauterized": "Cautérisé",
+    "IGUI_HealthPanel_WoundDirtyness": "Saleté de la plaie",
+    "IGUI_HealthPanel_ProstEquipped": "Prothèse équipée",
+    "IGUI_Confirmation_Amputate": " <CENTRE> Voulez-vous vraiment amputer ce membre ?",
     "IGUI_CraftCategory_EHRMedicine": "Medecine EHR"
 }

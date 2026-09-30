@@ -1,4 +1,9 @@
 {
+    "Tooltip_Surgery_CantCauterize": "Vous ne pouvez pas cautériser la plaie",
+    "Tooltip_Surgery_And": " et ",
+    "Tooltip_Surgery_TempTooLow": "La température est encore trop basse",
+    "Tooltip_Surgery_Coward": "Vous n'avez pas le courage de le faire",
+    "Tooltip_Surgery_LimbNotFree": "Vous devez d'abord retirer la prothése",
     "Tooltip_LastChanceEpinephrine": "Auto-injecteur d'adrénaline d'urgence à usage unique. <LINE> À 15%% de santé globale ou moins, porte la santé globale à au moins 75%%. Ne ferme, ne désinfecte ni ne stabilise les plaies et n'arrête pas les saignements. <LINE> Rétablit l'endurance, supprime la fatigue et augmente la vitesse de déplacement de 20%% pendant 1 heure. <LINE> CONTRECOUP : 50%% de fatigue, puis léger mal de tête et soif accrue pendant 3 heures. <LINE> <RGB:1,0.5,0> AU-DESSUS DE 15%% DE SANTÉ : 50%% de risque d'AVC mortel ; les survivants subissent nausée, stress et malheur maximaux, ainsi qu'un violent mal de tête.",
     "Tooltip_WarmingPack": "Chaufferette d'urgence à usage unique. <LINE> Réchauffe progressivement la température corporelle centrale vers 37 C pendant 2 heures. <LINE> Ne peut pas dépasser 37 C ; un froid ambiant intense peut réduire son efficacité.",
     "Tooltip_Buprenorphine": "Médicament sur ordonnance contre la dépendance aux antidouleurs. <LINE> Supprime les symptômes de manque pendant l'effet. <LINE> GUÉRIT la dépendance aux antidouleurs en 10 doses. <LINE> Prendre une dose toutes les 12 heures. Durée du traitement : 120 heures.",

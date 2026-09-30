@@ -1,4 +1,9 @@
 {
+    "Tooltip_Surgery_CantCauterize": "You can't cauterize the wound",
+    "Tooltip_Surgery_And": " and ",
+    "Tooltip_Surgery_TempTooLow": "The temperature is still too low",
+    "Tooltip_Surgery_Coward": "You don't have the guts to do it",
+    "Tooltip_Surgery_LimbNotFree": "You need to remove the prosthesis first",
     "Tooltip_EHR_PreparedHomemadeBloodBag_Category": "Crafting Material",
     "Tooltip_EHR_PreparedHomemadeBloodBag_Description": "Unfinished homemade blood collection bag.",
     "Tooltip_EHR_PreparedHomemadeBloodBag_Effect_1": "Heat in a stove, campfire, or another cooking heat source",

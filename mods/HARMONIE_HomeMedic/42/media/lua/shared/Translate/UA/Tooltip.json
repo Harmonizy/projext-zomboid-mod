@@ -1,4 +1,9 @@
 {
+    "Tooltip_Surgery_CantCauterize": "Не можна припекти рану",
+    "Tooltip_Surgery_And": " та ",
+    "Tooltip_Surgery_TempTooLow": "Температура занадто низька",
+    "Tooltip_Surgery_Coward": "Вам не вистачає сміливості зробити це",
+    "Tooltip_Surgery_LimbNotFree": "Спочатку необхідно зняти протез",
     "Tooltip_PreparedHomemadeBloodBag": "Незавершений саморобний пакет для крові. Нагрівайте на ввімкненій плиті, багатті чи іншому джерелі тепла для приготування їжі до завершення підготовки. До нагрівання не можна використовувати для забору крові.",
     "Tooltip_HomemadeSyringe": "Упаковка з п'яти саморобних одноразових шприців.",
     "Tooltip_EHR_HomemadeSyringe_Category": "Медичне приладдя",

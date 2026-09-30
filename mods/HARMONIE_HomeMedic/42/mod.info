@@ -1,8 +1,10 @@
 name=HARMONIE - Home Medic
 id=HARMONIE_HomeMedic
-description=A complete health overhaul for Build 42 built on Extensive Health Rework Evolved B42 (Workshop 3726328119, mod id ExtensiveHealthReworkEvolved), merged in with its author's permission (EHR 0.9): blood volume, diseases, wounds, medication, stitching and more. Adds traditional/folk medicine recipes (herbs, materials and vanilla insects) against Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, blood loss you can feel (stamina ceiling that drops with blood volume, darkening vision that throbs with your heartbeat), the stitching minigame on every stitch (vanilla health window too), The Only Cure surgery options inside the EHR health window (also when treating another player) and a per-player volume / mute for the delirium hallucination sounds (Options -> Mods). Replaces EHR: do NOT enable Extensive Health Rework Evolved together with this mod. Thai translation lives in "HARMONIE - Too Many Mod Thai Translate".
+description=A complete health overhaul for Build 42 built on Extensive Health Rework Evolved B42 (Workshop 3726328119, mod id ExtensiveHealthReworkEvolved), merged in with its author's permission (EHR 0.9): blood volume, diseases, wounds, medication, stitching and more. Adds traditional/folk medicine recipes (herbs, materials and vanilla insects) against Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, blood loss you can feel (stamina ceiling that drops with blood volume, darkening vision that throbs with your heartbeat), the stitching minigame on every stitch (vanilla health window too), The Only Cure surgery options inside the EHR health window (also when treating another player) and a per-player volume / mute for the delirium hallucination sounds (Options -> Mods). Replaces EHR: do NOT enable Extensive Health Rework Evolved together with this mod. Thai translation lives in "HARMONIE - Too Many Mod Thai Translate". Includes The Only Cure (Workshop 3580276809, mod id TheOnlyCure, by ZioPao, github.com/ZioPao/The-Only-Cure) merged in with permission. (TOC 2.4.0)
 poster=poster.png
 icon=icon.png
-require=TheOnlyCure,HARMONIE_TooManyModThai
-modversion=0.3.3
-versionMin=42.17.0
+require=HARMONIE_TooManyModThai
+modversion=0.4.0
+versionMin=42.20
+loadModAfter=\FancyHandwork,\BrutalHandwork,\TwoWeaponsOnBackRework
+incompatible=\BB_FirstAidOverhaul

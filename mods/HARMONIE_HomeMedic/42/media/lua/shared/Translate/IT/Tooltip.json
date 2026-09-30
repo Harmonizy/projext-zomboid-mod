@@ -1,4 +1,9 @@
 {
+    "Tooltip_Surgery_CantCauterize": "Non puoi cauterizzare la ferita",
+    "Tooltip_Surgery_And": " e ",
+    "Tooltip_Surgery_TempTooLow": "La temperatura è troppo bassa",
+    "Tooltip_Surgery_Coward": "Non sei abbastanza coraggioso",
+    "Tooltip_Surgery_LimbNotFree": "Devi rimuovere la protesi",
     "Tooltip_LastChanceEpinephrine": "Autoiniettore di adrenalina d'emergenza monouso. <LINE> Con salute complessiva al 15%% o meno, la porta almeno al 75%%. Non chiude, disinfetta o stabilizza le ferite e non arresta le emorragie. <LINE> Ripristina la resistenza, elimina la stanchezza e aumenta del 20%% la velocità di movimento per 1 ora. <LINE> CONTRACCOLPO: 50%% di stanchezza, poi lieve mal di testa e sete aumentata per 3 ore. <LINE> <RGB:1,0.5,0> OLTRE IL 15%% DI SALUTE: 50%% di probabilità di ictus fatale; i sopravvissuti subiscono nausea, stress e infelicità massimi e un forte mal di testa.",
     "Tooltip_WarmingPack": "Scaldino chimico d'emergenza monouso. <LINE> Aumenta gradualmente la temperatura corporea interna verso 37 C per 2 ore. <LINE> Non può superare 37 C e il freddo ambientale intenso può ridurne l'efficacia.",
     "Tooltip_Buprenorphine": "Farmaco su prescrizione per la dipendenza da antidolorifici. <LINE> Sopprime l'astinenza durante l'effetto. <LINE> CURA la dipendenza da antidolorifici con un ciclo di 10 dosi. <LINE> Assumere una dose ogni 12 ore. Durata del trattamento: 120 ore.",
