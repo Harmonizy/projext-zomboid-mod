@@ -8,6 +8,11 @@
       necro  -- P04 Necrotic tissue : cut only the dark tissue
       gauge  -- P05 Aspiration      : hold to keep suction in the green band
       suture -- P08 Wound closure   : place the stitches in order
+      extract   -- P06 Extraction / P14 (clot): drag the object out without touching the walls
+      dialysis  -- P11 Blood purification: keep pressure AND flow on target (left / right half)
+      cells     -- P12 Cell graft: click the cells in ascending order
+      variants  -- gauge: saw (P07), valve (P09), drill (P13); trace: catheter (P10);
+                   necro: organ (P15)
     Every game: G.new(kind, p) with p = { skill 0..1, shake 0..1.2, tool 0..1 },
     then :update(ms), :render(ui, x, y, w, h), :mouseDown/Up/Move(x, y) in
     board coordinates, .done, :score() -> 0..1. Pure drawing on the host
@@ -81,13 +86,15 @@ end
 -- ============================================================= trace (P01)
 local Trace = kind("trace")
 function Trace:init()
-    self.limit = 16000 + 6000 * (self.p.skill or 0)
-    self.tol = 9 + 12 * (self.p.skill or 0) + 5 * (self.p.tool or 1)
+    local cath = self.p.variant == "catheter"
+    self.limit = (cath and 20000 or 16000) + 6000 * (self.p.skill or 0)
+    self.tol = (cath and 6 or 9) + (cath and 8 or 12) * (self.p.skill or 0) + 5 * (self.p.tool or 1)
     self.pts = {}
     local a1, a2 = rndf() * 0.25 + 0.1, rndf() * 0.25 + 0.1
+    local waves = cath and 3.6 or 1.2
     for i = 0, 40 do
         local u = i / 40
-        self.pts[#self.pts + 1] = { u = u, v = 0.5 + math.sin(u * math.pi * 1.2) * a1 * 0.6 - math.sin(u * math.pi * 2.3) * a2 * 0.4 }
+        self.pts[#self.pts + 1] = { u = u, v = 0.5 + math.sin(u * math.pi * waves) * (a1 * 0.6 + (cath and 0.12 or 0)) - math.sin(u * math.pi * 2.3) * a2 * 0.4 }
     end
     self.progress = 0; self.inside = 0; self.samples = 0; self.drawing = false; self.marks = {}
 end
@@ -103,6 +110,12 @@ function Trace:update(ms) self:tick(ms) end
 function Trace:render(ui, x, y, w, h)
     self.box = { x, y, w, h }
     self:skin(ui, x, y, w, h)
+    if self.p.variant == "catheter" then          -- a vein to follow
+        for i = 0, 80 do
+            local px, py = self:pathAt(i / 80, w, h, x, y)
+            ui:drawRect(px - self.tol, py - self.tol / 2, 6, self.tol, 0.35, 0.25, 0.1, 0.45)
+        end
+    end
     local last
     for i = 0, 60 do
         local px, py = self:pathAt(i / 60, w, h, x, y)
@@ -235,12 +248,13 @@ function Clean:score() return clamp((self.total - self.left) / self.total, 0, 1)
 -- ============================================================= necro (P04)
 local Necro = kind("necro")
 function Necro:init()
+    self.organ = self.p.variant == "organ"
     self.limit = 14000 + 6000 * (self.p.skill or 0)
-    self.cols, self.rows = 7, 4
+    self.cols, self.rows = self.organ and 8 or 7, self.organ and 5 or 4
     self.cells = {}
     self.dead = 0
     for i = 1, self.cols * self.rows do
-        local isDead = rnd(100) < 32
+        local isDead = rnd(100) < (self.organ and 22 or 32)
         self.cells[i] = { dead = isDead, cut = false }
         if isDead then self.dead = self.dead + 1 end
     end
@@ -269,10 +283,16 @@ function Necro:render(ui, x, y, w, h)
         if c.cut then
             ui:drawRect(cx, cy, cw - 4, ch - 4, 1, c.dead and 0.55 or 0.8, c.dead and 0.1 or 0.05, c.dead and 0.1 or 0.05)
         elseif c.dead then
-            ui:drawRect(cx, cy, cw - 4, ch - 4, 1, 0.16, 0.12, 0.10)
-            ui:drawRect(cx + 4, cy + 4, cw - 12, ch - 12, 1, 0.28, 0.22, 0.15)
+            if self.organ then
+                ui:drawRect(cx, cy, cw - 4, ch - 4, 1, 0.30, 0.26, 0.20)
+                ui:drawRect(cx + 5, cy + 5, cw - 14, ch - 14, 1, 0.42, 0.38, 0.18)
+            else
+                ui:drawRect(cx, cy, cw - 4, ch - 4, 1, 0.16, 0.12, 0.10)
+                ui:drawRect(cx + 4, cy + 4, cw - 12, ch - 12, 1, 0.28, 0.22, 0.15)
+            end
         else
-            ui:drawRect(cx, cy, cw - 4, ch - 4, 1, 0.86, 0.52, 0.52)
+            if self.organ then ui:drawRect(cx, cy, cw - 4, ch - 4, 1, 0.62, 0.12, 0.16)
+            else ui:drawRect(cx, cy, cw - 4, ch - 4, 1, 0.86, 0.52, 0.52) end
         end
     end
 end
@@ -291,23 +311,33 @@ function Necro:score() return clamp(self.cutDead / self.dead - 0.15 * self.cutGo
 
 -- ============================================================= gauge (P05)
 local Gauge = kind("gauge")
+-- variant: nil = aspiration (P05), saw (P07), valve (P09), drill (P13)
+local GAUGE = {
+    default = { band = 0.12, drift = 0.18, speed = 0.9, up = 0.55, down = 0.45, fillSec = 7, danger = 0.12 },
+    saw     = { band = 0.16, drift = 0.06, speed = 0.5, up = 0.9,  down = 0.9,  fillSec = 8, danger = 0.10 },
+    valve   = { band = 0.14, drift = 0.26, speed = 1.3, up = 0.45, down = 0.35, fillSec = 7, danger = 0.14 },
+    drill   = { band = 0.08, drift = 0.10, speed = 0.7, up = 0.40, down = 0.50, fillSec = 9, danger = 0.06 },
+}
 function Gauge:init()
+    self.cfg = GAUGE[self.p.variant or "default"] or GAUGE.default
     self.limit = 16000 + 6000 * (self.p.skill or 0)
-    self.band = 0.12 + 0.10 * (self.p.skill or 0) + 0.04 * (self.p.tool or 1)
+    self.band = self.cfg.band + 0.10 * (self.p.skill or 0) + 0.04 * (self.p.tool or 1)
     self.level, self.fill, self.damage, self.holding = 0.2, 0, 0, false
 end
 function Gauge:center()
     local t = (self.t or 0) / 1000
-    return 0.5 + math.sin(t * 0.9) * 0.18 + math.sin(t * 2.2) * 0.06 * (1 + (self.p.shake or 0))
+    local c = self.cfg
+    return 0.5 + math.sin(t * c.speed) * c.drift + math.sin(t * 2.2) * 0.06 * (1 + (self.p.shake or 0))
 end
 function Gauge:update(ms)
     self:tick(ms)
     if self.done then return end
     local dt = ms / 1000
-    self.level = clamp(self.level + (self.holding and 0.55 or -0.45) * dt, 0, 1)
+    local cfg = self.cfg
+    self.level = clamp(self.level + (self.holding and cfg.up or -cfg.down) * dt, 0, 1)
     local c = self:center()
-    if math.abs(self.level - c) <= self.band / 2 then self.fill = self.fill + dt / 7
-    elseif self.level > c + self.band / 2 + 0.12 then self.damage = self.damage + dt / 10 end
+    if math.abs(self.level - c) <= self.band / 2 then self.fill = self.fill + dt / cfg.fillSec
+    elseif self.level > c + self.band / 2 + cfg.danger then self.damage = self.damage + dt / 10 end
     if self.fill >= 1 then self.fill = 1; self.done = true end
 end
 function Gauge:render(ui, x, y, w, h)
@@ -317,7 +347,7 @@ function Gauge:render(ui, x, y, w, h)
     local c = self:center()
     local bandTop = gy + gh * (1 - (c + self.band / 2))
     ui:drawRect(gx, bandTop, gw, gh * self.band, 0.85, 0.15, 0.7, 0.25)
-    ui:drawRect(gx, gy, gw, gh * (1 - (c + self.band / 2 + 0.12)), 0.45, 0.8, 0.1, 0.1)
+    ui:drawRect(gx, gy, gw, gh * (1 - (c + self.band / 2 + self.cfg.danger)), 0.45, 0.8, 0.1, 0.1)
     local ly = gy + gh * (1 - self.level)
     ui:drawRect(gx - 8, ly - 2, gw + 16, 4, 1, 1, 1, 1)
     ui:drawRect(x + 24, gy + gh * (1 - self.fill), 22, gh * self.fill, 1, 0.85, 0.8, 0.35)
@@ -377,5 +407,160 @@ function Suture:score()
     for _, v in ipairs(self.acc) do s = s + v end
     return clamp(s / self.count, 0, 1)
 end
+
+-- ============================================================= extract (P06, P14 clot)
+local Extract = kind("extract")
+function Extract:init()
+    self.clot = self.p.variant == "clot"
+    self.limit = 18000 + 6000 * (self.p.skill or 0)
+    self.count = self.clot and 3 or 1
+    self.width = (self.clot and 0.10 or 0.14) + 0.06 * (self.p.skill or 0) + 0.03 * (self.p.tool or 1)
+    self.i, self.touches, self.got = 1, 0, 0
+    self:place()
+end
+function Extract:place()
+    self.obj = { u = 0.25 + rndf() * 0.5, v = 0.78 }
+    self.held = false
+    self.lastTouch = -1000
+end
+-- channel centre at depth v (0 = exit at the top, 0.78 = object)
+function Extract:chan(v)
+    local t = (self.t or 0) / 1000
+    local s = (self.p.shake or 0) * 0.02
+    return self.obj0 or 0.5, s * math.sin(t * 3 + v * 6)
+end
+function Extract:centerAt(v)
+    local base = self.baseU or self.obj.u
+    local _, sway = self:chan(v)
+    return base + math.sin(v * 7 + (self.phase or 0)) * 0.08 + sway
+end
+function Extract:update(ms) self:tick(ms) end
+function Extract:render(ui, x, y, w, h)
+    self.box = { x, y, w, h }
+    self:skin(ui, x, y, w, h)
+    self.baseU = self.baseU or self.obj.u
+    self.phase = self.phase or rndf() * 6
+    for i = 0, 40 do
+        local v = i / 40 * 0.82
+        local cu = self:centerAt(v)
+        ui:drawRect(x + (cu - self.width / 2) * w, y + v * h, self.width * w, h / 40 + 1, 1, 0.45, 0.06, 0.06)
+    end
+    ui:drawRect(x, y, w, 6, 1, 0.2, 0.8, 0.3)
+    local ox, oy = x + (self.heldU or self.obj.u) * w, y + (self.heldV or self.obj.v) * h
+    if self.clot then circle(ui, ox, oy, 9, 1, 0.3, 0.02, 0.05) else circle(ui, ox, oy, 7, 1, 0.75, 0.75, 0.7) end
+    if (self.t or 0) - (self.lastTouch or -1000) < 300 then ui:drawRectBorder(x, y, w, h, 1, 1, 0.2, 0.2) end
+end
+function Extract:mouseDown(mx, my)
+    if self.done or not self.box then return end
+    local x, y, w, h = unpack(self.box)
+    local ox, oy = x + self.obj.u * w, y + self.obj.v * h
+    if (mx - ox) ^ 2 + (my - oy) ^ 2 <= 18 ^ 2 then self.held = true end
+end
+function Extract:mouseUp() self.held = false end
+function Extract:mouseMove(mx, my)
+    if not self.held or not self.box or self.done then return end
+    local x, y, w, h = unpack(self.box)
+    local u, v = (mx - x) / w, (my - y) / h
+    self.heldU, self.heldV = u, v
+    local cu = self:centerAt(clamp(v, 0, 0.82))
+    if math.abs(u - cu) > self.width / 2 then
+        if (self.t or 0) - (self.lastTouch or -1000) > 350 then self.touches = self.touches + 1; self.lastTouch = self.t end
+    end
+    if v <= 0.02 then
+        self.got = self.got + 1
+        self.held = false; self.heldU, self.heldV = nil, nil; self.baseU = nil
+        if self.got >= self.count then self.done = true else self:place() end
+    end
+end
+function Extract:score()
+    return clamp(self.got / self.count - 0.12 * self.touches, 0, 1)
+end
+
+-- ============================================================= dialysis (P11)
+local Dialysis = kind("dialysis")
+function Dialysis:init()
+    self.limit = 18000 + 6000 * (self.p.skill or 0)
+    self.band = 0.14 + 0.08 * (self.p.skill or 0)
+    self.a, self.b, self.fill, self.side = 0.2, 0.2, 0, nil
+end
+function Dialysis:targets()
+    local t = (self.t or 0) / 1000
+    return 0.5 + math.sin(t * 0.7) * 0.2, 0.5 + math.cos(t * 0.5) * 0.2
+end
+function Dialysis:update(ms)
+    self:tick(ms)
+    if self.done then return end
+    local dt = ms / 1000
+    self.a = clamp(self.a + ((self.side == "a") and 0.5 or -0.35) * dt, 0, 1)
+    self.b = clamp(self.b + ((self.side == "b") and 0.5 or -0.35) * dt, 0, 1)
+    local ta, tb = self:targets()
+    local inA = math.abs(self.a - ta) <= self.band / 2
+    local inB = math.abs(self.b - tb) <= self.band / 2
+    if inA and inB then self.fill = self.fill + dt / 8 elseif inA or inB then self.fill = self.fill + dt / 24 end
+    if self.fill >= 1 then self.fill = 1; self.done = true end
+end
+function Dialysis:render(ui, x, y, w, h)
+    self.box = { x, y, w, h }
+    ui:drawRect(x, y, w, h, 1, 0.08, 0.1, 0.12)
+    local ta, tb = self:targets()
+    local function meter(mx, val, tgt, r, g, b)
+        local gy, gh = y + 20, h - 40
+        ui:drawRect(mx, gy, 60, gh, 1, 0.03, 0.03, 0.04)
+        ui:drawRect(mx, gy + gh * (1 - (tgt + self.band / 2)), 60, gh * self.band, 0.8, 0.15, 0.7, 0.25)
+        ui:drawRect(mx - 6, gy + gh * (1 - val) - 2, 72, 4, 1, r, g, b)
+    end
+    meter(x + w * 0.25 - 30, self.a, ta, 1, 0.4, 0.4)
+    meter(x + w * 0.75 - 30, self.b, tb, 0.4, 0.7, 1)
+    ui:drawRect(x + w / 2 - 8, y + 20 + (h - 40) * (1 - self.fill), 16, (h - 40) * self.fill, 1, 0.85, 0.2, 0.2)
+end
+function Dialysis:mouseDown(mx) if self.box then self.side = (mx < self.box[1] + self.box[3] / 2) and "a" or "b" end end
+function Dialysis:mouseUp() self.side = nil end
+function Dialysis:score() return clamp(self.fill, 0, 1) end
+
+-- ============================================================= cells (P12)
+local Cells = kind("cells")
+function Cells:init()
+    self.limit = 16000 + 6000 * (self.p.skill or 0)
+    self.n = 9
+    self.order = {}
+    for i = 1, self.n do self.order[i] = i end
+    for i = self.n, 2, -1 do local j = rnd(i) + 1; self.order[i], self.order[j] = self.order[j], self.order[i] end
+    self.next, self.wrong = 1, 0
+end
+function Cells:update(ms) self:tick(ms) end
+function Cells:cellRect(k, x, y, w, h)
+    local col, row = (k - 1) % 3, math.floor((k - 1) / 3)
+    local cw, ch = (w - 60) / 3, (h - 40) / 3
+    local sx, sy = self:sway(3)
+    return x + 30 + col * cw + 4 + sx, y + 20 + row * ch + 4 + sy, cw - 8, ch - 8
+end
+function Cells:render(ui, x, y, w, h)
+    self.box = { x, y, w, h }
+    ui:drawRect(x, y, w, h, 1, 0.06, 0.1, 0.14)
+    for k = 1, self.n do
+        local cx, cy, cw, ch = self:cellRect(k, x, y, w, h)
+        local num = self.order[k]
+        local done = num < self.next
+        ui:drawRect(cx, cy, cw, ch, 1, done and 0.15 or 0.25, done and 0.55 or 0.35, done and 0.3 or 0.55)
+        ui:drawTextCentre(tostring(num), cx + cw / 2, cy + ch / 2 - 10, 1, 1, 1, done and 0.4 or 1, UIFont.Medium)
+    end
+end
+function Cells:mouseDown(mx, my)
+    if self.done or not self.box then return end
+    local x, y, w, h = unpack(self.box)
+    for k = 1, self.n do
+        local cx, cy, cw, ch = self:cellRect(k, x, y, w, h)
+        if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
+            if self.order[k] == self.next then
+                self.next = self.next + 1
+                if self.next > self.n then self.done = true end
+            elseif self.order[k] > self.next then
+                self.wrong = self.wrong + 1
+            end
+            return
+        end
+    end
+end
+function Cells:score() return clamp((self.next - 1) / self.n - 0.1 * self.wrong, 0, 1) end
 
 return G

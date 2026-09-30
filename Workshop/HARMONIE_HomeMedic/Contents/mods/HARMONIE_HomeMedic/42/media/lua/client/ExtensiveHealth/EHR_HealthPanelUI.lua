@@ -1239,9 +1239,12 @@ end
 
 function EHR_HealthPanelUI:getTabDefinitions()
     local vanillaText = xpSystemText or {}
+    -- HARMONIE: "Diagnosis" tab (client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua)
+    local diagnosis = { id = "diagnosis", label = safeText("UI_HomeMedic_Tab_Diagnosis", "Diagnosis") }
     if self.isRemoteHealthPanel then
         return {
             { id = "ehr", label = safeText("UI_HomeMedic_Tab_EHR_Compact", "EHR") },
+            diagnosis,
         }
     end
     if self.width < 560 then
@@ -1254,6 +1257,7 @@ function EHR_HealthPanelUI:getTabDefinitions()
     return {
         { id = "ehr", label = compact and safeText("UI_HomeMedic_Tab_EHR_Compact", "EHR") or safeText("UI_HomeMedic_Tab_EHR", "EHR Monitor") },
         { id = "immunity", label = compact and safeText("UI_HomeMedic_Tab_Immunity_Compact", "Immune System") or safeText("UI_HomeMedic_Tab_Immunity", "Immune System") },
+        diagnosis,
         { id = "info", label = vanillaText.info or safeText("UI_HomeMedic_Tab_Info", "Info") },
         { id = "skills", label = vanillaText.skills or safeText("UI_HomeMedic_Tab_Skills", "Skills") },
         { id = "health", label = vanillaText.health or safeText("UI_HomeMedic_Tab_Health", "Health") },
@@ -1979,7 +1983,8 @@ function EHR_HealthPanelUI:truncateText(text, maxWidth, font)
     local ellipsis = "..."
     local result = text
     while string.len(result) > 1 and self:getTextWidth(result .. ellipsis, font) > maxWidth do
-        result = string.sub(result, 1, string.len(result) - 1)
+        -- HARMONIE: drop a whole UTF-8 character (Thai letters are 3 bytes)
+        result = result:gsub("[%z\1-\127\194-\244][\128-\191]*$", "")
     end
     return result .. ellipsis
 end
@@ -2055,6 +2060,7 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         health = "media/textures/EHR_Tab_Health.png",
         protection = "media/textures/EHR_Tab_Protection.png",
         temperature = "media/textures/EHR_Tab_Temperature.png",
+        diagnosis = "media/textures/HARMONIE_HomeMedic/tab_diagnosis.png",
     }
 
     local path = paths[tabId]
@@ -5739,6 +5745,8 @@ function EHR_HealthPanelUI:prerender()
         end
     elseif self.activeTab == "immunity" then
         self:drawImmuneStatusPanel()
+    elseif self.activeTab == "diagnosis" and self.drawDiagnosisPanel then
+        self:drawDiagnosisPanel()
     else
         self:drawEmbeddedTabFrame()
     end
@@ -5749,9 +5757,11 @@ end
 function EHR_HealthPanelUI:render()
     self:drawResizeHandle()
     self:drawTabTooltip()
+    if self.activeTab == "diagnosis" and self.drawDiagnosisTooltip then self:drawDiagnosisTooltip() end
 end
 
 function EHR_HealthPanelUI:onMouseWheel(del)
+    if self.activeTab == "diagnosis" and self.onDiagnosisWheel then return self:onDiagnosisWheel(del) end
     if self.activeTab ~= "ehr" then return false end
     if not self.rightExpanded then return false end
     local maxScroll = self:getMaxContentScroll()

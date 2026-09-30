@@ -38,6 +38,58 @@ local function call(obj, method, ...)
     return nil
 end
 
+-- ---------------------------------------------------------------- text wrap (client)
+-- Wraps at spaces, and inside a "word" wider than the line at UTF-8
+-- character boundaries -- Thai writes whole sentences without spaces.
+-- Honours "\n" and EHR's "<LINE>". -> list of lines
+local CHAR = "[%z\1-\127\194-\244][\128-\191]*"
+-- Thai marks that sit on the previous letter (U+0E31, U+0E33-0E3A, U+0E47-0E4E)
+local function attaches(ch)
+    local a, b, c = ch:byte(1, 3)
+    if a ~= 0xE0 or not c then return false end
+    if b == 0xB8 then return c == 0xB1 or (c >= 0xB3 and c <= 0xBA) end
+    if b == 0xB9 then return c >= 0x87 and c <= 0x8E end
+    return false
+end
+-- iterator over display clusters (a letter plus its marks)
+function S.clusters(word)
+    local list = {}
+    for ch in word:gmatch(CHAR) do
+        if #list > 0 and attaches(ch) then list[#list] = list[#list] .. ch else list[#list + 1] = ch end
+    end
+    local i = 0
+    return function() i = i + 1; return list[i] end
+end
+
+function S.wrap(text, width, font)
+    local tm = getTextManager()
+    local function w(t) return tm:MeasureStringX(font or UIFont.Small, t) end
+    local lines = {}
+    text = tostring(text or ""):gsub("<LINE>", "\n"):gsub("\r\n", "\n")
+    for para in (text .. "\n"):gmatch("(.-)\n") do
+        local line = ""
+        for word in para:gmatch("%S+") do
+            local test = line == "" and word or (line .. " " .. word)
+            if w(test) <= width then
+                line = test
+            else
+                if line ~= "" then lines[#lines + 1] = line; line = "" end
+                if w(word) <= width then
+                    line = word
+                else
+                    for ch in S.clusters(word) do
+                        if line ~= "" and w(line .. ch) > width then lines[#lines + 1] = line; line = ch
+                        else line = line .. ch end
+                    end
+                end
+            end
+        end
+        lines[#lines + 1] = line
+    end
+    while #lines > 0 and lines[#lines] == "" do lines[#lines] = nil end
+    return lines
+end
+
 -- ---------------------------------------------------------------- sources
 S.Sources = S.Sources or {}
 local Src = S.Sources
@@ -214,12 +266,25 @@ function S.procedureUnlocked(doctor, pid)
     return fa >= need and knowOk, need, (not knowOk) and p.knowledge or nil
 end
 
+function S.tocAvailable()
+    return SetHealthPanelTOC ~= nil or (TOC_DEBUG ~= nil)
+end
+
+-- -> ok, reasonKey ("Tier" | "Knowledge" | "Steps" | "TOC")
 function S.surgeryUnlocked(doctor, sid)
     local s = S.Surgeries[sid]
-    if not s or s.planned then return false end
-    if S.firstAid(doctor) < S.TIERS[s.tier].firstAid then return false end
+    if not s or s.planned then return false, "Unknown" end
+    if s.needsTOC and not S.tocAvailable() then return false, "TOC" end
+    if S.firstAid(doctor) < S.TIERS[s.tier].firstAid then return false, "Tier" end
+    if s.knowledge then
+        local ok = false
+        for _, id in ipairs(s.knowledge) do
+            if S.knows(doctor, id) then ok = true; break end
+        end
+        if not ok then return false, "Knowledge" end
+    end
     for _, pid in ipairs(s.steps) do
-        if not S.procedureUnlocked(doctor, pid) then return false end
+        if not S.procedureUnlocked(doctor, pid) then return false, "Steps" end
     end
     return true
 end
@@ -253,47 +318,135 @@ end
 -- ---------------------------------------------------------------- indication
 -- `exam` (optional): the snapshot EHR's remote health panel keeps for a
 -- patient on another machine (their ModData is not synced to our client).
-local function activeDisease(patient, id, exam)
-    local data = exam and exam.EHR_Disease
-    if not data then
-        data = EHR and EHR.Disease and EHR.Disease.GetDiseaseData and EHR.Disease.GetDiseaseData(patient)
+local function modData(patient, exam, key)
+    if exam and exam[key] ~= nil then return exam[key] end
+    local md = call(patient, "getModData")
+    return md and md[key]
+end
+
+-- Stage of a disease (0 = not active). Sepsis lives in its own module.
+function S.stageOf(patient, id, exam)
+    if id == "sepsis" then
+        local d = modData(patient, exam, "EHR_Sepsis")
+        if type(d) == "table" and (d.active == true or (tonumber(d.stage) or 0) > 0) then return tonumber(d.stage) or 0 end
+        return 0
     end
-    local d = data and data.active and data.active[id]
-    if d then return tonumber(d.stage) or 1 end
-    return nil
+    local data = modData(patient, exam, "EHR_Disease")
+    local d = type(data) == "table" and data.active and data.active[id]
+    return d and (tonumber(d.stage) or 1) or 0
+end
+
+-- The table holding a disease's state (where the hold flag lives).
+function S.diseaseEntry(patient, id)
+    local md = call(patient, "getModData")
+    if not md then return nil end
+    if id == "sepsis" then
+        local d = md.EHR_Sepsis
+        if type(d) == "table" and (tonumber(d.stage) or 0) > 0 then return d end
+        return nil
+    end
+    return md.EHR_Disease and md.EHR_Disease.active and md.EHR_Disease.active[id] or nil
+end
+
+function S.isHeld(patient, id, exam)
+    if id == "sepsis" then
+        local d = modData(patient, exam, "EHR_Sepsis")
+        return type(d) == "table" and d.harmonieHold ~= nil
+    end
+    local data = modData(patient, exam, "EHR_Disease")
+    local d = type(data) == "table" and data.active and data.active[id]
+    return type(d) == "table" and d.harmonieHold ~= nil
+end
+
+function S.needsSurgery(patient, id, exam)
+    local from = S.SURGICAL[id]
+    return from ~= nil and S.stageOf(patient, id, exam) >= from
 end
 
 local function woundInfectionStage(patient, bodyPart, exam)
     local name = S.partName(bodyPart)
-    local pd
-    if exam and exam.EHR_WoundInfection then
-        pd = exam.EHR_WoundInfection.parts and exam.EHR_WoundInfection.parts[name]
-    else
-        local W = EHR and EHR.WoundInfection
-        pd = W and W.GetPartData and name and W.GetPartData(patient, name)
-    end
+    local data = modData(patient, exam, "EHR_WoundInfection")
+    local pd = type(data) == "table" and data.parts and data.parts[name]
     local stage = pd and tonumber(pd.stage) or 0
     if stage <= 0 and call(bodyPart, "isInfectedWound") == true then stage = 1 end
     return stage
 end
 
+local function inList(list, v)
+    for _, x in ipairs(list or {}) do if x == v then return true end end
+    return false
+end
+
+-- TOC limb name of a body part (nil if not an arm part TOC handles)
+function S.tocLimb(bodyPart)
+    local ok, SD = pcall(require, "TOC/StaticData")
+    local name = S.partName(bodyPart)
+    return ok and SD and SD.LIMBS_IND_STR and name and SD.LIMBS_IND_STR[name] or nil
+end
+
+local function tocIsCut(patient, limb)
+    local ok, DC = pcall(require, "TOC/Controllers/DataController")
+    local inst = ok and DC and DC.GetInstance and DC.GetInstance(call(patient, "getUsername") or "")
+    return inst and inst.getIsCut and inst:getIsCut(limb) == true or false
+end
+
+-- Special targets
+local SPECIAL = {}
+function SPECIAL.wound_infection(patient, part, exam)
+    local st = woundInfectionStage(patient, part, exam)
+    return st > 0 and st or nil
+end
+function SPECIAL.foreign_body(patient, part)
+    if call(part, "haveBullet") == true or call(part, "haveGlass") == true then return 1 end
+    return nil
+end
+function SPECIAL.knox(patient)
+    local K = EHR and EHR.KnoxCure
+    if K and K.IsInfected then
+        local ok, r = pcall(K.IsInfected, patient)
+        if ok and r then return 1 end
+    end
+    return nil
+end
+function SPECIAL.knox_bite(patient, part)
+    local limb = S.tocLimb(part)
+    if not limb or tocIsCut(patient, limb) then return nil end
+    local ok, SD = pcall(require, "TOC/StaticData")
+    local parts = { part }
+    local deps = ok and SD and SD.LIMBS_DEPENDENCIES_IND_STR and SD.LIMBS_DEPENDENCIES_IND_STR[limb] or {}
+    for _, d in ipairs(deps) do parts[#parts + 1] = S.partByName(patient, d) end
+    for _, p in ipairs(parts) do
+        if p and (call(p, "bitten") == true or call(p, "IsInfected") == true) then return 1 end
+    end
+    return nil
+end
+function SPECIAL.necrosis(patient, part, exam)
+    local limb = S.tocLimb(part)
+    if not limb or tocIsCut(patient, limb) then return nil end
+    if woundInfectionStage(patient, part, exam) >= 3 then return 3 end
+    return nil
+end
+
 -- Conditions this operation would treat through this body part.
--- -> list of { id, stage, cool = hours left or nil }
+-- -> list of { id, stage, cool = hours left or nil, held = bool, needs = bool }
 function S.indications(patient, bodyPart, sid, exam)
     local s = S.Surgeries[sid]
     local out = {}
     if not s or not patient or not bodyPart then return out end
+    local pname = S.partName(bodyPart)
+    if s.parts and not inList(s.parts, pname) then return out end
     local wound = S.hasWound(bodyPart)
-    for id, _ in pairs(s.targets) do
+    for id, t in pairs(s.targets) do
         local stage
-        if id == "wound_infection" then
-            stage = woundInfectionStage(patient, bodyPart, exam)
+        if SPECIAL[id] then
+            stage = SPECIAL[id](patient, bodyPart, exam)
+        elseif wound or t.anyPart then
+            stage = S.stageOf(patient, id, exam)
             if stage <= 0 then stage = nil end
-        elseif wound then
-            stage = activeDisease(patient, id, exam)
         end
         if stage then
-            out[#out + 1] = { id = id, stage = stage, cool = S.cooldownLeft(patient, id, bodyPart) }
+            out[#out + 1] = { id = id, stage = stage, cool = S.cooldownLeft(patient, id, bodyPart),
+                held = S.isHeld(patient, id, exam), needs = S.needsSurgery(patient, id, exam) }
         end
     end
     table.sort(out, function(a, b) return a.id < b.id end)
@@ -401,6 +554,56 @@ function S.distance(a, b)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+-- Generated description of what an operation does to each condition.
+function S.targetsTip(sid)
+    local s = S.Surgeries[sid]
+    if not s then return "" end
+    local ids = {}
+    for id in pairs(s.targets) do ids[#ids + 1] = id end
+    table.sort(ids)
+    local lines = {}
+    for _, id in ipairs(ids) do
+        local t = s.targets[id]
+        local what
+        if t.treat then
+            what = S.T("Eff_Treat", "treatment, clears in ~%1h (%2h if excellent)", t.treat, math.floor(t.treat * S.EXCELLENT_TREAT + 0.5))
+        else
+            what = S.T("Eff_" .. id, id)
+        end
+        lines[#lines + 1] = "- " .. S.T("Cond_" .. id, id) .. ": " .. what
+    end
+    return table.concat(lines, "\n")
+end
+
+-- Handbook text: which operations treat a disease and when they are needed.
+function S.handbookText(id)
+    id = tostring(id or ""):lower()
+    if id == "knox_infection" or id == "knox" then
+        return S.T("Hb_knox", "Amputate the bitten arm in time (Amputation), or try Experimental surgery with a Gene Therapy Kit.")
+    end
+    local list = S.surgeriesFor(id)
+    if #list == 0 then return nil end
+    local names = {}
+    local treat
+    for _, sid in ipairs(list) do
+        names[#names + 1] = S.T("Name_" .. sid, sid) .. " (" .. S.T("Tier_" .. S.Surgeries[sid].tier, S.Surgeries[sid].tier) .. ")"
+        local t = S.Surgeries[sid].targets[id]
+        if t and t.treat then treat = math.min(treat or t.treat, t.treat) end
+    end
+    local lines = { table.concat(names, ", ") }
+    if id == "wound_infection" then
+        lines[#lines + 1] = S.T("Hb_Clear", "A successful operation clears the infected wound at once.")
+    elseif treat then
+        lines[#lines + 1] = S.T("Hb_Treat", "Success starts treatment: it clears in about %1 hours (%2 if excellent).", treat, math.floor(treat * S.EXCELLENT_TREAT + 0.5))
+    end
+    if S.SURGICAL[id] then
+        lines[#lines + 1] = S.T("Hb_Required", "From stage %1 surgery is needed: a finished medicine course only holds it there (Awaiting surgery).", S.SURGICAL[id])
+    else
+        lines[#lines + 1] = S.T("Hb_Optional", "Optional: medicine alone can still cure it.")
+    end
+    return table.concat(lines, " ")
+end
+
 -- ---------------------------------------------------------------- readiness
 -- -> { rows = {...}, canStart, slots = {slotId = fill}, indications, asepsis, anesthesia, toolQ }
 -- row = { key, state = "ok"|"warn"|"fail"|"info", required, label, value, tip }
@@ -421,7 +624,10 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     local names = {}
     for _, i in ipairs(ind) do
         if not i.cool then usable = usable + 1 end
-        names[#names + 1] = S.T("Cond_" .. i.id, i.id) .. " " .. S.T("Stage", "St.%1", i.stage)
+        local special = i.id == "wound_infection" or i.id == "foreign_body" or i.id == "knox" or i.id == "knox_bite" or i.id == "necrosis"
+        names[#names + 1] = S.T("Cond_" .. i.id, i.id)
+            .. ((not special) and (" " .. S.T("Stage", "St.%1", i.stage)) or "")
+            .. (i.held and (" · " .. S.T("HeldShort", "awaiting")) or "")
             .. (i.cool and (" (" .. S.T("CoolShort", "%1h", math.ceil(i.cool)) .. ")") or "")
     end
     row({ key = "indication", required = not remoteUnknown,
@@ -430,7 +636,17 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
           value = #names > 0 and table.concat(names, ", ")
               or (remoteUnknown and S.T("ServerChecks", "Checked when you start") or S.T("None", "None")),
           tip = S.T("Tip_Indication", "What this operation treats through this body part.")
-              .. "\n" .. S.T("Tip_Targets_" .. sid, "") })
+              .. "\n\n" .. S.targetsTip(sid) })
+
+    -- the operation itself (tier / disease knowledge / The Only Cure)
+    local sok, why = S.surgeryUnlocked(doctor, sid)
+    if not sok and why ~= "Steps" then
+        local k = {}
+        for _, id in ipairs(s.knowledge or {}) do k[#k + 1] = S.T("Cond_" .. id, id) end
+        row({ key = "operation", required = true, state = "fail",
+              label = S.T("Row_Operation", "Operation"), value = S.T("Lock_" .. tostring(why), "Locked"),
+              tip = S.T("Tip_Lock_" .. tostring(why), "", S.TIERS[s.tier].firstAid, table.concat(k, " / ")) })
+    end
 
     -- skill: one row per procedure (step)
     for n, pid in ipairs(s.steps) do

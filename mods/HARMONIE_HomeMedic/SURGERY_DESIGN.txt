@@ -1,45 +1,61 @@
-HARMONIE - Home Medic : ระบบผ่าตัด (Surgery)            เฟส 1 = Field + Clinical
+HARMONIE - Home Medic : ระบบผ่าตัด (Surgery)                          0.7.0 - ครบทุกเฟส
 
 แนวคิด
-  ประเภทการผ่าตัด (Surgery Type) = ลำดับของ "กรรมวิธี" (Procedure P01..P15)
-  กรรมวิธีหนึ่ง = มินิเกมหนึ่งแบบ ใช้ซ้ำได้ทุกการผ่าตัด -> เพิ่มการผ่าตัดใหม่ = เพิ่มข้อมูล ไม่ต้องทำมินิเกมใหม่
+  ประเภทการผ่าตัด = ลำดับของ "กรรมวิธี" (P01..P15) · กรรมวิธีหนึ่ง = มินิเกมหนึ่งแบบ ใช้ซ้ำได้ทุกการผ่าตัด
 
 ไฟล์
-  shared/HARMONIEHomeMedic/Surgery/HM_SurgeryData.lua   ข้อมูลทั้งหมด (ระดับ, กรรมวิธี, อุปกรณ์, การผ่าตัด) รวมของเฟสหลัง (planned)
-  shared/HARMONIEHomeMedic/Surgery/HM_Surgery.lua       ค้นอุปกรณ์ (กระเป๋า/พื้น/กล่องรอบตัว), ปลดล็อก, ข้อบ่งชี้, เช็คความพร้อม, คำนวณคุณภาพ
-  server/HARMONIEHomeMedic/HM_SurgeryServer.lua         ใบอนุญาต (permit), ใช้วัสดุสิ้นเปลือง, ตัดสินผล, ซิงก์ MP
-  client/HARMONIEHomeMedic/Surgery/HM_SurgeryGames.lua  มินิเกม 6 แบบ: trace pulse clean necro gauge suture
+  shared/HARMONIEHomeMedic/Surgery/HM_SurgeryData.lua   ข้อมูลทั้งหมด: ระดับ, กรรมวิธี, อุปกรณ์, การผ่าตัด, โรคที่ต้องผ่าตัด
+  shared/HARMONIEHomeMedic/Surgery/HM_Surgery.lua       ค้นอุปกรณ์, ปลดล็อก, ข้อบ่งชี้, เช็คความพร้อม, คำนวณคุณภาพ, ข้อความคู่มือ, ตัดบรรทัดภาษาไทย
+  shared/HARMONIEHomeMedic/Surgery/HM_SurgeryRules.lua  สถานะ treat จากการผ่าตัด / สถานะ "รอผ่าตัด" (hold)
+  server/HARMONIEHomeMedic/HM_SurgeryServer.lua         ใบอนุญาต, ใช้วัสดุ, ตัดสินผล, ซิงก์ MP
+  client/HARMONIEHomeMedic/Surgery/HM_SurgeryGames.lua  มินิเกม
   client/HARMONIEHomeMedic/Surgery/HM_SurgeryUI.lua     หน้าต่าง Pre-op, หน้าต่างผ่าตัด, timed action, เมนูคลิกขวา
-  tools/gen_surgery_textures.py                          วาดวงกลม/วงแหวนที่มินิเกมใช้ (งานของเราเอง)
+  client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua        แท็บ "วินิจฉัย" ในหน้าต่างการแพทย์
+  client/ExtensiveHealth/EHR_MedicalJournalUI.lua       คู่มือโรค: หัวข้อ "การผ่าตัด" + เลื่อนอ่านได้
 
-ลำดับการทำงาน (MP)
-  1. คลิกขวาส่วนของร่างกาย (หน้าต่าง vanilla / EHR / EHR ของคนอื่น) -> "ผ่าตัด (Surgery)" (เห็นเมื่อมีข้อบ่งชี้)
-  2. หน้าต่าง Pre-op: แต่ละแถว = 1 การตรวจ ข้อความสั้น รายละเอียดเป็น tooltip เมื่อชี้
-  3. เริ่ม -> client ส่ง Begin -> server ตรวจซ้ำทั้งหมด + ความยินยอม (exam session ของ EHR) + ใช้วัสดุสิ้นเปลือง -> permit
-  4. client เล่นมินิเกมทีละขั้นระหว่าง timed action (เดิน/วิ่ง = ยกเลิก) -> ส่งคะแนน 0..1 ต่อขั้น
-  5. server: บีบคะแนนให้อยู่ในช่วง, จบเร็วผิดปกติ = ล้มเหลว, permit ใช้ได้ครั้งเดียว -> ผล -> syncBodyPart + ModData
-  ไม่มีอะไรทำงานทุก tick ฝั่ง server
+ผลของการผ่าตัด = สถานะ treat (ของ EHR)
+  treat = EHR_Medication.activeTreatments[โรค] -> โรคหยุดแย่ลง และหายเองเมื่อครบเวลา
+  ผ่าสำเร็จ (>= 45%) -> treat ตามเวลาของโรค · ดีเยี่ยม (>= 80%) -> เวลาเหลือ 60%
+  Wound Infection: หายทันที · กระสุน/เศษแก้ว: เอาออก · Knox: ตัดแขน (TOC) หรือยีนบำบัด
+  โรคเดียวกันผ่าได้วันละครั้ง (ต่อคนไข้)
 
-ปลดล็อก (ตามความรู้โรคของ EHR)
-  กรรมวิธีต้องมี First Aid ถึงระดับ (Field 2 / Clinical 4 / Advanced 6 / Master 8)
-  และถ้ากำหนดโรคไว้ ต้อง "รู้จัก" อย่างน้อยหนึ่งโรค (อ่านใบปลิวโรค หรือ First Aid 8) = EHR.DiseaseFlyers.HasMedicalKnowledge
-  P01 Incision, P02 Hemostasis, P08 Closure : Field
-  P03 Irrigation : Clinical + Wound Infection/Cellulitis
-  P04 Necrectomy : Clinical + Cellulitis/Sepsis/Tetanus/Wound Infection
-  P05 Aspiration : Clinical + Cellulitis/Wound Infection
+โรคที่ "ต้องผ่าตัด" ตั้งแต่ระยะ 3 (S.SURGICAL)
+  Cellulitis, Sepsis, Tetanus, Trichinosis, Pneumonia, Cadaveric Aspergillosis, Toxin Poisoning,
+  Hyperkeratotic Scabies, AHTR
+  -> ถ้ากินยาครบคอร์สตอนอยู่ระยะ 3 ขึ้นไป: ยาไม่ทำให้หาย แต่โรคถูก "หยุดไว้" (รอผ่าตัด) นาฬิกาของโรคถูกแช่แข็งทุกนาทีเกม
+     ระยะจึงไม่เพิ่ม -> ผ่าตัดแล้วได้ treat -> หาย
+  -> ต่ำกว่าระยะ 3 หรือโรคอื่น: กินยาแล้วหายเหมือน EHR เดิม
 
-การผ่าตัดเฟส 1
-  Debridement      P01 P04 P03 P02 P08  blade forceps suture dressing (+antiseptic)  ~250 mL
-      Wound Infection -1 (ดีเยี่ยม -2, หายได้) · Cellulitis -1 (ดีเยี่ยม -2, หายได้) · Tetanus/Sepsis -1 แต่ไม่ต่ำกว่าระยะ 1
-  Abscess Drainage P01 P05 P03 P08      blade syringe suture dressing (+antiseptic)  ~120 mL
-      Wound Infection -1 (ดีเยี่ยม -2) · Cellulitis -1
-  สำเร็จ >= 45% · ดีเยี่ยม >= 80% · โรคเดียวกันผ่าได้วันละครั้ง (ต่อคนไข้)
+การผ่าตัด 10 แบบ
+  ระดับ     การผ่าตัด                 ขั้นตอน                ใช้กับ                                     ส่วนร่างกาย
+  Clinical  Debridement               P01 P04 P03 P02 P08    Wound Infection, Cellulitis, Tetanus,      ส่วนที่มีแผล
+                                                             Sepsis, Hyperkeratotic Scabies
+  Clinical  Abscess Drainage          P01 P05 P03 P08        Wound Infection, Cellulitis                ส่วนที่มีแผล
+  Clinical  Foreign Body Removal      P01 P06 P02 P08        กระสุน / เศษแก้ว                             ส่วนที่มี
+  Advanced  Parasite Extraction       P01 P06 P03 P08        Trichinosis                                แขน/ขา
+  Advanced  Thoracic Surgery          P01 P15 P09 P08        Pneumonia, Cadaveric Aspergillosis         ลำตัวบน
+  Advanced  Organ Salvage             P01 P15 P03 P08        Sepsis, Toxin Poisoning                    ลำตัวล่าง
+  Master    Neurosurgery              P13 P14 P02 P08        Concussion                                 ศีรษะ
+  Master    Blood Purification        P10 P11 P02            AHTR                                       แขน
+  Master    Amputation (TOC)          P01 P07 P02 P08        แขนที่โดนซอมบี้กัด / เนื้อตาย (แผลติดเชื้อระยะ 3)  มือ/แขนล่าง/แขนบน
+  Master    Experimental              P10 P12 P11            Knox infection (ใช้ Gene Therapy Kit)       แขน
+  การผ่าตัดระดับ Advanced/Master ต้องรู้จักโรคที่เกี่ยวข้องด้วย (ใบปลิวโรค หรือ First Aid 8)
 
-ผลข้างเคียงทุกครั้ง
-  เสียเลือด (ตามคะแนนห้ามเลือด/เปิดแผล), ปวด (ลดด้วย anesthesia), แผลผ่า (เย็บปิดถ้าคะแนนเย็บ >= 50%),
-  ผ้าปิดแผลที่ใช้, โอกาสแผลผ่าตัดติดเชื้อ = (1-asepsis) x (1-คะแนนล้างแผล) x 60%, XP ปฐมพยาบาล
+กรรมวิธี 15 แบบ (มินิเกม)
+  P01 Incision     trace            ลากมีดตามเส้น              P09 Drainage       gauge/valve     คุมแรงดันวาล์ว
+  P02 Hemostasis   pulse            คลิกตามจังหวะวง             P10 Catheter       trace/catheter  นำสายตามเส้นเลือดคดเคี้ยว
+  P03 Irrigation   clean            คลิกกำจัดสิ่งสกปรก           P11 Hemodialysis   dialysis        คุมแรงดัน+อัตราไหลพร้อมกัน
+  P04 Necrectomy   necro            ตัดเฉพาะเนื้อดำ              P12 Cell Graft     cells           คลิกเซลล์ 1-9 ตามลำดับ
+  P05 Aspiration   gauge            คุมแรงดูด                   P13 Craniotomy     gauge/drill     คุมความเร็วสว่าน (แถบแคบ)
+  P06 Extraction   extract          ลากวัตถุออกไม่โดนผนัง        P14 Evacuation     extract/clot    ลากลิ่มเลือดออก 3 ก้อน
+  P07 Bone Cut     gauge/saw        คุมความเร็วเลื่อย            P15 Organ Repair   necro/organ     ตัดเฉพาะเนื้อสีเทา
+  P08 Closure      suture           คลิกจุดเย็บตามลำดับ
 
-เฟสถัดไป (มีข้อมูลรอแล้วใน HM_SurgeryData.lua)
-  2: Amputation (ครอบระบบ TOC) + P06 ดึงวัตถุแปลกปลอม (กระสุน/เศษแก้ว)
-  3: Parasite Extraction, Thoracic, Organ Salvage (P09 P15)
-  4: Neurosurgery, Blood Purification, Experimental/Knox (P10-P14)
+UI
+  - ทุกหน้าต่างวัดความสูงจากฟอนต์จริง, ตัดข้อความแบบไม่ตัดกลางตัวอักษรไทย, ขึ้นบรรทัดใหม่ในภาษาไทยที่ไม่มีเว้นวรรคได้
+  - รายการที่ยาวเลื่อนด้วยล้อเมาส์ได้; tooltip คำนวณตำแหน่งจากเมาส์จริงแม้ตอนเลื่อน
+  - แท็บ "วินิจฉัย": ทุกโรค/ภาวะ + ระยะ + สถานะ (กำลังรักษา / รอผ่าตัด / ต้องผ่าตัด) + ผลต่อร่างกายตอนนี้
+  - คู่มือโรค: หัวข้อ "การผ่าตัด" บอกการผ่าตัดที่ใช้ได้ ระยะที่ต้องผ่า และเวลาหาย
+
+MP
+  ไม่มีอะไรทำงานทุก tick ยกเว้นการแช่แข็งโรคที่รอผ่าตัด (ทุก 1 นาทีเกม, เฉพาะผู้เล่นที่มีโรคถูกหยุดไว้)

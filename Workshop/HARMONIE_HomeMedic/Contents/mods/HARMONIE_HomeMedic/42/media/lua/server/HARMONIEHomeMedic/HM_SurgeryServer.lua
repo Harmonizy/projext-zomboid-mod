@@ -13,6 +13,7 @@
 ]]--
 
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
+require "HARMONIEHomeMedic/Surgery/HM_SurgeryRules"
 
 local S = HM_Surgery
 S.Server = S.Server or {}
@@ -150,38 +151,59 @@ function SV.Begin(doctor, args)
 end
 
 -- ------------------------------------------------------------ outcome
-local function reduceWoundInfection(patient, part, by)
+local function clearWoundInfection(patient, part)
     local W = EHR and EHR.WoundInfection
     local name = S.partName(part)
     local data = W and W.GetData and W.GetData(patient)
-    local pd = data and data.parts and data.parts[name]
-    local from = pd and tonumber(pd.stage) or 1
-    local to = math.max(0, from - by)
-    if pd then pd.stage = to; pd.stageStartTime = hours() end
-    if to == 0 then
-        if data and data.parts then data.parts[name] = nil end
-        if W and W.ClearPartSymptomPain then pcall(W.ClearPartSymptomPain, patient, name) end
-        if W and W.ClearVanillaInfection then pcall(W.ClearVanillaInfection, part, "harmonie-surgery")
-        else call(part, "setInfectedWound", false) end
-    end
-    return from, to
+    if data and data.parts then data.parts[name] = nil end
+    if W and W.ClearPartSymptomPain then pcall(W.ClearPartSymptomPain, patient, name) end
+    if W and W.ClearVanillaInfection then pcall(W.ClearVanillaInfection, part, "harmonie-surgery")
+    else call(part, "setInfectedWound", false) end
 end
 
-local function reduceDisease(patient, id, by, floor)
-    local D = EHR and EHR.Disease
-    local data = D and D.GetDiseaseData and D.GetDiseaseData(patient)
-    local d = data and data.active and data.active[id]
-    if not d then return nil end
-    local from = tonumber(d.stage) or 1
-    local to = from - by
-    local low = (floor and floor > 0) and floor or 0
-    if to < low then to = low end
-    if to <= 0 then
-        pcall(D.Cure, patient, id)
-        return from, 0
+local function removeForeignBodies(part)
+    if call(part, "haveBullet") == true then call(part, "setHaveBullet", false, 0) end
+    if call(part, "haveGlass") == true then call(part, "setHaveGlass", false) end
+end
+
+-- Gene therapy delivered surgically: EHR's own chance, better with a good operation.
+local function experimentalKnox(patient, q)
+    local K = EHR and EHR.KnoxCure
+    if not K or not K.IsInfected or not K.IsInfected(patient) then return "none" end
+    local base = K.GetGeneTherapyChance and K.GetGeneTherapyChance(patient) or 50
+    local chance = math.max(5, math.min(95, base + (q - 0.5) * 40))
+    if rand100() < chance then
+        pcall(K.CureInfection, patient)
+        local data = K.GetData and K.GetData(patient)
+        if data then
+            local immune = K.IsPatientZeroTraitEnabled and K.IsPatientZeroTraitEnabled()
+            data.geneTherapySurvivor = true
+            data.geneTherapyImmune = immune
+            data.immunityTraitGranted = false
+            if immune and K.GrantImmunityTrait then pcall(K.GrantImmunityTrait, patient, data) end
+        end
+        if K.ApplyGeneTherapySideEffects then pcall(K.ApplyGeneTherapySideEffects, patient) end
+        return "cured"
     end
-    if to < from then pcall(D.SetStage, patient, id, to) end
-    return from, to
+    if q < S.SUCCESS then
+        if EHR.RecordDeathCause then pcall(EHR.RecordDeathCause, patient, "Gene therapy rejection during experimental surgery") end
+        call(patient, "setHealth", 0)
+        return "rejected"
+    end
+    return "failed"
+end
+
+local function amputate(doctor, patient, part, q)
+    local limb = S.tocLimb(part)
+    if not limb then return false end
+    local ok, AH = pcall(require, "TOC/Handlers/AmputationHandler")
+    if not ok or not AH then return false end
+    local done = pcall(function()
+        local h = AH:new(doctor, patient, limb)
+        h:execute(q < S.EXCELLENT)
+        h:close()
+    end)
+    return done
 end
 
 local function clamp01(v) v = tonumber(v) or 0; if v < 0 then return 0 elseif v > 1 then return 1 end return v end
@@ -215,19 +237,34 @@ function SV.Finish(doctor, args)
 
     -- 1. what it treats
     local changes = {}
+    local amputated = false
     if q >= S.SUCCESS then
         local md = patient:getModData()
         md.HARMONIE_Surgery = md.HARMONIE_Surgery or { cool = {} }
         md.HARMONIE_Surgery.cool = md.HARMONIE_Surgery.cool or {}
+        local factor = q >= S.EXCELLENT and S.EXCELLENT_TREAT or 1
         for _, ind in ipairs(S.indications(patient, part, permit.sid)) do
             if not ind.cool then
-                local t = s.targets[ind.id]
-                local by = t.reduce + ((q >= S.EXCELLENT and t.bonus) or 0)
-                local from, to
-                if ind.id == "wound_infection" then from, to = reduceWoundInfection(patient, part, by)
-                else from, to = reduceDisease(patient, ind.id, by, t.floor) end
-                if from then
-                    changes[#changes + 1] = { id = ind.id, from = from, to = to }
+                local t = s.targets[ind.id] or {}
+                local change
+                if ind.id == "wound_infection" then
+                    clearWoundInfection(patient, part); change = "cleared"
+                elseif ind.id == "foreign_body" then
+                    removeForeignBodies(part); change = "removed"
+                elseif ind.id == "knox" then
+                    change = experimentalKnox(patient, q)
+                elseif ind.id == "knox_bite" or ind.id == "necrosis" then
+                    if not amputated then amputated = amputate(doctor, patient, part, q) end
+                    change = amputated and "amputated" or "failed"
+                elseif t.treat then
+                    local h = math.floor(t.treat * factor + 0.5)
+                    if S.Rules.treat(patient, ind.id, h, permit.sid) then
+                        changes[#changes + 1] = { id = ind.id, kind = "treat", hours = h }
+                        md.HARMONIE_Surgery.cool[S.coolKey(ind.id, part)] = hours()
+                    end
+                end
+                if change then
+                    changes[#changes + 1] = { id = ind.id, kind = change }
                     md.HARMONIE_Surgery.cool[S.coolKey(ind.id, part)] = hours()
                 end
             end
@@ -242,25 +279,28 @@ function SV.Finish(doctor, args)
     local pain = math.floor(s.pain * (1 - 0.8 * (permit.anesthesia or 0)) + 0.5)
     call(part, "setAdditionalPain", math.min(100, (tonumber(call(part, "getAdditionalPain")) or 0) + pain))
 
-    -- 3. the incision: cut, closed by the suture step, dressed
+    -- 3. the incision (only operations that open the skin; TOC dresses an amputation stump itself)
     local suture = stepScore("P08") or 0
-    call(part, "setCut", true)
-    call(part, "setCutTime", math.max(tonumber(call(part, "getCutTime")) or 0, 8 + 14 * (1 - suture)))
-    if suture >= 0.5 and not aborted then
-        call(part, "setStitched", true)
-        call(part, "setStitchTime", 0)
-        call(part, "setBleeding", false)
-    else
-        call(part, "setBleeding", true)
-        call(part, "setBleedingTime", math.max(tonumber(call(part, "getBleedingTime")) or 0, 2 + 6 * (1 - hemo)))
-    end
-    if permit.dressingType then
-        pcall(part.setBandaged, part, true, permit.dressingPower or 2, permit.dressingAlcohol == true, permit.dressingType)
+    if not amputated and stepScore("P01") ~= nil then
+        call(part, "setCut", true)
+        call(part, "setCutTime", math.max(tonumber(call(part, "getCutTime")) or 0, 8 + 14 * (1 - suture)))
+        if suture >= 0.5 and not aborted then
+            call(part, "setStitched", true)
+            call(part, "setStitchTime", 0)
+            call(part, "setBleeding", false)
+        else
+            call(part, "setBleeding", true)
+            call(part, "setBleedingTime", math.max(tonumber(call(part, "getBleedingTime")) or 0, 2 + 6 * (1 - hemo)))
+        end
+        if permit.dressingType then
+            pcall(part.setBandaged, part, true, permit.dressingPower or 2, permit.dressingAlcohol == true, permit.dressingType)
+        end
     end
 
     -- 4. surgical-site infection
     local clean = stepScore("P03") or 0.5
     local ssi = (1 - (permit.asepsis or 0)) * (1 - clean) * 60 + (aborted and 15 or 0)
+    if stepScore("P01") == nil then ssi = ssi * 0.25 end            -- a needle, not an incision
     local infected = false
     local D = EHR and EHR.Disease
     local data = D and D.GetDiseaseData and D.GetDiseaseData(patient)

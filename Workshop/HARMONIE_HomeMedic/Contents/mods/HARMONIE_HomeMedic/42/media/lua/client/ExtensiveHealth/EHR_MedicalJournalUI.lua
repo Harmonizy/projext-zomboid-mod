@@ -17,6 +17,7 @@ pcall(function() require "ExtensiveHealth/EHR_Localization" end)
 EHR_MedicalJournalUI = ISPanel:derive("EHR_MedicalJournalUI")
 EHR_MedicalJournalUI.instance = nil
 
+require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 local WINDOW_WIDTH = 900
 local WINDOW_HEIGHT = 640
 local PADDING = 14
@@ -379,7 +380,8 @@ local function truncateText(text, maxWidth, font)
     local suffix = "..."
     local suffixW = measureText(font, suffix)
     while #text > 0 and measureText(font, text) + suffixW > maxWidth do
-        text = text:sub(1, #text - 1)
+        -- HARMONIE: drop a whole UTF-8 character (Thai letters are 3 bytes)
+        text = text:gsub("[%z\1-\127\194-\244][\128-\191]*$", "")
     end
     return text .. suffix
 end
@@ -542,22 +544,12 @@ function EHR_MedicalJournalUI:drawWrappedText(text, x, y, w, color, font, lineHe
     text = tostring(text or "")
     color = color or Colors.text
     font = font or UIFont.Small
-    lineHeight = lineHeight or 19
+    -- HARMONIE: never tighter than the font (Thai glyphs are taller)
+    local fontH = getTextManager():getFontHeight(font) + 2
+    lineHeight = math.max(lineHeight or 19, fontH)
 
-    local line = ""
-    for word in text:gmatch("%S+") do
-        local candidate = line == "" and word or (line .. " " .. word)
-        if measureText(font, candidate) <= w then
-            line = candidate
-        else
-            if line ~= "" then
-                self:drawText(line, x, y, color.r, color.g, color.b, color.a or 1, font)
-                y = y + lineHeight
-            end
-            line = word
-        end
-    end
-    if line ~= "" then
+    -- HARMONIE: HM_Surgery.wrap also breaks space-less (Thai) text at character boundaries
+    for _, line in ipairs(HM_Surgery.wrap(text, w, font)) do
         self:drawText(line, x, y, color.r, color.g, color.b, color.a or 1, font)
         y = y + lineHeight
     end
@@ -567,7 +559,7 @@ end
 function EHR_MedicalJournalUI:drawInfoSection(label, value, x, y, w)
     local c = Colors
     self:drawText(label, x, y, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
-    y = y + 24
+    y = y + math.max(24, getTextManager():getFontHeight(UIFont.Medium) + 4)
     return self:drawWrappedText(value, x + 8, y, w - 16, c.text, UIFont.Small, 19) + 10
 end
 
@@ -604,8 +596,33 @@ function EHR_MedicalJournalUI:render()
 
     local entry = self:getSelectedEntry()
     if entry then
-        self:drawDiseaseDetails(entry, detailX + 18, detailY + 46, detailW - 36, detailH - 58)
+        -- HARMONIE: the details scroll (mouse wheel) and are clipped to their frame
+        if self.detailEntryId ~= entry.id then self.detailEntryId = entry.id; self.detailScroll = 0 end
+        local top = detailY + 34
+        local viewH = detailH - 40
+        self.detailBounds = { x = detailX, y = top, w = detailW, h = viewH }
+        self:setStencilRect(detailX + 2, top, detailW - 4, viewH)
+        local startY = detailY + 46 - (self.detailScroll or 0)
+        local endY = self:drawDiseaseDetails(entry, detailX + 18, startY, detailW - 36, detailH - 58) or startY
+        self:clearStencilRect()
+        local contentH = endY - startY + 12
+        self.detailMaxScroll = math.max(0, contentH - (viewH - 12))
+        if (self.detailScroll or 0) > self.detailMaxScroll then self.detailScroll = self.detailMaxScroll end
+        if self.detailMaxScroll > 0 then
+            local barH = math.max(24, viewH * viewH / (contentH + viewH))
+            local barY = top + (viewH - barH) * ((self.detailScroll or 0) / self.detailMaxScroll)
+            self:drawRect(detailX + detailW - 7, barY, 3, barH, 0.8, Colors.red.r, Colors.red.g, Colors.red.b)
+        end
     end
+end
+
+function EHR_MedicalJournalUI:onMouseWheel(del)
+    local b = self.detailBounds
+    if not b or (self.detailMaxScroll or 0) <= 0 then return false end
+    local mx, my = self:getMouseX(), self:getMouseY()
+    if mx < b.x or mx > b.x + b.w or my < b.y or my > b.y + b.h then return false end
+    self.detailScroll = math.max(0, math.min(self.detailMaxScroll, (self.detailScroll or 0) + del * 40))
+    return true
 end
 
 function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
@@ -620,30 +637,36 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
     end
 
     local titleX = x + iconSize + 18
-    self:drawText(entry.displayName, titleX, y + 4, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Large)
-    self:drawText(categoryName(entry.category), titleX, y + 34, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
+    -- HARMONIE: measured rows + truncation, so long (Thai) names never overflow
+    local tm = getTextManager()
+    local titleW = x + w - titleX
+    local ty = y + 4
+    self:drawText(truncateText(entry.displayName, titleW, UIFont.Large), titleX, ty, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Large)
+    ty = ty + tm:getFontHeight(UIFont.Large) + 2
+    self:drawText(truncateText(categoryName(entry.category), titleW, UIFont.Medium), titleX, ty, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
+    ty = ty + tm:getFontHeight(UIFont.Medium) + 2
     local badge = entry.known and L("UI_HomeMedic_Codex_KnownUpper", "KNOWN") or L("UI_HomeMedic_Codex_LockedUpper", "LOCKED")
     local badgeColor = entry.known and c.green or c.yellow
-    self:drawText(badge, titleX, y + 60, badgeColor.r, badgeColor.g, badgeColor.b, badgeColor.a, UIFont.Medium)
+    self:drawText(badge, titleX, ty, badgeColor.r, badgeColor.g, badgeColor.b, badgeColor.a, UIFont.Medium)
 
     if entry.canKill then
         local lethal = L("UI_HomeMedic_Codex_LethalRisk", "LETHAL RISK")
         local lethalW = measureText(UIFont.Medium, lethal)
-        self:drawText(lethal, x + w - lethalW, y + 60, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
+        self:drawText(lethal, x + w - lethalW, ty, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
     end
+    ty = ty + tm:getFontHeight(UIFont.Medium)
 
-    y = y + iconSize + 18
+    y = math.max(y + iconSize, ty) + 18
     self:drawRect(x, y, w, 1, 0.76, c.border.r, c.border.g, c.border.b)
     y = y + 16
 
     if not entry.known then
         self:drawText(L("UI_HomeMedic_Codex_KnowledgeUnavailable", "Knowledge unavailable"), x, y, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
         y = y + 28
-        self:drawWrappedText(
+        return self:drawWrappedText(
             L("UI_HomeMedic_Codex_LockedDesc", "Read the matching disease flyer or reach First Aid level 8 to unlock symptoms, causes, prevention, and treatment notes."),
             x + 8, y, w - 16, c.textDim, UIFont.Small, 19
         )
-        return
     end
 
     local info = entry.info or {}
@@ -651,7 +674,13 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
     y = self:drawInfoSection(L("UI_HomeMedic_Codex_Symptoms", "Symptoms"), codexText(entry.id, "Symptoms", info.symptoms or L("UI_HomeMedic_Codex_NoSymptoms", "No symptom notes available.")), x, y, w)
     y = self:drawInfoSection(L("UI_HomeMedic_Codex_Timing", "Timing"), LF("UI_HomeMedic_Codex_TimingText", "Incubation: %1. Duration: %2.", tostring(entry.incubation or L("UI_HomeMedic_Codex_Unknown", "Unknown")), tostring(entry.duration or L("UI_HomeMedic_Codex_Unknown", "Unknown"))), x, y, w)
     y = self:drawInfoSection(L("UI_HomeMedic_Codex_Prevention", "Prevention"), codexText(entry.id, "Prevention", info.prevention or L("UI_HomeMedic_Codex_NoPrevention", "No prevention notes available.")), x, y, w)
-    self:drawInfoSection(L("UI_HomeMedic_Codex_Treatment", "Treatment"), codexText(entry.id, "Treatment", info.treatment or L("UI_HomeMedic_Codex_NoTreatment", "No treatment notes available.")), x, y, w)
+    y = self:drawInfoSection(L("UI_HomeMedic_Codex_Treatment", "Treatment"), codexText(entry.id, "Treatment", info.treatment or L("UI_HomeMedic_Codex_NoTreatment", "No treatment notes available.")), x, y, w)
+    -- HARMONIE: surgery notes (HM_Surgery.handbookText)
+    local surgery = HM_Surgery and HM_Surgery.handbookText and HM_Surgery.handbookText(entry.id)
+    if surgery then
+        y = self:drawInfoSection(L("UI_HomeMedic_Codex_Surgery", "Surgery"), surgery, x, y, w)
+    end
+    return y
 end
 
 function EHR_MedicalJournalUI.drawDiseaseItem(self, y, item, alt)
