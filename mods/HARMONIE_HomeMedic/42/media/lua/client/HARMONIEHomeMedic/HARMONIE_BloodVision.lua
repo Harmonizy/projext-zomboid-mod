@@ -78,7 +78,10 @@ function V.render()
     end
 end
 
+-- Drawn BEFORE the UI (over the world only), so the health window, the
+-- inventory and menus stay readable when the player most needs them.
 if Events then
-    if Events.OnPostUIDraw then Events.OnPostUIDraw.Add(V.render)
+    if Events.OnPreUIDraw then Events.OnPreUIDraw.Add(V.render)
+    elseif Events.OnPostUIDraw then Events.OnPostUIDraw.Add(V.render)
     elseif Events.OnRenderTick then Events.OnRenderTick.Add(V.render) end
 end

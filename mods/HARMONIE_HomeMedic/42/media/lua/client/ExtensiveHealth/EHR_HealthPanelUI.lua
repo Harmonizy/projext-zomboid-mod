@@ -692,8 +692,28 @@ function EHR_HealthBodyPartPanel:onMouseUp(x, y)
     return ISBodyPartPanel.onMouseUp(self, x, y)
 end
 
+-- HARMONIE: the window is 780 px tall (700 minimum), taller than a 720/768
+-- px screen. Cap both to the screen so the bottom never falls off it; the
+-- panel's content scrolls.
+local function screenMaxHeight()
+    local core = getCore and getCore()
+    local h = core and core:getScreenHeight() or nil
+    return h and math.max(360, h - 16) or nil
+end
+
+function EHR_HealthPanelUI.GetFitHeight()
+    local maxH = screenMaxHeight()
+    return maxH and math.min(EHR_HealthPanelUI.HEIGHT, maxH) or EHR_HealthPanelUI.HEIGHT
+end
+
+function EHR_HealthPanelUI.GetMinHeight()
+    local maxH = screenMaxHeight()
+    local minH = EHR_HealthPanelUI.MIN_HEIGHT or 420
+    return maxH and math.min(minH, maxH) or minH
+end
+
 function EHR_HealthPanelUI:new(x, y, player)
-    local o = ISPanel:new(x, y, EHR_HealthPanelUI.EXPANDED_WIDTH, EHR_HealthPanelUI.HEIGHT)
+    local o = ISPanel:new(x, y, EHR_HealthPanelUI.EXPANDED_WIDTH, EHR_HealthPanelUI.GetFitHeight())
     setmetatable(o, self)
     self.__index = self
 
@@ -1843,7 +1863,7 @@ function EHR_HealthPanelUI:clampWindowSize(width, height)
     local maxW = core and (core:getScreenWidth() - math.max(0, self.x) - 8) or width
     local maxH = core and (core:getScreenHeight() - math.max(0, self.y) - 8) or height
     local minW = self.rightExpanded and 700 or (self.MIN_WIDTH or 420)
-    local minH = self.MIN_HEIGHT or 420
+    local minH = EHR_HealthPanelUI.GetMinHeight()
 
     return clamp(width, minW, math.max(minW, maxW)), clamp(height, minH, math.max(minH, maxH))
 end
@@ -1868,7 +1888,7 @@ end
 
 function EHR_HealthPanelUI:ensureUsableSize()
     local minW = self.rightExpanded and 700 or (self.MIN_WIDTH or 420)
-    local minH = self.MIN_HEIGHT or 420
+    local minH = EHR_HealthPanelUI.GetMinHeight()
     if self.width >= minW and self.height >= minH then return end
 
     local newW, newH = self:clampWindowSize(self.width, self.height)
@@ -3110,7 +3130,7 @@ function EHR_HealthPanelUI:drawLockedBloodSensor(x, y, w, h)
     self:drawRectBorder(x - 4, y - 4, w + 8, h + 8, 0.65, c.borderDim.r, c.borderDim.g, c.borderDim.b)
     self:drawRect(x, y, w, h, 1, 0.035, 0.035, 0.04)
     self:drawRect(x, y, w, math.max(2, math.floor(h * 0.22)), 0.14, 0.8, 0.8, 0.72)
-    self:drawTextCentre("Medical watch required", x + math.floor(w / 2), y + 1, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+    self:drawTextCentre(safeText("UI_HomeMedic_MedicalWatchRequired", "Medical watch required"), x + math.floor(w / 2), y + 1, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     self:drawRectBorder(x, y, w, h, c.borderDim.a, c.borderDim.r, c.borderDim.g, c.borderDim.b)
 end
 
@@ -4504,53 +4524,53 @@ function EHR_HealthPanelUI:getBodyPartStatuses(bodyPart)
 
     if (tonumber(bodyValue("fractureTime", "getFractureTime", 0)) or 0) > 0 then
         hasLocalizedDamage = true
-        add("fracture", "Fracture", c.red, 1.00, 95)
+        add("fracture", safeText("UI_HomeMedic_BodyLegend_Fracture", "Fracture"), c.red, 1.00, 95)
     end
     if bodyValue("haveBullet", "haveBullet", false) == true then
         hasLocalizedDamage = true
-        add("bullet", "Lodged bullet", c.red, 1.00, 94)
+        add("bullet", safeText("UI_HomeMedic_BodyLegend_LodgedBullet", "Lodged bullet"), c.red, 1.00, 94)
     end
     if bodyValue("haveGlass", "haveGlass", false) == true then
         hasLocalizedDamage = true
-        add("glass", "Glass shards", c.red, 1.00, 92)
+        add("glass", safeText("UI_HomeMedic_BodyLegend_GlassShards", "Glass shards"), c.red, 1.00, 92)
     end
     if (tonumber(bodyValue("burnTime", "getBurnTime", 0)) or 0) > 0 then
         hasLocalizedDamage = true
-        local label = bodyValue("needBurnWash", "isNeedBurnWash", false) == true and "Burn needs cleaning" or "Burn"
+        local label = bodyValue("needBurnWash", "isNeedBurnWash", false) == true and safeText("UI_HomeMedic_BodyLegend_BurnNeedsCleaning", "Burn needs cleaning") or safeText("UI_HomeMedic_BodyLegend_Burn", "Burn")
         add("burn", label, c.orange, 0.60, 88)
     end
 
     if bodyValue("deepWounded", "deepWounded", false) == true then
         hasLocalizedDamage = true
-        add("deep_wound", "Deep wound", c.orange, 0.60, 84)
+        add("deep_wound", safeText("UI_HomeMedic_BodyLegend_DeepWound", "Deep wound"), c.orange, 0.60, 84)
     end
     if bodyValue("bitten", "bitten", false) == true then
         hasLocalizedDamage = true
-        add("bite", "Bite", c.red, 1.00, 82)
+        add("bite", safeText("UI_HomeMedic_BodyLegend_Bite", "Bite"), c.red, 1.00, 82)
     end
     if bodyValue("cut", "isCut", false) == true then
         hasLocalizedDamage = true
-        add("cut", "Cut", c.orange, 0.60, 78)
+        add("cut", safeText("UI_HomeMedic_BodyLegend_Cut", "Cut"), c.orange, 0.60, 78)
     end
     if bodyValue("scratched", "scratched", false) == true then
         hasLocalizedDamage = true
-        add("scratch", "Scratch", c.orange, 0.60, 74)
+        add("scratch", safeText("UI_HomeMedic_BodyLegend_Scratch", "Scratch"), c.orange, 0.60, 74)
     end
 
     if additionalPain > 50 then
-        add("pain", "Heavy pain", c.orange, 0.60, 72)
+        add("pain", safeText("UI_HomeMedic_BodyLegend_HeavyPain", "Heavy pain"), c.orange, 0.60, 72)
     elseif additionalPain > 10 then
         add("pain", safeText("UI_HomeMedic_Symptom_Pain", "Pain"), c.orange, 0.60, 68)
     elseif additionalPain >= 1 then
-        add("pain", "Minor pain", c.orange, 0.60, 42)
+        add("pain", safeText("UI_HomeMedic_BodyLegend_MinorPain", "Minor pain"), c.orange, 0.60, 42)
     end
 
     if stiffness >= 20 then
-        add("stiffness", "Muscle strain", c.orange, 0.60, 70)
+        add("stiffness", safeText("UI_HomeMedic_BodyLegend_MuscleStrain", "Muscle strain"), c.orange, 0.60, 70)
     elseif stiffness >= 5 then
-        add("stiffness", "Minor stiffness", c.yellow, 0.40, 45)
+        add("stiffness", safeText("UI_HomeMedic_BodyLegend_MinorStiffness", "Minor stiffness"), c.yellow, 0.40, 45)
     elseif stiffness >= 1 then
-        add("stiffness", "Slight stiffness", c.yellow, 0.40, 38)
+        add("stiffness", safeText("UI_HomeMedic_BodyLegend_SlightStiffness", "Slight stiffness"), c.yellow, 0.40, 38)
     end
 
     if bandaged then
@@ -4563,29 +4583,29 @@ function EHR_HealthPanelUI:getBodyPartStatuses(bodyPart)
     end
     if bodyValue("stitched", "stitched", false) == true then
         hasLocalizedDamage = true
-        add("stitched", "Stitched", c.green, 0.20, 32)
+        add("stitched", safeText("UI_HomeMedic_BodyLegend_Stitched", "Stitched"), c.green, 0.20, 32)
     end
     if (tonumber(bodyValue("splintFactor", "getSplintFactor", 0)) or 0) > 0 then
         hasLocalizedDamage = true
-        add("splinted", "Splinted", c.green, 0.20, 30)
+        add("splinted", safeText("UI_HomeMedic_BodyLegend_Splinted", "Splinted"), c.green, 0.20, 30)
     end
     if (tonumber(bodyValue("plantainFactor", "getPlantainFactor", 0)) or 0) > 0 then
-        add("plantain", "Plantain poultice", c.green, 0.20, 26)
+        add("plantain", safeText("UI_HomeMedic_BodyLegend_PlantainPoultice", "Plantain poultice"), c.green, 0.20, 26)
     end
     if (tonumber(bodyValue("comfreyFactor", "getComfreyFactor", 0)) or 0) > 0 then
-        add("comfrey", "Comfrey poultice", c.green, 0.20, 26)
+        add("comfrey", safeText("UI_HomeMedic_BodyLegend_ComfreyPoultice", "Comfrey poultice"), c.green, 0.20, 26)
     end
 
     if hasLocalizedDamage and health < 45 then
-        add("damaged", "Severe damage", c.red, 1.00, 86)
+        add("damaged", safeText("UI_HomeMedic_BodyLegend_SevereDamage", "Severe damage"), c.red, 1.00, 86)
     elseif hasLocalizedDamage and health < 85 then
         local color = health < 45 and c.red or c.orange
         local visualValue = health < 45 and 1.00 or 0.60
-        add("damaged", "Damaged", color, visualValue, 40)
+        add("damaged", safeText("UI_HomeMedic_BodyLegend_Damaged", "Damaged"), color, visualValue, 40)
     end
 
     if hasInjury and #statuses == 0 then
-        add("injury", "Injury", c.orange, 0.60, 46)
+        add("injury", safeText("UI_HomeMedic_BodyLegend_Injury", "Injury"), c.orange, 0.60, 46)
     end
 
     table.sort(statuses, function(a, b)
@@ -4653,7 +4673,7 @@ function EHR_HealthPanelUI:getSelectedBodyPartText()
         end
         return tostring(bodyPart:getType())
     end
-    return "None"
+    return safeText("UI_HomeMedic_None", "None")
 end
 
 function EHR_HealthPanelUI:getSelectedBodyPartStatuses()
@@ -5900,7 +5920,7 @@ function EHR.UI.ShowHealthPanel(player)
         local screenH = core and core:getScreenHeight() or 720
         local initialW = EHR.UI.ShouldOpenHealthPanelCompact() and EHR_HealthPanelUI.COLLAPSED_WIDTH or EHR_HealthPanelUI.EXPANDED_WIDTH
         local x = math.floor((screenW - initialW) / 2)
-        local y = math.floor((screenH - EHR_HealthPanelUI.HEIGHT) / 2)
+        local y = math.floor((screenH - EHR_HealthPanelUI.GetFitHeight()) / 2)
 
         local panel = EHR_HealthPanelUI:new(math.max(0, x), math.max(0, y), player)
         panel:initialise()
@@ -6103,7 +6123,7 @@ function EHR.UI.ShowRemoteHealthPanel(doctor, patient, examData)
 
         local initialW = EHR.UI.ShouldOpenHealthPanelCompact() and EHR_HealthPanelUI.COLLAPSED_WIDTH or EHR_HealthPanelUI.EXPANDED_WIDTH
         local x = math.floor((screenW - initialW) / 2) + (count % 3) * 24
-        local y = math.floor((screenH - EHR_HealthPanelUI.HEIGHT) / 2) + (count % 3) * 32
+        local y = math.floor((screenH - EHR_HealthPanelUI.GetFitHeight()) / 2) + (count % 3) * 32
 
         panel = EHR_HealthPanelUI:new(math.max(0, x), math.max(0, y), patient)
         panel.isRemoteHealthPanel = true
