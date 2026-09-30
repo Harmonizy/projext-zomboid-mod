@@ -991,12 +991,12 @@ end
 
 -- Get tier name
 function EHR.Tooltips.GetTierName(tier)
-    if tier == 0 then return EHR.Locale.Text("Tooltip_EHR_Tier_Basic", "Basic")
-    elseif tier == 1 then return EHR.Locale.Text("Tooltip_EHR_Tier_OTC", "OTC (Tier 1)")
-    elseif tier == 2 then return EHR.Locale.Text("Tooltip_EHR_Tier_Prescription", "Prescription (Tier 2)")
-    elseif tier == 3 then return EHR.Locale.Text("Tooltip_EHR_Tier_Clinical", "Clinical (Tier 3)")
-    elseif tier == 4 then return EHR.Locale.Text("Tooltip_EHR_Tier_Experimental", "Experimental (Tier 4)")
-    else return EHR.Locale.Text("Tooltip_EHR_Tier_Unknown", "Unknown")
+    if tier == 0 then return EHR.Locale.Text("Tooltip_HomeMedic_Tier_Basic", "Basic")
+    elseif tier == 1 then return EHR.Locale.Text("Tooltip_HomeMedic_Tier_OTC", "OTC (Tier 1)")
+    elseif tier == 2 then return EHR.Locale.Text("Tooltip_HomeMedic_Tier_Prescription", "Prescription (Tier 2)")
+    elseif tier == 3 then return EHR.Locale.Text("Tooltip_HomeMedic_Tier_Clinical", "Clinical (Tier 3)")
+    elseif tier == 4 then return EHR.Locale.Text("Tooltip_HomeMedic_Tier_Experimental", "Experimental (Tier 4)")
+    else return EHR.Locale.Text("Tooltip_HomeMedic_Tier_Unknown", "Unknown")
     end
 end
 

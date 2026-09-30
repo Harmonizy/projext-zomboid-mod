@@ -1,6 +1,6 @@
 {
-    "IGUI_Yes": "Так",
-    "IGUI_No": "Ні",
+    "IGUI_HomeMedic_Yes": "Так",
+    "IGUI_HomeMedic_No": "Ні",
     "IGUI_perks_Amputations": "Ампутації",
     "IGUI_perks_Side_R": "Права сторона",
     "IGUI_perks_Side_L": "Ліва сторона",
@@ -12,11 +12,11 @@
     "IGUI_ItemCat_Prosthesis": "Протез",
     "IGUI_ItemCat_Surgery": "Хірургія",
     "IGUI_ItemCat_Amputation": "Ампутація",
-    "IGUI_HealthPanel_Cicatrization": "Рубцювання",
-    "IGUI_HealthPanel_Cicatrized": "Зарубцьована",
-    "IGUI_HealthPanel_Cauterized": "Припечена",
-    "IGUI_HealthPanel_WoundDirtyness": "Забруднена рана",
-    "IGUI_HealthPanel_ProstEquipped": "Протез установлено",
-    "IGUI_Confirmation_Amputate": " <CENTRE> Ви впевнені, що хочете ампутувати цю кінцівку?",
-    "IGUI_CraftCategory_EHRMedicine": "EHR Медицина"
+    "IGUI_HomeMedic_HealthPanel_Cicatrization": "Рубцювання",
+    "IGUI_HomeMedic_HealthPanel_Cicatrized": "Зарубцьована",
+    "IGUI_HomeMedic_HealthPanel_Cauterized": "Припечена",
+    "IGUI_HomeMedic_HealthPanel_WoundDirtyness": "Забруднена рана",
+    "IGUI_HomeMedic_HealthPanel_ProstEquipped": "Протез установлено",
+    "IGUI_HomeMedic_Confirmation_Amputate": " <CENTRE> Ви впевнені, що хочете ампутувати цю кінцівку?",
+    "IGUI_CraftCategory_EHRMedicine": "Home Medic Медицина"
 }

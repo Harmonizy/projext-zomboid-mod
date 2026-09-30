@@ -26,6 +26,8 @@ merge_ehr.py.
 
 Usage (from the Zomboid folder that holds mods/):
   python mods/HARMONIE_HomeMedic/tools/merge_toc.py --toc PATH [--force] [--dry-run]
+then give the merged keys Home Medic names:
+  python mods/HARMONIE_HomeMedic/tools/rekey_homemedic.py
 PATH = the TOC zip, its Workshop folder (...\\108600\\3580276809) or the mod
 folder (The-Only-Cure).
 """
@@ -43,6 +45,7 @@ BEGIN = "The Only Cure (merged by tools/merge_toc.py) >>>"
 END = "<<< The Only Cure"
 APPENDED = {"media/registries.lua": "--", "media/sandbox-options.txt": "/*"}
 SKIP_EXT = {".bak"}
+SKIP_NAMES = {"Mod.json"}   # TOC's name/description would rename Home Medic in the mod list
 
 
 def find_toc_root(start):
@@ -161,7 +164,7 @@ def main():
             base = os.path.dirname(media_src)
             for dirpath, _, files in os.walk(media_src):
                 for name in files:
-                    if os.path.splitext(name)[1].lower() in SKIP_EXT:
+                    if os.path.splitext(name)[1].lower() in SKIP_EXT or name in SKIP_NAMES:
                         continue
                     s = os.path.join(dirpath, name)
                     rel = os.path.relpath(s, base).replace(os.sep, "/")      # media/...

@@ -692,8 +692,28 @@ function EHR_HealthBodyPartPanel:onMouseUp(x, y)
     return ISBodyPartPanel.onMouseUp(self, x, y)
 end
 
+-- HARMONIE: the window is 780 px tall (700 minimum), taller than a 720/768
+-- px screen. Cap both to the screen so the bottom never falls off it; the
+-- panel's content scrolls.
+local function screenMaxHeight()
+    local core = getCore and getCore()
+    local h = core and core:getScreenHeight() or nil
+    return h and math.max(360, h - 16) or nil
+end
+
+function EHR_HealthPanelUI.GetFitHeight()
+    local maxH = screenMaxHeight()
+    return maxH and math.min(EHR_HealthPanelUI.HEIGHT, maxH) or EHR_HealthPanelUI.HEIGHT
+end
+
+function EHR_HealthPanelUI.GetMinHeight()
+    local maxH = screenMaxHeight()
+    local minH = EHR_HealthPanelUI.MIN_HEIGHT or 420
+    return maxH and math.min(minH, maxH) or minH
+end
+
 function EHR_HealthPanelUI:new(x, y, player)
-    local o = ISPanel:new(x, y, EHR_HealthPanelUI.EXPANDED_WIDTH, EHR_HealthPanelUI.HEIGHT)
+    local o = ISPanel:new(x, y, EHR_HealthPanelUI.EXPANDED_WIDTH, EHR_HealthPanelUI.GetFitHeight())
     setmetatable(o, self)
     self.__index = self
 
@@ -938,7 +958,7 @@ function EHR_HealthPanelUI:createChildren()
     self.antibodiesButton.borderColor = { r = 0.72, g = 0.24, b = 0.20, a = 1 }
     self.antibodiesButton.backgroundColor = { r = 0.045, g = 0.025, b = 0.025, a = 0.72 }
     self.antibodiesButton.backgroundColorMouseOver = { r = 0.20, g = 0.055, b = 0.045, a = 0.95 }
-    self.antibodiesButton:setTooltip(safeText("UI_EHR_AntibodiesPanel", "Antibodies panel"))
+    self.antibodiesButton:setTooltip(safeText("UI_HomeMedic_AntibodiesPanel", "Antibodies panel"))
     local antibodiesIcon = getTexture and getTexture("media/textures/Item_AntibodyCompTest.png") or nil
     if antibodiesIcon then
         self.antibodiesButton:setImage(antibodiesIcon)
@@ -950,7 +970,7 @@ function EHR_HealthPanelUI:createChildren()
     self:addChild(self.antibodiesButton)
 
     self.administerMedicationButton = ISButton:new(self.width - 274, 6, 174, 24,
-        safeText("UI_EHR_MPMedication_Administer", "Administer Medication"),
+        safeText("UI_HomeMedic_MPMedication_Administer", "Administer Medication"),
         self, EHR_HealthPanelUI.onOpenMedicationAdminister)
     self.administerMedicationButton:initialise()
     self.administerMedicationButton:instantiate()
@@ -958,7 +978,7 @@ function EHR_HealthPanelUI:createChildren()
     self.administerMedicationButton.backgroundColor = { r = 0.045, g = 0.025, b = 0.025, a = 0.88 }
     self.administerMedicationButton.backgroundColorMouseOver = { r = 0.20, g = 0.055, b = 0.045, a = 0.95 }
     self.administerMedicationButton:setTooltip(safeText(
-        "UI_EHR_MPMedication_ButtonTooltip",
+        "UI_HomeMedic_MPMedication_ButtonTooltip",
         "Administer a medication from your inventory to this patient."
     ))
     self.administerMedicationButton:setVisible(false)
@@ -1219,26 +1239,30 @@ end
 
 function EHR_HealthPanelUI:getTabDefinitions()
     local vanillaText = xpSystemText or {}
+    -- HARMONIE: "Diagnosis" tab (client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua)
+    local diagnosis = { id = "diagnosis", label = safeText("UI_HomeMedic_Tab_Diagnosis", "Diagnosis") }
     if self.isRemoteHealthPanel then
         return {
-            { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
+            { id = "ehr", label = safeText("UI_HomeMedic_Tab_EHR_Compact", "EHR") },
+            diagnosis,
         }
     end
     if self.width < 560 then
         return {
-            { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
+            { id = "ehr", label = safeText("UI_HomeMedic_Tab_EHR_Compact", "EHR") },
         }
     end
 
     local compact = self.width < 760
     return {
-        { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "EHR") or safeText("UI_EHR_Tab_EHR", "EHR Monitor") },
-        { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
-        { id = "info", label = vanillaText.info or safeText("UI_EHR_Tab_Info", "Info") },
-        { id = "skills", label = vanillaText.skills or safeText("UI_EHR_Tab_Skills", "Skills") },
-        { id = "health", label = vanillaText.health or safeText("UI_EHR_Tab_Health", "Health") },
-        { id = "protection", label = compact and safeText("UI_EHR_Tab_Protection_Compact", "Protect") or (vanillaText.protection or safeText("UI_EHR_Tab_Protection", "Protection")) },
-        { id = "temperature", label = compact and safeText("UI_EHR_Tab_Temperature_Compact", "Temp") or safeText("UI_EHR_Tab_Temperature", "Temperature") },
+        { id = "ehr", label = compact and safeText("UI_HomeMedic_Tab_EHR_Compact", "EHR") or safeText("UI_HomeMedic_Tab_EHR", "EHR Monitor") },
+        { id = "immunity", label = compact and safeText("UI_HomeMedic_Tab_Immunity_Compact", "Immune System") or safeText("UI_HomeMedic_Tab_Immunity", "Immune System") },
+        diagnosis,
+        { id = "info", label = vanillaText.info or safeText("UI_HomeMedic_Tab_Info", "Info") },
+        { id = "skills", label = vanillaText.skills or safeText("UI_HomeMedic_Tab_Skills", "Skills") },
+        { id = "health", label = vanillaText.health or safeText("UI_HomeMedic_Tab_Health", "Health") },
+        { id = "protection", label = compact and safeText("UI_HomeMedic_Tab_Protection_Compact", "Protect") or (vanillaText.protection or safeText("UI_HomeMedic_Tab_Protection", "Protection")) },
+        { id = "temperature", label = compact and safeText("UI_HomeMedic_Tab_Temperature_Compact", "Temp") or safeText("UI_HomeMedic_Tab_Temperature", "Temperature") },
     }
 end
 
@@ -1843,7 +1867,7 @@ function EHR_HealthPanelUI:clampWindowSize(width, height)
     local maxW = core and (core:getScreenWidth() - math.max(0, self.x) - 8) or width
     local maxH = core and (core:getScreenHeight() - math.max(0, self.y) - 8) or height
     local minW = self.rightExpanded and 700 or (self.MIN_WIDTH or 420)
-    local minH = self.MIN_HEIGHT or 420
+    local minH = EHR_HealthPanelUI.GetMinHeight()
 
     return clamp(width, minW, math.max(minW, maxW)), clamp(height, minH, math.max(minH, maxH))
 end
@@ -1868,7 +1892,7 @@ end
 
 function EHR_HealthPanelUI:ensureUsableSize()
     local minW = self.rightExpanded and 700 or (self.MIN_WIDTH or 420)
-    local minH = self.MIN_HEIGHT or 420
+    local minH = EHR_HealthPanelUI.GetMinHeight()
     if self.width >= minW and self.height >= minH then return end
 
     local newW, newH = self:clampWindowSize(self.width, self.height)
@@ -1959,7 +1983,8 @@ function EHR_HealthPanelUI:truncateText(text, maxWidth, font)
     local ellipsis = "..."
     local result = text
     while string.len(result) > 1 and self:getTextWidth(result .. ellipsis, font) > maxWidth do
-        result = string.sub(result, 1, string.len(result) - 1)
+        -- HARMONIE: drop a whole UTF-8 character (Thai letters are 3 bytes)
+        result = result:gsub("[%z\1-\127\194-\244][\128-\191]*$", "")
     end
     return result .. ellipsis
 end
@@ -2035,6 +2060,7 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         health = "media/textures/EHR_Tab_Health.png",
         protection = "media/textures/EHR_Tab_Protection.png",
         temperature = "media/textures/EHR_Tab_Temperature.png",
+        diagnosis = "media/textures/HARMONIE_HomeMedic/tab_diagnosis.png",
     }
 
     local path = paths[tabId]
@@ -2236,28 +2262,28 @@ function EHR_HealthPanelUI:getDiseaseDefinition(diseaseId, disease)
     if type(disease) == "table" then
         if disease.isCorpseExposure then
             return {
-                name = disease.displayName or safeText("UI_EHR_CorpseExposure", "Corpse Exposure"),
-                symptoms = { safeText("UI_EHR_Symptom_Nausea", "Nausea"), safeText("UI_EHR_Symptom_Dizziness", "Dizziness"), safeText("UI_EHR_Symptom_EyeIrritation", "Eye irritation") },
+                name = disease.displayName or safeText("UI_HomeMedic_CorpseExposure", "Corpse Exposure"),
+                symptoms = { safeText("UI_HomeMedic_Symptom_Nausea", "Nausea"), safeText("UI_HomeMedic_Symptom_Dizziness", "Dizziness"), safeText("UI_HomeMedic_Symptom_EyeIrritation", "Eye irritation") },
             }
         end
         if disease.isWoundInfection then
             local partCount = tonumber(disease.infectedCount) or 1
             local partText = partCount > 1 and (" (" .. partCount .. " wounds)") or ""
             return {
-                name = safeText("UI_EHR_WoundInfection", "Wound Infection") .. partText,
-                symptoms = { safeText("UI_EHR_Symptom_Pain", "Pain"), safeText("UI_EHR_Symptom_Swelling", "Swelling"), safeText("UI_EHR_Symptom_Redness", "Redness"), safeText("UI_EHR_Symptom_Fever", "Fever") },
+                name = safeText("UI_HomeMedic_WoundInfection", "Wound Infection") .. partText,
+                symptoms = { safeText("UI_HomeMedic_Symptom_Pain", "Pain"), safeText("UI_HomeMedic_Symptom_Swelling", "Swelling"), safeText("UI_HomeMedic_Symptom_Redness", "Redness"), safeText("UI_HomeMedic_Symptom_Fever", "Fever") },
             }
         end
         if disease.isSepsis then
             return {
-                name = safeText("UI_EHR_Sepsis", "Sepsis"),
-                symptoms = { safeText("UI_EHR_Symptom_Fever", "Fever"), safeText("UI_EHR_Symptom_RapidHeartbeat", "Rapid heartbeat"), safeText("UI_EHR_Symptom_Confusion", "Confusion"), safeText("UI_EHR_Symptom_ExtremePain", "Extreme pain") },
+                name = safeText("UI_HomeMedic_Sepsis", "Sepsis"),
+                symptoms = { safeText("UI_HomeMedic_Symptom_Fever", "Fever"), safeText("UI_HomeMedic_Symptom_RapidHeartbeat", "Rapid heartbeat"), safeText("UI_HomeMedic_Symptom_Confusion", "Confusion"), safeText("UI_HomeMedic_Symptom_ExtremePain", "Extreme pain") },
             }
         end
         if disease.isKnox then
             return {
-                name = safeText("UI_EHR_KnoxInfection", "Knox Virus Infection"),
-                symptoms = { safeText("UI_EHR_Symptom_Fever", "Fever"), safeText("UI_EHR_Symptom_Nausea", "Nausea"), safeText("UI_EHR_Symptom_Weakness", "Weakness"), safeText("UI_EHR_Symptom_PaleSkin", "Pale skin") },
+                name = safeText("UI_HomeMedic_KnoxInfection", "Knox Virus Infection"),
+                symptoms = { safeText("UI_HomeMedic_Symptom_Fever", "Fever"), safeText("UI_HomeMedic_Symptom_Nausea", "Nausea"), safeText("UI_HomeMedic_Symptom_Weakness", "Weakness"), safeText("UI_HomeMedic_Symptom_PaleSkin", "Pale skin") },
             }
         end
     end
@@ -2304,8 +2330,8 @@ function EHR_HealthPanelUI:getUnknownDiseaseInfo(diseaseId)
         end
     end
     return {
-        displayName = safeText("UI_EHR_DiseaseUnknown", "Unknown Illness"),
-        description = safeText("UI_EHR_DiseaseUnknownDesc", "You feel unwell."),
+        displayName = safeText("UI_HomeMedic_DiseaseUnknown", "Unknown Illness"),
+        description = safeText("UI_HomeMedic_DiseaseUnknownDesc", "You feel unwell."),
     }
 end
 
@@ -2319,7 +2345,7 @@ function EHR_HealthPanelUI:getDiseaseDisplayInfo(diseaseId, disease)
         local canIdentifyKnox = self:hasDiseaseKnowledge("knox_infection")
         if not canIdentifyKnox then
             local unknownInfo = self:getUnknownDiseaseInfo("knox_infection")
-            local unknownName = unknownInfo.displayName or safeText("UI_EHR_DiseaseUnknown", "Unknown Illness")
+            local unknownName = unknownInfo.displayName or safeText("UI_HomeMedic_DiseaseUnknown", "Unknown Illness")
             return {
                 displayName = unknownName,
                 realName = unknownName,
@@ -2330,7 +2356,7 @@ function EHR_HealthPanelUI:getDiseaseDisplayInfo(diseaseId, disease)
                 showStageSeverity = false,
                 showProgress = false,
                 showTreatmentStatus = false,
-                detailText = unknownInfo.description or safeText("UI_EHR_DiseaseUnknownDesc", "You feel unwell."),
+                detailText = unknownInfo.description or safeText("UI_HomeMedic_DiseaseUnknownDesc", "You feel unwell."),
                 progressText = "",
                 hideProgressBar = true,
                 skillTier = skillTier,
@@ -2349,8 +2375,8 @@ function EHR_HealthPanelUI:getDiseaseDisplayInfo(diseaseId, disease)
             showStageSeverity = false,
             showProgress = false,
             showTreatmentStatus = true,
-            statusText = safeText("UI_EHR_Status_NoCure", "NO CURE"),
-            detailText = safeText("UI_EHR_KnoxNoCureDetail", "This is how you die"),
+            statusText = safeText("UI_HomeMedic_Status_NoCure", "NO CURE"),
+            detailText = safeText("UI_HomeMedic_KnoxNoCureDetail", "This is how you die"),
             progressText = "",
             hideProgressBar = true,
             skillTier = skillTier,
@@ -2382,7 +2408,7 @@ function EHR_HealthPanelUI:getDiseaseDisplayInfo(diseaseId, disease)
         or self:hasDiseaseKnowledge(normalized)
         or self:isSelfEvidentDisease(normalized)
     local unknownInfo = self:getUnknownDiseaseInfo(normalized)
-    local displayName = canIdentify and realName or (unknownInfo.displayName or safeText("UI_EHR_DiseaseUnknown", "Unknown Illness"))
+    local displayName = canIdentify and realName or (unknownInfo.displayName or safeText("UI_HomeMedic_DiseaseUnknown", "Unknown Illness"))
     local detailText = nil
     local detailColor = nil
     local statusText = nil
@@ -2395,14 +2421,14 @@ function EHR_HealthPanelUI:getDiseaseDisplayInfo(diseaseId, disease)
 
     if normalized == "concussion" and canIdentify then
         local stage = type(disease) == "table" and (tonumber(disease.stage) or 1) or 1
-        detailText = safeFormat("UI_EHR_DiseaseDetail_StageTimeRest", "Stage %1   Time and rest", stage)
+        detailText = safeFormat("UI_HomeMedic_DiseaseDetail_StageTimeRest", "Stage %1   Time and rest", stage)
         detailColor = EHR_HealthPanelUI.Colors.green
-        statusText = safeText("UI_EHR_Status_Recovering", "RECOVERING")
+        statusText = safeText("UI_HomeMedic_Status_Recovering", "RECOVERING")
         statusColor = EHR_HealthPanelUI.Colors.green
     end
 
     if normalized == "delirium" and canIdentify then
-        detailText = safeText("UI_EHR_DeliriumCourseRequired", "Antipsychotic course required")
+        detailText = safeText("UI_HomeMedic_DeliriumCourseRequired", "Antipsychotic course required")
         detailColor = EHR_HealthPanelUI.Colors.yellow
         statusText = nil
         statusColor = nil
@@ -2657,7 +2683,7 @@ function EHR_HealthPanelUI:addSpecialConditionEntries(activeDiseases, data)
         local stageByLevel = { Low = 1, Medium = 2, High = 3 }
         local stage = stageByLevel[corpseExposureLevel] or 1
         activeDiseases["corpse_exposure"] = {
-            displayName = safeText("UI_EHR_CorpseExposure", "Corpse Exposure"),
+            displayName = safeText("UI_HomeMedic_CorpseExposure", "Corpse Exposure"),
             exposureLevel = corpseExposureLevel,
             exposureColor = self:getCorpseExposureColor(corpseExposureLevel),
             severity = stage,
@@ -2677,7 +2703,7 @@ function EHR_HealthPanelUI:addSpecialConditionEntries(activeDiseases, data)
             local stage = stageByLevel[exposureLevel] or 1
 
             activeDiseases["cadaveric_aspergillosis_exposure"] = {
-                displayName = safeText("UI_EHR_CadavericAspergillosisExposure", "Cadaveric Aspergillosis Exposure"),
+                displayName = safeText("UI_HomeMedic_CadavericAspergillosisExposure", "Cadaveric Aspergillosis Exposure"),
                 exposureLevel = exposureLevel,
                 exposureColor = self:getCorpseExposureColor(exposureLevel),
                 severity = stage,
@@ -2714,7 +2740,7 @@ function EHR_HealthPanelUI:addSpecialConditionEntries(activeDiseases, data)
             end
 
             activeDiseases["heat_exhaustion_exposure"] = {
-                displayName = safeText("UI_EHR_Moodle_HeatExposure_Title", "Heat Exhaustion Exposure"),
+                displayName = safeText("UI_HomeMedic_Moodle_HeatExposure_Title", "Heat Exhaustion Exposure"),
                 exposureLevel = exposureLevel,
                 exposureColor = exposureColor,
                 severity = stage,
@@ -2770,7 +2796,7 @@ function EHR_HealthPanelUI:addSpecialConditionEntries(activeDiseases, data)
 
     if knoxInfected then
         activeDiseases["knox_infection"] = {
-            displayName = safeText("UI_EHR_KnoxInfection", "Knox Virus Infection"),
+            displayName = safeText("UI_HomeMedic_KnoxInfection", "Knox Virus Infection"),
             severity = 0,
             progress = knoxProgress,
             stage = 0,
@@ -3110,7 +3136,7 @@ function EHR_HealthPanelUI:drawLockedBloodSensor(x, y, w, h)
     self:drawRectBorder(x - 4, y - 4, w + 8, h + 8, 0.65, c.borderDim.r, c.borderDim.g, c.borderDim.b)
     self:drawRect(x, y, w, h, 1, 0.035, 0.035, 0.04)
     self:drawRect(x, y, w, math.max(2, math.floor(h * 0.22)), 0.14, 0.8, 0.8, 0.72)
-    self:drawTextCentre("Medical watch required", x + math.floor(w / 2), y + 1, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+    self:drawTextCentre(safeText("UI_HomeMedic_MedicalWatchRequired", "Medical watch required"), x + math.floor(w / 2), y + 1, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     self:drawRectBorder(x, y, w, h, c.borderDim.a, c.borderDim.r, c.borderDim.g, c.borderDim.b)
 end
 
@@ -3140,7 +3166,7 @@ function EHR_HealthPanelUI:drawBloodCompositionPanel()
     local diseaseCount = countTable(self.cachedData.diseases)
     local medicationCount = #(self.cachedData.activeMedications or {})
     local watchRequired = self:isMedicalWatchRequired()
-    self:drawPanelFrame(x, y, w, h, safeText("UI_EHR_BloodComposition", "BLOOD COMPOSITION"), nil)
+    self:drawPanelFrame(x, y, w, h, safeText("UI_HomeMedic_BloodComposition", "BLOOD COMPOSITION"), nil)
 
     hasWatch = (not watchRequired) or hasWatch
 
@@ -3176,7 +3202,7 @@ function EHR_HealthPanelUI:drawBloodCompositionPanel()
         if not hasWatch then
             return
         end
-        local compactText = hasWatch and string.format("%dmL / %dmL", math.floor(summary.current + 0.5), math.floor(summary.max + 0.5)) or safeText("UI_EHR_MedicalWatchRequired", "Medical watch required")
+        local compactText = hasWatch and string.format("%dmL / %dmL", math.floor(summary.current + 0.5), math.floor(summary.max + 0.5)) or safeText("UI_HomeMedic_MedicalWatchRequired", "Medical watch required")
         self:drawText(self:truncateText(compactText, math.max(80, barW - 4), stripFont), stripX, stripY, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, stripFont)
         return
     end
@@ -3187,10 +3213,10 @@ function EHR_HealthPanelUI:drawBloodCompositionPanel()
     end
     local cells = {}
     if hasWatch then
-        table.insert(cells, { text = safeFormat("UI_EHR_SalineVolume", "Saline: %1mL (%2%)", math.floor(summary.saline + 0.5), math.floor(summary.salinePct + 0.5)), color = c.blue })
+        table.insert(cells, { text = safeFormat("UI_HomeMedic_SalineVolume", "Saline: %1mL (%2%)", math.floor(summary.saline + 0.5), math.floor(summary.salinePct + 0.5)), color = c.blue })
     end
-    table.insert(cells, { text = safeFormat("UI_EHR_ConditionsCount", "Conditions: %1", diseaseCount), color = c.textDim })
-    table.insert(cells, { text = safeFormat("UI_EHR_MedicationsCount", "Medications: %1", medicationCount), color = c.textDim })
+    table.insert(cells, { text = safeFormat("UI_HomeMedic_ConditionsCount", "Conditions: %1", diseaseCount), color = c.textDim })
+    table.insert(cells, { text = safeFormat("UI_HomeMedic_MedicationsCount", "Medications: %1", medicationCount), color = c.textDim })
 
         local cursorX = stripX
     for i, cell in ipairs(cells) do
@@ -3218,7 +3244,7 @@ function EHR_HealthPanelUI:drawHeader()
     self:drawRect(0, self.HEADER_HEIGHT - 1, self.width, 1, 0.85, c.border.r, c.border.g, c.border.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
     local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190))
-    self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), 14, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
+    self:drawDockedText(self:truncateText(safeText("UI_HomeMedic_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), 14, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
     local rightReserve = self.activeTab == "ehr" and 86 or 50
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
         rightReserve = rightReserve + 30
@@ -4379,7 +4405,7 @@ end
 
 function EHR_HealthPanelUI:getCleanBandagePackOptionText()
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_EHR_BandagePack_ApplyFromPack", "Apply Clean Bandage from Pack")
+        return EHR.Locale.Text("UI_HomeMedic_BandagePack_ApplyFromPack", "Apply Clean Bandage from Pack")
     end
     return "Apply Clean Bandage from Pack"
 end
@@ -4494,98 +4520,98 @@ function EHR_HealthPanelUI:getBodyPartStatuses(bodyPart)
 
     if bodyValue("bleeding", "bleeding", false) == true then
         hasLocalizedDamage = true
-        add("bleeding", safeText("UI_EHR_BodyLegend_Bleeding", "Bleeding"), c.red, 1.00, 110)
+        add("bleeding", safeText("UI_HomeMedic_BodyLegend_Bleeding", "Bleeding"), c.red, 1.00, 110)
     end
 
     if infected or infectionLevel > infectionLevelThreshold or (type(ehrWoundPartData) == "table" and (tonumber(ehrWoundPartData.stage) or 0) > 0) then
         hasLocalizedDamage = true
-        add("infected", safeText("UI_EHR_BodyLegend_Infected", "Infected"), c.purple, 0.80, 100)
+        add("infected", safeText("UI_HomeMedic_BodyLegend_Infected", "Infected"), c.purple, 0.80, 100)
     end
 
     if (tonumber(bodyValue("fractureTime", "getFractureTime", 0)) or 0) > 0 then
         hasLocalizedDamage = true
-        add("fracture", "Fracture", c.red, 1.00, 95)
+        add("fracture", safeText("UI_HomeMedic_BodyLegend_Fracture", "Fracture"), c.red, 1.00, 95)
     end
     if bodyValue("haveBullet", "haveBullet", false) == true then
         hasLocalizedDamage = true
-        add("bullet", "Lodged bullet", c.red, 1.00, 94)
+        add("bullet", safeText("UI_HomeMedic_BodyLegend_LodgedBullet", "Lodged bullet"), c.red, 1.00, 94)
     end
     if bodyValue("haveGlass", "haveGlass", false) == true then
         hasLocalizedDamage = true
-        add("glass", "Glass shards", c.red, 1.00, 92)
+        add("glass", safeText("UI_HomeMedic_BodyLegend_GlassShards", "Glass shards"), c.red, 1.00, 92)
     end
     if (tonumber(bodyValue("burnTime", "getBurnTime", 0)) or 0) > 0 then
         hasLocalizedDamage = true
-        local label = bodyValue("needBurnWash", "isNeedBurnWash", false) == true and "Burn needs cleaning" or "Burn"
+        local label = bodyValue("needBurnWash", "isNeedBurnWash", false) == true and safeText("UI_HomeMedic_BodyLegend_BurnNeedsCleaning", "Burn needs cleaning") or safeText("UI_HomeMedic_BodyLegend_Burn", "Burn")
         add("burn", label, c.orange, 0.60, 88)
     end
 
     if bodyValue("deepWounded", "deepWounded", false) == true then
         hasLocalizedDamage = true
-        add("deep_wound", "Deep wound", c.orange, 0.60, 84)
+        add("deep_wound", safeText("UI_HomeMedic_BodyLegend_DeepWound", "Deep wound"), c.orange, 0.60, 84)
     end
     if bodyValue("bitten", "bitten", false) == true then
         hasLocalizedDamage = true
-        add("bite", "Bite", c.red, 1.00, 82)
+        add("bite", safeText("UI_HomeMedic_BodyLegend_Bite", "Bite"), c.red, 1.00, 82)
     end
     if bodyValue("cut", "isCut", false) == true then
         hasLocalizedDamage = true
-        add("cut", "Cut", c.orange, 0.60, 78)
+        add("cut", safeText("UI_HomeMedic_BodyLegend_Cut", "Cut"), c.orange, 0.60, 78)
     end
     if bodyValue("scratched", "scratched", false) == true then
         hasLocalizedDamage = true
-        add("scratch", "Scratch", c.orange, 0.60, 74)
+        add("scratch", safeText("UI_HomeMedic_BodyLegend_Scratch", "Scratch"), c.orange, 0.60, 74)
     end
 
     if additionalPain > 50 then
-        add("pain", "Heavy pain", c.orange, 0.60, 72)
+        add("pain", safeText("UI_HomeMedic_BodyLegend_HeavyPain", "Heavy pain"), c.orange, 0.60, 72)
     elseif additionalPain > 10 then
-        add("pain", safeText("UI_EHR_Symptom_Pain", "Pain"), c.orange, 0.60, 68)
+        add("pain", safeText("UI_HomeMedic_Symptom_Pain", "Pain"), c.orange, 0.60, 68)
     elseif additionalPain >= 1 then
-        add("pain", "Minor pain", c.orange, 0.60, 42)
+        add("pain", safeText("UI_HomeMedic_BodyLegend_MinorPain", "Minor pain"), c.orange, 0.60, 42)
     end
 
     if stiffness >= 20 then
-        add("stiffness", "Muscle strain", c.orange, 0.60, 70)
+        add("stiffness", safeText("UI_HomeMedic_BodyLegend_MuscleStrain", "Muscle strain"), c.orange, 0.60, 70)
     elseif stiffness >= 5 then
-        add("stiffness", "Minor stiffness", c.yellow, 0.40, 45)
+        add("stiffness", safeText("UI_HomeMedic_BodyLegend_MinorStiffness", "Minor stiffness"), c.yellow, 0.40, 45)
     elseif stiffness >= 1 then
-        add("stiffness", "Slight stiffness", c.yellow, 0.40, 38)
+        add("stiffness", safeText("UI_HomeMedic_BodyLegend_SlightStiffness", "Slight stiffness"), c.yellow, 0.40, 38)
     end
 
     if bandaged then
         hasLocalizedDamage = true
         if bandageLife <= 0 then
-            add("dirty_bandage", safeText("UI_EHR_BodyLegend_DirtyBandage", "Dirty bandage"), c.yellow, 0.40, 89)
+            add("dirty_bandage", safeText("UI_HomeMedic_BodyLegend_DirtyBandage", "Dirty bandage"), c.yellow, 0.40, 89)
         else
-            add("bandaged", safeText("UI_EHR_BodyLegend_Bandaged", "Bandaged"), c.green, 0.20, 89)
+            add("bandaged", safeText("UI_HomeMedic_BodyLegend_Bandaged", "Bandaged"), c.green, 0.20, 89)
         end
     end
     if bodyValue("stitched", "stitched", false) == true then
         hasLocalizedDamage = true
-        add("stitched", "Stitched", c.green, 0.20, 32)
+        add("stitched", safeText("UI_HomeMedic_BodyLegend_Stitched", "Stitched"), c.green, 0.20, 32)
     end
     if (tonumber(bodyValue("splintFactor", "getSplintFactor", 0)) or 0) > 0 then
         hasLocalizedDamage = true
-        add("splinted", "Splinted", c.green, 0.20, 30)
+        add("splinted", safeText("UI_HomeMedic_BodyLegend_Splinted", "Splinted"), c.green, 0.20, 30)
     end
     if (tonumber(bodyValue("plantainFactor", "getPlantainFactor", 0)) or 0) > 0 then
-        add("plantain", "Plantain poultice", c.green, 0.20, 26)
+        add("plantain", safeText("UI_HomeMedic_BodyLegend_PlantainPoultice", "Plantain poultice"), c.green, 0.20, 26)
     end
     if (tonumber(bodyValue("comfreyFactor", "getComfreyFactor", 0)) or 0) > 0 then
-        add("comfrey", "Comfrey poultice", c.green, 0.20, 26)
+        add("comfrey", safeText("UI_HomeMedic_BodyLegend_ComfreyPoultice", "Comfrey poultice"), c.green, 0.20, 26)
     end
 
     if hasLocalizedDamage and health < 45 then
-        add("damaged", "Severe damage", c.red, 1.00, 86)
+        add("damaged", safeText("UI_HomeMedic_BodyLegend_SevereDamage", "Severe damage"), c.red, 1.00, 86)
     elseif hasLocalizedDamage and health < 85 then
         local color = health < 45 and c.red or c.orange
         local visualValue = health < 45 and 1.00 or 0.60
-        add("damaged", "Damaged", color, visualValue, 40)
+        add("damaged", safeText("UI_HomeMedic_BodyLegend_Damaged", "Damaged"), color, visualValue, 40)
     end
 
     if hasInjury and #statuses == 0 then
-        add("injury", "Injury", c.orange, 0.60, 46)
+        add("injury", safeText("UI_HomeMedic_BodyLegend_Injury", "Injury"), c.orange, 0.60, 46)
     end
 
     table.sort(statuses, function(a, b)
@@ -4653,7 +4679,7 @@ function EHR_HealthPanelUI:getSelectedBodyPartText()
         end
         return tostring(bodyPart:getType())
     end
-    return "None"
+    return safeText("UI_HomeMedic_None", "None")
 end
 
 function EHR_HealthPanelUI:getSelectedBodyPartStatuses()
@@ -4780,11 +4806,11 @@ end
 function EHR_HealthPanelUI:drawBodyLegend(x, y, w)
     local c = EHR_HealthPanelUI.Colors
     local items = {
-        { label = safeText("UI_EHR_BodyLegend_Bandaged", "Bandaged"), color = c.green },
-        { label = safeText("UI_EHR_BodyLegend_DirtyBandage", "Dirty bandage"), color = c.yellow },
-        { label = safeText("UI_EHR_BodyLegend_PainWound", "Pain / wound"), color = c.orange },
-        { label = safeText("UI_EHR_BodyLegend_Infected", "Infected"), color = c.purple },
-        { label = safeText("UI_EHR_BodyLegend_Bleeding", "Bleeding"), color = c.red },
+        { label = safeText("UI_HomeMedic_BodyLegend_Bandaged", "Bandaged"), color = c.green },
+        { label = safeText("UI_HomeMedic_BodyLegend_DirtyBandage", "Dirty bandage"), color = c.yellow },
+        { label = safeText("UI_HomeMedic_BodyLegend_PainWound", "Pain / wound"), color = c.orange },
+        { label = safeText("UI_HomeMedic_BodyLegend_Infected", "Infected"), color = c.purple },
+        { label = safeText("UI_HomeMedic_BodyLegend_Bleeding", "Bleeding"), color = c.red },
     }
 
     local rowH = 20
@@ -4810,7 +4836,7 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
     local font = self:getCompactFont()
     local rowH = 20
     local textLift = 9
-    local title = partName and partName ~= "None" and partName or safeText("UI_EHR_NoPartSelected", "No part selected")
+    local title = partName and partName ~= "None" and partName or safeText("UI_HomeMedic_NoPartSelected", "No part selected")
 
     self:drawRect(x, y, w, h, 0.56, 0.025, 0.025, 0.028)
     self:drawRectBorder(x, y, w, h, 0.62, c.borderDim.r, c.borderDim.g, c.borderDim.b)
@@ -4820,8 +4846,8 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
 
     local rowY = y + 33
     if #statuses == 0 then
-        local text = partName == "None" and safeText("UI_EHR_HoverBodyPart", "Hover a body part")
-            or safeText("UI_EHR_NoActiveIssues", "No active issues")
+        local text = partName == "None" and safeText("UI_HomeMedic_HoverBodyPart", "Hover a body part")
+            or safeText("UI_HomeMedic_NoActiveIssues", "No active issues")
         self:drawText(self:truncateText(text, w - 16, font), x + 8, rowY - textLift, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, font)
         return
     end
@@ -4831,7 +4857,7 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
         if rowY + rowH > y + h - 4 then
             local remaining = #statuses - drawn
             if remaining > 0 then
-                local more = safeFormat("UI_EHR_MoreStatuses", "+%1 more", remaining)
+                local more = safeFormat("UI_HomeMedic_MoreStatuses", "+%1 more", remaining)
                 self:drawText(more, x + 8, rowY - 1, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, font)
             end
             break
@@ -4839,7 +4865,7 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
 
         local color = status.color or c.textDim
         self:drawRect(x + 8, rowY + 4, 8, 8, color.a, color.r, color.g, color.b)
-        self:drawText(self:truncateText(status.label or safeText("UI_EHR_GenericStatus", "Status"), w - 30, font), x + 22, rowY - textLift, color.r, color.g, color.b, color.a, font)
+        self:drawText(self:truncateText(status.label or safeText("UI_HomeMedic_GenericStatus", "Status"), w - 30, font), x + 22, rowY - textLift, color.r, color.g, color.b, color.a, font)
         rowY = rowY + rowH
         drawn = drawn + 1
     end
@@ -4849,7 +4875,7 @@ function EHR_HealthPanelUI:drawVanillaBodyPanelFrame(x, y, w, h)
     local c = EHR_HealthPanelUI.Colors
     self.markerBounds = {}
 
-    self:drawPanelFrame(x, y, w, h, safeText("UI_EHR_BodyStatus", "BODY STATUS"), "body_status")
+    self:drawPanelFrame(x, y, w, h, safeText("UI_HomeMedic_BodyStatus", "BODY STATUS"), "body_status")
     self:drawOverallHealthBar(x + 16, y + 50, w - 32)
     self:drawSubtleGrid(x + 12, y + 90, w - 24, math.max(40, h - 126), 22)
 
@@ -4881,12 +4907,12 @@ function EHR_HealthPanelUI:drawVanillaBodyPanelFrame(x, y, w, h)
             end
         end
     else
-        self:drawText(safeText("UI_EHR_BodyPanelUnavailable", "Body panel unavailable"), x + 10, y + 90, c.orange.r, c.orange.g, c.orange.b, c.orange.a, UIFont.Small)
+        self:drawText(safeText("UI_HomeMedic_BodyPanelUnavailable", "Body panel unavailable"), x + 10, y + 90, c.orange.r, c.orange.g, c.orange.b, c.orange.a, UIFont.Small)
     end
 
     local selectedPart = self:getSelectedBodyPartText()
-    local selectedText = safeText("UI_EHR_SelectedPrefix", "Selected: ")
-        .. (selectedPart == "None" and safeText("UI_EHR_NoPartSelected", "No part selected") or selectedPart)
+    local selectedText = safeText("UI_HomeMedic_SelectedPrefix", "Selected: ")
+        .. (selectedPart == "None" and safeText("UI_HomeMedic_NoPartSelected", "No part selected") or selectedPart)
     local statuses = self:getSelectedBodyPartStatuses()
     local statusColor = c.green
     if statuses and statuses[1] then
@@ -4920,18 +4946,18 @@ function EHR_HealthPanelUI:drawLeftPanel()
     self:drawPanelFrame(x, y, w, h, nil, nil)
 
     local overviewH = 112
-    self:drawPanelFrame(x + 10, y + 10, w - 20, overviewH, safeText("UI_EHR_Overview", "OVERVIEW"), "overview")
+    self:drawPanelFrame(x + 10, y + 10, w - 20, overviewH, safeText("UI_HomeMedic_Overview", "OVERVIEW"), "overview")
 
-    local healingText = safeText("UI_EHR_HealingActiveShort", "Healing: Active")
+    local healingText = safeText("UI_HomeMedic_HealingActiveShort", "Healing: Active")
     local healingColor = c.green
     if summary.canHeal == false then
-        healingText = safeText("UI_EHR_HealingSlowedShort", "Healing: Slowed")
+        healingText = safeText("UI_HomeMedic_HealingSlowedShort", "Healing: Slowed")
         healingColor = c.orange
     end
     self:drawText(healingText, x + 22, y + 53, healingColor.r, healingColor.g, healingColor.b, healingColor.a, UIFont.Medium)
 
     if summary.healBlockReason and summary.canHeal == false then
-        self:drawText(safeText("UI_EHR_Reason", "Reason: ") .. tostring(summary.healBlockReason), x + 22, y + 84, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+        self:drawText(safeText("UI_HomeMedic_Reason", "Reason: ") .. tostring(summary.healBlockReason), x + 22, y + 84, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     end
 
     local bodyY = y + overviewH + 12
@@ -5070,7 +5096,7 @@ function EHR_HealthPanelUI:addKnoxCureMedicationEntries(activeMedications, activ
         medKey = "ImmunoboosterShot",
         icon = "ImmunoboosterShot",
         isTreatingDisease = false,
-        effectLabel = safeText("UI_EHR_ProtectionLabel", "Protection:"),
+        effectLabel = safeText("UI_HomeMedic_ProtectionLabel", "Protection:"),
         hoursActiveRemaining = remaining,
         progress = clamp(remaining / math.max(1, duration), 0, 1),
     })
@@ -5098,7 +5124,7 @@ function EHR_HealthPanelUI:drawDiseaseRow(diseaseId, disease, x, y, w)
     local progress = self:getDiseaseProgress(disease)
     local visualProgress = self:getSmoothedDiseaseProgress(diseaseId, disease, progress)
     local treated = self:isDiseaseTreated(diseaseId)
-    local status = displayInfo.statusText or (treated and safeText("UI_EHR_Status_Treating", "TREATING") or safeText("UI_EHR_Status_Untreated", "UNTREATED"))
+    local status = displayInfo.statusText or (treated and safeText("UI_HomeMedic_Status_Treating", "TREATING") or safeText("UI_HomeMedic_Status_Untreated", "UNTREATED"))
     local statusColor = displayInfo.statusColor or (displayInfo.statusText and c.red or (treated and c.green or c.orange))
     local accent, iconLabel
     if displayInfo.canIdentify then
@@ -5121,14 +5147,14 @@ function EHR_HealthPanelUI:drawDiseaseRow(diseaseId, disease, x, y, w)
     local textX = iconX + iconSize + 16
     local textOffset = textX - x
     local textW = displayInfo.showTreatmentStatus and (w - textOffset - 127) or (w - textOffset - 18)
-    local detailsText = safeText("UI_EHR_SeverityUnknown", "Severity: ???")
+    local detailsText = safeText("UI_HomeMedic_SeverityUnknown", "Severity: ???")
     local detailsColor = c.textDim
     if displayInfo.detailText then
         detailsText = displayInfo.detailText
         detailsColor = displayInfo.detailColor or c.red
     elseif type(disease) == "table" and (disease.isCorpseExposure or disease.isExposureCondition) then
         local exposureLevel = tostring(disease.exposureLevel or "Low")
-        detailsText = safeText("UI_EHR_ExposurePrefix", "Exposure: ") .. EHR.Locale.ExposureLevel(exposureLevel)
+        detailsText = safeText("UI_HomeMedic_ExposurePrefix", "Exposure: ") .. EHR.Locale.ExposureLevel(exposureLevel)
         if type(disease.exposureColor) == "table" then
             detailsColor = {
                 r = tonumber(disease.exposureColor[1]) or accent.r,
@@ -5140,7 +5166,7 @@ function EHR_HealthPanelUI:drawDiseaseRow(diseaseId, disease, x, y, w)
             detailsColor = accent
         end
     elseif displayInfo.showStageSeverity then
-        detailsText = safeFormat("UI_EHR_StageSeverity", "Stage %1   Severity %2/5", stage, string.format("%.1f", severity))
+        detailsText = safeFormat("UI_HomeMedic_StageSeverity", "Stage %1   Severity %2/5", stage, string.format("%.1f", severity))
         detailsColor = c.green
     end
     local progressText = displayInfo.progressText
@@ -5188,24 +5214,24 @@ function EHR_HealthPanelUI:drawTreatmentRow(treatment, x, y, w)
         totalDoses = tonumber(treatment.totalDosesNeeded) or 0
         progress = clamp(tonumber(treatment.progress) or 0, 0, 1)
         if totalDoses > 0 then
-            doseText = safeFormat("UI_EHR_DoseCount", "Dose %d/%d", tonumber(treatment.doseCount) or 0, totalDoses)
+            doseText = safeFormat("UI_HomeMedic_DoseCount", "Dose %d/%d", tonumber(treatment.doseCount) or 0, totalDoses)
             if not isTreatingDisease and treatment.isDoseActive then
-                scheduleText = safeText("UI_EHR_MedicationActive", "Active")
+                scheduleText = safeText("UI_HomeMedic_MedicationActive", "Active")
                 scheduleValue = formatShortHours(treatment.hoursActiveRemaining or 0)
                 scheduleColor = c.green
             elseif treatment.isOverdue and not treatment.courseComplete then
-                scheduleText = safeText("UI_EHR_MedicationOverdue", "OVERDUE")
+                scheduleText = safeText("UI_HomeMedic_MedicationOverdue", "OVERDUE")
                 scheduleValue = formatShortHours(treatment.hoursOverdue or 0)
                 scheduleColor = c.red
             elseif treatment.courseComplete then
-                scheduleText = safeText("UI_EHR_CourseComplete", "Course complete")
+                scheduleText = safeText("UI_HomeMedic_CourseComplete", "Course complete")
                 scheduleColor = c.green
             elseif (tonumber(treatment.hoursUntilNextDose) or 0) <= 0.5 then
-                scheduleText = safeText("UI_EHR_NextDoseIn", "Next dose in")
+                scheduleText = safeText("UI_HomeMedic_NextDoseIn", "Next dose in")
                 scheduleValue = formatShortHours(treatment.hoursUntilNextDose or 0)
                 scheduleColor = c.yellow
             else
-                scheduleText = safeText("UI_EHR_NextDoseIn", "Next dose in")
+                scheduleText = safeText("UI_HomeMedic_NextDoseIn", "Next dose in")
                 scheduleValue = formatShortHours(treatment.hoursUntilNextDose or 0)
             end
         end
@@ -5227,14 +5253,14 @@ function EHR_HealthPanelUI:drawTreatmentRow(treatment, x, y, w)
     if isTreatingDisease then
         local valueW = self:getTextWidth(cureRemaining, UIFont.Small)
         self:drawTextRight(cureRemaining, x + w - 10, y + 7, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
-        self:drawTextRight(self:truncateText(safeText("UI_EHR_TimeToCure", "Time to cure:"), math.max(80, w - 210), UIFont.Small), x + w - valueW - 18, y + 7, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+        self:drawTextRight(self:truncateText(safeText("UI_HomeMedic_TimeToCure", "Time to cure:"), math.max(80, w - 210), UIFont.Small), x + w - valueW - 18, y + 7, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     elseif activeValue ~= "" then
         local valueW = self:getTextWidth(activeValue, UIFont.Small)
-        local label = tostring(treatment.effectLabel or safeText("UI_EHR_ActiveLabel", "Active:"))
+        local label = tostring(treatment.effectLabel or safeText("UI_HomeMedic_ActiveLabel", "Active:"))
         self:drawTextRight(activeValue, x + w - 10, y + 7, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Small)
         self:drawTextRight(self:truncateText(label, math.max(80, w - 210), UIFont.Small), x + w - valueW - 18, y + 7, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Small)
     else
-        self:drawTextRight(safeText("UI_EHR_GeneralEffect", "General effect"), x + w - 10, y + 7, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+        self:drawTextRight(safeText("UI_HomeMedic_GeneralEffect", "General effect"), x + w - 10, y + 7, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     end
 
     if doseText ~= "" then
@@ -5272,7 +5298,7 @@ function EHR_HealthPanelUI:drawRightPanel()
     local clipH = h - 56
 
     self:drawPanelFrame(x, y, w, h, nil, nil)
-    self:drawSectionTitle(safeText("UI_EHR_Details", "DETAILS"), x, y, w)
+    self:drawSectionTitle(safeText("UI_HomeMedic_Details", "DETAILS"), x, y, w)
 
     self:setStencilRect(x, clipY, w, clipH)
 
@@ -5283,11 +5309,11 @@ function EHR_HealthPanelUI:drawRightPanel()
         return displayInfo.sortName or displayInfo.displayName
     end)
 
-    self:drawSectionTitle(safeText("UI_EHR_ActiveConditions", "ACTIVE CONDITIONS"), x + 8, contentY, w - 16)
+    self:drawSectionTitle(safeText("UI_HomeMedic_ActiveConditions", "ACTIVE CONDITIONS"), x + 8, contentY, w - 16)
     contentY = contentY + 36
 
     if #diseases == 0 then
-        self:drawText(safeText("UI_EHR_NoConditions", "No active conditions"), x + 18, contentY, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
+        self:drawText(safeText("UI_HomeMedic_NoConditions", "No active conditions"), x + 18, contentY, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
         contentY = contentY + 42
     else
         for _, item in ipairs(diseases) do
@@ -5296,7 +5322,7 @@ function EHR_HealthPanelUI:drawRightPanel()
     end
 
     local treatments = self.cachedData.activeMedications or self.cachedData.activeTreatments or {}
-    self:drawSectionTitle(safeText("UI_EHR_ActiveMedications", "ACTIVE MEDICATIONS"), x + 8, contentY + 8, w - 16)
+    self:drawSectionTitle(safeText("UI_HomeMedic_ActiveMedications", "ACTIVE MEDICATIONS"), x + 8, contentY + 8, w - 16)
     contentY = contentY + 46
 
     if #treatments == 0 then
@@ -5310,7 +5336,7 @@ function EHR_HealthPanelUI:drawRightPanel()
         else
             self:drawRoundIcon(x + 22, contentY + 14, 26, c.panel, c.borderDim, "", c.textDim)
         end
-        self:drawDockedText(safeText("UI_EHR_NoMedications", "No active medications"), x + 64, contentY, w - 92, 54, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
+        self:drawDockedText(safeText("UI_HomeMedic_NoMedications", "No active medications"), x + 64, contentY, w - 92, 54, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
         contentY = contentY + 66
     else
         for _, treatment in ipairs(treatments) do
@@ -5319,11 +5345,11 @@ function EHR_HealthPanelUI:drawRightPanel()
     end
 
     local sideEffects = self.cachedData.activeSideEffects or {}
-    self:drawSectionTitle(safeText("UI_EHR_SideEffects", "SIDE EFFECTS"), x + 8, contentY + 8, w - 16)
+    self:drawSectionTitle(safeText("UI_HomeMedic_SideEffects", "SIDE EFFECTS"), x + 8, contentY + 8, w - 16)
     contentY = contentY + 46
 
     if #sideEffects == 0 then
-        self:drawText(safeText("UI_EHR_NoSideEffects", "No active side effects"), x + 18, contentY, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
+        self:drawText(safeText("UI_HomeMedic_NoSideEffects", "No active side effects"), x + 18, contentY, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
         contentY = contentY + 34
     else
         for _, effect in ipairs(sideEffects) do
@@ -5379,11 +5405,11 @@ end
 
 function EHR_HealthPanelUI:getImmunityStatusText(statusId)
     local labels = {
-        suppressed = safeText("UI_EHR_Immunity_Status_Suppressed", "Suppressed"),
-        compromised = safeText("UI_EHR_Immunity_Status_Compromised", "Compromised"),
-        strained = safeText("UI_EHR_Immunity_Status_Strained", "Strained"),
-        stable = safeText("UI_EHR_Immunity_Status_Stable", "Stable"),
-        strong = safeText("UI_EHR_Immunity_Status_Strong", "Strong"),
+        suppressed = safeText("UI_HomeMedic_Immunity_Status_Suppressed", "Suppressed"),
+        compromised = safeText("UI_HomeMedic_Immunity_Status_Compromised", "Compromised"),
+        strained = safeText("UI_HomeMedic_Immunity_Status_Strained", "Strained"),
+        stable = safeText("UI_HomeMedic_Immunity_Status_Stable", "Stable"),
+        strong = safeText("UI_HomeMedic_Immunity_Status_Strong", "Strong"),
     }
     return labels[statusId] or labels.strained
 end
@@ -5444,11 +5470,11 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
 
     local gameplayActive = enabled and state.observationOnly ~= true
     local topH = 190
-    self:drawPanelFrame(bounds.x, bounds.y, bounds.w, topH, safeText("UI_EHR_Immunity_Title", "IMMUNE SYSTEM"), nil)
+    self:drawPanelFrame(bounds.x, bounds.y, bounds.w, topH, safeText("UI_HomeMedic_Immunity_Title", "IMMUNE SYSTEM"), nil)
 
     if not hasData then
         self:drawDockedTextCenter(
-            safeText("UI_EHR_Immunity_AwaitingData", "Awaiting immune system data"),
+            safeText("UI_HomeMedic_Immunity_AwaitingData", "Awaiting immune system data"),
             bounds.x + 20, bounds.y + 58, bounds.w - 40, 54,
             c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium
         )
@@ -5462,7 +5488,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     )
 
     if not enabled then
-        statusText = safeText("UI_EHR_Immunity_Disabled", "Disabled")
+        statusText = safeText("UI_HomeMedic_Immunity_Disabled", "Disabled")
         scoreColor = c.textDim
     end
     self:drawDockedTextRight(
@@ -5476,19 +5502,19 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     self:drawImmunityBar(barX, barY, barW, 25, score, target, scoreColor)
 
     local trendLabels = {
-        recovering = safeText("UI_EHR_Immunity_Trend_Recovering", "Recovering"),
-        declining = safeText("UI_EHR_Immunity_Trend_Declining", "Declining"),
-        stable = safeText("UI_EHR_Immunity_Trend_Stable", "Stable"),
-        disabled = safeText("UI_EHR_Immunity_Disabled", "Disabled"),
+        recovering = safeText("UI_HomeMedic_Immunity_Trend_Recovering", "Recovering"),
+        declining = safeText("UI_HomeMedic_Immunity_Trend_Declining", "Declining"),
+        stable = safeText("UI_HomeMedic_Immunity_Trend_Stable", "Stable"),
+        disabled = safeText("UI_HomeMedic_Immunity_Disabled", "Disabled"),
     }
     local trend = trendLabels[state.trend] or trendLabels.stable
     self:drawDockedText(
-        safeText("UI_EHR_Immunity_Trend", "Trend") .. ": " .. trend,
+        safeText("UI_HomeMedic_Immunity_Trend", "Trend") .. ": " .. trend,
         barX, barY + 31, math.floor(barW / 2), 24,
         c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, self:getCompactFont()
     )
     self:drawDockedTextRight(
-        string.format("%s: %d%%", safeText("UI_EHR_Immunity_Target", "Target"), math.floor(target + 0.5)),
+        string.format("%s: %d%%", safeText("UI_HomeMedic_Immunity_Target", "Target"), math.floor(target + 0.5)),
         barX + barW, barY + 31, 24,
         c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, self:getCompactFont()
     )
@@ -5498,7 +5524,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     if gameplayActive and EHR.Immunity and EHR.Immunity.GetRiskModifierPercent then
         local riskModifier = tonumber(EHR.Immunity.GetRiskModifierPercent(score)) or 0
         local riskSign = riskModifier > 0 and "+" or ""
-        riskText = safeText("UI_EHR_Immunity_InfectionRisk", "Infection risk")
+        riskText = safeText("UI_HomeMedic_Immunity_InfectionRisk", "Infection risk")
             .. ": " .. riskSign .. string.format("%.1f%%", riskModifier)
         if riskModifier > 0.05 then
             riskColor = c.orange
@@ -5506,8 +5532,8 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
             riskColor = c.green
         end
     else
-        riskText = safeText("UI_EHR_Immunity_InfectionRisk", "Infection risk")
-            .. ": " .. safeText("UI_EHR_Immunity_NotApplied", "Not applied")
+        riskText = safeText("UI_HomeMedic_Immunity_InfectionRisk", "Infection risk")
+            .. ": " .. safeText("UI_HomeMedic_Immunity_NotApplied", "Not applied")
     end
     self:drawDockedTextCenter(
         riskText,
@@ -5522,14 +5548,14 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     local rightW = bounds.w - leftW - gap
     local rightX = bounds.x + leftW + gap
 
-    self:drawPanelFrame(bounds.x, lowerY, leftW, lowerH, safeText("UI_EHR_Immunity_SystemicFactors", "SYSTEMIC FACTORS"), nil)
+    self:drawPanelFrame(bounds.x, lowerY, leftW, lowerH, safeText("UI_HomeMedic_Immunity_SystemicFactors", "SYSTEMIC FACTORS"), nil)
     local factorRows = {
-        { id = "nutrition", label = safeText("UI_EHR_Immunity_Factor_Nutrition", "Nutrition") },
-        { id = "hydration", label = safeText("UI_EHR_Immunity_Factor_Hydration", "Hydration") },
-        { id = "rest", label = safeText("UI_EHR_Immunity_Factor_Rest", "Rest") },
-        { id = "stressControl", label = safeText("UI_EHR_Immunity_Factor_StressControl", "Stress control") },
-        { id = "bloodCondition", label = safeText("UI_EHR_Immunity_Factor_BloodCondition", "Blood condition") },
-        { id = "healthReserve", label = safeText("UI_EHR_Immunity_Factor_HealthReserve", "Health reserve") },
+        { id = "nutrition", label = safeText("UI_HomeMedic_Immunity_Factor_Nutrition", "Nutrition") },
+        { id = "hydration", label = safeText("UI_HomeMedic_Immunity_Factor_Hydration", "Hydration") },
+        { id = "rest", label = safeText("UI_HomeMedic_Immunity_Factor_Rest", "Rest") },
+        { id = "stressControl", label = safeText("UI_HomeMedic_Immunity_Factor_StressControl", "Stress control") },
+        { id = "bloodCondition", label = safeText("UI_HomeMedic_Immunity_Factor_BloodCondition", "Blood condition") },
+        { id = "healthReserve", label = safeText("UI_HomeMedic_Immunity_Factor_HealthReserve", "Health reserve") },
     }
     local factors = type(state.factors) == "table" and state.factors or {}
     local factorX = bounds.x + 16
@@ -5540,7 +5566,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
         self:drawImmunityFactorRow(factor.label, factors[factor.id] or 0, factorX, factorY + (index - 1) * rowH, factorW, rowH)
     end
 
-    self:drawPanelFrame(rightX, lowerY, rightW, lowerH, safeText("UI_EHR_Immunity_BarrierDefense", "DIRTINESS / BLOODINESS"), nil)
+    self:drawPanelFrame(rightX, lowerY, rightW, lowerH, safeText("UI_HomeMedic_Immunity_BarrierDefense", "DIRTINESS / BLOODINESS"), nil)
     local hygiene = type(state.hygiene) == "table" and state.hygiene or nil
     if not hygiene then
         local legacyBarrier = type(state.barrier) == "table" and state.barrier or {}
@@ -5558,7 +5584,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     local metricFont = self:getCompactFont()
 
     self:drawDockedText(
-        safeText("UI_EHR_Immunity_HandsArms", "Dirtiness"),
+        safeText("UI_HomeMedic_Immunity_HandsArms", "Dirtiness"),
         rightX + 16, lowerY + 52, rightW - 92, 24,
         c.text.r, c.text.g, c.text.b, c.text.a, metricFont
     )
@@ -5570,7 +5596,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     self:drawContaminationBar(rightX + 16, lowerY + 80, rightW - 32, 18, dirtiness, dirtColor)
 
     self:drawDockedText(
-        safeText("UI_EHR_Immunity_BloodContamination", "Bloodiness"),
+        safeText("UI_HomeMedic_Immunity_BloodContamination", "Bloodiness"),
         rightX + 16, lowerY + 113, rightW - 92, 24,
         c.text.r, c.text.g, c.text.b, c.text.a, metricFont
     )
@@ -5591,13 +5617,13 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
         penaltyColor = c.yellow
     end
     self:drawDockedText(
-        safeText("UI_EHR_Immunity_HygienePenalty", "Immune penalty") .. ": -" .. string.format("%d", math.floor(hygienePenalty + 0.5)),
+        safeText("UI_HomeMedic_Immunity_HygienePenalty", "Immune penalty") .. ": -" .. string.format("%d", math.floor(hygienePenalty + 0.5)),
         rightX + 16, lowerY + 164, rightW - 32, 24,
         penaltyColor.r, penaltyColor.g, penaltyColor.b, penaltyColor.a, metricFont
     )
 
     local pressuresY = lowerY + 194
-    self:drawSectionTitle(safeText("UI_EHR_Immunity_CurrentPressures", "CURRENT PRESSURES"), rightX + 10, pressuresY, rightW - 20)
+    self:drawSectionTitle(safeText("UI_HomeMedic_Immunity_CurrentPressures", "CURRENT PRESSURES"), rightX + 10, pressuresY, rightW - 20)
     local pressureRows = {}
     for _, factor in ipairs(factorRows) do
         local value = tonumber(factors[factor.id]) or 0
@@ -5607,7 +5633,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     end
     if state.antibioticSuppressed == true then
         table.insert(pressureRows, {
-            label = safeText("UI_EHR_Immunity_AntibioticPressure", "Antibiotic suppression"),
+            label = safeText("UI_HomeMedic_Immunity_AntibioticPressure", "Antibiotic suppression"),
             value = clamp(tonumber(state.antibioticCap) or 35, 0, 100),
             priority = true,
         })
@@ -5620,7 +5646,7 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     local pressureTextY = pressuresY + 38
     if #pressureRows == 0 then
         self:drawDockedText(
-            safeText("UI_EHR_Immunity_NoMajorPressures", "No major systemic pressures"),
+            safeText("UI_HomeMedic_Immunity_NoMajorPressures", "No major systemic pressures"),
             rightX + 18, pressureTextY, rightW - 36, 28,
             c.green.r, c.green.g, c.green.b, c.green.a, self:getCompactFont()
         )
@@ -5644,8 +5670,8 @@ function EHR_HealthPanelUI:drawImmuneStatusPanel()
     end
 
     local systemStateText = gameplayActive
-        and safeText("UI_EHR_Immunity_GameplayActive", "System state: Active")
-        or safeText("UI_EHR_Immunity_MonitoringOnly", "System state: Monitoring only")
+        and safeText("UI_HomeMedic_Immunity_GameplayActive", "System state: Active")
+        or safeText("UI_HomeMedic_Immunity_MonitoringOnly", "System state: Monitoring only")
     self:drawDockedText(
         systemStateText,
         rightX + 18, lowerY + lowerH - 34, rightW - 36, 24,
@@ -5698,7 +5724,7 @@ function EHR_HealthPanelUI:prerender()
 
     if self.isRemoteHealthPanel and type(self.remoteExamData) ~= "table" then
         local waitingText = self.remoteExamError
-            and safeText("UI_EHR_Exam_Failed", "Unable to receive patient data")
+            and safeText("UI_HomeMedic_Exam_Failed", "Unable to receive patient data")
             or safeText("IGUI_Loading", "Waiting for server data...")
         local waitingColor = self.remoteExamError and c.red or c.textDim
         self:drawDockedTextCenter(
@@ -5719,6 +5745,8 @@ function EHR_HealthPanelUI:prerender()
         end
     elseif self.activeTab == "immunity" then
         self:drawImmuneStatusPanel()
+    elseif self.activeTab == "diagnosis" and self.drawDiagnosisPanel then
+        self:drawDiagnosisPanel()
     else
         self:drawEmbeddedTabFrame()
     end
@@ -5729,9 +5757,11 @@ end
 function EHR_HealthPanelUI:render()
     self:drawResizeHandle()
     self:drawTabTooltip()
+    if self.activeTab == "diagnosis" and self.drawDiagnosisTooltip then self:drawDiagnosisTooltip() end
 end
 
 function EHR_HealthPanelUI:onMouseWheel(del)
+    if self.activeTab == "diagnosis" and self.onDiagnosisWheel then return self:onDiagnosisWheel(del) end
     if self.activeTab ~= "ehr" then return false end
     if not self.rightExpanded then return false end
     local maxScroll = self:getMaxContentScroll()
@@ -5900,7 +5930,7 @@ function EHR.UI.ShowHealthPanel(player)
         local screenH = core and core:getScreenHeight() or 720
         local initialW = EHR.UI.ShouldOpenHealthPanelCompact() and EHR_HealthPanelUI.COLLAPSED_WIDTH or EHR_HealthPanelUI.EXPANDED_WIDTH
         local x = math.floor((screenW - initialW) / 2)
-        local y = math.floor((screenH - EHR_HealthPanelUI.HEIGHT) / 2)
+        local y = math.floor((screenH - EHR_HealthPanelUI.GetFitHeight()) / 2)
 
         local panel = EHR_HealthPanelUI:new(math.max(0, x), math.max(0, y), player)
         panel:initialise()
@@ -6103,7 +6133,7 @@ function EHR.UI.ShowRemoteHealthPanel(doctor, patient, examData)
 
         local initialW = EHR.UI.ShouldOpenHealthPanelCompact() and EHR_HealthPanelUI.COLLAPSED_WIDTH or EHR_HealthPanelUI.EXPANDED_WIDTH
         local x = math.floor((screenW - initialW) / 2) + (count % 3) * 24
-        local y = math.floor((screenH - EHR_HealthPanelUI.HEIGHT) / 2) + (count % 3) * 32
+        local y = math.floor((screenH - EHR_HealthPanelUI.GetFitHeight()) / 2) + (count % 3) * 32
 
         panel = EHR_HealthPanelUI:new(math.max(0, x), math.max(0, y), patient)
         panel.isRemoteHealthPanel = true

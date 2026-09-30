@@ -1,0 +1,5 @@
+{
+    "$schema": "https://raw.githubusercontent.com/pz-wiki-modding/pz-translation-data/refs/heads/main/PZ_Translation_Schemas/Mod.schema.json",
+    "name": "HARMONIE - Home Medic",
+    "description": "ระบบสุขภาพแบบครบวงจรสำหรับ Build 42: เลือด โรค บาดแผล ยา และการผ่าตัด (รวม Extensive Health Rework Evolved และ The Only Cure ไว้ในตัว โดยได้รับอนุญาต)"
+}

@@ -17,16 +17,16 @@ EHR.MedicationAction = {}
 
 local function medActionText(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_EHR_MedAction_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_HomeMedic_MedAction_" .. tostring(key), fallback)
     end
-    local ok, value = pcall(getText, "UI_EHR_MedAction_" .. tostring(key))
-    if ok and value and value ~= "UI_EHR_MedAction_" .. tostring(key) then return value end
+    local ok, value = pcall(getText, "UI_HomeMedic_MedAction_" .. tostring(key))
+    if ok and value and value ~= "UI_HomeMedic_MedAction_" .. tostring(key) then return value end
     return fallback
 end
 
 local function medActionFormat(key, fallback, ...)
     if EHR and EHR.Locale and EHR.Locale.Format then
-        return EHR.Locale.Format("UI_EHR_MedAction_" .. tostring(key), fallback, ...)
+        return EHR.Locale.Format("UI_HomeMedic_MedAction_" .. tostring(key), fallback, ...)
     end
     local text = medActionText(key, fallback)
     local args = {...}

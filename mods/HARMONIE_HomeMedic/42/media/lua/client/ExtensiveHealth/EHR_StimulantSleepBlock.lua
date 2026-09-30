@@ -11,7 +11,7 @@ EHR.Stimulants = EHR.Stimulants or {}
 
 local function EHR_StimulantSleepText()
     if getText then
-        local key = "UI_EHR_Caffeine_NoSleep"
+        local key = "UI_HomeMedic_Caffeine_NoSleep"
         local text = getText(key)
         if text and text ~= key then
             return text
@@ -22,7 +22,7 @@ end
 
 local function EHR_BetaBlockerSleepText()
     if getText then
-        local key = "UI_EHR_BetaBlocker_NoSleep"
+        local key = "UI_HomeMedic_BetaBlocker_NoSleep"
         local text = getText(key)
         if text and text ~= key then
             return text
@@ -57,7 +57,7 @@ local function EHR_StimulantSleepBlocked(player)
     if EHR.Insomnia and EHR.Insomnia.ShouldBlockSleep and EHR.Insomnia.ShouldBlockSleep(player) then
         local text = "I'm exhausted, but I can't sleep without medication."
         if getText then
-            local key = "UI_EHR_Insomnia_NoSleep"
+            local key = "UI_HomeMedic_Insomnia_NoSleep"
             local translated = getText(key)
             if translated and translated ~= key then
                 text = translated

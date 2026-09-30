@@ -45,10 +45,10 @@ function EHR.Medication.GetDisplayName(medId, medData)
         end
 
         -- Try auto-generated key based on displayName
-        -- Convert "Cold & Flu Tablets" -> "UI_EHR_Med_ColdFluTablets"
+        -- Convert "Cold & Flu Tablets" -> "UI_HomeMedic_Med_ColdFluTablets"
         if medData.displayName then
             local keyName = medData.displayName:gsub("[%s%-%&%(%)]", ""):gsub("%.", "")
-            local autoKey = "UI_EHR_Med_" .. keyName
+            local autoKey = "UI_HomeMedic_Med_" .. keyName
             local translated = getText(autoKey)
             if translated and translated ~= autoKey then
                 return translated
@@ -75,7 +75,7 @@ function EHR.Medication.GetSideEffectDisplayName(effectId, effectData)
     -- Check if getText is available (client-side only)
     if getText then
         -- Try the side effect translation key (already defined in UI_EN.txt)
-        local key = "UI_SideEffect_" .. effectId:gsub("^%l", string.upper):gsub("_(%l)", function(c) return c:upper() end)
+        local key = "UI_HomeMedic_SideEffect_" .. effectId:gsub("^%l", string.upper):gsub("_(%l)", function(c) return c:upper() end)
         local translated = getText(key)
         if translated and translated ~= key then
             return translated
@@ -87,10 +87,10 @@ function EHR.Medication.GetSideEffectDisplayName(effectId, effectData)
 end
 
 local EHR_MEDICATION_TIER_LABELS = {
-    [0] = { key = "UI_EHR_MedAction_Tier_Basic", fallback = "Basic" },
-    [1] = { key = "UI_EHR_MedAction_Tier_OTC", fallback = "OTC" },
-    [2] = { key = "UI_EHR_MedAction_Tier_Prescription", fallback = "Prescription" },
-    [3] = { key = "UI_EHR_MedAction_Tier_Clinical", fallback = "Clinical" },
+    [0] = { key = "UI_HomeMedic_MedAction_Tier_Basic", fallback = "Basic" },
+    [1] = { key = "UI_HomeMedic_MedAction_Tier_OTC", fallback = "OTC" },
+    [2] = { key = "UI_HomeMedic_MedAction_Tier_Prescription", fallback = "Prescription" },
+    [3] = { key = "UI_HomeMedic_MedAction_Tier_Clinical", fallback = "Clinical" },
 }
 
 function EHR.Medication.GetTierDisplayName(tier)
@@ -107,7 +107,7 @@ function EHR.Medication.GetUseOptionText(medId, medData)
     local tierName = EHR.Medication.GetTierDisplayName(medData and medData.tier)
     if EHR.Locale and EHR.Locale.Format then
         return EHR.Locale.Format(
-            "UI_EHR_MedAction_UseWithTier",
+            "UI_HomeMedic_MedAction_UseWithTier",
             "Use %1 (%2)",
             displayName,
             tierName
@@ -119,13 +119,13 @@ end
 function EHR.Medication.GetCanUseReasonText(reason, reasonKey)
     local fallback = reason or "Cannot use"
     if reasonKey and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_EHR_MedReason_" .. tostring(reasonKey), fallback)
+        return EHR.Locale.Text("UI_HomeMedic_MedReason_" .. tostring(reasonKey), fallback)
     end
     if reason and EHR.Locale and EHR.Locale.TextForLine then
         return EHR.Locale.TextForLine(reason)
     end
     if EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_EHR_MedReason_CannotUse", fallback)
+        return EHR.Locale.Text("UI_HomeMedic_MedReason_CannotUse", fallback)
     end
     return fallback
 end
@@ -801,7 +801,7 @@ EHR.Medication.Database = {
         treats = {},
         displayName = "Warming Pack",
         icon = "WarmingPackeges",
-        nameKey = "UI_EHR_Med_WarmingPack",
+        nameKey = "UI_HomeMedic_Med_WarmingPack",
         usageMessage = "You activate the warming pack and hold it close to your body.",
         adminType = "emergency",
         effectDurationHours = 2.0,
@@ -4349,7 +4349,7 @@ function EHR.Medication.GetTreatmentTimeText(medData)
                 end
                 if EHR.Locale and EHR.Locale.Format then
                     table.insert(parts, EHR.Locale.Format(
-                        "UI_EHR_MedAction_DiseaseHours",
+                        "UI_HomeMedic_MedAction_DiseaseHours",
                         "%1: %2h",
                         diseaseName,
                         tostring(hours)
@@ -4368,7 +4368,7 @@ function EHR.Medication.GetTreatmentTimeText(medData)
     if medData.cureTimeHours then
         if EHR.Locale and EHR.Locale.Format then
             return EHR.Locale.Format(
-                "UI_EHR_MedAction_Hours",
+                "UI_HomeMedic_MedAction_Hours",
                 "%1 hours",
                 tostring(medData.cureTimeHours)
             )

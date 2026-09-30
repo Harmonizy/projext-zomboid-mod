@@ -19,7 +19,7 @@ local function rand(max)
 end
 
 local function text(key, fallback, a)
-    local fullKey = "UI_EHR_HiveWebSearch_" .. tostring(key)
+    local fullKey = "UI_HomeMedic_HiveWebSearch_" .. tostring(key)
     local value = fallback
     if EHR and EHR.Locale and EHR.Locale.Text then value = EHR.Locale.Text(fullKey, fallback)
     elseif getText then

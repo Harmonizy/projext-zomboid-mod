@@ -25,6 +25,8 @@ skipped; a different file of the same path stops the run unless --force.
 
 Usage (from the Zomboid folder that holds mods/):
   python mods/HARMONIE_HomeMedic/tools/merge_ehr.py --ehr PATH [--force] [--dry-run]
+then give the merged keys Home Medic names:
+  python mods/HARMONIE_HomeMedic/tools/rekey_homemedic.py
 PATH = the EHR zip, its Workshop folder (...\\108600\\3726328119) or the mod
 folder (ExtensiveHealthReworkB42) -- the script finds 42/media inside.
 """

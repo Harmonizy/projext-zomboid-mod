@@ -122,40 +122,40 @@ EHR.BodyTemp.Config = {
 -- Cold dialogue by stage
 EHR.BodyTemp.ColdDialogue = {
     [1] = {
-        "UI_EHR_Temp_Chilly1",
-        "UI_EHR_Temp_Chilly2",
+        "UI_HomeMedic_Temp_Chilly1",
+        "UI_HomeMedic_Temp_Chilly2",
     },
     [2] = {
-        "UI_EHR_Temp_Cold1",
-        "UI_EHR_Temp_Cold2",
+        "UI_HomeMedic_Temp_Cold1",
+        "UI_HomeMedic_Temp_Cold2",
     },
     [3] = {
-        "UI_EHR_Temp_VeryCold1",
-        "UI_EHR_Temp_VeryCold2",
+        "UI_HomeMedic_Temp_VeryCold1",
+        "UI_HomeMedic_Temp_VeryCold2",
     },
     [4] = {
-        "UI_EHR_Temp_Freezing1",
-        "UI_EHR_Temp_Freezing2",
+        "UI_HomeMedic_Temp_Freezing1",
+        "UI_HomeMedic_Temp_Freezing2",
     },
 }
 
 -- Hot dialogue by stage
 EHR.BodyTemp.HotDialogue = {
     [1] = {
-        "UI_EHR_Temp_Warm1",
-        "UI_EHR_Temp_Warm2",
+        "UI_HomeMedic_Temp_Warm1",
+        "UI_HomeMedic_Temp_Warm2",
     },
     [2] = {
-        "UI_EHR_Temp_Hot1",
-        "UI_EHR_Temp_Hot2",
+        "UI_HomeMedic_Temp_Hot1",
+        "UI_HomeMedic_Temp_Hot2",
     },
     [3] = {
-        "UI_EHR_Temp_VeryHot1",
-        "UI_EHR_Temp_VeryHot2",
+        "UI_HomeMedic_Temp_VeryHot1",
+        "UI_HomeMedic_Temp_VeryHot2",
     },
     [4] = {
-        "UI_EHR_Temp_Overheating1",
-        "UI_EHR_Temp_Overheating2",
+        "UI_HomeMedic_Temp_Overheating1",
+        "UI_HomeMedic_Temp_Overheating2",
     },
 }
 

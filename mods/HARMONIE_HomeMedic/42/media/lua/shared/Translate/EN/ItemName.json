@@ -65,7 +65,7 @@
     "ExtensiveHealth.EHRMedicalWatch_Left": "Medical Monitor Watch",
     "ExtensiveHealth.EHRMedicalWatch_Right": "Medical Monitor Watch",
     "ExtensiveHealth.EhrRecipePlantBasedAntibiotics": "Recipe: Plant-Based Antibiotics",
-    "ExtensiveHealth.EhrRecipeUltimateCraftGuide": "Recipe: EHR Medicine Crafting Guide",
+    "ExtensiveHealth.EhrRecipeUltimateCraftGuide": "Recipe: Home Medic Medicine Crafting Guide",
     "ExtensiveHealth.ElectrolytePowder": "Electrolyte Powder (Box)",
     "ExtensiveHealth.EmergencySepsisKit": "Emergency Sepsis Kit",
     "ExtensiveHealth.EmptyBloodBag": "Empty Blood Bag",
@@ -119,5 +119,9 @@
     "ExtensiveHealth.CommonColdTea": "Herbal Tea",
     "ExtensiveHealth.AntipyreticTea": "Antipyretic Tea",
     "ExtensiveHealth.RelaxantTea": "Relaxant Tea",
-    "ExtensiveHealth.MedicineStorageBox": "Medicine Storage Box"
+    "ExtensiveHealth.MedicineStorageBox": "Medicine Storage Box",
+    "HARMONIEHomeMedic.GingerBugTonic": "Fermented Ginger-Bug Tonic",
+    "HARMONIEHomeMedic.GraveAshGarlicPoultice": "Grave Ash & Garlic Poultice",
+    "HARMONIEHomeMedic.WarmingSpicedBitters": "Warming Spiced Bitters",
+    "HARMONIEHomeMedic.WillowBarkAntitoxinBooster": "Willow Bark & Herb Antitoxin Booster"
 }

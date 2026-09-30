@@ -21,9 +21,9 @@ EHR.KnoxCureMenu = {}
 
 local function knoxMenuText(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_EHR_KnoxCure_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_HomeMedic_KnoxCure_" .. tostring(key), fallback)
     end
-    local fullKey = "UI_EHR_KnoxCure_" .. tostring(key)
+    local fullKey = "UI_HomeMedic_KnoxCure_" .. tostring(key)
     local ok, value = pcall(getText, fullKey)
     if ok and value and value ~= fullKey then return value end
     return fallback
@@ -31,7 +31,7 @@ end
 
 local function knoxMenuFormat(key, fallback, ...)
     if EHR and EHR.Locale and EHR.Locale.Format then
-        return EHR.Locale.Format("UI_EHR_KnoxCure_" .. tostring(key), fallback, ...)
+        return EHR.Locale.Format("UI_HomeMedic_KnoxCure_" .. tostring(key), fallback, ...)
     end
 
     local text = knoxMenuText(key, fallback)

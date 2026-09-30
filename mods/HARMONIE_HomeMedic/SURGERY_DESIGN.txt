@@ -1,0 +1,61 @@
+HARMONIE - Home Medic : ระบบผ่าตัด (Surgery)                          0.7.0 - ครบทุกเฟส
+
+แนวคิด
+  ประเภทการผ่าตัด = ลำดับของ "กรรมวิธี" (P01..P15) · กรรมวิธีหนึ่ง = มินิเกมหนึ่งแบบ ใช้ซ้ำได้ทุกการผ่าตัด
+
+ไฟล์
+  shared/HARMONIEHomeMedic/Surgery/HM_SurgeryData.lua   ข้อมูลทั้งหมด: ระดับ, กรรมวิธี, อุปกรณ์, การผ่าตัด, โรคที่ต้องผ่าตัด
+  shared/HARMONIEHomeMedic/Surgery/HM_Surgery.lua       ค้นอุปกรณ์, ปลดล็อก, ข้อบ่งชี้, เช็คความพร้อม, คำนวณคุณภาพ, ข้อความคู่มือ, ตัดบรรทัดภาษาไทย
+  shared/HARMONIEHomeMedic/Surgery/HM_SurgeryRules.lua  สถานะ treat จากการผ่าตัด / สถานะ "รอผ่าตัด" (hold)
+  server/HARMONIEHomeMedic/HM_SurgeryServer.lua         ใบอนุญาต, ใช้วัสดุ, ตัดสินผล, ซิงก์ MP
+  client/HARMONIEHomeMedic/Surgery/HM_SurgeryGames.lua  มินิเกม
+  client/HARMONIEHomeMedic/Surgery/HM_SurgeryUI.lua     หน้าต่าง Pre-op, หน้าต่างผ่าตัด, timed action, เมนูคลิกขวา
+  client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua        แท็บ "วินิจฉัย" ในหน้าต่างการแพทย์
+  client/ExtensiveHealth/EHR_MedicalJournalUI.lua       คู่มือโรค: หัวข้อ "การผ่าตัด" + เลื่อนอ่านได้
+
+ผลของการผ่าตัด = สถานะ treat (ของ EHR)
+  treat = EHR_Medication.activeTreatments[โรค] -> โรคหยุดแย่ลง และหายเองเมื่อครบเวลา
+  ผ่าสำเร็จ (>= 45%) -> treat ตามเวลาของโรค · ดีเยี่ยม (>= 80%) -> เวลาเหลือ 60%
+  Wound Infection: หายทันที · กระสุน/เศษแก้ว: เอาออก · Knox: ตัดแขน (TOC) หรือยีนบำบัด
+  โรคเดียวกันผ่าได้วันละครั้ง (ต่อคนไข้)
+
+โรคที่ "ต้องผ่าตัด" ตั้งแต่ระยะ 3 (S.SURGICAL)
+  Cellulitis, Sepsis, Tetanus, Trichinosis, Pneumonia, Cadaveric Aspergillosis, Toxin Poisoning,
+  Hyperkeratotic Scabies, AHTR
+  -> ถ้ากินยาครบคอร์สตอนอยู่ระยะ 3 ขึ้นไป: ยาไม่ทำให้หาย แต่โรคถูก "หยุดไว้" (รอผ่าตัด) นาฬิกาของโรคถูกแช่แข็งทุกนาทีเกม
+     ระยะจึงไม่เพิ่ม -> ผ่าตัดแล้วได้ treat -> หาย
+  -> ต่ำกว่าระยะ 3 หรือโรคอื่น: กินยาแล้วหายเหมือน EHR เดิม
+
+การผ่าตัด 10 แบบ
+  ระดับ     การผ่าตัด                 ขั้นตอน                ใช้กับ                                     ส่วนร่างกาย
+  Clinical  Debridement               P01 P04 P03 P02 P08    Wound Infection, Cellulitis, Tetanus,      ส่วนที่มีแผล
+                                                             Sepsis, Hyperkeratotic Scabies
+  Clinical  Abscess Drainage          P01 P05 P03 P08        Wound Infection, Cellulitis                ส่วนที่มีแผล
+  Clinical  Foreign Body Removal      P01 P06 P02 P08        กระสุน / เศษแก้ว                             ส่วนที่มี
+  Advanced  Parasite Extraction       P01 P06 P03 P08        Trichinosis                                แขน/ขา
+  Advanced  Thoracic Surgery          P01 P15 P09 P08        Pneumonia, Cadaveric Aspergillosis         ลำตัวบน
+  Advanced  Organ Salvage             P01 P15 P03 P08        Sepsis, Toxin Poisoning                    ลำตัวล่าง
+  Master    Neurosurgery              P13 P14 P02 P08        Concussion                                 ศีรษะ
+  Master    Blood Purification        P10 P11 P02            AHTR                                       แขน
+  Master    Amputation (TOC)          P01 P07 P02 P08        แขนที่โดนซอมบี้กัด / เนื้อตาย (แผลติดเชื้อระยะ 3)  มือ/แขนล่าง/แขนบน
+  Master    Experimental              P10 P12 P11            Knox infection (ใช้ Gene Therapy Kit)       แขน
+  การผ่าตัดระดับ Advanced/Master ต้องรู้จักโรคที่เกี่ยวข้องด้วย (ใบปลิวโรค หรือ First Aid 8)
+
+กรรมวิธี 15 แบบ (มินิเกม)
+  P01 Incision     trace            ลากมีดตามเส้น              P09 Drainage       gauge/valve     คุมแรงดันวาล์ว
+  P02 Hemostasis   pulse            คลิกตามจังหวะวง             P10 Catheter       trace/catheter  นำสายตามเส้นเลือดคดเคี้ยว
+  P03 Irrigation   clean            คลิกกำจัดสิ่งสกปรก           P11 Hemodialysis   dialysis        คุมแรงดัน+อัตราไหลพร้อมกัน
+  P04 Necrectomy   necro            ตัดเฉพาะเนื้อดำ              P12 Cell Graft     cells           คลิกเซลล์ 1-9 ตามลำดับ
+  P05 Aspiration   gauge            คุมแรงดูด                   P13 Craniotomy     gauge/drill     คุมความเร็วสว่าน (แถบแคบ)
+  P06 Extraction   extract          ลากวัตถุออกไม่โดนผนัง        P14 Evacuation     extract/clot    ลากลิ่มเลือดออก 3 ก้อน
+  P07 Bone Cut     gauge/saw        คุมความเร็วเลื่อย            P15 Organ Repair   necro/organ     ตัดเฉพาะเนื้อสีเทา
+  P08 Closure      suture           คลิกจุดเย็บตามลำดับ
+
+UI
+  - ทุกหน้าต่างวัดความสูงจากฟอนต์จริง, ตัดข้อความแบบไม่ตัดกลางตัวอักษรไทย, ขึ้นบรรทัดใหม่ในภาษาไทยที่ไม่มีเว้นวรรคได้
+  - รายการที่ยาวเลื่อนด้วยล้อเมาส์ได้; tooltip คำนวณตำแหน่งจากเมาส์จริงแม้ตอนเลื่อน
+  - แท็บ "วินิจฉัย": ทุกโรค/ภาวะ + ระยะ + สถานะ (กำลังรักษา / รอผ่าตัด / ต้องผ่าตัด) + ผลต่อร่างกายตอนนี้
+  - คู่มือโรค: หัวข้อ "การผ่าตัด" บอกการผ่าตัดที่ใช้ได้ ระยะที่ต้องผ่า และเวลาหาย
+
+MP
+  ไม่มีอะไรทำงานทุก tick ยกเว้นการแช่แข็งโรคที่รอผ่าตัด (ทุก 1 นาทีเกม, เฉพาะผู้เล่นที่มีโรคถูกหยุดไว้)

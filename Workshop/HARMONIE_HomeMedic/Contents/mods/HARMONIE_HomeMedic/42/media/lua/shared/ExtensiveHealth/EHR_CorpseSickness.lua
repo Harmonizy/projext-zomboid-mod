@@ -2013,10 +2013,16 @@ function EHR.CorpseSickness.OnTick()
     local players = getActivePlayers()
     for _, player in ipairs(players) do
         if player and player:isAlive() then
-            EHR.CorpseSickness.InitializePlayer(player)
-            EHR.CorpseSickness.MigrateOldData(player)
-
             local state = getTickState(player)
+            -- HARMONIE (server load): set up / migrate once per character
+            -- (a new character after death is a new player object), not on
+            -- every tick for every player.
+            if state.initializedFor ~= player then
+                EHR.CorpseSickness.InitializePlayer(player)
+                EHR.CorpseSickness.MigrateOldData(player)
+                state.initializedFor = player
+            end
+
             state.tick = state.tick + 1
             state.quickClampTick = (state.quickClampTick or 0) + 1
 

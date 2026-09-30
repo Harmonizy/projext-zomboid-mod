@@ -1,12 +1,15 @@
 --[[
     HARMONIE - Home Medic : the one Options -> Mods page for everything the
     player sets for themselves (saved on their own machine only):
+      * the health-panel keys and switches (EHR_KeybindManager.lua)
       * delirium sound volume + mute   (HARMONIE_DeliriumAudio.lua)
       * blood-loss vision on/off + strength (HARMONIE_BloodVision.lua)
-    Option ids "deliriumVolume" / "deliriumMuted" are kept from 0.3.1 so
-    saved values carry over.
+    Since 0.5.0 these share the keybind page (id "ExtensiveHealthRework", so
+    saved keys carry over) instead of a second page of their own; the four
+    options below start from their defaults once.
 ]]--
 
+require "ExtensiveHealth/EHR_KeybindManager"
 require "HARMONIEHomeMedic/HARMONIE_DeliriumAudio"
 require "HARMONIEHomeMedic/HARMONIE_BloodVision"
 
@@ -22,14 +25,18 @@ end
 
 if PZAPI and PZAPI.ModOptions and not O.page then
     local T = function(k) return getText("UI_options_HARMONIE_HomeMedic_" .. k) end
-    O.page = PZAPI.ModOptions:create("HARMONIE_HomeMedic", T("title"))
-    O.deliriumVolume = O.page:addSlider("deliriumVolume", T("deliriumVolume"), 0, 1.5, 0.25, 1, T("deliriumVolume_tooltip"))
+    local id = (EHR and EHR.Keybinds and EHR.Keybinds.MOD_OPTIONS_ID) or "ExtensiveHealthRework"
+    O.page = PZAPI.ModOptions:getOptions(id) or PZAPI.ModOptions:create(id, T("title"))
+    local function add(kind, optId, ...)
+        return O.page:getOption(optId) or O.page[kind](O.page, optId, ...)
+    end
+    O.deliriumVolume = add("addSlider", "deliriumVolume", T("deliriumVolume"), 0, 1.5, 0.25, 1, T("deliriumVolume_tooltip"))
     hook(O.deliriumVolume, A.setVolume)
-    O.deliriumMuted = O.page:addTickBox("deliriumMuted", T("deliriumMute"), false, T("deliriumMute_tooltip"))
+    O.deliriumMuted = add("addTickBox", "deliriumMuted", T("deliriumMute"), false, T("deliriumMute_tooltip"))
     hook(O.deliriumMuted, A.setMuted)
-    O.bloodVision = O.page:addTickBox("bloodVision", T("bloodVision"), true, T("bloodVision_tooltip"))
+    O.bloodVision = add("addTickBox", "bloodVision", T("bloodVision"), true, T("bloodVision_tooltip"))
     hook(O.bloodVision, function(v) V.enabled = v == true end)
-    O.bloodVisionStrength = O.page:addSlider("bloodVisionStrength", T("bloodVisionStrength"), 0.25, 1.5, 0.25, 1, T("bloodVisionStrength_tooltip"))
+    O.bloodVisionStrength = add("addSlider", "bloodVisionStrength", T("bloodVisionStrength"), 0.25, 1.5, 0.25, 1, T("bloodVisionStrength_tooltip"))
     hook(O.bloodVisionStrength, function(v) V.strength = tonumber(v) or 1 end)
     if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
 end
