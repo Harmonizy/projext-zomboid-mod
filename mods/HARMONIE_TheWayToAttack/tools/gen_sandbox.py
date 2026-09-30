@@ -107,7 +107,7 @@ OPTS = [
  ("GemBreakBad", I, 50, 0, 100, "HARMONIE_TWA_Quality", "Gem refining: break chance at Bad (percent)", "ขัดเกลาอัญมณี: โอกาสแตกเมื่อคุณภาพรวม แย่ (เปอร์เซ็นต์)",
   "Finishing a gem-refining recipe (Refined to Pure) at an overall Bad breaks the gem this often; it is lost.",
   "เมื่อกดเสร็จสิ้นสูตรขัดเกลาอัญมณี (ขัดเกลาถึงบริสุทธิ์) ที่คุณภาพรวม แย่ อัญมณีจะแตกและหายไปตามโอกาสนี้"),
- ("GemBreakGood", I, 5, 0, 100, "HARMONIE_TWA_Quality", "Gem refining: break chance at Good (percent)", "ขัดเกลาอัญมณี: โอกาสแตกเมื่อคุณภาพรวม ดี (เปอร์เซ็นต์)",
+ ("GemBreakGood", I, 10, 0, 100, "HARMONIE_TWA_Quality", "Gem refining: break chance at Good (percent)", "ขัดเกลาอัญมณี: โอกาสแตกเมื่อคุณภาพรวม ดี (เปอร์เซ็นต์)",
   "The same at an overall Good.", "เหมือนข้างบน เมื่อคุณภาพรวม ดี"),
  ("GemBreakExcellent", I, 0, 0, 100, "HARMONIE_TWA_Quality", "Gem refining: break chance at Excellent (percent)", "ขัดเกลาอัญมณี: โอกาสแตกเมื่อคุณภาพรวม เยี่ยม (เปอร์เซ็นต์)",
   "The same at an overall Excellent.", "เหมือนข้างบน เมื่อคุณภาพรวม เยี่ยม"),

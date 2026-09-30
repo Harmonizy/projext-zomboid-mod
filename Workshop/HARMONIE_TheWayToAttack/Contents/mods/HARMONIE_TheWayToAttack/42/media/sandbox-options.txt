@@ -245,7 +245,7 @@ option HARMONIE_TheWayToAttack.GemBreakGood
     type = integer,
     min = 0,
     max = 100,
-    default = 5,
+    default = 10,
     page = HARMONIE_TWA_Quality,
     translation = HARMONIE_TWA_GemBreakGood,
 }
