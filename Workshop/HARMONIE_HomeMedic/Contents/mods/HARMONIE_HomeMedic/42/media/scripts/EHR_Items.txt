@@ -1113,7 +1113,7 @@ module ExtensiveHealth
         DisplayName = Honeycomb,
         Icon = EHR_Honeycomb,
         Weight = 0.4,
-        Tooltip = Tooltip_EHR_Honeycomb,
+        Tooltip = Tooltip_HomeMedic_Honeycomb,
         CantBeFrozen = true,
         EatType = GlugFood,
         EvolvedRecipe = Cake:5;Sandwich:2;FruitSalad:2;HotDrink:2;Pancakes:2;ConeIcecream:2;PieSweet:5;Toast:2;Oatmeal:2,
@@ -1200,7 +1200,7 @@ module ExtensiveHealth
         DisplayName = Spiderweb,
         Icon = EHR_Spiderweb,
         Weight = 0.01,
-        Tooltip = Tooltip_EHR_Spiderweb,
+        Tooltip = Tooltip_HomeMedic_Spiderweb,
         WorldStaticModel = Thread,
     }
 

@@ -312,10 +312,6 @@
     "HARMONIEGardenToPlate.HomeCannedWatermelonOpen": "แตงโมกระป๋อง (ทำเอง, เปิดแล้ว)",
     "HARMONIEGardenToPlate.HomeCannedZucchini": "ซูกินีกระป๋อง (ทำเอง)",
     "HARMONIEGardenToPlate.HomeCannedZucchiniOpen": "ซูกินีกระป๋อง (ทำเอง, เปิดแล้ว)",
-    "HARMONIEHomeMedic.GingerBugTonic": "Fermented Ginger-Bug Tonic (ยาต้มขิงหมักดอง)",
-    "HARMONIEHomeMedic.GraveAshGarlicPoultice": "Grave Ash & Garlic Poultice (ยาพอกขี้เถ้าและกระเทียม)",
-    "HARMONIEHomeMedic.WarmingSpicedBitters": "Warming Spiced Bitters (ยาดองเผ็ดร้อนบำรุงกำลัง)",
-    "HARMONIEHomeMedic.WillowBarkAntitoxinBooster": "Willow Bark & Herb Antitoxin Booster (ยาสมุนไพรเสริมฤทธิ์แก้พิษบาดทะยัก)",
     "Lifestyle.BloodSausage": "ไส้กรอกเลือด",
     "Lifestyle.BookCleaning1": "งานทำความสะอาด I: \"จัดห้องให้สะอาด\"",
     "Lifestyle.BookCleaning2": "งานทำความสะอาด II: \"น้ำยาฟอกขาวไม่ใช่น้ำดื่ม\"",
@@ -388,7 +384,6 @@
     "TOC.Surg_Arm_Tourniquet_R": "สายรัดห้ามเลือด",
     "Tsarcraft.TCBoombox": "วิทยุเทป 'Kazakhstan-102-stereo'",
     "Tsarcraft.TCVinylplayer": "เครื่องเล่นแผ่นเสียง 'Elektronika S1-01'",
-
     "Base.ChiappaTripleThreat": "ปืนลูกซอง เชียปปา ทริปเปิลเทรต",
     "Base.Aerosolbomb2": "ระเบิดสเปรย์",
     "Base.Ammo145": "แบบแปลนบรรจุกระสุน .145",

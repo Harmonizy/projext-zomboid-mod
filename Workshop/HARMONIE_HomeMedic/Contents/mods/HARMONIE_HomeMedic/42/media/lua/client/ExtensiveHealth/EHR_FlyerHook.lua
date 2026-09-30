@@ -88,13 +88,13 @@ local function unlockMedicalWildPlants(character, item)
             pcall(function() EHR.SkillXP.AwardXP(character, 50, "medical_wild_plants_flyer", nil) end)
         end
         if EHR and EHR.Locale and EHR.Locale.Say then
-            EHR.Locale.Say(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeLearned", "Medical wild plant knowledge acquired."))
+            EHR.Locale.Say(character, EHR.Locale.Text("UI_HomeMedic_HerbalSearch_KnowledgeLearned", "Medical wild plant knowledge acquired."))
         elseif character.Say then
             character:Say("Medical wild plant knowledge acquired.")
         end
     else
         if EHR and EHR.Locale and EHR.Locale.Say then
-            EHR.Locale.Say(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeAlreadyKnown", "I already know how to identify medicinal wild plants."))
+            EHR.Locale.Say(character, EHR.Locale.Text("UI_HomeMedic_HerbalSearch_KnowledgeAlreadyKnown", "I already know how to identify medicinal wild plants."))
         elseif character.Say then
             character:Say("I already know how to identify medicinal wild plants.")
         end

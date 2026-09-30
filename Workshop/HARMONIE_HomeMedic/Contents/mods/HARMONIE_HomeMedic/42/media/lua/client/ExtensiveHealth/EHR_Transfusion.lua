@@ -19,9 +19,9 @@ EHR.Transfusion = {}
 
 local function transfusionText(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_EHR_Transfusion_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_HomeMedic_Transfusion_" .. tostring(key), fallback)
     end
-    local fullKey = "UI_EHR_Transfusion_" .. tostring(key)
+    local fullKey = "UI_HomeMedic_Transfusion_" .. tostring(key)
     local ok, value = pcall(getText, fullKey)
     if ok and value and value ~= fullKey then return value end
     return fallback
@@ -29,7 +29,7 @@ end
 
 local function transfusionFormat(key, fallback, ...)
     if EHR and EHR.Locale and EHR.Locale.Format then
-        return EHR.Locale.Format("UI_EHR_Transfusion_" .. tostring(key), fallback, ...)
+        return EHR.Locale.Format("UI_HomeMedic_Transfusion_" .. tostring(key), fallback, ...)
     end
     local text = transfusionText(key, fallback)
     local args = {...}
@@ -40,7 +40,7 @@ local function transfusionFormat(key, fallback, ...)
 end
 
 local function transfusionIVKitText()
-    local key = "UI_EHR_MedAction_RequiresIVKit"
+    local key = "UI_HomeMedic_MedAction_RequiresIVKit"
     if EHR and EHR.Locale and EHR.Locale.Text then
         local ok, value = pcall(EHR.Locale.Text, key, "Requires: IV Kit")
         if ok and value then return tostring(value) end
@@ -834,7 +834,7 @@ function EHRDrawBloodAction:perform()
     EHR.Log("DrawBlood: Created " .. filledBagType .. " from player's blood")
 
     -- Apply effects from blood loss
-    EHR.Locale.Say(self.character, getText("UI_EHR_DrawBlood_Complete") or "That made me lightheaded...")
+    EHR.Locale.Say(self.character, getText("UI_HomeMedic_DrawBlood_Complete") or "That made me lightheaded...")
 
     -- Small chance of minor fatigue/dizziness
     local stats = self.character:getStats()
@@ -1089,7 +1089,7 @@ function EHR.Transfusion.OnFillInventoryContextMenu(playerNum, context, items)
         local minPercent = math.floor(EHR.Transfusion.MinBloodToDrawPercent * 100)
 
         if canDraw then
-            tooltip.description = (getText("UI_EHR_DrawBlood_Desc") or transfusionText("DrawBloodDesc", "Draw your own blood to store for later use.")) .. " <LINE> " ..
+            tooltip.description = (getText("UI_HomeMedic_DrawBlood_Desc") or transfusionText("DrawBloodDesc", "Draw your own blood to store for later use.")) .. " <LINE> " ..
                                   "<LINE> " .. transfusionFormat("YourBloodType", "Your blood type: %1", "<RGB:0.5,1,0.5>" .. playerType) .. " <LINE> " ..
                                   "<RGB:1,1,1>" .. transfusionFormat("CurrentBlood", "Current blood: %1mL (%2%)", math.floor(currentBlood), bloodPercent) .. " <LINE> " ..
                                   transfusionFormat("WillRemove", "Will remove: %1mL", drawAmount) .. " <LINE> " ..

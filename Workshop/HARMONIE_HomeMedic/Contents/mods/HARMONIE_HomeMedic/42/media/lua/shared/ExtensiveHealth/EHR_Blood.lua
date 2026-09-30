@@ -759,9 +759,9 @@ EHR.Blood.Stages = {
 -- Uses getText() for localization support
 function EHR.Blood.GetStageDialogue(stage)
     local keys = {
-        [3] = "UI_EHR_Dialogue_Blood_Stage3",
-        [2] = "UI_EHR_Dialogue_Blood_Stage2",
-        [1] = "UI_EHR_Dialogue_Blood_Stage1",
+        [3] = "UI_HomeMedic_Dialogue_Blood_Stage3",
+        [2] = "UI_HomeMedic_Dialogue_Blood_Stage2",
+        [1] = "UI_HomeMedic_Dialogue_Blood_Stage1",
     }
     local key = keys[stage]
     if key then
@@ -817,7 +817,7 @@ function EHR.Blood.TriggerBlackout(player, data)
     EHR.Blood.blackoutData[playerID] = blackout
 
     -- Show message (critical - always say unless dialogue off)
-    EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blackout_Start"))
+    EHR.Dialogue.SayCritical(player, getText("UI_HomeMedic_Dialogue_Blackout_Start"))
 
     -- Calculate wake up time (current time of day + sleep hours)
     local timeOfDay = GameTime.getInstance():getTimeOfDay()
@@ -886,7 +886,7 @@ function EHR.Blood.ApplyEffects(player, data)
             EHR.Log(string.format("Blackout wake-up: Fatigue halved from %.2f to %.2f", currentFatigue, newFatigue))
         end
 
-        EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blackout_Wake"))
+        EHR.Dialogue.SayCritical(player, getText("UI_HomeMedic_Dialogue_Blackout_Wake"))
     end
 
     local bloodPercent = data.EHR_Blood.currentVolume / data.EHR_Blood.maxVolume
@@ -964,7 +964,7 @@ function EHR.Blood.ApplyEffects(player, data)
             player:setSpeedMod(0.8)
         end
         -- Random dizzy message (affected by dialogue frequency)
-        EHR.Dialogue.SayRandom(player, getText("UI_EHR_Dialogue_Blood_Lightheaded"), 400)
+        EHR.Dialogue.SayRandom(player, getText("UI_HomeMedic_Dialogue_Blood_Lightheaded"), 400)
     end
 
     -- Stage 4: Critical (<70%) - blackouts, death imminent
@@ -979,7 +979,7 @@ function EHR.Blood.ApplyEffects(player, data)
 
         -- Check if blackouts are enabled in sandbox
         if not EHR.Blood.IsBlackoutEnabled() then
-            EHR.Dialogue.SayRandom(player, getText("UI_EHR_Dialogue_Blood_Unconscious"), 100)
+            EHR.Dialogue.SayRandom(player, getText("UI_HomeMedic_Dialogue_Blood_Unconscious"), 100)
             return
         end
 
@@ -1013,7 +1013,7 @@ function EHR.Blood.ApplyEffects(player, data)
         end
 
         -- Dizzy messages when not blacking out (affected by dialogue frequency)
-        EHR.Dialogue.SayRandom(player, getText("UI_EHR_Dialogue_Blood_Unconscious"), 100)
+        EHR.Dialogue.SayRandom(player, getText("UI_HomeMedic_Dialogue_Blood_Unconscious"), 100)
     end
 
     -- LETHAL blood loss checks (below 20%)
@@ -1022,7 +1022,7 @@ function EHR.Blood.ApplyEffects(player, data)
         if bodyDamage then
             if bloodPercent <= 0.05 then
                 -- Below 5%: Immediate death (critical - always say)
-                EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blood_Collapse"))
+                EHR.Dialogue.SayCritical(player, getText("UI_HomeMedic_Dialogue_Blood_Collapse"))
                 EHR.Log("DEATH: Blood volume critical (< 5%) - immediate death")
                 if EHR.RecordDeathCause then
                     EHR.RecordDeathCause(player, "Exsanguination (total blood loss)")
@@ -1031,7 +1031,7 @@ function EHR.Blood.ApplyEffects(player, data)
             else
                 -- Below 20%: High death chance per tick (1 in 50)
                 if ZombRand(50) < 1 then
-                    EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blood_HeartStops"))
+                    EHR.Dialogue.SayCritical(player, getText("UI_HomeMedic_Dialogue_Blood_HeartStops"))
                     EHR.Log("DEATH: Blood volume critical (< 20%) - cardiac arrest")
                     if EHR.RecordDeathCause then
                         EHR.RecordDeathCause(player, "Hypovolemic shock")
@@ -1118,7 +1118,7 @@ function EHR.Blood.UseBloodBag(player, item)
     -- Check compatibility
     if not EHR.Blood.IsCompatible(donorType, recipientType) then
         -- Incompatible transfusion - causes transfusion reaction!
-        EHR.Dialogue.SayStageChange(player, getText("UI_EHR_Dialogue_Transfusion_Bad"))
+        EHR.Dialogue.SayStageChange(player, getText("UI_HomeMedic_Dialogue_Transfusion_Bad"))
         EHR.Log("TRANSFUSION REACTION: " .. donorType .. " into " .. recipientType)
 
         -- Apply negative effects (transfusion reaction)
@@ -1145,7 +1145,7 @@ function EHR.Blood.UseBloodBag(player, item)
     -- Also track transfused amount for hemodilution calculations
     data.EHR_Blood.transfusedBlood = (data.EHR_Blood.transfusedBlood or 0) + EHR.Blood.TRANSFUSION_AMOUNT
 
-    EHR.Dialogue.SayStageChange(player, getText("UI_EHR_Dialogue_Transfusion_Good"))
+    EHR.Dialogue.SayStageChange(player, getText("UI_HomeMedic_Dialogue_Transfusion_Good"))
     EHR.Log("Blood transfusion successful: +" .. EHR.Blood.TRANSFUSION_AMOUNT .. "mL (" .. donorType .. ")")
 
     -- Consume the item - MP sync
@@ -1186,7 +1186,7 @@ function EHR.Blood.UseSalineBag(player, item)
 
     -- Warn player if this will be dangerous
     if projectedRatio >= EHR.Blood.HEMODILUTION_WARNING then
-        EHR.Dialogue.SayStageChange(player, getText("UI_EHR_Dialogue_Saline_Warning"))
+        EHR.Dialogue.SayStageChange(player, getText("UI_HomeMedic_Dialogue_Saline_Warning"))
     end
 
     -- Add saline to blood volume (v2.7.0+: directly modify currentVolume)
@@ -1202,7 +1202,7 @@ function EHR.Blood.UseSalineBag(player, item)
             beforeModify, data.EHR_Blood.currentVolume, newSaline, projectedRatio * 100))
     end
 
-    EHR.Dialogue.SayStageChange(player, getText("UI_EHR_Dialogue_Saline_Good"))
+    EHR.Dialogue.SayStageChange(player, getText("UI_HomeMedic_Dialogue_Saline_Good"))
     EHR.Log(string.format("Saline infusion: +%dmL (total saline: %.0fmL)", EHR.Blood.SALINE_AMOUNT, newSaline))
 
     -- Also helps with thirst slightly

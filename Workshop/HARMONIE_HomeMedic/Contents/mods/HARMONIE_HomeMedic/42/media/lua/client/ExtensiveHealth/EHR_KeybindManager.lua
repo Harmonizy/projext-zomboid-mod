@@ -5,7 +5,7 @@
     Handles registration and management of EHR custom keybinds.
     Uses PZAPI.ModOptions for Options menu integration (B42+).
 
-    Keybinds appear in: Options → Mods → Extensive Health Rework
+    Keybinds appear in: Options → Mods → HARMONIE - Home Medic
 
     v1.0.0
 ]]--
@@ -20,8 +20,16 @@ EHR.Keybinds = {}
 -- CONSTANTS
 -- ============================================
 
+-- HARMONIE: the id stays (saved keybinds keep working); the page is Home
+-- Medic's one Options -> Mods page (HARMONIE_ModOptions.lua adds its options here).
 local MOD_OPTIONS_ID = "ExtensiveHealthRework"
-local MOD_NAME = "Extensive Health Rework"
+local MOD_NAME = "HARMONIE - Home Medic"
+if getText then
+    local title = getText("UI_options_HARMONIE_HomeMedic_title")
+    if title and title ~= "UI_options_HARMONIE_HomeMedic_title" then MOD_NAME = title end
+end
+EHR.Keybinds.MOD_OPTIONS_ID = MOD_OPTIONS_ID
+EHR.Keybinds.MOD_NAME = MOD_NAME
 
 -- Keybind IDs
 EHR.Keybinds.IDs = {
@@ -118,50 +126,50 @@ function EHR.Keybinds.Initialize(forceRefresh)
     -- Add any missing options even when the player already has an older saved group.
     ensureKeyBind(
         EHR.Keybinds.IDs.TOGGLE_MONITOR,
-        "UI_EHR_ToggleMedicalMonitor",
+        "UI_HomeMedic_ToggleMedicalMonitor",
         "Toggle Medical Monitor",
         DEFAULT_KEYS[EHR.Keybinds.IDs.TOGGLE_MONITOR],
-        "UI_EHR_ToggleMedicalMonitor_tt",
+        "UI_HomeMedic_ToggleMedicalMonitor_tt",
         "Opens/closes the selected primary health panel"
     )
     ensureKeyBind(
         EHR.Keybinds.IDs.TOGGLE_DEBUG,
-        "UI_EHR_ToggleDebugMenu",
+        "UI_HomeMedic_ToggleDebugMenu",
         "Toggle Debug Menu",
         DEFAULT_KEYS[EHR.Keybinds.IDs.TOGGLE_DEBUG],
-        "UI_EHR_ToggleDebugMenu_tt",
+        "UI_HomeMedic_ToggleDebugMenu_tt",
         "Opens/closes the EHR Debug Menu (requires debug mode)"
     )
     ensureKeyBind(
         EHR.Keybinds.IDs.TOGGLE_JOURNAL,
-        "UI_EHR_ToggleMedicalJournal",
+        "UI_HomeMedic_ToggleMedicalJournal",
         "Toggle Medical Journal",
         DEFAULT_KEYS[EHR.Keybinds.IDs.TOGGLE_JOURNAL],
-        "UI_EHR_ToggleMedicalJournal_tt",
+        "UI_HomeMedic_ToggleMedicalJournal_tt",
         "Opens/closes the Medical Journal (diagnosis history)"
     )
     ensureTickBox(
         EHR.Keybinds.IDs.PRIMARY_HEALTH_PANEL,
-        "UI_EHR_PrimaryHealthPanel",
+        "UI_HomeMedic_PrimaryHealthPanel",
         "Use EHR as primary health panel",
         true,
-        "UI_EHR_PrimaryHealthPanel_tt",
+        "UI_HomeMedic_PrimaryHealthPanel_tt",
         "When enabled, the EHR hotkey opens the EHR panel and the heart button opens vanilla health. Disable to swap them."
     )
     ensureTickBox(
         EHR.Keybinds.IDs.OPEN_HEALTH_PANEL_COMPACT,
-        "UI_EHR_OpenHealthPanelCompact",
+        "UI_HomeMedic_OpenHealthPanelCompact",
         "Open EHR panels compact",
         true,
-        "UI_EHR_OpenHealthPanelCompact_tt",
+        "UI_HomeMedic_OpenHealthPanelCompact_tt",
         "When enabled, EHR health panels open in compact mode. Disable to open them expanded."
     )
     ensureTickBox(
         EHR.Keybinds.IDs.SHOW_EHR_MOODLES,
-        "UI_EHR_ShowMoodles",
+        "UI_HomeMedic_ShowMoodles",
         "Show EHR moodles",
         true,
-        "UI_EHR_ShowMoodles_tt",
+        "UI_HomeMedic_ShowMoodles_tt",
         "Show EHR condition and exposure moodles. Disable if another mod's moodles overlap; the EHR monitor and all mechanics remain active."
     )
 
@@ -291,7 +299,7 @@ function EHR.Keybinds.GetKeyName(keybindId)
             return tostring(keyCode)
         end
     end
-    return getText("UI_EHR_NotBound") or "Not bound"
+    return getText("UI_HomeMedic_NotBound") or "Not bound"
 end
 
 -- ============================================
