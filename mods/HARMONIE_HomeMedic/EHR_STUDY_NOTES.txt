@@ -1,0 +1,118 @@
+================================================================================
+HARMONIE - Home Medic : บันทึกการศึกษา Extensive Health Rework Evolved (EHR)
+================================================================================
+ต้นฉบับ: Workshop 3726328119 "Extensive Health Rework Evolved B42"
+  mod id = ExtensiveHealthReworkEvolved, modversion 0.9, versionMin 42.17.0
+  เจ้าของม็อดอนุญาตให้ใช้ทุกส่วน (แจ้งโดยผู้ใช้ 2026-09-30)
+ไฟล์ต้นฉบับ: ไม่ได้เก็บใน repo นี้ (repo เป็น public) -- ศึกษาจาก zip ที่ผู้ใช้ส่งมา
+บันทึกนี้เขียนเองทั้งหมด อ้างชื่อไฟล์/ฟังก์ชันของ EHR เพื่อใช้เป็นแผนที่เท่านั้น
+
+--------------------------------------------------------------------------------
+1. ภาพรวมขนาด
+--------------------------------------------------------------------------------
+- Lua 85 ไฟล์ ~86,600 บรรทัด, PNG 195, OGG 23, sandbox 98 ตัวเลือก
+- ภาษา: EN CN CH ES FR IT JP PTBR UA (ไม่มี TH ในตัว -- TH อยู่ใน
+  HARMONIE_TooManyModThai แล้ว)
+- ไม่ใช้ NeatUI (วาด UI เองด้วย ISPanel ทั้งหมด)
+- ไฟล์ใหญ่สุด: EHR_Medication (7.3k), EHR_Disease (6.4k), EHR_HealthPanelUI
+  (6.3k), EHR_ServerCommands (5.2k), EHR_EnvironmentalDiseases (4.6k),
+  EHR_DebugMenuV2 (4.5k), EHR_BodyTemperature (3.1k), EHR_MedicalMonitorUI (3k)
+
+--------------------------------------------------------------------------------
+2. แผนที่ระบบ (ไฟล์ -> หน้าที่)
+--------------------------------------------------------------------------------
+แกนกลาง
+  shared/EHR_Main.lua            -- tick หลัก, init ข้อมูลผู้เล่น, MP sync
+  server/EHR_ServerCommands.lua  -- ฝั่งเซิร์ฟเวอร์ทั้งหมด (เลือด, ยา, คำสั่ง)
+  shared/EHR_MedicalStateSync    -- sync สถานะการรักษา
+  client/EHR_ClientCommands      -- รับคำสั่งจากเซิร์ฟเวอร์
+เลือด/แผล
+  shared/EHR_Blood.lua           -- ปริมาณเลือด (mL), stage, blackout, ให้เลือด
+  client/EHR_Transfusion.lua     -- UI/การให้เลือด-น้ำเกลือ
+  shared/EHR_WoundInfection_V2   -- แผลติดเชื้อ, client/EHR_WoundHook
+  shared/EHR_Sepsis, EHR_Concussion, EHR_CorpseSickness ...
+โรค
+  shared/EHR_Disease.lua, EHR_DiseaseDefinitions, EHR_EnvironmentalDiseases,
+  EHR_FoodDiseases, EHR_Immunity, EHR_Insomnia, EHR_HyperkeratoticScabies
+  client/EHR_Delirium.lua        -- อาการ delirium (client ล้วน)
+ยา
+  shared/EHR_Medication.lua      -- ฐานข้อมูลยา EHR.Medication.Database
+                                    (Home Medic ลงทะเบียนยาของเราที่นี่)
+  client/EHR_MedicationAction, EHR_MedicationHook, EHR_MPAdministerMedication
+มินิเกม
+  client/EHR_StitchMinigame.lua  -- มินิเกมเย็บแผล (มีเกมเดียวในม็อด)
+UI
+  client/EHR_HealthPanelUI, EHR_MedicalMonitorUI, EHR_MedicalJournalUI,
+  EHR_Moodles, EHR_TooltipSystem, EHR_ToxinVision, EHR_KnoxCureMenu
+เสียง
+  scripts/EHR_Sounds.txt (26 เสียง), client/EHR_PainSounds.lua,
+  เสียง delirium ใน client/EHR_Delirium.lua
+
+--------------------------------------------------------------------------------
+3. MP / สถาปัตยกรรม
+--------------------------------------------------------------------------------
+- ข้อมูลทั้งหมดอยู่ใน player ModData (EHR_Blood, EHR_Disease, ...)
+- EHR.OnTick (EHR_Main): ใน MP ฝั่ง client แค่ขอ init แล้ว return;
+  เซิร์ฟเวอร์วนผู้เล่นออนไลน์ทุกคน (processPlayerTick) ~1 ครั้ง/วินาที
+- เลือดใน MP คำนวณที่ EHR_ServerCommands (processPlayerBlood) แล้วส่ง
+  sendServerCommand(player, "EHR_Sync", "UpdateModData", {EHR_Blood=...})
+  ทุก ~3 วินาทีขณะเลือดออก
+- Delirium ทำงานฝั่ง client ทั้งหมด (tick, overlay, เสียง, คำพูด)
+
+--------------------------------------------------------------------------------
+4. เป้าหมายของเรา -- สิ่งที่พบ และแนวทาง
+--------------------------------------------------------------------------------
+4.1 เสียง delirium ปรับได้ฝั่ง client (สำคัญที่สุด)
+  พบ:
+  - รายชื่อเสียงอยู่ในตาราง EHR.Delirium.Sounds (17 เสียง EHRDelirium*)
+  - เล่นด้วย getSoundManager():playUISound(name) ฝั่ง client (ไม่ส่งถึงคนอื่น);
+    ถ้า playUISound ใช้ไม่ได้และเป็น SP จะ fallback เป็น player:playSound
+  - sound script ใช้ category = Player (ใช้ร่วมกับ vanilla -- ปรับทั้ง
+    category ไม่ได้)
+  - playRandomSound เป็น local function แต่มันอ่าน EHR.Delirium.Sounds
+    ใหม่ทุกครั้ง -> เราเปลี่ยนตารางนี้จากม็อดเราได้โดยไม่ต้องแก้ไฟล์ EHR
+  บทเรียนจากม็อดเรา:
+  - TWA: เสียง playUISound ไม่ตอบสนองต่อ per-sound volume ของเกม -> ใช้ไฟล์
+    เสียงหลายระดับความดัง (NAME_v25..NAME_v200) แล้วเลือกตามค่าผู้เล่น (ใช้ได้จริง)
+  - Lifestyle Audio Tune: GameSounds.getSoundsInCategory + setUserVolume ใช้ได้
+    กับ category เฉพาะ (เสียงที่เล่นผ่าน emitter)
+  แนวทาง: หน้า Options > Mods ของ Home Medic (slider 0-200% + ปุ่มปิด)
+    -> ปิด = ตั้ง EHR.Delirium.Sounds = {} (ภาพ/คำพูดยังอยู่)
+    -> ระดับเสียง = แทนชื่อในตารางด้วยชื่อเวอร์ชันความดังที่ม็อดเราทำไว้
+       (ไฟล์ ogg ของ EHR ปรับระดับ + sound script ของเรา category UI)
+    ต้องทดสอบในเกมว่าแบบ setUserVolume ใช้กับ playUISound ได้หรือไม่ก่อน
+    ถ้าได้ จะง่ายกว่า (ไม่ต้องทำไฟล์หลายระดับ)
+
+4.2 ระบบเลือดให้ impact มากขึ้น
+  พบ (ต้องยืนยันในเกม):
+  - ผลของ stage ใน EHR.Blood.ApplyEffects ใช้ stats:setEndurance /
+    stats:getEndurance ซึ่งอาจไม่มีแล้วหลัง B42 เปลี่ยนระบบ Stats เป็น
+    stats:get/set(CharacterStat.X) -- ไฟล์อื่นของ EHR เอง (KnoxCure, Disease)
+    ใช้ CharacterStat.ENDURANCE แล้ว ถ้า setEndurance ไม่มี การลด endurance ตาม
+    stage จะไม่ทำงานเลย (เงียบ เพราะมี if guard)
+  - ใน MP ApplyEffects ทำงานบนเซิร์ฟเวอร์ (processPlayerTick) -- การลดความเร็ว
+    (setSpeedMod) และ endurance ที่ตั้งฝั่งเซิร์ฟเวอร์อาจไม่ถึงตัวละครฝั่ง client
+  - stage: >=85% ปกติ / 80-85 เหนื่อยเล็กน้อย / 70-80 มึน ช้า 0.8 / <70 วิกฤต
+    ช้า 0.5 + blackout; การเสียเลือด cap 5 mL ต่อแผลต่อวินาที
+  แนวทาง: ทำ effect ฝั่ง client จาก EHR_Blood ที่ sync มา (endurance ผ่าน
+    CharacterStat, ความเร็ว, ภาพมัว/สั่น, หายใจหอบ, เสียงหัวใจ, ทำของหล่น,
+    เดินเซ) + ทางเลือกปรับเกณฑ์ stage ใน sandbox ของเรา
+
+4.3 ปรับมินิเกมเย็บแผลให้สมจริง
+  พบ: EHR_StitchMinigame = จุด 12 จุดสลับซ้าย-ขวาของแผล คลิกตามลำดับ
+    จุดปัจจุบันขยับเป็นคลื่น (ช้าลงตาม First Aid) พลาดได้ 4-6 ครั้ง
+    quality = 1 - 0.13 x พลาด (ต่ำสุด 0.35); คุณภาพต่ำ -> เสี่ยง cellulitis 40%
+    ขยับตัว/ห่างเกินระยะ = ยกเลิก; hook ผ่าน ISStitch (vanilla)
+  แนวทาง (แนวคิดจาก Casualties Undead -- เขียนเองทั้งหมด ไม่คัดลอกโค้ด):
+    แทงเข็มตามแนวโค้ง -> ดึงด้ายให้ตึงพอดี (แบบมินิเกม Suture ของ TWA),
+    ความลึก, มือสั่นตามความเจ็บ/เมา/ตื่นตระหนก, เลือดบังสายตา
+
+4.4 มินิเกมผ่าตัดใหม่
+  EHR ไม่มีระบบผ่าตัด -- ต้องออกแบบเอง (เช่น เอาเศษกระสุน/เศษแก้วออก,
+  ห้ามเลือด, เย็บปิด) ใช้ NeatUI ได้ (เพิ่ม require) และต้องทำงาน MP แบบ
+  TWA: ผลวางใน timed action complete() ฝั่งเซิร์ฟเวอร์
+
+4.5 คำแปลไทย
+  ข้อความใหม่ทั้งหมดไปอยู่ใน HARMONIE_TooManyModThai (เติมท้ายไฟล์ JSON)
+  และเพิ่ม HARMONIE_TooManyModThai ใน require= ของ Home Medic
+  หมายเหตุ: mod.info ของ TooManyModThai ตั้งใจไม่มี require ใด ๆ -- ไม่กระทบ
