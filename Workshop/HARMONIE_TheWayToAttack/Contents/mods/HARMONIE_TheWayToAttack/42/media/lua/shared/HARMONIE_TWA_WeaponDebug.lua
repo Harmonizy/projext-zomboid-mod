@@ -102,6 +102,14 @@ end
 
 function W.isAllowed(player)
     if not TWAConfig.on("AllowWeaponDebug") then return false end
+    -- Round 25: on a server the -debug / isAdmin() globals describe the
+    -- SERVER, not the player who sent the edit -- a server started with
+    -- -debug let every player edit weapons. There only the sender's own
+    -- access level counts.
+    if isServer and isServer() then
+        local lvl = player and player.getAccessLevel and player:getAccessLevel()
+        return lvl ~= nil and lvl ~= "" and string.lower(tostring(lvl)) ~= "none"
+    end
     if isDebugEnabled and isDebugEnabled() then return true end
     if isAdmin and isAdmin() then return true end
     local lvl = player and player.getAccessLevel and player:getAccessLevel()

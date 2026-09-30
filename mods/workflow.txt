@@ -3141,6 +3141,21 @@ Round 24 (same day):
     fibre, anodised accents, lightening holes -- gen_weapon_icons.py "tech"
     looks). Item keys unchanged (TWA_master_forged_*) so saves keep them.
 
+Round 25 (MP / server-load review):
+  - Weapon debug editor: on a server, isDebugEnabled()/isAdmin() describe the
+    SERVER, so a server started with -debug let every player edit weapons.
+    W.isAllowed now checks only the sender's access level when isServer().
+  - TWA_PerformProcedureAction:isValid runs every tick (server too) and its
+    eligibility check walks bags + nearby containers: throttled to one real
+    check per 0.5 s (checkValid), and complete() calls checkValid() again so
+    a craft can never use tools/materials that went away in between.
+  - Craft window recipe list: ownsBase (walks nearby containers) was asked
+    for every visible row every frame -- cached 0.5 s per recipe (client).
+  - GemBreakGood default 5 -> 10 (gen_sandbox.py). Existing worlds keep the
+    value saved in their sandbox settings.
+  - Scanned for Lua 5.2+ features Kahlua lacks (next, //, goto, utf8,
+    table.unpack): none.
+
 Testing without the game: `pip install lupa` gives a real Lua runtime in
 Python; used to syntax-check every .lua file and to run mocked behaviour
 tests of CraftState/actions/minigame. Much better than brace counting (see

@@ -34,6 +34,17 @@ TWA_PerformProcedureAction = ISBaseTimedAction:derive("TWA_PerformProcedureActio
 
 function TWA_PerformProcedureAction:isValid()
     if not self.character or not self.proc then return false end
+    -- Round 25 (server load): isValid runs every tick while the bar fills,
+    -- and the eligibility check walks the bags and the containers nearby.
+    -- Re-check at most every 0.5 s; the last answer holds in between.
+    local now = getTimestampMs and getTimestampMs() or 0
+    if self.validAt and now - self.validAt < 500 then return self.validOk end
+    self.validAt = now
+    self.validOk = self:checkValid()
+    return self.validOk
+end
+
+function TWA_PerformProcedureAction:checkValid()
     -- The server only re-checks what it owns (tools/materials/skill); light
     -- and a nearby forge were checked client-side before queueing, and the
     -- client keeps re-checking them every tick below.
@@ -80,6 +91,9 @@ end
 
 -- Server in multiplayer, local in single player.
 function TWA_PerformProcedureAction:complete()
+    -- Round 25: isValid is throttled -- make sure the tools and materials
+    -- are still there at the moment they are used.
+    if not self:checkValid() then return false end
     if self.quality ~= "Miss" or TWAConfig.on("MissUsesMaterials") then
         TWAProcedures.Consume(self.proc, self.character)
     end

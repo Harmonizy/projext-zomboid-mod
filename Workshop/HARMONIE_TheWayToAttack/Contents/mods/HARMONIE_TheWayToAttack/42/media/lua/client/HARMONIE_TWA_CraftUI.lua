@@ -379,7 +379,21 @@ end
 -- AND base2 must be owned) -- NOT an OR-alternative like the removed
 -- MetalPipe `baseAlt`, which stays supported here too (still dead data-side
 -- since nothing emits it any more, but harmless to leave).
+-- Round 25: the recipe list asks for every visible row every frame, and
+-- each answer walks the bags and the containers nearby -- remember it for
+-- half a second per recipe.
+local ownsCache = {}
+local ownsBaseNow
 local function ownsBase(recipe, player)
+    local now = getTimestampMs and getTimestampMs() or 0
+    local c = ownsCache[recipe]
+    if c and c.player == player and now - c.at < 500 then return c.ok end
+    local ok = ownsBaseNow(recipe, player)
+    ownsCache[recipe] = { at = now, ok = ok, player = player }
+    return ok
+end
+
+ownsBaseNow = function(recipe, player)
     if not recipe.base then return true end
     local inv = TWASources.get(player) -- round 13: nearby containers/floor too
     local hasBase = false

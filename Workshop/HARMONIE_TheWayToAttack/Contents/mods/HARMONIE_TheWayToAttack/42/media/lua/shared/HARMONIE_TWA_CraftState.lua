@@ -202,7 +202,7 @@ function S.countBase(character, recipe, fullType)
 end
 
 -- Round 19: a refined gem can break at Finish -- chance by overall quality
--- (sandbox GemBreakBad 50 / GemBreakGood 5 / GemBreakExcellent 0 percent).
+-- (sandbox GemBreakBad 50 / GemBreakGood 10 (round 25, was 5) / GemBreakExcellent 0 percent).
 S.GEM_BREAK_KEY = { Excellent = "GemBreakExcellent", Good = "GemBreakGood", Bad = "GemBreakBad" }
 function S.gemBreakChance(word)
     return TWAConfig.num(S.GEM_BREAK_KEY[word] or "GemBreakBad", 0)
