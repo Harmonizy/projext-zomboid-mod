@@ -2037,6 +2037,8 @@ local function hasActiveExamSession(doctor, patient, refresh)
     end
     return true
 end
+-- HARMONIE: shared with the Home Medic surgery server (same consent rule as EHR treatment).
+EHR.ServerCommands.HasActiveExamSession = hasActiveExamSession
 
 function EHR.ServerCommands.BeginExamConsent(player, args)
     if not player then return end

@@ -1,0 +1,45 @@
+HARMONIE - Home Medic : ระบบผ่าตัด (Surgery)            เฟส 1 = Field + Clinical
+
+แนวคิด
+  ประเภทการผ่าตัด (Surgery Type) = ลำดับของ "กรรมวิธี" (Procedure P01..P15)
+  กรรมวิธีหนึ่ง = มินิเกมหนึ่งแบบ ใช้ซ้ำได้ทุกการผ่าตัด -> เพิ่มการผ่าตัดใหม่ = เพิ่มข้อมูล ไม่ต้องทำมินิเกมใหม่
+
+ไฟล์
+  shared/HARMONIEHomeMedic/Surgery/HM_SurgeryData.lua   ข้อมูลทั้งหมด (ระดับ, กรรมวิธี, อุปกรณ์, การผ่าตัด) รวมของเฟสหลัง (planned)
+  shared/HARMONIEHomeMedic/Surgery/HM_Surgery.lua       ค้นอุปกรณ์ (กระเป๋า/พื้น/กล่องรอบตัว), ปลดล็อก, ข้อบ่งชี้, เช็คความพร้อม, คำนวณคุณภาพ
+  server/HARMONIEHomeMedic/HM_SurgeryServer.lua         ใบอนุญาต (permit), ใช้วัสดุสิ้นเปลือง, ตัดสินผล, ซิงก์ MP
+  client/HARMONIEHomeMedic/Surgery/HM_SurgeryGames.lua  มินิเกม 6 แบบ: trace pulse clean necro gauge suture
+  client/HARMONIEHomeMedic/Surgery/HM_SurgeryUI.lua     หน้าต่าง Pre-op, หน้าต่างผ่าตัด, timed action, เมนูคลิกขวา
+  tools/gen_surgery_textures.py                          วาดวงกลม/วงแหวนที่มินิเกมใช้ (งานของเราเอง)
+
+ลำดับการทำงาน (MP)
+  1. คลิกขวาส่วนของร่างกาย (หน้าต่าง vanilla / EHR / EHR ของคนอื่น) -> "ผ่าตัด (Surgery)" (เห็นเมื่อมีข้อบ่งชี้)
+  2. หน้าต่าง Pre-op: แต่ละแถว = 1 การตรวจ ข้อความสั้น รายละเอียดเป็น tooltip เมื่อชี้
+  3. เริ่ม -> client ส่ง Begin -> server ตรวจซ้ำทั้งหมด + ความยินยอม (exam session ของ EHR) + ใช้วัสดุสิ้นเปลือง -> permit
+  4. client เล่นมินิเกมทีละขั้นระหว่าง timed action (เดิน/วิ่ง = ยกเลิก) -> ส่งคะแนน 0..1 ต่อขั้น
+  5. server: บีบคะแนนให้อยู่ในช่วง, จบเร็วผิดปกติ = ล้มเหลว, permit ใช้ได้ครั้งเดียว -> ผล -> syncBodyPart + ModData
+  ไม่มีอะไรทำงานทุก tick ฝั่ง server
+
+ปลดล็อก (ตามความรู้โรคของ EHR)
+  กรรมวิธีต้องมี First Aid ถึงระดับ (Field 2 / Clinical 4 / Advanced 6 / Master 8)
+  และถ้ากำหนดโรคไว้ ต้อง "รู้จัก" อย่างน้อยหนึ่งโรค (อ่านใบปลิวโรค หรือ First Aid 8) = EHR.DiseaseFlyers.HasMedicalKnowledge
+  P01 Incision, P02 Hemostasis, P08 Closure : Field
+  P03 Irrigation : Clinical + Wound Infection/Cellulitis
+  P04 Necrectomy : Clinical + Cellulitis/Sepsis/Tetanus/Wound Infection
+  P05 Aspiration : Clinical + Cellulitis/Wound Infection
+
+การผ่าตัดเฟส 1
+  Debridement      P01 P04 P03 P02 P08  blade forceps suture dressing (+antiseptic)  ~250 mL
+      Wound Infection -1 (ดีเยี่ยม -2, หายได้) · Cellulitis -1 (ดีเยี่ยม -2, หายได้) · Tetanus/Sepsis -1 แต่ไม่ต่ำกว่าระยะ 1
+  Abscess Drainage P01 P05 P03 P08      blade syringe suture dressing (+antiseptic)  ~120 mL
+      Wound Infection -1 (ดีเยี่ยม -2) · Cellulitis -1
+  สำเร็จ >= 45% · ดีเยี่ยม >= 80% · โรคเดียวกันผ่าได้วันละครั้ง (ต่อคนไข้)
+
+ผลข้างเคียงทุกครั้ง
+  เสียเลือด (ตามคะแนนห้ามเลือด/เปิดแผล), ปวด (ลดด้วย anesthesia), แผลผ่า (เย็บปิดถ้าคะแนนเย็บ >= 50%),
+  ผ้าปิดแผลที่ใช้, โอกาสแผลผ่าตัดติดเชื้อ = (1-asepsis) x (1-คะแนนล้างแผล) x 60%, XP ปฐมพยาบาล
+
+เฟสถัดไป (มีข้อมูลรอแล้วใน HM_SurgeryData.lua)
+  2: Amputation (ครอบระบบ TOC) + P06 ดึงวัตถุแปลกปลอม (กระสุน/เศษแก้ว)
+  3: Parasite Extraction, Thoracic, Organ Salvage (P09 P15)
+  4: Neurosurgery, Blood Purification, Experimental/Knox (P10-P14)

@@ -224,5 +224,7 @@
     "Sandbox_HomeMedic_ImmunityRecoveryRate": "อัตราการฟื้นตัวของภูมิคุ้มกัน",
     "Sandbox_HomeMedic_ImmunityRecoveryRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันเพิ่มขึ้นสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น",
     "Sandbox_HomeMedic_ImmunityDeclineRate": "อัตราการลดลงของภูมิคุ้มกัน",
-    "Sandbox_HomeMedic_ImmunityDeclineRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันลดลงสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น"
+    "Sandbox_HomeMedic_ImmunityDeclineRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันลดลงสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น",
+    "Sandbox_HomeMedic_SurgeryEnabled": "ระบบผ่าตัด (Home Medic)",
+    "Sandbox_HomeMedic_SurgeryEnabled_tooltip": "อนุญาตการผ่าตัดของ Home Medic (Debridement, Abscess Drainage ...) จากเมนูส่วนของร่างกาย"
 }

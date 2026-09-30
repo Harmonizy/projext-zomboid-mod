@@ -224,5 +224,7 @@
     "Sandbox_HomeMedic_ImmunityRecoveryRate": "Immune Recovery Rate",
     "Sandbox_HomeMedic_ImmunityRecoveryRate_tooltip": "Scales how quickly the immune system score rises toward its current target. 1.0 = default.",
     "Sandbox_HomeMedic_ImmunityDeclineRate": "Immune Decline Rate",
-    "Sandbox_HomeMedic_ImmunityDeclineRate_tooltip": "Scales how quickly the immune system score falls toward its current target. 1.0 = default."
+    "Sandbox_HomeMedic_ImmunityDeclineRate_tooltip": "Scales how quickly the immune system score falls toward its current target. 1.0 = default.",
+    "Sandbox_HomeMedic_SurgeryEnabled": "Surgery (Home Medic)",
+    "Sandbox_HomeMedic_SurgeryEnabled_tooltip": "Allow the Home Medic operations (Debridement, Abscess Drainage...) from the body-part menu."
 }
