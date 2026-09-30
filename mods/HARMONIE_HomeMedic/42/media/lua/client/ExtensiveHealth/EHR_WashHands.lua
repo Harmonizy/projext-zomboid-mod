@@ -1,0 +1,1 @@
+-- EHR_WashHands lives in shared so the timed action exists on both client and server in MP.
