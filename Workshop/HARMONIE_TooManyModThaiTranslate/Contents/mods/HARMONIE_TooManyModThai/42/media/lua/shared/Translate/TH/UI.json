@@ -3027,5 +3027,10 @@
     "UI_trait_moredesc_soto_breathing_vehicle": "ฟื้นฟูความอึด x3 ขณะนั่งหรืออยู่ในยานพาหนะ (SOTO)",
     "UI_trait_moredesc_soto_generatorexpert_xp": "XP ไฟฟ้า +5 ต่อการซ่อมเครื่องปั่นไฟหนึ่งครั้ง (SOTO)",
     "UI_trait_moredesc_soto_marathonrunner_scale": "ผลจะเพิ่มขึ้นตามฟิตเนส; ลดลงถ้าน้ำหนักเกินหรืออ้วน (SOTO)",
-    "UI_trait_moredesc_soto_pacifist_sandbox": "สามารถหายไปเองตามเวลาได้ ถ้าเปิดใช้ตัวเลือก PacifistRemovable ใน SOTO sandbox"
+    "UI_trait_moredesc_soto_pacifist_sandbox": "สามารถหายไปเองตามเวลาได้ ถ้าเปิดใช้ตัวเลือก PacifistRemovable ใน SOTO sandbox",
+    "UI_options_HARMONIE_HomeMedic_title": "HARMONIE - Home Medic",
+    "UI_options_HARMONIE_HomeMedic_deliriumVolume": "ระดับเสียงอาการเพ้อ (delirium)",
+    "UI_options_HARMONIE_HomeMedic_deliriumVolume_tooltip": "ความดังของเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ (100 = เท่าเดิม) ไม่มีผลต่อภาพหลอน คำพูด และการกระทำแปลกๆ",
+    "UI_options_HARMONIE_HomeMedic_deliriumMute": "ปิดเสียงอาการเพ้อ",
+    "UI_options_HARMONIE_HomeMedic_deliriumMute_tooltip": "ปิดเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ"
 }
