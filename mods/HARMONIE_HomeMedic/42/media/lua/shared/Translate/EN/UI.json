@@ -1861,5 +1861,14 @@
     "UI_EHR_Line_4A50134E": "You drink the ginger-bug tonic. Your stomach starts to settle.",
     "UI_EHR_Line_9D74A6FD": "You apply the poultice. The nausea and weakness start to fade.",
     "UI_EHR_Line_ED48363C": "You drink the spiced bitters. Warmth spreads through you, but you still need real shelter and a fire.",
-    "UI_EHR_Line_0D41BDD6": "You take the herbal booster alongside your antitoxin. It may help your body fight off the lockjaw."
+    "UI_EHR_Line_0D41BDD6": "You take the herbal booster alongside your antitoxin. It may help your body fight off the lockjaw.",
+    "UI_options_HARMONIE_HomeMedic_title": "HARMONIE - Home Medic",
+    "UI_options_HARMONIE_HomeMedic_deliriumVolume": "Delirium sound volume",
+    "UI_options_HARMONIE_HomeMedic_deliriumVolume_tooltip": "How loud the delirium hallucination sounds are for you only (100 = original). Visions, lines and impulses are not affected.",
+    "UI_options_HARMONIE_HomeMedic_deliriumMute": "Mute delirium sounds",
+    "UI_options_HARMONIE_HomeMedic_deliriumMute_tooltip": "Silence the delirium hallucination sounds for you only.",
+    "UI_options_HARMONIE_HomeMedic_bloodVision": "Blood-loss vision",
+    "UI_options_HARMONIE_HomeMedic_bloodVision_tooltip": "Darken the edges of the screen as you lose blood; below the moderate threshold the view dims and throbs with your heartbeat. Your screen only.",
+    "UI_options_HARMONIE_HomeMedic_bloodVisionStrength": "Blood-loss vision strength",
+    "UI_options_HARMONIE_HomeMedic_bloodVisionStrength_tooltip": "How strong the blood-loss darkening is (1 = normal)."
 }

@@ -4,6 +4,10 @@
 !/mods/
 !/Workshop/
 !/.gitignore
+# Claude Code project permissions (only this one file of .claude/)
+!/.claude/
+/.claude/*
+!/.claude/settings.json
 
 # The game writes its own current mod-selection list here every time the
 # player changes mods in-game -- it's local play state, not mod source, and

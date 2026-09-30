@@ -1,0 +1,901 @@
+--[[
+    Extensive Health Rework B42
+    Delirium / madness runtime module
+
+    A permanent stress-collapse condition. The disease record is stored in the
+    normal EHR disease table; this client module handles hallucination episodes,
+    visual tinting, and unsafe impulses.
+]]--
+
+require "ExtensiveHealth/EHR_Main"
+require "ExtensiveHealth/EHR_Disease"
+require "ISUI/ISPanel"
+require "TimedActions/ISSmashWindow"
+require "TimedActions/WalkToTimedAction"
+pcall(function() require "TimedActions/ISReloadWeaponAction" end)
+pcall(function() require "ISUI/ISInventoryPaneContextMenu" end)
+pcall(function() require "ExtensiveHealth/EHR_Localization" end)
+
+EHR = EHR or {}
+EHR.Delirium = EHR.Delirium or {}
+EHR.Delirium.Runtime = EHR.Delirium.Runtime or {}
+
+EHR.Delirium.Config = {
+    STRESS_THRESHOLD = 0.98,
+    HOURS_AT_MAX_STRESS_TO_TRIGGER = 12,
+    CHECK_INTERVAL_HOURS = 1 / 60,
+
+    FIRST_EPISODE_MIN_MINUTES = 4,
+    FIRST_EPISODE_MAX_MINUTES = 8,
+    EPISODE_MIN_MINUTES = 30,
+    EPISODE_MAX_MINUTES = 60,
+    ANTIPSYCHOTIC_EPISODE_INTERVAL_MULTIPLIER = 2.5,
+    ANTIPSYCHOTIC_IMPULSE_CHANCE = 0.40,
+
+    OVERLAY_MIN_MINUTES = 4,
+    OVERLAY_MAX_MINUTES = 8,
+    OVERLAY_ALPHA_MIN = 0.08,
+    OVERLAY_ALPHA_MAX = 0.16,
+    ENABLE_MULTIPLAYER_OVERLAY = false,
+
+    WINDOW_SEARCH_RADIUS = 2,
+    IMPULSE_CHANCE = 1.0,
+    IMPULSE_WEIGHTS = {
+        window = 30,
+        shout = 35,
+        dropBackpack = 20,
+        firearm = 25,
+    },
+    IMPULSE_COOLDOWNS_HOURS = {
+        window = 1.0,
+        shout = 0.75,
+        dropBackpack = 2.0,
+        firearm = 1.0,
+    },
+    SHOUT_SOUND_RADIUS = 45,
+    SHOUT_SOUND_VOLUME = 45,
+
+    LINE_DURATION_TICKS = 600,
+}
+
+EHR.Delirium.Sounds = {
+    "EHRDeliriumAliensSound",
+    "EHRDeliriumBigBell",
+    "EHRDeliriumCantSleepVoices",
+    "EHRDeliriumChicken",
+    "EHRDeliriumClownBackground",
+    "EHRDeliriumClownJingle",
+    "EHRDeliriumClownLaugh",
+    "EHRDeliriumComicLaugh",
+    "EHRDeliriumCreepyLaugh",
+    "EHRDeliriumCreepyVoicesWhisper",
+    "EHRDeliriumDevilishVoice",
+    "EHRDeliriumHideClownSound",
+    "EHRDeliriumSchoolBell",
+    "EHRDeliriumStrangeWhispers",
+    "EHRDeliriumTheyKnowNothingVoices",
+    "EHRDeliriumWhisperVoicesA",
+    "EHRDeliriumWhisperVoicesB",
+}
+
+EHR.Delirium.Lines = {
+    "Ahahaha! Why my left sock telling me to grow a car???",
+    "No No No you pink elephant.. I wont eat that mushrooom he he he",
+    "Pu pi pi tapi pu pipipi tapi??? Pu pi pi tapi pu pipipi tapi!!!",
+    "Wait what if I'm the zombie?? Oh no.. that's not good right? I wanna be a cute cattito!",
+    "Hm? Yea I think the same! That stew the other day was top notch! Except that strange eye . I throw it out. ",
+    "I.. I forgot how to breath.. I need a bowl of nails right now!!!",
+    "Shish! I can't concentrate you idiot. Whait.. Wha was I doing?",
+    "Haha haaaa! What a cute squirel. But it's kinda big! Is this a super rare one? I need to talk to it",
+    "I wonder why all of my cars always complaining... Can't you guys keep your mouth shut?",
+    "I wanna fly! Oh oh right. I need to find a garbage bag and use it as parachute!",
+    "The floor.. Was it always made from noodles?",
+}
+
+EHR.Delirium.OverlayColors = {
+    { r = 0.90, g = 0.05, b = 0.04 },
+    { r = 0.12, g = 0.80, b = 0.26 },
+    { r = 0.18, g = 0.42, b = 1.00 },
+    { r = 0.72, g = 0.20, b = 0.95 },
+    { r = 1.00, g = 0.72, b = 0.08 },
+    { r = 0.12, g = 0.82, b = 0.85 },
+}
+
+local function worldHour()
+    local gameTime = getGameTime and getGameTime() or nil
+    if gameTime then
+        local ok, hour = pcall(function() return gameTime:getWorldAgeHours() end)
+        if ok and hour then return hour end
+    end
+    return 0
+end
+
+local function randomMinutes(minMinutes, maxMinutes)
+    minMinutes = tonumber(minMinutes) or 0
+    maxMinutes = tonumber(maxMinutes) or minMinutes
+    if maxMinutes <= minMinutes then return minMinutes / 60 end
+    return (minMinutes + ZombRand((maxMinutes - minMinutes) + 1)) / 60
+end
+
+local function randomFloat(minValue, maxValue)
+    minValue = tonumber(minValue) or 0
+    maxValue = tonumber(maxValue) or minValue
+    if maxValue <= minValue then return minValue end
+    return minValue + (ZombRand(1000) / 1000) * (maxValue - minValue)
+end
+
+local function getLocalPlayerCount()
+    if getNumActivePlayers then
+        local ok, count = pcall(getNumActivePlayers)
+        if ok and count and count > 0 then return count end
+    end
+    return 1
+end
+
+local function getPlayerIndex(player, fallback)
+    if player and player.getPlayerNum then
+        local ok, index = pcall(function() return player:getPlayerNum() end)
+        if ok and index ~= nil then return index end
+    end
+    return fallback or 0
+end
+
+local function isPlayerValid(player)
+    if not player then return false end
+    local okDead, dead = pcall(function()
+        if player.isDead then return player:isDead() end
+        return false
+    end)
+    if okDead and dead == true then return false end
+    return true
+end
+
+local function isPlayerBusyForEpisode(player)
+    if not isPlayerValid(player) then return true end
+
+    local okAsleep, asleep = pcall(function()
+        if player.isAsleep then return player:isAsleep() end
+        return false
+    end)
+    if okAsleep and asleep == true then return true end
+
+    local okVehicle, vehicle = pcall(function()
+        if player.getVehicle then return player:getVehicle() end
+        return nil
+    end)
+    if okVehicle and vehicle then return true end
+
+    return false
+end
+
+local function getStress(player)
+    local stats = player and player.getStats and player:getStats() or nil
+    if not stats then return 0 end
+
+    if CharacterStat and CharacterStat.STRESS and stats.get then
+        local ok, value = pcall(function() return stats:get(CharacterStat.STRESS) end)
+        if ok and value ~= nil then return tonumber(value) or 0 end
+    end
+
+    if stats.getStress then
+        local ok, value = pcall(function() return stats:getStress() end)
+        if ok and value ~= nil then return tonumber(value) or 0 end
+    end
+
+    return 0
+end
+
+local function getPlayerDiseaseData(player)
+    if not player then return nil end
+    if EHR.Disease and EHR.Disease.InitializePlayer then
+        pcall(EHR.Disease.InitializePlayer, player)
+    end
+    if EHR.Disease and EHR.Disease.GetDiseaseData then
+        return EHR.Disease.GetDiseaseData(player)
+    end
+    return nil
+end
+
+local function getState(player)
+    local modData = player and player.getModData and player:getModData() or nil
+    if not modData then return nil end
+    modData.EHR_Delirium = modData.EHR_Delirium or {}
+    return modData.EHR_Delirium
+end
+
+function EHR.Delirium.GetRuntime(playerIndex)
+    EHR.Delirium.Runtime[playerIndex] = EHR.Delirium.Runtime[playerIndex] or {}
+    return EHR.Delirium.Runtime[playerIndex]
+end
+
+function EHR.Delirium.HasActive(player)
+    local data = getPlayerDiseaseData(player)
+    return data and data.active and type(data.active.delirium) == "table"
+end
+
+function EHR.Delirium.Contract(player, currentHour)
+    if not isPlayerValid(player) or EHR.Delirium.HasActive(player) then return false end
+
+    if EHR.Disease and EHR.Disease.Contract then
+        pcall(EHR.Disease.Contract, player, "delirium")
+    end
+
+    local data = getPlayerDiseaseData(player)
+    if not data or not data.active or not data.active.delirium then return false end
+
+    currentHour = currentHour or worldHour()
+    local disease = data.active.delirium
+    disease.startTime = currentHour
+    disease.incubationEnd = currentHour
+    disease.peakTime = currentHour
+    disease.endTime = currentHour + 999999
+    disease.stage = 1
+    disease.stageCount = 1
+    disease.progress = 0
+    disease.severity = tonumber(disease.severity) or 0.85
+    disease.permanent = true
+    disease.noCure = false
+    disease.mental = true
+
+    local state = getState(player)
+    if state then
+        state.highStressSince = nil
+        state.triggeredAt = currentHour
+        state.nextEpisodeHour = nil
+        state.nextEpisodeAntipsychoticActive = nil
+    end
+
+    if EHR and EHR.SafeTransmitModData then
+        EHR.SafeTransmitModData(player)
+    end
+
+    EHR.Log("Delirium triggered by prolonged maximum stress")
+    return true
+end
+
+function EHR.Delirium.IsAntipsychoticDoseActive(player)
+    if not player or not EHR.Medication or not EHR.Medication.GetDoseStatus then
+        return false
+    end
+
+    local ok, status = pcall(
+        EHR.Medication.GetDoseStatus,
+        player,
+        "ExtensiveHealth.Antipsychotics"
+    )
+    return ok == true and type(status) == "table" and status.isDoseActive == true
+end
+
+local function persistEpisodeSchedule(player, runtime, antipsychoticActive)
+    local state = getState(player)
+    if not state then return end
+
+    state.nextEpisodeHour = runtime and runtime.nextEpisodeHour or nil
+    state.nextEpisodeAntipsychoticActive = antipsychoticActive == true
+
+    if EHR and EHR.SafeTransmitModData then
+        EHR.SafeTransmitModData(player)
+    end
+end
+
+function EHR.Delirium.ScheduleNextEpisode(runtime, currentHour, first, player)
+    local cfg = EHR.Delirium.Config
+    local antipsychoticActive = EHR.Delirium.IsAntipsychoticDoseActive(player)
+    local intervalMultiplier = antipsychoticActive
+        and cfg.ANTIPSYCHOTIC_EPISODE_INTERVAL_MULTIPLIER
+        or 1.0
+
+    if first then
+        runtime.nextEpisodeHour = currentHour + randomMinutes(
+            cfg.FIRST_EPISODE_MIN_MINUTES * intervalMultiplier,
+            cfg.FIRST_EPISODE_MAX_MINUTES * intervalMultiplier
+        )
+    else
+        runtime.nextEpisodeHour = currentHour + randomMinutes(
+            cfg.EPISODE_MIN_MINUTES * intervalMultiplier,
+            cfg.EPISODE_MAX_MINUTES * intervalMultiplier
+        )
+    end
+
+    persistEpisodeSchedule(player, runtime, antipsychoticActive)
+end
+
+
+function EHR.Delirium.RefreshScheduleForMedication(player, runtime, currentHour)
+    if not player or not runtime or not runtime.nextEpisodeHour then return end
+
+    local state = getState(player)
+    if not state then return end
+
+    local antipsychoticActive = EHR.Delirium.IsAntipsychoticDoseActive(player)
+    local scheduledWithAntipsychotic = state.nextEpisodeAntipsychoticActive == true
+    if antipsychoticActive == scheduledWithAntipsychotic then return end
+
+    local multiplier = math.max(
+        1.0,
+        tonumber(EHR.Delirium.Config.ANTIPSYCHOTIC_EPISODE_INTERVAL_MULTIPLIER) or 2.5
+    )
+    local remainingHours = math.max(0, (tonumber(runtime.nextEpisodeHour) or currentHour) - currentHour)
+
+    if remainingHours <= 0 then
+        EHR.Delirium.ScheduleNextEpisode(runtime, currentHour, false, player)
+        return
+    end
+
+    if antipsychoticActive then
+        remainingHours = remainingHours * multiplier
+    else
+        remainingHours = remainingHours / multiplier
+    end
+
+    runtime.nextEpisodeHour = currentHour + remainingHours
+    persistEpisodeSchedule(player, runtime, antipsychoticActive)
+end
+
+local function getOverlayVisuals(runtime, currentHour)
+    if not runtime then return nil end
+
+    local untilHour = tonumber(runtime.overlayUntilHour) or 0
+    local startHour = tonumber(runtime.overlayStartHour) or 0
+    currentHour = tonumber(currentHour) or worldHour()
+    if currentHour >= untilHour or untilHour <= startHour then return nil end
+
+    local color = runtime.overlayColor or EHR.Delirium.OverlayColors[1]
+    local duration = math.max(0.001, untilHour - startHour)
+    local remaining = math.max(0, untilHour - currentHour)
+    local elapsed = math.max(0, currentHour - startHour)
+    local fade = math.min(1, remaining / math.min(duration, 1 / 60), elapsed / math.min(duration, 1 / 60))
+    local pulse = 0.78 + math.sin(currentHour * 320) * 0.22
+    local alpha = (tonumber(runtime.overlayAlpha) or 0.10) * math.max(0, fade) * pulse
+
+    if alpha <= 0 then return nil end
+    return color, alpha
+end
+
+function EHR.Delirium.GetOverlayRenderBridge()
+    local bridge = EHR.Delirium.OverlayRenderBridge
+    if bridge and bridge.javaObject then return bridge end
+
+    -- This element is deliberately instantiated but never added to UIManager.
+    -- It gives the render event access to DrawTextureScaledColor without ever
+    -- participating in mouse hit-testing.
+    bridge = ISPanel:new(0, 0, 1, 1)
+    bridge.background = false
+    bridge.border = false
+    bridge:initialise()
+    bridge:instantiate()
+    if bridge.javaObject and bridge.javaObject.setConsumeMouseEvents then
+        bridge.javaObject:setConsumeMouseEvents(false)
+    end
+    EHR.Delirium.OverlayRenderBridge = bridge
+    return bridge
+end
+
+function EHR.Delirium.RenderOverlay(playerIndex, currentHour)
+    if isClient and isClient() and not EHR.Delirium.Config.ENABLE_MULTIPLAYER_OVERLAY then
+        return
+    end
+
+    local runtime = EHR.Delirium.GetRuntime(playerIndex)
+    local color, alpha = getOverlayVisuals(runtime, currentHour)
+    if not color or not alpha then return end
+
+    local bridge = EHR.Delirium.GetOverlayRenderBridge()
+    local core = getCore and getCore() or nil
+    if not bridge or not bridge.javaObject or not core then return end
+
+    local ok, err = pcall(function()
+        bridge.javaObject:DrawTextureScaledColor(
+            nil,
+            0,
+            0,
+            core:getScreenWidth(),
+            core:getScreenHeight(),
+            tonumber(color.r) or 1,
+            tonumber(color.g) or 1,
+            tonumber(color.b) or 1,
+            alpha
+        )
+    end)
+    if not ok and not EHR.Delirium.OverlayRenderErrorLogged then
+        EHR.Delirium.OverlayRenderErrorLogged = true
+        EHR.Log("Delirium overlay render failed: " .. tostring(err))
+    end
+end
+
+function EHR.Delirium.OnPostUIDraw()
+    local currentHour = worldHour()
+    for i = 0, getLocalPlayerCount() - 1 do
+        local player = getSpecificPlayer and getSpecificPlayer(i) or nil
+        EHR.Delirium.RenderOverlay(getPlayerIndex(player, i), currentHour)
+    end
+end
+
+function EHR.Delirium.RemoveOverlay(playerIndex)
+    local runtime = EHR.Delirium.GetRuntime(playerIndex)
+    -- Remove a legacy full-screen panel if this code is reloaded into a running
+    -- session created by an older version.
+    if runtime.overlay and runtime.overlay.removeFromUIManager then
+        pcall(function() runtime.overlay:removeFromUIManager() end)
+    end
+    runtime.overlay = nil
+    runtime.overlayStartHour = nil
+    runtime.overlayUntilHour = nil
+    runtime.overlayAlpha = nil
+    runtime.overlayColor = nil
+end
+
+function EHR.Delirium.UpdateOverlay(playerIndex, currentHour)
+    if isClient and isClient() and not EHR.Delirium.Config.ENABLE_MULTIPLAYER_OVERLAY then
+        EHR.Delirium.RemoveOverlay(playerIndex)
+        return
+    end
+
+    local runtime = EHR.Delirium.GetRuntime(playerIndex)
+    local untilHour = tonumber(runtime.overlayUntilHour) or 0
+    if untilHour <= 0 or currentHour >= untilHour then
+        EHR.Delirium.RemoveOverlay(playerIndex)
+    end
+end
+
+function EHR.Delirium.StartOverlay(playerIndex, currentHour)
+    if isClient and isClient() and not EHR.Delirium.Config.ENABLE_MULTIPLAYER_OVERLAY then
+        EHR.Delirium.RemoveOverlay(playerIndex)
+        return
+    end
+
+    local runtime = EHR.Delirium.GetRuntime(playerIndex)
+    local cfg = EHR.Delirium.Config
+    local colors = EHR.Delirium.OverlayColors
+
+    runtime.overlayStartHour = currentHour
+    runtime.overlayUntilHour = currentHour + randomMinutes(cfg.OVERLAY_MIN_MINUTES, cfg.OVERLAY_MAX_MINUTES)
+    runtime.overlayAlpha = randomFloat(cfg.OVERLAY_ALPHA_MIN, cfg.OVERLAY_ALPHA_MAX)
+    runtime.overlayColor = colors[ZombRand(#colors) + 1]
+
+    EHR.Delirium.GetOverlayRenderBridge()
+end
+
+local function getObjects(square)
+    if not square or not square.getObjects then return nil end
+    local ok, objects = pcall(function() return square:getObjects() end)
+    if ok then return objects end
+    return nil
+end
+
+local function isIntactWindow(object)
+    if not object then return false end
+    if instanceof and not instanceof(object, "IsoWindow") then return false end
+
+    local okDestroyed, destroyed = pcall(function()
+        if object.isDestroyed then return object:isDestroyed() end
+        return false
+    end)
+    if okDestroyed and destroyed == true then return false end
+
+    local okSmashed, smashed = pcall(function()
+        if object.isSmashed then return object:isSmashed() end
+        return false
+    end)
+    if okSmashed and smashed == true then return false end
+
+    return true
+end
+
+function EHR.Delirium.FindNearbyWindow(player)
+    local square = player and player.getCurrentSquare and player:getCurrentSquare() or nil
+    if not square then return nil end
+
+    local cell = getCell and getCell() or nil
+    if not cell then return nil end
+
+    local radius = EHR.Delirium.Config.WINDOW_SEARCH_RADIUS
+    local px = math.floor(player:getX())
+    local py = math.floor(player:getY())
+    local z = math.floor(player:getZ())
+
+    for dx = -radius, radius do
+        for dy = -radius, radius do
+            local sq = cell:getGridSquare(px + dx, py + dy, z)
+            local objects = getObjects(sq)
+            if objects then
+                for i = 0, objects:size() - 1 do
+                    local object = objects:get(i)
+                    if isIntactWindow(object) then
+                        return object
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+function EHR.Delirium.TrySmashNearbyWindow(player)
+    if not isPlayerValid(player) then return false end
+
+    local window = EHR.Delirium.FindNearbyWindow(player)
+    if not window then return false end
+
+    local ok = pcall(function()
+        if luautils and luautils.walkAdjWindowOrDoor and window.getSquare and luautils.walkAdjWindowOrDoor(player, window:getSquare(), window) then
+            ISTimedActionQueue.add(ISSmashWindow:new(player, window))
+        elseif ISSmashWindow and ISTimedActionQueue then
+            ISTimedActionQueue.add(ISSmashWindow:new(player, window))
+        end
+    end)
+
+    if ok then
+        EHR.Log("Delirium impulse: queued nearby window smash")
+    end
+    return ok
+end
+
+local function impulseChancePassed(chance)
+    chance = tonumber(chance) or 0
+    if chance <= 0 then return false end
+    if chance >= 1 then return true end
+    return ZombRand(10000) < math.floor(chance * 10000)
+end
+
+local function getImpulseCooldowns(runtime)
+    runtime.impulseCooldowns = runtime.impulseCooldowns or {}
+    return runtime.impulseCooldowns
+end
+
+local function isImpulseReady(runtime, impulseId, currentHour)
+    local cooldowns = getImpulseCooldowns(runtime)
+    local nextHour = tonumber(cooldowns[impulseId]) or 0
+    return (tonumber(currentHour) or 0) >= nextHour
+end
+
+local function markImpulseUsed(runtime, impulseId, currentHour)
+    local cfg = EHR.Delirium.Config
+    local hours = cfg.IMPULSE_COOLDOWNS_HOURS and tonumber(cfg.IMPULSE_COOLDOWNS_HOURS[impulseId]) or 0
+    getImpulseCooldowns(runtime)[impulseId] = (tonumber(currentHour) or worldHour()) + math.max(0, hours or 0)
+    runtime.lastImpulseId = impulseId
+end
+
+local function getImpulseWeight(impulseId)
+    local weights = EHR.Delirium.Config.IMPULSE_WEIGHTS or {}
+    return math.max(0, tonumber(weights[impulseId]) or 0)
+end
+
+local function chooseWeightedImpulse(candidates)
+    local totalWeight = 0
+    for _, candidate in ipairs(candidates) do
+        totalWeight = totalWeight + (tonumber(candidate.weight) or 0)
+    end
+    if totalWeight <= 0 then return nil end
+
+    local roll = ZombRand(totalWeight) + 1
+    local cursor = 0
+    for _, candidate in ipairs(candidates) do
+        cursor = cursor + (tonumber(candidate.weight) or 0)
+        if roll <= cursor then return candidate end
+    end
+    return candidates[#candidates]
+end
+
+function EHR.Delirium.TryShoutImpulse(player)
+    if not isPlayerValid(player) then return false end
+
+    local ok = false
+    if player.Callout then
+        ok = pcall(function() player:Callout() end) == true
+    elseif player.Say then
+        ok = pcall(function() EHR.Locale.Say(player, "HEY!") end) == true
+    end
+
+    local cfg = EHR.Delirium.Config
+    local radius = tonumber(cfg.SHOUT_SOUND_RADIUS) or 45
+    local volume = tonumber(cfg.SHOUT_SOUND_VOLUME) or radius
+    if player.addWorldSoundUnlessInvisible then
+        pcall(function() player:addWorldSoundUnlessInvisible(radius, volume, true) end)
+    elseif addSound then
+        pcall(function() addSound(player, player:getX(), player:getY(), player:getZ(), radius, volume) end)
+    end
+
+    if ok then
+        EHR.Log("Delirium impulse: forced shout")
+    end
+    return ok
+end
+
+local function getHeldFirearm(player)
+    if not player then return nil end
+
+    local items = {}
+    if player.getPrimaryHandItem then
+        local ok, item = pcall(function() return player:getPrimaryHandItem() end)
+        if ok and item then table.insert(items, item) end
+    end
+    if player.getSecondaryHandItem then
+        local ok, item = pcall(function() return player:getSecondaryHandItem() end)
+        if ok and item then table.insert(items, item) end
+    end
+
+    for _, item in ipairs(items) do
+        local okRanged, ranged = pcall(function()
+            return item.isRanged and item:isRanged()
+        end)
+        if okRanged and ranged == true then
+            return item
+        end
+    end
+    return nil
+end
+
+local function canFireWeapon(player, weapon)
+    if not weapon then return false end
+    if ISReloadWeaponAction and ISReloadWeaponAction.canShoot then
+        local ok, canShoot = pcall(function() return ISReloadWeaponAction.canShoot(player, weapon) end)
+        if ok then return canShoot == true end
+    end
+
+    local okAmmo, ammo = pcall(function()
+        if weapon.haveChamber and weapon:haveChamber() then
+            return weapon.isRoundChambered and weapon:isRoundChambered()
+        end
+        return weapon.getCurrentAmmoCount and (weapon:getCurrentAmmoCount() > 0)
+    end)
+    return okAmmo and ammo == true
+end
+
+function EHR.Delirium.TryFireHeldWeapon(player)
+    if not isPlayerValid(player) then return false end
+    local weapon = getHeldFirearm(player)
+    if not canFireWeapon(player, weapon) then return false end
+    if not ISReloadWeaponAction or not ISReloadWeaponAction.attackHook then return false end
+
+    local ok = pcall(function()
+        ISReloadWeaponAction.attackHook(player, nil, weapon)
+    end)
+    if ok then
+        EHR.Log("Delirium impulse: fired held firearm")
+    end
+    return ok
+end
+
+local function getWornBackpack(player)
+    if not player or not player.getClothingItem_Back then return nil end
+    local ok, item = pcall(function() return player:getClothingItem_Back() end)
+    if ok then return item end
+    return nil
+end
+
+function EHR.Delirium.TryDropWornBackpack(player)
+    if not isPlayerValid(player) then return false end
+    local backpack = getWornBackpack(player)
+    if not backpack then return false end
+
+    local playerNum = getPlayerIndex(player, 0)
+    local ok = false
+    if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.dropItem then
+        ok = pcall(function()
+            ISInventoryPaneContextMenu.dropItem(backpack, playerNum)
+        end) == true
+    end
+
+    if not ok then
+        local square = player.getCurrentSquare and player:getCurrentSquare() or nil
+        if not square then return false end
+        local container = backpack.getContainer and backpack:getContainer() or nil
+        ok = pcall(function()
+            if player.removeAttachedItem then player:removeAttachedItem(backpack) end
+            if player.setClothingItem_Back then player:setClothingItem_Back(nil) end
+            if player.removeFromHands then player:removeFromHands(backpack) end
+            if container and container.Remove then container:Remove(backpack) end
+            if square and square.AddWorldInventoryItem then
+                square:AddWorldInventoryItem(backpack,
+                    player:getX() - math.floor(player:getX()),
+                    player:getY() - math.floor(player:getY()),
+                    player:getZ() - math.floor(player:getZ()))
+            end
+        end) == true
+    end
+
+    if ok then
+        EHR.Log("Delirium impulse: dropped worn backpack")
+    end
+    return ok
+end
+
+function EHR.Delirium.TryRandomImpulse(player, runtime, currentHour, chance)
+    if not isPlayerValid(player) or not runtime then return false end
+    if not impulseChancePassed(chance or EHR.Delirium.Config.IMPULSE_CHANCE) then return false end
+
+    local candidates = {}
+    if isImpulseReady(runtime, "firearm", currentHour) and canFireWeapon(player, getHeldFirearm(player)) then
+        table.insert(candidates, { id = "firearm", weight = getImpulseWeight("firearm"), fn = EHR.Delirium.TryFireHeldWeapon })
+    end
+    if isImpulseReady(runtime, "dropBackpack", currentHour) and getWornBackpack(player) then
+        table.insert(candidates, { id = "dropBackpack", weight = getImpulseWeight("dropBackpack"), fn = EHR.Delirium.TryDropWornBackpack })
+    end
+    if isImpulseReady(runtime, "window", currentHour) and EHR.Delirium.FindNearbyWindow(player) then
+        table.insert(candidates, { id = "window", weight = getImpulseWeight("window"), fn = EHR.Delirium.TrySmashNearbyWindow })
+    end
+    if isImpulseReady(runtime, "shout", currentHour) then
+        table.insert(candidates, { id = "shout", weight = getImpulseWeight("shout"), fn = EHR.Delirium.TryShoutImpulse })
+    end
+
+    local candidate = chooseWeightedImpulse(candidates)
+    if not candidate or not candidate.fn then return false end
+
+    local ok = candidate.fn(player)
+    if ok then
+        markImpulseUsed(runtime, candidate.id, currentHour)
+        return true
+    end
+    return false
+end
+
+local function sayRandomLine(player, runtime)
+    local lines = EHR.Delirium.Lines
+    if not lines or #lines == 0 or not player or not player.Say then return end
+
+    local index = ZombRand(#lines) + 1
+    if #lines > 1 and runtime.lastLineIndex == index then
+        index = (index % #lines) + 1
+    end
+    runtime.lastLineIndex = index
+    local line = lines[index]
+    local usedHaloNote = false
+    if player.setHaloNote then
+        usedHaloNote = pcall(function()
+            player:setHaloNote(line, 255, 230, 185, EHR.Delirium.Config.LINE_DURATION_TICKS)
+        end)
+    end
+    if not usedHaloNote then
+        pcall(function() EHR.Locale.Say(player, line) end)
+    end
+end
+
+local function playLocalUISound(sound)
+    if not sound or not getSoundManager then return false end
+    local soundManager = getSoundManager()
+    if not soundManager or type(soundManager.playUISound) ~= "function" then return false end
+
+    local ok = pcall(function()
+        soundManager:playUISound(sound)
+    end)
+    return ok == true
+end
+
+local function playRandomSound(player, runtime)
+    local sounds = EHR.Delirium.Sounds
+    if not sounds or #sounds == 0 or not player then return end
+
+    local index = ZombRand(#sounds) + 1
+    if #sounds > 1 and runtime.lastSoundIndex == index then
+        index = (index % #sounds) + 1
+    end
+    runtime.lastSoundIndex = index
+
+    if playLocalUISound(sounds[index]) then
+        return
+    end
+
+    -- In multiplayer, player:playSound is spatial/network-audible. If the UI
+    -- sound path fails, fail silent rather than broadcasting hallucinations.
+    if isClient and isClient() then return end
+    pcall(function() player:playSound(sounds[index]) end)
+end
+
+function EHR.Delirium.StartEpisode(player, playerIndex, currentHour)
+    if isPlayerBusyForEpisode(player) then return end
+
+    local runtime = EHR.Delirium.GetRuntime(playerIndex)
+    local antipsychoticActive = EHR.Delirium.IsAntipsychoticDoseActive(player)
+    local impulseChance = antipsychoticActive
+        and EHR.Delirium.Config.ANTIPSYCHOTIC_IMPULSE_CHANCE
+        or EHR.Delirium.Config.IMPULSE_CHANCE
+
+    playRandomSound(player, runtime)
+    sayRandomLine(player, runtime)
+    EHR.Delirium.StartOverlay(playerIndex, currentHour)
+    EHR.Delirium.TryRandomImpulse(player, runtime, currentHour, impulseChance)
+    EHR.Delirium.ScheduleNextEpisode(runtime, currentHour, false, player)
+end
+
+function EHR.Delirium.UpdateStressTrigger(player, currentHour)
+    if not isPlayerValid(player) then return end
+    if EHR.Delirium.HasActive(player) then return end
+
+    local state = getState(player)
+    if not state then return end
+
+    local stress = getStress(player)
+    if stress >= EHR.Delirium.Config.STRESS_THRESHOLD then
+        state.highStressSince = tonumber(state.highStressSince) or currentHour
+        if (currentHour - state.highStressSince) >= EHR.Delirium.Config.HOURS_AT_MAX_STRESS_TO_TRIGGER then
+            EHR.Delirium.Contract(player, currentHour)
+        end
+    else
+        state.highStressSince = nil
+    end
+end
+
+function EHR.Delirium.UpdateEpisodes(player, playerIndex, currentHour)
+    local runtime = EHR.Delirium.GetRuntime(playerIndex)
+    local state = getState(player)
+
+    if not EHR.Delirium.HasActive(player) then
+        local hadPersistentSchedule = state and (
+            state.nextEpisodeHour ~= nil
+            or state.nextEpisodeAntipsychoticActive ~= nil
+        )
+        runtime.nextEpisodeHour = nil
+        if state then
+            state.nextEpisodeHour = nil
+            state.nextEpisodeAntipsychoticActive = nil
+        end
+        if hadPersistentSchedule and EHR and EHR.SafeTransmitModData then
+            EHR.SafeTransmitModData(player)
+        end
+        EHR.Delirium.RemoveOverlay(playerIndex)
+        return
+    end
+
+    if not runtime.nextEpisodeHour then
+        local savedNextEpisodeHour = state and tonumber(state.nextEpisodeHour) or nil
+        if savedNextEpisodeHour and savedNextEpisodeHour > currentHour then
+            runtime.nextEpisodeHour = savedNextEpisodeHour
+        elseif savedNextEpisodeHour then
+            -- The world may have advanced while an MP player was offline. Do not
+            -- fire an overdue hallucination immediately after joining.
+            EHR.Delirium.ScheduleNextEpisode(runtime, currentHour, false, player)
+        else
+            -- Existing saves already have triggeredAt. Only genuinely new cases
+            -- should use the short 4-8 minute first-episode window.
+            local triggeredAt = state and tonumber(state.triggeredAt) or nil
+            local firstEpisodeWindow = EHR.Delirium.Config.FIRST_EPISODE_MAX_MINUTES / 60
+            local isNewCase = triggeredAt ~= nil
+                and currentHour >= triggeredAt
+                and (currentHour - triggeredAt) <= firstEpisodeWindow
+            EHR.Delirium.ScheduleNextEpisode(runtime, currentHour, isNewCase, player)
+        end
+    end
+
+    EHR.Delirium.RefreshScheduleForMedication(player, runtime, currentHour)
+
+    if currentHour >= runtime.nextEpisodeHour then
+        EHR.Delirium.StartEpisode(player, playerIndex, currentHour)
+    end
+end
+
+function EHR.Delirium.OnTick()
+    local currentHour = worldHour()
+    if currentHour < (EHR.Delirium.NextCheckHour or 0) then return end
+
+    EHR.Delirium.NextCheckHour = currentHour + EHR.Delirium.Config.CHECK_INTERVAL_HOURS
+
+    for i = 0, getLocalPlayerCount() - 1 do
+        local player = getSpecificPlayer and getSpecificPlayer(i) or nil
+        local playerIndex = getPlayerIndex(player, i)
+        EHR.Delirium.UpdateOverlay(playerIndex, currentHour)
+        EHR.Delirium.UpdateStressTrigger(player, currentHour)
+        EHR.Delirium.UpdateEpisodes(player, playerIndex, currentHour)
+    end
+end
+
+function EHR.Delirium.OnPlayerDeath(player)
+    local playerIndex = getPlayerIndex(player, 0)
+    EHR.Delirium.RemoveOverlay(playerIndex)
+    EHR.Delirium.Runtime[playerIndex] = nil
+end
+
+if Events then
+    Events.OnTick.Add(EHR.Delirium.OnTick)
+    if Events.OnPostUIDraw then
+        Events.OnPostUIDraw.Add(EHR.Delirium.OnPostUIDraw)
+    elseif Events.OnRenderTick then
+        Events.OnRenderTick.Add(EHR.Delirium.OnPostUIDraw)
+    end
+    if Events.OnPlayerDeath then
+        Events.OnPlayerDeath.Add(EHR.Delirium.OnPlayerDeath)
+    end
+end
+
+EHR.Log("Delirium module loaded")

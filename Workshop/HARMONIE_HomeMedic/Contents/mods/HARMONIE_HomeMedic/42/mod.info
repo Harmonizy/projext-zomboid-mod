@@ -1,8 +1,8 @@
 name=HARMONIE - Home Medic
 id=HARMONIE_HomeMedic
-description=Inspired by Extensive Health Rework Evolved (EHR): adds traditional/folk medicine recipes crafted from herbs, materials and vanilla insects to treat Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, plus crafting recipes for the Empty Blood Bag and IV Administration Kit. Thai translation for this mod and for EHR/The Only Cure themselves now lives in the separate "HARMONIE - Too Many Mod Thai Translate" pack, not bundled here.
+description=A complete health overhaul for Build 42 built on Extensive Health Rework Evolved B42 (Workshop 3726328119, mod id ExtensiveHealthReworkEvolved), merged in with its author's permission (EHR 0.9): blood volume, diseases, wounds, medication, stitching and more. Adds traditional/folk medicine recipes (herbs, materials and vanilla insects) against Gastroenteritis, Corpse Sickness, Hypothermia and Tetanus, blood loss you can feel (stamina ceiling that drops with blood volume, darkening vision that throbs with your heartbeat), the stitching minigame on every stitch (vanilla health window too), The Only Cure surgery options inside the EHR health window (also when treating another player) and a per-player volume / mute for the delirium hallucination sounds (Options -> Mods). Replaces EHR: do NOT enable Extensive Health Rework Evolved together with this mod. Thai translation lives in "HARMONIE - Too Many Mod Thai Translate".
 poster=poster.png
 icon=icon.png
-require=ExtensiveHealthReworkEvolved,TheOnlyCure
-modversion=0.2.0
+require=TheOnlyCure,HARMONIE_TooManyModThai
+modversion=0.3.3
 versionMin=42.17.0
