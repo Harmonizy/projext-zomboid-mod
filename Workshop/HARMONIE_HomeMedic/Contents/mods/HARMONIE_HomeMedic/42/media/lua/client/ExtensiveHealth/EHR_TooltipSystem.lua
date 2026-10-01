@@ -32,16 +32,16 @@ local function tooltipItemName(itemFullType)
 end
 
 local function tooltipText(itemFullType, suffix, fallback)
-    local key = "Tooltip_HomeMedic_" .. tooltipItemName(itemFullType) .. "_" .. tostring(suffix or "Text")
+    local key = "Tooltip_EHR_" .. tooltipItemName(itemFullType) .. "_" .. tostring(suffix or "Text")
     return EHR.Locale.Text(key, fallback)
 end
 
 local function tooltipLabel(key, fallback)
-    return EHR.Locale.Text("Tooltip_HomeMedic_Label_" .. key, fallback)
+    return EHR.Locale.Text("Tooltip_EHR_Label_" .. key, fallback)
 end
 
 local function tooltipFormat(key, fallback, ...)
-    return EHR.Locale.Format("Tooltip_HomeMedic_Label_" .. key, fallback, ...)
+    return EHR.Locale.Format("Tooltip_EHR_Label_" .. key, fallback, ...)
 end
 
 local function tooltipListValue(itemFullType, prefix, index, fallback)
@@ -266,7 +266,7 @@ end
 
 local function watchBatteryText(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_HomeMedic_WatchBattery_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_EHR_WatchBattery_" .. tostring(key), fallback)
     end
     return fallback
 end

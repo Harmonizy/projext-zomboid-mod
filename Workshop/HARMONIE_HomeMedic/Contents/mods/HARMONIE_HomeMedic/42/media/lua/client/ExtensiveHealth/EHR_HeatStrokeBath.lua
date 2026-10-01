@@ -288,7 +288,7 @@ function EHRHeatStrokeColdBathAction:start()
     end
 
     if self.character.Say then
-        EHR.Locale.Say(self.character, EHR_HeatStrokeBathText("UI_HomeMedic_ColdBath_Start", "Cold... but I need this."))
+        EHR.Locale.Say(self.character, EHR_HeatStrokeBathText("UI_EHR_ColdBath_Start", "Cold... but I need this."))
     end
 
     if self.useLifestyleAnim and self.parts and self.parts.main then
@@ -367,7 +367,7 @@ function EHRHeatStrokeColdBathAction:perform()
     end
 
     if self.character.Say then
-        EHR.Locale.Say(self.character, EHR_HeatStrokeBathText("UI_HomeMedic_ColdBath_Complete", "The fever finally broke..."))
+        EHR.Locale.Say(self.character, EHR_HeatStrokeBathText("UI_EHR_ColdBath_Complete", "The fever finally broke..."))
     end
 
     ISBaseTimedAction.perform(self)
@@ -408,7 +408,7 @@ function EHR.HeatStrokeBath.OnFillWorldObjectContextMenu(playerNum, context, wor
     local parts = EHR_HeatStrokeBathFindClickableBath(worldObjects)
     if not parts then return end
 
-    local optionText = EHR_HeatStrokeBathText("UI_HomeMedic_Context_TakeColdBath", "Take Cold Bath")
+    local optionText = EHR_HeatStrokeBathText("UI_EHR_Context_TakeColdBath", "Take Cold Bath")
     local option
     if context.addOptionOnTop then
         option = context:addOptionOnTop(optionText, player, EHR.HeatStrokeBath.OnTakeColdBath, parts)
@@ -419,14 +419,14 @@ function EHR.HeatStrokeBath.OnFillWorldObjectContextMenu(playerNum, context, wor
     local tooltip = ISWorldObjectContextMenu.addToolTip()
     tooltip:setName(optionText)
     tooltip.description = EHR_HeatStrokeBathText(
-        "UI_HomeMedic_Context_TakeColdBathDesc",
+        "UI_EHR_Context_TakeColdBathDesc",
         "Spend 3 hours cooling down in a bathtub. Cures Heat Stroke if completed."
     )
     option.toolTip = tooltip
 
     if not EHR_HeatStrokeBathHasEnoughWater(parts) then
         option.notAvailable = true
-        tooltip.description = EHR_HeatStrokeBathText("UI_HomeMedic_Context_TakeColdBathNoWater", "The bathtub needs water.")
+        tooltip.description = EHR_HeatStrokeBathText("UI_EHR_Context_TakeColdBathNoWater", "The bathtub needs water.")
     end
 end
 

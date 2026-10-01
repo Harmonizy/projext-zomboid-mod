@@ -491,6 +491,9 @@ local function hideWindow(instance)
 end
 
 local function hideVanillaHealthWindow()
+    -- HARMONIE: only when EHR is set to replace the vanilla health panel;
+    -- otherwise the vanilla character window is left alone
+    if EHR.UI.IsEHRPrimaryHealthPanel and not EHR.UI.IsEHRPrimaryHealthPanel() then return end
     if ISCharacterInfoWindow and ISCharacterInfoWindow.instance then
         hideWindow(ISCharacterInfoWindow.instance)
     end
@@ -1237,14 +1240,20 @@ function EHR_HealthPanelUI:closeRemoteExamIfOutOfRange()
     return true
 end
 
+-- HARMONIE: our own five tabs, no embedded vanilla windows (info, skills,
+-- health, protection and temperature stay in the vanilla character window,
+-- where other mods expect them). Tabs 3-5 live in client/HARMONIEHomeMedic
+-- and register in EHR_HealthPanelUI.ExtraTabs.
+EHR_HealthPanelUI.ExtraTabs = EHR_HealthPanelUI.ExtraTabs or {}
+
 function EHR_HealthPanelUI:getTabDefinitions()
-    local vanillaText = xpSystemText or {}
-    -- HARMONIE: "Diagnosis" tab (client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua)
+    local stats = { id = "stats", label = safeText("UI_EHR_Tab_Stats", "Body Stats") }
     local diagnosis = { id = "diagnosis", label = safeText("UI_EHR_Tab_Diagnosis", "Diagnosis") }
+    local handbook = { id = "handbook", label = safeText("UI_EHR_Tab_Handbook", "Disease Handbook") }
     if self.isRemoteHealthPanel then
         return {
             { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
-            diagnosis,
+            stats, diagnosis, handbook,
         }
     end
     if self.width < 560 then
@@ -1257,12 +1266,7 @@ function EHR_HealthPanelUI:getTabDefinitions()
     return {
         { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "EHR") or safeText("UI_EHR_Tab_EHR", "EHR Monitor") },
         { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
-        diagnosis,
-        { id = "info", label = vanillaText.info or safeText("UI_EHR_Tab_Info", "Info") },
-        { id = "skills", label = vanillaText.skills or safeText("UI_EHR_Tab_Skills", "Skills") },
-        { id = "health", label = vanillaText.health or safeText("UI_EHR_Tab_Health", "Health") },
-        { id = "protection", label = compact and safeText("UI_EHR_Tab_Protection_Compact", "Protect") or (vanillaText.protection or safeText("UI_EHR_Tab_Protection", "Protection")) },
-        { id = "temperature", label = compact and safeText("UI_EHR_Tab_Temperature_Compact", "Temp") or safeText("UI_EHR_Tab_Temperature", "Temperature") },
+        stats, diagnosis, handbook,
     }
 end
 
@@ -1701,82 +1705,10 @@ function EHR_HealthPanelUI:prepareTemperatureView(view)
 end
 
 function EHR_HealthPanelUI:createEmbeddedVanillaTabs()
-    if self.embeddedTabsCreated then return end
+    -- HARMONIE: no embedded vanilla windows any more (they created second
+    -- ISHealthPanel / ISCharacterInfo instances that other mods trip over)
     self.embeddedTabsCreated = true
     self.embeddedTabs = self.embeddedTabs or {}
-
-    if not self.player then return end
-    if self.isRemoteHealthPanel then return end
-
-    local bounds = self:getTabContentBounds()
-    local specs = {
-        {
-            id = "info",
-            factory = function()
-                return ISCharacterScreen:new(0, 0, bounds.w, bounds.h, self.playerNum)
-            end,
-        },
-        {
-            id = "skills",
-            factory = function()
-                return ISCharacterInfo:new(0, 0, bounds.w, bounds.h, self.playerNum)
-            end,
-        },
-        {
-            id = "health",
-            factory = function()
-                return ISHealthPanel:new(self.player, 0, 0, bounds.w, bounds.h)
-            end,
-        },
-        {
-            id = "protection",
-            factory = function()
-                return ISCharacterProtection:new(0, 0, bounds.w, bounds.h, self.playerNum)
-            end,
-        },
-        {
-            id = "temperature",
-            factory = function()
-                return ISClothingInsPanel:new(self.player, 0, 0, bounds.w, bounds.h)
-            end,
-        },
-    }
-
-    for _, spec in ipairs(specs) do
-        local oldHealthInstance = ISHealthPanel and ISHealthPanel.instance or nil
-        local oldCharacterInfoInstance = ISCharacterInfo and ISCharacterInfo.instance or nil
-        local ok, view = pcall(spec.factory)
-        if ISHealthPanel then
-            ISHealthPanel.instance = oldHealthInstance
-        end
-        if ISCharacterInfo then
-            ISCharacterInfo.instance = oldCharacterInfoInstance
-        end
-        if ok and view then
-            view.ehrTabId = spec.id
-            self:prepareEmbeddedVanillaView(view)
-            view:initialise()
-            if not view.javaObject and view.instantiate then
-                view:instantiate()
-            end
-            if spec.id == "info" then
-                self:prepareInfoAvatarRefresh(view)
-                self:prepareInfoLiteratureButton(view)
-            elseif spec.id == "temperature" then
-                self:prepareTemperatureView(view)
-            elseif spec.id == "health" and self.isRemoteHealthPanel and self.remoteDoctor then
-                view.doctorLevel = self.remoteDoctor:getPerkLevel(Perks.Doctor)
-                if view.setOtherPlayer then
-                    pcall(function() view:setOtherPlayer(self.remoteDoctor) end)
-                end
-                self:prepareRemoteHealthView(view)
-            end
-            view:setVisible(false)
-            view.ehrVisible = false
-            self:addChild(view)
-            self.embeddedTabs[spec.id] = view
-        end
-    end
 end
 
 function EHR_HealthPanelUI:layoutEmbeddedVanillaTabs()
@@ -1805,6 +1737,9 @@ function EHR_HealthPanelUI:syncTabVisibility()
     end
     if self.administerMedicationButton then
         self.administerMedicationButton:setVisible(self:shouldShowMedicationAdministerButton())
+    end
+    for id, extra in pairs(EHR_HealthPanelUI.ExtraTabs) do
+        if extra.sync then extra.sync(self, self.activeTab == id) end
     end
     if self.embeddedTabs then
         for id, view in pairs(self.embeddedTabs) do
@@ -1835,6 +1770,8 @@ function EHR_HealthPanelUI:setActiveTab(tabId)
     self:repositionControls()
     self:syncTabVisibility()
     self:keepOnScreen()
+    local extra = EHR_HealthPanelUI.ExtraTabs[tabId]
+    if extra and extra.open then extra.open(self) end
 end
 
 function EHR_HealthPanelUI:repositionControls()
@@ -2065,15 +2002,13 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         return self.tabIconTextures[tabId] or nil
     end
 
+    -- HARMONIE: our own icon set (tools/gen_surgery_textures.py)
     local paths = {
-        ehr = "media/textures/EHR_Tab_EHR.png",
-        immunity = "media/textures/EHR_Tab_Immune.png",
-        info = "media/textures/EHR_Tab_Info.png",
-        skills = "media/textures/EHR_Tab_Skills.png",
-        health = "media/textures/EHR_Tab_Health.png",
-        protection = "media/textures/EHR_Tab_Protection.png",
-        temperature = "media/textures/EHR_Tab_Temperature.png",
+        ehr = "media/textures/HARMONIE_HomeMedic/tab_ehr.png",
+        immunity = "media/textures/HARMONIE_HomeMedic/tab_immunity.png",
+        stats = "media/textures/HARMONIE_HomeMedic/tab_stats.png",
         diagnosis = "media/textures/HARMONIE_HomeMedic/tab_diagnosis.png",
+        handbook = "media/textures/HARMONIE_HomeMedic/tab_handbook.png",
     }
 
     local path = paths[tabId]
@@ -3256,8 +3191,10 @@ function EHR_HealthPanelUI:drawHeader()
     self:drawRect(0, 0, self.width, self.HEADER_HEIGHT, c.header.a, c.header.r, c.header.g, c.header.b)
     self:drawRect(0, self.HEADER_HEIGHT - 1, self.width, 1, 0.85, c.border.r, c.border.g, c.border.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
-    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190))
-    self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), 14, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
+    -- HARMONIE: room for the pin button (HM_Pin.lua) left of the title
+    local titleX = self.hmPinBtn and 34 or 14
+    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (titleX - 14))
+    self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
     local rightReserve = self.activeTab == "ehr" and 86 or 50
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
         rightReserve = rightReserve + 30
@@ -5758,8 +5695,8 @@ function EHR_HealthPanelUI:prerender()
         end
     elseif self.activeTab == "immunity" then
         self:drawImmuneStatusPanel()
-    elseif self.activeTab == "diagnosis" and self.drawDiagnosisPanel then
-        self:drawDiagnosisPanel()
+    elseif EHR_HealthPanelUI.ExtraTabs[self.activeTab] and EHR_HealthPanelUI.ExtraTabs[self.activeTab].draw then
+        EHR_HealthPanelUI.ExtraTabs[self.activeTab].draw(self)
     else
         self:drawEmbeddedTabFrame()
     end
@@ -5770,11 +5707,13 @@ end
 function EHR_HealthPanelUI:render()
     self:drawResizeHandle()
     self:drawTabTooltip()
-    if self.activeTab == "diagnosis" and self.drawDiagnosisTooltip then self:drawDiagnosisTooltip() end
+    local extra = EHR_HealthPanelUI.ExtraTabs[self.activeTab]
+    if extra and extra.render then extra.render(self) end
 end
 
 function EHR_HealthPanelUI:onMouseWheel(del)
-    if self.activeTab == "diagnosis" and self.onDiagnosisWheel then return self:onDiagnosisWheel(del) end
+    local extra = EHR_HealthPanelUI.ExtraTabs[self.activeTab]
+    if extra and extra.wheel then return extra.wheel(self, del) end
     if self.activeTab ~= "ehr" then return false end
     if not self.rightExpanded then return false end
     local maxScroll = self:getMaxContentScroll()
@@ -5802,6 +5741,9 @@ function EHR_HealthPanelUI:onMouseDown(x, y)
             return true
         end
     end
+
+    local extra = EHR_HealthPanelUI.ExtraTabs[self.activeTab]
+    if extra and extra.mouseDown and extra.mouseDown(self, x, y) then return true end
 
     if self.activeTab == "ehr" then
         for _, marker in ipairs(self.markerBounds or {}) do

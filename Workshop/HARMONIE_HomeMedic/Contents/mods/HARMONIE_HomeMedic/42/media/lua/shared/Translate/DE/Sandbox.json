@@ -1,9 +1,9 @@
 {
-    "Sandbox_HomeMedic_Surgery": "The Only Cure - Die einzige Heilung",
-    "Sandbox_HomeMedic_Surgery_CicatrizationSpeed": "Vernarbungs Geschwindigkeit",
-    "Sandbox_HomeMedic_Surgery_WoundDirtynessMultiplier": "Wundenverschmutzung Multiplikator",
-    "Sandbox_HomeMedic_Surgery_SurgeonAbilityImportance": "Relevanz der Fähigkeiten des Chirurgen",
-    "Sandbox_HomeMedic_Surgery_EnableZombieAmputations": "Zombie-Amputationen aktivieren",
-    "Sandbox_HomeMedic_Surgery_ZombieAmputationDamageThreshold": "Schadensschwelle für Zombie-Amputationen",
-    "Sandbox_HomeMedic_Surgery_ZombieAmputationDamageChance": "Schadenschance für Zombie-Amputationen"
+    "Sandbox_TOC": "The Only Cure - Die einzige Heilung",
+    "Sandbox_TOC_CicatrizationSpeed": "Vernarbungs Geschwindigkeit",
+    "Sandbox_TOC_WoundDirtynessMultiplier": "Wundenverschmutzung Multiplikator",
+    "Sandbox_TOC_SurgeonAbilityImportance": "Relevanz der Fähigkeiten des Chirurgen",
+    "Sandbox_TOC_EnableZombieAmputations": "Zombie-Amputationen aktivieren",
+    "Sandbox_TOC_ZombieAmputationDamageThreshold": "Schadensschwelle für Zombie-Amputationen",
+    "Sandbox_TOC_ZombieAmputationDamageChance": "Schadenschance für Zombie-Amputationen"
 }

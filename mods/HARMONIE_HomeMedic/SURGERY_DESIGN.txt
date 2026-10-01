@@ -1,4 +1,5 @@
 HARMONIE - Home Medic : ระบบผ่าตัด (Surgery)                          0.7.0 - ครบทุกเฟส
+(0.8.0: ดูหัวข้อ "หน้าต่างการแพทย์ 0.8.0" ท้ายไฟล์)
 
 แนวคิด
   ประเภทการผ่าตัด = ลำดับของ "กรรมวิธี" (P01..P15) · กรรมวิธีหนึ่ง = มินิเกมหนึ่งแบบ ใช้ซ้ำได้ทุกการผ่าตัด
@@ -10,7 +11,7 @@ HARMONIE - Home Medic : ระบบผ่าตัด (Surgery)                
   server/HARMONIEHomeMedic/HM_SurgeryServer.lua         ใบอนุญาต, ใช้วัสดุ, ตัดสินผล, ซิงก์ MP
   client/HARMONIEHomeMedic/Surgery/HM_SurgeryGames.lua  มินิเกม
   client/HARMONIEHomeMedic/Surgery/HM_SurgeryUI.lua     หน้าต่าง Pre-op, หน้าต่างผ่าตัด, timed action, เมนูคลิกขวา
-  client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua        แท็บ "วินิจฉัย" ในหน้าต่างการแพทย์
+  client/HARMONIEHomeMedic/HM_DiagnosisPanel.lua        แท็บ "วินิจฉัย" (เกมเลือกอาการ) + ผลการตรวจ
   client/ExtensiveHealth/EHR_MedicalJournalUI.lua       คู่มือโรค: หัวข้อ "การผ่าตัด" + เลื่อนอ่านได้
 
 ผลของการผ่าตัด = สถานะ treat (ของ EHR)
@@ -59,3 +60,37 @@ UI
 
 MP
   ไม่มีอะไรทำงานทุก tick ยกเว้นการแช่แข็งโรคที่รอผ่าตัด (ทุก 1 นาทีเกม, เฉพาะผู้เล่นที่มีโรคถูกหยุดไว้)
+
+
+หน้าต่างการแพทย์ 0.8.0
+  แท็บ (ไอคอนของเราเอง tools/gen_surgery_textures.py):
+    1 Monitor (EHR เดิม)   2 Immune System (EHR เดิม)   3 Body Stats   4 Diagnosis   5 Disease Handbook
+    เอาแท็บ vanilla (info/skills/health/protection/temperature) ออก: ไม่สร้าง ISHealthPanel / ISCharacterInfo ซ้อนอีก
+    หน้าต่าง vanilla จะถูกซ่อนตอนเปิดหน้าต่างการแพทย์ เฉพาะเมื่อตั้งให้ EHR แทนปุ่ม Health (ตัวเลือก primary health panel)
+    แท็บของเราลงทะเบียนใน EHR_HealthPanelUI.ExtraTabs[id] = { draw, render, wheel, mouseDown, open, sync }
+
+  การวินิจฉัย (shared/HARMONIEHomeMedic/HM_Diagnosis.lua)
+    ทุกโรคแสดงเป็น Unknown (ทุกแท็บ + Medical Monitor) จนกว่าจะวินิจฉัย; Sandbox HomeMedic.DiagnosisRequired ปิดได้
+    แท็ก = อาการที่แต่ละโรคทำจริงในเกม (อ่านจาก EHR_DiseaseDefinitions, EHR_Disease.ApplyEffects, Sepsis.StageEffects,
+           WoundInfection.STAGE_EFFECTS) -> D.DISEASES[โรค] = { แท็ก... }
+    เลือกแท็ก -> รายชื่อโรคที่มีแท็กครบทุกอันที่เลือก; โรคที่หมอไม่รู้ (ไม่มี flyer / First Aid < 8) = Unknown กดไม่ได้
+    กด "วินิจฉัย" -> เซิร์ฟเวอร์ตรวจ (ระยะ <= 3, หมอรู้จักโรค, ผู้ป่วยเป็นโรคนี้จริง)
+       ถูก -> modData.HM_Diagnosis[โรค] = ชั่วโมงเกม (ส่งให้ client ผู้ป่วย + อยู่ใน exam snapshot)
+       ผิด -> รอ 8 วินาทีก่อนลองใหม่
+    หายจากโรค -> ลบผลวินิจฉัยทุก 10 นาทีเกม (ติดใหม่ = Unknown อีกครั้ง)
+
+  Body Stats (shared/HARMONIEHomeMedic/HM_Stats.lua)
+    ค่าคงที่ ณ ตอนเปิดแท็บ / กด Refresh (ไม่ส่งข้อมูลต่อเนื่อง)
+    CharacterStat ทุกตัว (+ CharacterStat.values()), Health, อุณหภูมิ, เลือด, ภูมิคุ้มกัน, โภชนาการ
+    ม็อดอื่น: HM_Stats.Register{ id, label/labelKey, group, get(player) -> value, fraction, text }
+              + อ่าน indicator ที่ลงทะเบียนกับ Modern Status อัตโนมัติ + วิตามิน From Garden to Plate
+    คนอื่น: หมอขอ -> เซิร์ฟเวอร์ตอบค่าของเซิร์ฟเวอร์ทันที แล้วขอจาก client ผู้ป่วย -> ส่งต่อให้หมอ (แทนที่)
+
+  อื่น ๆ
+    Pin/Unpin (HM_Pin.lua): หน้าต่างการแพทย์ + Medical Monitor, ปลด pin แล้วหุบเหลือหัวเมื่อเมาส์ออก
+    Medical Monitor เปิดแบบขยายเสมอ
+    ปุ่ม J = เปิดหน้าต่างการแพทย์ที่แท็บคู่มือโรค
+    EHR debug: อนุญาตเสมอเมื่อเกมเปิดแบบ -debug หรือเป็น admin ของเซิร์ฟเวอร์
+    คีย์แปลภาษากลับเป็นชื่อเดิมของ EHR / TOC (ม็อดอื่นอ้างอิงอยู่); ข้อความยังเป็น Home Medic (tools/rebrand_homemedic.py)
+    ตัดข้อความภาษาไทยแบบปลอดภัยใน Kahlua (สตริงเป็น Java: อักษรไทย = 1 ตัว) -> แก้เกมค้างตอนเปิดคู่มือ
+    TOC: แขนขวาท่อนบนใช้ texture โฟลเดอร์ Upperarm1 ที่ไม่มีอยู่ -> ไหล่โปร่ง; แก้เป็น Upperarm

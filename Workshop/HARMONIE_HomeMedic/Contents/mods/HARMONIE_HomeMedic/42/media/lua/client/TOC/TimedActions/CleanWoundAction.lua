@@ -59,7 +59,7 @@ function CleanWoundAction:update()
     if self.character ~= self.patient then
         self.character:faceThisObject(self.patient)
     end
-    local jobType = getText("ContextMenu_HomeMedic_CleanWound")
+    local jobType = getText("ContextMenu_CleanWound")
     ISHealthPanel.setBodyPartActionForPlayer(self.patient, self.bodyPart, self, jobType, { cleanBurn = true })
     self.character:setMetabolicTarget(Metabolics.LightDomestic)
 end

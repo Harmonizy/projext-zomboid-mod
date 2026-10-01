@@ -481,15 +481,15 @@ function EHR.FoodTemp.OnFoodConsumed(player, item, hungerReduction)
             local text
             if effect.magnitude > 0 then
                 if effect.sourceTemp >= EHR.FoodTemp.Config.scaldingTemp then
-                    text = getText("UI_HomeMedic_Food_Scalding") or "*The hot food warms me from the inside*"
+                    text = getText("UI_EHR_Food_Scalding") or "*The hot food warms me from the inside*"
                 else
-                    text = getText("UI_HomeMedic_Food_Warming") or "*That warmed me up a bit*"
+                    text = getText("UI_EHR_Food_Warming") or "*That warmed me up a bit*"
                 end
             else
                 if effect.sourceTemp <= EHR.FoodTemp.Config.frozenTemp then
-                    text = getText("UI_HomeMedic_Food_Frozen") or "*Brr, that's cold!*"
+                    text = getText("UI_EHR_Food_Frozen") or "*Brr, that's cold!*"
                 else
-                    text = getText("UI_HomeMedic_Food_Cooling") or "*That cooled me down*"
+                    text = getText("UI_EHR_Food_Cooling") or "*That cooled me down*"
                 end
             end
 

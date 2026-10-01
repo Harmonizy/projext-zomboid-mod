@@ -13,6 +13,7 @@
 ]]
 
 require "ISUI/ISPanel"
+require "HARMONIEHomeMedic/HM_Diagnosis"
 require "ISUI/ISButton"
 require "ISUI/ISRichTextPanel"
 require "ExtensiveHealth/EHR_WoundInfection"
@@ -615,6 +616,11 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
     end
 
     local function canIdentifyDisease(diseaseId)
+        -- HARMONIE: Unknown until diagnosed (HM_Diagnosis, Diagnosis tab)
+        if HM_Diagnosis and HM_Diagnosis.gated(diseaseId)
+                and not HM_Diagnosis.isDiagnosed(self.player, diseaseId, self.isRemoteExamination and self.remoteExamData or nil) then
+            return false
+        end
         if EHR.DiseaseFlyers
             and EHR.DiseaseFlyers.IsKnoxDiseaseId
             and EHR.DiseaseFlyers.IsKnoxDiseaseId(diseaseId)
@@ -1912,6 +1918,16 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
         end
     end
 
+    -- HARMONIE: Unknown until diagnosed (HM_Diagnosis, Diagnosis tab)
+    local hmId = diseaseData.isKnox and "knox_infection" or diseaseId
+    if canIdentify and HM_Diagnosis and HM_Diagnosis.gated(hmId)
+            and not HM_Diagnosis.isDiagnosed(self.player, hmId, self.isRemoteExamination and self.remoteExamData or nil) then
+        canIdentify = false
+        if EHR.DiseaseFlyers and EHR.DiseaseFlyers.GetUnknownDiseaseDisplay then
+            unknownInfo = EHR.DiseaseFlyers.GetUnknownDiseaseDisplay(hmId)
+        end
+    end
+
     if not canIdentify then
         displayName = (unknownInfo and unknownInfo.displayName) or (getText("UI_EHR_DiseaseUnknown") or "Unknown Illness")
     else
@@ -2694,6 +2710,10 @@ function EHR.UI.ShowMonitor(player)
     if EHR.UI.MonitorInstance then
         EHR.UI.MonitorInstance:setVisible(true)
         EHR.UI.MonitorVisible = true
+        -- HARMONIE: always opens expanded; the -/+ button shrinks it
+        if not EHR.UI.MonitorInstance.isExpanded then
+            EHR.UI.MonitorInstance:onToggleExpand()
+        end
         EHR.UI.MonitorInstance:updateCachedData()
         updateMonitorPosition()
     end

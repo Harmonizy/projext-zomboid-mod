@@ -1,9 +1,9 @@
 {
-    "Sandbox_HomeMedic_Surgery": "The Only Cure",
-    "Sandbox_HomeMedic_Surgery_CicatrizationSpeed": "Yara İyileşme Hızı",
-    "Sandbox_HomeMedic_Surgery_WoundDirtynessMultiplier": "Yara Kirlilik Çarpanı",
-    "Sandbox_HomeMedic_Surgery_SurgeonAbilityImportance": "Cerrahın Yetenek Önemi",
-    "Sandbox_HomeMedic_Surgery_EnableZombieAmputations": "Zombi Amputasyonlarını Etkinleştir",
-    "Sandbox_HomeMedic_Surgery_ZombieAmputationDamageThreshold": "Zombi Amputasyon Hasar Eşiği",
-    "Sandbox_HomeMedic_Surgery_ZombieAmputationDamageChance": "Zombi Amputasyon Hasar Şansı"
+    "Sandbox_TOC": "The Only Cure",
+    "Sandbox_TOC_CicatrizationSpeed": "Yara İyileşme Hızı",
+    "Sandbox_TOC_WoundDirtynessMultiplier": "Yara Kirlilik Çarpanı",
+    "Sandbox_TOC_SurgeonAbilityImportance": "Cerrahın Yetenek Önemi",
+    "Sandbox_TOC_EnableZombieAmputations": "Zombi Amputasyonlarını Etkinleştir",
+    "Sandbox_TOC_ZombieAmputationDamageThreshold": "Zombi Amputasyon Hasar Eşiği",
+    "Sandbox_TOC_ZombieAmputationDamageChance": "Zombi Amputasyon Hasar Şansı"
 }

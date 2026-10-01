@@ -964,3 +964,11 @@ option HomeMedic.SurgeryEnabled
     page = TOC,
     translation = HomeMedic_SurgeryEnabled,
 }
+
+option HomeMedic.DiagnosisRequired
+{
+    type = boolean,
+    default = true,
+    page = EHR_Disease,
+    translation = HomeMedic_DiagnosisRequired,
+}

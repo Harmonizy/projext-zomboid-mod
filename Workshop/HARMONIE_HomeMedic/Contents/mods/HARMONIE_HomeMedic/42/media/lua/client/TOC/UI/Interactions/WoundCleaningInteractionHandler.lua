@@ -39,7 +39,7 @@ function WoundCleaningInteractionHandler:addToMenu(context)
     local types = self:getAllItemTypes(self.items.ITEMS)
     if #types > 0 and self:isValid() then
         TOC_DEBUG.print("WoundCleaningInteraction inside addToMenu")
-        local option = context:addOption(getText("ContextMenu_HomeMedic_CleanWound"), nil)
+        local option = context:addOption(getText("ContextMenu_CleanWound"), nil)
         local subMenu = context:getNew(context)
         context:addSubMenu(option, subMenu)
         for i=1, #types do

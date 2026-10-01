@@ -226,5 +226,7 @@
     "Sandbox_EHR_ImmunityDeclineRate": "อัตราการลดลงของภูมิคุ้มกัน",
     "Sandbox_EHR_ImmunityDeclineRate_tooltip": "ปรับความเร็วที่คะแนนระบบภูมิคุ้มกันลดลงสู่เป้าหมายปัจจุบัน 1.0 = ค่าเริ่มต้น",
     "Sandbox_HomeMedic_SurgeryEnabled": "ระบบผ่าตัด (Home Medic)",
-    "Sandbox_HomeMedic_SurgeryEnabled_tooltip": "อนุญาตการผ่าตัดของ Home Medic (Debridement, Abscess Drainage ...) จากเมนูส่วนของร่างกาย"
+    "Sandbox_HomeMedic_SurgeryEnabled_tooltip": "อนุญาตการผ่าตัดของ Home Medic (Debridement, Abscess Drainage ...) จากเมนูส่วนของร่างกาย",
+    "Sandbox_HomeMedic_DiagnosisRequired": "ต้องวินิจฉัยก่อนรู้ชื่อโรค (Home Medic)",
+    "Sandbox_HomeMedic_DiagnosisRequired_tooltip": "ทุกโรคจะแสดงเป็น Unknown จนกว่าจะมีคนวินิจฉัยในแท็บการวินิจฉัยของหน้าต่างการแพทย์ ถ้าปิด จะแสดงชื่อโรคแบบเดิมของ Extensive Health Rework"
 }

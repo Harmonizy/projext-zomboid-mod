@@ -1,0 +1,306 @@
+--[[
+    HARMONIE - Home Medic : diagnosis by symptoms (shared data + rules)
+
+    Request 2026-10-01: the medical window shows every illness as "Unknown"
+    until someone diagnoses it in the Diagnosis tab. The doctor ticks the
+    signs the patient shows (tags); the candidate list narrows to the
+    illnesses that cause ALL of them. Only illnesses the doctor knows (disease
+    flyer, First Aid 8, or self-evident ones) can be picked -- the others stay
+    "Unknown" in the list too. Picking an illness the patient really has
+    records the diagnosis on the patient (modData.HM_Diagnosis[id] = hour);
+    a wrong pick is refused (and the doctor waits a little before trying
+    again).
+
+    The tags come from what each illness actually does in game -- read from
+    EHR's stage effects and effect code (EHR_DiseaseDefinitions,
+    EHR_Disease.ApplyEffects, EHR_Sepsis.StageEffects, EHR_WoundInfection).
+
+    The server decides (MP: dedicated server; SP: same Lua state). Entries
+    of cured illnesses are pruned, so a new infection starts unknown again.
+    Sandbox HomeMedic.DiagnosisRequired = false turns the whole gate off.
+]]--
+
+HM_Diagnosis = HM_Diagnosis or {}
+local D = HM_Diagnosis
+D.MODULE = "HARMONIE_HM_Diag"
+D.KEY = "HM_Diagnosis"
+D.MAX_DISTANCE = 3
+D.WRONG_LOCK_MS = 8000
+
+-- ------------------------------------------------------------- tags
+-- groups keep the chip grid readable; order = display order
+D.GROUPS = {
+    { id = "general", tags = { "fever", "chills", "overheat", "fatigue", "weakness", "slow", "health_loss", "collapse" } },
+    { id = "breath", tags = { "runny_nose", "sneeze", "cough", "cough_blood", "chest_pain", "short_breath" } },
+    { id = "gut", tags = { "nausea", "vomit", "abdominal", "bloody_stool", "thirst", "hunger" } },
+    { id = "body", tags = { "muscle_pain", "stiffness", "spasm", "back_pain", "itch", "skin_pain", "wound_inflamed" } },
+    { id = "mind", tags = { "headache", "dizziness", "blurred", "eye_burn", "confusion", "hallucination", "sleepless", "craving", "stress" } },
+}
+
+-- illness -> signs it can show (all stages together)
+D.DISEASES = {
+    common_cold = { "runny_nose", "sneeze", "fatigue", "weakness" },
+    pneumonia = { "cough", "chest_pain", "short_breath", "fatigue", "weakness", "health_loss" },
+    dysentery = { "abdominal", "bloody_stool", "vomit", "thirst", "hunger", "slow", "weakness" },
+    hypothermia = { "chills", "slow", "weakness", "fatigue", "confusion", "dizziness", "collapse", "health_loss" },
+    heat_stroke = { "overheat", "thirst", "slow", "weakness", "confusion", "dizziness", "collapse", "health_loss" },
+    corpse_sickness = { "nausea", "vomit", "cough", "eye_burn", "dizziness", "fatigue", "weakness", "slow", "thirst" },
+    cadaveric_aspergillosis = { "cough", "short_breath", "chest_pain", "fever", "fatigue", "weakness", "slow", "thirst", "health_loss" },
+    food_poisoning = { "nausea", "vomit", "weakness", "hunger", "thirst" },
+    gastroenteritis = { "nausea", "vomit", "weakness", "thirst", "hunger" },
+    toxin_poisoning = { "nausea", "vomit", "weakness", "thirst", "fatigue", "dizziness", "abdominal", "health_loss" },
+    trichinosis = { "muscle_pain", "fever", "fatigue", "weakness", "thirst", "spasm", "health_loss" },
+    hyperkeratotic_scabies = { "itch", "skin_pain", "fever", "health_loss" },
+    cellulitis = { "wound_inflamed", "skin_pain", "fever", "nausea", "fatigue" },
+    wound_infection = { "wound_inflamed", "fever" },
+    sepsis = { "fever", "fatigue", "confusion", "health_loss", "weakness" },
+    tetanus = { "stiffness", "spasm", "muscle_pain", "short_breath", "weakness", "slow", "fatigue", "fever", "health_loss" },
+    tuberculosis = { "cough", "cough_blood", "fever", "fatigue", "weakness", "hunger", "slow" },
+    ahtr = { "back_pain", "weakness", "nausea", "fever", "health_loss" },
+    concussion = { "headache", "dizziness", "blurred", "nausea" },
+    delirium = { "hallucination", "confusion" },
+    insomnia = { "sleepless", "fatigue", "stress", "headache" },
+    painkiller_addiction = { "craving", "stress", "thirst" },
+    knox_infection = { "fever", "nausea", "confusion", "health_loss", "fatigue" },
+}
+D.ORDER = {
+    "common_cold", "pneumonia", "tuberculosis", "cadaveric_aspergillosis", "corpse_sickness", "food_poisoning",
+    "gastroenteritis", "dysentery", "toxin_poisoning", "trichinosis", "hypothermia", "heat_stroke", "wound_infection",
+    "cellulitis", "sepsis", "tetanus", "hyperkeratotic_scabies", "ahtr", "concussion", "delirium", "insomnia",
+    "painkiller_addiction", "knox_infection",
+}
+D.TAGSET = {}
+for id, tags in pairs(D.DISEASES) do
+    local set = {}
+    for _, t in ipairs(tags) do set[t] = true end
+    D.TAGSET[id] = set
+end
+
+-- ------------------------------------------------------------- helpers
+local function call(obj, method, ...)
+    if not obj or not obj[method] then return nil end
+    local ok, v = pcall(obj[method], obj, ...)
+    if ok then return v end
+    return nil
+end
+local function hours() return getGameTime and getGameTime():getWorldAgeHours() or 0 end
+
+local ALIAS = { Sepsis = "sepsis", Knox_Infection = "knox_infection", Wound_Infection = "wound_infection",
+    knox = "knox_infection", heat_exhaustion = "heat_stroke" }
+function D.normalize(id)
+    id = tostring(id or "")
+    if ALIAS[id] then return ALIAS[id] end
+    local low = id:lower()
+    return ALIAS[low] or low
+end
+
+-- illnesses that are not "diseases" (exposure meters etc.) are never gated
+function D.gated(id)
+    return D.DISEASES[D.normalize(id)] ~= nil
+end
+
+function D.enabled()
+    local o = SandboxVars and SandboxVars.HomeMedic
+    if o and o.DiagnosisRequired == false then return false end
+    return true
+end
+
+function D.store(player, create)
+    local md = call(player, "getModData")
+    if not md then return nil end
+    if create and type(md[D.KEY]) ~= "table" then md[D.KEY] = {} end
+    return md[D.KEY]
+end
+
+-- getter(key) -> table (patient modData or remote exam snapshot)
+function D.getter(patient, exam)
+    if type(exam) == "table" then return function(k) return exam[k] end end
+    local md = call(patient, "getModData") or {}
+    return function(k) return md[k] end
+end
+
+-- is `id` active on the patient right now?
+function D.isActive(get, id, patient, exam)
+    id = D.normalize(id)
+    if id == "sepsis" then
+        local s = get("EHR_Sepsis")
+        return type(s) == "table" and (tonumber(s.stage) or 0) > 0
+    end
+    if id == "wound_infection" then
+        local w = get("EHR_WoundInfection")
+        if type(w) == "table" and type(w.parts) == "table" then
+            for _, pd in pairs(w.parts) do
+                if type(pd) == "table" and (tonumber(pd.stage) or 0) > 0 then return true end
+            end
+        end
+        return false
+    end
+    if id == "knox_infection" then
+        if type(exam) == "table" then
+            return type(exam.EHR_KnoxStatus) == "table" and exam.EHR_KnoxStatus.infected == true
+        end
+        local K = EHR and EHR.KnoxCure
+        if K and K.IsInfected and patient then
+            local ok, r = pcall(K.IsInfected, patient)
+            return ok and r == true
+        end
+        return false
+    end
+    local dis = get("EHR_Disease")
+    local active = type(dis) == "table" and dis.active or nil
+    if type(active) ~= "table" then return false end
+    for k, v in pairs(active) do
+        if v and D.normalize(k) == id then return true end
+    end
+    return false
+end
+
+-- every gated illness the patient has now
+function D.activeIds(patient, exam)
+    local get = D.getter(patient, exam)
+    local list = {}
+    for _, id in ipairs(D.ORDER) do
+        if D.isActive(get, id, patient, exam) then list[#list + 1] = id end
+    end
+    return list
+end
+
+function D.isDiagnosed(patient, id, exam)
+    if not D.enabled() then return true end
+    id = D.normalize(id)
+    if not D.DISEASES[id] then return true end
+    local data
+    if type(exam) == "table" then data = exam[D.KEY] else data = D.store(patient) end
+    return type(data) == "table" and data[id] ~= nil
+end
+
+-- can the doctor recognise (and so pick) this illness?
+function D.knows(doctor, id)
+    id = D.normalize(id)
+    local F = EHR and EHR.DiseaseFlyers
+    if id == "knox_infection" then
+        return F and F.KnowsDisease and F.KnowsDisease(doctor, "knox_infection") == true or false
+    end
+    if F and F.CanIdentifyDisease then
+        local ok, r = pcall(F.CanIdentifyDisease, doctor, id)
+        if ok then return r == true end
+    end
+    return HM_Surgery and HM_Surgery.knows and HM_Surgery.knows(doctor, id) or false
+end
+
+-- illnesses that show ALL the selected signs (selected: set tag -> true)
+function D.candidates(selected)
+    local out = {}
+    for _, id in ipairs(D.ORDER) do
+        local set, ok = D.TAGSET[id], true
+        for t, on in pairs(selected or {}) do
+            if on and not set[t] then ok = false; break end
+        end
+        if ok then out[#out + 1] = id end
+    end
+    return out
+end
+
+-- drop diagnoses of illnesses that are gone (a new infection starts unknown)
+function D.prune(patient)
+    local data = D.store(patient)
+    if type(data) ~= "table" then return false end
+    local get = D.getter(patient, nil)
+    local changed = false
+    for id in pairs(data) do
+        if not D.isActive(get, id, patient, nil) then data[id] = nil; changed = true end
+    end
+    return changed
+end
+
+-- ------------------------------------------------------------- server
+D.Server = D.Server or {}
+local SV = D.Server
+
+local function reply(doctor, command, args)
+    if isServer and isServer() then
+        if sendServerCommand then sendServerCommand(doctor, D.MODULE, command, args or {}) end
+    elseif D.Client and D.Client.onServerCommand then
+        D.Client.onServerCommand(D.MODULE, command, args or {})
+    end
+end
+
+local function findPatient(doctor, args)
+    if isServer and isServer() then
+        local id = tonumber(args.patientOnline)
+        if not id then return doctor end
+        local online = getOnlinePlayers and getOnlinePlayers()
+        if online then
+            for i = 0, online:size() - 1 do
+                local p = online:get(i)
+                if p and call(p, "getOnlineID") == id then return p end
+            end
+        end
+        return nil
+    end
+    local n = tonumber(args.patientNum)
+    return n and getSpecificPlayer and getSpecificPlayer(n) or doctor
+end
+
+local function distance(a, b)
+    if a == b then return 0 end
+    local ax, ay, bx, by = call(a, "getX"), call(a, "getY"), call(b, "getX"), call(b, "getY")
+    if not (ax and ay and bx and by) then return 999 end
+    return math.sqrt((ax - bx) ^ 2 + (ay - by) ^ 2)
+end
+
+-- send the patient's own copy (MP: their client keeps its own modData)
+function SV.push(patient)
+    if isServer and isServer() and sendServerCommand then
+        sendServerCommand(patient, D.MODULE, "Sync", { data = D.store(patient) or {} })
+    end
+end
+
+function SV.Diagnose(doctor, args)
+    args = type(args) == "table" and args or {}
+    local id = D.normalize(args.id)
+    local patient = findPatient(doctor, args)
+    local base = { id = id, patientOnline = args.patientOnline, patientNum = args.patientNum }
+    local function deny(reason)
+        base.ok = false
+        base.reason = reason
+        reply(doctor, "Result", base)
+    end
+    if not patient or not D.DISEASES[id] then return deny("Invalid") end
+    if distance(doctor, patient) > D.MAX_DISTANCE then return deny("TooFar") end
+    if not D.knows(doctor, id) then return deny("Unknown") end
+    if not D.isActive(D.getter(patient, nil), id, patient, nil) then return deny("Wrong") end
+    local data = D.store(patient, true)
+    data[id] = hours()
+    base.ok = true
+    base.data = data
+    SV.push(patient)
+    reply(doctor, "Result", base)
+end
+
+local function onClientCommand(module, command, player, args)
+    if module ~= D.MODULE then return end
+    if command == "Diagnose" then SV.Diagnose(player, args) end
+end
+
+local function pruneAll()
+    if isClient and isClient() then return end
+    local online = getOnlinePlayers and getOnlinePlayers()
+    if online then
+        for i = 0, online:size() - 1 do
+            local p = online:get(i)
+            if p and D.prune(p) then SV.push(p) end
+        end
+    elseif getSpecificPlayer then
+        for n = 0, 3 do
+            local p = getSpecificPlayer(n)
+            if p then D.prune(p) end
+        end
+    end
+end
+
+if Events and not D.registered then
+    D.registered = true
+    if Events.OnClientCommand then Events.OnClientCommand.Add(onClientCommand) end
+    if Events.EveryTenMinutes then Events.EveryTenMinutes.Add(pruneAll) end
+end

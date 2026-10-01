@@ -404,14 +404,17 @@ local function categoryName(category)
     return L(key, CategoryNames[category] or tostring(category or L("UI_EHR_Codex_Unknown", "Unknown")))
 end
 
-function EHR_MedicalJournalUI:new(x, y, width, height, player)
+-- HARMONIE: embedded = true -> a child view of the medical window's
+-- "handbook" tab (HM_PanelTabs.lua): no close button, not draggable
+function EHR_MedicalJournalUI:new(x, y, width, height, player, embedded)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
     o.player = player
+    o.embedded = embedded == true
     o.backgroundColor = Colors.bg
     o.borderColor = Colors.border
-    o.moveWithMouse = true
+    o.moveWithMouse = not o.embedded
     o.textureCache = {}
     return o
 end
@@ -423,6 +426,7 @@ end
 function EHR_MedicalJournalUI:createChildren()
     ISPanel.createChildren(self)
 
+    if not self.embedded then
     self.closeBtn = ISButton:new(self.width - 34, 9, 24, 24, "X", self, EHR_MedicalJournalUI.onClose)
     self.closeBtn:initialise()
     self.closeBtn:instantiate()
@@ -431,6 +435,7 @@ function EHR_MedicalJournalUI:createChildren()
     self.closeBtn.backgroundColorMouseOver = { r = 0.45, g = 0.02, b = 0.02, a = 0.95 }
     self.closeBtn:setAnchorRight(true)
     self:addChild(self.closeBtn)
+    end
 
     self.diseaseList = ISScrollingListBox:new(PADDING, HEADER_HEIGHT + PADDING + 36, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2 - 40)
     self.diseaseList:initialise()
@@ -588,7 +593,7 @@ function EHR_MedicalJournalUI:prerender()
     local known = tonumber(self.knownCount) or 0
     local progress = LF("UI_EHR_DiseaseHandbook_KnownCount", "%1/%2 known", known, total)
     local progressW = measureText(UIFont.Medium, progress)
-    self:drawText(progress, self.width - progressW - 50, 11, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
+    self:drawText(progress, self.width - progressW - (self.embedded and 16 or 50), 11, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
 
     self:drawPanelFrame(PADDING, HEADER_HEIGHT + PADDING, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2, L("UI_EHR_DiseaseHandbook_Index", "DISEASE INDEX"))
 

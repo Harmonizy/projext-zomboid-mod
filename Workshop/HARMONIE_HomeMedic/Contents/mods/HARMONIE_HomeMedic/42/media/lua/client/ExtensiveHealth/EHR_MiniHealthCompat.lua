@@ -255,7 +255,7 @@ function ISEHRCompanionPanel:render()
     y = y + 4
 
     -- Blood
-    self:drawText(miniText("UI_HomeMedic_Mini_Blood", "Blood:"), x, y,
+    self:drawText(miniText("UI_EHR_Mini_Blood", "Blood:"), x, y,
         self.COLORS.label.r, self.COLORS.label.g, self.COLORS.label.b, 1.0,
         UIFont.Small)
     local bloodText = string.format("%d%%", math.floor(self.bloodPercent))
@@ -267,7 +267,7 @@ function ISEHRCompanionPanel:render()
 
     -- Infected parts
     local infectColor = self.infectedCount > 0 and self.COLORS.infectionActive or self.COLORS.infectionNone
-    self:drawText(miniText("UI_HomeMedic_Mini_Infect", "Infect:"), x, y,
+    self:drawText(miniText("UI_EHR_Mini_Infect", "Infect:"), x, y,
         self.COLORS.label.r, self.COLORS.label.g, self.COLORS.label.b, 1.0,
         UIFont.Small)
     local infectText = tostring(self.infectedCount)
@@ -279,7 +279,7 @@ function ISEHRCompanionPanel:render()
 
     -- Sepsis
     local sepsisColor = self.sepsisStage > 0 and self.COLORS.sepsisActive or self.COLORS.sepsisNone
-    self:drawText(miniText("UI_HomeMedic_Mini_Sepsis", "Sepsis:"), x, y,
+    self:drawText(miniText("UI_EHR_Mini_Sepsis", "Sepsis:"), x, y,
         self.COLORS.label.r, self.COLORS.label.g, self.COLORS.label.b, 1.0,
         UIFont.Small)
     local sepsisTextWidth = getTextManager():MeasureStringX(UIFont.Small, self.sepsisText)
@@ -290,7 +290,7 @@ function ISEHRCompanionPanel:render()
 
     -- Disease
     local diseaseColor = self.diseaseStage > 0 and self.COLORS.diseaseActive or self.COLORS.diseaseNone
-    self:drawText(miniText("UI_HomeMedic_Mini_Disease", "Disease:"), x, y,
+    self:drawText(miniText("UI_EHR_Mini_Disease", "Disease:"), x, y,
         self.COLORS.label.r, self.COLORS.label.g, self.COLORS.label.b, 1.0,
         UIFont.Small)
     local diseaseTextWidth = getTextManager():MeasureStringX(UIFont.Small, self.diseaseText)

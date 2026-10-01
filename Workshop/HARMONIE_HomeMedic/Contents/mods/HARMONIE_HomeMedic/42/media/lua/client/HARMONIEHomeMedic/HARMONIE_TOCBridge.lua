@@ -93,31 +93,31 @@ function T.limbStatuses(patient, bodyPart, colors)
         rows[#rows + 1] = { key = key, label = label, color = color or c.textDim, visualValue = visual, priority = priority }
     end
     if not dc:getIsVisible(limb) then
-        add("toc_missing", text("UI_HomeMedic_LimbMissing", "Missing (amputated above)"), c.textDim, 0, 130)
+        add("toc_missing", text("UI_EHR_LimbMissing", "Missing (amputated above)"), c.textDim, 0, 130)
         return rows
     end
-    add("toc_amputated", text("UI_HomeMedic_Amputated", "Amputated"), c.red, 1.00, 130)
+    add("toc_amputated", text("UI_EHR_Amputated", "Amputated"), c.red, 1.00, 130)
     if dc:getIsCicatrized(limb) then
         if dc:getIsCauterized(limb) then
-            add("toc_cauterized", text("IGUI_HomeMedic_HealthPanel_Cauterized", "Cauterized"), c.green, 0.20, 129)
+            add("toc_cauterized", text("IGUI_HealthPanel_Cauterized", "Cauterized"), c.green, 0.20, 129)
         else
-            add("toc_healed", text("IGUI_HomeMedic_HealthPanel_Cicatrized", "Healed"), c.green, 0.20, 129)
+            add("toc_healed", text("IGUI_HealthPanel_Cicatrized", "Healed"), c.green, 0.20, 129)
         end
     else
         local maxTime = StaticData.LIMBS_CICATRIZATION_TIME_IND_NUM and StaticData.LIMBS_CICATRIZATION_TIME_IND_NUM[limb]
         local cic = tonumber(dc:getCicatrizationTime(limb)) or -1
         if maxTime and maxTime > 0 and cic >= 0 then
             local pct = math.max(0, math.min(100, math.floor((1 - cic / maxTime) * 100)))
-            add("toc_healing", text("IGUI_HomeMedic_HealthPanel_Cicatrization", "Cicatrization") .. " " .. pct .. "%", c.orange, 0.60, 128)
+            add("toc_healing", text("IGUI_HealthPanel_Cicatrization", "Cicatrization") .. " " .. pct .. "%", c.orange, 0.60, 128)
         end
         local dirt = tonumber(dc:getWoundDirtyness(limb)) or -1
         if dirt >= 0 then
-            add("toc_dirt", text("IGUI_HomeMedic_HealthPanel_WoundDirtyness", "Wound dirtiness") .. " " .. math.floor(dirt * 100) .. "%",
+            add("toc_dirt", text("IGUI_HealthPanel_WoundDirtyness", "Wound dirtiness") .. " " .. math.floor(dirt * 100) .. "%",
                 dirt >= 0.5 and c.red or c.yellow, 0.60, 127)
         end
     end
     if dc:getIsProstEquipped(limb) then
-        add("toc_prosthesis", text("IGUI_HomeMedic_HealthPanel_ProstEquipped", "Prosthesis equipped"), c.blue or c.green, 0.20, 126)
+        add("toc_prosthesis", text("IGUI_HealthPanel_ProstEquipped", "Prosthesis equipped"), c.blue or c.green, 0.20, 126)
     end
     return rows
 end

@@ -1,6 +1,6 @@
 {
-    "IGUI_HomeMedic_Yes": "Да",
-    "IGUI_HomeMedic_No": "Нет",
+    "IGUI_Yes": "Да",
+    "IGUI_No": "Нет",
     "IGUI_perks_Amputations": "Ампутации",
     "IGUI_perks_Side_R": "Правая сторона",
     "IGUI_perks_Side_L": "Левая сторона",
@@ -12,10 +12,10 @@
     "IGUI_ItemCat_Prosthesis": "Протез",
     "IGUI_ItemCat_Surgery": "Хирургия",
     "IGUI_ItemCat_Amputation": "Ампутация",
-    "IGUI_HomeMedic_HealthPanel_Cicatrization": "Заживление",
-    "IGUI_HomeMedic_HealthPanel_Cicatrized": "Заживлено",
-    "IGUI_HomeMedic_HealthPanel_Cauterized": "Прижженно",
-    "IGUI_HomeMedic_HealthPanel_WoundDirtyness": "Загрезнённая рана",
-    "IGUI_HomeMedic_HealthPanel_ProstEquipped": "Протез экипирован",
-    "IGUI_HomeMedic_Confirmation_Amputate": " <CENTRE> Вы уверены, что хотите ампутировать эту конечность?"
+    "IGUI_HealthPanel_Cicatrization": "Заживление",
+    "IGUI_HealthPanel_Cicatrized": "Заживлено",
+    "IGUI_HealthPanel_Cauterized": "Прижженно",
+    "IGUI_HealthPanel_WoundDirtyness": "Загрезнённая рана",
+    "IGUI_HealthPanel_ProstEquipped": "Протез экипирован",
+    "IGUI_Confirmation_Amputate": " <CENTRE> Вы уверены, что хотите ампутировать эту конечность?"
 }

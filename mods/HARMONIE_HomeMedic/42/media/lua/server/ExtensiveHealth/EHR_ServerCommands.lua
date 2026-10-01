@@ -4676,6 +4676,7 @@ local function OnClientCommand(module, command, player, args)
                 EHR_KnoxStatus = knoxStatus,
                 EHR_Immunity = targetData.EHR_Immunity,
                 EHR_Initialized = targetData.EHR_Initialized,
+                HM_Diagnosis = targetData.HM_Diagnosis,  -- HARMONIE: diagnoses (HM_Diagnosis)
                 serverWorldHour = serverWorldHour,
                 snapshotTimestamp = getTimestampMs and getTimestampMs() or 0,
             }
