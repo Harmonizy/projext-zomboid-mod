@@ -60,6 +60,47 @@ end
 
 local function patientOf(panel) return panel.player end
 
+-- vanilla moodle icon by moodle type name; tries the game's texture paths,
+-- nil when none is found (a drawn badge is used instead)
+local moodleTex = {}
+local function moodleIcon(mt)
+    if not mt or not getTexture then return nil end
+    if moodleTex[mt] ~= nil then return moodleTex[mt] or nil end
+    local name = tostring(mt):gsub("^.*[:%.]", "")
+    local cap = name:sub(1, 1):upper() .. name:sub(2)
+    local found = false
+    for _, n in ipairs({ name, cap }) do
+        for _, path in ipairs({
+            "media/ui/Moodles/Moodle_Icon_" .. n .. ".png", "media/ui/Moodle_Icon_" .. n .. ".png",
+            "Moodle_Icon_" .. n, "media/ui/Moodles/" .. n .. ".png", "media/ui/Moodles/64/" .. n .. ".png",
+            "media/ui/Moodles/128/" .. n .. ".png" }) do
+            local ok, t = pcall(getTexture, path)
+            if ok and t then found = t; break end
+        end
+        if found then break end
+    end
+    if not found then print("[HARMONIE HomeMedic] no vanilla moodle icon found for " .. tostring(mt) .. " (drawn badge used)") end
+    moodleTex[mt] = found
+    return found or nil
+end
+
+local function drawMoodle(panel, row, x, y, size)
+    local gb = row.gb or 0
+    local r, g, b = 0.45, 0.5, 0.55
+    if gb == 1 then r, g, b = 0.22, 0.75, 0.3 elseif gb == 2 then r, g, b = 0.85, 0.22, 0.15 end
+    local lv = math.max(1, math.min(4, row.lv or 1))
+    local a = 0.35 + 0.15 * lv
+    panel:drawRect(x, y, size, size, a, r * 0.6, g * 0.6, b * 0.6)
+    panel:drawRectBorder(x, y, size, size, 0.9, r, g, b)
+    local tex = moodleIcon(row.mt)
+    if tex then
+        panel:drawTextureScaled(tex, x + 1, y + 1, size - 2, size - 2, 1, 1, 1, 1)
+    else
+        local letter = tostring(row.t or "?"):sub(1, 1)
+        panel:drawTextCentre(letter, x + size / 2, y + math.floor((size - fh()) / 2), 1, 1, 1, 1, FONT)
+    end
+end
+
 function EHR_HealthPanelUI:hmStatsRequest()
     local patient = patientOf(self)
     local st = self.hmStats or {}
@@ -109,9 +150,36 @@ local function hoursText(h)
     return string.format("%d, %02d:%02d", day, hh, mm)
 end
 
-function EHR_HealthPanelUI:hmDrawStats()
+-- tab 3 opens only with a powered medical monitor watch on the patient
+-- (same rule and sandbox option as EHR's blood composition)
+function EHR_HealthPanelUI:hmStatsUnlocked()
+    return (not self:isMedicalWatchRequired()) or self:hasMedicalMonitorWatch()
+end
+
+function EHR_HealthPanelUI:hmDrawStatsLocked()
     local c = EHR_HealthPanelUI.Colors
     local b = self:getTabContentBounds()
+    self:drawPanelFrame(b.x, b.y, b.w, b.h, L("Title", "BODY STATS"), nil)
+    local iw, ih = 90, 110
+    local cx = b.x + math.floor(b.w / 2)
+    local iy = b.y + math.max(60, math.floor(b.h / 2) - 120)
+    self:drawMedicalWatchIcon(cx - math.floor(iw / 2), iy, iw, ih)
+    local lines = S.wrap(L("Locked", "The patient must wear a powered medical monitor watch (MedicalMonitorWatch, left or right wrist) to read the body stats and blood composition."), math.min(520, b.w - 60), FONT_M)
+    local y = iy + ih + 14
+    for _, l in ipairs(lines) do
+        self:drawTextCentre(l, cx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT_M)
+        y = y + fh(FONT_M) + 2
+    end
+end
+
+function EHR_HealthPanelUI:hmDrawStats()
+    local c = EHR_HealthPanelUI.Colors
+    if not self:hmStatsUnlocked() then return self:hmDrawStatsLocked() end
+    -- blood composition on top (moved here from tab 1), stats below
+    self:drawBloodCompositionPanel(self:getContentTop())
+    local b = self:getTabContentBounds()
+    local shift = self.BLOOD_PANEL_HEIGHT + 10
+    b.y, b.h = b.y + shift, math.max(120, b.h - shift)
     local st = self.hmStats
     if not st or st.patient ~= patientOf(self) then self:hmStatsRequest(); st = self.hmStats end
     self:drawPanelFrame(b.x, b.y, b.w, b.h, L("Title", "BODY STATS"), nil)
@@ -177,8 +245,25 @@ function EHR_HealthPanelUI:hmDrawStats()
                     local value = tostring(row.s or row.v or "")
                     local valueW = tw(value)
                     local labelW = math.floor(colW * 0.45)
-                    local label = S.fitText(rowLabel(row), labelW - 6, function(t) return tw(t) end)
-                    self:drawText(label, col.x + 6, y + 2, c.text.r, c.text.g, c.text.b, 1, FONT)
+                    local lx = col.x + 6
+                    if row.g == "moodles" then
+                        -- icon, name, level pips (1..4) instead of a bar
+                        drawMoodle(self, row, lx, y, rowH - 2)
+                        lx = lx + rowH + 2
+                        value, valueW = "", 0
+                        local lv = math.max(0, math.min(4, row.lv or 0))
+                        for k = 1, 4 do
+                            local px = col.x + colW - 6 - (5 - k) * 10
+                            local on = k <= lv
+                            local pc = row.gb == 1 and c.green or (row.gb == 2 and c.red or c.textDim)
+                            self:drawRect(px, y + math.floor(rowH / 2) - 3, 7, 7, on and 0.95 or 0.25, pc.r, pc.g, pc.b)
+                        end
+                    end
+                    local labelText = rowLabel(row)
+                    if row.g == "moodles" then labelW = colW - 50 end
+                    local label = S.fitText(labelText, labelW - (lx - col.x), function(t) return tw(t) end)
+                    local lc = row.g == "signs" and row.tag and c.yellow or c.text
+                    self:drawText(label, lx, y + 2, lc.r, lc.g, lc.b, 1, FONT)
                     self:drawText(value, col.x + colW - 6 - valueW, y + 2, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT)
                     if row.f then
                         local bx = col.x + labelW + 6
@@ -191,7 +276,12 @@ function EHR_HealthPanelUI:hmDrawStats()
                         end
                     end
                     if inside(mx, my, col.x, y, colW, rowH) and my >= top and my <= top + viewH then
-                        st.tip = rowLabel(row) .. ": " .. value
+                        st.tip = rowLabel(row) .. (value ~= "" and (": " .. value) or "")
+                        if row.g == "signs" and row.tag then
+                            st.tip = st.tip .. "\n" .. HM_Text("UI_HomeMedic_SignWhere_" .. row.tag, "")
+                        elseif row.g == "moodles" then
+                            st.tip = st.tip .. "\n" .. L("MoodleLevel", "Level %1 of 4", tostring(row.lv or 0))
+                        end
                     end
                 end
                 y = y + rowH
@@ -212,8 +302,16 @@ end
 
 EHR_HealthPanelUI.ExtraTabs = EHR_HealthPanelUI.ExtraTabs or {}
 EHR_HealthPanelUI.ExtraTabs.stats = {
-    open = function(panel) panel:hmStatsRequest() end,
+    open = function(panel) if panel:hmStatsUnlocked() then panel:hmStatsRequest() end end,
     draw = function(panel) panel:hmDrawStats() end,
+    render = function(panel)
+        local st = panel.hmStats
+        if not st or not st.tip or st.tip == "" or not panel.drawDiagnosisTooltip then return end
+        local keep = panel.dxState
+        panel.dxState = { tip = st.tip }
+        panel:drawDiagnosisTooltip()
+        panel.dxState = keep
+    end,
     wheel = function(panel, del)
         local st = panel.hmStats
         if not st or (st.maxScroll or 0) <= 0 then return false end
@@ -223,7 +321,7 @@ EHR_HealthPanelUI.ExtraTabs.stats = {
     mouseDown = function(panel, x, y)
         local st = panel.hmStats
         local r = st and st.refreshBtn
-        if r and inside(x, y, r.x, r.y, r.w, r.h) then
+        if r and panel:hmStatsUnlocked() and inside(x, y, r.x, r.y, r.w, r.h) then
             panel:hmStatsRequest()
             return true
         end

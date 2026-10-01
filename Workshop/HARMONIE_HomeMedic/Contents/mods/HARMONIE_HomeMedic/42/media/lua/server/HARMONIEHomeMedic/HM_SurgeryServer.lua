@@ -143,6 +143,14 @@ function SV.Begin(doctor, args)
         local fill = ev.slots[slotId]
         if fill and S.Supplies[slotId].kind == "use" then SV.consume(fill.item) end
     end
+    -- transfusion during the operation (the bag was used up above)
+    if ev.slots.blood then
+        local ptype = S.bloodType(patient)
+        permit.transfusion = { kind = "blood", donor = ev.slots.blood.donor,
+            compatible = S.compatible(ev.slots.blood.donor, ptype) }
+    elseif ev.slots.saline then
+        permit.transfusion = { kind = "saline" }
+    end
     S.Sources.forget(doctor)
     SV.permits[keyOf(doctor)] = permit
 
@@ -257,6 +265,10 @@ function SV.Finish(doctor, args)
                 elseif ind.id == "knox_bite" or ind.id == "necrosis" then
                     if not amputated then amputated = amputate(doctor, patient, part, q) end
                     change = amputated and "amputated" or "failed"
+                elseif t.cure then
+                    -- an illness that heals by itself (concussion): the operation ends it now
+                    local Dz = EHR and EHR.Disease
+                    if Dz and Dz.Cure and pcall(Dz.Cure, patient, ind.id) then change = "cured" else change = "failed" end
                 elseif t.treat then
                     local h = math.floor(t.treat * factor + 0.5)
                     if S.Rules.treat(patient, ind.id, h, permit.sid) then
@@ -277,6 +289,29 @@ function SV.Finish(doctor, args)
     local incision = stepScore("P01") or 0.5
     local blood = math.floor(s.bloodLoss * (0.6 + (1 - hemo) * 0.9 + (1 - incision) * 0.4) + 0.5)
     if EHR and EHR.Blood and EHR.Blood.ModifyBloodVolume then pcall(EHR.Blood.ModifyBloodVolume, patient, -blood) end
+    -- the transfusion given during the operation
+    local transfusion
+    local B = EHR and EHR.Blood
+    if permit.transfusion and B and B.ModifyBloodVolume then
+        local bd = patient:getModData().EHR_Blood
+        if permit.transfusion.kind == "blood" then
+            local amt = tonumber(B.TRANSFUSION_AMOUNT) or 450
+            pcall(B.ModifyBloodVolume, patient, amt)
+            if bd then bd.transfusedBlood = (bd.transfusedBlood or 0) + amt end
+            transfusion = { kind = "blood", amount = amt, ok = permit.transfusion.compatible == true, donor = permit.transfusion.donor }
+            if not permit.transfusion.compatible then
+                -- wrong blood type: acute haemolytic transfusion reaction
+                local Dz = EHR and EHR.Disease
+                local dd = Dz and Dz.GetDiseaseData and Dz.GetDiseaseData(patient)
+                if Dz and Dz.Contract and not (dd and dd.active and dd.active.ahtr) then pcall(Dz.Contract, patient, "ahtr") end
+            end
+        else
+            local amt = tonumber(B.SALINE_AMOUNT) or 500
+            pcall(B.ModifyBloodVolume, patient, amt)
+            if bd then bd.transfusedSaline = (bd.transfusedSaline or 0) + amt end
+            transfusion = { kind = "saline", amount = amt }
+        end
+    end
     local pain = math.floor(s.pain * (1 - 0.8 * (permit.anesthesia or 0)) + 0.5)
     call(part, "setAdditionalPain", math.min(100, (tonumber(call(part, "getAdditionalPain")) or 0) + pain))
 
@@ -340,7 +375,7 @@ function SV.Finish(doctor, args)
         pcall(EHR.Locale.Say, patient, S.T("Say_" .. grade, ""))
     end
     SV.reply(doctor, "Result", { permit = permit.id, sid = permit.sid, quality = q, grade = grade,
-        changes = changes, blood = blood, pain = pain, infected = infected, aspirated = aspirated, xp = xp, scores = scores })
+        changes = changes, blood = blood, pain = pain, infected = infected, aspirated = aspirated, transfusion = transfusion, xp = xp, scores = scores })
 end
 
 function SV.Abort(doctor, args)

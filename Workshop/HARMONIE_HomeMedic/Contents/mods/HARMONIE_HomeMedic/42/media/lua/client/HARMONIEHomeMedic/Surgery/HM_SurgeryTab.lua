@@ -129,12 +129,21 @@ local function draw(panel)
         local bd = active and c.accent or c.borderDim
         panel:drawRectBorder(x, y, w, rowH - 4, 1, bd.r, bd.g, bd.b)
         local tc = needed and c.text or c.textDim
-        panel:drawText(S.fitText(S.T("Name_" .. sid, sid), w - 16, function(t) return tw(t, FONT_M) end), x + 8, y + 4, tc.r, tc.g, tc.b, 1, FONT_M)
+        -- the operation's picture on the left of the row
+        local tx = x + 8
+        local tex = C.cardTexture and C.cardTexture(sid)
+        if tex then
+            local th = rowH - 12
+            local twd = math.floor(th * 16 / 9)
+            panel:drawTextureScaled(tex, x + 4, y + 4, twd, th, needed and 1 or 0.45, 1, 1, 1)
+            tx = x + 4 + twd + 8
+        end
+        panel:drawText(S.fitText(S.T("Name_" .. sid, sid), x + w - 8 - tx, function(t) return tw(t, FONT_M) end), tx, y + 4, tc.r, tc.g, tc.b, 1, FONT_M)
         local state, sc
         if needed and e.unlocked then state, sc = S.T("Tab_Needed", "Needed: %1", #e.parts), c.green
         elseif needed then state, sc = S.T("Tab_NeededLocked", "Needed - locked"), c.yellow
         else state, sc = S.T("Tab_NotNeeded", "Not needed now"), c.textDim end
-        panel:drawText(S.fitText(state, w - 16, function(t) return tw(t) end), x + 8, y + 6 + fh(FONT_M), sc.r, sc.g, sc.b, 1, FONT)
+        panel:drawText(S.fitText(state, x + w - 8 - tx, function(t) return tw(t) end), tx, y + 6 + fh(FONT_M), sc.r, sc.g, sc.b, 1, FONT)
         if inside(mx, my, x, y, w, rowH - 4) then
             st.tip = S.T("Tip_Surgery_" .. sid, "") .. "\n\n" .. S.targetsTip(sid)
         end

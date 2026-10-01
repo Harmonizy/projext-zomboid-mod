@@ -78,6 +78,16 @@ end
 -- scrolls with the wheel when it does not fit, and every hover test uses the
 -- same scrolled coordinates as the drawing -- the tooltip always sits at the
 -- mouse, scrolled or not.
+-- illustration of each operation (tools/gen_surgery_cards.py), 256 x 144
+local cardTex = {}
+function C.cardTexture(sid)
+    if not sid or not getTexture then return nil end
+    if cardTex[sid] == nil then
+        cardTex[sid] = getTexture("media/textures/HARMONIE_HomeMedic/surg/card_" .. sid .. ".png") or false
+    end
+    return cardTex[sid] or nil
+end
+
 HM_SurgeryPrepUI = ISPanel:derive("HM_SurgeryPrepUI")
 local Prep = HM_SurgeryPrepUI
 
@@ -138,6 +148,12 @@ function Prep:metrics()
     m.title = m.pad
     m.sub = m.title + fh(FONT_M) + 4
     m.tabsTop = m.sub + fh() + 10
+    -- the operation's picture at the top right
+    if C.cardTexture(self.sid) and self.width >= 360 then
+        m.cardW, m.cardH = 128, 72
+        m.tabsTop = math.max(m.tabsTop, m.pad + m.cardH + 8)
+    end
+    m.textW = self.width - 2 * m.pad - (m.cardW and (m.cardW + 10) or 0)
     m.tabH = fh() + 10
     local rects, x, y = {}, m.pad, m.tabsTop
     local entries = {}
@@ -195,11 +211,17 @@ function Prep:prerender()
     ISPanel.prerender(self)
     self:reevaluate(false)
     local m = self.m or self:metrics()
-    self:drawText(fit(S.T("Title_Prep", "Pre-op checklist"), self.width - 2 * m.pad, FONT_M), m.pad, m.title, COL.text[1], COL.text[2], COL.text[3], 1, FONT_M)
+    if m.cardW then
+        local tex = C.cardTexture(self.sid)
+        local cx = self.width - m.pad - m.cardW
+        if tex then self:drawTextureScaled(tex, cx, m.pad, m.cardW, m.cardH, 1, 1, 1, 1) end
+        self:drawRectBorder(cx, m.pad, m.cardW, m.cardH, 1, COL.border[1], COL.border[2], COL.border[3])
+    end
+    self:drawText(fit(S.T("Title_Prep", "Pre-op checklist") .. ": " .. S.T("Name_" .. self.sid, self.sid), m.textW, FONT_M), m.pad, m.title, COL.text[1], COL.text[2], COL.text[3], 1, FONT_M)
     local who = self.doctor == self.patient and S.T("Self", "Yourself")
         or (self.patient.getDisplayName and self.patient:getDisplayName() or "?")
     local part = BodyPartType and BodyPartType.getDisplayName and self.bodyPart and BodyPartType.getDisplayName(self.bodyPart:getType()) or tostring(self.partName)
-    self:drawText(fit(who .. "  -  " .. part, self.width - 2 * m.pad), m.pad, m.sub, COL.dim[1], COL.dim[2], COL.dim[3], 1, FONT)
+    self:drawText(fit(who .. "  -  " .. part, m.textW), m.pad, m.sub, COL.dim[1], COL.dim[2], COL.dim[3], 1, FONT)
 
     self.hoverTip = nil
     local mx, my = self:getMouseX(), self:getMouseY()
@@ -349,8 +371,8 @@ HM_SurgeryOpUI = ISPanel:derive("HM_SurgeryOpUI")
 local Op = HM_SurgeryOpUI
 
 function Op:new(doctor, info)
-    local w = 680
-    local h = math.min(560, getCore():getScreenHeight() - 40)
+    local w = math.min(780, getCore():getScreenWidth() - 40)
+    local h = math.min(620, getCore():getScreenHeight() - 40)
     local x = (getCore():getScreenWidth() - w) / 2
     local y = (getCore():getScreenHeight() - h) / 2
     local o = ISPanel.new(self, x, y, w, h)
@@ -385,7 +407,7 @@ function Op:nextStep()
     self.stepIndex = self.stepIndex + 1
     if self.stepIndex > #self.steps then self:finish(false); return end
     local proc = S.Procedures[self.steps[self.stepIndex]]
-    local p = { variant = proc.variant, tier = S.TIERS[proc.tier].order }
+    local p = { variant = proc.variant, tier = S.TIERS[proc.tier].order, sid = self.sid }
     for k, v in pairs(self.params) do p[k] = v end
     self.game = G.new(proc.game, p)
     self.pause = 0
@@ -456,8 +478,10 @@ function Op:update()
         else
             self.game:update(dt)
             if self.game.done then
-                self.scores[self.stepIndex] = self.game:score()
-                self.pause = 700
+                local sc = self.game:score()
+                self.scores[self.stepIndex] = sc
+                self.pause = 900
+                G.sfx(sc >= 0.45 and "Good" or "Bad")
             end
         end
     end
@@ -491,7 +515,15 @@ function Op:prerender()
         local proc = S.Procedures[self.steps[self.stepIndex]]
         local key = "Game_" .. proc.game .. (proc.variant and ("_" .. proc.variant) or "")
         self:drawText(fit(S.T(key, S.T("Game_" .. proc.game, "")), self.width - 32), 16, self.instrY, COL.warn[1], COL.warn[2], COL.warn[3], 1, FONT)
+        self:setStencilRect(b.x, b.y, b.w, b.h)   -- blood and the instrument stay on the board
         self.game:render(self, b.x, b.y, b.w, b.h)
+        self:clearStencilRect()
+        -- patient monitor: heart rate climbs with pain and every slip
+        if G.drawVitals then
+            local vx = self.game.vitalsLeft and (b.x + 6) or (b.x + b.w - 168)
+            if self.game.vitalsAt == "center" then vx = b.x + (b.w - 162) / 2 end
+            G.drawVitals(self, self.game, vx, b.y + 6, 162, 58)
+        end
         if self.pause > 0 then
             local sc = math.floor((self.scores[self.stepIndex] or 0) * 100 + 0.5)
             local bandH = fh(FONT_M) + 16
@@ -550,6 +582,12 @@ function Op:drawResult(b)
     line(S.T("Res_Blood", "Blood lost: %1 mL", r.blood or 0), COL.dim)
     line(S.T("Res_Pain", "Pain: +%1", r.pain or 0), COL.dim)
     if r.infected then line(S.T("Res_Infected", "Surgical-site infection: Cellulitis!"), COL.fail) end
+    if r.transfusion then
+        local tr = r.transfusion
+        if tr.kind == "blood" and tr.ok then line(S.T("Res_TransfusionOk", "Transfusion: +%1 mL of blood (%2)", tr.amount or 0, tostring(tr.donor or "?")), COL.ok)
+        elseif tr.kind == "blood" then line(S.T("Res_TransfusionBad", "Wrong blood type (%1): transfusion reaction (AHTR)!", tostring(tr.donor or "?")), COL.fail)
+        else line(S.T("Res_Saline", "Saline: +%1 mL of volume (it dilutes the blood)", tr.amount or 0), COL.warn) end
+    end
     if r.aspirated then line(S.T("Res_Aspirated", "The patient vomited and breathed it in: aspiration pneumonia!"), COL.fail) end
     line(S.T("Res_XP", "First Aid XP +%1", r.xp or 0), COL.info)
     line(S.T("Res_Aftercare", "Keep the wound dressed."), COL.dim)

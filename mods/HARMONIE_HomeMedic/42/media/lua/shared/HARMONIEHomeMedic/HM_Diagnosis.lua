@@ -76,6 +76,108 @@ for id, tags in pairs(D.DISEASES) do
     D.TAGSET[id] = set
 end
 
+-- ------------------------------------------------------------- signs <-> readings
+-- Where each sign can be checked. at = "stats" (tab 3, read off the body:
+-- the reading shows in tab 3's Signs group), or "observe" (only seen or
+-- heard: coughing, vomiting...). test(v) gets HM_Stats.vitals(patient)
+-- and returns present, reading. The handbook (tab 5) lists the same
+-- thresholds per illness (keys UI_HomeMedic_SignWhere_<tag>).
+local LIMBS = { "UpperArm_L", "UpperArm_R", "ForeArm_L", "ForeArm_R", "Hand_L", "Hand_R",
+    "UpperLeg_L", "UpperLeg_R", "LowerLeg_L", "LowerLeg_R", "Foot_L", "Foot_R" }
+local function partMax(v, names, field)
+    local m, at = 0, nil
+    for _, n in ipairs(names) do
+        local p = v.parts and v.parts[n]
+        if p and (tonumber(p[field]) or 0) > m then m, at = tonumber(p[field]), n end
+    end
+    return m, at
+end
+D.STIFF_PARTS = { "Neck", "Torso_Upper", "Torso_Lower" }
+for _, n in ipairs(LIMBS) do D.STIFF_PARTS[#D.STIFF_PARTS + 1] = n end
+local function pct(x) return tostring(math.floor((x or 0) * 100 + 0.5)) .. "%" end
+local function stat(name, op, limit)
+    return function(v)
+        local x = v[name]
+        if type(x) ~= "number" then return false end
+        local on = (op == ">=" and x >= limit) or (op == "<=" and x <= limit)
+        return on, pct(x)
+    end
+end
+local function temp(op, limit)
+    return function(v)
+        if type(v.temp) ~= "number" then return false end
+        local on = (op == ">=" and v.temp >= limit) or (op == "<=" and v.temp <= limit)
+        return on, string.format("%.1f C", v.temp)
+    end
+end
+local function pain(names, limit)
+    return function(v)
+        local m, at = partMax(v, names, "pain")
+        return m >= (limit or 10), string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. at .. ")") or "")
+    end
+end
+D.SIGNS = {
+    fever = { at = "stats", test = temp(">=", 37.6) },
+    chills = { at = "stats", test = temp("<=", 35.8) },
+    overheat = { at = "stats", test = temp(">=", 39.5) },
+    fatigue = { at = "stats", test = stat("FATIGUE", ">=", 0.4) },
+    weakness = { at = "stats", test = stat("ENDURANCE", "<=", 0.5) },
+    short_breath = { at = "stats", test = stat("ENDURANCE", "<=", 0.3) },
+    health_loss = { at = "stats", test = function(v)
+        if type(v.health) ~= "number" then return false end
+        return v.health < 80, tostring(math.floor(v.health + 0.5))
+    end },
+    collapse = { at = "stats", test = function(v)
+        if type(v.health) ~= "number" then return false end
+        return v.health < 25, tostring(math.floor(v.health + 0.5))
+    end },
+    thirst = { at = "stats", test = stat("THIRST", ">=", 0.25) },
+    hunger = { at = "stats", test = stat("HUNGER", ">=", 0.25) },
+    nausea = { at = "stats", test = function(v)
+        local x = math.max(v.SICKNESS or 0, v.FOOD_SICKNESS or 0)
+        return x >= 0.25, pct(x)
+    end },
+    stress = { at = "stats", test = stat("STRESS", ">=", 0.4) },
+    headache = { at = "stats", test = pain({ "Head" }) },
+    chest_pain = { at = "stats", test = pain({ "Torso_Upper" }) },
+    abdominal = { at = "stats", test = pain({ "Torso_Lower", "Groin" }) },
+    back_pain = { at = "stats", test = pain({ "Torso_Lower", "Torso_Upper" }, 15) },
+    muscle_pain = { at = "stats", test = pain(LIMBS) },
+    skin_pain = { at = "stats", test = stat("PAIN", ">=", 0.2) },
+    stiffness = { at = "stats", test = function(v)
+        local m, at = partMax(v, D.STIFF_PARTS, "stiff")
+        return m >= 10, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. at .. ")") or "")
+    end },
+    wound_inflamed = { at = "stats", test = function(v)
+        for name, p in pairs(v.parts or {}) do
+            if p.infected then return true, name end
+        end
+        return false
+    end },
+}
+-- every other tag is only seen or heard
+for _, grp in ipairs(D.GROUPS) do
+    for _, tag in ipairs(grp.tags) do
+        D.SIGNS[tag] = D.SIGNS[tag] or { at = "observe" }
+    end
+end
+
+-- -> { {tag, reading} } of the measurable signs present now
+function D.readSigns(v)
+    local out = {}
+    if type(v) ~= "table" or v.dead then return out end
+    for _, grp in ipairs(D.GROUPS) do
+        for _, tag in ipairs(grp.tags) do
+            local sg = D.SIGNS[tag]
+            if sg and sg.test then
+                local ok, on, reading = pcall(sg.test, v)
+                if ok and on then out[#out + 1] = { tag = tag, reading = reading or "" } end
+            end
+        end
+    end
+    return out
+end
+
 -- ------------------------------------------------------------- helpers
 local function call(obj, method, ...)
     if not obj or not obj[method] then return nil end
