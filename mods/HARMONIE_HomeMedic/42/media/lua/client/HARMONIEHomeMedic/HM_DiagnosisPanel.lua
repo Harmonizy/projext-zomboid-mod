@@ -19,6 +19,8 @@ require "HARMONIEHomeMedic/HM_Text"
 require "ExtensiveHealth/EHR_HealthPanelUI"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Diagnosis"
+require "HARMONIEHomeMedic/HM_Stats"
+require "HARMONIEHomeMedic/HM_DiagnoseResultUI"
 local S = HM_Surgery
 local D = HM_Diagnosis
 D.Client = D.Client or {}
@@ -290,6 +292,9 @@ function C.onServerCommand(module, command, args)
     local st = panel and panel.dxState
     if not st then return end
     local name = diseaseName(args.id)
+    if panel.hmDxResult and panel.hmDxResult.setResult then
+        panel.hmDxResult:setResult(args.ok, args.reason, name)
+    end
     if args.ok then
         if panel.isRemoteHealthPanel and type(panel.remoteExamData) == "table" then
             panel.remoteExamData[D.KEY] = args.data or {}
@@ -358,6 +363,28 @@ local function drawCards(self, st, cards, x, w, top, viewH, mx, my)
     return y + st.scrollR - top
 end
 
+-- tag -> reading of the signs measurable on the patient right now (the
+-- same list as the Body Stats tab's "Signs worth watching"); only with the
+-- medical monitor watch rule met, like that tab
+function EHR_HealthPanelUI:hmMeasuredSigns()
+    if self.hmStatsUnlocked and not self:hmStatsUnlocked() then return nil end
+    local t = nowMs()
+    if self.hmSignsAt and t - self.hmSignsAt < 1000 then return self.hmSigns end
+    self.hmSignsAt = t
+    local out = {}
+    if self.isRemoteHealthPanel and isClient and isClient() then
+        local st = self.hmStats
+        if (not st or st.patient ~= self.player) and self.hmStatsRequest then self:hmStatsRequest(); st = self.hmStats end
+        for _, row in ipairs(st and st.rows or {}) do
+            if row.g == "signs" and row.tag then out[row.tag] = row.s or "" end
+        end
+    elseif HM_Stats and HM_Stats.vitals then
+        for _, r in ipairs(D.readSigns(HM_Stats.vitals(self.player))) do out[r.tag] = r.reading end
+    end
+    self.hmSigns = out
+    return out
+end
+
 function EHR_HealthPanelUI:drawDiagnosisPanel()
     local c = EHR_HealthPanelUI.Colors
     local b = self:getTabContentBounds()
@@ -397,9 +424,16 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
     for _, l in ipairs(wrap(L("Intro", "Tick the signs the patient shows. The list narrows to illnesses that cause all of them."), leftW)) do
         self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
     end
+    if self:hmMeasuredSigns() then
+        self:drawRect(lx, y + math.floor(fh() / 2) - 2, 5, 5, 1, c.yellow.r, c.yellow.g, c.yellow.b)
+        for _, l in ipairs(wrap(L("MeasuredLegend", "= measured on the patient right now (Body Stats)"), leftW - 12)) do
+            self:drawText(l, lx + 10, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
+        end
+    end
     y = y + 8
     local chipH = fh() + 8
     local selected = 0
+    local measured = self:hmMeasuredSigns()
     for _, g in ipairs(D.GROUPS) do
         self:drawText(L("Group_" .. g.id, g.id), lx, y, c.accent.r, c.accent.g, c.accent.b, 1, FONT)
         y = y + fh() + 4
@@ -417,6 +451,16 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             self:drawRectBorder(x, y, w, chipH, on and 1 or 0.8, bd.r, bd.g, bd.b)
             local tc = on and c.text or (hov and c.text or c.textDim)
             self:drawText(S.fitText(label, w - 12, function(t) return tw(t) end), x + 9, y + 4, tc.r, tc.g, tc.b, 1, FONT)
+            -- measured on the patient right now: a yellow corner mark
+            local reading = measured and measured[tag]
+            if reading then
+                self:drawRect(x + w - 7, y + 2, 5, 5, 1, c.yellow.r, c.yellow.g, c.yellow.b)
+            end
+            if hov then
+                local where = HM_Text("UI_HomeMedic_SignWhere_" .. tag, "")
+                st.tip = label .. (reading and ("\n" .. L("MeasuredNow", "Measured now: %1", reading)) or "")
+                    .. (where ~= "" and ("\n" .. where) or "")
+            end
             hit(x, y, w, chipH, "tag", tag)
             x = x + w + 6
         end
@@ -480,7 +524,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             end
             self:drawText(btn, bx + 8, by + 4, btnColor.r, btnColor.g, btnColor.b, 1, FONT)
             if hov then
-                st.tip = known and (codex(id, "Symptoms") or "") or L("UnknownTip", "You do not know this illness yet: read its flyer or reach First Aid 8.")
+                st.tip = known and ((HM_Handbook and HM_Handbook.symptoms(id)) or codex(id, "Symptoms") or "") or L("UnknownTip", "You do not know this illness yet: read its flyer or reach First Aid 8.")
             end
             y = y + rowH
         end
@@ -545,6 +589,11 @@ function EHR_HealthPanelUI:onDiagnosisMouseDown(x, y)
                 st.tags = {}
             elseif h.kind == "pick" then
                 st.msg = nil
+                local picked = {}
+                for _, g in ipairs(D.GROUPS) do
+                    for _, t in ipairs(g.tags) do if st.tags[t] then picked[#picked + 1] = t end end
+                end
+                if HM_DiagnoseResultUI then HM_DiagnoseResultUI.open(self, h.id, picked) end
                 C.send(self, h.id)
             end
             if getSoundManager then pcall(function() getSoundManager():playUISound("UISelectListItem") end) end

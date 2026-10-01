@@ -88,20 +88,66 @@ local function itemName(fullType, med)
     return med and med.displayName or fullType
 end
 
-function H.treatment(id)
+-- ------------------------------------------------------------- medicines
+-- Same rule as EHR (EHR_MedicationCanCure): a medicine cures when its tier
+-- can cure (2+) or it has its own cure time, unless it is prevention only
+-- or marked canCure = false. Everything else only eases the symptoms.
+function H.isCurative(med)
+    if type(med) ~= "table" then return false end
+    if med.preventionOnly == true or med.canCure == false then return false end
+    local tiers = EHR and EHR.Medication and EHR.Medication.TierEffectiveness
+    local te = tiers and tiers[tonumber(med.tier) or 0]
+    return (te and te.canCure == true) or med.canCure == true or med.cureTimeHours ~= nil
+        or med.diseaseCureTimeHours ~= nil or med.isKnoxCure == true
+end
+
+local function itemExists(fullType)
+    local sm = getScriptManager and getScriptManager()
+    if not sm then return true end
+    local ok, it = pcall(function() return sm:FindItem(fullType) end)
+    return ok and it ~= nil
+end
+H.itemExists = itemExists
+
+-- every medicine of the game (items another mod adds only when it is loaded)
+function H.meds()
+    if H._meds then return H._meds end
     local db = EHR and EHR.Medication and EHR.Medication.Database
+    local out = {}
+    if type(db) ~= "table" then return out end
+    for fullType, med in pairs(db) do
+        if type(med) == "table" and itemExists(fullType) then
+            local treats = {}
+            for _, t in ipairs(med.treats or {}) do
+                treats[#treats + 1] = HM_Diagnosis and HM_Diagnosis.normalize(t) or t
+            end
+            out[#out + 1] = { id = fullType, med = med, name = itemName(fullType, med), tier = tonumber(med.tier) or 0,
+                curative = H.isCurative(med) and #treats > 0, treats = treats }
+        end
+    end
+    table.sort(out, function(a, b)
+        if a.curative ~= b.curative then return a.curative end
+        return tostring(a.name) < tostring(b.name)
+    end)
+    H._meds = out
+    return out
+end
+
+-- names of the medicines listed for an illness (search text)
+function H.medNames(id)
+    local out = {}
+    for _, m in ipairs(H.meds()) do
+        for _, t in ipairs(m.treats) do if t == id then out[#out + 1] = m.name end end
+    end
+    return out
+end
+
+function H.treatment(id)
     local cure, ease = {}, {}
-    if type(db) == "table" then
-        local keys = {}
-        for fullType in pairs(db) do keys[#keys + 1] = fullType end
-        table.sort(keys)
-        for _, fullType in ipairs(keys) do
-            local med = db[fullType]
-            for _, t in ipairs(type(med) == "table" and med.treats or {}) do
-                if t == id then
-                    local n = itemName(fullType, med)
-                    if (tonumber(med.tier) or 0) >= 2 then cure[#cure + 1] = n else ease[#ease + 1] = n end
-                end
+    for _, m in ipairs(H.meds()) do
+        for _, t in ipairs(m.treats) do
+            if t == id then
+                if m.curative then cure[#cure + 1] = m.name else ease[#ease + 1] = m.name end
             end
         end
     end
@@ -114,5 +160,6 @@ function H.treatment(id)
     elseif #cure == 0 and #ease == 0 then
         lines[#lines + 1] = L("NoMeds", "No medicine in the game is listed for it.")
     end
+    lines[#lines + 1] = L("SeeMeds", "Details of each medicine: Medication Handbook tab.")
     return table.concat(lines, "\n")
 end

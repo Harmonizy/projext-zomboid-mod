@@ -14,6 +14,9 @@ local function fill(t, args)
         t = t:gsub("%%" .. i .. "%$%a", function() return v end)
         t = t:gsub("%%" .. i, function() return v end)
     end
+    -- "%%" is a literal percent for Java's formatter; show it as one "%"
+    -- when the text did not go through it
+    t = t:gsub("%%%%", "%%")
     return t
 end
 

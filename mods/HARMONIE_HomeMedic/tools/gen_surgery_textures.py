@@ -4,8 +4,8 @@
 Writes 42/media/textures/HARMONIE_HomeMedic/surg_dot.png (filled circle) and
 surg_ring.png (ring), white on transparent, antialiased, 128 px -- the games
 tint and scale them (HM_SurgeryGames.lua) -- and tab_*.png, the
-medical window's five tab icons (one badge style: monitor, immunity, stats,
-diagnosis, handbook) -- and pin_on.png / pin_off.png, the windows' pin button.
+medical window's tab icons (one badge style: monitor, immunity, stats,
+diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button.
 """
 import os
 import numpy as np
@@ -121,20 +121,67 @@ def pin_icon(pinned, size=64):
     return img.resize((size, size), Image.LANCZOS)
 
 
+def _rot(pts, cx, cy, ang, s):
+    """local (x, y) points -> rotated badge coordinates (scaled)."""
+    import math
+    c, n = math.cos(ang), math.sin(ang)
+    return [((cx + x * c - y * n) * s, (cy + x * n + y * c) * s) for x, y in pts]
+
+
 def tab_surgery(size=128):
-    """Surgery: a scalpel over a stitched incision."""
+    """Surgery: a scalpel (ridged steel handle, curved blade) over a sutured incision."""
+    import math
     img, d, s = _canvas(size)
-    d.line([(26 * s, 96 * s), (100 * s, 96 * s)], fill=RED, width=int(6 * s))
-    for x in range(34, 100, 14):
-        d.line([(x * s, 88 * s), ((x + 6) * s, 104 * s)], fill=CREAM, width=int(4 * s))
-    d.polygon([(30 * s, 70 * s), (78 * s, 22 * s), (90 * s, 30 * s), (46 * s, 74 * s)], fill=(200, 210, 225, 255))
-    d.polygon([(78 * s, 22 * s), (104 * s, 12 * s), (96 * s, 38 * s), (90 * s, 30 * s)], fill=CREAM)
-    d.line([(46 * s, 74 * s), (30 * s, 70 * s)], fill=(120, 140, 170, 255), width=int(3 * s))
+    # sutured incision along the bottom
+    d.line([(24 * s, 98 * s), (104 * s, 98 * s)], fill=RED, width=int(5 * s))
+    for x in range(30, 102, 12):
+        d.line([(x * s, 90 * s), ((x + 6) * s, 106 * s)], fill=CREAM, width=int(4 * s))
+    ang = -math.pi / 4          # handle lower-left, blade upper-right
+    cx, cy = 70, 48
+    k = 1.2                     # size of the scalpel
+    steel = (190, 204, 222, 255)
+    dark = (60, 86, 120, 255)
+    def R(pts): return _rot([(x * k, y * k) for x, y in pts], cx, cy, ang, s)
+    # handle: long rounded bar with grip ridges
+    d.polygon(R([(-42, -5), (2, -5), (6, -3.5), (6, 3.5), (2, 5), (-42, 5), (-46, 2.5), (-46, -2.5)]), fill=steel, outline=dark)
+    for gx in range(-38, -16, 5):
+        d.line(R([(gx, -4), (gx, 4)]), fill=dark, width=int(2 * s))
+    # blade: straight spine, curved cutting belly up to the point
+    belly = [(6 + t * 30, 3.5 + 7 * math.sin(math.pi * t) - 3.5 * t) for t in [j / 12 for j in range(13)]]
+    d.polygon(R([(6, -3.5), (32, -4.5), (38, -6)] + list(reversed(belly))), fill=CREAM, outline=dark)
+    d.line(R([(8, -1.5), (32, -3)]), fill=(255, 255, 255, 255), width=int(2 * s))
+    return _done(img, size)
+
+
+def tab_meds(size=128):
+    """Medication handbook: a two-tone capsule and a round tablet."""
+    import math
+    img, d, s = _canvas(size)
+    ang = -math.pi / 4
+    cx, cy = 58, 60
+    r = 15
+    def cap(x0, x1, col):
+        pts = []
+        for k in range(13):
+            a = math.pi / 2 + math.pi * k / 12
+            pts.append((x0 + r * math.cos(a), r * math.sin(a)))
+        pts += [(x1, -r), (x1, r)]
+        d.polygon(_rot(pts, cx, cy, ang, s), fill=col)
+    cap(-24, 0, CREAM)
+    # right half: mirror
+    pts = [(24 + r * math.cos(-math.pi / 2 + math.pi * k / 12), r * math.sin(-math.pi / 2 + math.pi * k / 12)) for k in range(13)]
+    pts += [(0, r), (0, -r)]
+    d.polygon(_rot(pts, cx, cy, ang, s), fill=RED)
+    d.line(_rot([(-22, -7), (18, -7)], cx, cy, ang, s), fill=(255, 255, 255, 170), width=int(3 * s))
+    # round tablet with a score line
+    d.ellipse([78 * s, 76 * s, 108 * s, 106 * s], fill=CREAM, outline=(70, 96, 130, 255), width=int(2 * s))
+    d.line([(83 * s, 101 * s), (103 * s, 81 * s)], fill=(150, 160, 175, 255), width=int(3 * s))
     return _done(img, size)
 
 
 TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats,
-        "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook, "tab_surgery": tab_surgery}
+        "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook, "tab_surgery": tab_surgery,
+        "tab_meds": tab_meds}
 
 
 if __name__ == "__main__":
