@@ -273,7 +273,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             local statusW = tw(status, FONT)
             local title = tostring(card.title) .. (card.stage and ("  ·  " .. L("Stage", "Stage %1", card.stage)) or "")
             local maxT = w - statusW - 36
-            while #title > 1 and tw(title, FONT_M) > maxT do title = title:gsub("[%z\1-\127\194-\244][\128-\191]*$", "") end
+            title = S.fitText(title, maxT, function(t) return tw(t, FONT_M) end, "")
             self:drawText(title, x + 10, y + 8, c.text.r, c.text.g, c.text.b, 1, FONT_M)
             self:drawText(status, x + w - 12 - statusW, y + 8 + (fh(FONT_M) - fh()) / 2, sc[1], sc[2], sc[3], 1, FONT)
             local ly = y + 12 + fh(FONT_M) + 4

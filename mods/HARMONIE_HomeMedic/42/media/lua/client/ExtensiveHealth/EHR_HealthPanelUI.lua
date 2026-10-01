@@ -1975,6 +1975,20 @@ function EHR_HealthPanelUI:drawDockedTextCenter(text, x, y, w, h, r, g, b, a, fo
     self:drawText(tostring(text or ""), x + math.floor((w - width) / 2), self:getDockedTextY(y, h, font, bias), r, g, b, a, font or UIFont.Small)
 end
 
+local function trimLastCharacter(text)
+    -- HARMONIE: Kahlua-safe (Java strings: a Thai letter is one char there,
+    -- three bytes in plain Lua); always shortens, so loops always end
+    local len = #text
+    if len <= 1 then return "" end
+    local cut = len
+    while cut > 1 do
+        local byte = string.byte(text, cut)
+        if not byte or byte < 128 or byte >= 192 then break end
+        cut = cut - 1
+    end
+    return text:sub(1, cut - 1)
+end
+
 function EHR_HealthPanelUI:truncateText(text, maxWidth, font)
     text = tostring(text or "")
     font = font or UIFont.Small
@@ -1983,8 +1997,7 @@ function EHR_HealthPanelUI:truncateText(text, maxWidth, font)
     local ellipsis = "..."
     local result = text
     while string.len(result) > 1 and self:getTextWidth(result .. ellipsis, font) > maxWidth do
-        -- HARMONIE: drop a whole UTF-8 character (Thai letters are 3 bytes)
-        result = result:gsub("[%z\1-\127\194-\244][\128-\191]*$", "")
+        result = trimLastCharacter(result)
     end
     return result .. ellipsis
 end
