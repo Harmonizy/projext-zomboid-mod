@@ -167,12 +167,43 @@ function T.install()
     end
 end
 
--- The body diagram of the medical window: an amputated limb disappears.
--- TOC paints the missing limb (its own 123x302 overlay of the vanilla body,
--- media/ui/<Sex>/<Limb>.png) on the vanilla health panel; here the same
--- overlay is painted in the window's background colour, so the limb is gone
--- (a fitted prosthesis is drawn on top). Offset -5,-13 = TOC's B42 alignment.
+-- The body diagram of the medical window: an amputated limb turns black.
+-- The body-part panel keeps one entry per part in panel.bps (bodyPartType +
+-- the part's own shape texture); the parts of the missing limb are drawn
+-- again in black on top, so exactly that shape goes dark. If a part's
+-- texture cannot be found, TOC's own limb overlay (media/ui/<Sex>/<Limb>.png,
+-- offset -5,-13 = TOC's B42 alignment) is painted black instead.
+-- A fitted prosthesis is drawn on top.
 T.BODY_OFFSET_X, T.BODY_OFFSET_Y = -5, -13
+local LIMB_PARTS = {
+    Hand_L = { "Hand_L" }, ForeArm_L = { "Hand_L", "ForeArm_L" }, UpperArm_L = { "Hand_L", "ForeArm_L", "UpperArm_L" },
+    Hand_R = { "Hand_R" }, ForeArm_R = { "Hand_R", "ForeArm_R" }, UpperArm_R = { "Hand_R", "ForeArm_R", "UpperArm_R" },
+}
+
+-- the Texture stored in a body-part entry (field name not relied upon)
+local function partTexture(bp)
+    for _, key in ipairs({ "texture", "tex", "partTexture", "mask", "overlay" }) do
+        local v = bp[key]
+        if v and type(v) ~= "table" and type(v) ~= "string" then return v, bp.texX or bp.x or 0, bp.texY or bp.y or 0 end
+    end
+    for _, v in pairs(bp) do
+        if type(v) == "userdata" then
+            local ok, w = pcall(function() return v:getWidth() end)
+            local okN, n = pcall(function() return v:getName() end)
+            if ok and tonumber(w) and okN and n then return v, bp.texX or 0, bp.texY or 0 end
+        end
+    end
+    return nil
+end
+
+local function logFields(panel)
+    if T.loggedFields or not panel.bps or not panel.bps[1] then return end
+    T.loggedFields = true
+    local keys = {}
+    for k, v in pairs(panel.bps[1]) do keys[#keys + 1] = tostring(k) .. ":" .. type(v) end
+    print("[HARMONIE HomeMedic] body-part entry fields: " .. table.concat(keys, ", "))
+end
+
 function T.drawMissingLimbs(panel)
     if not T.available() then return end
     local player = (panel.parent and panel.parent.player) or panel.character or panel.player
@@ -184,19 +215,141 @@ function T.drawMissingLimbs(panel)
     if not (okS and okC and StaticData and Cached and Cached.GetHighestAmputatedLimbs) then return end
     local okH, highest = pcall(Cached.GetHighestAmputatedLimbs, username)
     if not okH or type(highest) ~= "table" then return end
+    logFields(panel)
     local sex = player.isFemale and player:isFemale() and "Female" or "Male"
     local textures = StaticData.HEALTH_PANEL_TEXTURES and StaticData.HEALTH_PANEL_TEXTURES[sex]
-    local bg = EHR_HealthPanelUI and EHR_HealthPanelUI.Colors and EHR_HealthPanelUI.Colors.panel or { r = 0.04, g = 0.062, b = 0.09 }
     local dc = okD and DataController and DataController.GetInstance(username)
     for _, side in ipairs({ "L", "R" }) do
         local limb = highest[side]
-        local tex = limb and textures and textures[limb]
-        if tex then
-            panel:drawTexture(tex, T.BODY_OFFSET_X, T.BODY_OFFSET_Y, 1, bg.r, bg.g, bg.b)
+        if limb then
+            local drawn = false
+            local want = {}
+            for _, n in ipairs(LIMB_PARTS[limb] or {}) do want[n] = true end
+            for _, bp in ipairs(panel.bps or {}) do
+                local okT, name = pcall(function() return BodyPartType.ToString(bp.bodyPartType) end)
+                if okT and want[name] then
+                    local tex, tx, ty = partTexture(bp)
+                    if tex then
+                        panel:drawTexture(tex, tx, ty, 1, 0.02, 0.02, 0.03)
+                        drawn = true
+                    end
+                end
+            end
+            if not drawn and textures and textures[limb] then
+                panel:drawTexture(textures[limb], T.BODY_OFFSET_X, T.BODY_OFFSET_Y, 0.92, 0, 0, 0)
+            end
             local prost = dc and dc.getIsProstEquipped and dc:getIsProstEquipped(limb)
             local ptex = prost and StaticData.HEALTH_PANEL_TEXTURES.ProstArm and StaticData.HEALTH_PANEL_TEXTURES.ProstArm[side]
             if ptex then panel:drawTexture(ptex, T.BODY_OFFSET_X, T.BODY_OFFSET_Y, 1, 1, 1, 1) end
         end
+    end
+end
+
+-- ------------------------------------------------------------- prosthesis from the body menu
+-- Request 2026-10-02: fit / remove a prosthesis by right-clicking the stump
+-- in the body diagram (the medical window or the vanilla health window)
+-- instead of through the item. The action is TOC's own: a prosthesis is worn
+-- like clothing (ISWearClothing / ISUnequipAction, which TOC hooks).
+local function tocModules()
+    local okS, StaticData = pcall(require, "TOC/StaticData")
+    local okD, DataController = pcall(require, "TOC/Controllers/DataController")
+    local okC, Cached = pcall(require, "TOC/Handlers/CachedDataHandler")
+    local okP, Prost = pcall(require, "TOC/Handlers/ProsthesisHandler")
+    if okS and okD and okC and okP and StaticData and DataController and Cached and Prost then
+        return StaticData, DataController, Cached, Prost
+    end
+end
+
+local function sideOf(fullType)
+    return string.find(fullType or "", "_L") and "L" or "R"
+end
+
+function T.prosthesisOptions(context, player, bodyPart)
+    if not context or not player or not bodyPart or not T.available() then return false end
+    local StaticData, DataController, Cached, Prost = tocModules()
+    if not StaticData then return false end
+    local okT, typeStr = pcall(function() return BodyPartType.ToString(bodyPart:getType()) end)
+    local limb = okT and StaticData.LIMBS_IND_STR and StaticData.LIMBS_IND_STR[typeStr]
+    if not limb then return false end
+    local username = player:getUsername()
+    local dc = DataController.GetInstance(username)
+    if not dc or not dc:getIsCut(limb) then return false end
+    local side = limb:sub(-1)
+    local okH, highest = pcall(Cached.GetHighestAmputatedLimbs, username)
+    if not okH or type(highest) ~= "table" or highest[side] ~= limb then return false end
+    if string.find(limb, "UpperArm") then
+        local o = context:addOption(text("UI_HomeMedic_Prost_NoUpper", "Prosthesis: not possible above the elbow"), nil, nil)
+        o.notAvailable = true
+        return true
+    end
+    if dc:getIsProstEquipped(limb) then
+        local worn = player:getWornItems()
+        for i = 0, (worn and worn:size() or 0) - 1 do
+            local it = worn:get(i) and worn:get(i):getItem()
+            if it and Prost.CheckIfProst(it) and sideOf(it:getFullType()) == side then
+                context:addOption(text("UI_HomeMedic_Prost_Remove", "Remove prosthesis") .. ": " .. it:getDisplayName(), player,
+                    function(p) ISTimedActionQueue.add(ISUnequipAction:new(p, it, 50)) end)
+                return true
+            end
+        end
+        return false
+    end
+    local found = {}
+    local items = player:getInventory():getAllEvalRecurse(function(it) return Prost.CheckIfProst(it) end)
+    for i = 0, (items and items:size() or 0) - 1 do
+        local it = items:get(i)
+        if sideOf(it:getFullType()) == side then found[#found + 1] = it end
+    end
+    if #found == 0 then
+        local o = context:addOption(text("UI_HomeMedic_Prost_None", "Fit prosthesis (none for this side in your bags)"), nil, nil)
+        o.notAvailable = true
+        return true
+    end
+    for _, it in ipairs(found) do
+        context:addOption(text("UI_HomeMedic_Prost_Fit", "Fit prosthesis") .. ": " .. it:getDisplayName(), player, function(p)
+            if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
+                ISInventoryPaneContextMenu.transferIfNeeded(p, it)
+            end
+            ISTimedActionQueue.add(ISWearClothing:new(p, it, 50))
+        end)
+    end
+    return true
+end
+
+function T.installProsthesis()
+    if T.prostInstalled or not T.available() or not ISHealthPanel or not ISHealthPanel.doBodyPartContextMenu then return end
+    T.prostInstalled = true
+    local orig = ISHealthPanel.doBodyPartContextMenu
+    ISHealthPanel.doBodyPartContextMenu = function(self, bodyPart, x, y, ...)
+        local r = orig(self, bodyPart, x, y, ...)
+        -- only on your own body (you cannot dress someone else)
+        if self.otherPlayer == nil and self.character and self.character.getPlayerNum then
+            local context = getPlayerContextMenu and getPlayerContextMenu(self.character:getPlayerNum())
+            local ok, added = pcall(T.prosthesisOptions, context, self.character, bodyPart)
+            if ok and added then context:setVisible(true); context:bringToTop() end
+        end
+        return r
+    end
+    -- the item's own "Wear" goes: prostheses are fitted from the body menu
+    if Events and Events.OnFillInventoryObjectContextMenu then
+        Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+            local _, _, _, Prost = tocModules()
+            if not Prost or not context then return end
+            local all, any = true, false
+            for _, entry in ipairs(items or {}) do
+                local it = entry
+                if type(entry) == "table" and entry.items then it = entry.items[1] end
+                if it and type(it) ~= "table" then
+                    any = true
+                    if not Prost.CheckIfProst(it) then all = false end
+                end
+            end
+            if any and all then
+                pcall(function() context:removeOptionByName(getText("ContextMenu_Wear")) end)
+                local o = context:addOption(text("UI_HomeMedic_Prost_Hint", "Fit it from the body menu (right-click the stump)"), nil, nil)
+                o.notAvailable = true
+            end
+        end)
     end
 end
 
@@ -214,4 +367,5 @@ if Events and Events.OnGameStart then
     Events.OnGameStart.Add(T.install)
     Events.OnGameStart.Add(T.installStatuses)
     Events.OnGameStart.Add(T.installBody)
+    Events.OnGameStart.Add(T.installProsthesis)
 end

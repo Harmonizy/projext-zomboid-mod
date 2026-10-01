@@ -101,14 +101,20 @@ function C.surgeriesFor(doctor, patient, bodyPart, exam)
     return list
 end
 
-function Prep:new(doctor, patient, bodyPart, sid, exam, list)
-    local w = 620
-    local o = ISPanel.new(self, 0, 0, w, 300)
+-- opts.embedded: a child view of the medical window's Surgery tab
+-- (HM_SurgeryTab.lua): sized by the tab, no Close button, and the chip row
+-- picks the body part (opts.parts = { {part=, name=} }) instead of the operation
+function Prep:new(doctor, patient, bodyPart, sid, exam, list, opts)
+    opts = opts or {}
+    local w = opts.w or 620
+    local o = ISPanel.new(self, opts.x or 0, opts.y or 0, w, opts.h or 300)
     o.doctor, o.patient, o.bodyPart, o.exam = doctor, patient, bodyPart, exam
+    o.embedded = opts.embedded == true
+    o.parts = opts.parts
     o.partName = S.partName(bodyPart)
     o.list = list or { sid }
     o.sid = sid or o.list[1]
-    o.moveWithMouse = true
+    o.moveWithMouse = not o.embedded
     o.backgroundColor = { r = COL.bg[1], g = COL.bg[2], b = COL.bg[3], a = 0.97 }
     o.borderColor = { r = COL.border[1], g = COL.border[2], b = COL.border[3], a = 1 }
     o.lastEval, o.scroll = 0, 0
@@ -122,6 +128,7 @@ function Prep:createChildren()
     self.startBtn:initialise(); self:addChild(self.startBtn)
     self.closeBtn = ISButton:new(0, 0, 100, bh, S.T("Close", "Close"), self, Prep.close)
     self.closeBtn:initialise(); self:addChild(self.closeBtn)
+    if self.embedded then self.closeBtn:setVisible(false) end
 end
 
 -- vertical metrics
@@ -133,11 +140,16 @@ function Prep:metrics()
     m.tabsTop = m.sub + fh() + 10
     m.tabH = fh() + 10
     local rects, x, y = {}, m.pad, m.tabsTop
-    for _, sid in ipairs(self.list) do
-        local label = S.T("Name_" .. sid, sid)
-        local w = math.min(self.width - m.pad * 2, tw(label) + 28)
+    local entries = {}
+    if self.parts then
+        for _, p in ipairs(self.parts) do entries[#entries + 1] = { part = p.part, label = p.name } end
+    else
+        for _, sid in ipairs(self.list) do entries[#entries + 1] = { sid = sid, label = S.T("Name_" .. sid, sid) } end
+    end
+    for _, e in ipairs(entries) do
+        local w = math.min(self.width - m.pad * 2, tw(e.label) + 28)
         if x + w > self.width - m.pad and x > m.pad then x = m.pad; y = y + m.tabH + 6 end
-        rects[#rects + 1] = { sid = sid, x = x, y = y, w = w, h = m.tabH, label = label }
+        rects[#rects + 1] = { sid = e.sid, part = e.part, x = x, y = y, w = w, h = m.tabH, label = e.label }
         x = x + w + 6
     end
     m.tabs = rects
@@ -153,8 +165,9 @@ function Prep:layout()
     local want = m.listTop + rows * m.rowH + m.footerH + 8
     local maxH = getCore():getScreenHeight() - 40
     local h = math.min(want, maxH)
+    if self.embedded then h = self.height end
     if h ~= self.height then self:setHeight(h) end
-    if not self.placed then
+    if not self.placed and not self.embedded then
         self.placed = true
         self:setX((getCore():getScreenWidth() - self.width) / 2)
         self:setY(math.max(10, (getCore():getScreenHeight() - h) / 2))
@@ -163,7 +176,7 @@ function Prep:layout()
     self.maxScroll = math.max(0, rows * m.rowH - self.listH)
     if self.scroll > self.maxScroll then self.scroll = self.maxScroll end
     local by = self.height - self.startBtn.height - 10
-    self.startBtn:setX(self.width - 238); self.startBtn:setY(by)
+    self.startBtn:setX(self.width - (self.embedded and 132 or 238)); self.startBtn:setY(by)
     self.closeBtn:setX(self.width - 112); self.closeBtn:setY(by)
     self.m = m
 end
@@ -186,19 +199,19 @@ function Prep:prerender()
     local who = self.doctor == self.patient and S.T("Self", "Yourself")
         or (self.patient.getDisplayName and self.patient:getDisplayName() or "?")
     local part = BodyPartType and BodyPartType.getDisplayName and self.bodyPart and BodyPartType.getDisplayName(self.bodyPart:getType()) or tostring(self.partName)
-    self:drawText(fit(who .. "  ·  " .. part, self.width - 2 * m.pad), m.pad, m.sub, COL.dim[1], COL.dim[2], COL.dim[3], 1, FONT)
+    self:drawText(fit(who .. "  -  " .. part, self.width - 2 * m.pad), m.pad, m.sub, COL.dim[1], COL.dim[2], COL.dim[3], 1, FONT)
 
     self.hoverTip = nil
     local mx, my = self:getMouseX(), self:getMouseY()
     for _, r in ipairs(m.tabs) do
-        local active = r.sid == self.sid
-        local unlocked = S.surgeryUnlocked(self.doctor, r.sid)
+        local active = (r.part and r.part == self.bodyPart) or (not r.part and r.sid == self.sid)
+        local unlocked = r.part and true or S.surgeryUnlocked(self.doctor, r.sid)
         local c = active and COL.accent or COL.border
         self:drawRect(r.x, r.y, r.w, r.h, active and 0.35 or 0.15, c[1], c[2], c[3])
         self:drawRectBorder(r.x, r.y, r.w, r.h, 1, c[1], c[2], c[3])
         local tc = unlocked and COL.text or COL.dim
         self:drawText(fit((unlocked and "" or "# ") .. r.label, r.w - 16), r.x + 8, r.y + 5, tc[1], tc[2], tc[3], 1, FONT)
-        if mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h then
+        if not r.part and mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h then
             local sd = S.Surgeries[r.sid]
             self.hoverTip = S.T("Tip_Surgery_" .. r.sid, "") .. "\n\n" .. S.targetsTip(r.sid)
                 .. "\n\n" .. S.T("Tier_" .. sd.tier, sd.tier)
@@ -259,7 +272,12 @@ end
 function Prep:onMouseDown(x, y)
     for _, r in ipairs(self.m and self.m.tabs or {}) do
         if x >= r.x and x <= r.x + r.w and y >= r.y and y <= r.y + r.h then
-            self.sid = r.sid; self.status = nil; self.scroll = 0
+            if r.part then
+                self.bodyPart = r.part; self.partName = S.partName(r.part)
+            else
+                self.sid = r.sid
+            end
+            self.status = nil; self.scroll = 0
             self:reevaluate(true)
             return true
         end
@@ -272,16 +290,50 @@ function Prep:onStart()
     if not self.eval.canStart then return end
     self.waiting = true
     self.status = S.T("Preparing", "Preparing...")
+    C.prep = self
     C.request(self.doctor, self.patient, self.partName, self.sid)
 end
 
 function Prep:close()
+    if self.embedded then
+        -- the tab stays; the operating window takes over
+        self.waiting = false
+        self.status = nil
+        if C.prep == self then C.prep = nil end
+        return
+    end
     self:setVisible(false)
     self:removeFromUIManager()
     if C.prep == self then C.prep = nil end
 end
 
+-- the medical window that shows this patient (own window, or the remote one)
+local function panelFor(doctor, patient)
+    if not EHR or not EHR.UI then return nil end
+    if doctor == patient and EHR.UI.ShowHealthPanel then
+        EHR.UI.ShowHealthPanel(doctor)
+        return EHR.UI.HealthPanelInstance
+    end
+    for _, p in pairs(EHR.UI.RemoteHealthPanelInstances or {}) do
+        if p and p.player == patient and p:isVisible() then return p end
+    end
+    return nil
+end
+
+-- body-part menu "Surgery": the medical window's Surgery tab with this
+-- operation and part selected; the old pop-up only when no window fits
 function C.openPrep(doctor, patient, bodyPart, sid, exam)
+    local panel = panelFor(doctor, patient)
+    if panel and panel.setActiveTab and EHR_HealthPanelUI.ExtraTabs and EHR_HealthPanelUI.ExtraTabs.surgery then
+        panel.hmSurgerySelect = { sid = sid, part = S.partName(bodyPart) }
+        if panel.activeTab == "surgery" then EHR_HealthPanelUI.ExtraTabs.surgery.open(panel)
+        else panel:setActiveTab("surgery") end
+        return
+    end
+    C.openPrepWindow(doctor, patient, bodyPart, sid, exam)
+end
+
+function C.openPrepWindow(doctor, patient, bodyPart, sid, exam)
     if C.prep then C.prep:close() end
     local list = C.surgeriesFor(doctor, patient, bodyPart, exam)
     if #list == 0 then list = { sid } end

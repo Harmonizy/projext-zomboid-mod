@@ -494,9 +494,9 @@ local function hideWindow(instance)
 end
 
 local function hideVanillaHealthWindow()
-    -- HARMONIE: only when EHR is set to replace the vanilla health panel;
-    -- otherwise the vanilla character window is left alone
-    if EHR.UI.IsEHRPrimaryHealthPanel and not EHR.UI.IsEHRPrimaryHealthPanel() then return end
+    -- HARMONIE: the vanilla character / health window is never hidden: the
+    -- medical window opens alongside it, it does not replace it
+    if true then return end
     if ISCharacterInfoWindow and ISCharacterInfoWindow.instance then
         hideWindow(ISCharacterInfoWindow.instance)
     end
@@ -525,7 +525,7 @@ local function patchCharacterInfoWindowHealthToggle()
     ISCharacterInfoWindow.ehrHealthToggleSuppressPatch = true
 
     ISCharacterInfoWindow.toggleView = function(self, viewName)
-        if suppressVanillaTicks > 0 and isVanillaHealthViewName(viewName) then
+        if false and suppressVanillaTicks > 0 and isVanillaHealthViewName(viewName) then  -- HARMONIE: never suppress
             hideWindow(self)
             return
         end
@@ -1243,7 +1243,7 @@ function EHR_HealthPanelUI:closeRemoteExamIfOutOfRange()
     return true
 end
 
--- HARMONIE: our own five tabs, no embedded vanilla windows (info, skills,
+-- HARMONIE: our own six tabs, no embedded vanilla windows (info, skills,
 -- health, protection and temperature stay in the vanilla character window,
 -- where other mods expect them). Tabs 3-5 live in client/HARMONIEHomeMedic
 -- and register in EHR_HealthPanelUI.ExtraTabs.
@@ -1253,10 +1253,11 @@ function EHR_HealthPanelUI:getTabDefinitions()
     local stats = { id = "stats", label = safeText("UI_EHR_Tab_Stats", "Body Stats") }
     local diagnosis = { id = "diagnosis", label = safeText("UI_EHR_Tab_Diagnosis", "Diagnosis") }
     local handbook = { id = "handbook", label = safeText("UI_EHR_Tab_Handbook", "Disease Handbook") }
+    local surgery = { id = "surgery", label = safeText("UI_EHR_Tab_Surgery", "Surgery") }
     if self.isRemoteHealthPanel then
         return {
             { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
-            stats, diagnosis, handbook,
+            stats, diagnosis, handbook, surgery,
         }
     end
     if self.width < 560 then
@@ -1269,7 +1270,7 @@ function EHR_HealthPanelUI:getTabDefinitions()
     return {
         { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "EHR") or safeText("UI_EHR_Tab_EHR", "EHR Monitor") },
         { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
-        stats, diagnosis, handbook,
+        stats, diagnosis, handbook, surgery,
     }
 end
 
@@ -2012,6 +2013,7 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         stats = "media/textures/HARMONIE_HomeMedic/tab_stats.png",
         diagnosis = "media/textures/HARMONIE_HomeMedic/tab_diagnosis.png",
         handbook = "media/textures/HARMONIE_HomeMedic/tab_handbook.png",
+        surgery = "media/textures/HARMONIE_HomeMedic/tab_surgery.png",
     }
 
     local path = paths[tabId]
@@ -3118,6 +3120,16 @@ function EHR_HealthPanelUI:drawBloodCompositionPanel()
     local medicationCount = #(self.cachedData.activeMedications or {})
     local watchRequired = self:isMedicalWatchRequired()
     self:drawPanelFrame(x, y, w, h, safeText("UI_EHR_BloodComposition", "BLOOD COMPOSITION"), nil)
+    -- HARMONIE: blood type right after the heading (moved from the window header)
+    do
+        local bt = self:getBloodSummary()
+        local heading = safeText("UI_EHR_BloodComposition", "BLOOD COMPOSITION")
+        if bt and bt.bloodType then
+            local hx = x + 12 + self:getTextWidth(heading, UIFont.Medium) + 12
+            self:drawDockedText("[" .. tostring(bt.bloodType) .. "]", hx, y + 8, w - (hx - x) - 12, 28,
+                EHR_HealthPanelUI.Colors.green.r, EHR_HealthPanelUI.Colors.green.g, EHR_HealthPanelUI.Colors.green.b, 1, UIFont.Medium)
+        end
+    end
 
     hasWatch = (not watchRequired) or hasWatch
 
@@ -3197,14 +3209,14 @@ function EHR_HealthPanelUI:drawHeader()
     local titleX = 14
     local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0))
     self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
-    local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0)
+    local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0)  -- (blood type moved)
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
         rightReserve = rightReserve + 30
     end
     if self.administerMedicationButton and self.administerMedicationButton:isVisible() then
         rightReserve = rightReserve + 184
     end
-    self:drawDockedTextRight("[" .. tostring(summary.bloodType) .. "]", self.width - rightReserve, 0, self.HEADER_HEIGHT, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
+    -- HARMONIE: the blood type is shown after "BLOOD COMPOSITION" instead
 end
 
 function EHR_HealthPanelUI:drawTabBar()
@@ -4765,61 +4777,72 @@ function EHR_HealthPanelUI:drawBodyLegend(x, y, w)
         { label = safeText("UI_EHR_BodyLegend_Bleeding", "Bleeding"), color = c.red },
     }
 
-    local rowH = 20
-    local textLift = 9
+    -- HARMONIE: rows sized from the font, text centred on its colour square
+    local fontH = getTextManager():getFontHeight(UIFont.Small)
+    local rowH = math.max(20, fontH + 4)
     w = w or 146
     local h = #items * rowH + 10
-    self:drawRect(x, y, w, h, 0.56, 0.025, 0.025, 0.028)
+    self:drawRect(x, y, w, h, 0.56, c.panel.r, c.panel.g, c.panel.b)
     self:drawRectBorder(x, y, w, h, 0.62, c.borderDim.r, c.borderDim.g, c.borderDim.b)
     for i, item in ipairs(items) do
         local rowY = y + 5 + (i - 1) * rowH
-        self:drawRect(x + 8, rowY + 5, 8, 8, item.color.a, item.color.r, item.color.g, item.color.b)
-        self:drawText(self:truncateText(item.label, w - 30, UIFont.Small), x + 22, rowY - textLift, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+        local mid = rowY + math.floor(rowH / 2)
+        self:drawRect(x + 8, mid - 4, 8, 8, item.color.a, item.color.r, item.color.g, item.color.b)
+        self:drawText(self:truncateText(item.label, w - 30, UIFont.Small), x + 22, mid - math.floor(fontH / 2), c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     end
 
     return h
 end
 
+-- HARMONIE: the list scrolls with the wheel (self.hmPartScroll) instead of
+-- cutting off at "+N more"; rows sized from the font, text centred
 function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, statuses)
     local c = EHR_HealthPanelUI.Colors
     if h < 48 then return end
 
     statuses = statuses or {}
     local font = self:getCompactFont()
-    local rowH = 20
-    local textLift = 9
+    local fontH = getTextManager():getFontHeight(font)
+    local rowH = math.max(20, fontH + 4)
     local title = partName and partName ~= "None" and partName or safeText("UI_EHR_NoPartSelected", "No part selected")
 
-    self:drawRect(x, y, w, h, 0.56, 0.025, 0.025, 0.028)
+    self:drawRect(x, y, w, h, 0.56, c.panel.r, c.panel.g, c.panel.b)
     self:drawRectBorder(x, y, w, h, 0.62, c.borderDim.r, c.borderDim.g, c.borderDim.b)
-    local titleY = (partName == nil or partName == "None") and y or (y - 5)
-    self:drawDockedText(self:truncateText(title, w - 16, font), x + 8, titleY, w - 16, 22, c.green.r, c.green.g, c.green.b, c.green.a, font, -1)
-    self:drawRect(x + 8, y + 22, w - 16, 1, 0.45, c.border.r, c.border.g, c.border.b)
+    self:drawDockedText(self:truncateText(title, w - 16, font), x + 8, y, w - 16, 24, c.green.r, c.green.g, c.green.b, c.green.a, font, -1)
+    self:drawRect(x + 8, y + 24, w - 16, 1, 0.45, c.border.r, c.border.g, c.border.b)
 
-    local rowY = y + 33
+    local top = y + 28
+    local viewH = y + h - 4 - top
     if #statuses == 0 then
+        self.hmPartDetails = nil
         local text = partName == "None" and safeText("UI_EHR_HoverBodyPart", "Hover a body part")
             or safeText("UI_EHR_NoActiveIssues", "No active issues")
-        self:drawText(self:truncateText(text, w - 16, font), x + 8, rowY - textLift, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, font)
+        self:drawText(self:truncateText(text, w - 16, font), x + 8, top + math.floor((rowH - fontH) / 2), c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, font)
         return
     end
 
-    local drawn = 0
-    for i, status in ipairs(statuses) do
-        if rowY + rowH > y + h - 4 then
-            local remaining = #statuses - drawn
-            if remaining > 0 then
-                local more = safeFormat("UI_EHR_MoreStatuses", "+%1 more", remaining)
-                self:drawText(more, x + 8, rowY - 1, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, font)
-            end
-            break
-        end
+    if self.hmPartDetailsName ~= title then self.hmPartDetailsName = title; self.hmPartScroll = 0 end
+    local contentH = #statuses * rowH
+    local maxScroll = math.max(0, contentH - viewH)
+    self.hmPartScroll = math.max(0, math.min(maxScroll, self.hmPartScroll or 0))
+    self.hmPartDetails = { x = x, y = top, w = w, h = viewH, maxScroll = maxScroll, step = rowH }
 
-        local color = status.color or c.textDim
-        self:drawRect(x + 8, rowY + 4, 8, 8, color.a, color.r, color.g, color.b)
-        self:drawText(self:truncateText(status.label or safeText("UI_EHR_GenericStatus", "Status"), w - 30, font), x + 22, rowY - textLift, color.r, color.g, color.b, color.a, font)
+    self:setStencilRect(x + 1, top, w - 2, viewH)
+    local rowY = top - self.hmPartScroll
+    for _, status in ipairs(statuses) do
+        if rowY + rowH >= top and rowY <= top + viewH then
+            local color = status.color or c.textDim
+            local mid = rowY + math.floor(rowH / 2)
+            self:drawRect(x + 8, mid - 4, 8, 8, color.a, color.r, color.g, color.b)
+            self:drawText(self:truncateText(status.label or safeText("UI_EHR_GenericStatus", "Status"), w - 34, font), x + 22, mid - math.floor(fontH / 2), color.r, color.g, color.b, color.a, font)
+        end
         rowY = rowY + rowH
-        drawn = drawn + 1
+    end
+    self:clearStencilRect()
+    if maxScroll > 0 then
+        local barH = math.max(14, viewH * viewH / contentH)
+        local barY = top + (viewH - barH) * (self.hmPartScroll / maxScroll)
+        self:drawRect(x + w - 5, barY, 3, barH, 0.85, c.accent.r, c.accent.g, c.accent.b)
     end
 end
 
@@ -5714,6 +5737,15 @@ function EHR_HealthPanelUI:render()
 end
 
 function EHR_HealthPanelUI:onMouseWheel(del)
+    -- HARMONIE: the selected body part's list scrolls on its own
+    local d = self.activeTab == "ehr" and self.hmPartDetails
+    if d and d.maxScroll > 0 then
+        local mx, my = self:getLocalMousePosition()
+        if mx >= d.x and mx <= d.x + d.w and my >= d.y and my <= d.y + d.h then
+            self.hmPartScroll = math.max(0, math.min(d.maxScroll, (self.hmPartScroll or 0) + del * d.step))
+            return true
+        end
+    end
     local extra = EHR_HealthPanelUI.ExtraTabs[self.activeTab]
     if extra and extra.wheel then return extra.wheel(self, del) end
     if self.activeTab ~= "ehr" then return false end
@@ -5958,11 +5990,19 @@ local function patchEquippedItemHealthButton()
     ISEquippedItem.onOptionMouseDown = function(self, button, x, y)
         if button and button.internal == "HEALTH" and EHR.UI then
             if EHR.UI.ShouldHeartButtonOpenEHR and EHR.UI.ShouldHeartButtonOpenEHR() then
+                -- HARMONIE: the vanilla health window opens as usual AND the
+                -- medical window opens / closes with it
                 local player = self and self.chr or (getSpecificPlayer and getSpecificPlayer(self and self.playerNum or 0)) or (getPlayer and getPlayer())
-                if EHR.UI.ToggleHealthPanel then
-                    EHR.UI.ToggleHealthPanel(player)
-                    return
+                local result = originalOnOptionMouseDown(self, button, x, y)
+                local info = getPlayerInfoPanel and getPlayerInfoPanel(self and self.playerNum or 0)
+                local vanillaOpen = info and info.isVisible and info:isVisible()
+                local ehrOpen = EHR.UI.HealthPanelInstance and EHR.UI.HealthPanelInstance:isVisible()
+                if vanillaOpen and not ehrOpen and EHR.UI.ShowHealthPanel then
+                    EHR.UI.ShowHealthPanel(player)
+                elseif not vanillaOpen and ehrOpen and EHR.UI.HideHealthPanelOnly then
+                    EHR.UI.HideHealthPanelOnly()
                 end
+                return result
             elseif EHR.UI.HideHealthPanelOnly then
                 if EHR.UI.ClearLegacyHealthSuppression then
                     EHR.UI.ClearLegacyHealthSuppression()
@@ -5980,7 +6020,7 @@ local function patchEquippedItemHealthButton()
     if originalPrerender then
         ISEquippedItem.prerender = function(self)
             originalPrerender(self)
-            if self and self.healthBtn and self.heartIconOn and self.heartIconOff
+            if false and self and self.healthBtn and self.heartIconOn and self.heartIconOff  -- HARMONIE: vanilla keeps its icon
                     and EHR.UI and EHR.UI.ShouldHeartButtonOpenEHR and EHR.UI.ShouldHeartButtonOpenEHR() then
                 if EHR.UI.HealthPanelInstance and EHR.UI.HealthPanelInstance:isVisible() then
                     self.healthBtn:setImage(self.heartIconOn)
