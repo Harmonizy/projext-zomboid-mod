@@ -121,3 +121,15 @@ MP
   หน้าต่างร่างกาย vanilla เปิดตามปกติ + หน้าต่างการแพทย์เปิดพร้อมกัน (ไม่ซ่อน vanilla อีกแล้ว)
   คลิกขวาร่างกายในหน้าต่างการแพทย์ของตัวเอง = ฟังก์ชัน ISHealthPanel.doBodyPartContextMenu ของ vanilla เอง (ม็อดอื่นที่ hook ไว้ก็ขึ้นด้วย)
     ของคนอื่น (MP) = เมนูของ EHR เอง (vanilla ทำให้ข้อมูลผู้ป่วยเพี้ยนใน MP) + TOC + ผ่าตัด
+
+0.11.0 มินิเกมสมจริง
+  ภาพ: tools/gen_surgery_art.py -> textures/HARMONIE_HomeMedic/surg/ (ของเราเองทั้งหมด สร้างด้วยสคริปต์)
+    ผ้าคลุมผ่าตัด, ผิวทา Betadine, แผลเปิดรูปวงรีขอบไม่เรียบ (wound_bed / organ_bed), กล้ามเนื้อ ไขมัน อวัยวะ เนื้อตาย
+    เลือด/หยดเลือด/น้ำ, เศษสิ่งสกปรก, กระสุน เศษแก้ว พยาธิ ลิ่มเลือด, กระดูก กะโหลก จานเพาะเชื้อ เซลล์
+    เครื่องมือ: scalpel, hemostat, needle holder, forceps, syringe, suction, bone saw, drill, pipette, catheter, curette
+  เสียง: tools/gen_surgery_sounds.py -> sound/HM_Surg_*.wav + scripts/HM_surgery_sounds.txt (สังเคราะห์เอง, หมวด UI)
+  ระบบ (HM_SurgeryGames.lua): วาดด้วย javaObject:DrawTexture (quad 4 จุด) -> หมุนรูป เส้น วงกลม
+    เครื่องมืออยู่ที่เมาส์ (ปลายเครื่องมือ = จุดที่เมาส์ชี้) จับแบบปากกามาจากขวาล่าง
+    พลาด -> hurtAt: เลือดกระเด็น จอสั่น เสียง และนับ hurt -> จอ monitor (HR/SpO2/ECG) ชีพจรขึ้น เตือนเมื่อ HR >= 120
+    กติกาและการคิดคะแนนเหมือนเดิมทุกเกม
+  ทดสอบ: เรนเดอร์ภาพตัวอย่างทุกเกมจากคำสั่งวาด (preview) + เล่นจนจบทุกเกมใน mock

@@ -349,8 +349,8 @@ HM_SurgeryOpUI = ISPanel:derive("HM_SurgeryOpUI")
 local Op = HM_SurgeryOpUI
 
 function Op:new(doctor, info)
-    local w = 680
-    local h = math.min(560, getCore():getScreenHeight() - 40)
+    local w = math.min(780, getCore():getScreenWidth() - 40)
+    local h = math.min(620, getCore():getScreenHeight() - 40)
     local x = (getCore():getScreenWidth() - w) / 2
     local y = (getCore():getScreenHeight() - h) / 2
     local o = ISPanel.new(self, x, y, w, h)
@@ -385,7 +385,7 @@ function Op:nextStep()
     self.stepIndex = self.stepIndex + 1
     if self.stepIndex > #self.steps then self:finish(false); return end
     local proc = S.Procedures[self.steps[self.stepIndex]]
-    local p = { variant = proc.variant, tier = S.TIERS[proc.tier].order }
+    local p = { variant = proc.variant, tier = S.TIERS[proc.tier].order, sid = self.sid }
     for k, v in pairs(self.params) do p[k] = v end
     self.game = G.new(proc.game, p)
     self.pause = 0
@@ -456,8 +456,10 @@ function Op:update()
         else
             self.game:update(dt)
             if self.game.done then
-                self.scores[self.stepIndex] = self.game:score()
-                self.pause = 700
+                local sc = self.game:score()
+                self.scores[self.stepIndex] = sc
+                self.pause = 900
+                G.sfx(sc >= 0.45 and "Good" or "Bad")
             end
         end
     end
@@ -491,7 +493,15 @@ function Op:prerender()
         local proc = S.Procedures[self.steps[self.stepIndex]]
         local key = "Game_" .. proc.game .. (proc.variant and ("_" .. proc.variant) or "")
         self:drawText(fit(S.T(key, S.T("Game_" .. proc.game, "")), self.width - 32), 16, self.instrY, COL.warn[1], COL.warn[2], COL.warn[3], 1, FONT)
+        self:setStencilRect(b.x, b.y, b.w, b.h)   -- blood and the instrument stay on the board
         self.game:render(self, b.x, b.y, b.w, b.h)
+        self:clearStencilRect()
+        -- patient monitor: heart rate climbs with pain and every slip
+        if G.drawVitals then
+            local vx = self.game.vitalsLeft and (b.x + 6) or (b.x + b.w - 168)
+            if self.game.vitalsAt == "center" then vx = b.x + (b.w - 162) / 2 end
+            G.drawVitals(self, self.game, vx, b.y + 6, 162, 58)
+        end
         if self.pause > 0 then
             local sc = math.floor((self.scores[self.stepIndex] or 0) * 100 + 0.5)
             local bandH = fh(FONT_M) + 16
