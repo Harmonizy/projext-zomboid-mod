@@ -74,7 +74,7 @@ function EHR.Locale.RawKey(text)
     for i = 1, #text do
         hash = (hash * 33 + string.byte(text, i)) % 4294967296
     end
-    return string.format("UI_HomeMedic_Line_%08X", hash)
+    return string.format("UI_EHR_Line_%08X", hash)
 end
 
 function EHR.Locale.TextForLine(text)
@@ -94,15 +94,15 @@ function EHR.Locale.TextForLine(text)
     )
     if bloodType and rating and chance then
         local ratingKeys = {
-            ["High Compatibility"] = "UI_HomeMedic_KnoxCure_Rating_High",
-            ["Moderate Compatibility"] = "UI_HomeMedic_KnoxCure_Rating_Moderate",
-            ["Low Compatibility"] = "UI_HomeMedic_KnoxCure_Rating_Low",
-            ["Critical Risk"] = "UI_HomeMedic_KnoxCure_Rating_Critical",
+            ["High Compatibility"] = "UI_EHR_KnoxCure_Rating_High",
+            ["Moderate Compatibility"] = "UI_EHR_KnoxCure_Rating_Moderate",
+            ["Low Compatibility"] = "UI_EHR_KnoxCure_Rating_Low",
+            ["Critical Risk"] = "UI_EHR_KnoxCure_Rating_Critical",
         }
         local ratingKey = ratingKeys[rating]
         local localizedRating = ratingKey and EHR.Locale.Text(ratingKey, rating) or rating
         return EHR.Locale.Format(
-            "UI_HomeMedic_KnoxCure_TestResult",
+            "UI_EHR_KnoxCure_TestResult",
             "Test complete... Blood type %1. %2 - %3 survival chance.",
             bloodType,
             localizedRating,
@@ -146,7 +146,7 @@ function EHR.Locale.SideEffectName(name)
     if not name or name == "" then
         return ""
     end
-    local key = "UI_HomeMedic_SideEffect_" .. tostring(name):gsub("%s+", ""):gsub("[^A-Za-z0-9_]", "")
+    local key = "UI_SideEffect_" .. tostring(name):gsub("%s+", ""):gsub("[^A-Za-z0-9_]", "")
     return EHR.Locale.Text(key, tostring(name))
 end
 
@@ -154,5 +154,5 @@ end
 -- where it is displayed so localized words never enter threshold comparisons.
 function EHR.Locale.ExposureLevel(level)
     level = tostring(level or "None")
-    return EHR.Locale.Text("UI_HomeMedic_ExposureLevel_" .. level, level)
+    return EHR.Locale.Text("UI_EHR_ExposureLevel_" .. level, level)
 end

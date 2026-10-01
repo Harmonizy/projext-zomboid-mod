@@ -115,7 +115,7 @@ function ProsthesisHandler.Validate(item, isEquippable)
         isEquippable = ProsthesisHandler.CheckIfEquippable(fullType)
     else
         TOC_DEBUG.print("Should say cant equip")
-        getPlayer():Say(getText("UI_HomeMedic_Say_CantEquip"))        -- FIX not working
+        getPlayer():Say(getText("UI_Say_CantEquip"))        -- FIX not working
     end
 
     return isEquippable

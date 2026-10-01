@@ -252,31 +252,31 @@ function EHR.DiseaseFlyers.GetDiseaseFriendlyName(diseaseId)
     diseaseId = normalizeDiseaseId(diseaseId)
 
     local names = {
-        ahtr = { "UI_HomeMedic_Disease_AHTR", "AHTR" },
-        blood_types = { "UI_HomeMedic_Disease_BloodTypes", "Blood Types" },
-        common_cold = { "UI_HomeMedic_Disease_CommonCold", "Common Cold" },
-        concussion = { "UI_HomeMedic_Disease_Concussion", "Concussion" },
-        delirium = { "UI_HomeMedic_Disease_Delirium", "Delirium" },
-        insomnia = { "UI_HomeMedic_Disease_Insomnia", "Insomnia" },
-        flu = { "UI_HomeMedic_Disease_Influenza", "Influenza" },
-        pneumonia = { "UI_HomeMedic_Disease_Pneumonia", "Pneumonia" },
-        food_poisoning = { "UI_HomeMedic_Disease_FoodPoisoning", "Food Poisoning" },
-        gastroenteritis = { "UI_HomeMedic_Disease_Gastroenteritis", "Gastroenteritis" },
-        dysentery = { "UI_HomeMedic_Disease_Dysentery", "Dysentery" },
-        trichinosis = { "UI_HomeMedic_Disease_Trichinosis", "Trichinosis" },
-        hyperkeratotic_scabies = { "UI_HomeMedic_Disease_HyperkeratoticScabies", "Hyperkeratotic Scabies" },
-        toxin_poisoning = { "UI_HomeMedic_Disease_ToxinPoisoning", "Toxin Poisoning" },
-        hypothermia = { "UI_HomeMedic_Disease_Hypothermia", "Hypothermia" },
-        heat_exhaustion = { "UI_HomeMedic_Disease_HeatExhaustion", "Heat Exhaustion" },
-        heat_stroke = { "UI_HomeMedic_Disease_HeatStroke", "Heat Stroke" },
-        sepsis = { "UI_HomeMedic_Disease_Sepsis", "Sepsis" },
-        corpse_sickness = { "UI_HomeMedic_Disease_CorpseSickness", "Corpse Exposure Illness" },
-        cadaveric_aspergillosis = { "UI_HomeMedic_Disease_CadavericAspergillosis", "Cadaveric Aspergillosis" },
-        tuberculosis = { "UI_HomeMedic_Disease_Tuberculosis", "Tuberculosis" },
-        tetanus = { "UI_HomeMedic_Disease_Tetanus", "Tetanus" },
-        wound_infection = { "UI_HomeMedic_Disease_WoundInfection", "Wound Infection" },
-        cellulitis = { "UI_HomeMedic_Disease_Cellulitis", "Cellulitis" },
-        knox_infection = { "UI_HomeMedic_Disease_KnoxInfection", "Knox Infection" },
+        ahtr = { "UI_EHR_Disease_AHTR", "AHTR" },
+        blood_types = { "UI_EHR_Disease_BloodTypes", "Blood Types" },
+        common_cold = { "UI_EHR_Disease_CommonCold", "Common Cold" },
+        concussion = { "UI_EHR_Disease_Concussion", "Concussion" },
+        delirium = { "UI_EHR_Disease_Delirium", "Delirium" },
+        insomnia = { "UI_EHR_Disease_Insomnia", "Insomnia" },
+        flu = { "UI_EHR_Disease_Influenza", "Influenza" },
+        pneumonia = { "UI_EHR_Disease_Pneumonia", "Pneumonia" },
+        food_poisoning = { "UI_EHR_Disease_FoodPoisoning", "Food Poisoning" },
+        gastroenteritis = { "UI_EHR_Disease_Gastroenteritis", "Gastroenteritis" },
+        dysentery = { "UI_EHR_Disease_Dysentery", "Dysentery" },
+        trichinosis = { "UI_EHR_Disease_Trichinosis", "Trichinosis" },
+        hyperkeratotic_scabies = { "UI_EHR_Disease_HyperkeratoticScabies", "Hyperkeratotic Scabies" },
+        toxin_poisoning = { "UI_EHR_Disease_ToxinPoisoning", "Toxin Poisoning" },
+        hypothermia = { "UI_EHR_Disease_Hypothermia", "Hypothermia" },
+        heat_exhaustion = { "UI_EHR_Disease_HeatExhaustion", "Heat Exhaustion" },
+        heat_stroke = { "UI_EHR_Disease_HeatStroke", "Heat Stroke" },
+        sepsis = { "UI_EHR_Disease_Sepsis", "Sepsis" },
+        corpse_sickness = { "UI_EHR_Disease_CorpseSickness", "Corpse Exposure Illness" },
+        cadaveric_aspergillosis = { "UI_EHR_Disease_CadavericAspergillosis", "Cadaveric Aspergillosis" },
+        tuberculosis = { "UI_EHR_Disease_Tuberculosis", "Tuberculosis" },
+        tetanus = { "UI_EHR_Disease_Tetanus", "Tetanus" },
+        wound_infection = { "UI_EHR_Disease_WoundInfection", "Wound Infection" },
+        cellulitis = { "UI_EHR_Disease_Cellulitis", "Cellulitis" },
+        knox_infection = { "UI_EHR_Disease_KnoxInfection", "Knox Infection" },
     }
     local entry = names[diseaseId]
     if type(entry) == "table" then
@@ -335,7 +335,7 @@ function EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId, options)
 
     local name = EHR.DiseaseFlyers.GetDiseaseFriendlyName(diseaseId)
     if player.Say and not options.silent then
-        EHR.Locale.Say(player, flyerText("UI_HomeMedic_FlyerLearned", "Disease knowledge acquired: %1", name))
+        EHR.Locale.Say(player, flyerText("UI_EHR_FlyerLearned", "Disease knowledge acquired: %1", name))
     end
 
     EHR.Log("Player learned disease: " .. tostring(diseaseId))
@@ -413,8 +413,8 @@ function EHR.DiseaseFlyers.GetUnknownDiseaseDisplay(diseaseId)
         knox_infection = { displayName = "Unknown Infection", description = "" },
     }
 
-    local unknownName = getText and getText("UI_HomeMedic_DiseaseUnknown") or nil
-    if unknownName == "UI_HomeMedic_DiseaseUnknown" then
+    local unknownName = getText and getText("UI_EHR_DiseaseUnknown") or nil
+    if unknownName == "UI_EHR_DiseaseUnknown" then
         unknownName = nil
     end
     return categories[normalized] or { displayName = unknownName or "Unknown Illness", description = "You feel unwell." }
@@ -441,7 +441,7 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
             if isKnox and not EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then
                 EHR.Locale.Say(player, "This flyer is too vague. I need a real source.")
             else
-                EHR.Locale.Say(player, flyerText("UI_HomeMedic_FlyerAlreadyKnown", "You already know about this disease."))
+                EHR.Locale.Say(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
             end
         end
         if sendClientCommand and not isKnox then
@@ -458,7 +458,7 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
         if isKnox and not EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then
             EHR.Locale.Say(player, "This flyer is too vague. I need a real source.")
         else
-            EHR.Locale.Say(player, flyerText("UI_HomeMedic_FlyerAlreadyKnown", "You already know about this disease."))
+            EHR.Locale.Say(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
         end
     end
 end

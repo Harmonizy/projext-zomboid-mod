@@ -2298,7 +2298,7 @@ function EHR.ServerCommands.RequestAdministerMedication(doctor, args)
     local medicationName = getServerTreatmentDisplayName(item, fullType, treatmentKind, medData)
     if treatmentKind == REMOTE_TREATMENT_KIND_BLOOD and spoilageState == "stale" then
         medicationName = tostring(medicationName) .. " - "
-            .. serverText("UI_HomeMedic_Transfusion_StaleSuffix", "STALE!")
+            .. serverText("UI_EHR_Transfusion_StaleSuffix", "STALE!")
     end
     local adminType = getServerTreatmentAdminType(treatmentKind, medData)
 
@@ -2947,7 +2947,7 @@ function EHR.ServerCommands.UseTransfusion(player, args)
     local ivKit, ivKitContainer = EHR.Medication.FindMedicalSupply(player, "IVKit")
     if not ivKit then
         log("[EHR Server] UseTransfusion rejected: IV Administration Kit not found")
-        serverSay(player, serverText("UI_HomeMedic_MedAction_RequiresIVKit", "Requires: IV Kit"))
+        serverSay(player, serverText("UI_EHR_MedAction_RequiresIVKit", "Requires: IV Kit"))
         syncModDataToClient(player)
         return
     end
@@ -3010,7 +3010,7 @@ function EHR.ServerCommands.DrawBlood(player, args)
     local current = tonumber(data.EHR_Blood.currentVolume) or 5000
     local maxVolume = tonumber(data.EHR_Blood.maxVolume) or 5000
     if maxVolume <= 0 or (current / maxVolume) < 0.80 then
-        serverSay(player, serverText("UI_HomeMedic_Transfusion_NotEnoughBloodSafe", "I don't have enough blood to do that safely."))
+        serverSay(player, serverText("UI_EHR_Transfusion_NotEnoughBloodSafe", "I don't have enough blood to do that safely."))
         syncModDataToClient(player)
         return
     end
@@ -3033,7 +3033,7 @@ function EHR.ServerCommands.DrawBlood(player, args)
     }
     local filledBagType = bloodBagItems[playerType]
     if not filledBagType then
-        serverSay(player, serverText("UI_HomeMedic_Transfusion_SomethingWentWrong", "Something went wrong..."))
+        serverSay(player, serverText("UI_EHR_Transfusion_SomethingWentWrong", "Something went wrong..."))
         log("[EHR Server] DrawBlood rejected: unknown blood type " .. tostring(playerType))
         syncModDataToClient(player)
         return
@@ -3042,7 +3042,7 @@ function EHR.ServerCommands.DrawBlood(player, args)
     local inventory = player:getInventory()
     local okAdd, filledBag = pcall(function() return inventory:AddItem(filledBagType) end)
     if not okAdd or not filledBag then
-        serverSay(player, serverText("UI_HomeMedic_Transfusion_SomethingWentWrong", "Something went wrong..."))
+        serverSay(player, serverText("UI_EHR_Transfusion_SomethingWentWrong", "Something went wrong..."))
         log("[EHR Server] DrawBlood failed to create " .. tostring(filledBagType) .. ": " .. tostring(filledBag))
         syncModDataToClient(player)
         return
@@ -3070,7 +3070,7 @@ function EHR.ServerCommands.DrawBlood(player, args)
     end
 
     removeInventoryItem(emptyBag, container)
-    serverSay(player, serverText("UI_HomeMedic_DrawBlood_Complete", "That made me lightheaded..."))
+    serverSay(player, serverText("UI_EHR_DrawBlood_Complete", "That made me lightheaded..."))
 
     addCharacterStat(player, "FATIGUE", 0.15, 0.7)
     if CharacterStat and CharacterStat.ENDURANCE then
@@ -4676,6 +4676,7 @@ local function OnClientCommand(module, command, player, args)
                 EHR_KnoxStatus = knoxStatus,
                 EHR_Immunity = targetData.EHR_Immunity,
                 EHR_Initialized = targetData.EHR_Initialized,
+                HM_Diagnosis = targetData.HM_Diagnosis,  -- HARMONIE: diagnoses (HM_Diagnosis)
                 serverWorldHour = serverWorldHour,
                 snapshotTimestamp = getTimestampMs and getTimestampMs() or 0,
             }

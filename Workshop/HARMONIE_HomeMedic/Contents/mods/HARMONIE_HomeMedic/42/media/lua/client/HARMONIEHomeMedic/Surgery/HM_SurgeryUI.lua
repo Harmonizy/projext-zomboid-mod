@@ -37,13 +37,8 @@ local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 local function fh(font) return getTextManager():getFontHeight(font or FONT) end
 local function tw(text, font) return getTextManager():MeasureStringX(font or FONT, text or "") end
 
--- drop the last UTF-8 character (Thai letters are 3 bytes: never cut one in half)
-local function dropLast(text) return (text:gsub("[%z\1-\127\194-\244][\128-\191]*$", "")) end
 local function fit(text, maxW, font)
-    text = tostring(text or "")
-    if tw(text, font) <= maxW then return text end
-    while #text > 0 and tw(text .. "...", font) > maxW do text = dropLast(text) end
-    return text .. "..."
+    return S.fitText(text, maxW, function(t) return tw(t, font) end)
 end
 C.fit = fit
 

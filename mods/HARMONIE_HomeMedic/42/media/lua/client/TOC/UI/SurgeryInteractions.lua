@@ -12,7 +12,7 @@ local function AppendToDescription(tooltip, desc)
         tooltip.description = desc
     else
         desc = string.lower(string.sub(desc, 1, 1)) .. string.sub(desc, 2)
-        tooltip.description = tooltip.description .. getText("Tooltip_HomeMedic_Surgery_And") .. desc
+        tooltip.description = tooltip.description .. getText("Tooltip_Surgery_And") .. desc
     end
 end
 
@@ -54,13 +54,13 @@ local function AddStoveContextMenu(playerNum, context, worldObjects, test)
         if dcInst:getIsVisible(limbName) and not dcInst:getIsCicatrized(limbName) then
             if addMainOption == false then
                 -- Adds the cauterize option ONLY when it's needed
-                local optionMain = context:addOption(getText("ContextMenu_HomeMedic_Cauterize"), nil)
+                local optionMain = context:addOption(getText("ContextMenu_Cauterize"), nil)
                 subMenu = context:getNew(context)
                 context:addSubMenu(optionMain, subMenu)
                 addMainOption = true
             end
 
-            local option = subMenu:addOption(getText("ContextMenu_HomeMedic_Limb_" .. limbName), nil, function()
+            local option = subMenu:addOption(getText("ContextMenu_Limb_" .. limbName), nil, function()
                 local adjacent = AdjacentFreeTileFinder.Find(stoveObj:getSquare(), pl)
                 ISTimedActionQueue.add(ISWalkToTimedAction:new(pl, adjacent))
                 ISTimedActionQueue.add(CauterizeAction:new(pl, limbName, stoveObj))
@@ -75,19 +75,19 @@ local function AddStoveContextMenu(playerNum, context, worldObjects, test)
 
             option.notAvailable = not(isPlayerCourageous and isTempHighEnough and isLimbFree)
             if not isTempHighEnough then
-                AppendToDescription(tempTooltip,  getText("Tooltip_HomeMedic_Surgery_TempTooLow"))
+                AppendToDescription(tempTooltip,  getText("Tooltip_Surgery_TempTooLow"))
             end
 
             if not isPlayerCourageous then
-                AppendToDescription(tempTooltip, getText("Tooltip_HomeMedic_Surgery_Coward"))
+                AppendToDescription(tempTooltip, getText("Tooltip_Surgery_Coward"))
             end
 
             if not isLimbFree then
-                AppendToDescription(tempTooltip, getText("Tooltip_HomeMedic_Surgery_LimbNotFree"))
+                AppendToDescription(tempTooltip, getText("Tooltip_Surgery_LimbNotFree"))
             end
 
             if option.notAvailable then
-                tempTooltip:setName(getText("Tooltip_HomeMedic_Surgery_CantCauterize"))
+                tempTooltip:setName(getText("Tooltip_Surgery_CantCauterize"))
                 option.toolTip = tempTooltip
             end
         end

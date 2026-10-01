@@ -11,9 +11,9 @@ EHR.BandagePack = EHR.BandagePack or {}
 
 local function bandagePackText(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_HomeMedic_BandagePack_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_EHR_BandagePack_" .. tostring(key), fallback)
     end
-    local fullKey = "UI_HomeMedic_BandagePack_" .. tostring(key)
+    local fullKey = "UI_EHR_BandagePack_" .. tostring(key)
     local ok, value = pcall(getText, fullKey)
     if ok and value and value ~= fullKey then return value end
     return fallback
@@ -21,7 +21,7 @@ end
 
 local function bandagePackFormat(key, fallback, ...)
     if EHR and EHR.Locale and EHR.Locale.Format then
-        return EHR.Locale.Format("UI_HomeMedic_BandagePack_" .. tostring(key), fallback, ...)
+        return EHR.Locale.Format("UI_EHR_BandagePack_" .. tostring(key), fallback, ...)
     end
     local text = bandagePackText(key, fallback)
     local args = {...}

@@ -39,26 +39,83 @@ local function call(obj, method, ...)
 end
 
 -- ---------------------------------------------------------------- text wrap (client)
--- Wraps at spaces, and inside a "word" wider than the line at UTF-8
--- character boundaries -- Thai writes whole sentences without spaces.
+-- Wraps at spaces, and inside a "word" wider than the line at character
+-- boundaries -- Thai writes whole sentences without spaces.
 -- Honours "\n" and EHR's "<LINE>". -> list of lines
-local CHAR = "[%z\1-\127\194-\244][\128-\191]*"
+--
+-- Kahlua strings are Java strings: there string.byte returns the UTF-16
+-- code (a Thai letter is ONE char, code ~3600), while plain Lua sees the
+-- UTF-8 bytes (three). Byte-class patterns like "[\194-\244][\128-\191]*"
+-- never match in Kahlua, so a "drop the last char" gsub would not shorten
+-- the text and a truncation loop would never end (game freeze). These
+-- helpers work in both.
+
+-- length of the character starting at i
+local function charLen(s, i)
+    local b = s:byte(i)
+    if not b or b < 192 or b > 247 then return 1 end
+    local n = b >= 240 and 4 or (b >= 224 and 3 or 2)
+    for k = 1, n - 1 do
+        local c = s:byte(i + k)
+        if not c or c < 128 or c > 191 then return 1 end
+    end
+    return n
+end
+
+-- the text without its last character; always shorter (never loops)
+function S.dropLast(text)
+    text = tostring(text or "")
+    local len = #text
+    if len <= 1 then return "" end
+    local cut = len
+    while cut > 1 do
+        local b = text:byte(cut)
+        if not b or b < 128 or b >= 192 then break end
+        cut = cut - 1
+    end
+    if cut < len and charLen(text, cut) ~= len - cut + 1 then cut = len end
+    return text:sub(1, cut - 1)
+end
+
+-- text cut to maxW pixels with "..." (measure(text) -> width)
+function S.fitText(text, maxW, measure, suffix)
+    text = tostring(text or "")
+    suffix = suffix or "..."
+    if measure(text) <= maxW then return text end
+    local guard = #text + 1
+    while #text > 0 and guard > 0 and measure(text .. suffix) > maxW do
+        text = S.dropLast(text)
+        guard = guard - 1
+    end
+    return text .. suffix
+end
+
+local function codepoint(ch)
+    local a, b, c = ch:byte(1, 3)
+    if not a then return 0 end
+    if a > 255 then return a end                       -- Kahlua: already a code
+    if a >= 224 and a < 240 and b and c then
+        return (a - 224) * 4096 + (b - 128) * 64 + (c - 128)
+    end
+    return a
+end
 -- Thai marks that sit on the previous letter (U+0E31, U+0E33-0E3A, U+0E47-0E4E)
 local function attaches(ch)
-    local a, b, c = ch:byte(1, 3)
-    if a ~= 0xE0 or not c then return false end
-    if b == 0xB8 then return c == 0xB1 or (c >= 0xB3 and c <= 0xBA) end
-    if b == 0xB9 then return c >= 0x87 and c <= 0x8E end
-    return false
+    local cp = codepoint(ch)
+    return cp == 0x0E31 or (cp >= 0x0E33 and cp <= 0x0E3A) or (cp >= 0x0E47 and cp <= 0x0E4E)
 end
 -- iterator over display clusters (a letter plus its marks)
 function S.clusters(word)
     local list = {}
-    for ch in word:gmatch(CHAR) do
+    local i, n = 1, #word
+    while i <= n do
+        local l = charLen(word, i)
+        local ch = word:sub(i, i + l - 1)
         if #list > 0 and attaches(ch) then list[#list] = list[#list] .. ch else list[#list + 1] = ch end
+        i = i + l
     end
-    local i = 0
-    return function() i = i + 1; return list[i] end
+    local k = 0
+    return function() k = k + 1; return list[k] end
 end
 
 function S.wrap(text, width, font)

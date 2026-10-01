@@ -6,8 +6,8 @@ module ExtensiveHealth
         DisabledInMultiplayer = false,
         CharacterTrait = ExtensiveHealth:patientzero,
         Cost = 20,
-        UIName = UI_trait_HomeMedic_PatientZero,
-        UIDescription = UI_trait_HomeMedic_PatientZeroDesc,
+        UIName = UI_trait_EHR_PatientZero,
+        UIDescription = UI_trait_EHR_PatientZeroDesc,
     }
 
     character_trait_definition ExtensiveHealth:scalpelmaster
@@ -16,7 +16,7 @@ module ExtensiveHealth
         DisabledInMultiplayer = false,
         CharacterTrait = ExtensiveHealth:scalpelmaster,
         Cost = 0,
-        UIName = UI_trait_HomeMedic_ScalpelMaster,
-        UIDescription = UI_trait_HomeMedic_ScalpelMasterDesc,
+        UIName = UI_trait_EHR_ScalpelMaster,
+        UIDescription = UI_trait_EHR_ScalpelMasterDesc,
     }
 }

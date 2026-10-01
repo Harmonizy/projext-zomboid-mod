@@ -32,85 +32,85 @@ EHR.DialogueData.Diseases = {
     ["Sepsis"] = {
         [1] = {  -- Stage 1: Early
             clueless = {
-                "HomeMedic_Dialogue_Sepsis_S1_Clueless_1",  -- "I feel really off... maybe tired?"
-                "HomeMedic_Dialogue_Sepsis_S1_Clueless_2",  -- "Something's not right with me..."
-                "HomeMedic_Dialogue_Sepsis_S1_Clueless_3",  -- "Why do I feel so weird?"
-                "HomeMedic_Dialogue_Sepsis_S1_Clueless_4",  -- "Just need some rest, probably..."
+                "EHR_Dialogue_Sepsis_S1_Clueless_1",  -- "I feel really off... maybe tired?"
+                "EHR_Dialogue_Sepsis_S1_Clueless_2",  -- "Something's not right with me..."
+                "EHR_Dialogue_Sepsis_S1_Clueless_3",  -- "Why do I feel so weird?"
+                "EHR_Dialogue_Sepsis_S1_Clueless_4",  -- "Just need some rest, probably..."
             },
             novice = {
-                "HomeMedic_Dialogue_Sepsis_S1_Novice_1",    -- "I might be getting sick from that wound..."
-                "HomeMedic_Dialogue_Sepsis_S1_Novice_2",    -- "That cut doesn't look good, I feel feverish"
-                "HomeMedic_Dialogue_Sepsis_S1_Novice_3",    -- "Think my wound might be infected..."
+                "EHR_Dialogue_Sepsis_S1_Novice_1",    -- "I might be getting sick from that wound..."
+                "EHR_Dialogue_Sepsis_S1_Novice_2",    -- "That cut doesn't look good, I feel feverish"
+                "EHR_Dialogue_Sepsis_S1_Novice_3",    -- "Think my wound might be infected..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Sepsis_S1_Inter_1",     -- "Early signs of infection. Need antibiotics."
-                "HomeMedic_Dialogue_Sepsis_S1_Inter_2",     -- "Wound's getting infected, need to treat this fast."
-                "HomeMedic_Dialogue_Sepsis_S1_Inter_3",     -- "Systemic infection starting. This is serious."
+                "EHR_Dialogue_Sepsis_S1_Inter_1",     -- "Early signs of infection. Need antibiotics."
+                "EHR_Dialogue_Sepsis_S1_Inter_2",     -- "Wound's getting infected, need to treat this fast."
+                "EHR_Dialogue_Sepsis_S1_Inter_3",     -- "Systemic infection starting. This is serious."
             },
             expert = {
-                "HomeMedic_Dialogue_Sepsis_S1_Expert_1",    -- "SIRS criteria - elevated temp, increased heart rate."
-                "HomeMedic_Dialogue_Sepsis_S1_Expert_2",    -- "Early sepsis indicators. IV antibiotics needed."
-                "HomeMedic_Dialogue_Sepsis_S1_Expert_3",    -- "Inflammatory response to wound infection detected."
+                "EHR_Dialogue_Sepsis_S1_Expert_1",    -- "SIRS criteria - elevated temp, increased heart rate."
+                "EHR_Dialogue_Sepsis_S1_Expert_2",    -- "Early sepsis indicators. IV antibiotics needed."
+                "EHR_Dialogue_Sepsis_S1_Expert_3",    -- "Inflammatory response to wound infection detected."
             },
             master = {
-                "HomeMedic_Dialogue_Sepsis_S1_Master_1",    -- "Sepsis Stage 1. qSOFA score indicates systemic response."
-                "HomeMedic_Dialogue_Sepsis_S1_Master_2",    -- "Presenting with SIRS. Broad-spectrum antibiotics required."
+                "EHR_Dialogue_Sepsis_S1_Master_1",    -- "Sepsis Stage 1. qSOFA score indicates systemic response."
+                "EHR_Dialogue_Sepsis_S1_Master_2",    -- "Presenting with SIRS. Broad-spectrum antibiotics required."
             },
         },
         [2] = {  -- Stage 2: Moderate
             clueless = {
-                "HomeMedic_Dialogue_Sepsis_S2_Clueless_1",  -- "I feel terrible... so tired and cold..."
-                "HomeMedic_Dialogue_Sepsis_S2_Clueless_2",  -- "Everything hurts... can't think straight..."
+                "EHR_Dialogue_Sepsis_S2_Clueless_1",  -- "I feel terrible... so tired and cold..."
+                "EHR_Dialogue_Sepsis_S2_Clueless_2",  -- "Everything hurts... can't think straight..."
             },
             novice = {
-                "HomeMedic_Dialogue_Sepsis_S2_Novice_1",    -- "The infection is spreading... need medicine!"
-                "HomeMedic_Dialogue_Sepsis_S2_Novice_2",    -- "Getting worse... fever won't break..."
+                "EHR_Dialogue_Sepsis_S2_Novice_1",    -- "The infection is spreading... need medicine!"
+                "EHR_Dialogue_Sepsis_S2_Novice_2",    -- "Getting worse... fever won't break..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Sepsis_S2_Inter_1",     -- "Sepsis progressing. Need stronger antibiotics now."
-                "HomeMedic_Dialogue_Sepsis_S2_Inter_2",     -- "Blood pressure dropping. This is septic shock territory."
+                "EHR_Dialogue_Sepsis_S2_Inter_1",     -- "Sepsis progressing. Need stronger antibiotics now."
+                "EHR_Dialogue_Sepsis_S2_Inter_2",     -- "Blood pressure dropping. This is septic shock territory."
             },
             expert = {
-                "HomeMedic_Dialogue_Sepsis_S2_Expert_1",    -- "Organ dysfunction beginning. Lactate levels likely elevated."
-                "HomeMedic_Dialogue_Sepsis_S2_Expert_2",    -- "Severe sepsis. Need fluid resuscitation and antibiotics."
+                "EHR_Dialogue_Sepsis_S2_Expert_1",    -- "Organ dysfunction beginning. Lactate levels likely elevated."
+                "EHR_Dialogue_Sepsis_S2_Expert_2",    -- "Severe sepsis. Need fluid resuscitation and antibiotics."
             },
             master = {
-                "HomeMedic_Dialogue_Sepsis_S2_Master_1",    -- "Severe sepsis with hypoperfusion. Immediate intervention required."
+                "EHR_Dialogue_Sepsis_S2_Master_1",    -- "Severe sepsis with hypoperfusion. Immediate intervention required."
             },
         },
         [3] = {  -- Stage 3: Severe
             clueless = {
-                "HomeMedic_Dialogue_Sepsis_S3_Clueless_1",  -- "I... I can't... everything is wrong..."
-                "HomeMedic_Dialogue_Sepsis_S3_Clueless_2",  -- "So cold... can't feel my hands..."
+                "EHR_Dialogue_Sepsis_S3_Clueless_1",  -- "I... I can't... everything is wrong..."
+                "EHR_Dialogue_Sepsis_S3_Clueless_2",  -- "So cold... can't feel my hands..."
             },
             novice = {
-                "HomeMedic_Dialogue_Sepsis_S3_Novice_1",    -- "I'm dying... the infection is killing me..."
+                "EHR_Dialogue_Sepsis_S3_Novice_1",    -- "I'm dying... the infection is killing me..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Sepsis_S3_Inter_1",     -- "Septic shock. Organs are failing. Need emergency care."
+                "EHR_Dialogue_Sepsis_S3_Inter_1",     -- "Septic shock. Organs are failing. Need emergency care."
             },
             expert = {
-                "HomeMedic_Dialogue_Sepsis_S3_Expert_1",    -- "Multi-organ dysfunction syndrome. Mortality rate critical."
+                "EHR_Dialogue_Sepsis_S3_Expert_1",    -- "Multi-organ dysfunction syndrome. Mortality rate critical."
             },
             master = {
-                "HomeMedic_Dialogue_Sepsis_S3_Master_1",    -- "Refractory septic shock. Without ICU-level intervention, prognosis is terminal."
+                "EHR_Dialogue_Sepsis_S3_Master_1",    -- "Refractory septic shock. Without ICU-level intervention, prognosis is terminal."
             },
         },
         [4] = {  -- Stage 4: Critical/Terminal
             clueless = {
-                "HomeMedic_Dialogue_Sepsis_S4_Clueless_1",  -- "..."  (barely conscious)
+                "EHR_Dialogue_Sepsis_S4_Clueless_1",  -- "..."  (barely conscious)
             },
             novice = {
-                "HomeMedic_Dialogue_Sepsis_S4_Novice_1",    -- "This is it... goodbye..."
+                "EHR_Dialogue_Sepsis_S4_Novice_1",    -- "This is it... goodbye..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Sepsis_S4_Inter_1",     -- "Total organ failure... nothing can save me now..."
+                "EHR_Dialogue_Sepsis_S4_Inter_1",     -- "Total organ failure... nothing can save me now..."
             },
             expert = {
-                "HomeMedic_Dialogue_Sepsis_S4_Expert_1",    -- "Terminal sepsis... no viable treatment options remain..."
+                "EHR_Dialogue_Sepsis_S4_Expert_1",    -- "Terminal sepsis... no viable treatment options remain..."
             },
             master = {
-                "HomeMedic_Dialogue_Sepsis_S4_Master_1",    -- "End-stage multiple organ dysfunction syndrome..."
+                "EHR_Dialogue_Sepsis_S4_Master_1",    -- "End-stage multiple organ dysfunction syndrome..."
             },
         },
     },
@@ -121,75 +121,75 @@ EHR.DialogueData.Diseases = {
     ["FoodPoisoning"] = {
         [1] = {  -- Stage 1: Onset
             clueless = {
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Clueless_1",  -- "My stomach feels weird..."
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Clueless_2",  -- "I don't feel so good..."
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Clueless_3",  -- "Something I ate maybe?"
+                "EHR_Dialogue_FoodPoisoning_S1_Clueless_1",  -- "My stomach feels weird..."
+                "EHR_Dialogue_FoodPoisoning_S1_Clueless_2",  -- "I don't feel so good..."
+                "EHR_Dialogue_FoodPoisoning_S1_Clueless_3",  -- "Something I ate maybe?"
             },
             novice = {
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Novice_1",    -- "Think I got food poisoning..."
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Novice_2",    -- "Shouldn't have eaten that..."
+                "EHR_Dialogue_FoodPoisoning_S1_Novice_1",    -- "Think I got food poisoning..."
+                "EHR_Dialogue_FoodPoisoning_S1_Novice_2",    -- "Shouldn't have eaten that..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Inter_1",     -- "Foodborne illness. Need to stay hydrated."
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Inter_2",     -- "Early food poisoning. Probably bacterial."
+                "EHR_Dialogue_FoodPoisoning_S1_Inter_1",     -- "Foodborne illness. Need to stay hydrated."
+                "EHR_Dialogue_FoodPoisoning_S1_Inter_2",     -- "Early food poisoning. Probably bacterial."
             },
             expert = {
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Expert_1",    -- "Acute gastroenteritis from contaminated food. Onset suggests bacterial toxin."
+                "EHR_Dialogue_FoodPoisoning_S1_Expert_1",    -- "Acute gastroenteritis from contaminated food. Onset suggests bacterial toxin."
             },
             master = {
-                "HomeMedic_Dialogue_FoodPoisoning_S1_Master_1",    -- "Foodborne intoxication, likely Staphylococcal or Bacillus cereus based on onset time."
+                "EHR_Dialogue_FoodPoisoning_S1_Master_1",    -- "Foodborne intoxication, likely Staphylococcal or Bacillus cereus based on onset time."
             },
         },
         [2] = {  -- Stage 2: Acute
             clueless = {
-                "HomeMedic_Dialogue_FoodPoisoning_S2_Clueless_1",  -- "Ugh... gonna be sick..."
-                "HomeMedic_Dialogue_FoodPoisoning_S2_Clueless_2",  -- "Why won't this stop..."
+                "EHR_Dialogue_FoodPoisoning_S2_Clueless_1",  -- "Ugh... gonna be sick..."
+                "EHR_Dialogue_FoodPoisoning_S2_Clueless_2",  -- "Why won't this stop..."
             },
             novice = {
-                "HomeMedic_Dialogue_FoodPoisoning_S2_Novice_1",    -- "Bad food poisoning... need water..."
+                "EHR_Dialogue_FoodPoisoning_S2_Novice_1",    -- "Bad food poisoning... need water..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_FoodPoisoning_S2_Inter_1",     -- "Severe dehydration risk. Need oral rehydration."
+                "EHR_Dialogue_FoodPoisoning_S2_Inter_1",     -- "Severe dehydration risk. Need oral rehydration."
             },
             expert = {
-                "HomeMedic_Dialogue_FoodPoisoning_S2_Expert_1",    -- "Acute phase. Monitor for signs of dehydration and electrolyte imbalance."
+                "EHR_Dialogue_FoodPoisoning_S2_Expert_1",    -- "Acute phase. Monitor for signs of dehydration and electrolyte imbalance."
             },
             master = {
-                "HomeMedic_Dialogue_FoodPoisoning_S2_Master_1",    -- "Peak toxin effect. Supportive care and fluid replacement indicated."
+                "EHR_Dialogue_FoodPoisoning_S2_Master_1",    -- "Peak toxin effect. Supportive care and fluid replacement indicated."
             },
         },
         [3] = {  -- Stage 3: Severe
             clueless = {
-                "HomeMedic_Dialogue_FoodPoisoning_S3_Clueless_1",  -- "I'm so weak... can't stop..."
+                "EHR_Dialogue_FoodPoisoning_S3_Clueless_1",  -- "I'm so weak... can't stop..."
             },
             novice = {
-                "HomeMedic_Dialogue_FoodPoisoning_S3_Novice_1",    -- "This is really bad... I'm too weak..."
+                "EHR_Dialogue_FoodPoisoning_S3_Novice_1",    -- "This is really bad... I'm too weak..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_FoodPoisoning_S3_Inter_1",     -- "Severe dehydration. Need IV fluids if possible."
+                "EHR_Dialogue_FoodPoisoning_S3_Inter_1",     -- "Severe dehydration. Need IV fluids if possible."
             },
             expert = {
-                "HomeMedic_Dialogue_FoodPoisoning_S3_Expert_1",    -- "Hypovolemic state from fluid loss. Critical dehydration."
+                "EHR_Dialogue_FoodPoisoning_S3_Expert_1",    -- "Hypovolemic state from fluid loss. Critical dehydration."
             },
             master = {
-                "HomeMedic_Dialogue_FoodPoisoning_S3_Master_1",    -- "Severe gastroenteritis with hypovolemia. IV fluid resuscitation required."
+                "EHR_Dialogue_FoodPoisoning_S3_Master_1",    -- "Severe gastroenteritis with hypovolemia. IV fluid resuscitation required."
             },
         },
         [4] = {  -- Stage 4: Critical
             clueless = {
-                "HomeMedic_Dialogue_FoodPoisoning_S4_Clueless_1",  -- "...help..."
+                "EHR_Dialogue_FoodPoisoning_S4_Clueless_1",  -- "...help..."
             },
             novice = {
-                "HomeMedic_Dialogue_FoodPoisoning_S4_Novice_1",    -- "I can't take anymore..."
+                "EHR_Dialogue_FoodPoisoning_S4_Novice_1",    -- "I can't take anymore..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_FoodPoisoning_S4_Inter_1",     -- "Organ stress from dehydration... this could kill me..."
+                "EHR_Dialogue_FoodPoisoning_S4_Inter_1",     -- "Organ stress from dehydration... this could kill me..."
             },
             expert = {
-                "HomeMedic_Dialogue_FoodPoisoning_S4_Expert_1",    -- "Cardiac and renal compromise from severe dehydration."
+                "EHR_Dialogue_FoodPoisoning_S4_Expert_1",    -- "Cardiac and renal compromise from severe dehydration."
             },
             master = {
-                "HomeMedic_Dialogue_FoodPoisoning_S4_Master_1",    -- "Multi-system failure secondary to hypovolemic shock."
+                "EHR_Dialogue_FoodPoisoning_S4_Master_1",    -- "Multi-system failure secondary to hypovolemic shock."
             },
         },
     },
@@ -200,75 +200,75 @@ EHR.DialogueData.Diseases = {
     ["Hypothermia"] = {
         [1] = {  -- Stage 1: Mild
             clueless = {
-                "HomeMedic_Dialogue_Hypothermia_S1_Clueless_1",  -- "Brrr... it's cold..."
-                "HomeMedic_Dialogue_Hypothermia_S1_Clueless_2",  -- "Can't stop shivering..."
-                "HomeMedic_Dialogue_Hypothermia_S1_Clueless_3",  -- "My hands are so cold..."
+                "EHR_Dialogue_Hypothermia_S1_Clueless_1",  -- "Brrr... it's cold..."
+                "EHR_Dialogue_Hypothermia_S1_Clueless_2",  -- "Can't stop shivering..."
+                "EHR_Dialogue_Hypothermia_S1_Clueless_3",  -- "My hands are so cold..."
             },
             novice = {
-                "HomeMedic_Dialogue_Hypothermia_S1_Novice_1",    -- "Getting too cold... need to warm up..."
-                "HomeMedic_Dialogue_Hypothermia_S1_Novice_2",    -- "Think I'm getting hypothermia..."
+                "EHR_Dialogue_Hypothermia_S1_Novice_1",    -- "Getting too cold... need to warm up..."
+                "EHR_Dialogue_Hypothermia_S1_Novice_2",    -- "Think I'm getting hypothermia..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Hypothermia_S1_Inter_1",     -- "Mild hypothermia. Need shelter and warmth now."
-                "HomeMedic_Dialogue_Hypothermia_S1_Inter_2",     -- "Core temp dropping. Shivering is a warning sign."
+                "EHR_Dialogue_Hypothermia_S1_Inter_1",     -- "Mild hypothermia. Need shelter and warmth now."
+                "EHR_Dialogue_Hypothermia_S1_Inter_2",     -- "Core temp dropping. Shivering is a warning sign."
             },
             expert = {
-                "HomeMedic_Dialogue_Hypothermia_S1_Expert_1",    -- "Stage 1 hypothermia - shivering, vasoconstriction. Need passive rewarming."
+                "EHR_Dialogue_Hypothermia_S1_Expert_1",    -- "Stage 1 hypothermia - shivering, vasoconstriction. Need passive rewarming."
             },
             master = {
-                "HomeMedic_Dialogue_Hypothermia_S1_Master_1",    -- "Mild hypothermia, core temp 32-35C. Remove wet clothing, passive external rewarming."
+                "EHR_Dialogue_Hypothermia_S1_Master_1",    -- "Mild hypothermia, core temp 32-35C. Remove wet clothing, passive external rewarming."
             },
         },
         [2] = {  -- Stage 2: Moderate
             clueless = {
-                "HomeMedic_Dialogue_Hypothermia_S2_Clueless_1",  -- "S-so sleepy... just want to rest..."
-                "HomeMedic_Dialogue_Hypothermia_S2_Clueless_2",  -- "Fingers won't work right..."
+                "EHR_Dialogue_Hypothermia_S2_Clueless_1",  -- "S-so sleepy... just want to rest..."
+                "EHR_Dialogue_Hypothermia_S2_Clueless_2",  -- "Fingers won't work right..."
             },
             novice = {
-                "HomeMedic_Dialogue_Hypothermia_S2_Novice_1",    -- "This is bad... can't feel my hands anymore..."
+                "EHR_Dialogue_Hypothermia_S2_Novice_1",    -- "This is bad... can't feel my hands anymore..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Hypothermia_S2_Inter_1",     -- "Moderate hypothermia. Confusion setting in. Need heat source."
+                "EHR_Dialogue_Hypothermia_S2_Inter_1",     -- "Moderate hypothermia. Confusion setting in. Need heat source."
             },
             expert = {
-                "HomeMedic_Dialogue_Hypothermia_S2_Expert_1",    -- "Stage 2 hypothermia - decreased shivering, mental confusion. Active rewarming needed."
+                "EHR_Dialogue_Hypothermia_S2_Expert_1",    -- "Stage 2 hypothermia - decreased shivering, mental confusion. Active rewarming needed."
             },
             master = {
-                "HomeMedic_Dialogue_Hypothermia_S2_Master_1",    -- "Moderate hypothermia, core 28-32C. Active external rewarming, handle gently to avoid cardiac arrhythmia."
+                "EHR_Dialogue_Hypothermia_S2_Master_1",    -- "Moderate hypothermia, core 28-32C. Active external rewarming, handle gently to avoid cardiac arrhythmia."
             },
         },
         [3] = {  -- Stage 3: Severe
             clueless = {
-                "HomeMedic_Dialogue_Hypothermia_S3_Clueless_1",  -- "...not...cold...anymore..."  (paradoxical warmth)
+                "EHR_Dialogue_Hypothermia_S3_Clueless_1",  -- "...not...cold...anymore..."  (paradoxical warmth)
             },
             novice = {
-                "HomeMedic_Dialogue_Hypothermia_S3_Novice_1",    -- "Feel warm now... that's bad, isn't it..."
+                "EHR_Dialogue_Hypothermia_S3_Novice_1",    -- "Feel warm now... that's bad, isn't it..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Hypothermia_S3_Inter_1",     -- "Severe hypothermia. Paradoxical warmth means I'm dying."
+                "EHR_Dialogue_Hypothermia_S3_Inter_1",     -- "Severe hypothermia. Paradoxical warmth means I'm dying."
             },
             expert = {
-                "HomeMedic_Dialogue_Hypothermia_S3_Expert_1",    -- "Severe hypothermia - paradoxical undressing, cardiac risk. ICU-level care needed."
+                "EHR_Dialogue_Hypothermia_S3_Expert_1",    -- "Severe hypothermia - paradoxical undressing, cardiac risk. ICU-level care needed."
             },
             master = {
-                "HomeMedic_Dialogue_Hypothermia_S3_Master_1",    -- "Severe hypothermia, core below 28C. Risk of ventricular fibrillation. Active core rewarming required."
+                "EHR_Dialogue_Hypothermia_S3_Master_1",    -- "Severe hypothermia, core below 28C. Risk of ventricular fibrillation. Active core rewarming required."
             },
         },
         [4] = {  -- Stage 4: Profound
             clueless = {
-                "HomeMedic_Dialogue_Hypothermia_S4_Clueless_1",  -- "..."  (unresponsive)
+                "EHR_Dialogue_Hypothermia_S4_Clueless_1",  -- "..."  (unresponsive)
             },
             novice = {
-                "HomeMedic_Dialogue_Hypothermia_S4_Novice_1",    -- "Can't... move..."
+                "EHR_Dialogue_Hypothermia_S4_Novice_1",    -- "Can't... move..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Hypothermia_S4_Inter_1",     -- "Heart... stopping..."
+                "EHR_Dialogue_Hypothermia_S4_Inter_1",     -- "Heart... stopping..."
             },
             expert = {
-                "HomeMedic_Dialogue_Hypothermia_S4_Expert_1",    -- "Profound hypothermia... cardiac standstill imminent..."
+                "EHR_Dialogue_Hypothermia_S4_Expert_1",    -- "Profound hypothermia... cardiac standstill imminent..."
             },
             master = {
-                "HomeMedic_Dialogue_Hypothermia_S4_Master_1",    -- "Core temp critical. Apparent death. CPR and ECMO rewarming only hope."
+                "EHR_Dialogue_Hypothermia_S4_Master_1",    -- "Core temp critical. Apparent death. CPR and ECMO rewarming only hope."
             },
         },
     },
@@ -279,71 +279,71 @@ EHR.DialogueData.Diseases = {
     ["HeatStroke"] = {
         [1] = {
             clueless = {
-                "HomeMedic_Dialogue_HeatStroke_S1_Clueless_1",  -- "So hot... head is pounding..."
-                "HomeMedic_Dialogue_HeatStroke_S1_Clueless_2",  -- "Feel dizzy from the heat..."
+                "EHR_Dialogue_HeatStroke_S1_Clueless_1",  -- "So hot... head is pounding..."
+                "EHR_Dialogue_HeatStroke_S1_Clueless_2",  -- "Feel dizzy from the heat..."
             },
             novice = {
-                "HomeMedic_Dialogue_HeatStroke_S1_Novice_1",    -- "Getting heat exhaustion... need shade and water..."
+                "EHR_Dialogue_HeatStroke_S1_Novice_1",    -- "Getting heat exhaustion... need shade and water..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_HeatStroke_S1_Inter_1",     -- "Early heat illness. Core temp rising. Need cooling now."
+                "EHR_Dialogue_HeatStroke_S1_Inter_1",     -- "Early heat illness. Core temp rising. Need cooling now."
             },
             expert = {
-                "HomeMedic_Dialogue_HeatStroke_S1_Expert_1",    -- "Heat exhaustion progressing. Risk of exertional heat stroke."
+                "EHR_Dialogue_HeatStroke_S1_Expert_1",    -- "Heat exhaustion progressing. Risk of exertional heat stroke."
             },
             master = {
-                "HomeMedic_Dialogue_HeatStroke_S1_Master_1",    -- "Thermoregulatory stress. Remove from heat, begin cooling measures."
+                "EHR_Dialogue_HeatStroke_S1_Master_1",    -- "Thermoregulatory stress. Remove from heat, begin cooling measures."
             },
         },
         [2] = {
             clueless = {
-                "HomeMedic_Dialogue_HeatStroke_S2_Clueless_1",  -- "Can't... think... too hot..."
+                "EHR_Dialogue_HeatStroke_S2_Clueless_1",  -- "Can't... think... too hot..."
             },
             novice = {
-                "HomeMedic_Dialogue_HeatStroke_S2_Novice_1",    -- "Heat stroke... need to cool down fast!"
+                "EHR_Dialogue_HeatStroke_S2_Novice_1",    -- "Heat stroke... need to cool down fast!"
             },
             intermediate = {
-                "HomeMedic_Dialogue_HeatStroke_S2_Inter_1",     -- "Heat stroke developing. Mental status changes. Emergency cooling needed."
+                "EHR_Dialogue_HeatStroke_S2_Inter_1",     -- "Heat stroke developing. Mental status changes. Emergency cooling needed."
             },
             expert = {
-                "HomeMedic_Dialogue_HeatStroke_S2_Expert_1",    -- "Classic heat stroke - hyperthermia with CNS dysfunction. Ice water immersion if available."
+                "EHR_Dialogue_HeatStroke_S2_Expert_1",    -- "Classic heat stroke - hyperthermia with CNS dysfunction. Ice water immersion if available."
             },
             master = {
-                "HomeMedic_Dialogue_HeatStroke_S2_Master_1",    -- "Exertional heat stroke, core likely >40C. Rapid cooling critical to prevent rhabdomyolysis."
+                "EHR_Dialogue_HeatStroke_S2_Master_1",    -- "Exertional heat stroke, core likely >40C. Rapid cooling critical to prevent rhabdomyolysis."
             },
         },
         [3] = {
             clueless = {
-                "HomeMedic_Dialogue_HeatStroke_S3_Clueless_1",  -- "Everything... spinning..."
+                "EHR_Dialogue_HeatStroke_S3_Clueless_1",  -- "Everything... spinning..."
             },
             novice = {
-                "HomeMedic_Dialogue_HeatStroke_S3_Novice_1",    -- "I'm burning up inside..."
+                "EHR_Dialogue_HeatStroke_S3_Novice_1",    -- "I'm burning up inside..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_HeatStroke_S3_Inter_1",     -- "Severe heat stroke. Organ damage occurring."
+                "EHR_Dialogue_HeatStroke_S3_Inter_1",     -- "Severe heat stroke. Organ damage occurring."
             },
             expert = {
-                "HomeMedic_Dialogue_HeatStroke_S3_Expert_1",    -- "Multi-organ dysfunction from hyperthermia. Coagulopathy likely."
+                "EHR_Dialogue_HeatStroke_S3_Expert_1",    -- "Multi-organ dysfunction from hyperthermia. Coagulopathy likely."
             },
             master = {
-                "HomeMedic_Dialogue_HeatStroke_S3_Master_1",    -- "Severe heat stroke with DIC and rhabdomyolysis. Mortality risk extreme."
+                "EHR_Dialogue_HeatStroke_S3_Master_1",    -- "Severe heat stroke with DIC and rhabdomyolysis. Mortality risk extreme."
             },
         },
         [4] = {
             clueless = {
-                "HomeMedic_Dialogue_HeatStroke_S4_Clueless_1",  -- "..."
+                "EHR_Dialogue_HeatStroke_S4_Clueless_1",  -- "..."
             },
             novice = {
-                "HomeMedic_Dialogue_HeatStroke_S4_Novice_1",    -- "Can't... breathe..."
+                "EHR_Dialogue_HeatStroke_S4_Novice_1",    -- "Can't... breathe..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_HeatStroke_S4_Inter_1",     -- "Organs... shutting down..."
+                "EHR_Dialogue_HeatStroke_S4_Inter_1",     -- "Organs... shutting down..."
             },
             expert = {
-                "HomeMedic_Dialogue_HeatStroke_S4_Expert_1",    -- "Terminal hyperthermia... brain damage irreversible..."
+                "EHR_Dialogue_HeatStroke_S4_Expert_1",    -- "Terminal hyperthermia... brain damage irreversible..."
             },
             master = {
-                "HomeMedic_Dialogue_HeatStroke_S4_Master_1",    -- "End-stage heat stroke with cerebral edema and multi-system failure."
+                "EHR_Dialogue_HeatStroke_S4_Master_1",    -- "End-stage heat stroke with cerebral edema and multi-system failure."
             },
         },
     },
@@ -354,71 +354,71 @@ EHR.DialogueData.Diseases = {
     ["Flu"] = {
         [1] = {
             clueless = {
-                "HomeMedic_Dialogue_Flu_S1_Clueless_1",  -- "Got the sniffles..."
-                "HomeMedic_Dialogue_Flu_S1_Clueless_2",  -- "Think I'm catching something..."
+                "EHR_Dialogue_Flu_S1_Clueless_1",  -- "Got the sniffles..."
+                "EHR_Dialogue_Flu_S1_Clueless_2",  -- "Think I'm catching something..."
             },
             novice = {
-                "HomeMedic_Dialogue_Flu_S1_Novice_1",    -- "Coming down with the flu..."
+                "EHR_Dialogue_Flu_S1_Novice_1",    -- "Coming down with the flu..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Flu_S1_Inter_1",     -- "Influenza symptoms. Rest and fluids needed."
+                "EHR_Dialogue_Flu_S1_Inter_1",     -- "Influenza symptoms. Rest and fluids needed."
             },
             expert = {
-                "HomeMedic_Dialogue_Flu_S1_Expert_1",    -- "Typical influenza presentation. Monitor for complications."
+                "EHR_Dialogue_Flu_S1_Expert_1",    -- "Typical influenza presentation. Monitor for complications."
             },
             master = {
-                "HomeMedic_Dialogue_Flu_S1_Master_1",    -- "Influenza-like illness, likely viral URI. Symptomatic treatment indicated."
+                "EHR_Dialogue_Flu_S1_Master_1",    -- "Influenza-like illness, likely viral URI. Symptomatic treatment indicated."
             },
         },
         [2] = {
             clueless = {
-                "HomeMedic_Dialogue_Flu_S2_Clueless_1",  -- "Feel awful... body aches everywhere..."
+                "EHR_Dialogue_Flu_S2_Clueless_1",  -- "Feel awful... body aches everywhere..."
             },
             novice = {
-                "HomeMedic_Dialogue_Flu_S2_Novice_1",    -- "Bad flu... fever and chills..."
+                "EHR_Dialogue_Flu_S2_Novice_1",    -- "Bad flu... fever and chills..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Flu_S2_Inter_1",     -- "Moderate flu. Watch for pneumonia signs."
+                "EHR_Dialogue_Flu_S2_Inter_1",     -- "Moderate flu. Watch for pneumonia signs."
             },
             expert = {
-                "HomeMedic_Dialogue_Flu_S2_Expert_1",    -- "Influenza with systemic symptoms. Risk of secondary bacterial infection."
+                "EHR_Dialogue_Flu_S2_Expert_1",    -- "Influenza with systemic symptoms. Risk of secondary bacterial infection."
             },
             master = {
-                "HomeMedic_Dialogue_Flu_S2_Master_1",    -- "Moderate influenza. Oseltamivir within 48h of onset would be ideal."
+                "EHR_Dialogue_Flu_S2_Master_1",    -- "Moderate influenza. Oseltamivir within 48h of onset would be ideal."
             },
         },
         [3] = {
             clueless = {
-                "HomeMedic_Dialogue_Flu_S3_Clueless_1",  -- "Can barely move... so weak..."
+                "EHR_Dialogue_Flu_S3_Clueless_1",  -- "Can barely move... so weak..."
             },
             novice = {
-                "HomeMedic_Dialogue_Flu_S3_Novice_1",    -- "Worst flu ever... can't breathe right..."
+                "EHR_Dialogue_Flu_S3_Novice_1",    -- "Worst flu ever... can't breathe right..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Flu_S3_Inter_1",     -- "Severe flu with respiratory involvement. Need antibiotics for secondary infection."
+                "EHR_Dialogue_Flu_S3_Inter_1",     -- "Severe flu with respiratory involvement. Need antibiotics for secondary infection."
             },
             expert = {
-                "HomeMedic_Dialogue_Flu_S3_Expert_1",    -- "Complicated influenza, possible viral pneumonia or bacterial superinfection."
+                "EHR_Dialogue_Flu_S3_Expert_1",    -- "Complicated influenza, possible viral pneumonia or bacterial superinfection."
             },
             master = {
-                "HomeMedic_Dialogue_Flu_S3_Master_1",    -- "Severe influenza with ARDS risk. Empiric antibiotics for bacterial co-infection."
+                "EHR_Dialogue_Flu_S3_Master_1",    -- "Severe influenza with ARDS risk. Empiric antibiotics for bacterial co-infection."
             },
         },
         [4] = {
             clueless = {
-                "HomeMedic_Dialogue_Flu_S4_Clueless_1",  -- "Can't... breathe..."
+                "EHR_Dialogue_Flu_S4_Clueless_1",  -- "Can't... breathe..."
             },
             novice = {
-                "HomeMedic_Dialogue_Flu_S4_Novice_1",    -- "The flu is killing me..."
+                "EHR_Dialogue_Flu_S4_Novice_1",    -- "The flu is killing me..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_Flu_S4_Inter_1",     -- "Pneumonia complications... respiratory failure..."
+                "EHR_Dialogue_Flu_S4_Inter_1",     -- "Pneumonia complications... respiratory failure..."
             },
             expert = {
-                "HomeMedic_Dialogue_Flu_S4_Expert_1",    -- "Influenza-associated ARDS... ventilator support needed..."
+                "EHR_Dialogue_Flu_S4_Expert_1",    -- "Influenza-associated ARDS... ventilator support needed..."
             },
             master = {
-                "HomeMedic_Dialogue_Flu_S4_Master_1",    -- "Fulminant influenza with cytokine storm and multi-organ failure."
+                "EHR_Dialogue_Flu_S4_Master_1",    -- "Fulminant influenza with cytokine storm and multi-organ failure."
             },
         },
     },
@@ -429,71 +429,71 @@ EHR.DialogueData.Diseases = {
     ["WoundInfection"] = {
         [1] = {
             clueless = {
-                "HomeMedic_Dialogue_WoundInfection_S1_Clueless_1",  -- "This wound looks red..."
-                "HomeMedic_Dialogue_WoundInfection_S1_Clueless_2",  -- "It hurts more than before..."
+                "EHR_Dialogue_WoundInfection_S1_Clueless_1",  -- "This wound looks red..."
+                "EHR_Dialogue_WoundInfection_S1_Clueless_2",  -- "It hurts more than before..."
             },
             novice = {
-                "HomeMedic_Dialogue_WoundInfection_S1_Novice_1",    -- "Wound is getting infected... need to clean it..."
+                "EHR_Dialogue_WoundInfection_S1_Novice_1",    -- "Wound is getting infected... need to clean it..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_WoundInfection_S1_Inter_1",     -- "Local wound infection. Needs cleaning and antibiotics."
+                "EHR_Dialogue_WoundInfection_S1_Inter_1",     -- "Local wound infection. Needs cleaning and antibiotics."
             },
             expert = {
-                "HomeMedic_Dialogue_WoundInfection_S1_Expert_1",    -- "Cellulitis developing. Oral antibiotics should suffice at this stage."
+                "EHR_Dialogue_WoundInfection_S1_Expert_1",    -- "Cellulitis developing. Oral antibiotics should suffice at this stage."
             },
             master = {
-                "HomeMedic_Dialogue_WoundInfection_S1_Master_1",    -- "Localized bacterial infection, likely Staph aureus. Debridement and antibiotics."
+                "EHR_Dialogue_WoundInfection_S1_Master_1",    -- "Localized bacterial infection, likely Staph aureus. Debridement and antibiotics."
             },
         },
         [2] = {
             clueless = {
-                "HomeMedic_Dialogue_WoundInfection_S2_Clueless_1",  -- "There's pus coming out..."
+                "EHR_Dialogue_WoundInfection_S2_Clueless_1",  -- "There's pus coming out..."
             },
             novice = {
-                "HomeMedic_Dialogue_WoundInfection_S2_Novice_1",    -- "Infection is spreading... this is bad..."
+                "EHR_Dialogue_WoundInfection_S2_Novice_1",    -- "Infection is spreading... this is bad..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_WoundInfection_S2_Inter_1",     -- "Advancing cellulitis. Risk of systemic spread."
+                "EHR_Dialogue_WoundInfection_S2_Inter_1",     -- "Advancing cellulitis. Risk of systemic spread."
             },
             expert = {
-                "HomeMedic_Dialogue_WoundInfection_S2_Expert_1",    -- "Progressing soft tissue infection. IV antibiotics warranted."
+                "EHR_Dialogue_WoundInfection_S2_Expert_1",    -- "Progressing soft tissue infection. IV antibiotics warranted."
             },
             master = {
-                "HomeMedic_Dialogue_WoundInfection_S2_Master_1",    -- "Spreading cellulitis with abscess formation. I&D may be necessary."
+                "EHR_Dialogue_WoundInfection_S2_Master_1",    -- "Spreading cellulitis with abscess formation. I&D may be necessary."
             },
         },
         [3] = {
             clueless = {
-                "HomeMedic_Dialogue_WoundInfection_S3_Clueless_1",  -- "My whole arm/leg is swelling..."
+                "EHR_Dialogue_WoundInfection_S3_Clueless_1",  -- "My whole arm/leg is swelling..."
             },
             novice = {
-                "HomeMedic_Dialogue_WoundInfection_S3_Novice_1",    -- "Infection is really bad now... feel feverish..."
+                "EHR_Dialogue_WoundInfection_S3_Novice_1",    -- "Infection is really bad now... feel feverish..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_WoundInfection_S3_Inter_1",     -- "Severe wound infection. May become septic."
+                "EHR_Dialogue_WoundInfection_S3_Inter_1",     -- "Severe wound infection. May become septic."
             },
             expert = {
-                "HomeMedic_Dialogue_WoundInfection_S3_Expert_1",    -- "Necrotizing soft tissue infection possible. Urgent surgical evaluation needed."
+                "EHR_Dialogue_WoundInfection_S3_Expert_1",    -- "Necrotizing soft tissue infection possible. Urgent surgical evaluation needed."
             },
             master = {
-                "HomeMedic_Dialogue_WoundInfection_S3_Master_1",    -- "Suspected necrotizing fasciitis. Emergent surgical debridement is life-saving."
+                "EHR_Dialogue_WoundInfection_S3_Master_1",    -- "Suspected necrotizing fasciitis. Emergent surgical debridement is life-saving."
             },
         },
         [4] = {
             clueless = {
-                "HomeMedic_Dialogue_WoundInfection_S4_Clueless_1",  -- "The skin is turning black..."
+                "EHR_Dialogue_WoundInfection_S4_Clueless_1",  -- "The skin is turning black..."
             },
             novice = {
-                "HomeMedic_Dialogue_WoundInfection_S4_Novice_1",    -- "I'm going to lose this limb... or worse..."
+                "EHR_Dialogue_WoundInfection_S4_Novice_1",    -- "I'm going to lose this limb... or worse..."
             },
             intermediate = {
-                "HomeMedic_Dialogue_WoundInfection_S4_Inter_1",     -- "Gangrene... without amputation, I'll die..."
+                "EHR_Dialogue_WoundInfection_S4_Inter_1",     -- "Gangrene... without amputation, I'll die..."
             },
             expert = {
-                "HomeMedic_Dialogue_WoundInfection_S4_Expert_1",    -- "Gas gangrene or necrotizing fasciitis. Amputation or death."
+                "EHR_Dialogue_WoundInfection_S4_Expert_1",    -- "Gas gangrene or necrotizing fasciitis. Amputation or death."
             },
             master = {
-                "HomeMedic_Dialogue_WoundInfection_S4_Master_1",    -- "Fournier's gangrene or Type I necrotizing fasciitis. Mortality exceeds 30% even with surgery."
+                "EHR_Dialogue_WoundInfection_S4_Master_1",    -- "Fournier's gangrene or Type I necrotizing fasciitis. Mortality exceeds 30% even with surgery."
             },
         },
     },
@@ -512,46 +512,46 @@ EHR.DialogueData.Diseases = {
 EHR.DialogueData.FalseAssumptions = {
     -- Sepsis misdiagnosed as other conditions
     ["Sepsis_as_FoodPoisoning"] = {
-        "HomeMedic_Dialogue_False_SepsisAsFood_1",  -- "Must've eaten something bad..."
-        "HomeMedic_Dialogue_False_SepsisAsFood_2",  -- "Probably just food poisoning, it'll pass..."
-        "HomeMedic_Dialogue_False_SepsisAsFood_3",  -- "Bad food is all, need to rest..."
+        "EHR_Dialogue_False_SepsisAsFood_1",  -- "Must've eaten something bad..."
+        "EHR_Dialogue_False_SepsisAsFood_2",  -- "Probably just food poisoning, it'll pass..."
+        "EHR_Dialogue_False_SepsisAsFood_3",  -- "Bad food is all, need to rest..."
     },
     ["Sepsis_as_Flu"] = {
-        "HomeMedic_Dialogue_False_SepsisAsFlu_1",   -- "Just a bad flu, I'll sleep it off..."
-        "HomeMedic_Dialogue_False_SepsisAsFlu_2",   -- "Caught something, chicken soup time..."
+        "EHR_Dialogue_False_SepsisAsFlu_1",   -- "Just a bad flu, I'll sleep it off..."
+        "EHR_Dialogue_False_SepsisAsFlu_2",   -- "Caught something, chicken soup time..."
     },
     ["Sepsis_as_Exhaustion"] = {
-        "HomeMedic_Dialogue_False_SepsisAsExhaustion_1",  -- "Just tired... need more sleep..."
+        "EHR_Dialogue_False_SepsisAsExhaustion_1",  -- "Just tired... need more sleep..."
     },
 
     -- Food poisoning misdiagnosed
     ["FoodPoisoning_as_Flu"] = {
-        "HomeMedic_Dialogue_False_FoodAsFlu_1",     -- "Must be the flu going around..."
+        "EHR_Dialogue_False_FoodAsFlu_1",     -- "Must be the flu going around..."
     },
     ["FoodPoisoning_as_Anxiety"] = {
-        "HomeMedic_Dialogue_False_FoodAsAnxiety_1", -- "Just stress... my stomach always acts up..."
+        "EHR_Dialogue_False_FoodAsAnxiety_1", -- "Just stress... my stomach always acts up..."
     },
 
     -- Hypothermia misdiagnosed
     ["Hypothermia_as_Flu"] = {
-        "HomeMedic_Dialogue_False_HypoAsFlu_1",     -- "Coming down with something... feel cold and achy..."
+        "EHR_Dialogue_False_HypoAsFlu_1",     -- "Coming down with something... feel cold and achy..."
     },
     ["Hypothermia_as_Exhaustion"] = {
-        "HomeMedic_Dialogue_False_HypoAsExhaustion_1", -- "Just need to rest... so tired..."
+        "EHR_Dialogue_False_HypoAsExhaustion_1", -- "Just need to rest... so tired..."
     },
 
     -- Heat stroke misdiagnosed
     ["HeatStroke_as_Fever"] = {
-        "HomeMedic_Dialogue_False_HeatAsFever_1",   -- "Running a fever... need medicine..."
+        "EHR_Dialogue_False_HeatAsFever_1",   -- "Running a fever... need medicine..."
     },
     ["HeatStroke_as_Dehydration"] = {
-        "HomeMedic_Dialogue_False_HeatAsDehydration_1", -- "Just dehydrated... drink some water..."
+        "EHR_Dialogue_False_HeatAsDehydration_1", -- "Just dehydrated... drink some water..."
     },
 
     -- Generic fallback
     ["Unknown_as_Unknown"] = {
-        "HomeMedic_Dialogue_False_Unknown_1",       -- "I'm fine... just need rest..."
-        "HomeMedic_Dialogue_False_Unknown_2",       -- "It's nothing serious..."
+        "EHR_Dialogue_False_Unknown_1",       -- "I'm fine... just need rest..."
+        "EHR_Dialogue_False_Unknown_2",       -- "It's nothing serious..."
     },
 }
 
@@ -562,40 +562,40 @@ EHR.DialogueData.FalseAssumptions = {
 
 EHR.DialogueData.TreatmentHints = {
     ["Sepsis"] = {
-        novice = "HomeMedic_Dialogue_Treat_Sepsis_Novice",        -- "Maybe some medicine would help?"
-        intermediate = "HomeMedic_Dialogue_Treat_Sepsis_Inter",   -- "Need antibiotics and rest"
-        expert = "HomeMedic_Dialogue_Treat_Sepsis_Expert",        -- "IV antibiotics, fluids, and monitoring"
-        master = "HomeMedic_Dialogue_Treat_Sepsis_Master",        -- "Broad-spectrum IV antibiotics, fluid resuscitation, source control"
+        novice = "EHR_Dialogue_Treat_Sepsis_Novice",        -- "Maybe some medicine would help?"
+        intermediate = "EHR_Dialogue_Treat_Sepsis_Inter",   -- "Need antibiotics and rest"
+        expert = "EHR_Dialogue_Treat_Sepsis_Expert",        -- "IV antibiotics, fluids, and monitoring"
+        master = "EHR_Dialogue_Treat_Sepsis_Master",        -- "Broad-spectrum IV antibiotics, fluid resuscitation, source control"
     },
     ["FoodPoisoning"] = {
-        novice = "HomeMedic_Dialogue_Treat_FoodPoisoning_Novice",
-        intermediate = "HomeMedic_Dialogue_Treat_FoodPoisoning_Inter",
-        expert = "HomeMedic_Dialogue_Treat_FoodPoisoning_Expert",
-        master = "HomeMedic_Dialogue_Treat_FoodPoisoning_Master",
+        novice = "EHR_Dialogue_Treat_FoodPoisoning_Novice",
+        intermediate = "EHR_Dialogue_Treat_FoodPoisoning_Inter",
+        expert = "EHR_Dialogue_Treat_FoodPoisoning_Expert",
+        master = "EHR_Dialogue_Treat_FoodPoisoning_Master",
     },
     ["Hypothermia"] = {
-        novice = "HomeMedic_Dialogue_Treat_Hypothermia_Novice",
-        intermediate = "HomeMedic_Dialogue_Treat_Hypothermia_Inter",
-        expert = "HomeMedic_Dialogue_Treat_Hypothermia_Expert",
-        master = "HomeMedic_Dialogue_Treat_Hypothermia_Master",
+        novice = "EHR_Dialogue_Treat_Hypothermia_Novice",
+        intermediate = "EHR_Dialogue_Treat_Hypothermia_Inter",
+        expert = "EHR_Dialogue_Treat_Hypothermia_Expert",
+        master = "EHR_Dialogue_Treat_Hypothermia_Master",
     },
     ["HeatStroke"] = {
-        novice = "HomeMedic_Dialogue_Treat_HeatStroke_Novice",
-        intermediate = "HomeMedic_Dialogue_Treat_HeatStroke_Inter",
-        expert = "HomeMedic_Dialogue_Treat_HeatStroke_Expert",
-        master = "HomeMedic_Dialogue_Treat_HeatStroke_Master",
+        novice = "EHR_Dialogue_Treat_HeatStroke_Novice",
+        intermediate = "EHR_Dialogue_Treat_HeatStroke_Inter",
+        expert = "EHR_Dialogue_Treat_HeatStroke_Expert",
+        master = "EHR_Dialogue_Treat_HeatStroke_Master",
     },
     ["Flu"] = {
-        novice = "HomeMedic_Dialogue_Treat_Flu_Novice",
-        intermediate = "HomeMedic_Dialogue_Treat_Flu_Inter",
-        expert = "HomeMedic_Dialogue_Treat_Flu_Expert",
-        master = "HomeMedic_Dialogue_Treat_Flu_Master",
+        novice = "EHR_Dialogue_Treat_Flu_Novice",
+        intermediate = "EHR_Dialogue_Treat_Flu_Inter",
+        expert = "EHR_Dialogue_Treat_Flu_Expert",
+        master = "EHR_Dialogue_Treat_Flu_Master",
     },
     ["WoundInfection"] = {
-        novice = "HomeMedic_Dialogue_Treat_WoundInfection_Novice",
-        intermediate = "HomeMedic_Dialogue_Treat_WoundInfection_Inter",
-        expert = "HomeMedic_Dialogue_Treat_WoundInfection_Expert",
-        master = "HomeMedic_Dialogue_Treat_WoundInfection_Master",
+        novice = "EHR_Dialogue_Treat_WoundInfection_Novice",
+        intermediate = "EHR_Dialogue_Treat_WoundInfection_Inter",
+        expert = "EHR_Dialogue_Treat_WoundInfection_Expert",
+        master = "EHR_Dialogue_Treat_WoundInfection_Master",
     },
 }
 
@@ -606,14 +606,14 @@ EHR.DialogueData.TreatmentHints = {
 
 EHR.DialogueData.WrongTreatments = {
     ["Sepsis_as_FoodPoisoning"] = {
-        "HomeMedic_Dialogue_WrongTreat_SepsisAsFood_1",  -- "Just need to rest and let it pass..."
-        "HomeMedic_Dialogue_WrongTreat_SepsisAsFood_2",  -- "Drink fluids, it's just food poisoning..."
+        "EHR_Dialogue_WrongTreat_SepsisAsFood_1",  -- "Just need to rest and let it pass..."
+        "EHR_Dialogue_WrongTreat_SepsisAsFood_2",  -- "Drink fluids, it's just food poisoning..."
     },
     ["Sepsis_as_Flu"] = {
-        "HomeMedic_Dialogue_WrongTreat_SepsisAsFlu_1",   -- "Some cold medicine should help..."
+        "EHR_Dialogue_WrongTreat_SepsisAsFlu_1",   -- "Some cold medicine should help..."
     },
     ["Hypothermia_as_Flu"] = {
-        "HomeMedic_Dialogue_WrongTreat_HypoAsFlu_1",     -- "Take some medicine for the fever..."
+        "EHR_Dialogue_WrongTreat_HypoAsFlu_1",     -- "Take some medicine for the fever..."
     },
 }
 

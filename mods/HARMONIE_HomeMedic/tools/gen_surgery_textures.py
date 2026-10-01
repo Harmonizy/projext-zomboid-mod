@@ -3,8 +3,9 @@
 
 Writes 42/media/textures/HARMONIE_HomeMedic/surg_dot.png (filled circle) and
 surg_ring.png (ring), white on transparent, antialiased, 128 px -- the games
-tint and scale them (HM_SurgeryGames.lua) -- and tab_diagnosis.png, the
-medical window's Diagnosis tab icon (a clipboard with a heartbeat trace).
+tint and scale them (HM_SurgeryGames.lua) -- and tab_*.png, the
+medical window's five tab icons (one badge style: monitor, immunity, stats,
+diagnosis, handbook) -- and pin_on.png / pin_off.png, the windows' pin button.
 """
 import os
 import numpy as np
@@ -26,22 +27,110 @@ def disc(inner=None):
     return Image.fromarray(rgba, "RGBA")
 
 
-def diagnosis_icon(size=128):
+CREAM = (238, 232, 220, 255)
+RED = (226, 44, 44, 255)
+
+
+def _canvas(size):
     from PIL import ImageDraw
     big = size * 4
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     s = big / 128.0
-    d.rounded_rectangle([22 * s, 18 * s, 106 * s, 116 * s], radius=10 * s, outline=(235, 230, 220, 255), width=int(8 * s))
-    d.rounded_rectangle([44 * s, 8 * s, 84 * s, 28 * s], radius=6 * s, fill=(235, 230, 220, 255))
-    pts = [(32, 70), (48, 70), (56, 50), (66, 92), (76, 60), (82, 70), (96, 70)]
-    d.line([(x * s, y * s) for x, y in pts], fill=(230, 40, 40, 255), width=int(7 * s), joint="curve")
+    # the shared badge: dark rounded plate, thin red rim
+    d.rounded_rectangle([6 * s, 6 * s, 122 * s, 122 * s], radius=22 * s, fill=(24, 18, 18, 235),
+                        outline=(150, 34, 34, 255), width=int(4 * s))
+    return img, d, s
+
+
+def _done(img, size):
     return img.resize((size, size), Image.LANCZOS)
+
+
+def _pulse(d, s, pts, width=7, fill=RED):
+    d.line([(x * s, y * s) for x, y in pts], fill=fill, width=int(width * s), joint="curve")
+
+
+def tab_ehr(size=128):
+    """Monitor: a heart with a heartbeat trace across it."""
+    img, d, s = _canvas(size)
+    d.ellipse([28 * s, 30 * s, 66 * s, 68 * s], fill=CREAM)
+    d.ellipse([62 * s, 30 * s, 100 * s, 68 * s], fill=CREAM)
+    d.polygon([(30 * s, 56 * s), (98 * s, 56 * s), (64 * s, 100 * s)], fill=CREAM)
+    _pulse(d, s, [(16, 64), (40, 64), (50, 44), (62, 84), (72, 54), (80, 64), (112, 64)], 7)
+    return _done(img, size)
+
+
+def tab_immunity(size=128):
+    """Immune system: a shield with a cross."""
+    img, d, s = _canvas(size)
+    d.polygon([(64 * s, 20 * s), (102 * s, 34 * s), (98 * s, 74 * s), (64 * s, 108 * s),
+               (30 * s, 74 * s), (26 * s, 34 * s)], fill=CREAM)
+    d.rectangle([57 * s, 40 * s, 71 * s, 86 * s], fill=RED)
+    d.rectangle([41 * s, 56 * s, 87 * s, 70 * s], fill=RED)
+    return _done(img, size)
+
+
+def tab_stats(size=128):
+    """Body stats: a chart -- bars of different heights and a trend line."""
+    img, d, s = _canvas(size)
+    d.line([(26 * s, 100 * s), (104 * s, 100 * s)], fill=CREAM, width=int(5 * s))
+    for x, top in ((32, 70), (52, 50), (72, 62), (92, 36)):
+        d.rounded_rectangle([x * s, top * s, (x + 13) * s, 96 * s], radius=3 * s, fill=CREAM)
+    _pulse(d, s, [(30, 56), (50, 36), (70, 48), (100, 22)], 6)
+    return _done(img, size)
+
+
+def tab_diagnosis(size=128):
+    """Diagnosis: a magnifying glass over a heartbeat."""
+    img, d, s = _canvas(size)
+    d.ellipse([22 * s, 20 * s, 84 * s, 82 * s], outline=CREAM, width=int(9 * s))
+    d.line([(76 * s, 74 * s), (104 * s, 102 * s)], fill=CREAM, width=int(15 * s))
+    _pulse(d, s, [(30, 52), (42, 52), (48, 38), (56, 66), (63, 46), (68, 52), (76, 52)], 6)
+    return _done(img, size)
+
+
+def tab_handbook(size=128):
+    """Handbook: an open book with a cross on the right page."""
+    img, d, s = _canvas(size)
+    d.polygon([(20 * s, 34 * s), (60 * s, 28 * s), (64 * s, 34 * s), (64 * s, 102 * s), (60 * s, 96 * s), (20 * s, 100 * s)], fill=CREAM)
+    d.polygon([(108 * s, 34 * s), (68 * s, 28 * s), (64 * s, 34 * s), (64 * s, 102 * s), (68 * s, 96 * s), (108 * s, 100 * s)], fill=CREAM)
+    d.line([(64 * s, 32 * s), (64 * s, 102 * s)], fill=(120, 30, 30, 255), width=int(3 * s))
+    for y in (46, 58, 70, 82):
+        d.line([(28 * s, y * s), (54 * s, (y - 2) * s)], fill=(150, 140, 130, 255), width=int(3 * s))
+    d.rectangle([82 * s, 46 * s, 92 * s, 80 * s], fill=RED)
+    d.rectangle([70 * s, 58 * s, 104 * s, 68 * s], fill=RED)
+    return _done(img, size)
+
+
+def pin_icon(pinned, size=64):
+    """Window pin: upright (pinned) or tipped over (unpinned)."""
+    from PIL import ImageDraw
+    big = size * 4
+    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    s = big / 64.0
+    col = CREAM if pinned else (190, 180, 170, 255)
+    head = RED if pinned else (150, 60, 60, 255)
+    d.ellipse([20 * s, 6 * s, 44 * s, 30 * s], fill=head)
+    d.rectangle([26 * s, 26 * s, 38 * s, 36 * s], fill=col)
+    d.polygon([(16 * s, 36 * s), (48 * s, 36 * s), (44 * s, 42 * s), (20 * s, 42 * s)], fill=col)
+    d.polygon([(30 * s, 42 * s), (34 * s, 42 * s), (32 * s, 60 * s)], fill=col)
+    if not pinned:
+        img = img.rotate(45, resample=Image.BICUBIC, center=(big / 2, big / 2))
+    return img.resize((size, size), Image.LANCZOS)
+
+
+TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats,
+        "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook}
 
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     disc().save(os.path.join(OUT, "surg_dot.png"))
     disc(inner=N / 2 - 9).save(os.path.join(OUT, "surg_ring.png"))
-    diagnosis_icon().save(os.path.join(OUT, "tab_diagnosis.png"))
+    for name, fn in TABS.items():
+        fn().save(os.path.join(OUT, name + ".png"))
+    pin_icon(True).save(os.path.join(OUT, "pin_on.png"))
+    pin_icon(False).save(os.path.join(OUT, "pin_off.png"))
     print("wrote", OUT)

@@ -210,9 +210,9 @@ function ISHealthBodyPartListBox:doDrawItem(y, item, alt)
         if dcInst:getIsCut(limbName) and dcInst:getIsVisible(limbName) then
             if dcInst:getIsCicatrized(limbName) then
                 if dcInst:getIsCauterized(limbName) then
-                    self:drawText("- " .. getText("IGUI_HomeMedic_HealthPanel_Cauterized"), x, y,  0.58, 0.75, 0.28, 1, UIFont.Small)
+                    self:drawText("- " .. getText("IGUI_HealthPanel_Cauterized"), x, y,  0.58, 0.75, 0.28, 1, UIFont.Small)
                 else
-                    self:drawText("- " .. getText("IGUI_HomeMedic_HealthPanel_Cicatrized"), x, y, 0.28, 0.89, 0.28, 1, UIFont.Small)
+                    self:drawText("- " .. getText("IGUI_HealthPanel_Cicatrized"), x, y, 0.28, 0.89, 0.28, 1, UIFont.Small)
                 end
 
                 y = y + fontHgt
@@ -222,17 +222,17 @@ function ISHealthBodyPartListBox:doDrawItem(y, item, alt)
                 -- Show it in percentage
                 local maxCicaTime = StaticData.LIMBS_CICATRIZATION_TIME_IND_NUM[limbName]
                 local percentage = (1 - cicaTime/maxCicaTime) * 100
-                self:drawText("- " .. getText("IGUI_HomeMedic_HealthPanel_Cicatrization") .. string.format(" %.2f", percentage) .. "%", x, y, 0.89, 0.28, 0.28, 1, UIFont.Small)
+                self:drawText("- " .. getText("IGUI_HealthPanel_Cicatrization") .. string.format(" %.2f", percentage) .. "%", x, y, 0.89, 0.28, 0.28, 1, UIFont.Small)
                 y = y + fontHgt
 
                 local scaledDirtyness = math.floor(dcInst:getWoundDirtyness(limbName) * 100)
-                self:drawText("- " .. getText("IGUI_HomeMedic_HealthPanel_WoundDirtyness") .. string.format(" %d", scaledDirtyness) .. "%", x, y, 0.89, 0.28, 0.28, 1, UIFont.Small)
+                self:drawText("- " .. getText("IGUI_HealthPanel_WoundDirtyness") .. string.format(" %d", scaledDirtyness) .. "%", x, y, 0.89, 0.28, 0.28, 1, UIFont.Small)
                 y = y + fontHgt
 
             end
 
             if dcInst:getIsProstEquipped(limbName) then
-                self:drawText("- " .. getText("IGUI_HomeMedic_HealthPanel_ProstEquipped"), x, y, 0.28, 0.89, 0.28, 1, UIFont.Small)
+                self:drawText("- " .. getText("IGUI_HealthPanel_ProstEquipped"), x, y, 0.28, 0.89, 0.28, 1, UIFont.Small)
                 y = y + fontHgt
             end
 

@@ -16,7 +16,7 @@ local luaDigitalWatchApi = nil
 local luaClockWasSuppressed = false
 
 local function watchText(key, fallback)
-    local fullKey = "UI_HomeMedic_WatchBattery_" .. tostring(key)
+    local fullKey = "UI_EHR_WatchBattery_" .. tostring(key)
     if EHR and EHR.Locale and EHR.Locale.Text then
         return EHR.Locale.Text(fullKey, fallback)
     end
@@ -28,7 +28,7 @@ local function watchText(key, fallback)
 end
 
 local function watchFormat(key, fallback, ...)
-    local fullKey = "UI_HomeMedic_WatchBattery_" .. tostring(key)
+    local fullKey = "UI_EHR_WatchBattery_" .. tostring(key)
     local textValue = nil
     if EHR and EHR.Locale and EHR.Locale.Format then
         textValue = EHR.Locale.Format(fullKey, fallback, ...)

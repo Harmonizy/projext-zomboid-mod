@@ -35,7 +35,7 @@ local function tex(path)
 end
 
 local function L(key, fallback)
-    local fullKey = "UI_HomeMedic_HerbalSearch_" .. tostring(key)
+    local fullKey = "UI_EHR_HerbalSearch_" .. tostring(key)
     if EHR and EHR.Locale and EHR.Locale.Text then return EHR.Locale.Text(fullKey, fallback) end
     if getText then
         local ok, value = pcall(getText, fullKey)

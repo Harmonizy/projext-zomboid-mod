@@ -594,6 +594,16 @@ end
 function EHR.DebugV2.IsDebugAllowed()
     -- BUG-020 FIX: No getDebug() check - Steam -debug flag is NOT required
 
+    -- HARMONIE: always allowed in a game started with -debug, and for a
+    -- server admin, whatever the sandbox DebugMode says
+    if isDebugEnabled and isDebugEnabled() then return true end
+    if isClient and isClient() then
+        local admin = getSpecificPlayer(0)
+        local level = ""
+        if admin then pcall(function() level = admin:getAccessLevel() or "" end) end
+        if level == "admin" then return true end
+    end
+
     -- Check sandbox setting first
     local sandboxEnabled = false
     if SandboxVars and SandboxVars.ExtensiveHealthRework then
@@ -4400,32 +4410,11 @@ end
 
 function EHR.DebugV2.Toggle()
     -- Check permissions first with detailed error messages
-    local sandboxEnabled = false
-    if SandboxVars and SandboxVars.ExtensiveHealthRework then
-        local debugModeValue = SandboxVars.ExtensiveHealthRework.DebugMode
-        sandboxEnabled = debugModeValue == true or debugModeValue == 1
-    end
-
-    if not sandboxEnabled then
-        print("[EHR] Debug Menu: Access denied - Sandbox DebugMode is DISABLED")
-        print("[EHR] Enable it in Sandbox Options -> Extensive Health Rework -> Debug Mode")
+    -- HARMONIE: one rule, EHR.DebugV2.IsDebugAllowed (-debug game or server
+    -- admin always; otherwise sandbox DebugMode, plus staff access in MP)
+    if not EHR.DebugV2.IsDebugAllowed() then
+        print("[EHR] Debug Menu: Access denied - enable Sandbox DebugMode (and be admin/moderator/gm in multiplayer)")
         return
-    end
-
-    -- MP admin check
-    if isClient() then
-        local player = getSpecificPlayer(0)
-        local accessLevel = ""
-        if player then
-            pcall(function() accessLevel = player:getAccessLevel() or "" end)
-        end
-        local hasAccess = accessLevel == "admin" or accessLevel == "moderator" or accessLevel == "gm"
-        if not hasAccess then
-            print("[EHR] Debug Menu: Access denied - You need ADMIN access in multiplayer")
-            print("[EHR] Your current access level: '" .. tostring(accessLevel) .. "'")
-            print("[EHR] Use /setaccesslevel [YourName] admin to give yourself admin")
-            return
-        end
     end
 
     local player = getSpecificPlayer(0)

@@ -13,6 +13,7 @@
 ]]
 
 require "ISUI/ISPanel"
+require "HARMONIEHomeMedic/HM_Diagnosis"
 require "ISUI/ISButton"
 require "ISUI/ISRichTextPanel"
 require "ExtensiveHealth/EHR_WoundInfection"
@@ -315,7 +316,7 @@ function EHR_MedicalMonitorUI:repositionControls()
     end
 
     if self.examineBtn then
-        local btnTitle = ehrSafeText("UI_HomeMedic_ExamineButton", "Examine Self")
+        local btnTitle = ehrSafeText("UI_EHR_ExamineButton", "Examine Self")
         local btnWidth = math.max(132, self:getTextWidth(btnTitle, UIFont.Small) + 18)
         local btnHeight = 20
         if self.examineBtn.setWidth then
@@ -471,7 +472,7 @@ function EHR_MedicalMonitorUI:createChildren()
     self:addChild(self.closeBtn)
 
     -- Examine Self button (at bottom-right of panel)
-    local btnTitle = ehrSafeText("UI_HomeMedic_ExamineButton", "Examine Self")
+    local btnTitle = ehrSafeText("UI_EHR_ExamineButton", "Examine Self")
     local btnWidth = math.max(132, self:getTextWidth(btnTitle, UIFont.Small) + 18)
     local btnHeight = 20
     self.examineBtn = ISButton:new(
@@ -485,7 +486,7 @@ function EHR_MedicalMonitorUI:createChildren()
     self.examineBtn:instantiate()
     self.examineBtn.borderColor = self.Colors.border
     self.examineBtn.backgroundColor = {r=0.15, g=0.25, b=0.2, a=0.9}
-    self.examineBtn:setTooltip(getText("UI_HomeMedic_ExamineButton_tt") or "Examine your current health condition")
+    self.examineBtn:setTooltip(getText("UI_EHR_ExamineButton_tt") or "Examine your current health condition")
     self:addChild(self.examineBtn)
 end
 
@@ -615,6 +616,11 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
     end
 
     local function canIdentifyDisease(diseaseId)
+        -- HARMONIE: Unknown until diagnosed (HM_Diagnosis, Diagnosis tab)
+        if HM_Diagnosis and HM_Diagnosis.gated(diseaseId)
+                and not HM_Diagnosis.isDiagnosed(self.player, diseaseId, self.isRemoteExamination and self.remoteExamData or nil) then
+            return false
+        end
         if EHR.DiseaseFlyers
             and EHR.DiseaseFlyers.IsKnoxDiseaseId
             and EHR.DiseaseFlyers.IsKnoxDiseaseId(diseaseId)
@@ -670,10 +676,10 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
     if conditions.diseaseCount == 0 and conditions.bloodPercent >= 90 and not conditions.hasWoundInfection then
         if skillTier >= 3 then
             -- Expert/Master: detailed healthy status
-            dialogue = getText("UI_HomeMedic_Examine_HealthyDetailed") or "All vitals look good. Blood levels normal, no infections detected."
+            dialogue = getText("UI_EHR_Examine_HealthyDetailed") or "All vitals look good. Blood levels normal, no infections detected."
         else
             -- Lower skill: simple response
-            dialogue = getText("UI_HomeMedic_Examine_Healthy") or "I feel fine. Nothing seems wrong."
+            dialogue = getText("UI_EHR_Examine_Healthy") or "I feel fine. Nothing seems wrong."
         end
         return dialogue
     end
@@ -681,17 +687,17 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
     -- Blood loss detection
     if conditions.bloodPercent < 50 then
         if skillTier >= 2 then
-            local status = conditions.bloodPercent < 30 and ehrSafeText("UI_HomeMedic_TransfusionUrgent", "Need a transfusion urgently!") or ehrSafeText("UI_HomeMedic_BloodLossModerate", "Moderate blood loss.")
+            local status = conditions.bloodPercent < 30 and ehrSafeText("UI_EHR_TransfusionUrgent", "Need a transfusion urgently!") or ehrSafeText("UI_EHR_BloodLossModerate", "Moderate blood loss.")
             dialogue = ehrFormatText(
-                "UI_HomeMedic_Examine_BloodDetailed",
+                "UI_EHR_Examine_BloodDetailed",
                 "Blood volume at approximately %1%. %2",
                 math.floor(conditions.bloodPercent),
                 status
             )
         elseif skillTier >= 1 then
-            dialogue = conditions.bloodPercent < 30 and (getText("UI_HomeMedic_Examine_BloodCritical") or "I've lost too much blood! I need a transfusion!") or (getText("UI_HomeMedic_Examine_BloodLow") or "I've lost blood... I feel weak.")
+            dialogue = conditions.bloodPercent < 30 and (getText("UI_EHR_Examine_BloodCritical") or "I've lost too much blood! I need a transfusion!") or (getText("UI_EHR_Examine_BloodLow") or "I've lost blood... I feel weak.")
         else
-            dialogue = getText("UI_HomeMedic_Dialogue_Blood_Lightheaded") or "I feel lightheaded..."
+            dialogue = getText("UI_EHR_Dialogue_Blood_Lightheaded") or "I feel lightheaded..."
         end
         return dialogue
     end
@@ -701,16 +707,16 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
         if skillTier >= 3 then
             -- Expert: Full diagnosis
             dialogue = ehrFormatText(
-                "UI_HomeMedic_Examine_SepsisDetailed",
+                "UI_EHR_Examine_SepsisDetailed",
                 "Sepsis confirmed, Stage %1. Need IV antibiotics immediately!",
                 conditions.sepsisStage
             )
         elseif canIdentifyDisease("Sepsis") then
             -- Novice: Can identify sepsis
-            dialogue = getText("UI_HomeMedic_Examine_SepsisIdentified") or "I think I have blood poisoning... sepsis!"
+            dialogue = getText("UI_EHR_Examine_SepsisIdentified") or "I think I have blood poisoning... sepsis!"
         else
             -- Clueless: Vague symptoms
-            dialogue = getText("UI_HomeMedic_Examine_SepsisVague") or "I feel feverish and weak all over..."
+            dialogue = getText("UI_EHR_Examine_SepsisVague") or "I feel feverish and weak all over..."
         end
         return dialogue
     end
@@ -718,9 +724,9 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
     -- Wound infection detection
     if conditions.hasWoundInfection and conditions.diseaseCount <= 1 then
         if skillTier >= 1 then
-            dialogue = getText("UI_HomeMedic_Examine_WoundInfection") or "One of my wounds looks infected..."
+            dialogue = getText("UI_EHR_Examine_WoundInfection") or "One of my wounds looks infected..."
         else
-            dialogue = getText("UI_HomeMedic_Examine_SomethingWrong") or "Something doesn't feel right..."
+            dialogue = getText("UI_EHR_Examine_SomethingWrong") or "Something doesn't feel right..."
         end
         return dialogue
     end
@@ -737,16 +743,16 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
                 local identifiedText = joinDiseaseNames(identifiedNames)
                 local unknownCount = conditions.diseaseCount - #identifiedNames
                 if unknownCount > 0 then
-                    identifiedText = identifiedText .. ehrFormatText("UI_HomeMedic_UnknownCountSuffix", " (+%1 unknown)", unknownCount)
+                    identifiedText = identifiedText .. ehrFormatText("UI_EHR_UnknownCountSuffix", " (+%1 unknown)", unknownCount)
                 end
-                dialogue = ehrFormatText("UI_HomeMedic_Examine_DiseasesIdentified", "I can identify: %1.", identifiedText)
+                dialogue = ehrFormatText("UI_EHR_Examine_DiseasesIdentified", "I can identify: %1.", identifiedText)
             elseif skillTier >= 2 then
-                dialogue = getText("UI_HomeMedic_Examine_MultipleIssues") or "I have multiple health issues to deal with."
+                dialogue = getText("UI_EHR_Examine_MultipleIssues") or "I have multiple health issues to deal with."
             elseif diseaseKnownFromFlyer then
                 local displayName = getDiseaseDisplayName(disease.id)
-                dialogue = ehrFormatText("UI_HomeMedic_Examine_DiseaseIdentified", "I believe I have %1.", displayName)
+                dialogue = ehrFormatText("UI_EHR_Examine_DiseaseIdentified", "I believe I have %1.", displayName)
             else
-                dialogue = getText("UI_HomeMedic_Examine_FeelSick") or "I feel sick... but I can't tell what's wrong."
+                dialogue = getText("UI_EHR_Examine_FeelSick") or "I feel sick... but I can't tell what's wrong."
             end
         elseif disease then
             -- Single disease
@@ -756,21 +762,21 @@ function EHR_MedicalMonitorUI:generateExamineDialogue(skillTier, skillLevel, con
                 local displayName = getDiseaseDisplayName(disease.id)
                 local stage = disease.data.stage or 1
                 local severity = disease.data.severity or 1
-                dialogue = ehrFormatText("UI_HomeMedic_Examine_DiseaseDetailed", "Diagnosis: %1, Stage %2. Severity: %3/5.", displayName, stage, severity)
+                dialogue = ehrFormatText("UI_EHR_Examine_DiseaseDetailed", "Diagnosis: %1, Stage %2. Severity: %3/5.", displayName, stage, severity)
             elseif diseaseCanIdentify or diseaseKnownFromFlyer then
                 -- Novice or flyer knowledge: can identify disease, but not numeric details.
                 local displayName = getDiseaseDisplayName(disease.id)
-                dialogue = ehrFormatText("UI_HomeMedic_Examine_DiseaseIdentified", "I believe I have %1.", displayName)
+                dialogue = ehrFormatText("UI_EHR_Examine_DiseaseIdentified", "I believe I have %1.", displayName)
             else
                 -- Clueless: Vague
-                dialogue = getText("UI_HomeMedic_Examine_DiseaseVague") or "I think I might be sick with something..."
+                dialogue = getText("UI_EHR_Examine_DiseaseVague") or "I think I might be sick with something..."
             end
         end
         return dialogue
     end
 
     -- Fallback: something wrong but can't identify
-    dialogue = getText("UI_HomeMedic_Examine_SomethingWrong") or "Something doesn't feel right..."
+    dialogue = getText("UI_EHR_Examine_SomethingWrong") or "Something doesn't feel right..."
     return dialogue
 end
 
@@ -1046,10 +1052,10 @@ function EHR_MedicalMonitorUI:updateCachedData()
 
         if coldStage > 0 then
             local coldWarnings = {
-                [1] = {name = getText("UI_HomeMedic_Temp_Chilly") or "Chilly", severity = 1, desc = getText("UI_HomeMedic_Temp_ChillyDesc") or "Feeling cold"},
-                [2] = {name = getText("UI_HomeMedic_Temp_Cold") or "Cold", severity = 2, desc = getText("UI_HomeMedic_Temp_ColdDesc") or "Getting cold, find warmth"},
-                [3] = {name = getText("UI_HomeMedic_Temp_VeryCold") or "Very Cold", severity = 3, desc = getText("UI_HomeMedic_Temp_VeryColdDesc") or "Dangerously cold!"},
-                [4] = {name = getText("UI_HomeMedic_Temp_HypoRisk") or "Hypothermia Risk", severity = 4, desc = getText("UI_HomeMedic_Temp_HypoRiskDesc") or "CRITICAL: Get warm immediately!"},
+                [1] = {name = getText("UI_EHR_Temp_Chilly") or "Chilly", severity = 1, desc = getText("UI_EHR_Temp_ChillyDesc") or "Feeling cold"},
+                [2] = {name = getText("UI_EHR_Temp_Cold") or "Cold", severity = 2, desc = getText("UI_EHR_Temp_ColdDesc") or "Getting cold, find warmth"},
+                [3] = {name = getText("UI_EHR_Temp_VeryCold") or "Very Cold", severity = 3, desc = getText("UI_EHR_Temp_VeryColdDesc") or "Dangerously cold!"},
+                [4] = {name = getText("UI_EHR_Temp_HypoRisk") or "Hypothermia Risk", severity = 4, desc = getText("UI_EHR_Temp_HypoRiskDesc") or "CRITICAL: Get warm immediately!"},
             }
             local warning = coldWarnings[coldStage]
             if warning then
@@ -1067,10 +1073,10 @@ function EHR_MedicalMonitorUI:updateCachedData()
 
         if hotStage > 0 and not feverOnly then
             local hotWarnings = {
-                [1] = {name = getText("UI_HomeMedic_Temp_Warm") or "Warm", severity = 1, desc = getText("UI_HomeMedic_Temp_WarmDesc") or "Feeling warm"},
-                [2] = {name = getText("UI_HomeMedic_Temp_Hot") or "Hot", severity = 2, desc = getText("UI_HomeMedic_Temp_HotDesc") or "Getting hot, find shade"},
-                [3] = {name = getText("UI_HomeMedic_Temp_VeryHot") or "Very Hot", severity = 3, desc = getText("UI_HomeMedic_Temp_VeryHotDesc") or "Dangerously hot!"},
-                [4] = {name = getText("UI_HomeMedic_Temp_HeatRisk") or "Heat Exhaustion Risk", severity = 4, desc = getText("UI_HomeMedic_Temp_HeatRiskDesc") or "CRITICAL: Cool down immediately!"},
+                [1] = {name = getText("UI_EHR_Temp_Warm") or "Warm", severity = 1, desc = getText("UI_EHR_Temp_WarmDesc") or "Feeling warm"},
+                [2] = {name = getText("UI_EHR_Temp_Hot") or "Hot", severity = 2, desc = getText("UI_EHR_Temp_HotDesc") or "Getting hot, find shade"},
+                [3] = {name = getText("UI_EHR_Temp_VeryHot") or "Very Hot", severity = 3, desc = getText("UI_EHR_Temp_VeryHotDesc") or "Dangerously hot!"},
+                [4] = {name = getText("UI_EHR_Temp_HeatRisk") or "Heat Exhaustion Risk", severity = 4, desc = getText("UI_EHR_Temp_HeatRiskDesc") or "CRITICAL: Cool down immediately!"},
             }
             local warning = hotWarnings[hotStage]
             if warning then
@@ -1128,9 +1134,9 @@ end
 -- Trend constants (ASCII for font compatibility)
 -- Text will be fetched from translation at runtime
 EHR_MedicalMonitorUI.TrendArrows = {
-    improving = { symbol = "[^]", textKey = "UI_HomeMedic_Trend_Improving", fallback = "Improving" },
-    worsening = { symbol = "[v]", textKey = "UI_HomeMedic_Trend_Worsening", fallback = "Worsening" },
-    stable = { symbol = "[-]", textKey = "UI_HomeMedic_Trend_Stable", fallback = "Stable" },
+    improving = { symbol = "[^]", textKey = "UI_EHR_Trend_Improving", fallback = "Improving" },
+    worsening = { symbol = "[v]", textKey = "UI_EHR_Trend_Worsening", fallback = "Worsening" },
+    stable = { symbol = "[-]", textKey = "UI_EHR_Trend_Stable", fallback = "Stable" },
 }
 
 -- Hysteresis settings to prevent flicker
@@ -1318,9 +1324,9 @@ function EHR_MedicalMonitorUI:prerender()
         bloodType = self.cachedData.blood.bloodType
     end
 
-    local titleText = getText("UI_HomeMedic_MonitorTitle")
+    local titleText = getText("UI_EHR_MonitorTitle")
     if self.isRemoteExamination and self.targetPlayerName then
-        titleText = ehrFormatText("UI_HomeMedic_Examining", "Examining: %1", self.targetPlayerName)
+        titleText = ehrFormatText("UI_EHR_Examining", "Examining: %1", self.targetPlayerName)
     end
 
     local bloodTypeRight = self.width - 85
@@ -1408,7 +1414,7 @@ function EHR_MedicalMonitorUI:renderDoseAlertsSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_DoseAlerts"), padding, y + 2, c.warning.r, c.warning.g, c.warning.b, c.warning.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_DoseAlerts"), padding, y + 2, c.warning.r, c.warning.g, c.warning.b, c.warning.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT + 4
 
     for _, status in ipairs(urgentAlerts) do
@@ -1420,9 +1426,9 @@ function EHR_MedicalMonitorUI:renderDoseAlertsSection(startY)
             alertColor = c.danger
             icon = "X"
             if status.hoursOverdue < 1 then
-                alertText = ehrFormatText("UI_HomeMedic_DoseAlertOverdueMinutes", "%1 - OVERDUE %2m!", status.medicationName, string.format("%.0f", status.hoursOverdue * 60))
+                alertText = ehrFormatText("UI_EHR_DoseAlertOverdueMinutes", "%1 - OVERDUE %2m!", status.medicationName, string.format("%.0f", status.hoursOverdue * 60))
             else
-                alertText = ehrFormatText("UI_HomeMedic_DoseAlertOverdueHours", "%1 - OVERDUE %2h!", status.medicationName, string.format("%.1f", status.hoursOverdue))
+                alertText = ehrFormatText("UI_EHR_DoseAlertOverdueHours", "%1 - OVERDUE %2h!", status.medicationName, string.format("%.1f", status.hoursOverdue))
             end
             -- Flash effect
             local flash = (math.sin(self.flashPhase * 2) + 1) / 2
@@ -1433,7 +1439,7 @@ function EHR_MedicalMonitorUI:renderDoseAlertsSection(startY)
                 a = 1
             }
         else
-            alertText = ehrFormatText("UI_HomeMedic_DoseAlertDueMinutes", "%1 - Due in %2m", status.medicationName, string.format("%.0f", status.hoursUntilNextDose * 60))
+            alertText = ehrFormatText("UI_EHR_DoseAlertDueMinutes", "%1 - Due in %2m", status.medicationName, string.format("%.0f", status.hoursUntilNextDose * 60))
         end
 
         local rightColumnX = self.width - 95
@@ -1465,7 +1471,7 @@ function EHR_MedicalMonitorUI:renderBloodSection(startY)
     self:drawRect(5, y, self.width - 10, 126, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
 
     -- Section title
-    self:drawText(getText("UI_HomeMedic_BloodComposition"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_BloodComposition"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + 32
 
     -- Get blood data (use stored values from EHR_Blood system)
@@ -1519,9 +1525,9 @@ function EHR_MedicalMonitorUI:renderBloodSection(startY)
 
     -- Blood stats text
     local bloodPercent = (actualBloodVolume / maxVolume) * 100
-    local bloodText = ehrFormatText("UI_HomeMedic_BloodVolume", "Blood: %1mL (%2%)", math.floor(actualBloodVolume), string.format("%.0f", bloodPercent))
+    local bloodText = ehrFormatText("UI_EHR_BloodVolume", "Blood: %1mL (%2%)", math.floor(actualBloodVolume), string.format("%.0f", bloodPercent))
     local salinePercentDisplay = salineRatio * 100
-    local salineText = ehrFormatText("UI_HomeMedic_SalineVolume", "Saline: %1mL (%2%)", math.floor(transfusedSaline), string.format("%.0f", salinePercentDisplay))
+    local salineText = ehrFormatText("UI_EHR_SalineVolume", "Saline: %1mL (%2%)", math.floor(transfusedSaline), string.format("%.0f", salinePercentDisplay))
 
     self:drawText(self:truncateText(bloodText, self.width - padding * 2 - 90, UIFont.Small), padding, y, c.blood.r, c.blood.g, c.blood.b, c.blood.a, UIFont.Small)
 
@@ -1559,13 +1565,13 @@ end
 function EHR_MedicalMonitorUI:getSalineStatus(ratio)
     local c = self.Colors
     if ratio >= 0.60 then
-        return getText("UI_HomeMedic_SalineStatus_Lethal"), c.critical
+        return getText("UI_EHR_SalineStatus_Lethal"), c.critical
     elseif ratio >= 0.50 then
-        return getText("UI_HomeMedic_SalineStatus_Danger"), c.danger
+        return getText("UI_EHR_SalineStatus_Danger"), c.danger
     elseif ratio >= 0.40 then
-        return getText("UI_HomeMedic_SalineStatus_Warning"), c.warning
+        return getText("UI_EHR_SalineStatus_Warning"), c.warning
     else
-        return getText("UI_HomeMedic_SalineStatus_Safe"), c.safe
+        return getText("UI_EHR_SalineStatus_Safe"), c.safe
     end
 end
 
@@ -1588,7 +1594,7 @@ function EHR_MedicalMonitorUI:renderNarcoticsSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_ActiveSubstances"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_ActiveSubstances"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT
 
     -- Render withdrawal warning first if present
@@ -1602,14 +1608,14 @@ function EHR_MedicalMonitorUI:renderNarcoticsSection(startY)
             b = c.withdrawal.b * flash + 0.1 * (1 - flash),
             a = 1
         }
-        local wdText = ehrSafeText("UI_HomeMedic_Withdrawal", "! WITHDRAWAL: ") .. withdrawal.drugName
+        local wdText = ehrSafeText("UI_EHR_Withdrawal", "! WITHDRAWAL: ") .. withdrawal.drugName
         local wdMaxWidth = self.width - padding * 2
         if withdrawal.blocksHealing then
             wdMaxWidth = wdMaxWidth - 125
         end
         self:drawText(self:truncateText(wdText, wdMaxWidth, UIFont.Small), padding + 5, y, wdColor.r, wdColor.g, wdColor.b, wdColor.a, UIFont.Small)
         if withdrawal.blocksHealing then
-            self:drawRightTextFit(ehrSafeText("UI_HomeMedic_BlocksHealing", "[Slows Healing]"), self.width - padding, y, c.danger.r, c.danger.g, c.danger.b, c.danger.a, UIFont.Small, self.width - 130)
+            self:drawRightTextFit(ehrSafeText("UI_EHR_BlocksHealing", "[Slows Healing]"), self.width - padding, y, c.danger.r, c.danger.g, c.danger.b, c.danger.a, UIFont.Small, self.width - 130)
         end
         y = y + self.LINE_HEIGHT
     end
@@ -1642,7 +1648,7 @@ function EHR_MedicalMonitorUI:renderOtherSubstancesSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_OtherSubstances") or "OTHER DETECTED SUBSTANCES", padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_OtherSubstances") or "OTHER DETECTED SUBSTANCES", padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT
 
     -- Render each detected substance
@@ -1759,8 +1765,8 @@ function EHR_MedicalMonitorUI:renderDiseasesSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_ActiveConditions"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
-    self:drawRightTextFit(ehrFormatText("UI_HomeMedic_ActiveCount", "[%1 Active]", totalConditions), self.width - padding, y + 2, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, self.width - 120)
+    self:drawText(getText("UI_EHR_ActiveConditions"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawRightTextFit(ehrFormatText("UI_EHR_ActiveCount", "[%1 Active]", totalConditions), self.width - padding, y + 2, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, self.width - 120)
     y = y + self.SECTION_HEADER_HEIGHT
 
     -- Render temperature warnings FIRST (they're urgent)
@@ -1774,7 +1780,7 @@ function EHR_MedicalMonitorUI:renderDiseasesSection(startY)
     end
 
     if diseaseCount == 0 and tempWarningCount == 0 and not corpseExposureLevel then
-        self:drawText(getText("UI_HomeMedic_NoConditions"), padding + 10, y, c.safe.r, c.safe.g, c.safe.b, c.safe.a, UIFont.Small)
+        self:drawText(getText("UI_EHR_NoConditions"), padding + 10, y, c.safe.r, c.safe.g, c.safe.b, c.safe.a, UIFont.Small)
         return y + 20
     end
 
@@ -1793,7 +1799,7 @@ function EHR_MedicalMonitorUI:renderCorpseExposureSection(startY, level)
     local y = startY
     local c = self.Colors
     local padding = 10
-    local label = (getText and getText("UI_HomeMedic_CorpseExposure")) or "Corpse Exposure"
+    local label = (getText and getText("UI_EHR_CorpseExposure")) or "Corpse Exposure"
     local color = {1, 1, 1}
     if EHR.CorpseSickness and EHR.CorpseSickness.GetExposureColor then
         color = EHR.CorpseSickness.GetExposureColor(level) or color
@@ -1860,26 +1866,26 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
     -- Note: getText() returns the key itself if not found, so we check for that
     if diseaseData.isWoundInfection then
         local partCount = diseaseData.infectedCount or 1
-        local partText = partCount > 1 and ehrFormatText("UI_HomeMedic_WoundCountSuffix", " (%1 wounds)", partCount) or ""
-        local woundName = getText("UI_HomeMedic_WoundInfection")
-        if not woundName or woundName == "UI_HomeMedic_WoundInfection" then woundName = "Wound Infection" end
+        local partText = partCount > 1 and ehrFormatText("UI_EHR_WoundCountSuffix", " (%1 wounds)", partCount) or ""
+        local woundName = getText("UI_EHR_WoundInfection")
+        if not woundName or woundName == "UI_EHR_WoundInfection" then woundName = "Wound Infection" end
         diseaseDef = {
             name = woundName .. partText,
-            symptoms = {ehrSafeText("UI_HomeMedic_Symptom_Pain", "Pain"), ehrSafeText("UI_HomeMedic_Symptom_Swelling", "Swelling"), ehrSafeText("UI_HomeMedic_Symptom_Redness", "Redness"), ehrSafeText("UI_HomeMedic_Symptom_Fever", "Fever")},
+            symptoms = {ehrSafeText("UI_EHR_Symptom_Pain", "Pain"), ehrSafeText("UI_EHR_Symptom_Swelling", "Swelling"), ehrSafeText("UI_EHR_Symptom_Redness", "Redness"), ehrSafeText("UI_EHR_Symptom_Fever", "Fever")},
         }
     elseif diseaseData.isSepsis then
-        local sepsisName = getText("UI_HomeMedic_Sepsis")
-        if not sepsisName or sepsisName == "UI_HomeMedic_Sepsis" then sepsisName = "Sepsis" end
+        local sepsisName = getText("UI_EHR_Sepsis")
+        if not sepsisName or sepsisName == "UI_EHR_Sepsis" then sepsisName = "Sepsis" end
         diseaseDef = {
             name = sepsisName,
-            symptoms = {ehrSafeText("UI_HomeMedic_Symptom_Fever", "Fever"), ehrSafeText("UI_HomeMedic_Symptom_RapidHeartbeat", "Rapid heartbeat"), ehrSafeText("UI_HomeMedic_Symptom_Confusion", "Confusion"), ehrSafeText("UI_HomeMedic_Symptom_ExtremePain", "Extreme pain")},
+            symptoms = {ehrSafeText("UI_EHR_Symptom_Fever", "Fever"), ehrSafeText("UI_EHR_Symptom_RapidHeartbeat", "Rapid heartbeat"), ehrSafeText("UI_EHR_Symptom_Confusion", "Confusion"), ehrSafeText("UI_EHR_Symptom_ExtremePain", "Extreme pain")},
         }
     elseif diseaseData.isKnox then
-        local knoxName = getText("UI_HomeMedic_KnoxInfection")
-        if not knoxName or knoxName == "UI_HomeMedic_KnoxInfection" then knoxName = "Knox Infection" end
+        local knoxName = getText("UI_EHR_KnoxInfection")
+        if not knoxName or knoxName == "UI_EHR_KnoxInfection" then knoxName = "Knox Infection" end
         diseaseDef = {
             name = knoxName,
-            symptoms = {ehrSafeText("UI_HomeMedic_Symptom_Fever", "Fever"), ehrSafeText("UI_HomeMedic_Symptom_Nausea", "Nausea"), ehrSafeText("UI_HomeMedic_Symptom_Weakness", "Weakness"), ehrSafeText("UI_HomeMedic_Symptom_PaleSkin", "Pale skin")},
+            symptoms = {ehrSafeText("UI_EHR_Symptom_Fever", "Fever"), ehrSafeText("UI_EHR_Symptom_Nausea", "Nausea"), ehrSafeText("UI_EHR_Symptom_Weakness", "Weakness"), ehrSafeText("UI_EHR_Symptom_PaleSkin", "Pale skin")},
         }
     end
 
@@ -1912,8 +1918,18 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
         end
     end
 
+    -- HARMONIE: Unknown until diagnosed (HM_Diagnosis, Diagnosis tab)
+    local hmId = diseaseData.isKnox and "knox_infection" or diseaseId
+    if canIdentify and HM_Diagnosis and HM_Diagnosis.gated(hmId)
+            and not HM_Diagnosis.isDiagnosed(self.player, hmId, self.isRemoteExamination and self.remoteExamData or nil) then
+        canIdentify = false
+        if EHR.DiseaseFlyers and EHR.DiseaseFlyers.GetUnknownDiseaseDisplay then
+            unknownInfo = EHR.DiseaseFlyers.GetUnknownDiseaseDisplay(hmId)
+        end
+    end
+
     if not canIdentify then
-        displayName = (unknownInfo and unknownInfo.displayName) or (getText("UI_HomeMedic_DiseaseUnknown") or "Unknown Illness")
+        displayName = (unknownInfo and unknownInfo.displayName) or (getText("UI_EHR_DiseaseUnknown") or "Unknown Illness")
     else
         displayName = diseaseDef and diseaseDef.name or diseaseId
         if diseaseData.isKnox then
@@ -1941,14 +1957,14 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
     y = y + self.LINE_HEIGHT
 
     if diseaseData.isKnox and canIdentify then
-        self:drawText(ehrSafeText("UI_HomeMedic_NoCureDetail", "There is no cure"), padding + 5, y,
+        self:drawText(ehrSafeText("UI_EHR_NoCureDetail", "There is no cure"), padding + 5, y,
             c.danger.r, c.danger.g, c.danger.b, c.danger.a, UIFont.Small)
     elseif showSeverity then
-        self:drawText(getText("UI_HomeMedic_Severity") .. severityBar .. " " .. severity .. "/5", padding + 5, y,
+        self:drawText(getText("UI_EHR_Severity") .. severityBar .. " " .. severity .. "/5", padding + 5, y,
             severityColor.r, severityColor.g, severityColor.b, severityColor.a, UIFont.Small)
     else
         -- Show vague indicator for clueless players
-        self:drawText(getText("UI_HomeMedic_UnknownSeverity") or "Severity: ???", padding + 5, y,
+        self:drawText(getText("UI_EHR_UnknownSeverity") or "Severity: ???", padding + 5, y,
             c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     end
     y = y + self.LINE_HEIGHT
@@ -1964,17 +1980,17 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
 
     -- Unknown disease description (flyer-gated)
     if not canIdentify then
-        local descText = unknownInfo and unknownInfo.description or (getText("UI_HomeMedic_SomethingWrong") or "Something feels wrong...")
+        local descText = unknownInfo and unknownInfo.description or (getText("UI_EHR_SomethingWrong") or "Something feels wrong...")
         self:drawText(descText, padding + 5, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
         y = y + self.LINE_HEIGHT
-        local requiresText = getText("UI_HomeMedic_DiseaseRequiresFlyer") or "(Read the disease flyer to identify)"
+        local requiresText = getText("UI_EHR_DiseaseRequiresFlyer") or "(Read the disease flyer to identify)"
         self:drawText(requiresText, padding + 5, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
         y = y + self.LINE_HEIGHT
     end
 
     -- Symptoms (visible only when identified and disease has symptoms defined)
     if showSymptoms and diseaseDef and diseaseDef.symptoms then
-        local symptomText = getText("UI_HomeMedic_Symptoms") or "Symptoms: "
+        local symptomText = getText("UI_EHR_Symptoms") or "Symptoms: "
         symptomText = symptomText .. table.concat(diseaseDef.symptoms, ", ")
         -- Word-wrap symptoms across multiple lines
         local maxWidth = self.width - padding - 25
@@ -2011,7 +2027,7 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
 
         -- Treatment status (Tier 3+)
         if showTreatmentStatus then
-            local treatmentStatus = diseaseData.treating and ehrSafeText("UI_HomeMedic_Status_Treating", "TREATING") or ehrSafeText("UI_HomeMedic_Status_Untreated", "UNTREATED")
+            local treatmentStatus = diseaseData.treating and ehrSafeText("UI_EHR_Status_Treating", "TREATING") or ehrSafeText("UI_EHR_Status_Untreated", "UNTREATED")
             local statusColor = diseaseData.treating and c.safe or c.danger
             self:drawRightTextFit(treatmentStatus, self.width - padding, y, statusColor.r, statusColor.g, statusColor.b, statusColor.a, UIFont.Small, statusColumnX)
         end
@@ -2046,7 +2062,7 @@ function EHR_MedicalMonitorUI:renderTemperatureWarning(startY, warning)
     local sevColor = severityColors[warning.severity] or c.text
 
     -- Icon based on type (ASCII for font compatibility)
-    local icon = warning.type == "cold" and ehrSafeText("UI_HomeMedic_ColdTag", "[COLD]") or ehrSafeText("UI_HomeMedic_HotTag", "[HOT]")
+    local icon = warning.type == "cold" and ehrSafeText("UI_EHR_ColdTag", "[COLD]") or ehrSafeText("UI_EHR_HotTag", "[HOT]")
 
     -- Draw warning name with icon
     local displayText = icon .. " " .. warning.name
@@ -2063,7 +2079,7 @@ function EHR_MedicalMonitorUI:renderTemperatureWarning(startY, warning)
     y = y + self.LINE_HEIGHT
     -- If at danger stage (4), show time in danger zone
     if warning.stage >= 4 and warning.dangerTime and warning.dangerTime > 0 then
-        local dangerText = ehrFormatText("UI_HomeMedic_DangerZoneMinutes", "  In danger zone: %1 min", string.format("%.1f", warning.dangerTime * 60))
+        local dangerText = ehrFormatText("UI_EHR_DangerZoneMinutes", "  In danger zone: %1 min", string.format("%.1f", warning.dangerTime * 60))
         self:drawText(dangerText, padding, y, c.critical.r, c.critical.g, c.critical.b, c.critical.a, UIFont.Small)
         y = y + 16
     end
@@ -2150,12 +2166,12 @@ function EHR_MedicalMonitorUI:renderMedicationsSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_ActiveMedications"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
-    self:drawRightTextFit(ehrFormatText("UI_HomeMedic_ActiveCount", "[%1 Active]", medCount), self.width - padding, y + 2, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, self.width - 120)
+    self:drawText(getText("UI_EHR_ActiveMedications"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawRightTextFit(ehrFormatText("UI_EHR_ActiveCount", "[%1 Active]", medCount), self.width - padding, y + 2, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, self.width - 120)
     y = y + self.SECTION_HEADER_HEIGHT + 4
 
     if medCount == 0 then
-        self:drawText(getText("UI_HomeMedic_NoMedications"), padding + 10, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+        self:drawText(getText("UI_EHR_NoMedications"), padding + 10, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
         return y + 20
     end
 
@@ -2180,7 +2196,7 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
     elseif getText then
         -- Try to find translation by converting displayName to key
         local keyName = displayName:gsub("[%s%-%&%(%)]", ""):gsub("%.", "")
-        local autoKey = "UI_HomeMedic_Med_" .. keyName
+        local autoKey = "UI_EHR_Med_" .. keyName
         local translated = getText(autoKey)
         if translated and translated ~= autoKey then
             displayName = translated
@@ -2211,7 +2227,7 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
 
     -- Dose count on right side
     if totalDoses > 0 then
-        local doseText = ehrFormatText("UI_HomeMedic_DoseCount", "Dose %1/%2", doseCount, totalDoses)
+        local doseText = ehrFormatText("UI_EHR_DoseCount", "Dose %1/%2", doseCount, totalDoses)
         local doseMinX = self.width - 110
         local doseMaxWidth = (self.width - padding) - doseMinX
         if self:getTextWidth(doseText, UIFont.Small) > doseMaxWidth then
@@ -2222,7 +2238,7 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
     y = y + self.LINE_HEIGHT
     -- Treatment progress (only for disease treatment, not symptom relief)
     if isTreatingDisease and hoursRemaining > 0 then
-        local timeText = ehrFormatText("UI_HomeMedic_TimeLeft", "%1h left", string.format("%.1f", hoursRemaining))
+        local timeText = ehrFormatText("UI_EHR_TimeLeft", "%1h left", string.format("%.1f", hoursRemaining))
         self:drawText(timeText, padding + 5, y, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
         y = y + self.LINE_HEIGHT
 
@@ -2234,9 +2250,9 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
         y = y + 16
     else
         -- Symptom relief only - show status text
-        local reliefText = getText("UI_HomeMedic_SymptomRelief")
+        local reliefText = getText("UI_EHR_SymptomRelief")
         if isDoseActive and hoursActiveRemaining > 0 then
-            reliefText = ehrFormatText("UI_HomeMedic_SymptomReliefTimeLeft", "Symptom relief: %1h left", string.format("%.1f", hoursActiveRemaining))
+            reliefText = ehrFormatText("UI_EHR_SymptomReliefTimeLeft", "Symptom relief: %1h left", string.format("%.1f", hoursActiveRemaining))
         end
         self:drawText(reliefText, padding + 5, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
         y = y + self.LINE_HEIGHT
@@ -2250,9 +2266,9 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
             -- Overdue - show warning
             retakeColor = c.danger
             if hoursOverdue < 1 then
-                retakeText = ehrFormatText("UI_HomeMedic_RetakeOverdueMinutes", "RETAKE NOW! (%1m overdue)", string.format("%.0f", hoursOverdue * 60))
+                retakeText = ehrFormatText("UI_EHR_RetakeOverdueMinutes", "RETAKE NOW! (%1m overdue)", string.format("%.0f", hoursOverdue * 60))
             else
-                retakeText = ehrFormatText("UI_HomeMedic_RetakeOverdueHours", "RETAKE NOW! (%1h overdue)", string.format("%.1f", hoursOverdue))
+                retakeText = ehrFormatText("UI_EHR_RetakeOverdueHours", "RETAKE NOW! (%1h overdue)", string.format("%.1f", hoursOverdue))
             end
             -- Flash effect for urgency
             local flash = (math.sin(self.flashPhase * 2) + 1) / 2
@@ -2265,10 +2281,10 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
         elseif hoursUntilNextDose < 0.5 then
             -- Almost time
             retakeColor = c.warning
-            retakeText = ehrFormatText("UI_HomeMedic_RetakeIn", "Retake in %1m", string.format("%.0f", hoursUntilNextDose * 60))
+            retakeText = ehrFormatText("UI_EHR_RetakeIn", "Retake in %1m", string.format("%.0f", hoursUntilNextDose * 60))
         else
             -- On schedule
-            retakeText = ehrFormatText("UI_HomeMedic_NextDose", "Next dose in %1h", string.format("%.1f", hoursUntilNextDose))
+            retakeText = ehrFormatText("UI_EHR_NextDose", "Next dose in %1h", string.format("%.1f", hoursUntilNextDose))
         end
 
         self:drawText(retakeText, padding + 10, y, retakeColor.r, retakeColor.g, retakeColor.b, retakeColor.a, UIFont.Small)
@@ -2279,11 +2295,11 @@ function EHR_MedicalMonitorUI:renderMedicationEntry(startY, medData)
 end
 
 function EHR_MedicalMonitorUI:getTierName(tier)
-    if tier == 0 then return ehrSafeText("UI_HomeMedic_TierBasic", "Basic")
-    elseif tier == 1 then return ehrSafeText("UI_HomeMedic_TierOTC", "OTC")
-    elseif tier == 2 then return ehrSafeText("UI_HomeMedic_TierRx", "Rx")
-    elseif tier == 3 then return ehrSafeText("UI_HomeMedic_TierClinical", "Clinical")
-    else return ehrSafeText("UI_HomeMedic_TierUnknown", "Unknown") end
+    if tier == 0 then return ehrSafeText("UI_EHR_TierBasic", "Basic")
+    elseif tier == 1 then return ehrSafeText("UI_EHR_TierOTC", "OTC")
+    elseif tier == 2 then return ehrSafeText("UI_EHR_TierRx", "Rx")
+    elseif tier == 3 then return ehrSafeText("UI_EHR_TierClinical", "Clinical")
+    else return ehrSafeText("UI_EHR_TierUnknown", "Unknown") end
 end
 
 -- ============================================
@@ -2300,11 +2316,11 @@ function EHR_MedicalMonitorUI:renderInteractionsSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_DrugInteractions"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_DrugInteractions"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT
 
     if #interactions == 0 then
-        self:drawText(getText("UI_HomeMedic_NoInteractions"), padding + 10, y, c.safe.r, c.safe.g, c.safe.b, c.safe.a, UIFont.Small)
+        self:drawText(getText("UI_EHR_NoInteractions"), padding + 10, y, c.safe.r, c.safe.g, c.safe.b, c.safe.a, UIFont.Small)
         return y + 20
     end
 
@@ -2337,7 +2353,7 @@ function EHR_MedicalMonitorUI:checkDrugInteractions()
     if hasTier3Count >= 2 then
         table.insert(interactions, {
             severity = "warning",
-            message = ehrSafeText("UI_HomeMedic_Interaction_ClinicalStack", "Multiple Tier 3 meds: Side effects may stack")
+            message = ehrSafeText("UI_EHR_Interaction_ClinicalStack", "Multiple Tier 3 meds: Side effects may stack")
         })
     end
 
@@ -2361,7 +2377,7 @@ function EHR_MedicalMonitorUI:renderSideEffectsSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_SideEffects"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_SideEffects"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT
 
     for _, effect in ipairs(sideEffects) do
@@ -2371,7 +2387,7 @@ function EHR_MedicalMonitorUI:renderSideEffectsSection(startY)
             displayName = EHR.Medication.GetSideEffectDisplayName(effect.effectId, effect)
         elseif getText and effect.effectId then
             -- Try the side effect translation key (UI_HomeMedic_SideEffect_Nausea, etc.)
-            local key = "UI_HomeMedic_SideEffect_" .. effect.effectId:gsub("^%l", string.upper):gsub("_(%l)", function(c) return c:upper() end)
+            local key = "UI_SideEffect_" .. effect.effectId:gsub("^%l", string.upper):gsub("_(%l)", function(c) return c:upper() end)
             local translated = getText(key)
             if translated and translated ~= key then
                 displayName = translated
@@ -2398,7 +2414,7 @@ function EHR_MedicalMonitorUI:renderHealingSection(startY)
 
     -- Section header
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_HealingStatus"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_HealingStatus"), padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT
 
     local blood = self.cachedData.blood or {}
@@ -2406,11 +2422,11 @@ function EHR_MedicalMonitorUI:renderHealingSection(startY)
     local blockReason = blood.healBlockReason or "unknown"
 
     if canHeal then
-        self:drawText(getText("UI_HomeMedic_HealingActive"), padding + 10, y, c.safe.r, c.safe.g, c.safe.b, c.safe.a, UIFont.Small)
+        self:drawText(getText("UI_EHR_HealingActive"), padding + 10, y, c.safe.r, c.safe.g, c.safe.b, c.safe.a, UIFont.Small)
     else
-        self:drawText(getText("UI_HomeMedic_HealingBlocked"), padding + 10, y, c.danger.r, c.danger.g, c.danger.b, c.danger.a, UIFont.Small)
+        self:drawText(getText("UI_EHR_HealingBlocked"), padding + 10, y, c.danger.r, c.danger.g, c.danger.b, c.danger.a, UIFont.Small)
         y = y + self.LINE_HEIGHT
-        self:drawText(getText("UI_HomeMedic_Reason") .. blockReason, padding + 15, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+        self:drawText(getText("UI_EHR_Reason") .. blockReason, padding + 15, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
     end
 
     return y + 20
@@ -2433,12 +2449,12 @@ function EHR_MedicalMonitorUI:renderLifestyleBonusesSection(startY)
 
     -- Section header - always show when Lifestyle is detected
     self:drawRect(5, y, self.width - 10, self.SECTION_HEADER_HEIGHT, c.sectionBg.a, c.sectionBg.r, c.sectionBg.g, c.sectionBg.b)
-    self:drawText(getText("UI_HomeMedic_HealingBonuses") or "LIFESTYLE BONUSES", padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
+    self:drawText(getText("UI_EHR_HealingBonuses") or "LIFESTYLE BONUSES", padding, y + 2, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     y = y + self.SECTION_HEADER_HEIGHT
 
     -- If no bonuses active, show hint
     if not bonusDetails.isActive then
-        local hintText = getText("UI_HomeMedic_NoBonuses") or "Take a bath or rest comfortably for healing bonuses"
+        local hintText = getText("UI_EHR_NoBonuses") or "Take a bath or rest comfortably for healing bonuses"
         self:drawText(hintText, padding + 10, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
         return y + 20
     end
@@ -2461,12 +2477,12 @@ function EHR_MedicalMonitorUI:renderLifestyleBonusesSection(startY)
     -- Total bonus/penalty
     local totalColor = bonusDetails.totalBonus >= 0 and c.safe or c.danger
     local totalSign = bonusDetails.totalBonus >= 0 and "+" or ""
-    local totalText = string.format("%s %s%d%%", getText("UI_HomeMedic_TotalBonus") or "Total:", totalSign, math.floor(bonusDetails.totalBonus * 100))
+    local totalText = string.format("%s %s%d%%", getText("UI_EHR_TotalBonus") or "Total:", totalSign, math.floor(bonusDetails.totalBonus * 100))
     self:drawText(totalText, padding + 10, y, totalColor.r, totalColor.g, totalColor.b, totalColor.a, UIFont.Small)
     y = y + self.LINE_HEIGHT
 
     -- Note about supported diseases
-    local noteText = getText("UI_HomeMedic_BonusNote") or "(Affects disease recovery speed)"
+    local noteText = getText("UI_EHR_BonusNote") or "(Affects disease recovery speed)"
     self:drawText(noteText, padding + 10, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
 
     return y + 20
@@ -2512,8 +2528,8 @@ function EHR_MedicalMonitorUI:renderCompactView(startY)
     y = y + barHeight + 8
 
     -- Quick blood stats
-    local bloodText = ehrFormatText("UI_HomeMedic_Compact_Blood", "%1% Blood", string.format("%.0f", bloodPercent * 100))
-    local salineText = ehrFormatText("UI_HomeMedic_Compact_Saline", "%1% Saline", string.format("%.0f", salineRatio * 100))
+    local bloodText = ehrFormatText("UI_EHR_Compact_Blood", "%1% Blood", string.format("%.0f", bloodPercent * 100))
+    local salineText = ehrFormatText("UI_EHR_Compact_Saline", "%1% Saline", string.format("%.0f", salineRatio * 100))
     self:drawText(bloodText, padding, y, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Small)
     self:drawRightTextFit(salineText, contentRight, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, padding + 150)
     y = y + self.LINE_HEIGHT
@@ -2536,8 +2552,8 @@ function EHR_MedicalMonitorUI:renderCompactView(startY)
         end
     end
 
-    self:drawText(ehrFormatText("UI_HomeMedic_Compact_Conditions", "%1 Conditions", diseaseCount), padding, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
-    self:drawRightTextFit(ehrFormatText("UI_HomeMedic_Compact_Medications", "%1 Meds", medCount), contentRight, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, padding + 150)
+    self:drawText(ehrFormatText("UI_EHR_Compact_Conditions", "%1 Conditions", diseaseCount), padding, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+    self:drawRightTextFit(ehrFormatText("UI_EHR_Compact_Medications", "%1 Meds", medCount), contentRight, y, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small, padding + 150)
     y = y + self.LINE_HEIGHT
 
     -- One compact warning line, only if something needs attention.
@@ -2555,23 +2571,23 @@ function EHR_MedicalMonitorUI:renderCompactView(startY)
     if overdueCount > 0 then
         warningColor = c.danger
         if overdueCount == 1 then
-            warningText = ehrFormatText("UI_HomeMedic_Compact_OverdueMedication", "X %1 OVERDUE!", self:truncateText(firstOverdue.medicationName or "?", 140, UIFont.Small))
+            warningText = ehrFormatText("UI_EHR_Compact_OverdueMedication", "X %1 OVERDUE!", self:truncateText(firstOverdue.medicationName or "?", 140, UIFont.Small))
         else
-            warningText = ehrFormatText("UI_HomeMedic_Compact_OverdueCount", "X %1 meds OVERDUE!", overdueCount)
+            warningText = ehrFormatText("UI_EHR_Compact_OverdueCount", "X %1 meds OVERDUE!", overdueCount)
         end
     else
         local interactions = self:checkDrugInteractions()
         if #interactions > 0 then
-            warningText = ehrFormatText("UI_HomeMedic_Compact_DrugInteractions", "! %1 Drug Interactions", #interactions)
+            warningText = ehrFormatText("UI_EHR_Compact_DrugInteractions", "! %1 Drug Interactions", #interactions)
         else
             local narcotics = self.cachedData.narcotics or {}
             local withdrawal = self.cachedData.withdrawal
             if withdrawal then
                 warningColor = c.withdrawal
-                warningText = ehrFormatText("UI_HomeMedic_Compact_Withdrawal", "! Withdrawal: %1", withdrawal.drugName or "?")
+                warningText = ehrFormatText("UI_EHR_Compact_Withdrawal", "! Withdrawal: %1", withdrawal.drugName or "?")
             elseif #narcotics > 0 then
                 warningColor = c.stimulant
-                warningText = ehrFormatText("UI_HomeMedic_Compact_Substances", "%1 Substance(s) Active", #narcotics)
+                warningText = ehrFormatText("UI_EHR_Compact_Substances", "%1 Substance(s) Active", #narcotics)
             end
         end
     end
@@ -2585,16 +2601,16 @@ function EHR_MedicalMonitorUI:renderCompactView(startY)
     local bloodData = self.cachedData.blood or {}
     local healText
     if bloodData.canHeal then
-        healText = ehrSafeText("UI_HomeMedic_Compact_HealingActive", "Healing: Active")
+        healText = ehrSafeText("UI_EHR_Compact_HealingActive", "Healing: Active")
     else
         local reason = bloodData.healBlockReason or "?"
-        healText = ehrFormatText("UI_HomeMedic_Compact_HealingSlowed", "Healing: Slowed (%1)", reason)
+        healText = ehrFormatText("UI_EHR_Compact_HealingSlowed", "Healing: Slowed (%1)", reason)
     end
     local healColor = bloodData.canHeal and c.safe or c.danger
     self:drawText(self:truncateText(healText, self.width - padding * 2, UIFont.Small), padding, y, healColor.r, healColor.g, healColor.b, healColor.a, UIFont.Small)
 
     -- Expand hint stays above the button instead of flowing into it.
-    local hintText = getText("UI_HomeMedic_Compact_ClickExpand") or "[Click + to expand]"
+    local hintText = getText("UI_EHR_Compact_ClickExpand") or "[Click + to expand]"
     local hintWidth = self:getTextWidth(hintText, UIFont.Small)
     local hintX = math.max(padding, math.floor((self.width - hintWidth) / 2))
     local hintY = self.height - 58
@@ -2694,6 +2710,10 @@ function EHR.UI.ShowMonitor(player)
     if EHR.UI.MonitorInstance then
         EHR.UI.MonitorInstance:setVisible(true)
         EHR.UI.MonitorVisible = true
+        -- HARMONIE: always opens expanded; the -/+ button shrinks it
+        if not EHR.UI.MonitorInstance.isExpanded then
+            EHR.UI.MonitorInstance:onToggleExpand()
+        end
         EHR.UI.MonitorInstance:updateCachedData()
         updateMonitorPosition()
     end

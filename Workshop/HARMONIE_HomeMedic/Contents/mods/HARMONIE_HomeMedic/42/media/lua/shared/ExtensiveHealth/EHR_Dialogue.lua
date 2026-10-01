@@ -346,11 +346,11 @@ function EHR.Dialogue.GetSkillDialogue(player, disease, stage, isCorrectDiagnosi
         if text == dialogueKey or text == "?" or text == nil or text == "" then
             -- Return a generic message based on tier
             if tierGroup == "clueless" then
-                return EHR.Locale.Text("UI_HomeMedic_Dialogue_Generic_Clueless", "Something feels wrong...")
+                return EHR.Locale.Text("UI_EHR_Dialogue_Generic_Clueless", "Something feels wrong...")
             elseif tierGroup == "novice" then
-                return EHR.Locale.Text("UI_HomeMedic_Dialogue_Generic_Novice", "I don't feel well...")
+                return EHR.Locale.Text("UI_EHR_Dialogue_Generic_Novice", "I don't feel well...")
             else
-                return EHR.Locale.Text("UI_HomeMedic_Dialogue_Generic_Symptoms", "I'm experiencing symptoms...")
+                return EHR.Locale.Text("UI_EHR_Dialogue_Generic_Symptoms", "I'm experiencing symptoms...")
             end
         end
         return text

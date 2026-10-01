@@ -43,7 +43,7 @@ local Colors = {
 }
 
 local function mpMedText(key, fallback)
-    local fullKey = "UI_HomeMedic_MPMedication_" .. tostring(key)
+    local fullKey = "UI_EHR_MPMedication_" .. tostring(key)
     if EHR.Locale and EHR.Locale.Text then
         return EHR.Locale.Text(fullKey, fallback)
     end
@@ -55,7 +55,7 @@ local function mpMedText(key, fallback)
 end
 
 local function mpMedFormat(key, fallback, ...)
-    local fullKey = "UI_HomeMedic_MPMedication_" .. tostring(key)
+    local fullKey = "UI_EHR_MPMedication_" .. tostring(key)
     if EHR.Locale and EHR.Locale.Format then
         return EHR.Locale.Format(fullKey, fallback, ...)
     end
@@ -196,12 +196,12 @@ local function updateBloodBagEntryState(entry, item)
     local baseName = tostring(entry.baseName or entry.name or entry.fullType)
     if state == "stale" then
         entry.name = baseName .. " - "
-            .. localizedText("UI_HomeMedic_Transfusion_StaleSuffix", "STALE!")
+            .. localizedText("UI_EHR_Transfusion_StaleSuffix", "STALE!")
     elseif state == "rotten" then
         entry.name = baseName .. " - "
-            .. localizedText("UI_HomeMedic_Transfusion_Unusable", "UNUSABLE")
+            .. localizedText("UI_EHR_Transfusion_Unusable", "UNUSABLE")
         entry.unavailableReason = localizedText(
-            "UI_HomeMedic_Transfusion_BloodSpoiledDesc",
+            "UI_EHR_Transfusion_BloodSpoiledDesc",
             "This blood bag has completely spoiled and cannot be used."
         )
     else

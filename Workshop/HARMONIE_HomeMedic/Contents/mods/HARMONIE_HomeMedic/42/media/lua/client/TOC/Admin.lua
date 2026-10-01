@@ -36,11 +36,11 @@ local function AddAdminTocOptions(playerNum, context, worldobjects)
 
         local clickedPlayerNum = pl:getOnlineID()
 
-        local option = context:addOption(getText("ContextMenu_HomeMedic_Admin_TOC") .. " - " .. pl:getUsername(), nil, nil)
+        local option = context:addOption(getText("ContextMenu_Admin_TOC") .. " - " .. pl:getUsername(), nil, nil)
         local subMenu = ISContextMenu:getNew(context)
         context:addSubMenu(option, subMenu)
 
-        subMenu:addOption(getText("ContextMenu_HomeMedic_Admin_ResetTOC"), nil, function()
+        subMenu:addOption(getText("ContextMenu_Admin_ResetTOC"), nil, function()
             if isClient() then
                 sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayExecuteInitialization,
                     { patientNum = clickedPlayerNum })
@@ -50,13 +50,13 @@ local function AddAdminTocOptions(playerNum, context, worldobjects)
         end)
 
         -- Force amputation
-        local forceAmpOption = subMenu:addOption(getText("ContextMenu_HomeMedic_Admin_ForceAmputation"), nil, nil)
+        local forceAmpOption = subMenu:addOption(getText("ContextMenu_Admin_ForceAmputation"), nil, nil)
         local forceAmpSubMenu = ISContextMenu:getNew(subMenu)
         context:addSubMenu(forceAmpOption, forceAmpSubMenu)
 
         for i = 1, #StaticData.LIMBS_STR do
             local limbName = StaticData.LIMBS_STR[i]
-            local limbTranslatedName = getText("ContextMenu_HomeMedic_Limb_" .. limbName)
+            local limbTranslatedName = getText("ContextMenu_Limb_" .. limbName)
 
             forceAmpSubMenu:addOption(limbTranslatedName, nil, function()
                 --if isClient() then

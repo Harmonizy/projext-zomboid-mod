@@ -115,27 +115,27 @@ EHR.PainSounds.WoundSounds = {
 EHR.PainSounds.PainDialogue = {
     -- Minor pain (level 1)
     [1] = {
-        "HomeMedic_Pain_Minor_1",   -- "Ow..."
-        "HomeMedic_Pain_Minor_2",   -- "That stings..."
-        "HomeMedic_Pain_Minor_3",   -- "Ouch..."
-        "HomeMedic_Pain_Minor_4",   -- "*winces*"
-        "HomeMedic_Pain_Minor_5",   -- "Ah..."
+        "EHR_Pain_Minor_1",   -- "Ow..."
+        "EHR_Pain_Minor_2",   -- "That stings..."
+        "EHR_Pain_Minor_3",   -- "Ouch..."
+        "EHR_Pain_Minor_4",   -- "*winces*"
+        "EHR_Pain_Minor_5",   -- "Ah..."
     },
     -- Moderate pain (level 2)
     [2] = {
-        "HomeMedic_Pain_Moderate_1",  -- "God that hurts!"
-        "HomeMedic_Pain_Moderate_2",  -- "Damn it!"
-        "HomeMedic_Pain_Moderate_3",  -- "*groans in pain*"
-        "HomeMedic_Pain_Moderate_4",  -- "Argh!"
-        "HomeMedic_Pain_Moderate_5",  -- "This really hurts..."
+        "EHR_Pain_Moderate_1",  -- "God that hurts!"
+        "EHR_Pain_Moderate_2",  -- "Damn it!"
+        "EHR_Pain_Moderate_3",  -- "*groans in pain*"
+        "EHR_Pain_Moderate_4",  -- "Argh!"
+        "EHR_Pain_Moderate_5",  -- "This really hurts..."
     },
     -- Severe pain (level 3)
     [3] = {
-        "HomeMedic_Pain_Severe_1",   -- "*screams*"
-        "HomeMedic_Pain_Severe_2",   -- "AAAGH!"
-        "HomeMedic_Pain_Severe_3",   -- "Make it stop!"
-        "HomeMedic_Pain_Severe_4",   -- "*cries out in agony*"
-        "HomeMedic_Pain_Severe_5",   -- "I can't take this!"
+        "EHR_Pain_Severe_1",   -- "*screams*"
+        "EHR_Pain_Severe_2",   -- "AAAGH!"
+        "EHR_Pain_Severe_3",   -- "Make it stop!"
+        "EHR_Pain_Severe_4",   -- "*cries out in agony*"
+        "EHR_Pain_Severe_5",   -- "I can't take this!"
     },
 }
 

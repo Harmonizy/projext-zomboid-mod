@@ -302,13 +302,13 @@ local function getMedicalAlert(player)
         return nil
     end
 
-    local title = L("UI_HomeMedic_Moodle_MedicalAlert_Title", "Medical Alert")
-    local desc = L("UI_HomeMedic_Moodle_MedicalAlert_Desc", "Something is wrong. Check EHR Monitor.")
+    local title = L("UI_EHR_Moodle_MedicalAlert_Title", "Medical Alert")
+    local desc = L("UI_EHR_Moodle_MedicalAlert_Desc", "Something is wrong. Check EHR Monitor.")
 
     if sideEffects > 0 and diseaseCount <= 0 and woundLevel <= 0 and sepsis <= 0 then
-        desc = L("UI_HomeMedic_Moodle_MedicalAlert_SideEffects", "Medication side effects active. Check EHR Monitor.")
+        desc = L("UI_EHR_Moodle_MedicalAlert_SideEffects", "Medication side effects active. Check EHR Monitor.")
     elseif diseaseCount > 1 then
-        desc = L("UI_HomeMedic_Moodle_MedicalAlert_Multiple", "Multiple active conditions. Check EHR Monitor.")
+        desc = L("UI_EHR_Moodle_MedicalAlert_Multiple", "Multiple active conditions. Check EHR Monitor.")
     end
 
     return {
@@ -479,7 +479,7 @@ local function makeExposureAlert(exposureLevel, icon, titleKey, titleFallback)
         exposureLevel = exposureLevel,
         icon = icon,
         title = L(titleKey, titleFallback),
-        description = L("UI_HomeMedic_Moodle_ExposureAlert_Desc", "Exposure level: ") .. EHR.Locale.ExposureLevel(exposureLevel),
+        description = L("UI_EHR_Moodle_ExposureAlert_Desc", "Exposure level: ") .. EHR.Locale.ExposureLevel(exposureLevel),
     }
 end
 
@@ -552,14 +552,14 @@ function MODULE.UpdatePlayer(playerNum)
 
     applyMoodle(playerNum, MOODLE_MEDICAL, getMedicalAlert(player))
     applyMoodle(playerNum, MOODLE_CORPSE_EXPOSURE,
-        makeExposureAlert(corpseLevel, ICONS.corpse, "UI_HomeMedic_CorpseExposure", "Corpse Exposure"))
+        makeExposureAlert(corpseLevel, ICONS.corpse, "UI_EHR_CorpseExposure", "Corpse Exposure"))
     applyMoodle(playerNum, MOODLE_CADAVERIC_EXPOSURE,
         makeExposureAlert(cadavericLevel, ICONS.cadaveric,
-            "UI_HomeMedic_CadavericAspergillosisExposure", "Cadaveric Aspergillosis Exposure"))
+            "UI_EHR_CadavericAspergillosisExposure", "Cadaveric Aspergillosis Exposure"))
     applyMoodle(playerNum, MOODLE_HEAT_EXPOSURE,
-        makeExposureAlert(heatLevel, ICONS.heat, "UI_HomeMedic_Moodle_HeatExposure_Title", "Heat Exposure"))
+        makeExposureAlert(heatLevel, ICONS.heat, "UI_EHR_Moodle_HeatExposure_Title", "Heat Exposure"))
     applyMoodle(playerNum, MOODLE_COLD_EXPOSURE,
-        makeExposureAlert(coldLevel, ICONS.cold, "UI_HomeMedic_Moodle_ColdRisk_Title", "Cold Risk"))
+        makeExposureAlert(coldLevel, ICONS.cold, "UI_EHR_Moodle_ColdRisk_Title", "Cold Risk"))
     -- Hide framework objects left behind by an in-session Lua reload from an
     -- older EHR build, without registering those retired identifiers again.
     hideRetiredMoodles(playerNum)

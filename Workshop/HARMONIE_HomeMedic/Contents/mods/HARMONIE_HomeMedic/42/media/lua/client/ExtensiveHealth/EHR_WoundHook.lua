@@ -27,9 +27,9 @@ EHR.WoundHook = EHR.WoundHook or {}
 
 local function woundHookText(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_HomeMedic_WoundHook_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_EHR_WoundHook_" .. tostring(key), fallback)
     end
-    local fullKey = "UI_HomeMedic_WoundHook_" .. tostring(key)
+    local fullKey = "UI_EHR_WoundHook_" .. tostring(key)
     local ok, value = pcall(getText, fullKey)
     if ok and value and value ~= fullKey then return value end
     return fallback
@@ -37,7 +37,7 @@ end
 
 local function woundHookFormat(key, fallback, ...)
     if EHR and EHR.Locale and EHR.Locale.Format then
-        return EHR.Locale.Format("UI_HomeMedic_WoundHook_" .. tostring(key), fallback, ...)
+        return EHR.Locale.Format("UI_EHR_WoundHook_" .. tostring(key), fallback, ...)
     end
     local text = woundHookText(key, fallback)
     local args = {...}
