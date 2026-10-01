@@ -1243,9 +1243,9 @@ function EHR_HealthPanelUI:closeRemoteExamIfOutOfRange()
     return true
 end
 
--- HARMONIE: our own six tabs, no embedded vanilla windows (info, skills,
+-- HARMONIE: our own seven tabs, no embedded vanilla windows (info, skills,
 -- health, protection and temperature stay in the vanilla character window,
--- where other mods expect them). Tabs 3-5 live in client/HARMONIEHomeMedic
+-- where other mods expect them). Tabs 3-7 live in client/HARMONIEHomeMedic
 -- and register in EHR_HealthPanelUI.ExtraTabs.
 EHR_HealthPanelUI.ExtraTabs = EHR_HealthPanelUI.ExtraTabs or {}
 
@@ -1254,10 +1254,11 @@ function EHR_HealthPanelUI:getTabDefinitions()
     local diagnosis = { id = "diagnosis", label = safeText("UI_EHR_Tab_Diagnosis", "Diagnosis") }
     local handbook = { id = "handbook", label = safeText("UI_EHR_Tab_Handbook", "Disease Handbook") }
     local surgery = { id = "surgery", label = safeText("UI_EHR_Tab_Surgery", "Surgery") }
+    local meds = { id = "meds", label = safeText("UI_EHR_Tab_Meds", "Medication Handbook") }
     if self.isRemoteHealthPanel then
         return {
             { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
-            stats, diagnosis, handbook, surgery,
+            stats, diagnosis, surgery, handbook, meds,
         }
     end
     if self.width < 560 then
@@ -1270,7 +1271,7 @@ function EHR_HealthPanelUI:getTabDefinitions()
     return {
         { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "EHR") or safeText("UI_EHR_Tab_EHR", "EHR Monitor") },
         { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
-        stats, diagnosis, handbook, surgery,
+        stats, diagnosis, surgery, handbook, meds,
     }
 end
 
@@ -2014,6 +2015,7 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         diagnosis = "media/textures/HARMONIE_HomeMedic/tab_diagnosis.png",
         handbook = "media/textures/HARMONIE_HomeMedic/tab_handbook.png",
         surgery = "media/textures/HARMONIE_HomeMedic/tab_surgery.png",
+        meds = "media/textures/HARMONIE_HomeMedic/tab_meds.png",
     }
 
     local path = paths[tabId]

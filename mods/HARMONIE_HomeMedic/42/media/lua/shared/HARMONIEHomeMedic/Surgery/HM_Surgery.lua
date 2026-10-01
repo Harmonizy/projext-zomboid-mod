@@ -551,8 +551,13 @@ function S.indications(patient, bodyPart, sid, exam)
             if stage <= 0 then stage = nil end
         end
         if stage then
+            -- no operation for an illness nobody has diagnosed yet (HM_Diagnosis)
+            local D = HM_Diagnosis
+            local did = (id == "knox") and "knox_infection" or id
+            local undiagnosed = D and D.gated and D.gated(did) and not D.isDiagnosed(patient, did, exam) or nil
             out[#out + 1] = { id = id, stage = stage, cool = S.cooldownLeft(patient, id, bodyPart),
-                held = S.isHeld(patient, id, exam), needs = S.needsSurgery(patient, id, exam) }
+                held = S.isHeld(patient, id, exam), needs = S.needsSurgery(patient, id, exam),
+                undiagnosed = undiagnosed }
         end
     end
     table.sort(out, function(a, b) return a.id < b.id end)
@@ -754,20 +759,28 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     local remoteUnknown = #ind == 0 and not exam and S.isRemote(doctor, patient)
     local usable = 0
     local names = {}
+    local undiagnosed = 0
     for _, i in ipairs(ind) do
-        if not i.cool then usable = usable + 1 end
-        local special = i.id == "wound_infection" or i.id == "foreign_body" or i.id == "knox" or i.id == "knox_bite" or i.id == "necrosis"
-        names[#names + 1] = S.T("Cond_" .. i.id, i.id)
-            .. ((not special) and (" " .. S.T("Stage", "St.%1", i.stage)) or "")
-            .. (i.held and (" - " .. S.T("HeldShort", "awaiting")) or "")
-            .. (i.cool and (" (" .. S.T("CoolShort", "%1h", math.ceil(i.cool)) .. ")") or "")
+        if i.undiagnosed then
+            undiagnosed = undiagnosed + 1
+        else
+            if not i.cool then usable = usable + 1 end
+            local special = i.id == "wound_infection" or i.id == "foreign_body" or i.id == "knox" or i.id == "knox_bite" or i.id == "necrosis"
+            names[#names + 1] = S.T("Cond_" .. i.id, i.id)
+                .. ((not special) and (" " .. S.T("Stage", "St.%1", i.stage)) or "")
+                .. (i.held and (" - " .. S.T("HeldShort", "awaiting")) or "")
+                .. (i.cool and (" (" .. S.T("CoolShort", "%1h", math.ceil(i.cool)) .. ")") or "")
+        end
     end
+    -- the name stays hidden until someone diagnoses it
+    if undiagnosed > 0 then names[#names + 1] = S.T("Ind_Undiagnosed", "Undiagnosed illness - diagnose it first") end
     row({ key = "indication", required = not remoteUnknown,
           state = usable > 0 and "ok" or (remoteUnknown and "info" or "fail"),
           label = S.T("Row_Indication", "Indication"),
           value = #names > 0 and table.concat(names, ", ")
               or (remoteUnknown and S.T("ServerChecks", "Checked when you start") or S.T("None", "None")),
           tip = S.T("Tip_Indication", "What this operation treats through this body part.")
+              .. (undiagnosed > 0 and ("\n\n" .. S.T("Tip_Undiagnosed", "An illness must be diagnosed (Diagnosis tab) before it can be operated on.")) or "")
               .. "\n\n" .. S.targetsTip(sid) })
 
     -- the operation itself (tier / disease knowledge / The Only Cure)

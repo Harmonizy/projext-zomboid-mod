@@ -9,6 +9,7 @@
 require "ISUI/ISPanel"
 require "ISUI/ISButton"
 require "ISUI/ISScrollingListBox"
+require "ISUI/ISTextEntryBox"
 require "ExtensiveHealth/EHR_Main"
 require "ExtensiveHealth/EHR_Disease"
 require "ExtensiveHealth/EHR_DiseaseFlyers"
@@ -23,6 +24,7 @@ local WINDOW_HEIGHT = 640
 local PADDING = 14
 local HEADER_HEIGHT = 42
 local LIST_WIDTH = 326
+local SEARCH_H = 24     -- HARMONIE: search box
 
 
 local function L(key, fallback)
@@ -439,12 +441,26 @@ function EHR_MedicalJournalUI:createChildren()
     self:addChild(self.closeBtn)
     end
 
-    self.diseaseList = ISScrollingListBox:new(PADDING, HEADER_HEIGHT + PADDING + 36, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2 - 40)
+    -- HARMONIE: search box + filter chips above the list
+    local searchY = HEADER_HEIGHT + PADDING + 38
+    self.searchBox = ISTextEntryBox:new("", PADDING + 8, searchY, LIST_WIDTH - 16, SEARCH_H)
+    self.searchBox.font = UIFont.Small
+    self.searchBox:initialise()
+    self.searchBox:instantiate()
+    if self.searchBox.setPlaceholderText then
+        self.searchBox:setPlaceholderText(L("UI_HomeMedic_Hb_Search", "Search name, sign, medicine..."))
+    end
+    local ui = self
+    self.searchBox.onTextChange = function(box) ui:refreshEntries() end
+    self:addChild(self.searchBox)
+
+    local listY = self:getListTop()
+    self.diseaseList = ISScrollingListBox:new(PADDING, listY, LIST_WIDTH, self.height - listY - PADDING - 4)
     self.diseaseList:initialise()
     self.diseaseList:instantiate()
     self.diseaseList.itemheight = 76
     self.diseaseList.font = UIFont.Small
-    self.diseaseList.doDrawItem = EHR_MedicalJournalUI.drawDiseaseItem
+    self.diseaseList.doDrawItem = self.drawListItem or EHR_MedicalJournalUI.drawDiseaseItem
     self.diseaseList.drawBorder = false
     self.diseaseList.parentUI = self
     self.diseaseList:setAnchorBottom(true)
@@ -527,19 +543,131 @@ function EHR_MedicalJournalUI:getCatalogEntries()
     return entries
 end
 
+-- HARMONIE: filter chips + search. A subclass (the medication handbook)
+-- gives its own getFilters / entryMatches / searchText.
+function EHR_MedicalJournalUI:getFilters()
+    return {
+        { id = "all", label = L("UI_HomeMedic_Hb_Filter_all", "All") },
+        { id = "known", label = L("UI_HomeMedic_Hb_Filter_known", "Known") },
+        { id = "locked", label = L("UI_HomeMedic_Hb_Filter_locked", "Locked") },
+        { id = "lethal", label = L("UI_HomeMedic_Hb_Filter_lethal", "Lethal") },
+        { id = "surgery", label = L("UI_HomeMedic_Hb_Filter_surgery", "Surgery") },
+    }
+end
+
+function EHR_MedicalJournalUI:entryMatches(entry, filter)
+    if filter == "known" then return entry.known end
+    if filter == "locked" then return not entry.known end
+    if filter == "lethal" then return entry.canKill end
+    if filter == "surgery" then
+        local S = HM_Surgery
+        local hbId = HM_Diagnosis and HM_Diagnosis.normalize(entry.id) or entry.id
+        return S and S.surgeriesFor and #S.surgeriesFor(hbId) > 0 or false
+    end
+    return true
+end
+
+-- what the search box looks in: name, category, and (when known) the signs
+function EHR_MedicalJournalUI:searchText(entry)
+    local parts = { entry.displayName or "", categoryName(entry.category) }
+    if entry.known then
+        parts[#parts + 1] = entry.realName or ""
+        local D = HM_Diagnosis
+        local hbId = D and D.normalize(entry.id) or entry.id
+        for _, t in ipairs(D and D.DISEASES[hbId] or {}) do
+            parts[#parts + 1] = L("UI_HomeMedic_Diag_Tag_" .. t, t)
+        end
+        if HM_Handbook and HM_Handbook.medNames then
+            for _, n in ipairs(HM_Handbook.medNames(hbId)) do parts[#parts + 1] = n end
+        end
+    end
+    return string.lower(table.concat(parts, " "))
+end
+
+function EHR_MedicalJournalUI:getListTop()
+    local chipH = getTextManager():getFontHeight(UIFont.Small) + 6
+    return HEADER_HEIGHT + PADDING + 38 + SEARCH_H + 6 + chipH + 6
+end
+
 function EHR_MedicalJournalUI:refreshEntries()
     if not self.diseaseList then return end
+    local keepId = self:getSelectedEntry() and self:getSelectedEntry().id
     self.diseaseList:clear()
-    self.catalogEntries = self:getCatalogEntries()
+    self.allEntries = self:getCatalogEntries()
+    local query = self.searchBox and string.lower(tostring(self.searchBox:getText() or "")) or ""
+    query = query:gsub("^%s+", ""):gsub("%s+$", "")
+    local filter = self.hmFilter or "all"
+    self.catalogEntries = {}
     local knownCount = 0
-    for _, entry in ipairs(self.catalogEntries) do
+    for _, entry in ipairs(self.allEntries) do
         if entry.known then knownCount = knownCount + 1 end
-        self.diseaseList:addItem(entry.displayName, entry)
+        if self:entryMatches(entry, filter) and (query == "" or string.find(self:searchText(entry), query, 1, true)) then
+            self.catalogEntries[#self.catalogEntries + 1] = entry
+            self.diseaseList:addItem(entry.displayName, entry)
+        end
     end
     self.knownCount = knownCount
-    if #self.catalogEntries > 0 and (not self.diseaseList.selected or self.diseaseList.selected <= 0) then
-        self.diseaseList.selected = 1
+    self.diseaseList.selected = 1
+    for i, entry in ipairs(self.catalogEntries) do
+        if entry.id == keepId then self.diseaseList.selected = i end
     end
+end
+
+-- select an entry by id (clears search and filter so it is listed)
+function EHR_MedicalJournalUI:selectEntryId(id)
+    if not id then return end
+    if self.searchBox then self.searchBox:setText("") end
+    self.hmFilter = "all"
+    self:refreshEntries()
+    local D = HM_Diagnosis
+    for i, entry in ipairs(self.catalogEntries or {}) do
+        if entry.id == id or (D and D.normalize(entry.id) == D.normalize(id)) then
+            self.diseaseList.selected = i
+            if self.diseaseList.ensureVisible then pcall(function() self.diseaseList:ensureVisible(i) end) end
+            return true
+        end
+    end
+    return false
+end
+
+function EHR_MedicalJournalUI:drawFilterChips()
+    local c = Colors
+    local font = UIFont.Small
+    local chipH = getTextManager():getFontHeight(font) + 6
+    local x = PADDING + 8
+    local y = HEADER_HEIGHT + PADDING + 38 + SEARCH_H + 6
+    local maxX = PADDING + LIST_WIDTH - 8
+    local mx, my = self:getMouseX(), self:getMouseY()
+    self.filterChips = {}
+    for _, f in ipairs(self:getFilters()) do
+        local w = measureText(font, f.label) + 14
+        if x + w > maxX then break end
+        local on = (self.hmFilter or "all") == f.id
+        local hov = mx >= x and mx <= x + w and my >= y and my <= y + chipH
+        local bg = on and c.redDark or c.panelSoft
+        local bd = on and c.accent or c.borderDim
+        self:drawRect(x, y, w, chipH, on and 0.95 or (hov and 0.75 or 0.5), bg.r, bg.g, bg.b)
+        self:drawRectBorder(x, y, w, chipH, 1, bd.r, bd.g, bd.b)
+        local tc = (on or hov) and c.text or c.textDim
+        self:drawText(f.label, x + 7, y + 3, tc.r, tc.g, tc.b, 1, font)
+        self.filterChips[#self.filterChips + 1] = { x = x, y = y, w = w, h = chipH, id = f.id }
+        x = x + w + 5
+    end
+    -- results count at the right of the search row
+    local count = tostring(#(self.catalogEntries or {})) .. "/" .. tostring(#(self.allEntries or {}))
+    self:drawText(count, maxX - measureText(font, count), y - SEARCH_H - 6 - getTextManager():getFontHeight(font) - 2, c.textDim.r, c.textDim.g, c.textDim.b, 0.8, font)
+end
+
+function EHR_MedicalJournalUI:onMouseDown(x, y)
+    for _, chip in ipairs(self.filterChips or {}) do
+        if x >= chip.x and x <= chip.x + chip.w and y >= chip.y and y <= chip.y + chip.h then
+            self.hmFilter = chip.id
+            self:refreshEntries()
+            if getSoundManager then pcall(function() getSoundManager():playUISound("UISelectListItem") end) end
+            return true
+        end
+    end
+    return ISPanel.onMouseDown(self, x, y)
 end
 
 function EHR_MedicalJournalUI:getSelectedEntry()
@@ -583,21 +711,27 @@ function EHR_MedicalJournalUI:drawInfoSection(label, value, x, y, w)
     return self:drawWrappedText(value, x + 8, y, w - 16, c.text, UIFont.Small, 19) + 10
 end
 
+-- HARMONIE: texts a subclass replaces
+function EHR_MedicalJournalUI:titleText() return L("UI_EHR_DiseaseHandbook_Title", "EHR DISEASE HANDBOOK") end
+function EHR_MedicalJournalUI:indexTitle() return L("UI_EHR_DiseaseHandbook_Index", "DISEASE INDEX") end
+function EHR_MedicalJournalUI:progressText()
+    return LF("UI_EHR_DiseaseHandbook_KnownCount", "%1/%2 known", tonumber(self.knownCount) or 0, #CatalogOrder)
+end
+
 function EHR_MedicalJournalUI:prerender()
     ISPanel.prerender(self)
     local c = Colors
     self:drawRect(0, 0, self.width, self.height, c.bg.a, c.bg.r, c.bg.g, c.bg.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
     self:drawRect(0, 0, self.width, HEADER_HEIGHT, 0.82, 0.02, 0.02, 0.02)
-    self:drawText(L("UI_EHR_DiseaseHandbook_Title", "EHR DISEASE HANDBOOK"), 16, 8, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Large)
+    self:drawText(self:titleText(), 16, 8, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Large)
 
-    local total = #CatalogOrder
-    local known = tonumber(self.knownCount) or 0
-    local progress = LF("UI_EHR_DiseaseHandbook_KnownCount", "%1/%2 known", known, total)
+    local progress = self:progressText()
     local progressW = measureText(UIFont.Medium, progress)
     self:drawText(progress, self.width - progressW - (self.embedded and 16 or 50), 11, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
 
-    self:drawPanelFrame(PADDING, HEADER_HEIGHT + PADDING, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2, L("UI_EHR_DiseaseHandbook_Index", "DISEASE INDEX"))
+    self:drawPanelFrame(PADDING, HEADER_HEIGHT + PADDING, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2, self:indexTitle())
+    self:drawFilterChips()
 
     local detailX = PADDING + LIST_WIDTH + 12
     local detailY = HEADER_HEIGHT + PADDING

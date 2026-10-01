@@ -61,7 +61,7 @@ local function scan(panel)
                 if part then
                     local ok, ind = pcall(S.indications, patient, part, sid, exam)
                     local usable = false
-                    for _, i in ipairs(ok and ind or {}) do if not i.cool then usable = true end end
+                    for _, i in ipairs(ok and ind or {}) do if not i.cool and not i.undiagnosed then usable = true end end
                     if usable then e.parts[#e.parts + 1] = { part = part, name = partLabel(part, name), key = name } end
                 end
             end

@@ -1,5 +1,5 @@
 --[[
-    HARMONIE - Home Medic : medical window tabs 3 and 5 (client)
+    HARMONIE - Home Medic : medical window tabs 3, 6 and 7 (client)
 
     "stats"    -- every stat of the player in this window (yourself or the
                   patient you examine), mods' stats included (HM_Stats).
@@ -8,8 +8,10 @@
                   answers with its view and then the patient's own.
     "handbook" -- the disease handbook (EHR_MedicalJournalUI), embedded as a
                   child view. The J key opens the window on this tab.
+    "meds"     -- the medication handbook (HM_MedHandbookUI), the same way.
 
-    Tabs 1, 2 are EHR's own; tab 4 is HM_DiagnosisPanel.lua.
+    Tabs 1, 2 are EHR's own; tab 4 is HM_DiagnosisPanel.lua, tab 5
+    Surgery/HM_SurgeryTab.lua.
 ]]--
 
 require "HARMONIEHomeMedic/HM_Text"
@@ -17,6 +19,7 @@ require "ExtensiveHealth/EHR_HealthPanelUI"
 require "ExtensiveHealth/EHR_MedicalJournalUI"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Stats"
+require "HARMONIEHomeMedic/HM_MedHandbookUI"
 local S = HM_Surgery
 local St = HM_Stats
 
@@ -329,43 +332,54 @@ EHR_HealthPanelUI.ExtraTabs.stats = {
     end,
 }
 
--- ============================================================= handbook tab
-local function journalFor(panel)
-    local j = panel.hmJournal
-    if j then return j end
-    local b = panel:getTabContentBounds()
-    local reader = panel.getKnowledgePlayer and panel:getKnowledgePlayer() or panel.player
-    j = EHR_MedicalJournalUI:new(b.x, b.y, b.w, b.h, reader, true)
-    j:initialise()
-    j:instantiate()
-    j:setVisible(false)
-    panel:addChild(j)
-    panel.hmJournal = j
-    return j
+-- ============================================================= handbook tabs
+-- the disease handbook (EHR_MedicalJournalUI) and the medication handbook
+-- (HM_MedHandbookUI) as child views of their tabs
+local function bookTab(field, class)
+    local function bookFor(panel)
+        local j = panel[field]
+        if j then return j end
+        local b = panel:getTabContentBounds()
+        local reader = panel.getKnowledgePlayer and panel:getKnowledgePlayer() or panel.player
+        j = class():new(b.x, b.y, b.w, b.h, reader, true)
+        j:initialise()
+        j:instantiate()
+        j:setVisible(false)
+        panel:addChild(j)
+        panel[field] = j
+        return j
+    end
+    return {
+        open = function(panel)
+            local j = bookFor(panel)
+            j.player = panel.getKnowledgePlayer and panel:getKnowledgePlayer() or panel.player
+            j:refreshEntries()
+            -- "show this entry" (diagnosis result -> handbook)
+            if panel.hmBookSelect and panel.hmBookSelect[field] then
+                j:selectEntryId(panel.hmBookSelect[field])
+                panel.hmBookSelect[field] = nil
+            end
+        end,
+        draw = function(panel) end,
+        sync = function(panel, shown)
+            local j = panel[field]
+            if not j then
+                if not shown then return end
+                j = bookFor(panel)
+            end
+            if shown then
+                local b = panel:getTabContentBounds()
+                if j:getX() ~= b.x or j:getY() ~= b.y then j:setX(b.x); j:setY(b.y) end
+                if j:getWidth() ~= b.w then j:setWidth(b.w) end
+                if j:getHeight() ~= b.h then j:setHeight(b.h) end
+            end
+            if j:isVisible() ~= shown then j:setVisible(shown) end
+        end,
+    }
 end
 
-EHR_HealthPanelUI.ExtraTabs.handbook = {
-    open = function(panel)
-        local j = journalFor(panel)
-        j.player = panel.getKnowledgePlayer and panel:getKnowledgePlayer() or panel.player
-        j:refreshEntries()
-    end,
-    draw = function(panel) end,
-    sync = function(panel, shown)
-        local j = panel.hmJournal
-        if not j then
-            if not shown then return end
-            j = journalFor(panel)
-        end
-        if shown then
-            local b = panel:getTabContentBounds()
-            if j:getX() ~= b.x or j:getY() ~= b.y then j:setX(b.x); j:setY(b.y) end
-            if j:getWidth() ~= b.w then j:setWidth(b.w) end
-            if j:getHeight() ~= b.h then j:setHeight(b.h) end
-        end
-        if j:isVisible() ~= shown then j:setVisible(shown) end
-    end,
-}
+EHR_HealthPanelUI.ExtraTabs.handbook = bookTab("hmJournal", function() return EHR_MedicalJournalUI end)
+EHR_HealthPanelUI.ExtraTabs.meds = bookTab("hmMedBook", function() return HM_MedHandbookUI end)
 
 -- J key / any "open the handbook": the medical window on its handbook tab
 function EHR_MedicalJournalUI.Toggle(player)

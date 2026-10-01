@@ -253,7 +253,7 @@ function SV.Finish(doctor, args)
         md.HARMONIE_Surgery.cool = md.HARMONIE_Surgery.cool or {}
         local factor = q >= S.EXCELLENT and S.EXCELLENT_TREAT or 1
         for _, ind in ipairs(S.indications(patient, part, permit.sid)) do
-            if not ind.cool then
+            if not ind.cool and not ind.undiagnosed then
                 local t = s.targets[ind.id] or {}
                 local change
                 if ind.id == "wound_infection" then

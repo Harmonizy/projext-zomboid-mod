@@ -175,10 +175,31 @@ function Prep:metrics()
     return m
 end
 
+-- rows wrap instead of being cut ("..."): label left, value right, each up
+-- to a few lines; the row is as tall as its longest side
+function Prep:rowLayout(m)
+    local labelW = math.floor((self.width - 60) * 0.48)
+    local valueW = self.width - 60 - labelW - 16
+    local lineH = fh() + 2
+    local out, total = {}, 0
+    for _, row in ipairs(self.eval and self.eval.rows or {}) do
+        local label = row.label .. (row.required and "" or ("  (" .. S.T("Optional", "optional") .. ")"))
+        local ll = wrap(label, labelW)
+        local vl = S.wrap(tostring(row.value or ""), valueW, FONT)
+        while #ll > 3 do ll[#ll] = nil end
+        while #vl > 3 do vl[#vl] = nil end
+        local h = math.max(m.rowH, math.max(#ll, #vl, 1) * lineH + 8)
+        out[#out + 1] = { y = total, h = h, label = ll, value = vl }
+        total = total + h
+    end
+    return out, total, labelW, valueW
+end
+
 function Prep:layout()
     local m = self:metrics()
-    local rows = self.eval and #self.eval.rows or 12
-    local want = m.listTop + rows * m.rowH + m.footerH + 8
+    local rowsL, rowsTotal = self:rowLayout(m)
+    self.rowsL, self.rowsTotal, self.rowsW = rowsL, rowsTotal, self.width
+    local want = m.listTop + math.max(rowsTotal, m.rowH * 6) + m.footerH + 8
     local maxH = getCore():getScreenHeight() - 40
     local h = math.min(want, maxH)
     if self.embedded then h = self.height end
@@ -189,7 +210,7 @@ function Prep:layout()
         self:setY(math.max(10, (getCore():getScreenHeight() - h) / 2))
     end
     self.listH = self.height - m.listTop - m.footerH
-    self.maxScroll = math.max(0, rows * m.rowH - self.listH)
+    self.maxScroll = math.max(0, rowsTotal - self.listH)
     if self.scroll > self.maxScroll then self.scroll = self.maxScroll end
     local by = self.height - self.startBtn.height - 10
     self.startBtn:setX(self.width - (self.embedded and 132 or 238)); self.startBtn:setY(by)
@@ -202,6 +223,7 @@ function Prep:reevaluate(force)
     if not force and t - self.lastEval < 800 then return end
     self.lastEval = t
     self.eval = S.evaluate(self.doctor, self.patient, self.bodyPart, self.sid, self.exam)
+    self.rowsL = nil
     self:layout()
     local unlocked = S.surgeryUnlocked(self.doctor, self.sid)
     self.startBtn:setEnable(self.eval.canStart and unlocked and not self.waiting)
@@ -232,7 +254,8 @@ function Prep:prerender()
         self:drawRect(r.x, r.y, r.w, r.h, active and 0.35 or 0.15, c[1], c[2], c[3])
         self:drawRectBorder(r.x, r.y, r.w, r.h, 1, c[1], c[2], c[3])
         local tc = unlocked and COL.text or COL.dim
-        self:drawText(fit((unlocked and "" or "# ") .. r.label, r.w - 16), r.x + 8, r.y + 5, tc[1], tc[2], tc[3], 1, FONT)
+        self:drawText(fit(r.label, r.w - 16), r.x + 8, r.y + 5, tc[1], tc[2], tc[3], 1, FONT)
+        if not unlocked then self:drawRect(r.x + r.w - 6, r.y + 2, 4, 4, 1, COL.warn[1], COL.warn[2], COL.warn[3]) end
         if not r.part and mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h then
             local sd = S.Surgeries[r.sid]
             self.hoverTip = S.T("Tip_Surgery_" .. r.sid, "") .. "\n\n" .. S.targetsTip(r.sid)
@@ -242,12 +265,18 @@ function Prep:prerender()
     end
 
     -- rows (scrolled, clipped to the list area)
-    local top, rowH = m.listTop, m.rowH
-    local labelW = math.floor((self.width - 60) * 0.5)
-    local valueW = self.width - 60 - labelW - 16
+    local top = m.listTop
+    if not self.rowsL or self.rowsW ~= self.width then
+        self.rowsL, self.rowsTotal = self:rowLayout(m)
+        self.rowsW = self.width
+    end
+    local lineH = fh() + 2
     self:setStencilRect(0, top, self.width, self.listH)
-    local y = top - self.scroll
     for i, row in ipairs(self.eval and self.eval.rows or {}) do
+        local L = self.rowsL[i]
+        if not L then break end
+        local y = top - self.scroll + L.y
+        local rowH = L.h
         if y + rowH >= top and y <= top + self.listH then
             local c = COL[row.state] or COL.dim
             local hovered = my >= math.max(y, top) and my < math.min(y + rowH, top + self.listH) and mx >= 8 and mx <= self.width - 8
@@ -259,12 +288,17 @@ function Prep:prerender()
             end
             self:drawRect(16, y + 4, 14, rowH - 8, 0.9, c[1], c[2], c[3])
             self:drawTextCentre(STATE_MARK[row.state] or "?", 23, y + (rowH - fh()) / 2, 0, 0, 0, 1, FONT)
-            local label = row.label .. (row.required and "" or ("  (" .. S.T("Optional", "optional") .. ")"))
-            self:drawText(fit(label, labelW), 40, y + (rowH - fh()) / 2, COL.text[1], COL.text[2], COL.text[3], 1, FONT)
-            local v = fit(row.value, valueW)
-            self:drawText(v, self.width - 20 - tw(v), y + (rowH - fh()) / 2, c[1], c[2], c[3], 1, FONT)
+            local ly = y + math.floor((rowH - #L.label * lineH) / 2) + 1
+            for _, l in ipairs(L.label) do
+                self:drawText(l, 40, ly, COL.text[1], COL.text[2], COL.text[3], 1, FONT)
+                ly = ly + lineH
+            end
+            local vy = y + math.floor((rowH - #L.value * lineH) / 2) + 1
+            for _, l in ipairs(L.value) do
+                self:drawText(l, self.width - 20 - tw(l), vy, c[1], c[2], c[3], 1, FONT)
+                vy = vy + lineH
+            end
         end
-        y = y + rowH
     end
     self:clearStencilRect()
     if self.maxScroll > 0 then
@@ -389,7 +423,7 @@ function Op:new(doctor, info)
     local top = 10 + fh(FONT_M) + 8
     o.chipY, o.chipH = top, fh() + 8
     o.instrY = top + o.chipH + 8
-    local boardY = o.instrY + fh() + 8
+    local boardY = o.instrY + (fh() + 2) * 2 + 6     -- the instruction gets two lines
     local footer = fh() + 14 + 28 + 10
     o.board = { x = 20, y = boardY, w = w - 40, h = h - boardY - footer - 16 }
     return o
@@ -514,7 +548,11 @@ function Op:prerender()
     elseif self.game then
         local proc = S.Procedures[self.steps[self.stepIndex]]
         local key = "Game_" .. proc.game .. (proc.variant and ("_" .. proc.variant) or "")
-        self:drawText(fit(S.T(key, S.T("Game_" .. proc.game, "")), self.width - 32), 16, self.instrY, COL.warn[1], COL.warn[2], COL.warn[3], 1, FONT)
+        local lines = wrap(S.T(key, S.T("Game_" .. proc.game, "")), self.width - 32)
+        for i = 1, math.min(2, #lines) do
+            local l = (i == 2 and #lines > 2) and fit(lines[2] .. " " .. lines[3], self.width - 32) or lines[i]
+            self:drawText(l, 16, self.instrY + (i - 1) * (fh() + 2), COL.warn[1], COL.warn[2], COL.warn[3], 1, FONT)
+        end
         self:setStencilRect(b.x, b.y, b.w, b.h)   -- blood and the instrument stay on the board
         self.game:render(self, b.x, b.y, b.w, b.h)
         self:clearStencilRect()

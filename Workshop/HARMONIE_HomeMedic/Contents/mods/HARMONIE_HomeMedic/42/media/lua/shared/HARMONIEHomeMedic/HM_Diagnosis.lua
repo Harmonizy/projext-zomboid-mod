@@ -39,17 +39,17 @@ D.GROUPS = {
 
 -- illness -> signs it can show (all stages together)
 D.DISEASES = {
-    common_cold = { "runny_nose", "sneeze", "fatigue", "weakness" },
-    pneumonia = { "cough", "chest_pain", "short_breath", "fatigue", "weakness", "health_loss" },
+    common_cold = { "runny_nose", "sneeze", "fever", "fatigue", "weakness" },
+    pneumonia = { "cough", "chest_pain", "short_breath", "fever", "fatigue", "weakness", "health_loss" },
     dysentery = { "abdominal", "bloody_stool", "vomit", "thirst", "hunger", "slow", "weakness" },
     hypothermia = { "chills", "slow", "weakness", "fatigue", "confusion", "dizziness", "collapse", "health_loss" },
-    heat_stroke = { "overheat", "thirst", "slow", "weakness", "confusion", "dizziness", "collapse", "health_loss" },
+    heat_stroke = { "overheat", "fever", "thirst", "slow", "weakness", "confusion", "dizziness", "collapse", "health_loss" },
     corpse_sickness = { "nausea", "vomit", "cough", "eye_burn", "dizziness", "fatigue", "weakness", "slow", "thirst" },
-    cadaveric_aspergillosis = { "cough", "short_breath", "chest_pain", "fever", "fatigue", "weakness", "slow", "thirst", "health_loss" },
+    cadaveric_aspergillosis = { "cough", "short_breath", "chest_pain", "fever", "nausea", "fatigue", "weakness", "slow", "thirst", "health_loss" },
     food_poisoning = { "nausea", "vomit", "weakness", "hunger", "thirst" },
     gastroenteritis = { "nausea", "vomit", "weakness", "thirst", "hunger" },
     toxin_poisoning = { "nausea", "vomit", "weakness", "thirst", "fatigue", "dizziness", "abdominal", "health_loss" },
-    trichinosis = { "muscle_pain", "fever", "fatigue", "weakness", "thirst", "spasm", "health_loss" },
+    trichinosis = { "muscle_pain", "stiffness", "fever", "nausea", "fatigue", "weakness", "thirst", "spasm", "health_loss" },
     hyperkeratotic_scabies = { "itch", "skin_pain", "fever", "health_loss" },
     cellulitis = { "wound_inflamed", "skin_pain", "fever", "nausea", "fatigue" },
     wound_infection = { "wound_inflamed", "fever" },
@@ -84,16 +84,10 @@ end
 -- thresholds per illness (keys UI_HomeMedic_SignWhere_<tag>).
 local LIMBS = { "UpperArm_L", "UpperArm_R", "ForeArm_L", "ForeArm_R", "Hand_L", "Hand_R",
     "UpperLeg_L", "UpperLeg_R", "LowerLeg_L", "LowerLeg_R", "Foot_L", "Foot_R" }
-local function partMax(v, names, field)
-    local m, at = 0, nil
-    for _, n in ipairs(names) do
-        local p = v.parts and v.parts[n]
-        if p and (tonumber(p[field]) or 0) > m then m, at = tonumber(p[field]), n end
-    end
-    return m, at
-end
-D.STIFF_PARTS = { "Neck", "Torso_Upper", "Torso_Lower" }
+D.STIFF_PARTS = { "Neck" }
 for _, n in ipairs(LIMBS) do D.STIFF_PARTS[#D.STIFF_PARTS + 1] = n end
+D.SKIN_PARTS = { "Neck" }
+for _, n in ipairs(LIMBS) do D.SKIN_PARTS[#D.SKIN_PARTS + 1] = n end
 local function pct(x) return tostring(math.floor((x or 0) * 100 + 0.5)) .. "%" end
 local function stat(name, op, limit)
     return function(v)
@@ -110,16 +104,54 @@ local function temp(op, limit)
         return on, string.format("%.1f C", v.temp)
     end
 end
-local function pain(names, limit)
+-- Thresholds follow what EHR really does to the body (R43 check):
+--   fever: EHR moves the body temperature (37.6-40.5 C) for pneumonia, cold,
+--     heat stroke, aspergillosis, trichinosis, scabies, cellulitis, TB,
+--     tetanus, AHTR, sepsis, wound infection; >= 40.3 C only heat stroke
+--   part pain (BodyPart additional pain): head = concussion / insomnia;
+--     upper torso = pneumonia; lower torso / groin = dysentery;
+--     lower back pain WITH stiffness = AHTR; limbs with stiffness =
+--     tetanus / trichinosis; one part without stiffness = cellulitis / scabies
+--   nausea: the Sickness stat (Queasy moodle) - also raised by trichinosis
+--     and aspergillosis
+local function partName(name)
+    if BodyPartType and BodyPartType.FromString and BodyPartType.getDisplayName then
+        local ok, n = pcall(function() return BodyPartType.getDisplayName(BodyPartType.FromString(name)) end)
+        if ok and n and n ~= "" then return n end
+    end
+    return name
+end
+D.partName = partName
+-- the worst part among `names` whose pain >= minPain and stiffness passes
+local function partPain(names, minPain, stiff)
     return function(v)
-        local m, at = partMax(v, names, "pain")
-        return m >= (limit or 10), string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. at .. ")") or "")
+        local m, at = 0, nil
+        for _, n in ipairs(names) do
+            local p = v.parts and v.parts[n]
+            if p then
+                local s = tonumber(p.stiff) or 0
+                local ok = stiff == nil or (stiff == "with" and s >= 10) or (stiff == "without" and s < 10)
+                if ok and (tonumber(p.pain) or 0) > m then m, at = tonumber(p.pain), n end
+            end
+        end
+        return m >= minPain, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
     end
 end
+local function partStiff(names, minStiff)
+    return function(v)
+        local m, at = 0, nil
+        for _, n in ipairs(names) do
+            local p = v.parts and v.parts[n]
+            if p and (tonumber(p.stiff) or 0) > m then m, at = tonumber(p.stiff), n end
+        end
+        return m >= minStiff, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
+    end
+end
+D.SIGN_LIMBS = LIMBS
 D.SIGNS = {
-    fever = { at = "stats", test = temp(">=", 37.6) },
+    fever = { at = "stats", test = temp(">=", 37.5) },
     chills = { at = "stats", test = temp("<=", 35.8) },
-    overheat = { at = "stats", test = temp(">=", 39.5) },
+    overheat = { at = "stats", test = temp(">=", 40.3) },
     fatigue = { at = "stats", test = stat("FATIGUE", ">=", 0.4) },
     weakness = { at = "stats", test = stat("ENDURANCE", "<=", 0.5) },
     short_breath = { at = "stats", test = stat("ENDURANCE", "<=", 0.3) },
@@ -138,19 +170,16 @@ D.SIGNS = {
         return x >= 0.25, pct(x)
     end },
     stress = { at = "stats", test = stat("STRESS", ">=", 0.4) },
-    headache = { at = "stats", test = pain({ "Head" }) },
-    chest_pain = { at = "stats", test = pain({ "Torso_Upper" }) },
-    abdominal = { at = "stats", test = pain({ "Torso_Lower", "Groin" }) },
-    back_pain = { at = "stats", test = pain({ "Torso_Lower", "Torso_Upper" }, 15) },
-    muscle_pain = { at = "stats", test = pain(LIMBS) },
-    skin_pain = { at = "stats", test = stat("PAIN", ">=", 0.2) },
-    stiffness = { at = "stats", test = function(v)
-        local m, at = partMax(v, D.STIFF_PARTS, "stiff")
-        return m >= 10, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. at .. ")") or "")
-    end },
+    headache = { at = "stats", test = partPain({ "Head" }, 10) },
+    chest_pain = { at = "stats", test = partPain({ "Torso_Upper" }, 10, "without") },
+    abdominal = { at = "stats", test = partPain({ "Torso_Lower", "Groin" }, 10, "without") },
+    back_pain = { at = "stats", test = partPain({ "Torso_Lower" }, 10, "with") },
+    muscle_pain = { at = "stats", test = partPain(LIMBS, 10, "with") },
+    skin_pain = { at = "stats", test = partPain(D.SKIN_PARTS, 10, "without") },
+    stiffness = { at = "stats", test = partStiff(D.STIFF_PARTS, 10) },
     wound_inflamed = { at = "stats", test = function(v)
         for name, p in pairs(v.parts or {}) do
-            if p.infected then return true, name end
+            if p.infected then return true, partName(name) end
         end
         return false
     end },
