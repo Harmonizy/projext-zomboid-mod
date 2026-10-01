@@ -555,7 +555,7 @@ function EHR_MedicalJournalUI:drawPanelFrame(x, y, w, h, title)
     self:drawRectBorder(x, y, w, h, c.borderDim.a, c.borderDim.r, c.borderDim.g, c.borderDim.b)
     if title then
         self:drawRect(x + 1, y + 1, w - 2, 30, c.header.a, c.header.r, c.header.g, c.header.b)
-        self:drawText(title, x + 10, y - 5, c.accent.r, c.accent.g, c.accent.b, c.accent.a, UIFont.Medium)
+        self:drawText(title, x + 10, y + math.max(2, math.floor((30 - getTextManager():getFontHeight(UIFont.Medium)) / 2)), c.accent.r, c.accent.g, c.accent.b, c.accent.a, UIFont.Medium)
         self:drawRect(x + 10, y + 29, w - 20, 1, 0.75, c.border.r, c.border.g, c.border.b)
     end
 end
@@ -691,10 +691,17 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
 
     local info = entry.info or {}
     y = self:drawInfoSection(L("UI_EHR_Codex_Cause", "Cause"), codexText(entry.id, "Cause", info.cause or L("UI_EHR_Codex_UnknownSentence", "Unknown.")), x, y, w)
-    y = self:drawInfoSection(L("UI_EHR_Codex_Symptoms", "Symptoms"), codexText(entry.id, "Symptoms", info.symptoms or L("UI_EHR_Codex_NoSymptoms", "No symptom notes available.")), x, y, w)
+    -- HARMONIE: symptoms / how to check / treatment from the game's own data (HM_Handbook)
+    local HB = HM_Handbook
+    local hbId = HM_Diagnosis and HM_Diagnosis.normalize(entry.id) or entry.id
+    local realSymptoms = HB and HB.symptoms(hbId)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Symptoms", "Symptoms"), realSymptoms or codexText(entry.id, "Symptoms", info.symptoms or L("UI_EHR_Codex_NoSymptoms", "No symptom notes available.")), x, y, w)
+    local check = HB and HB.howToCheck(hbId)
+    if check then y = self:drawInfoSection(L("UI_HomeMedic_Hb_HowToCheck", "How to check"), check, x, y, w) end
     y = self:drawInfoSection(L("UI_EHR_Codex_Timing", "Timing"), LF("UI_EHR_Codex_TimingText", "Incubation: %1. Duration: %2.", tostring(entry.incubation or L("UI_EHR_Codex_Unknown", "Unknown")), tostring(entry.duration or L("UI_EHR_Codex_Unknown", "Unknown"))), x, y, w)
     y = self:drawInfoSection(L("UI_EHR_Codex_Prevention", "Prevention"), codexText(entry.id, "Prevention", info.prevention or L("UI_EHR_Codex_NoPrevention", "No prevention notes available.")), x, y, w)
-    y = self:drawInfoSection(L("UI_EHR_Codex_Treatment", "Treatment"), codexText(entry.id, "Treatment", info.treatment or L("UI_EHR_Codex_NoTreatment", "No treatment notes available.")), x, y, w)
+    local realTreatment = HB and HB.treatment(hbId)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Treatment", "Treatment"), realTreatment or codexText(entry.id, "Treatment", info.treatment or L("UI_EHR_Codex_NoTreatment", "No treatment notes available.")), x, y, w)
     -- HARMONIE: surgery notes (HM_Surgery.handbookText)
     local surgery = HM_Surgery and HM_Surgery.handbookText and HM_Surgery.handbookText(entry.id)
     if surgery then

@@ -308,6 +308,12 @@ function G.drawVitals(ui, game, x, y, w, h)
     local c = alarm and { 1, 0.3, 0.3 } or { 0.3, 1, 0.45 }
     if alarm and math.floor(t * 2) % 2 == 0 then ui:drawRect(x + 1, y + 1, w - 2, h - 2, 0.18, 1, 0.1, 0.1) end
     if alarm and game then G.sfx("Alarm", 1500) end
+    -- a soft beep on every heartbeat, like a bedside monitor
+    if game then
+        local n = math.floor(t * hr / 60)
+        if game.beatN and n ~= game.beatN and not alarm then G.sfx("Beep", 250) end
+        game.beatN = n
+    end
     ui:drawText("HR " .. hr, x + 6, y + 3, c[1], c[2], c[3], 1, UIFont.Small)
     ui:drawText("SpO2 " .. spo2 .. "%", x + w - 70, y + 3, 0.4, 0.8, 1, 1, UIFont.Small)
     -- ECG trace

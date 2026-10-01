@@ -3108,12 +3108,12 @@ function EHR_HealthPanelUI:drawMedicalWatchIcon(x, y, w, h)
     end
 end
 
-function EHR_HealthPanelUI:drawBloodCompositionPanel()
+function EHR_HealthPanelUI:drawBloodCompositionPanel(atY)  -- HARMONIE: atY (tab 3 draws it too)
     local c = EHR_HealthPanelUI.Colors
     local summary = self:getBloodSummary()
     local hasWatch = self:hasMedicalMonitorWatch()
     local x = 12
-    local y = self:getContentTop()
+    local y = atY or self:getContentTop()
     local w = self.width - 24
     local h = self.BLOOD_PANEL_HEIGHT
     local diseaseCount = countTable(self.cachedData.diseases)
@@ -5712,7 +5712,8 @@ function EHR_HealthPanelUI:prerender()
     end
 
     if self.activeTab == "ehr" then
-        self:drawBloodCompositionPanel()
+        -- HARMONIE: the pulse monitor here; blood composition lives on tab 3
+        if self.hmDrawPulsePanel then self:hmDrawPulsePanel() else self:drawBloodCompositionPanel() end
         self:drawLeftPanel()
 
         if self.rightExpanded then

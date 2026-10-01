@@ -153,6 +153,8 @@ end
 C.diseaseName = diseaseName
 
 local function tagName(tag) return L("Tag_" .. tag, tag) end
+C.tagName = tagName
+C.effectLines = effectLines
 
 -- -> cards { title, stage, status, statusColor, lines, tip } of DIAGNOSED
 -- illnesses (+ blood loss), and how many illnesses are still undiagnosed

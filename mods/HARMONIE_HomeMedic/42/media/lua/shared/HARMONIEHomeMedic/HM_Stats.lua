@@ -28,7 +28,7 @@ HM_Stats = HM_Stats or {}
 local St = HM_Stats
 St.MODULE = "HARMONIE_HM_Stats"
 St.registry = St.registry or {}
-St.GROUPS = { "vitals", "needs", "mood", "body", "nutrition", "illness", "mods" }
+St.GROUPS = { "signs", "moodles", "vitals", "needs", "mood", "body", "nutrition", "illness", "mods" }
 
 local function call(obj, method, ...)
     if not obj or not obj[method] then return nil end
@@ -191,9 +191,89 @@ local function modernStatusRows(player, out)
     end
 end
 
+-- ------------------------------------------------------------- vitals (pulse, signs)
+-- A small live read for the pulse monitor and the signs list:
+-- { dead, health 0..100, blood 0..1, temp C, and CharacterStat values 0..1 }
+local VITAL_STATS = { "PANIC", "PAIN", "STRESS", "ENDURANCE", "FATIGUE", "HUNGER", "THIRST",
+    "SICKNESS", "FOOD_SICKNESS", "POISON", "INTOXICATION", "ZOMBIE_INFECTION", "ZOMBIE_FEVER" }
+function St.vitals(player)
+    local v = {}
+    if not player then return v end
+    v.dead = call(player, "isDead") == true
+    local bd = call(player, "getBodyDamage")
+    v.health = bd and tonumber(call(bd, "getOverallBodyHealth")) or nil
+    v.temp = bd and tonumber(call(bd, "getTemperature")) or nil
+    v.infection = bd and tonumber(call(bd, "getInfectionLevel")) or nil
+    local md = call(player, "getModData") or {}
+    local blood = md.EHR_Blood
+    if type(blood) == "table" and tonumber(blood.currentVolume) and tonumber(blood.maxVolume) and blood.maxVolume > 0 then
+        v.blood = clamp01(blood.currentVolume / blood.maxVolume)
+    end
+    -- per body part: pain (EHR puts illness pain there), stiffness, infected wound
+    v.parts = {}
+    if bd and BodyPartType and BodyPartType.FromIndex and BodyPartType.ToIndex then
+        local okN, n = pcall(function() return BodyPartType.ToIndex(BodyPartType.MAX) end)
+        for i = 0, (okN and tonumber(n) or 0) - 1 do
+            local okP, part = pcall(function() return bd:getBodyPart(BodyPartType.FromIndex(i)) end)
+            if okP and part then
+                local name = tostring(call(part, "getType") or i)
+                v.parts[name] = {
+                    pain = tonumber(call(part, "getAdditionalPain")) or 0,
+                    stiff = tonumber(call(part, "getStiffness")) or 0,
+                    infected = call(part, "isInfectedWound") == true,
+                }
+            end
+        end
+    end
+    local stats = call(player, "getStats")
+    if stats and CharacterStat then
+        for _, name in ipairs(VITAL_STATS) do
+            local okS, stat = pcall(function() return CharacterStat[name] end)
+            if okS and stat then
+                local ok, val = pcall(function() return stats:get(stat) end)
+                if ok and tonumber(val) then v[name] = tonumber(val) end
+            end
+        end
+    end
+    return v
+end
+
+-- ------------------------------------------------------------- moodles
+-- the vanilla moodles the player shows now: row.mt = moodle type name
+-- (icon lookup on the client), row.lv = level 1..4, row.gb = 1 good / 2 bad
+local function moodleRows(player, out)
+    local m = call(player, "getMoodles")
+    local n = m and tonumber(call(m, "getNumMoodles")) or 0
+    for i = 0, n - 1 do
+        local lv = tonumber(call(m, "getMoodleLevel", i)) or 0
+        if lv > 0 then
+            local mt = call(m, "getMoodleType", i)
+            local name = call(m, "getMoodleDisplayString", i)
+            out[#out + 1] = { g = "moodles", t = tostring(name or mt or "?"), mt = mt and tostring(mt) or nil,
+                lv = lv, gb = tonumber(call(m, "getGoodBadNeutral", i)) or 0, v = lv,
+                s = string.rep("|", lv) }
+        end
+    end
+end
+
+-- ------------------------------------------------------------- signs
+-- the illness signs that can be read off the body right now (HM_Diagnosis.SIGNS)
+local function signRows(player, out)
+    local D = HM_Diagnosis
+    if not (D and D.readSigns) then return end
+    local any = false
+    for _, r in ipairs(D.readSigns(St.vitals(player))) do
+        out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Diag_Tag_" .. r.tag, t = r.tag, tag = r.tag, s = r.reading }
+        any = true
+    end
+    if not any then out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Stats_NoSigns", t = "No measurable signs", s = "" } end
+end
+
 function St.collect(player)
     local out = {}
     if not player then return out end
+    pcall(signRows, player, out)
+    pcall(moodleRows, player, out)
     pcall(bodyRows, player, out)
     pcall(vanillaStats, player, out)
     pcall(registryRows, player, out)

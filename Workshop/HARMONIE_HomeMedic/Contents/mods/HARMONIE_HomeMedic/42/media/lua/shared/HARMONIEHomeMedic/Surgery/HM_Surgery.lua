@@ -232,7 +232,25 @@ local function hasUses(it)
     return true
 end
 
+local function lowType(it) return (call(it, "getType") or ""):lower() end
+local function has(it, word) return lowType(it):find(word, 1, true) ~= nil end
+
 local MATCH = {
+    scalpel = function(it) return has(it, "scalpel") end,
+    razor = function(it) return has(it, "razor") end,
+    blade = function(it) return has(it, "blade") and not has(it, "saw") end,
+    tweezers = function(it) return has(it, "tweezer") end,
+    pliers = function(it) return has(it, "pliers") end,
+    suture = function(it) return has(it, "sutureneedle") and not has(it, "holder") end,
+    thread = function(it) return has(it, "thread") end,
+    rag = function(it) local t = lowType(it); return t == "rippedsheets" or t == "rag" or t == "denimstrips" end,
+    syringe = function(it) return has(it, "syringe") and not has(it, "empty") end,
+    saline = function(it) return has(it, "saline") end,
+    bloodbag = function(it)
+        local B = EHR and EHR.Blood
+        if B and B.BloodBagTypes and B.BloodBagTypes[call(it, "getFullType") or ""] then return true end
+        return has(it, "bloodbag") and not has(it, "empty")
+    end,
     knife = function(it)
         local ty = (call(it, "getType") or ""):lower()
         return ty:find("knife", 1, true) ~= nil and not ty:find("butter", 1, true)
@@ -269,9 +287,35 @@ local function findType(src, t)
 end
 
 -- Best option for a supply slot: { slot, opt, item, where, need, needWhere, q } or nil
-function S.fillSlot(src, slotId)
+function S.donorType(it)
+    local B = EHR and EHR.Blood
+    return B and B.BloodBagTypes and B.BloodBagTypes[fullType(it)] or nil
+end
+
+function S.compatible(donor, recipient)
+    local B = EHR and EHR.Blood
+    if not donor or not recipient or not B or not B.IsCompatible then return false end
+    local ok, r = pcall(B.IsCompatible, donor, recipient)
+    return ok and r == true
+end
+
+function S.fillSlot(src, slotId, recipientType)
     local slot = S.Supplies[slotId]
     if not slot then return nil end
+    if slot.transfusion == "blood" then
+        -- prefer a bag the patient can take
+        local any
+        local best
+        Src.each(src, function(it, w)
+            if optionMatches(slot.options[1], it) then
+                local f = { slot = slotId, opt = slot.options[1], item = it, where = w, q = 1, donor = S.donorType(it) }
+                f.compatible = S.compatible(f.donor, recipientType)
+                any = any or f
+                if f.compatible then best = f; return true end
+            end
+        end)
+        return best or any
+    end
     for _, opt in ipairs(slot.options) do
         local item, where
         Src.each(src, function(it, w)
@@ -376,6 +420,15 @@ local function modData(patient, exam, key)
     local md = call(patient, "getModData")
     return md and md[key]
 end
+
+-- the patient's blood type (EHR), from the exam snapshot for another player
+function S.bloodType(patient, exam)
+    local b = modData(patient, exam, "EHR_Blood")
+    local t = type(b) == "table" and b.bloodType or nil
+    if t == "PENDING" then return nil end
+    return t
+end
+
 
 -- Stage of a disease (0 = not active). Sepsis lives in its own module.
 function S.stageOf(patient, id, exam)
@@ -641,6 +694,8 @@ function S.targetsTip(sid)
         local what
         if t.treat then
             what = S.T("Eff_Treat", "treatment, clears in ~%1h (%2h if excellent)", t.treat, math.floor(t.treat * S.EXCELLENT_TREAT + 0.5))
+        elseif t.cure then
+            what = S.T("Eff_Cure", "cured at once")
         else
             what = S.T("Eff_" .. id, id)
         end
@@ -658,21 +713,24 @@ function S.handbookText(id)
     local list = S.surgeriesFor(id)
     if #list == 0 then return nil end
     local names = {}
-    local treat
+    local treat, cure
     for _, sid in ipairs(list) do
         names[#names + 1] = S.T("Name_" .. sid, sid) .. " (" .. S.T("Tier_" .. S.Surgeries[sid].tier, S.Surgeries[sid].tier) .. ")"
         local t = S.Surgeries[sid].targets[id]
         if t and t.treat then treat = math.min(treat or t.treat, t.treat) end
+        if t and t.cure then cure = true end
     end
     local lines = { table.concat(names, ", ") }
     if id == "wound_infection" then
         lines[#lines + 1] = S.T("Hb_Clear", "A successful operation clears the infected wound at once.")
+    elseif cure then
+        lines[#lines + 1] = S.T("Hb_Cure", "It heals by itself in time; a successful operation ends it at once, with all its symptoms.")
     elseif treat then
         lines[#lines + 1] = S.T("Hb_Treat", "Success starts treatment: it clears in about %1 hours (%2 if excellent).", treat, math.floor(treat * S.EXCELLENT_TREAT + 0.5))
     end
     if S.SURGICAL[id] then
         lines[#lines + 1] = S.T("Hb_Required", "From stage %1 surgery is needed: a finished medicine course only holds it there (Awaiting surgery).", S.SURGICAL[id])
-    else
+    elseif not cure then
         lines[#lines + 1] = S.T("Hb_Optional", "Optional: medicine alone can still cure it.")
     end
     return table.concat(lines, " ")
@@ -739,18 +797,48 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
 
     -- supplies
     local qSum, qN = 0, 0
+    -- transfusion: needed when the operation would leave the patient low on blood
+    local ptype = S.bloodType(patient, exam)
+    local bv = modData(patient, exam, "EHR_Blood")
+    local cur = type(bv) == "table" and tonumber(bv.currentVolume) or nil
+    local max = type(bv) == "table" and tonumber(bv.maxVolume) or nil
+    local after = (cur and max and max > 0) and (cur - (s.bloodLoss or 0)) / max or nil
+    local worth = after ~= nil and after < 0.85
+    local must = after ~= nil and after < S.TRANSFUSE_BELOW
+    r.bloodAfter, r.mustTransfuse = after, must
+    local function optionNames(slot, n)
+        local out = {}
+        for _, o in ipairs(slot.options) do
+            if #out >= n then break end
+            out[#out + 1] = o.type and (getItemNameFromFullType and getItemNameFromFullType(o.type) or o.type) or S.T("Match_" .. o.match, o.match)
+        end
+        return table.concat(out, " / ")
+    end
     for _, slotId in ipairs(s.supplies) do
         local slot = S.Supplies[slotId]
-        local fill = S.fillSlot(Src.get(doctor), slotId)
-        r.slots[slotId] = fill
+        local fill
         local value, state
-        if fill then
-            value = (call(fill.item, "getDisplayName") or fullType(fill.item)) .. " - " .. S.T("Where_" .. fill.where, fill.where)
-            state = fill.q >= 0.8 and "ok" or "warn"
-            if slot.kind == "tool" then qSum = qSum + fill.q; qN = qN + 1 end
+        if slot.transfusion and not worth then
+            value = after and S.T("Transfuse_NotNeeded", "Not needed (blood after ~%1%)", math.floor(after * 100 + 0.5)) or S.T("Optional", "optional")
+            state = "info"
+        elseif slot.transfusion == "saline" and r.slots.blood and r.slots.blood.compatible then
+            value, state = S.T("Transfuse_UseBlood", "Not used: the blood bag goes in"), "info"
         else
-            value = S.T("Missing", "Missing")
-            state = slot.required and "fail" or "warn"
+            fill = S.fillSlot(Src.get(doctor), slotId, ptype)
+            r.slots[slotId] = fill
+            if fill then
+                value = (call(fill.item, "getDisplayName") or fullType(fill.item)) .. " - " .. S.T("Where_" .. fill.where, fill.where)
+                state = fill.q >= 0.8 and "ok" or "warn"
+                if slot.kind == "tool" then qSum = qSum + fill.q; qN = qN + 1 end
+                if slot.transfusion == "blood" then
+                    value = value .. "  [" .. tostring(fill.donor or "?") .. " -> " .. tostring(ptype or "?") .. "] "
+                        .. (fill.compatible and S.T("Compatible", "compatible") or S.T("Incompatible", "INCOMPATIBLE"))
+                    state = fill.compatible and "ok" or "warn"
+                end
+            else
+                value = S.T("MissingNeed", "Missing: %1", optionNames(slot, 2))
+                state = slot.required and "fail" or (slot.transfusion and must and "warn" or "warn")
+            end
         end
         local opts = {}
         for _, o in ipairs(slot.options) do
@@ -762,6 +850,12 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
               value = value,
               tip = S.T("Tip_Slot_" .. slotId, "") .. "\n\n" .. S.T("Tip_Options", "Accepts: %1", table.concat(opts, ", "))
                   .. "\n" .. S.T("Tip_Sources", "Found in your inventory, on the floor or in containers next to you.") })
+    end
+    if must and not r.slots.blood and not r.slots.saline then
+        row({ key = "transfusion", required = true, state = "fail",
+              label = S.T("Row_Transfusion", "Transfusion"),
+              value = S.T("Transfuse_Must", "Needed: blood after ~%1% (blood bag or saline)", math.floor(after * 100 + 0.5)),
+              tip = S.T("Tip_Transfusion", "This operation would leave the patient with too little blood. Have a blood bag of a compatible type (or saline) at hand: it goes in during the operation.") })
     end
     r.toolQ = qN > 0 and (qSum / qN) or 1
 
