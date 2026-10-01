@@ -152,3 +152,9 @@ MP
     Neurosurgery รักษา concussion หายทันที (ปกติต้องรอหายเอง 48 ชม.)
   รูปการผ่าตัดทั้ง 10 แบบ: tools/gen_surgery_cards.py (ประกอบจากภาพที่เราสร้างเอง) -> แท็บ 6 และหัวเช็คลิสต์
   เสียง: จอ monitor ในหน้าต่างผ่าตัดมีเสียงบี๊บตามจังหวะหัวใจ
+
+0.12.1
+  console: IllegalFormatConversionException "d != java.lang.String" (UI_EHR_SalineVolume)
+    สาเหตุ: คำแปลไทยของ EHR ใช้ %d / %.1f แต่โค้ดส่งค่าเป็น %1 (สตริงที่จัดรูปแล้ว) -> Java format ไม่ได้
+    แก้ TH 10 คีย์ให้เป็น %1 / %2 เหมือน EN (BloodVolume, SalineVolume, TimeLeft, Retake*, NextDose, DrugInteractions, StageSeverity, StageTimeRest)
+  "%" เดี่ยวหลัง %1 (เช่น "%1%") Java อ่านไม่ได้เช่นกัน -> เปลี่ยนเป็น "%%" (EN/TH 24 คีย์); HM_Text แปลง "%%" กลับเป็น "%" เมื่อไม่ผ่าน Java
