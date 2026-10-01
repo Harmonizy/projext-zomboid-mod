@@ -18,8 +18,8 @@ EHR.StitchMinigame.DOCTOR_MOVE_TOLERANCE = 0.35
 EHR.StitchMinigame.PATIENT_MOVE_TOLERANCE = 0.45
 
 local C = {
-    bg = { r = 0.018, g = 0.016, b = 0.016, a = 0.97 },
-    panel = { r = 0.055, g = 0.030, b = 0.030, a = 0.92 },
+    bg = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
+    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
     panelSoft = { r = 0.08, g = 0.020, b = 0.020, a = 0.72 },
     skin = { r = 0.24, g = 0.13, b = 0.10, a = 0.56 },
     skinDark = { r = 0.12, g = 0.045, b = 0.035, a = 0.64 },
@@ -33,8 +33,8 @@ local C = {
     gold = { r = 1.00, g = 0.66, b = 0.18, a = 1.0 },
     green = { r = 0.20, g = 0.90, b = 0.30, a = 1.0 },
     cyan = { r = 0.20, g = 0.82, b = 1.00, a = 1.0 },
-    text = { r = 0.92, g = 0.90, b = 0.84, a = 1.0 },
-    dim = { r = 0.60, g = 0.58, b = 0.56, a = 1.0 },
+    text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
+    dim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
     bad = { r = 1.00, g = 0.28, b = 0.12, a = 1.0 },
 }
 

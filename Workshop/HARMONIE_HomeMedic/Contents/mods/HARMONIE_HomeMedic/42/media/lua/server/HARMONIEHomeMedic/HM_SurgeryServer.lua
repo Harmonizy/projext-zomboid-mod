@@ -134,6 +134,7 @@ function SV.Begin(doctor, args)
         id = tostring(nowMs()) .. "-" .. tostring(ZombRand and ZombRand(100000) or 0),
         sid = sid, doctor = doctor, patient = patient, part = args.part,
         started = nowMs(), asepsis = ev.asepsis or 0, anesthesia = ev.anesthesia or 0, toolQ = ev.toolQ or 1,
+        aspiration = ev.aspiration or 0,
         dressingPower = tonumber(call(dressing, "getBandagePower")) or 2,
         dressingAlcohol = call(dressing, "isAlcoholic") == true or (ev.slots.dressing and ev.slots.dressing.q or 0) >= 1,
         dressingType = call(dressing, "getFullType"),
@@ -309,6 +310,17 @@ function SV.Finish(doctor, args)
         infected = true
     end
 
+    -- 4b. aspiration: operated on a full stomach
+    local aspirated = false
+    if (permit.aspiration or 0) > 0 and rand100() < permit.aspiration then
+        aspirated = true
+        if D and D.Contract and not (data and data.active and data.active.pneumonia) then pcall(D.Contract, patient, "pneumonia") end
+        local stats = call(patient, "getStats")
+        if stats and CharacterStat and CharacterStat.SICKNESS then
+            pcall(function() stats:set(CharacterStat.SICKNESS, math.min(1, (stats:get(CharacterStat.SICKNESS) or 0) + 0.25)) end)
+        end
+    end
+
     -- 5. experience
     local xp = math.floor(10 + 35 * q + 0.5)
     if EHR and EHR.SkillXP and EHR.SkillXP.AwardXP then pcall(EHR.SkillXP.AwardXP, doctor, xp, "surgery", nil)
@@ -328,7 +340,7 @@ function SV.Finish(doctor, args)
         pcall(EHR.Locale.Say, patient, S.T("Say_" .. grade, ""))
     end
     SV.reply(doctor, "Result", { permit = permit.id, sid = permit.sid, quality = q, grade = grade,
-        changes = changes, blood = blood, pain = pain, infected = infected, xp = xp, scores = scores })
+        changes = changes, blood = blood, pain = pain, infected = infected, aspirated = aspirated, xp = xp, scores = scores })
 end
 
 function SV.Abort(doctor, args)

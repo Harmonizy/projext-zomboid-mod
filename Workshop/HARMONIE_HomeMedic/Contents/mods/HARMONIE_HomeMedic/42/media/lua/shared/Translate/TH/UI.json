@@ -2490,5 +2490,14 @@
     "UI_HomeMedic_Stat_POISON": "พิษ",
     "UI_HomeMedic_Stat_ZOMBIE_INFECTION": "การติดเชื้อ Knox",
     "UI_HomeMedic_Stat_ZOMBIE_FEVER": "ไข้จากเชื้อ Knox",
-    "UI_HomeMedic_Stat_FITNESS": "ความฟิต"
+    "UI_HomeMedic_Stat_FITNESS": "ความฟิต",
+    "UI_HomeMedic_Surg_Row_Fasting": "การงดอาหาร (NPO)",
+    "UI_HomeMedic_Surg_Fasting_Full": "เพิ่งกินอาหาร - เสี่ยงสำลัก %1%",
+    "UI_HomeMedic_Surg_Fasting_Ok": "ท้องว่าง",
+    "UI_HomeMedic_Surg_Tip_Fasting": "ผู้ป่วยที่เพิ่งกินอาหารอาจอาเจียนแล้วสำลักเข้าปอดระหว่างผ่าตัด (Aspiration pneumonia) โดยเฉพาะตอนหลับหรือได้ยาระงับปวด/แอลกอฮอล์ ควรรอสักสองสามชั่วโมงหลังกินอาหาร",
+    "UI_HomeMedic_Surg_Row_Self": "ผ่าตัดตัวเอง",
+    "UI_HomeMedic_Surg_Self_Bypass": "อนุญาต (debug / admin)",
+    "UI_HomeMedic_Surg_Self_No": "ทำไม่ได้",
+    "UI_HomeMedic_Surg_Tip_Self": "ไม่มีใครเปิดช่องอก ช่องท้อง กะโหลก ฟอกเลือด หรือทำยีนบำบัดให้ตัวเองได้ ต้องให้ผู้เล่นคนอื่นผ่าให้",
+    "UI_HomeMedic_Surg_Res_Aspirated": "ผู้ป่วยอาเจียนและสำลักเข้าปอด: ปอดอักเสบจากการสำลัก (Aspiration pneumonia)!"
 }

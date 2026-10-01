@@ -26,10 +26,10 @@ local FONT = UIFont.Small
 local FONT_M = UIFont.Medium
 
 local COL = {
-    bg = { 0.06, 0.07, 0.08 }, panel = { 0.11, 0.12, 0.14 }, border = { 0.35, 0.38, 0.42 },
-    text = { 0.92, 0.92, 0.9 }, dim = { 0.62, 0.64, 0.66 },
+    bg = { 0.020, 0.032, 0.050 }, panel = { 0.040, 0.062, 0.090 }, border = { 0.22, 0.50, 0.85 },  -- HM_Theme blue
+    text = { 0.90, 0.93, 0.97 }, dim = { 0.60, 0.67, 0.74 },
     ok = { 0.35, 0.85, 0.45 }, warn = { 0.95, 0.75, 0.25 }, fail = { 0.95, 0.30, 0.28 }, info = { 0.45, 0.70, 1.0 },
-    accent = { 0.35, 0.75, 0.95 },
+    accent = { 0.32, 0.70, 1.00 },
 }
 local STATE_MARK = { ok = "+", warn = "!", fail = "x", info = "i" }
 
@@ -309,7 +309,7 @@ function Op:new(doctor, info)
     o.params = { skill = tonumber(info.skill) or 0, shake = tonumber(info.shake) or 0, tool = tonumber(info.tool) or 1 }
     o.backgroundColor = { r = COL.bg[1], g = COL.bg[2], b = COL.bg[3], a = 0.97 }
     o.borderColor = { r = COL.border[1], g = COL.border[2], b = COL.border[3], a = 1 }
-    o.moveWithMouse = false
+    o.moveWithMouse = true   -- drag by the title bar / edges (not the board)
     o.last = nowMs()
     -- measured layout: title, chips, instruction, board, timer, footer
     local top = 10 + fh(FONT_M) + 8
@@ -366,10 +366,13 @@ function Op:finish(aborted)
     self.sent = true
     self.game = nil
     self.waiting = true
-    local args = { permit = self.info.permit, scores = self.scores, aborted = aborted == true }
-    send(aborted and "Abort" or "Finish", args)
+    self.waitSince = nowMs()
+    -- button first: in single player the result arrives inside send()
+    -- (and enables it again); disabling it afterwards locked the window
     self.abortBtn:setTitle(S.T("Close", "Close"))
     self.abortBtn:setEnable(false)
+    local args = { permit = self.info.permit, scores = self.scores, aborted = aborted == true }
+    send(aborted and "Abort" or "Finish", args)
 end
 
 function Op:onAbort()
@@ -389,6 +392,11 @@ function Op:update()
     local t = nowMs()
     local dt = math.min(100, t - self.last)
     self.last = t
+    -- no answer from the server: let the player close the window anyway
+    if self.waiting and self.waitSince and t - self.waitSince > 6000 then
+        self.waiting = false
+        self.abortBtn:setEnable(true)
+    end
     if self.game then
         if self.pause > 0 then
             self.pause = self.pause - dt
@@ -490,6 +498,7 @@ function Op:drawResult(b)
     line(S.T("Res_Blood", "Blood lost: %1 mL", r.blood or 0), COL.dim)
     line(S.T("Res_Pain", "Pain: +%1", r.pain or 0), COL.dim)
     if r.infected then line(S.T("Res_Infected", "Surgical-site infection: Cellulitis!"), COL.fail) end
+    if r.aspirated then line(S.T("Res_Aspirated", "The patient vomited and breathed it in: aspiration pneumonia!"), COL.fail) end
     line(S.T("Res_XP", "First Aid XP +%1", r.xp or 0), COL.info)
     line(S.T("Res_Aftercare", "Keep the wound dressed."), COL.dim)
 end
@@ -513,11 +522,14 @@ function Op:onMouseUp(x, y)
 end
 function Op:onMouseUpOutside(x, y)
     if self.game then self.game:mouseUp(x, y) end
+    return ISPanel.onMouseUpOutside(self, x, y)
 end
 function Op:onMouseMove(dx, dy)
+    if self.moving then return ISPanel.onMouseMove(self, dx, dy) end
     if self.game and self.pause <= 0 then self.game:mouseMove(self:getMouseX(), self:getMouseY()) end
 end
 function Op:onMouseMoveOutside(dx, dy)
+    if self.moving then return ISPanel.onMouseMoveOutside(self, dx, dy) end
     if self.game and self.pause <= 0 then self.game:mouseMove(self:getMouseX(), self:getMouseY()) end
 end
 

@@ -50,11 +50,17 @@ function P.ensure(panel, cfg)
         return
     end
     if panel.hmPinned == nil then panel.hmPinned = true end
-    local b = ISButton:new(0, 0, P.SIZE, P.SIZE, "", panel, function(target) P.toggle(target) end)
+    local w, h = cfg.size and cfg.size[1] or 24, cfg.size and cfg.size[2] or 22
+    local b = ISButton:new(0, 0, w, h, "", panel, function(target) P.toggle(target) end)
     b:initialise()
     b:instantiate()
-    b.displayBackground = false
-    b.borderColor = { r = 0, g = 0, b = 0, a = 0 }
+    -- same look as the window's other header buttons, so it is easy to spot
+    local th = HM_Theme
+    b.borderColor = th and th.button.border or { r = 0.35, g = 0.62, b = 0.95, a = 1 }
+    b.backgroundColor = th and th.button.bg or { r = 0.03, g = 0.06, b = 0.10, a = 0.85 }
+    b.backgroundColorMouseOver = th and th.button.over or { r = 0.08, g = 0.20, b = 0.36, a = 0.95 }
+    b.forcedWidthImage = w - 6
+    b.forcedHeightImage = h - 6
     panel:addChild(b)
     panel.hmPinBtn = b
     panel.hmPinCfg = cfg
@@ -121,9 +127,10 @@ end
 -- ------------------------------------------------------------- medical window
 local HEALTH = {
     header = function(panel) return panel.HEADER_HEIGHT or 40 end,
+    -- right side, just left of the -/+ (collapse / expand) button
     place = function(panel, b)
-        b:setX(8)
-        b:setY(math.floor(((panel.HEADER_HEIGHT or 40) - P.SIZE) / 2))
+        b:setX(panel.width - 90)
+        b:setY(math.floor(((panel.HEADER_HEIGHT or 40) - b.height) / 2))
     end,
     keep = { "closeButton", "expandButton", "antibodiesButton", "administerMedicationButton" },
 }
@@ -166,6 +173,7 @@ end
 
 -- ------------------------------------------------------------- medical monitor
 local MONITOR = {
+    size = { 20, 20 },
     header = function(panel) return panel.HEADER_HEIGHT or 30 end,
     place = function(panel, b)
         b:setX(panel.width - 75)

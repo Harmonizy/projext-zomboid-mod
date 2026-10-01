@@ -49,8 +49,8 @@ function St.Register(def)
 end
 
 -- ------------------------------------------------------------- vanilla stats
--- CharacterStat names known in B42; anything else CharacterStat.values()
--- reports is added after them.
+-- CharacterStat names known in B42 (a name the game lacks is skipped).
+-- Never call CharacterStat.values(): Kahlua does not expose it (error).
 local STAT_GROUP = {
     ENDURANCE = "needs", FATIGUE = "needs", HUNGER = "needs", THIRST = "needs",
     PAIN = "body", SICKNESS = "illness", FOOD_SICKNESS = "illness", POISON = "illness",
@@ -97,17 +97,6 @@ local function vanillaStats(player, out)
     for _, name in ipairs(STAT_ORDER) do
         local ok, stat = pcall(function() return CharacterStat[name] end)
         if ok then add(name, stat) end
-    end
-    -- anything newer the game knows
-    local ok, all = pcall(function() return CharacterStat.values() end)
-    if ok and all then
-        local n = 0
-        pcall(function() n = all.size and all:size() or #all end)
-        for i = 0, n - 1 do
-            local stat
-            pcall(function() stat = all.get and all:get(i) or all[i + 1] end)
-            if stat then add(tostring(stat), stat) end
-        end
     end
 end
 

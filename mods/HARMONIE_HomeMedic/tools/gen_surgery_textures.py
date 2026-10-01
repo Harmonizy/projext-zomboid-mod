@@ -28,7 +28,7 @@ def disc(inner=None):
 
 
 CREAM = (238, 232, 220, 255)
-RED = (226, 44, 44, 255)
+RED = (82, 172, 255, 255)        # accent (HM_Theme blue; the name is historical)
 
 
 def _canvas(size):
@@ -37,9 +37,9 @@ def _canvas(size):
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     s = big / 128.0
-    # the shared badge: dark rounded plate, thin red rim
-    d.rounded_rectangle([6 * s, 6 * s, 122 * s, 122 * s], radius=22 * s, fill=(24, 18, 18, 235),
-                        outline=(150, 34, 34, 255), width=int(4 * s))
+    # the shared badge: dark blue rounded plate, blue rim (HM_Theme)
+    d.rounded_rectangle([6 * s, 6 * s, 122 * s, 122 * s], radius=22 * s, fill=(12, 22, 36, 235),
+                        outline=(56, 128, 217, 255), width=int(4 * s))
     return img, d, s
 
 
@@ -95,7 +95,7 @@ def tab_handbook(size=128):
     img, d, s = _canvas(size)
     d.polygon([(20 * s, 34 * s), (60 * s, 28 * s), (64 * s, 34 * s), (64 * s, 102 * s), (60 * s, 96 * s), (20 * s, 100 * s)], fill=CREAM)
     d.polygon([(108 * s, 34 * s), (68 * s, 28 * s), (64 * s, 34 * s), (64 * s, 102 * s), (68 * s, 96 * s), (108 * s, 100 * s)], fill=CREAM)
-    d.line([(64 * s, 32 * s), (64 * s, 102 * s)], fill=(120, 30, 30, 255), width=int(3 * s))
+    d.line([(64 * s, 32 * s), (64 * s, 102 * s)], fill=(30, 70, 130, 255), width=int(3 * s))
     for y in (46, 58, 70, 82):
         d.line([(28 * s, y * s), (54 * s, (y - 2) * s)], fill=(150, 140, 130, 255), width=int(3 * s))
     d.rectangle([82 * s, 46 * s, 92 * s, 80 * s], fill=RED)
@@ -110,12 +110,12 @@ def pin_icon(pinned, size=64):
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     s = big / 64.0
-    col = CREAM if pinned else (190, 180, 170, 255)
-    head = RED if pinned else (150, 60, 60, 255)
-    d.ellipse([20 * s, 6 * s, 44 * s, 30 * s], fill=head)
-    d.rectangle([26 * s, 26 * s, 38 * s, 36 * s], fill=col)
-    d.polygon([(16 * s, 36 * s), (48 * s, 36 * s), (44 * s, 42 * s), (20 * s, 42 * s)], fill=col)
-    d.polygon([(30 * s, 42 * s), (34 * s, 42 * s), (32 * s, 60 * s)], fill=col)
+    col = CREAM if pinned else (175, 185, 200, 255)
+    head = RED if pinned else (70, 110, 160, 255)
+    d.ellipse([16 * s, 2 * s, 48 * s, 34 * s], fill=head, outline=(10, 20, 35, 255), width=int(2 * s))
+    d.rectangle([25 * s, 30 * s, 39 * s, 38 * s], fill=col)
+    d.polygon([(12 * s, 38 * s), (52 * s, 38 * s), (47 * s, 46 * s), (17 * s, 46 * s)], fill=col)
+    d.polygon([(29 * s, 46 * s), (35 * s, 46 * s), (32 * s, 63 * s)], fill=col)
     if not pinned:
         img = img.rotate(45, resample=Image.BICUBIC, center=(big / 2, big / 2))
     return img.resize((size, size), Image.LANCZOS)

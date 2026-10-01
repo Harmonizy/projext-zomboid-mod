@@ -15,18 +15,14 @@
     Pure data / questions only; changes happen in server/HARMONIEHomeMedic/HM_SurgeryServer.lua.
 ]]--
 
+require "HARMONIEHomeMedic/HM_Text"
 require "HARMONIEHomeMedic/Surgery/HM_SurgeryData"
 
 local S = HM_Surgery
 
 -- ---------------------------------------------------------------- text
 function S.T(key, fallback, ...)
-    local k = "UI_HomeMedic_Surg_" .. key
-    local t = getText and getText(k)
-    if not t or t == k or t == "?" then t = fallback or key end
-    local args = { ... }
-    for i = 1, #args do t = t:gsub("%%" .. i, (tostring(args[i]):gsub("%%", "%%%%"))) end
-    return t
+    return HM_Text("UI_HomeMedic_Surg_" .. key, fallback or key, ...)
 end
 
 local function now() return getGameTime and getGameTime():getWorldAgeHours() or 0 end
@@ -594,6 +590,27 @@ function S.anesthesia(patient)
     }
 end
 
+-- -debug game or a server admin: may bypass the "not on yourself" lock
+function S.privileged(player)
+    if isDebugEnabled and isDebugEnabled() then return true end
+    local level = call(player, "getAccessLevel")
+    return level == "admin" or level == "Admin"
+end
+
+-- has the patient eaten recently (full stomach)? -> full, hunger, risk %
+function S.fasting(patient, anesthesia)
+    local hunger
+    local stats = call(patient, "getStats")
+    if stats and CharacterStat and CharacterStat.HUNGER then
+        hunger = tonumber(call(stats, "get", CharacterStat.HUNGER))
+    end
+    if not hunger then return false, nil, 0 end
+    local full = hunger < S.FULL_STOMACH_HUNGER
+    if not full then return false, hunger, 0 end
+    local sedated = (anesthesia or 0) >= 0.6
+    return true, hunger, sedated and S.ASPIRATION_CHANCE_SEDATED or S.ASPIRATION_CHANCE
+end
+
 function S.bloodFraction(patient)
     local B = HARMONIE_HomeMedic_BloodImpact
     if B and B.bloodFraction then
@@ -766,12 +783,29 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
           label = S.T("Row_Anesthesia", "Anesthesia"), value = math.floor(an * 100 + 0.5) .. "%",
           tip = S.T("Tip_Anesthesia", "Without pain relief the patient flinches: the steps shake and hurt more.") .. "\n" .. table.concat(lines, "\n") })
 
+    -- fasting (NPO): a full stomach can be breathed in during the operation
+    local full, _, risk = S.fasting(patient, an)
+    r.aspiration = risk
+    row({ key = "fasting", state = full and "warn" or "ok",
+          label = S.T("Row_Fasting", "Fasting (NPO)"),
+          value = full and S.T("Fasting_Full", "Ate recently - aspiration %1%", risk) or S.T("Fasting_Ok", "Empty stomach"),
+          tip = S.T("Tip_Fasting", "A patient who has just eaten may vomit and breathe it in during the operation (aspiration pneumonia), more so when asleep or sedated. Wait a few hours after a meal.") })
+
     -- blood
     local bf = S.bloodFraction(patient)
     if bf then
         row({ key = "blood", state = bf >= 0.7 and "ok" or (bf >= 0.55 and "warn" or "fail"),
               label = S.T("Row_Blood", "Blood volume"), value = math.floor(bf * 100 + 0.5) .. "%",
               tip = S.T("Tip_Blood", "The operation costs about %1 mL of blood (more if hemostasis goes badly).", s.bloodLoss) })
+    end
+
+    -- some operations cannot be done on yourself
+    if doctor == patient and S.NO_SELF[sid] then
+        local bypass = S.privileged(doctor)
+        row({ key = "self", required = true, state = bypass and "warn" or "fail",
+              label = S.T("Row_Self", "On yourself"),
+              value = bypass and S.T("Self_Bypass", "Allowed (debug / admin)") or S.T("Self_No", "Not possible"),
+              tip = S.T("Tip_Self", "Nobody can open their own chest, abdomen or skull, run their own dialysis or gene therapy. Another player has to operate.") })
     end
 
     -- position

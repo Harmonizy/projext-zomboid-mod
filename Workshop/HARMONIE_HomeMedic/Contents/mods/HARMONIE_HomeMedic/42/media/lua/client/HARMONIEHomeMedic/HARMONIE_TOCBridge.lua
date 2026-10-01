@@ -167,7 +167,51 @@ function T.install()
     end
 end
 
+-- The body diagram of the medical window: an amputated limb disappears.
+-- TOC paints the missing limb (its own 123x302 overlay of the vanilla body,
+-- media/ui/<Sex>/<Limb>.png) on the vanilla health panel; here the same
+-- overlay is painted in the window's background colour, so the limb is gone
+-- (a fitted prosthesis is drawn on top). Offset -5,-13 = TOC's B42 alignment.
+T.BODY_OFFSET_X, T.BODY_OFFSET_Y = -5, -13
+function T.drawMissingLimbs(panel)
+    if not T.available() then return end
+    local player = (panel.parent and panel.parent.player) or panel.character or panel.player
+    local username = player and player.getUsername and player:getUsername()
+    if not username then return end
+    local okS, StaticData = pcall(require, "TOC/StaticData")
+    local okC, Cached = pcall(require, "TOC/Handlers/CachedDataHandler")
+    local okD, DataController = pcall(require, "TOC/Controllers/DataController")
+    if not (okS and okC and StaticData and Cached and Cached.GetHighestAmputatedLimbs) then return end
+    local okH, highest = pcall(Cached.GetHighestAmputatedLimbs, username)
+    if not okH or type(highest) ~= "table" then return end
+    local sex = player.isFemale and player:isFemale() and "Female" or "Male"
+    local textures = StaticData.HEALTH_PANEL_TEXTURES and StaticData.HEALTH_PANEL_TEXTURES[sex]
+    local bg = EHR_HealthPanelUI and EHR_HealthPanelUI.Colors and EHR_HealthPanelUI.Colors.panel or { r = 0.04, g = 0.062, b = 0.09 }
+    local dc = okD and DataController and DataController.GetInstance(username)
+    for _, side in ipairs({ "L", "R" }) do
+        local limb = highest[side]
+        local tex = limb and textures and textures[limb]
+        if tex then
+            panel:drawTexture(tex, T.BODY_OFFSET_X, T.BODY_OFFSET_Y, 1, bg.r, bg.g, bg.b)
+            local prost = dc and dc.getIsProstEquipped and dc:getIsProstEquipped(limb)
+            local ptex = prost and StaticData.HEALTH_PANEL_TEXTURES.ProstArm and StaticData.HEALTH_PANEL_TEXTURES.ProstArm[side]
+            if ptex then panel:drawTexture(ptex, T.BODY_OFFSET_X, T.BODY_OFFSET_Y, 1, 1, 1, 1) end
+        end
+    end
+end
+
+function T.installBody()
+    if T.bodyInstalled or not EHR_HealthBodyPartPanel or not T.available() then return end
+    T.bodyInstalled = true
+    local original = EHR_HealthBodyPartPanel.render
+    function EHR_HealthBodyPartPanel:render()
+        if original then original(self) end
+        pcall(T.drawMissingLimbs, self)
+    end
+end
+
 if Events and Events.OnGameStart then
     Events.OnGameStart.Add(T.install)
     Events.OnGameStart.Add(T.installStatuses)
+    Events.OnGameStart.Add(T.installBody)
 end

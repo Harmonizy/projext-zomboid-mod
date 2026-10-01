@@ -12,6 +12,7 @@
     Tabs 1, 2 are EHR's own; tab 4 is HM_DiagnosisPanel.lua.
 ]]--
 
+require "HARMONIEHomeMedic/HM_Text"
 require "ExtensiveHealth/EHR_HealthPanelUI"
 require "ExtensiveHealth/EHR_MedicalJournalUI"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
@@ -28,10 +29,7 @@ local function txt(key, fallback)
     return t
 end
 local function L(key, fallback, ...)
-    local t = txt("UI_HomeMedic_Stats_" .. key, fallback or key)
-    local args = { ... }
-    for i = 1, #args do t = t:gsub("%%" .. i, (tostring(args[i]):gsub("%%", "%%%%"))) end
-    return t
+    return HM_Text("UI_HomeMedic_Stats_" .. key, fallback or key, ...)
 end
 local function inside(mx, my, x, y, w, h) return mx >= x and mx <= x + w and my >= y and my <= y + h end
 
@@ -130,8 +128,8 @@ function EHR_HealthPanelUI:hmDrawStats()
     local ry = b.y + 6
     local rh = fh() + 8
     local hov = inside(mx, my, rx, ry, rw, rh)
-    self:drawRect(rx, ry, rw, rh, hov and 0.9 or 0.6, c.redDark.r, c.redDark.g, c.redDark.b)
-    self:drawRectBorder(rx, ry, rw, rh, 1, c.red.r, c.red.g, c.red.b)
+    self:drawRect(rx, ry, rw, rh, hov and 0.9 or 0.6, c.accentDark.r, c.accentDark.g, c.accentDark.b)
+    self:drawRectBorder(rx, ry, rw, rh, 1, c.accent.r, c.accent.g, c.accent.b)
     self:drawText(refresh, rx + 9, ry + 4, c.text.r, c.text.g, c.text.b, 1, FONT)
     st.refreshBtn = { x = rx, y = ry, w = rw, h = rh }
     local titleW = tw(L("Title", "BODY STATS"), FONT_M) + 40
@@ -147,7 +145,7 @@ function EHR_HealthPanelUI:hmDrawStats()
         groups[g] = groups[g] or {}
         table.insert(groups[g], row)
     end
-    local top, viewH = b.y + 36, b.h - 44
+    local top, viewH = b.y + 48, b.h - 56
     local colW = math.floor((b.w - 28 - 18) / 2)
     local cols = { { x = b.x + 14, h = 0, items = {} }, { x = b.x + 14 + colW + 18, h = 0, items = {} } }
     local rowH = fh() + 7
@@ -170,7 +168,7 @@ function EHR_HealthPanelUI:hmDrawStats()
     for _, col in ipairs(cols) do
         local y = top - st.scroll
         for _, item in ipairs(col.items) do
-            self:drawText(L("Group_" .. item.g, item.g), col.x, y, c.red.r, c.red.g, c.red.b, 1, FONT_M)
+            self:drawText(L("Group_" .. item.g, item.g), col.x, y, c.accent.r, c.accent.g, c.accent.b, 1, FONT_M)
             y = y + headH
             self:drawRect(col.x, y - 4, colW, 1, 0.6, c.borderDim.r, c.borderDim.g, c.borderDim.b)
             for i, row in ipairs(item.rows) do
@@ -208,7 +206,7 @@ function EHR_HealthPanelUI:hmDrawStats()
     if st.maxScroll > 0 then
         local barH = math.max(24, viewH * viewH / contentH)
         local barY = top + (viewH - barH) * (st.scroll / st.maxScroll)
-        self:drawRect(b.x + b.w - 7, barY, 3, barH, 0.8, c.red.r, c.red.g, c.red.b)
+        self:drawRect(b.x + b.w - 7, barY, 3, barH, 0.8, c.accent.r, c.accent.g, c.accent.b)
     end
 end
 
