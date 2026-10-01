@@ -54,20 +54,20 @@ EHR.DebugV2.Tabs = {
 
 -- Color scheme (matches Medical Monitor)
 EHR.DebugV2.Colors = {
-    background = {r=0.1, g=0.1, b=0.12, a=0.95},
-    border = {r=0.3, g=0.5, b=0.4, a=1},
-    headerBg = {r=0.15, g=0.2, b=0.18, a=1},
-    tabBg = {r=0.12, g=0.14, b=0.16, a=1},
-    tabActive = {r=0.2, g=0.35, b=0.3, a=1},
-    tabHover = {r=0.15, g=0.25, b=0.22, a=1},
-    text = {r=0.9, g=0.9, b=0.9, a=1},
-    textDim = {r=0.6, g=0.6, b=0.6, a=1},
+    background = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
+    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
+    headerBg = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
+    tabBg = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
+    tabActive = { r = 0.08, g = 0.24, b = 0.44, a = 1 },
+    tabHover = { r = 0.06, g = 0.16, b = 0.3, a = 1 },
+    text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
+    textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
     safe = {r=0.2, g=0.8, b=0.3, a=1},
     warning = {r=0.9, g=0.7, b=0.2, a=1},
     danger = {r=0.9, g=0.3, b=0.1, a=1},
     critical = {r=1, g=0.1, b=0.1, a=1},
-    buttonBg = {r=0.18, g=0.22, b=0.2, a=1},
-    buttonHover = {r=0.25, g=0.35, b=0.3, a=1},
+    buttonBg = { r = 0.06, g = 0.12, b = 0.2, a = 1 },
+    buttonHover = { r = 0.1, g = 0.24, b = 0.42, a = 1 },
 }
 
 local function debugClamp(value, minValue, maxValue)

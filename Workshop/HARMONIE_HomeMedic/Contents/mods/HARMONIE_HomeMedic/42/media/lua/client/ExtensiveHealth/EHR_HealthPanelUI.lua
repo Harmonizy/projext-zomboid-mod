@@ -60,20 +60,23 @@ EHR_HealthPanelUI.TEXT_DOCK_Y_BIAS = -2
 EHR_HealthPanelUI.REMOTE_EXAM_MAX_DISTANCE = 3.0
 
 EHR_HealthPanelUI.Colors = {
-    background = { r = 0.025, g = 0.025, b = 0.028, a = 0.97 },
-    panel = { r = 0.055, g = 0.055, b = 0.06, a = 0.94 },
-    panelSoft = { r = 0.09, g = 0.085, b = 0.085, a = 0.72 },
-    header = { r = 0.035, g = 0.035, b = 0.038, a = 0.98 },
-    border = { r = 0.48, g = 0.14, b = 0.12, a = 1.0 },
-    borderDim = { r = 0.24, g = 0.10, b = 0.09, a = 1.0 },
-    text = { r = 0.92, g = 0.91, b = 0.86, a = 1.0 },
-    textDim = { r = 0.62, g = 0.62, b = 0.62, a = 1.0 },
+    -- HARMONIE: blue theme (HM_Theme); red stays for danger / blood
+    accent = { r = 0.32, g = 0.7, b = 1.0, a = 1.0 },
+    accentDark = { r = 0.05, g = 0.16, b = 0.32, a = 1.0 },
+    background = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
+    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
+    panelSoft = { r = 0.07, g = 0.105, b = 0.15, a = 0.72 },
+    header = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
+    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
+    borderDim = { r = 0.11, g = 0.24, b = 0.42, a = 1.0 },
+    text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
+    textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
     green = { r = 0.22, g = 0.88, b = 0.30, a = 1.0 },
     blue = { r = 0.20, g = 0.78, b = 1.0, a = 1.0 },
     yellow = { r = 0.95, g = 0.74, b = 0.18, a = 1.0 },
     orange = { r = 1.0, g = 0.36, b = 0.12, a = 1.0 },
     red = { r = 0.86, g = 0.05, b = 0.045, a = 1.0 },
-    redDark = { r = 0.30, g = 0.015, b = 0.015, a = 1.0 },
+    redDark = { r = 0.05, g = 0.16, b = 0.32, a = 1.0 },
     purple = { r = 0.58, g = 0.20, b = 0.72, a = 1.0 },
     body = { r = 0.30, g = 0.33, b = 0.31, a = 0.55 },
     bodyHot = { r = 0.64, g = 0.18, b = 0.12, a = 0.82 },
@@ -943,13 +946,13 @@ function EHR_HealthPanelUI:createChildren()
     self.closeButton = ISButton:new(self.width - 30, 6, 24, 22, "X", self, EHR_HealthPanelUI.onClose)
     self.closeButton:initialise()
     self.closeButton:instantiate()
-    self.closeButton.borderColor = { r = 0.72, g = 0.24, b = 0.20, a = 1 }
+    self.closeButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
     self:addChild(self.closeButton)
 
     self.expandButton = ISButton:new(self.width - 60, 6, 24, 22, "-", self, EHR_HealthPanelUI.onToggleRight)
     self.expandButton:initialise()
     self.expandButton:instantiate()
-    self.expandButton.borderColor = { r = 0.72, g = 0.24, b = 0.20, a = 1 }
+    self.expandButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
     self:addChild(self.expandButton)
 
     self.antibodiesButton = ISButton:new(self.width - 90, 6, 24, 22, "", self, EHR_HealthPanelUI.onOpenAntibodiesPanel)
@@ -958,9 +961,9 @@ function EHR_HealthPanelUI:createChildren()
     self.antibodiesButton.toString = function()
         return "EHR_AntibodiesButton"
     end
-    self.antibodiesButton.borderColor = { r = 0.72, g = 0.24, b = 0.20, a = 1 }
-    self.antibodiesButton.backgroundColor = { r = 0.045, g = 0.025, b = 0.025, a = 0.72 }
-    self.antibodiesButton.backgroundColorMouseOver = { r = 0.20, g = 0.055, b = 0.045, a = 0.95 }
+    self.antibodiesButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
+    self.antibodiesButton.backgroundColor = { r = 0.03, g = 0.07, b = 0.12, a = 0.72 }
+    self.antibodiesButton.backgroundColorMouseOver = { r = 0.08, g = 0.22, b = 0.40, a = 0.95 }
     self.antibodiesButton:setTooltip(safeText("UI_EHR_AntibodiesPanel", "Antibodies panel"))
     local antibodiesIcon = getTexture and getTexture("media/textures/Item_AntibodyCompTest.png") or nil
     if antibodiesIcon then
@@ -977,9 +980,9 @@ function EHR_HealthPanelUI:createChildren()
         self, EHR_HealthPanelUI.onOpenMedicationAdminister)
     self.administerMedicationButton:initialise()
     self.administerMedicationButton:instantiate()
-    self.administerMedicationButton.borderColor = { r = 0.72, g = 0.24, b = 0.20, a = 1 }
-    self.administerMedicationButton.backgroundColor = { r = 0.045, g = 0.025, b = 0.025, a = 0.88 }
-    self.administerMedicationButton.backgroundColorMouseOver = { r = 0.20, g = 0.055, b = 0.045, a = 0.95 }
+    self.administerMedicationButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
+    self.administerMedicationButton.backgroundColor = { r = 0.03, g = 0.07, b = 0.12, a = 0.88 }
+    self.administerMedicationButton.backgroundColorMouseOver = { r = 0.08, g = 0.22, b = 0.40, a = 0.95 }
     self.administerMedicationButton:setTooltip(safeText(
         "UI_EHR_MPMedication_ButtonTooltip",
         "Administer a medication from your inventory to this patient."
@@ -1785,11 +1788,11 @@ function EHR_HealthPanelUI:repositionControls()
         self.expandButton:setTitle(self.rightExpanded and "-" or "+")
     end
     if self.antibodiesButton then
-        self.antibodiesButton:setX(self.width - 90)
+        self.antibodiesButton:setX(self.width - 120)  -- HARMONIE: -90 is the pin (HM_Pin.lua)
         self.antibodiesButton:setY(math.floor((self.HEADER_HEIGHT - self.antibodiesButton.height) / 2))
     end
     if self.administerMedicationButton then
-        self.administerMedicationButton:setX(self.width - 274)
+        self.administerMedicationButton:setX(self.width - 304)
         self.administerMedicationButton:setY(math.floor((self.HEADER_HEIGHT - self.administerMedicationButton.height) / 2))
     end
 end
@@ -1970,9 +1973,9 @@ function EHR_HealthPanelUI:drawPanelFrame(x, y, w, h, title, iconLabel)
                 self:drawTextureScaled(iconTexture, x + 8, y + 9, 24, 24, 1.0, 1.0, 1.0, 1.0)
                 titleX = x + 38
             else
-                self:drawRect(x + 10, y + 13, 16, 16, 0.18, c.red.r, c.red.g, c.red.b)
+                self:drawRect(x + 10, y + 13, 16, 16, 0.18, c.accent.r, c.accent.g, c.accent.b)
                 self:drawRectBorder(x + 10, y + 13, 16, 16, 0.85, c.border.r, c.border.g, c.border.b)
-                self:drawDockedTextCenter(iconLabel, x + 10, y + 13, 16, 16, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Small)
+                self:drawDockedTextCenter(iconLabel, x + 10, y + 13, 16, 16, c.accent.r, c.accent.g, c.accent.b, c.accent.a, UIFont.Small)
                 titleX = x + 34
             end
         end
@@ -2067,9 +2070,9 @@ end
 
 function EHR_HealthPanelUI:drawBadgeIcon(x, y, size, accent, label)
     local c = EHR_HealthPanelUI.Colors
-    accent = accent or c.red
-    self:drawRoundIcon(x, y, size, { r = 0.045, g = 0.035, b = 0.035, a = 0.94 }, accent, nil)
-    self:drawRoundIcon(x + 5, y + 5, size - 10, { r = 0.08, g = 0.025, b = 0.025, a = 0.84 }, c.borderDim, nil)
+    accent = accent or c.accent
+    self:drawRoundIcon(x, y, size, { r = 0.030, g = 0.045, b = 0.065, a = 0.94 }, accent, nil)
+    self:drawRoundIcon(x + 5, y + 5, size - 10, { r = 0.040, g = 0.070, b = 0.110, a = 0.84 }, c.borderDim, nil)
     self:drawDockedTextCenter(label or "?", x, y, size, size, accent.r, accent.g, accent.b, accent.a, UIFont.Medium)
 end
 
@@ -2117,7 +2120,7 @@ function EHR_HealthPanelUI:drawTabGlyph(tabId, x, y, size, active)
         return
     end
 
-    self:drawRect(x + 3, y + 3, size - 6, size - 6, active and 0.16 or 0.07, c.red.r, c.red.g, c.red.b)
+    self:drawRect(x + 3, y + 3, size - 6, size - 6, active and 0.16 or 0.07, c.accent.r, c.accent.g, c.accent.b)
 
     if tabId == "ehr" then
         self:drawRect(x + 2, cy, 8, 2, a, color.r, color.g, color.b)
@@ -2125,7 +2128,7 @@ function EHR_HealthPanelUI:drawTabGlyph(tabId, x, y, size, active)
         self:drawRect(x + 12, cy + 1, 6, 2, a, color.r, color.g, color.b)
         self:drawRect(x + 18, cy - 5, 2, 9, a, color.r, color.g, color.b)
         self:drawRect(x + 20, cy, 10, 2, a, color.r, color.g, color.b)
-        self:drawRect(x + 5, cy - 1, 22, 1, 0.22, c.red.r, c.red.g, c.red.b)
+        self:drawRect(x + 5, cy - 1, 22, 1, 0.22, c.accent.r, c.accent.g, c.accent.b)
     elseif tabId == "health" then
         self:drawRect(cx - 9, cy - 7, 18, 13, a, color.r, color.g, color.b)
         self:drawRect(cx - 6, cy - 11, 5, 5, a, color.r, color.g, color.b)
@@ -2163,7 +2166,7 @@ end
 function EHR_HealthPanelUI:drawSectionTitle(text, x, y, w)
     local c = EHR_HealthPanelUI.Colors
     self:drawRect(x, y, w, 28, 0.46, c.redDark.r, c.redDark.g, c.redDark.b)
-    self:drawDockedText(text, x + 8, y + 3, w - 16, 28, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
+    self:drawDockedText(text, x + 8, y + 3, w - 16, 28, c.accent.r, c.accent.g, c.accent.b, c.accent.a, UIFont.Medium)
     self:drawRect(x + 8, y + 27, w - 16, 1, 0.72, c.border.r, c.border.g, c.border.b)
 end
 
@@ -3191,11 +3194,10 @@ function EHR_HealthPanelUI:drawHeader()
     self:drawRect(0, 0, self.width, self.HEADER_HEIGHT, c.header.a, c.header.r, c.header.g, c.header.b)
     self:drawRect(0, self.HEADER_HEIGHT - 1, self.width, 1, 0.85, c.border.r, c.border.g, c.border.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
-    -- HARMONIE: room for the pin button (HM_Pin.lua) left of the title
-    local titleX = self.hmPinBtn and 34 or 14
-    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (titleX - 14))
+    local titleX = 14
+    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0))
     self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
-    local rightReserve = self.activeTab == "ehr" and 86 or 50
+    local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0)
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
         rightReserve = rightReserve + 30
     end
@@ -3233,7 +3235,7 @@ function EHR_HealthPanelUI:drawTabBar()
 
         local active = self.activeTab == tab.id
         local bg = active and c.redDark or c.background
-        local border = active and c.red or c.borderDim
+        local border = active and c.accent or c.borderDim
         local tabY = y + 6
         local tabH = h - 12
         local iconSize = math.min(50, math.max(30, math.min(tabH - 10, tabW - 14)))
@@ -3243,8 +3245,8 @@ function EHR_HealthPanelUI:drawTabBar()
         self:drawRect(x + 1, tabY + 1, tabW - 2, 1, active and 0.88 or 0.26, border.r, border.g, border.b)
         self:drawRect(x + 1, tabY + tabH - 2, tabW - 2, 1, active and 0.56 or 0.18, border.r, border.g, border.b)
         if active then
-            self:drawRect(x + 2, tabY + 2, tabW - 4, tabH - 4, 0.18, c.red.r, c.red.g, c.red.b)
-            self:drawRect(x + 3, tabY + tabH - 5, tabW - 6, 2, 0.70, c.red.r, c.red.g, c.red.b)
+            self:drawRect(x + 2, tabY + 2, tabW - 4, tabH - 4, 0.18, c.accent.r, c.accent.g, c.accent.b)
+            self:drawRect(x + 3, tabY + tabH - 5, tabW - 6, 2, 0.70, c.accent.r, c.accent.g, c.accent.b)
         end
         self:drawTabGlyph(tab.id, x + math.floor((tabW - iconSize) / 2), tabY + math.floor((tabH - iconSize) / 2), iconSize, active)
         table.insert(self.tabBounds, { id = tab.id, label = label, x = x, y = tabY, w = tabW, h = tabH })

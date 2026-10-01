@@ -139,6 +139,17 @@ S.Surgeries = {
         bloodLoss = 80, pain = 30,
         targets = { knox = {} } },
 }
+-- Operations nobody can do on themselves (chest, abdomen, skull, dialysis,
+-- gene therapy). A -debug game or a server admin may anyway (S.privileged).
+S.NO_SELF = { thoracic = true, organ_salvage = true, neurosurgery = true, blood_purification = true, experimental = true }
+
+-- Aspiration: operating on someone who has just eaten. HUNGER below this
+-- = a full stomach; the chance (%) is raised when the patient is asleep or
+-- sedated (no swallowing reflex). Outcome: aspiration pneumonia.
+S.FULL_STOMACH_HUNGER = 0.12
+S.ASPIRATION_CHANCE = 15
+S.ASPIRATION_CHANCE_SEDATED = 35
+
 S.SURGERY_ORDER = { "debridement", "abscess_drainage", "foreign_body", "parasite_extraction", "thoracic",
     "organ_salvage", "neurosurgery", "blood_purification", "amputation", "experimental" }
 

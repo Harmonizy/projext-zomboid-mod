@@ -281,7 +281,8 @@ function EHR.Keybinds.ShouldHotkeyOpenEHR()
 end
 
 function EHR.Keybinds.ShouldHeartButtonOpenEHR()
-    return not EHR.Keybinds.IsEHRPrimaryHealthPanel()
+    -- HARMONIE: the vanilla health (heart) button always opens the medical window
+    return true
 end
 
 --[[

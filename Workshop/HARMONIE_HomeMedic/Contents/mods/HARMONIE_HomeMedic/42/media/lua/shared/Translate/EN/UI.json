@@ -2490,5 +2490,14 @@
     "UI_HomeMedic_Stat_POISON": "Poison",
     "UI_HomeMedic_Stat_ZOMBIE_INFECTION": "Knox infection",
     "UI_HomeMedic_Stat_ZOMBIE_FEVER": "Knox fever",
-    "UI_HomeMedic_Stat_FITNESS": "Fitness"
+    "UI_HomeMedic_Stat_FITNESS": "Fitness",
+    "UI_HomeMedic_Surg_Row_Fasting": "Fasting (NPO)",
+    "UI_HomeMedic_Surg_Fasting_Full": "Ate recently - aspiration %1%",
+    "UI_HomeMedic_Surg_Fasting_Ok": "Empty stomach",
+    "UI_HomeMedic_Surg_Tip_Fasting": "A patient who has just eaten may vomit and breathe it in during the operation (aspiration pneumonia), more so when asleep or sedated. Wait a few hours after a meal.",
+    "UI_HomeMedic_Surg_Row_Self": "On yourself",
+    "UI_HomeMedic_Surg_Self_Bypass": "Allowed (debug / admin)",
+    "UI_HomeMedic_Surg_Self_No": "Not possible",
+    "UI_HomeMedic_Surg_Tip_Self": "Nobody can open their own chest, abdomen or skull, run their own dialysis or gene therapy. Another player has to operate.",
+    "UI_HomeMedic_Surg_Res_Aspirated": "The patient vomited and breathed it in: aspiration pneumonia!"
 }

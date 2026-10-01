@@ -15,6 +15,7 @@
     with the wheel; hover tests use the drawn (scrolled) coordinates.
 ]]--
 
+require "HARMONIEHomeMedic/HM_Text"
 require "ExtensiveHealth/EHR_HealthPanelUI"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Diagnosis"
@@ -27,12 +28,7 @@ local FONT, FONT_M = UIFont.Small, UIFont.Medium
 local function fh(f) return getTextManager():getFontHeight(f or FONT) end
 local function tw(t, f) return getTextManager():MeasureStringX(f or FONT, t or "") end
 local function L(key, fallback, ...)
-    local k = "UI_HomeMedic_Diag_" .. key
-    local t = getText and getText(k)
-    if not t or t == k or t == "?" then t = fallback or key end
-    local args = { ... }
-    for i = 1, #args do t = t:gsub("%%" .. i, (tostring(args[i]):gsub("%%", "%%%%"))) end
-    return t
+    return HM_Text("UI_HomeMedic_Diag_" .. key, fallback or key, ...)
 end
 local function pct(v) return math.floor((tonumber(v) or 0) * 100 + 0.5) end
 local function num(v) return string.format("%.1f", tonumber(v) or 0) end
@@ -323,7 +319,7 @@ local function drawScrollbar(self, x, top, viewH, contentH, scroll)
     local c = EHR_HealthPanelUI.Colors
     local barH = math.max(24, viewH * viewH / contentH)
     local barY = top + (viewH - barH) * (math.min(scroll, maxScroll) / maxScroll)
-    self:drawRect(x, barY, 3, barH, 0.8, c.red.r, c.red.g, c.red.b)
+    self:drawRect(x, barY, 3, barH, 0.8, c.accent.r, c.accent.g, c.accent.b)
     return maxScroll
 end
 
@@ -376,7 +372,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
         self:drawText(m, b.x + b.w - 16 - tw(m), b.y + 9, mc[1], mc[2], mc[3], 1, FONT)
     end
 
-    local top, viewH = b.y + 36, b.h - 44
+    local top, viewH = b.y + 48, b.h - 56
     local leftW = math.floor((b.w - 40) * 0.55)
     local lx = b.x + 14
     local rx = lx + leftW + 14
@@ -403,7 +399,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
     local chipH = fh() + 8
     local selected = 0
     for _, g in ipairs(D.GROUPS) do
-        self:drawText(L("Group_" .. g.id, g.id), lx, y, c.red.r, c.red.g, c.red.b, 1, FONT)
+        self:drawText(L("Group_" .. g.id, g.id), lx, y, c.accent.r, c.accent.g, c.accent.b, 1, FONT)
         y = y + fh() + 4
         local x = lx
         for _, tag in ipairs(g.tags) do
@@ -413,8 +409,8 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             local on = st.tags[tag] == true
             if on then selected = selected + 1 end
             local hov = inView and inside(mx, my, x, y, w, chipH)
-            local bg = on and c.redDark or c.panelSoft
-            local bd = on and c.red or c.borderDim
+            local bg = on and c.accentDark or c.panelSoft
+            local bd = on and c.accent or c.borderDim
             self:drawRect(x, y, w, chipH, on and 0.95 or (hov and 0.7 or 0.45), bg.r, bg.g, bg.b)
             self:drawRectBorder(x, y, w, chipH, on and 1 or 0.8, bd.r, bd.g, bd.b)
             local tc = on and c.text or (hov and c.text or c.textDim)
@@ -476,8 +472,8 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             local canPick = known and not done and not locked
             local bh = canPick and inView and inside(mx, my, bx, by, bw, chipH)
             if canPick then
-                self:drawRect(bx, by, bw, chipH, bh and 0.9 or 0.6, c.redDark.r, c.redDark.g, c.redDark.b)
-                self:drawRectBorder(bx, by, bw, chipH, 1, c.red.r, c.red.g, c.red.b)
+                self:drawRect(bx, by, bw, chipH, bh and 0.9 or 0.6, c.accentDark.r, c.accentDark.g, c.accentDark.b)
+                self:drawRectBorder(bx, by, bw, chipH, 1, c.accent.r, c.accent.g, c.accent.b)
                 hit(bx, by, bw, chipH, "pick", id)
             end
             self:drawText(btn, bx + 8, by + 4, btnColor.r, btnColor.g, btnColor.b, 1, FONT)
@@ -537,7 +533,7 @@ function EHR_HealthPanelUI:onDiagnosisMouseDown(x, y)
     local st = self.dxState
     if not st or not st.hits then return false end
     local b = self:getTabContentBounds()
-    if y < b.y + 36 or y > b.y + b.h - 8 then return false end
+    if y < b.y + 48 or y > b.y + b.h - 8 then return false end
     for i = #st.hits, 1, -1 do
         local h = st.hits[i]
         if inside(x, y, h.x, h.y, h.w, h.h) then

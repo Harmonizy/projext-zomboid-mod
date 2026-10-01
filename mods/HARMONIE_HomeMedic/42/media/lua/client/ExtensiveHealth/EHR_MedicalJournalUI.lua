@@ -43,20 +43,22 @@ local function codexText(diseaseId, field, fallback)
 end
 
 local Colors = {
-    bg = { r = 0.015, g = 0.014, b = 0.014, a = 0.96 },
-    panel = { r = 0.035, g = 0.035, b = 0.038, a = 0.88 },
-    panelSoft = { r = 0.075, g = 0.025, b = 0.025, a = 0.62 },
-    header = { r = 0.09, g = 0.012, b = 0.012, a = 0.96 },
+    -- HARMONIE: blue theme (HM_Theme); red stays for danger
+    accent = { r = 0.32, g = 0.7, b = 1.0, a = 1.0 },
+    bg = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
+    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
+    panelSoft = { r = 0.07, g = 0.105, b = 0.15, a = 0.72 },
+    header = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
     red = { r = 0.95, g = 0.08, b = 0.07, a = 1.0 },
-    redDark = { r = 0.34, g = 0.015, b = 0.015, a = 1.0 },
+    redDark = { r = 0.05, g = 0.16, b = 0.32, a = 1.0 },
     orange = { r = 1.0, g = 0.38, b = 0.12, a = 1.0 },
     green = { r = 0.18, g = 0.92, b = 0.32, a = 1.0 },
     cyan = { r = 0.22, g = 0.82, b = 1.0, a = 1.0 },
     yellow = { r = 1.0, g = 0.78, b = 0.12, a = 1.0 },
-    text = { r = 0.90, g = 0.88, b = 0.82, a = 1.0 },
-    textDim = { r = 0.62, g = 0.60, b = 0.58, a = 1.0 },
-    border = { r = 0.78, g = 0.05, b = 0.04, a = 0.88 },
-    borderDim = { r = 0.42, g = 0.04, b = 0.035, a = 0.74 },
+    text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
+    textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
+    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
+    borderDim = { r = 0.11, g = 0.24, b = 0.42, a = 1.0 },
 }
 
 local DiseaseIcons = {
@@ -431,8 +433,8 @@ function EHR_MedicalJournalUI:createChildren()
     self.closeBtn:initialise()
     self.closeBtn:instantiate()
     self.closeBtn.borderColor = Colors.border
-    self.closeBtn.backgroundColor = { r = 0.02, g = 0.02, b = 0.02, a = 0.9 }
-    self.closeBtn.backgroundColorMouseOver = { r = 0.45, g = 0.02, b = 0.02, a = 0.95 }
+    self.closeBtn.backgroundColor = { r = 0.03, g = 0.07, b = 0.12, a = 0.9 }
+    self.closeBtn.backgroundColorMouseOver = { r = 0.08, g = 0.22, b = 0.40, a = 0.95 }
     self.closeBtn:setAnchorRight(true)
     self:addChild(self.closeBtn)
     end
@@ -553,7 +555,7 @@ function EHR_MedicalJournalUI:drawPanelFrame(x, y, w, h, title)
     self:drawRectBorder(x, y, w, h, c.borderDim.a, c.borderDim.r, c.borderDim.g, c.borderDim.b)
     if title then
         self:drawRect(x + 1, y + 1, w - 2, 30, c.header.a, c.header.r, c.header.g, c.header.b)
-        self:drawText(title, x + 10, y - 5, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
+        self:drawText(title, x + 10, y - 5, c.accent.r, c.accent.g, c.accent.b, c.accent.a, UIFont.Medium)
         self:drawRect(x + 10, y + 29, w - 20, 1, 0.75, c.border.r, c.border.g, c.border.b)
     end
 end
@@ -576,7 +578,7 @@ end
 
 function EHR_MedicalJournalUI:drawInfoSection(label, value, x, y, w)
     local c = Colors
-    self:drawText(label, x, y, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
+    self:drawText(label, x, y, c.accent.r, c.accent.g, c.accent.b, c.accent.a, UIFont.Medium)
     y = y + math.max(24, getTextManager():getFontHeight(UIFont.Medium) + 4)
     return self:drawWrappedText(value, x + 8, y, w - 16, c.text, UIFont.Small, 19) + 10
 end
@@ -629,7 +631,7 @@ function EHR_MedicalJournalUI:render()
         if self.detailMaxScroll > 0 then
             local barH = math.max(24, viewH * viewH / (contentH + viewH))
             local barY = top + (viewH - barH) * ((self.detailScroll or 0) / self.detailMaxScroll)
-            self:drawRect(detailX + detailW - 7, barY, 3, barH, 0.8, Colors.red.r, Colors.red.g, Colors.red.b)
+            self:drawRect(detailX + detailW - 7, barY, 3, barH, 0.8, Colors.accent.r, Colors.accent.g, Colors.accent.b)
         end
     end
 end
