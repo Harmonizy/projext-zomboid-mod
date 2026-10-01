@@ -35,7 +35,7 @@ end
 
 local function codexKey(diseaseId, field)
     diseaseId = tostring(diseaseId or "unknown"):gsub("[^%w_]", "_")
-    return "UI_HomeMedic_Codex_" .. diseaseId .. "_" .. tostring(field or "Text")
+    return "UI_EHR_Codex_" .. diseaseId .. "_" .. tostring(field or "Text")
 end
 
 local function codexText(diseaseId, field, fallback)
@@ -359,7 +359,7 @@ end
 local function rangeHoursToText(minHours, maxHours)
     local minText = hoursToText(minHours)
     local maxText = hoursToText(maxHours)
-    if not minText and not maxText then return L("UI_HomeMedic_Codex_Unknown", "Unknown") end
+    if not minText and not maxText then return L("UI_EHR_Codex_Unknown", "Unknown") end
     if minText == maxText then return minText end
     return tostring(minText or "?") .. " - " .. tostring(maxText or "?")
 end
@@ -400,8 +400,8 @@ local function truncateText(text, maxWidth, font)
 end
 
 local function categoryName(category)
-    local key = "UI_HomeMedic_Codex_Category_" .. tostring(category or "unknown")
-    return L(key, CategoryNames[category] or tostring(category or L("UI_HomeMedic_Codex_Unknown", "Unknown")))
+    local key = "UI_EHR_Codex_Category_" .. tostring(category or "unknown")
+    return L(key, CategoryNames[category] or tostring(category or L("UI_EHR_Codex_Unknown", "Unknown")))
 end
 
 function EHR_MedicalJournalUI:new(x, y, width, height, player)
@@ -496,7 +496,7 @@ function EHR_MedicalJournalUI:getCatalogEntry(diseaseId)
     local category = info.category or (def and def.category) or "infection"
     local known = self:knowsDisease(id)
     local realName = info.name or (def and def.name) or (EHR.DiseaseFlyers and EHR.DiseaseFlyers.GetDiseaseFriendlyName and EHR.DiseaseFlyers.GetDiseaseFriendlyName(id)) or id
-    local displayName = known and realName or L("UI_HomeMedic_Codex_UnknownCategory_" .. tostring(category or "unknown"), CategoryUnknownNames[category] or L("UI_HomeMedic_DiseaseUnknown", "Unknown Illness"))
+    local displayName = known and realName or L("UI_EHR_Codex_UnknownCategory_" .. tostring(category or "unknown"), CategoryUnknownNames[category] or L("UI_EHR_DiseaseUnknown", "Unknown Illness"))
 
     return {
         id = id,
@@ -582,21 +582,21 @@ function EHR_MedicalJournalUI:prerender()
     self:drawRect(0, 0, self.width, self.height, c.bg.a, c.bg.r, c.bg.g, c.bg.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
     self:drawRect(0, 0, self.width, HEADER_HEIGHT, 0.82, 0.02, 0.02, 0.02)
-    self:drawText(L("UI_HomeMedic_DiseaseHandbook_Title", "EHR DISEASE HANDBOOK"), 16, 8, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Large)
+    self:drawText(L("UI_EHR_DiseaseHandbook_Title", "EHR DISEASE HANDBOOK"), 16, 8, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Large)
 
     local total = #CatalogOrder
     local known = tonumber(self.knownCount) or 0
-    local progress = LF("UI_HomeMedic_DiseaseHandbook_KnownCount", "%1/%2 known", known, total)
+    local progress = LF("UI_EHR_DiseaseHandbook_KnownCount", "%1/%2 known", known, total)
     local progressW = measureText(UIFont.Medium, progress)
     self:drawText(progress, self.width - progressW - 50, 11, c.green.r, c.green.g, c.green.b, c.green.a, UIFont.Medium)
 
-    self:drawPanelFrame(PADDING, HEADER_HEIGHT + PADDING, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2, L("UI_HomeMedic_DiseaseHandbook_Index", "DISEASE INDEX"))
+    self:drawPanelFrame(PADDING, HEADER_HEIGHT + PADDING, LIST_WIDTH, self.height - HEADER_HEIGHT - PADDING * 2, L("UI_EHR_DiseaseHandbook_Index", "DISEASE INDEX"))
 
     local detailX = PADDING + LIST_WIDTH + 12
     local detailY = HEADER_HEIGHT + PADDING
     local detailW = self.width - detailX - PADDING
     local detailH = self.height - detailY - PADDING
-    self:drawPanelFrame(detailX, detailY, detailW, detailH, L("UI_HomeMedic_DiseaseHandbook_Details", "ENTRY DETAILS"))
+    self:drawPanelFrame(detailX, detailY, detailW, detailH, L("UI_EHR_DiseaseHandbook_Details", "ENTRY DETAILS"))
 end
 
 function EHR_MedicalJournalUI:render()
@@ -658,12 +658,12 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
     ty = ty + tm:getFontHeight(UIFont.Large) + 2
     self:drawText(truncateText(categoryName(entry.category), titleW, UIFont.Medium), titleX, ty, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Medium)
     ty = ty + tm:getFontHeight(UIFont.Medium) + 2
-    local badge = entry.known and L("UI_HomeMedic_Codex_KnownUpper", "KNOWN") or L("UI_HomeMedic_Codex_LockedUpper", "LOCKED")
+    local badge = entry.known and L("UI_EHR_Codex_KnownUpper", "KNOWN") or L("UI_EHR_Codex_LockedUpper", "LOCKED")
     local badgeColor = entry.known and c.green or c.yellow
     self:drawText(badge, titleX, ty, badgeColor.r, badgeColor.g, badgeColor.b, badgeColor.a, UIFont.Medium)
 
     if entry.canKill then
-        local lethal = L("UI_HomeMedic_Codex_LethalRisk", "LETHAL RISK")
+        local lethal = L("UI_EHR_Codex_LethalRisk", "LETHAL RISK")
         local lethalW = measureText(UIFont.Medium, lethal)
         self:drawText(lethal, x + w - lethalW, ty, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
     end
@@ -674,24 +674,24 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
     y = y + 16
 
     if not entry.known then
-        self:drawText(L("UI_HomeMedic_Codex_KnowledgeUnavailable", "Knowledge unavailable"), x, y, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
+        self:drawText(L("UI_EHR_Codex_KnowledgeUnavailable", "Knowledge unavailable"), x, y, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
         y = y + 28
         return self:drawWrappedText(
-            L("UI_HomeMedic_Codex_LockedDesc", "Read the matching disease flyer or reach First Aid level 8 to unlock symptoms, causes, prevention, and treatment notes."),
+            L("UI_EHR_Codex_LockedDesc", "Read the matching disease flyer or reach First Aid level 8 to unlock symptoms, causes, prevention, and treatment notes."),
             x + 8, y, w - 16, c.textDim, UIFont.Small, 19
         )
     end
 
     local info = entry.info or {}
-    y = self:drawInfoSection(L("UI_HomeMedic_Codex_Cause", "Cause"), codexText(entry.id, "Cause", info.cause or L("UI_HomeMedic_Codex_UnknownSentence", "Unknown.")), x, y, w)
-    y = self:drawInfoSection(L("UI_HomeMedic_Codex_Symptoms", "Symptoms"), codexText(entry.id, "Symptoms", info.symptoms or L("UI_HomeMedic_Codex_NoSymptoms", "No symptom notes available.")), x, y, w)
-    y = self:drawInfoSection(L("UI_HomeMedic_Codex_Timing", "Timing"), LF("UI_HomeMedic_Codex_TimingText", "Incubation: %1. Duration: %2.", tostring(entry.incubation or L("UI_HomeMedic_Codex_Unknown", "Unknown")), tostring(entry.duration or L("UI_HomeMedic_Codex_Unknown", "Unknown"))), x, y, w)
-    y = self:drawInfoSection(L("UI_HomeMedic_Codex_Prevention", "Prevention"), codexText(entry.id, "Prevention", info.prevention or L("UI_HomeMedic_Codex_NoPrevention", "No prevention notes available.")), x, y, w)
-    y = self:drawInfoSection(L("UI_HomeMedic_Codex_Treatment", "Treatment"), codexText(entry.id, "Treatment", info.treatment or L("UI_HomeMedic_Codex_NoTreatment", "No treatment notes available.")), x, y, w)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Cause", "Cause"), codexText(entry.id, "Cause", info.cause or L("UI_EHR_Codex_UnknownSentence", "Unknown.")), x, y, w)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Symptoms", "Symptoms"), codexText(entry.id, "Symptoms", info.symptoms or L("UI_EHR_Codex_NoSymptoms", "No symptom notes available.")), x, y, w)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Timing", "Timing"), LF("UI_EHR_Codex_TimingText", "Incubation: %1. Duration: %2.", tostring(entry.incubation or L("UI_EHR_Codex_Unknown", "Unknown")), tostring(entry.duration or L("UI_EHR_Codex_Unknown", "Unknown"))), x, y, w)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Prevention", "Prevention"), codexText(entry.id, "Prevention", info.prevention or L("UI_EHR_Codex_NoPrevention", "No prevention notes available.")), x, y, w)
+    y = self:drawInfoSection(L("UI_EHR_Codex_Treatment", "Treatment"), codexText(entry.id, "Treatment", info.treatment or L("UI_EHR_Codex_NoTreatment", "No treatment notes available.")), x, y, w)
     -- HARMONIE: surgery notes (HM_Surgery.handbookText)
     local surgery = HM_Surgery and HM_Surgery.handbookText and HM_Surgery.handbookText(entry.id)
     if surgery then
-        y = self:drawInfoSection(L("UI_HomeMedic_Codex_Surgery", "Surgery"), surgery, x, y, w)
+        y = self:drawInfoSection(L("UI_EHR_Codex_Surgery", "Surgery"), surgery, x, y, w)
     end
     return y
 end
@@ -724,7 +724,7 @@ function EHR_MedicalJournalUI.drawDiseaseItem(self, y, item, alt)
     local category = truncateText(categoryName(entry.category), self:getWidth() - 118, UIFont.Small)
     self:drawText(category, 76, y + 42, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
 
-    local status = entry.known and L("UI_HomeMedic_Codex_Known", "Known") or L("UI_HomeMedic_Codex_Locked", "Locked")
+    local status = entry.known and L("UI_EHR_Codex_Known", "Known") or L("UI_EHR_Codex_Locked", "Locked")
     local statusColor = entry.known and c.green or c.yellow
     local statusW = measureText(UIFont.Small, status)
     self:drawText(status, self:getWidth() - statusW - 18, y + 42, statusColor.r, statusColor.g, statusColor.b, statusColor.a, UIFont.Small)

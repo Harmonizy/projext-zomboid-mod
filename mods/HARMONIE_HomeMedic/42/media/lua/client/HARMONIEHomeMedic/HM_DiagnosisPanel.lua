@@ -108,7 +108,7 @@ local function source(panel)
 end
 
 local function codex(id, field)
-    local k = "UI_HomeMedic_Codex_" .. tostring(id):gsub("[^%w_]", "_") .. "_" .. field
+    local k = "UI_EHR_Codex_" .. tostring(id):gsub("[^%w_]", "_") .. "_" .. field
     local t = getText and getText(k)
     if t and t ~= k then return t end
     return nil

@@ -1,6 +1,6 @@
 {
-    "IGUI_HomeMedic_Yes": "Yes",
-    "IGUI_HomeMedic_No": "No",
+    "IGUI_Yes": "Yes",
+    "IGUI_No": "No",
     "IGUI_perks_Amputations": "Amputations",
     "IGUI_perks_Side_R": "Right Side",
     "IGUI_perks_Side_L": "Left Side",
@@ -12,11 +12,11 @@
     "IGUI_ItemCat_Prosthesis": "Prosthesis",
     "IGUI_ItemCat_Surgery": "Surgery",
     "IGUI_ItemCat_Amputation": "Amputation",
-    "IGUI_HomeMedic_HealthPanel_Cicatrization": "Cicatrization",
-    "IGUI_HomeMedic_HealthPanel_Cicatrized": "Cicatrized",
-    "IGUI_HomeMedic_HealthPanel_Cauterized": "Cauterized",
-    "IGUI_HomeMedic_HealthPanel_WoundDirtyness": "Wound Dirtyness",
-    "IGUI_HomeMedic_HealthPanel_ProstEquipped": "Prosthesis Equipped",
-    "IGUI_HomeMedic_Confirmation_Amputate": " <CENTRE> Do you really want to amputate that limb?",
+    "IGUI_HealthPanel_Cicatrization": "Cicatrization",
+    "IGUI_HealthPanel_Cicatrized": "Cicatrized",
+    "IGUI_HealthPanel_Cauterized": "Cauterized",
+    "IGUI_HealthPanel_WoundDirtyness": "Wound Dirtyness",
+    "IGUI_HealthPanel_ProstEquipped": "Prosthesis Equipped",
+    "IGUI_Confirmation_Amputate": " <CENTRE> Do you really want to amputate that limb?",
     "IGUI_CraftCategory_EHRMedicine": "Home Medic Medicine"
 }

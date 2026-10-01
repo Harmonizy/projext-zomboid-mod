@@ -26,8 +26,8 @@ merge_ehr.py.
 
 Usage (from the Zomboid folder that holds mods/):
   python mods/HARMONIE_HomeMedic/tools/merge_toc.py --toc PATH [--force] [--dry-run]
-then give the merged keys Home Medic names:
-  python mods/HARMONIE_HomeMedic/tools/rekey_homemedic.py
+then rebrand the visible text (keys keep their original names):
+  python mods/HARMONIE_HomeMedic/tools/rebrand_homemedic.py
 PATH = the TOC zip, its Workshop folder (...\\108600\\3580276809) or the mod
 folder (The-Only-Cure).
 """

@@ -633,7 +633,7 @@ function EHR.MPExamination.RequestExamData(localPlayer, targetPlayer, silent, fo
 
     -- Show loading feedback to player
     if not silent then
-        EHR.Locale.Say(localPlayer, getText("UI_HomeMedic_Exam_Requesting") or "Examining...")
+        EHR.Locale.Say(localPlayer, getText("UI_EHR_Exam_Requesting") or "Examining...")
     end
 end
 
@@ -730,7 +730,7 @@ function EHR.MPExamination.OnExamDataFailed(targetUsername, error, requestId)
         return
     end
     if pending and pending.localPlayer and not pending.silent and error ~= "rate_limited" then
-        EHR.Locale.Say(pending.localPlayer, getText("UI_HomeMedic_Exam_Failed") or "Cannot examine that player")
+        EHR.Locale.Say(pending.localPlayer, getText("UI_EHR_Exam_Failed") or "Cannot examine that player")
     end
     if pending and pending.targetPlayer and EHR.UI and EHR.UI.GetRemoteHealthPanelForPatient then
         local panel = EHR.UI.GetRemoteHealthPanelForPatient(pending.targetPlayer)
@@ -1006,7 +1006,7 @@ function EHR.MPExamination.OnFillWorldObjectContextMenu(playerNum, context, worl
 
         -- Allow self to open monitor
         if isSelf then
-            local optionText = getText("UI_HomeMedic_Context_OpenMonitor") or "Open Medical Monitor"
+            local optionText = getText("UI_EHR_Context_OpenMonitor") or "Open Medical Monitor"
             local option = context:addOption(optionText, localPlayer, function(player)
                 if EHR.UI and EHR.UI.ToggleHealthPanel then
                     EHR.UI.ToggleHealthPanel(player)
@@ -1016,14 +1016,14 @@ function EHR.MPExamination.OnFillWorldObjectContextMenu(playerNum, context, worl
             end)
             local tooltip = ISWorldObjectContextMenu.addToolTip()
             tooltip:setName(optionText)
-            tooltip.description = getText("UI_HomeMedic_ExamineButton_tt") or "Examine your current health condition"
+            tooltip.description = getText("UI_EHR_ExamineButton_tt") or "Examine your current health condition"
             option.toolTip = tooltip
         else
             local targetName = getPlayerDisplayName(targetPlayer) or getPlayerUsername(targetPlayer) or getExamRequestKey(targetPlayer) or "Unknown"
             local canRequest = EHR.MPExamination.CanRequestMedicalCheck(localPlayer, targetPlayer)
 
             -- Add context menu option
-            local optionText = getText("UI_HomeMedic_Context_ExamineHealth") or "Examine Health"
+            local optionText = getText("UI_EHR_Context_ExamineHealth") or "Examine Health"
             optionText = optionText .. " (" .. targetName .. ")"
 
             local option = context:addOption(optionText, localPlayer, EHR.MPExamination.OnExamineClick, targetPlayer)
@@ -1036,9 +1036,9 @@ function EHR.MPExamination.OnFillWorldObjectContextMenu(playerNum, context, worl
             if not canRequest then
                 option.notAvailable = true
                 local tooltip = ISWorldObjectContextMenu.addToolTip()
-                tooltip:setName(getText("UI_HomeMedic_Context_TooFar") or "Too Far Away")
+                tooltip:setName(getText("UI_EHR_Context_TooFar") or "Too Far Away")
                 tooltip.description = EHR.Locale.Format(
-                    "UI_HomeMedic_Context_TooFarDesc",
+                    "UI_EHR_Context_TooFarDesc",
                     "You need to be within %1 tiles to examine this player.",
                     EHR.MPExamination.EXAMINE_RANGE
                 )
@@ -1046,8 +1046,8 @@ function EHR.MPExamination.OnFillWorldObjectContextMenu(playerNum, context, worl
             else
                 -- Add tooltip with health hint
                 local tooltip = ISWorldObjectContextMenu.addToolTip()
-                tooltip:setName(getText("UI_HomeMedic_Context_ExamineHealth") or "Examine Health")
-                tooltip.description = getText("UI_HomeMedic_Context_ExamineHealthDesc") or "View this player's health status, diseases, and medications."
+                tooltip:setName(getText("UI_EHR_Context_ExamineHealth") or "Examine Health")
+                tooltip.description = getText("UI_EHR_Context_ExamineHealthDesc") or "View this player's health status, diseases, and medications."
                 option.toolTip = tooltip
             end
         end

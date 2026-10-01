@@ -40,9 +40,9 @@ local C = {
 
 local function L(key, fallback)
     if EHR and EHR.Locale and EHR.Locale.Text then
-        return EHR.Locale.Text("UI_HomeMedic_StitchMinigame_" .. tostring(key), fallback)
+        return EHR.Locale.Text("UI_EHR_StitchMinigame_" .. tostring(key), fallback)
     end
-    local fullKey = "UI_HomeMedic_StitchMinigame_" .. tostring(key)
+    local fullKey = "UI_EHR_StitchMinigame_" .. tostring(key)
     local ok, value = pcall(getText, fullKey)
     if ok and value and value ~= fullKey then return value end
     return fallback

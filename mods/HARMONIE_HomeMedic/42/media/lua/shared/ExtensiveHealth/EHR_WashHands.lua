@@ -352,7 +352,7 @@ function EHR.WashHands.OnFillWorldObjectContextMenu(playerNum, context, worldObj
         hasEnoughWater = false
     end
 
-    local optionText = text("UI_HomeMedic_Context_WashHands", "Wash hands")
+    local optionText = text("UI_EHR_Context_WashHands", "Wash hands")
     local option
     if handsAreClean or not hasEnoughWater then
         option = context.addOptionOnTop and context:addOptionOnTop(optionText)
@@ -368,14 +368,14 @@ function EHR.WashHands.OnFillWorldObjectContextMenu(playerNum, context, worldObj
     if tooltip then
         tooltip:setName(optionText)
         if handsAreClean then
-            tooltip.description = text("UI_HomeMedic_Context_WashHandsClean", "Hands are already clean.")
+            tooltip.description = text("UI_EHR_Context_WashHandsClean", "Hands are already clean.")
         elseif not hasEnoughWater then
-            tooltip.description = text("UI_HomeMedic_Context_WashHandsNoWater", "Not enough water.")
+            tooltip.description = text("UI_EHR_Context_WashHandsNoWater", "Not enough water.")
         else
-            tooltip.description = text("UI_HomeMedic_Context_WashHandsDesc", "Clean blood and dirt from hands and arms using a small amount of water.")
+            tooltip.description = text("UI_EHR_Context_WashHandsDesc", "Clean blood and dirt from hands and arms using a small amount of water.")
         end
         if not handsAreClean and hasEnoughWater and hasSoap(player) then
-            tooltip.description = tooltip.description .. " <LINE> " .. text("UI_HomeMedic_Context_WashHandsSoap", "Soap reduces water use.")
+            tooltip.description = tooltip.description .. " <LINE> " .. text("UI_EHR_Context_WashHandsSoap", "Soap reduces water use.")
         end
         option.toolTip = tooltip
     end

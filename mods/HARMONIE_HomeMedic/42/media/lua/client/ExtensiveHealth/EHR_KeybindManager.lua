@@ -126,50 +126,50 @@ function EHR.Keybinds.Initialize(forceRefresh)
     -- Add any missing options even when the player already has an older saved group.
     ensureKeyBind(
         EHR.Keybinds.IDs.TOGGLE_MONITOR,
-        "UI_HomeMedic_ToggleMedicalMonitor",
+        "UI_EHR_ToggleMedicalMonitor",
         "Toggle Medical Monitor",
         DEFAULT_KEYS[EHR.Keybinds.IDs.TOGGLE_MONITOR],
-        "UI_HomeMedic_ToggleMedicalMonitor_tt",
+        "UI_EHR_ToggleMedicalMonitor_tt",
         "Opens/closes the selected primary health panel"
     )
     ensureKeyBind(
         EHR.Keybinds.IDs.TOGGLE_DEBUG,
-        "UI_HomeMedic_ToggleDebugMenu",
+        "UI_EHR_ToggleDebugMenu",
         "Toggle Debug Menu",
         DEFAULT_KEYS[EHR.Keybinds.IDs.TOGGLE_DEBUG],
-        "UI_HomeMedic_ToggleDebugMenu_tt",
+        "UI_EHR_ToggleDebugMenu_tt",
         "Opens/closes the EHR Debug Menu (requires debug mode)"
     )
     ensureKeyBind(
         EHR.Keybinds.IDs.TOGGLE_JOURNAL,
-        "UI_HomeMedic_ToggleMedicalJournal",
+        "UI_EHR_ToggleMedicalJournal",
         "Toggle Medical Journal",
         DEFAULT_KEYS[EHR.Keybinds.IDs.TOGGLE_JOURNAL],
-        "UI_HomeMedic_ToggleMedicalJournal_tt",
+        "UI_EHR_ToggleMedicalJournal_tt",
         "Opens/closes the Medical Journal (diagnosis history)"
     )
     ensureTickBox(
         EHR.Keybinds.IDs.PRIMARY_HEALTH_PANEL,
-        "UI_HomeMedic_PrimaryHealthPanel",
+        "UI_EHR_PrimaryHealthPanel",
         "Use EHR as primary health panel",
         true,
-        "UI_HomeMedic_PrimaryHealthPanel_tt",
+        "UI_EHR_PrimaryHealthPanel_tt",
         "When enabled, the EHR hotkey opens the EHR panel and the heart button opens vanilla health. Disable to swap them."
     )
     ensureTickBox(
         EHR.Keybinds.IDs.OPEN_HEALTH_PANEL_COMPACT,
-        "UI_HomeMedic_OpenHealthPanelCompact",
+        "UI_EHR_OpenHealthPanelCompact",
         "Open EHR panels compact",
         true,
-        "UI_HomeMedic_OpenHealthPanelCompact_tt",
+        "UI_EHR_OpenHealthPanelCompact_tt",
         "When enabled, EHR health panels open in compact mode. Disable to open them expanded."
     )
     ensureTickBox(
         EHR.Keybinds.IDs.SHOW_EHR_MOODLES,
-        "UI_HomeMedic_ShowMoodles",
+        "UI_EHR_ShowMoodles",
         "Show EHR moodles",
         true,
-        "UI_HomeMedic_ShowMoodles_tt",
+        "UI_EHR_ShowMoodles_tt",
         "Show EHR condition and exposure moodles. Disable if another mod's moodles overlap; the EHR monitor and all mechanics remain active."
     )
 
@@ -299,7 +299,7 @@ function EHR.Keybinds.GetKeyName(keybindId)
             return tostring(keyCode)
         end
     end
-    return getText("UI_HomeMedic_NotBound") or "Not bound"
+    return getText("UI_EHR_NotBound") or "Not bound"
 end
 
 -- ============================================

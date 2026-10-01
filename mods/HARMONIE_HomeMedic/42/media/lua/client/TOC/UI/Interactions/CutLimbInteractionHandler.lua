@@ -67,11 +67,11 @@ local function GetStitchesConsumableItem(player)
 end
 
 
-local textConfirmAmp = getText("IGUI_HomeMedic_Confirmation_Amputate")
-local textAmp = getText("ContextMenu_HomeMedic_Amputate")
-local textAmpBandage = getText("ContextMenu_HomeMedic_Amputate_Bandage")
-local textAmpStitch = getText("ContextMenu_HomeMedic_Amputate_Stitch")
-local textAmpStitchBandage = getText("ContextMenu_HomeMedic_Amputate_Stitch_Bandage")
+local textConfirmAmp = getText("IGUI_Confirmation_Amputate")
+local textAmp = getText("ContextMenu_Amputate")
+local textAmpBandage = getText("ContextMenu_Amputate_Bandage")
+local textAmpStitch = getText("ContextMenu_Amputate_Stitch")
+local textAmpStitchBandage = getText("ContextMenu_Amputate_Stitch_Bandage")
 
 ---Add the action to the queue
 ---@param limbName string
@@ -161,7 +161,7 @@ local function AddInvAmputationOptions(player, context, sawItem, stitchesItem, b
     for i = 1, #StaticData.LIMBS_STR do
         local limbName = StaticData.LIMBS_STR[i]
         if not dc:getIsCut(limbName) then
-            local limbTranslatedName = getText("ContextMenu_HomeMedic_Limb_" .. limbName)
+            local limbTranslatedName = getText("ContextMenu_Limb_" .. limbName)
             subMenu:addOption(limbTranslatedName, player, PerformAction, player, limbName, sawItem, stitchesItem, bandageItem)
         end
     end
