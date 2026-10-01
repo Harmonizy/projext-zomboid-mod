@@ -121,8 +121,20 @@ def pin_icon(pinned, size=64):
     return img.resize((size, size), Image.LANCZOS)
 
 
+def tab_surgery(size=128):
+    """Surgery: a scalpel over a stitched incision."""
+    img, d, s = _canvas(size)
+    d.line([(26 * s, 96 * s), (100 * s, 96 * s)], fill=RED, width=int(6 * s))
+    for x in range(34, 100, 14):
+        d.line([(x * s, 88 * s), ((x + 6) * s, 104 * s)], fill=CREAM, width=int(4 * s))
+    d.polygon([(30 * s, 70 * s), (78 * s, 22 * s), (90 * s, 30 * s), (46 * s, 74 * s)], fill=(200, 210, 225, 255))
+    d.polygon([(78 * s, 22 * s), (104 * s, 12 * s), (96 * s, 38 * s), (90 * s, 30 * s)], fill=CREAM)
+    d.line([(46 * s, 74 * s), (30 * s, 70 * s)], fill=(120, 140, 170, 255), width=int(3 * s))
+    return _done(img, size)
+
+
 TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats,
-        "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook}
+        "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook, "tab_surgery": tab_surgery}
 
 
 if __name__ == "__main__":

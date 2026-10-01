@@ -701,7 +701,7 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
         local special = i.id == "wound_infection" or i.id == "foreign_body" or i.id == "knox" or i.id == "knox_bite" or i.id == "necrosis"
         names[#names + 1] = S.T("Cond_" .. i.id, i.id)
             .. ((not special) and (" " .. S.T("Stage", "St.%1", i.stage)) or "")
-            .. (i.held and (" · " .. S.T("HeldShort", "awaiting")) or "")
+            .. (i.held and (" - " .. S.T("HeldShort", "awaiting")) or "")
             .. (i.cool and (" (" .. S.T("CoolShort", "%1h", math.ceil(i.cool)) .. ")") or "")
     end
     row({ key = "indication", required = not remoteUnknown,
@@ -745,7 +745,7 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
         r.slots[slotId] = fill
         local value, state
         if fill then
-            value = (call(fill.item, "getDisplayName") or fullType(fill.item)) .. " · " .. S.T("Where_" .. fill.where, fill.where)
+            value = (call(fill.item, "getDisplayName") or fullType(fill.item)) .. " - " .. S.T("Where_" .. fill.where, fill.where)
             state = fill.q >= 0.8 and "ok" or "warn"
             if slot.kind == "tool" then qSum = qSum + fill.q; qN = qN + 1 end
         else

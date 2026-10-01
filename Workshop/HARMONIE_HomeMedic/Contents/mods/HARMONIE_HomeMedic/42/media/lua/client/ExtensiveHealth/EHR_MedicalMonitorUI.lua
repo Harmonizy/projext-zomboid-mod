@@ -14,6 +14,7 @@
 
 require "ISUI/ISPanel"
 require "HARMONIEHomeMedic/HM_Diagnosis"
+require "HARMONIEHomeMedic/HM_Text"
 require "ISUI/ISButton"
 require "ISUI/ISRichTextPanel"
 require "ExtensiveHealth/EHR_WoundInfection"
@@ -1923,7 +1924,10 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
     if canIdentify and HM_Diagnosis and HM_Diagnosis.gated(hmId)
             and not HM_Diagnosis.isDiagnosed(self.player, hmId, self.isRemoteExamination and self.remoteExamData or nil) then
         canIdentify = false
-        if EHR.DiseaseFlyers and EHR.DiseaseFlyers.GetUnknownDiseaseDisplay then
+        if HM_Diagnosis.knows(self.player, hmId) then
+            -- known illness, just not diagnosed yet (vs. an illness you do not know)
+            unknownInfo = { displayName = HM_Text("UI_HomeMedic_Diag_Undiagnosed_Name", "Undiagnosed illness") }
+        elseif EHR.DiseaseFlyers and EHR.DiseaseFlyers.GetUnknownDiseaseDisplay then
             unknownInfo = EHR.DiseaseFlyers.GetUnknownDiseaseDisplay(hmId)
         end
     end

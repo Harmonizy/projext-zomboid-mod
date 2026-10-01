@@ -222,7 +222,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
                     local okT, t = pcall(BodyPartType.FromString, part)
                     if okT and t then where = BodyPartType.getDisplayName(t) or part end
                 end
-                cards[#cards + 1] = { title = diseaseName("wound_infection") .. " · " .. tostring(where), stage = st,
+                cards[#cards + 1] = { title = diseaseName("wound_infection") .. " - " .. tostring(where), stage = st,
                     status = treatments.wound_infection and L("Treating", "TREATING") or L("Untreated", "UNTREATED"),
                     statusColor = treatments.wound_infection and { 0.35, 0.85, 0.45 } or { 0.95, 0.75, 0.25 },
                     lines = lines, tip = codex("wound_infection", "Treatment") or "" }
@@ -340,7 +340,7 @@ local function drawCards(self, st, cards, x, w, top, viewH, mx, my)
             local status = tostring(card.status or "")
             local sc = card.statusColor or { 1, 1, 1 }
             local statusW = tw(status, FONT)
-            local title = tostring(card.title) .. (card.stage and ("  ·  " .. L("Stage", "Stage %1", card.stage)) or "")
+            local title = tostring(card.title) .. (card.stage and ("  -  " .. L("Stage", "Stage %1", card.stage)) or "")
             title = S.fitText(title, w - statusW - 36, function(t) return tw(t, FONT_M) end, "")
             self:drawText(title, x + 10, y + 8, c.text.r, c.text.g, c.text.b, 1, FONT_M)
             self:drawText(status, x + w - 12 - statusW, y + 8 + (fh(FONT_M) - fh()) / 2, sc[1], sc[2], sc[3], 1, FONT)
@@ -583,22 +583,101 @@ EHR_HealthPanelUI.ExtraTabs.diagnosis = {
 
 -- ------------------------------------------------------------- names in the EHR windows
 -- every gated illness reads "Unknown" until it is diagnosed
+-- Two different states:
+--   "Undiagnosed" -- the doctor knows this illness, nobody has diagnosed it
+--                    yet: go to the Diagnosis tab.
+--   "Unknown"     -- the doctor does not know this illness at all (no flyer,
+--                    First Aid < 8): even the Diagnosis tab cannot name it.
 local function unknownInfo(panel, info, id)
     local copy = {}
     for k, v in pairs(info) do copy[k] = v end
-    local u = panel.getUnknownDiseaseInfo and panel:getUnknownDiseaseInfo(id) or {}
-    local name = u.displayName or L("Unknown", "Unknown illness")
+    local doctor = parties(panel)
+    local known = doctor and D.knows(doctor, id)
+    local name, detail
+    if known then
+        name = L("Undiagnosed_Name", "Undiagnosed illness")
+        detail = L("UndiagnosedDetail", "Not diagnosed yet: use the Diagnosis tab.")
+        copy.hmState = "undiagnosed"
+    else
+        local u = panel.getUnknownDiseaseInfo and panel:getUnknownDiseaseInfo(id) or {}
+        name = u.displayName or L("Unknown", "Unknown illness")
+        detail = L("UnknownDetail", "You do not know this illness (disease flyer or First Aid 8).")
+        copy.hmState = "unknown"
+    end
     copy.displayName, copy.realName, copy.sortName = name, name, name
     copy.canIdentify = false
     copy.iconKey = "unknown"
     copy.showStageSeverity, copy.showProgress, copy.showTreatmentStatus = false, false, false
     copy.statusText, copy.statusColor = nil, nil
-    copy.detailText = L("UnknownDetail", "Not diagnosed yet (Diagnosis tab).")
-    copy.detailColor = nil
+    copy.detailText = detail
+    copy.detailColor = known and EHR_HealthPanelUI.Colors.yellow or EHR_HealthPanelUI.Colors.textDim
     copy.hideProgressBar, copy.progressText = true, ""
     return copy
 end
 C.unknownInfo = unknownInfo
+
+-- ------------------------------------------------------------- buttons on the first tab's illness rows
+-- Undiagnosed -> "Diagnose" (Diagnosis tab). Diagnosed and at a stage that
+-- needs surgery -> "Surgery" (Surgery tab, that operation selected).
+local function rowButton(panel, diseaseId, disease, x, y, w, rowH)
+    if type(disease) == "table" and (disease.isCorpseExposure or disease.isExposureCondition) then return end
+    local id = D.normalize(type(disease) == "table" and disease.isKnox and "knox_infection" or diseaseId)
+    if not D.gated(id) then return end
+    local doctor, patient, exam = parties(panel)
+    local label, action, sid
+    if D.enabled() and not D.isDiagnosed(patient, id, exam) then
+        if not D.knows(doctor, id) then return end
+        label, action = L("Btn_Diagnose", "Diagnose"), "diagnosis"
+    else
+        local list = S.surgeriesFor(id)
+        if #list == 0 then return end
+        local needed = S.needsSurgery(patient, id, exam) or S.isHeld(patient, id, exam)
+        if not needed then return end
+        label, action, sid = S.T("Btn_Surgery", "Surgery"), "surgery", list[1]
+    end
+    local c = EHR_HealthPanelUI.Colors
+    local bh = fh() + 8
+    local bw = tw(label) + 20
+    local bx = x + w - bw - 12
+    local by = y + rowH - bh - 8
+    local mx, my = panel:getLocalMousePosition()
+    local hov = mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
+    panel:drawRect(bx, by, bw, bh, hov and 0.95 or 0.75, c.accentDark.r, c.accentDark.g, c.accentDark.b)
+    panel:drawRectBorder(bx, by, bw, bh, 1, c.accent.r, c.accent.g, c.accent.b)
+    panel:drawText(label, bx + 10, by + 4, c.text.r, c.text.g, c.text.b, 1, FONT)
+    panel.hmRowButtons = panel.hmRowButtons or {}
+    table.insert(panel.hmRowButtons, { x = bx, y = by, w = bw, h = bh, action = action, sid = sid, id = id })
+end
+
+local function installRowButtons()
+    if EHR_HealthPanelUI.hmRowButtonsInstalled or not EHR_HealthPanelUI.drawDiseaseRow then return end
+    EHR_HealthPanelUI.hmRowButtonsInstalled = true
+    local origRow = EHR_HealthPanelUI.drawDiseaseRow
+    function EHR_HealthPanelUI:drawDiseaseRow(diseaseId, disease, x, y, w)
+        local used = origRow(self, diseaseId, disease, x, y, w)
+        local rowH = (tonumber(used) or 98) - 10
+        pcall(rowButton, self, diseaseId, disease, x, y, w, rowH)
+        return used
+    end
+    local origPre = EHR_HealthPanelUI.prerender
+    function EHR_HealthPanelUI:prerender()
+        self.hmRowButtons = {}
+        return origPre(self)
+    end
+    local origDown = EHR_HealthPanelUI.onMouseDown
+    function EHR_HealthPanelUI:onMouseDown(x, y)
+        if self.activeTab == "ehr" and not self.hmCollapsed then
+            for _, b in ipairs(self.hmRowButtons or {}) do
+                if x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h and y >= self:getEHRContentTop() then
+                    if b.action == "surgery" then self.hmSurgerySelect = { sid = b.sid, id = b.id } end
+                    self:setActiveTab(b.action)
+                    return true
+                end
+            end
+        end
+        return origDown(self, x, y)
+    end
+end
 
 local function install()
     if not EHR_HealthPanelUI or EHR_HealthPanelUI.harmonieDiagInstalled then return end
@@ -635,4 +714,8 @@ local function install()
 end
 
 install()
-if Events and Events.OnGameStart then Events.OnGameStart.Add(install) end
+installRowButtons()
+if Events and Events.OnGameStart then
+    Events.OnGameStart.Add(install)
+    Events.OnGameStart.Add(installRowButtons)
+end
