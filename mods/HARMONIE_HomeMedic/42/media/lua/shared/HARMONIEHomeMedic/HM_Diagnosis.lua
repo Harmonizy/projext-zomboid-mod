@@ -135,7 +135,8 @@ local function partPain(names, minPain, stiff)
             local p = v.parts and v.parts[n]
             if p then
                 local s = tonumber(p.stiff) or 0
-                local ok = stiff == nil or (stiff == "with" and s >= 10) or (stiff == "without" and s < 10)
+                local sNeed = 10 + (tonumber(v.stiffFloor) or 0)   -- above GTP's vitamin D floor
+                local ok = stiff == nil or (stiff == "with" and s >= sNeed) or (stiff == "without" and s < sNeed)
                 if ok and (tonumber(p.pain) or 0) > m then m, at = tonumber(p.pain), n end
             end
         end
@@ -144,12 +145,13 @@ local function partPain(names, minPain, stiff)
 end
 local function partStiff(names, minStiff)
     return function(v)
+        local need = minStiff + (tonumber(v.stiffFloor) or 0)   -- above GTP's vitamin D floor
         local m, at = 0, nil
         for _, n in ipairs(names) do
             local p = v.parts and v.parts[n]
             if p and (tonumber(p.stiff) or 0) > m then m, at = tonumber(p.stiff), n end
         end
-        return m >= minStiff, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
+        return m >= need, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
     end
 end
 -- arm / leg stiffness that comes with pain: on the part itself, or
@@ -160,7 +162,7 @@ local function strainedMuscle(v)
     local m = 0
     for _, n in ipairs(LIMBS) do
         local p = v.parts and v.parts[n]
-        if p and (tonumber(p.stiff) or 0) >= 10 and (tonumber(p.pain) or 0) > m then m = tonumber(p.pain) end
+        if p and (tonumber(p.stiff) or 0) >= 10 + (tonumber(v.stiffFloor) or 0) and (tonumber(p.pain) or 0) > m then m = tonumber(p.pain) end
     end
     if m >= 5 or (v.PAIN or 0) >= 0.4 then return true, reading end
     return false

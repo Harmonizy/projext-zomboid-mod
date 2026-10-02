@@ -243,13 +243,38 @@ function M:drawDiseaseDetails(entry, x, y, w, h)
     end
     if #lines > 0 then y = self:drawInfoSection(L("Use", "How to use"), table.concat(lines, "\n"), x, y, w) end
 
-    -- side effects
-    local sides = {}
+    -- side effects, with WHEN they happen -- as EHR applies them:
+    --   tier 3 or alwaysApplySideEffects: on every dose (EHR.Medication.Use)
+    --   crash / delayed effects in a sub-table (fatigueBlock, staminaLock...):
+    --     when the medicine wears off
+    --   anything else in sideEffects is never applied (shown as such)
     local SE = EHR and EHR.Medication and EHR.Medication.SideEffects or {}
-    for _, id in ipairs(type(med.sideEffects) == "table" and med.sideEffects or {}) do
+    local function seName(id)
         local def = SE[id]
-        sides[#sides + 1] = L("Side_" .. tostring(id), def and def.displayName or tostring(id))
+        return L("Side_" .. tostring(id), def and def.displayName or tostring(id))
     end
-    if #sides > 0 then y = self:drawInfoSection(L("SideEffects", "Side effects"), table.concat(sides, ", "), x, y, w) end
+    local everyDose = (tonumber(med.tier) or 0) >= 3 or med.alwaysApplySideEffects == true
+    local later, seen = {}, {}
+    for _, sub in pairs(med) do
+        if type(sub) == "table" then
+            for k, v in pairs(sub) do
+                if type(k) == "string" and k:find("SideEffect", 1, true) and type(v) == "string" and SE[v] and not seen[v] then
+                    seen[v] = true
+                    later[#later + 1] = seName(v)
+                end
+            end
+        end
+    end
+    local onDose, never = {}, {}
+    for _, id in ipairs(type(med.sideEffects) == "table" and med.sideEffects or {}) do
+        if not seen[id] then
+            if everyDose then onDose[#onDose + 1] = seName(id) else never[#never + 1] = seName(id) end
+        end
+    end
+    local lines = {}
+    if #onDose > 0 then lines[#lines + 1] = L("SideEvery", "Every dose: %1", table.concat(onDose, ", ")) end
+    if #later > 0 then lines[#lines + 1] = L("SideLater", "When it wears off: %1", table.concat(later, ", ")) end
+    if #never > 0 then lines[#lines + 1] = L("SideNever", "Listed but not triggered at this tier: %1", table.concat(never, ", ")) end
+    if #lines > 0 then y = self:drawInfoSection(L("SideEffects", "Side effects"), table.concat(lines, "\n"), x, y, w) end
     return y
 end

@@ -2196,8 +2196,9 @@ EHR.Medication.SideEffects = {
         mpFatigueRecoveryHours = 4,
         effects = function(player)
             local stats = EHRMedicationGetStats(player)
+            -- HARMONIE: the fever itself comes from EHR.BodyTemp
+            -- (GetActiveDiseaseFeverTarget reads this side effect: 38.2 C)
             if stats and CharacterStat then
-                EHRMedicationRaiseStat(stats, CharacterStat.TEMPERATURE, 0.65)
                 EHRMedicationRaiseStat(stats, CharacterStat.FATIGUE, 0.32)
             end
         end,
@@ -6690,7 +6691,9 @@ function EHR.Medication.ApplySideEffect(player, effectId, options)
     EHRMedicationRequestSync(player)
 
     if player.isLocalPlayer and player:isLocalPlayer() then
-        EHR.Locale.Say(player, "Side effect: " .. sideEffect.displayName)
+        -- HARMONIE: translated line (the composed English sentence had no key)
+        EHR.Locale.Say(player, EHR.Locale.Format("UI_EHR_SideEffectSay", "Side effect: %1",
+            EHR.Locale.SideEffectName and EHR.Locale.SideEffectName(sideEffect.displayName) or sideEffect.displayName))
 
         if effectId == "dizziness" and EHR.ToxinVision and EHR.ToxinVision.StartMedicationEpisode then
             EHR.ToxinVision.StartMedicationEpisode(player)

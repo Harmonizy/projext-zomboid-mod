@@ -765,6 +765,22 @@ local function install()
             return info
         end
     end
+    -- a surgical treatment has no medicine item: EHR fell back to a "+" or to
+    -- whatever item happened to match the operation's name. Draw the Surgery
+    -- tab's own icon (square, made for this) instead.
+    local origIcon = EHR_HealthPanelUI.drawMedicationIcon
+    if origIcon then
+        function EHR_HealthPanelUI:drawMedicationIcon(treatment, x, y, size)
+            if type(treatment) == "table" and treatment.source == S.TREATMENT_SOURCE then
+                self.hmSurgeryIcon = self.hmSurgeryIcon or (getTexture and getTexture("media/textures/HARMONIE_HomeMedic/tab_surgery.png")) or false
+                if self.hmSurgeryIcon and self.drawTextureScaled then
+                    self:drawTextureScaled(self.hmSurgeryIcon, x, y, size, size, 1, 1, 1, 1)
+                    return
+                end
+            end
+            return origIcon(self, treatment, x, y, size)
+        end
+    end
     local origName = EHR_HealthPanelUI.getTreatmentName
     if origName then
         function EHR_HealthPanelUI:getTreatmentName(treatment)
