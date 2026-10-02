@@ -20,6 +20,7 @@ require "ExtensiveHealth/EHR_MedicalJournalUI"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Stats"
 require "HARMONIEHomeMedic/HM_MedHandbookUI"
+require "HARMONIEHomeMedic/HM_WatchGive"
 local S = HM_Surgery
 local St = HM_Stats
 
@@ -174,6 +175,77 @@ function EHR_HealthPanelUI:hmDrawStatsLocked()
         self:drawTextCentre(l, cx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT_M)
         y = y + fh(FONT_M) + 2
     end
+    self:hmDrawWatchGive(cx, y + 14)
+end
+
+-- Request 2026-10-02: examining someone, put your own medical monitor
+-- watch on the patient's wrist (HM_WatchGive -- the server moves it)
+local WG = HM_WatchGive
+local function WL(key, fallback) return HM_Text("UI_HomeMedic_Watch_" .. key, fallback) end
+function EHR_HealthPanelUI:hmDrawWatchGive(cx, y)
+    self.hmWatchBtn = nil
+    local doctor = self.isRemoteHealthPanel and self.remoteDoctor or nil
+    local patient = patientOf(self)
+    if not WG or not doctor or not patient or doctor == patient then return end
+    local c = EHR_HealthPanelUI.Colors
+    local list = WG.watchesOf(doctor)
+    local pick = list[1]
+    local pending = self.hmWatchPendingUntil and getTimestampMs() < self.hmWatchPendingUntil
+    local label, enabled, note
+    if pick and pick.powered then
+        label, enabled = WL("Give", "Put my medical watch on the patient"), not pending
+    elseif pick then
+        label, enabled = WL("Give", "Put my medical watch on the patient"), false
+        note = WL("NoBattery", "Your medical watch has no battery left.")
+    else
+        label, enabled = WL("Give", "Put my medical watch on the patient"), false
+        note = WL("NoWatch", "You have no medical monitor watch with you.")
+    end
+    local bw, bh = tw(label, FONT_M) + 36, fh(FONT_M) + 12
+    local bx = cx - math.floor(bw / 2)
+    local mx, my = self:getLocalMousePosition()
+    local hov = enabled and inside(mx, my, bx, y, bw, bh)
+    local a = enabled and (hov and 0.95 or 0.75) or 0.35
+    self:drawRect(bx, y, bw, bh, a, c.accentDark.r, c.accentDark.g, c.accentDark.b)
+    self:drawRectBorder(bx, y, bw, bh, enabled and 1 or 0.5, c.accent.r, c.accent.g, c.accent.b)
+    local tr, tg, tb = c.text.r, c.text.g, c.text.b
+    if not enabled then tr, tg, tb = c.textDim.r, c.textDim.g, c.textDim.b end
+    self:drawTextCentre(label, cx, y + 6, tr, tg, tb, 1, FONT_M)
+    if enabled then self.hmWatchBtn = { x = bx, y = y, w = bw, h = bh, id = pick.item:getID() } end
+    y = y + bh + 8
+    local res = WG.lastResult
+    if res and res.panel == self and getTimestampMs() < res.untilMs and not res.ok then
+        note = WL("Fail_" .. tostring(res.reason), WL("Fail_Invalid", "Could not put the watch on."))
+    end
+    if note then self:drawTextCentre(note, cx, y, 1.0, 0.55, 0.35, 1, FONT) end
+end
+
+function EHR_HealthPanelUI:hmWatchGiveClick(x, y)
+    local b = self.hmWatchBtn
+    if not b or not inside(x, y, b.x, b.y, b.w, b.h) then return false end
+    WG.lastPanel = self
+    self.hmWatchPendingUntil = getTimestampMs() + 3000
+    WG.request(self.remoteDoctor, patientOf(self), b.id)
+    return true
+end
+
+if WG then
+    WG.onResult = function(res)
+        local panel = WG.lastPanel
+        WG.lastResult = { ok = res.ok == true, reason = res.reason, panel = panel, untilMs = getTimestampMs() + 6000 }
+        if not panel then return end
+        panel.hmWatchPendingUntil = nil
+        if res.ok then
+            -- read the patient again now (the watch unlocks this tab)
+            panel.lastRemoteExamRefreshMs = nil
+            if panel.remoteExamData then panel.remoteExamData.EHR_HasMedicalMonitorWatch = nil end
+            if EHR.MPExamination and EHR.MPExamination.RequestExamData and panel.remoteDoctor and panel.remotePatient then
+                pcall(EHR.MPExamination.RequestExamData, panel.remoteDoctor, panel.remotePatient, true)
+            end
+            local who = panel.remoteDoctor
+            if who and who.Say then pcall(function() who:Say(WL("Done", "There, the watch is on.")) end) end
+        end
+    end
 end
 
 function EHR_HealthPanelUI:hmDrawStats()
@@ -327,6 +399,7 @@ EHR_HealthPanelUI.ExtraTabs.stats = {
         return true
     end,
     mouseDown = function(panel, x, y)
+        if not panel:hmStatsUnlocked() and panel:hmWatchGiveClick(x, y) then return true end
         local st = panel.hmStats
         local r = st and st.refreshBtn
         if r and panel:hmStatsUnlocked() and inside(x, y, r.x, r.y, r.w, r.h) then
