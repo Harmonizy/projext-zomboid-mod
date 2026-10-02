@@ -2171,7 +2171,7 @@
     "UI_HomeMedic_Surg_Anes_Alcohol": "Drunk",
     "UI_HomeMedic_Surg_Anes_Asleep": "Asleep",
     "UI_HomeMedic_Surg_Row_Blood": "Blood volume",
-    "UI_HomeMedic_Surg_Tip_Blood": "The operation costs about %1 mL of blood - more if hemostasis goes badly.",
+    "UI_HomeMedic_Surg_Tip_Blood": "The operation costs about %1 mL of blood - more if hemostasis goes badly. Afterwards the patient is left at 70%% blood at most (less after a messy operation): weak and tired until the blood comes back.",
     "UI_HomeMedic_Surg_Row_Patient": "Patient",
     "UI_HomeMedic_Surg_Tip_Patient": "Stay next to the patient. Operating on yourself makes every step shakier.",
     "UI_HomeMedic_Surg_Slot_blade": "Blade",
@@ -2755,5 +2755,14 @@
     "UI_HomeMedic_Stat_VitaminE": "Vitamin E",
     "UI_HomeMedic_Sign_VitE": "Vitamin E deficiency (low mood, clumsy hands)",
     "UI_HomeMedic_Stat_VitaminK": "Vitamin K",
-    "UI_HomeMedic_Sign_VitK": "Vitamin K deficiency (max health lowered)"
+    "UI_HomeMedic_Sign_VitK": "Vitamin K deficiency (max health lowered)",
+    "UI_HomeMedic_Dose_Title": "TIME FOR THE NEXT DOSE",
+    "UI_HomeMedic_Dose_DoseOf": "Dose %1 of %2",
+    "UI_HomeMedic_Dose_Treating": "For: %1",
+    "UI_HomeMedic_Dose_TreatingUnknown": "For an illness not yet diagnosed",
+    "UI_HomeMedic_Dose_Deadline": "Take it within %1 h, or the course is dropped and must start over.",
+    "UI_HomeMedic_Dose_HaveIt": "You have it with you.",
+    "UI_HomeMedic_Dose_NoItem": "You do not have it with you!",
+    "UI_HomeMedic_Dose_Btn_Ok": "Got it",
+    "UI_HomeMedic_Dose_Btn_Later": "Remind me in an hour"
 }

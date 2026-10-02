@@ -23,6 +23,7 @@ description=- Delirium sound volume and mute, per player. Only your own machine 
 description=- One Options -> Mods page (keys, health-panel switches, delirium sound, blood vision) and one set of Sandbox pages ("Home Medic: ...").
 description=- English and Thai built in -- every line the character says and every label in the medical window is translated. The Thai lines are written as people really talk: grumbling, swearing and all.
 description=- Body Stats shows abnormal values in red (fever, low blood, pain, panic...), so trouble stands out at a glance.
+description=- A cured illness caught again must be diagnosed again. A medicine course pops up a reminder when the next dose is due. After an operation the patient is left weak: 70% blood at most, less after a messy one.
 description=- Caffeine pills are their own item now; vanilla's vitamin pills are vitamins again (and work with our From Garden to Plate mod as multivitamins).
 description=- Translation keys keep the original Extensive Health Rework / The Only Cure names, so other mods that use them keep working. EHR debug menu always available in a -debug game or to server admins.
 description=- Lighter on dedicated servers (per-tick work trimmed); the medical window fits 720p screens; blood-loss vision no longer darkens your windows.

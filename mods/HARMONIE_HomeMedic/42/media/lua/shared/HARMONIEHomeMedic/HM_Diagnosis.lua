@@ -320,13 +320,45 @@ function D.activeIds(patient, exam)
     return list
 end
 
+-- when the CURRENT bout of `id` began (game hours), or nil
+function D.onset(get, id)
+    id = D.normalize(id)
+    if id == "sepsis" then
+        local s = get("EHR_Sepsis")
+        return type(s) == "table" and tonumber(s.startTime) or nil
+    end
+    if id == "wound_infection" then
+        local w = get("EHR_WoundInfection")
+        local first
+        for _, pd in pairs(type(w) == "table" and type(w.parts) == "table" and w.parts or {}) do
+            local t = type(pd) == "table" and (tonumber(pd.stage) or 0) > 0 and tonumber(pd.startTime) or nil
+            if t and (not first or t < first) then first = t end
+        end
+        return first
+    end
+    local dis = get("EHR_Disease")
+    local active = type(dis) == "table" and type(dis.active) == "table" and dis.active or {}
+    for k, v in pairs(active) do
+        if type(v) == "table" and D.normalize(k) == id then return tonumber(v.startTime) end
+    end
+    return nil
+end
+
+-- Request 2026-10-02: an illness that was cured and caught again must be
+-- diagnosed again -- a diagnosis only counts for the bout it was made in
+-- (made before that bout began = an old one). The server also drops
+-- diagnoses of illnesses that are gone (D.prune).
 function D.isDiagnosed(patient, id, exam)
     if not D.enabled() then return true end
     id = D.normalize(id)
     if not D.DISEASES[id] then return true end
     local data
     if type(exam) == "table" then data = exam[D.KEY] else data = D.store(patient) end
-    return type(data) == "table" and data[id] ~= nil
+    local at = type(data) == "table" and data[id] or nil
+    if at == nil then return false end
+    local onset = tonumber(at) and D.onset(D.getter(patient, exam), id)
+    if onset and onset > tonumber(at) + 0.01 then return false end
+    return true
 end
 
 -- can the doctor recognise (and so pick) this illness?
@@ -362,8 +394,11 @@ function D.prune(patient)
     if type(data) ~= "table" then return false end
     local get = D.getter(patient, nil)
     local changed = false
-    for id in pairs(data) do
-        if not D.isActive(get, id, patient, nil) then data[id] = nil; changed = true end
+    for id, at in pairs(data) do
+        local onset = tonumber(at) and D.onset(get, id)
+        if not D.isActive(get, id, patient, nil) or (onset and onset > tonumber(at) + 0.01) then
+            data[id] = nil; changed = true
+        end
     end
     return changed
 end
@@ -441,7 +476,8 @@ end
 local function pruneAll()
     if isClient and isClient() then return end
     local online = getOnlinePlayers and getOnlinePlayers()
-    if online then
+    -- (single player: the online list is empty -> the local players)
+    if online and online:size() > 0 then
         for i = 0, online:size() - 1 do
             local p = online:get(i)
             if p and D.prune(p) then SV.push(p) end

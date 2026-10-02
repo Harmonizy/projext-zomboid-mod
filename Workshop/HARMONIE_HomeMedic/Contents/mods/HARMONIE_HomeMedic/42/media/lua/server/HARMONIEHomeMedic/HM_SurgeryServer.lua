@@ -312,6 +312,19 @@ function SV.Finish(doctor, args)
             transfusion = { kind = "saline", amount = amt }
         end
     end
+    -- the patient comes out weak: at most S.POSTOP_MAX of full blood, less
+    -- when hemostasis / the incision went badly (a transfusion only helps
+    -- someone who would end below that)
+    local bdc = patient:getModData().EHR_Blood
+    local maxV = type(bdc) == "table" and tonumber(bdc.maxVolume) or nil
+    local curV = type(bdc) == "table" and tonumber(bdc.currentVolume) or nil
+    if B and B.ModifyBloodVolume and maxV and curV and maxV > 0 then
+        local cap = S.postOpCap(hemo, incision) * maxV
+        if curV > cap then
+            pcall(B.ModifyBloodVolume, patient, cap - curV)
+            blood = blood + math.floor(curV - cap + 0.5)
+        end
+    end
     local pain = math.floor(s.pain * (1 - 0.8 * (permit.anesthesia or 0)) + 0.5)
     call(part, "setAdditionalPain", math.min(100, (tonumber(call(part, "getAdditionalPain")) or 0) + pain))
 
