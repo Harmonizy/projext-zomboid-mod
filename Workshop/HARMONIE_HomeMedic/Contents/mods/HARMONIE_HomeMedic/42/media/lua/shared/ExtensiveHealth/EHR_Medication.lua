@@ -182,8 +182,9 @@ EHR.Medication.Database = {
         usageMessage = "You take painkillers. The pain begins to fade.",
     },
 
-    -- Base.PillsVitamins (B42 caffeine pills)
-    ["Base.PillsVitamins"] = {
+    -- HARMONIE: caffeine pills are their own item (was Base.PillsVitamins,
+    -- which Garden to Plate uses as multivitamins)
+    ["ExtensiveHealth.CaffeinePills"] = {
         tier = 1,
         treats = {},
         displayName = "Caffeine Pills",
@@ -2196,8 +2197,9 @@ EHR.Medication.SideEffects = {
         mpFatigueRecoveryHours = 4,
         effects = function(player)
             local stats = EHRMedicationGetStats(player)
+            -- HARMONIE: the fever itself comes from EHR.BodyTemp
+            -- (GetActiveDiseaseFeverTarget reads this side effect: 38.2 C)
             if stats and CharacterStat then
-                EHRMedicationRaiseStat(stats, CharacterStat.TEMPERATURE, 0.65)
                 EHRMedicationRaiseStat(stats, CharacterStat.FATIGUE, 0.32)
             end
         end,
@@ -2497,7 +2499,7 @@ EHR.Medication.DosingSchedules = {
     ["Base.Antibiotics"] = { doseInterval = 4, dosesRequired = 6 },
     ["Base.Pills"] = { doseInterval = 3, dosesRequired = 1, activeHours = 3 },
     ["ExtensiveHealth.HomemadePainkillers"] = { doseInterval = 3, dosesRequired = 1, activeHours = 3 },
-    ["Base.PillsVitamins"] = { doseInterval = 12, dosesRequired = 1 },
+    ["ExtensiveHealth.CaffeinePills"] = { doseInterval = 12, dosesRequired = 1 },
     ["Base.PillsSleepingTablets"] = { doseInterval = 8, dosesRequired = 1 },
     ["ExtensiveHealth.HomemadeSleepingPills"] = { doseInterval = 8, dosesRequired = 1 },
     ["Base.PillsAntiDep"] = { doseInterval = 12, dosesRequired = 14 },
@@ -6690,7 +6692,9 @@ function EHR.Medication.ApplySideEffect(player, effectId, options)
     EHRMedicationRequestSync(player)
 
     if player.isLocalPlayer and player:isLocalPlayer() then
-        EHR.Locale.Say(player, "Side effect: " .. sideEffect.displayName)
+        -- HARMONIE: translated line (the composed English sentence had no key)
+        EHR.Locale.Say(player, EHR.Locale.Format("UI_EHR_SideEffectSay", "Side effect: %1",
+            EHR.Locale.SideEffectName and EHR.Locale.SideEffectName(sideEffect.displayName) or sideEffect.displayName))
 
         if effectId == "dizziness" and EHR.ToxinVision and EHR.ToxinVision.StartMedicationEpisode then
             EHR.ToxinVision.StartMedicationEpisode(player)

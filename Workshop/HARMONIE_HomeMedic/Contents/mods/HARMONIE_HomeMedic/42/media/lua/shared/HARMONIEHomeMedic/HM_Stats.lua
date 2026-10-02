@@ -28,7 +28,7 @@ HM_Stats = HM_Stats or {}
 local St = HM_Stats
 St.MODULE = "HARMONIE_HM_Stats"
 St.registry = St.registry or {}
-St.GROUPS = { "signs", "moodles", "vitals", "needs", "mood", "body", "nutrition", "illness", "mods" }
+St.GROUPS = { "signs", "moodles", "vitals", "needs", "mood", "body", "nutrition", "vitamins", "illness", "mods" }
 
 local function call(obj, method, ...)
     if not obj or not obj[method] then return nil end
@@ -191,6 +191,49 @@ local function modernStatusRows(player, out)
     end
 end
 
+-- ------------------------------------------------------------- From Garden to Plate
+-- Our vitamin mod (HARMONIE_GardenToPlate), when it is loaded: read its
+-- per-player store straight from modData (HARMONIE_Vitamins) -- read only,
+-- so nothing is created or synced from here (VitData.Get would create the
+-- store). -> { [vit] = { value, band, afflicted, active } } or nil
+function St.gtp(player)
+    local G = HARMONIE_GTP
+    if not (G and G.Vitamins) then return nil end
+    local md = call(player, "getModData")
+    local store = md and md.HARMONIE_Vitamins
+    if type(store) ~= "table" then return nil end
+    local cfg = G.Config or {}
+    local out = {}
+    for _, vit in ipairs(G.Vitamins) do
+        local e = store[vit]
+        local v = type(e) == "table" and tonumber(e.value) or nil
+        if v then
+            local band = (G.GetBand and G.GetBand(v)) or (v < (cfg.criticalThreshold or 20) and "critical")
+                or (v < (cfg.sufficientThreshold or 50) and "low") or "sufficient"
+            -- GTP applies a deficiency effect while afflicted and not shielded
+            -- by a banked pause day (VitEffects isActive)
+            local active = e.afflicted == true and (tonumber(e.pauseDays) or 0) < 1 and cfg.effectsEnabled ~= false
+            out[vit] = { value = v, band = band, afflicted = e.afflicted == true, active = active,
+                max = cfg.maxValue or 100 }
+        end
+    end
+    return out
+end
+
+local function vitaminRows(player, out)
+    local gtp = St.gtp(player)
+    local G = HARMONIE_GTP
+    if not gtp then return end
+    for _, vit in ipairs(G.Vitamins) do
+        local e = gtp[vit]
+        if e then
+            out[#out + 1] = { g = "vitamins", k = "UI_HomeMedic_Stat_Vitamin" .. vit, t = "Vitamin " .. vit, v = e.value,
+                f = clamp01(e.value / e.max), band = e.band, active = e.active or nil,
+                s = tostring(round(e.value, 1)) .. " / " .. tostring(e.max) }
+        end
+    end
+end
+
 -- ------------------------------------------------------------- vitals (pulse, signs)
 -- A small live read for the pulse monitor and the signs list:
 -- { dead, health 0..100, blood 0..1, temp C, and CharacterStat values 0..1 }
@@ -225,6 +268,10 @@ function St.vitals(player)
             end
         end
     end
+    -- GTP vitamin D deficiency holds every body part at stiffness 20:
+    -- the stiffness signs then count only what is above that floor
+    v.gtp = St.gtp(player)
+    v.stiffFloor = (v.gtp and v.gtp.D and v.gtp.D.active) and 20 or 0
     local stats = call(player, "getStats")
     if stats and CharacterStat then
         for _, name in ipairs(VITAL_STATS) do
@@ -266,6 +313,16 @@ local function signRows(player, out)
         out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Diag_Tag_" .. r.tag, t = r.tag, tag = r.tag, s = r.reading }
         any = true
     end
+    -- From Garden to Plate: a vitamin deficiency that is acting on the body
+    local gtp = St.gtp(player)
+    for _, vit in ipairs(HARMONIE_GTP and HARMONIE_GTP.Vitamins or {}) do
+        local e = gtp and gtp[vit]
+        if e and e.active then
+            out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Sign_Vit" .. vit, t = "Vitamin " .. vit .. " deficiency",
+                vit = vit, bad = true, s = tostring(round(e.value, 1)) .. " / " .. tostring(e.max) }
+            any = true
+        end
+    end
     if not any then out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Stats_NoSigns", t = "No measurable signs", s = "" } end
 end
 
@@ -306,7 +363,9 @@ St.ABNORMAL = {
 local function markAbnormal(out)
     for _, row in ipairs(out) do
         if row.g == "signs" then
-            row.bad = row.tag ~= nil
+            row.bad = row.bad or row.tag ~= nil
+        elseif row.g == "vitamins" then
+            row.bad = row.band ~= nil and row.band ~= "sufficient"
         elseif row.g == "moodles" then
             row.bad = row.gb == 2 and (row.lv or 0) >= 2
         elseif row.k == "UI_HomeMedic_Stat_Blood" then
@@ -326,6 +385,7 @@ function St.collect(player)
     pcall(signRows, player, out)
     pcall(moodleRows, player, out)
     pcall(bodyRows, player, out)
+    pcall(vitaminRows, player, out)
     pcall(vanillaStats, player, out)
     pcall(registryRows, player, out)
     pcall(modernStatusRows, player, out)
@@ -334,23 +394,9 @@ function St.collect(player)
 end
 
 -- ------------------------------------------------------------- built-in extensions
--- HARMONIE - From Garden to Plate: vitamins (shared data, works on the server)
-local function registerGardenToPlate()
-    local G = HARMONIE_GTP
-    if not (G and G.Vitamins and G.VitData and G.VitData.Get) then return end
-    for _, vit in ipairs(G.Vitamins) do
-        St.Register({
-            id = "GTP_Vitamin" .. vit, group = "mods", labelKey = "IGUI_HARMONIE_ModernStatus_Vitamin" .. vit,
-            label = "Vitamin " .. vit,
-            get = function(player)
-                local v = G.VitData.Get(player, vit)
-                local max = G.Config and G.Config.maxValue or 100
-                if type(v) ~= "number" then return nil end
-                return v, v / max, tostring(round(v, 1)) .. " / " .. tostring(max)
-            end,
-        })
-    end
-end
+-- HARMONIE - From Garden to Plate: vitamins have their own group now
+-- (vitaminRows above); kept as a no-op for callers.
+local function registerGardenToPlate() end
 St.registerGardenToPlate = registerGardenToPlate
 
 -- ------------------------------------------------------------- server

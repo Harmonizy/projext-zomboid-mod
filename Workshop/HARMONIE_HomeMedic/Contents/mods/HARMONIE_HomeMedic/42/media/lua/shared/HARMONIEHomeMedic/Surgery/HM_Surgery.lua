@@ -815,8 +815,11 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     local bv = modData(patient, exam, "EHR_Blood")
     local cur = type(bv) == "table" and tonumber(bv.currentVolume) or nil
     local max = type(bv) == "table" and tonumber(bv.maxVolume) or nil
-    local after = (cur and max and max > 0) and (cur - (s.bloodLoss or 0)) / max or nil
-    local worth = after ~= nil and after < 0.85
+    local raw = (cur and max and max > 0) and (cur - (s.bloodLoss or 0)) / max or nil
+    -- every operation leaves the patient at S.POSTOP_MAX at most; a
+    -- transfusion is worth it only for someone who would end below that
+    local after = raw and math.min(raw, S.POSTOP_MAX) or nil
+    local worth = raw ~= nil and raw < S.POSTOP_MAX
     local must = after ~= nil and after < S.TRANSFUSE_BELOW
     r.bloodAfter, r.mustTransfuse = after, must
     local function optionNames(slot, n)

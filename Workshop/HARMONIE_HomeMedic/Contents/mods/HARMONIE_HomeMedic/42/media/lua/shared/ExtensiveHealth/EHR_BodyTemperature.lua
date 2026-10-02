@@ -893,6 +893,16 @@ function EHR.BodyTemp.GetActiveDiseaseFeverTarget(player)
         end
     end
 
+    -- HARMONIE: the "fever" medication side effect (drug-induced fever) is a
+    -- fever source too; it used to raise CharacterStat.TEMPERATURE to 0.65,
+    -- which does nothing on the Celsius scale and is overwritten by this
+    -- module every tick
+    local med = modData.EHR_Medication
+    local sideFever = med and type(med.activeSideEffects) == "table" and med.activeSideEffects.fever
+    if type(sideFever) == "table" and not sideFever.clientExpired then
+        bestTarget = math.max(bestTarget or 38.2, 38.2)
+    end
+
     local woundData = modData.EHR_WoundInfection
     local woundStage = woundData and tonumber(woundData.worstStage) or 0
     if woundStage > 0 then

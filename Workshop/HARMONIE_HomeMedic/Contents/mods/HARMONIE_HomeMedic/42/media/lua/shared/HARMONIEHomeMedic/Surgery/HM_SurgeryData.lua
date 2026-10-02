@@ -90,6 +90,19 @@ S.Supplies = {
 -- type causes a transfusion reaction (AHTR), saline adds volume but dilutes.
 S.TRANSFUSE_BELOW = 0.62
 
+-- Request 2026-10-02: an operation leaves the patient weak for a while --
+-- blood volume ends at POSTOP_MAX at most (just inside EHR's "moderate"
+-- band: tired, slower), lower when the bleeding was badly controlled, down
+-- to POSTOP_MIN (EHR's "critical" band: no endurance, blackouts).
+S.POSTOP_MAX = 0.704
+S.POSTOP_MIN = 0.555
+-- hemostasis (P02) / incision (P01) scores 0..1 -> the most blood left
+function S.postOpCap(hemo, incision)
+    local q = 0.65 * (tonumber(hemo) or 0.5) + 0.35 * (tonumber(incision) or 0.5)
+    q = math.max(0, math.min(1, q))
+    return S.POSTOP_MIN + (S.POSTOP_MAX - S.POSTOP_MIN) * q
+end
+
 -- Body-part groups
 local LIMBS = { "UpperArm_L", "UpperArm_R", "ForeArm_L", "ForeArm_R", "UpperLeg_L", "UpperLeg_R", "LowerLeg_L", "LowerLeg_R" }
 local ARMS  = { "UpperArm_L", "UpperArm_R", "ForeArm_L", "ForeArm_R" }

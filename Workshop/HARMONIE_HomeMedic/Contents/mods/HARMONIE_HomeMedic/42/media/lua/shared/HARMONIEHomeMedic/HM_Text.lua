@@ -38,4 +38,20 @@ function HM_Text(key, fallback, ...)
     return fill(t, a)
 end
 
+-- A key for sorting names "alphabetically", Thai included: Thai
+-- dictionaries order a word by its first consonant, so a leading vowel
+-- (เ แ โ ใ ไ) moves behind it ("เลือด" sorts under ล). Works with Kahlua's
+-- Java strings (1 char = 1 letter) and with plain Lua (UTF-8 bytes).
+local LEAD = { "เ", "แ", "โ", "ใ", "ไ" }
+function HM_SortKey(text)
+    local t = string.lower(tostring(text or ""))
+    for _, v in ipairs(LEAD) do
+        local n = #v
+        if t:sub(1, n) == v and #t > n then
+            return t:sub(n + 1, 2 * n) .. v .. t:sub(2 * n + 1)
+        end
+    end
+    return t
+end
+
 return HM_Text

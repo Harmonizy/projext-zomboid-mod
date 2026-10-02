@@ -1222,6 +1222,25 @@ local function EHR_InitDistributions()
     end
     addHouseholdLoot()
 
+    -- HARMONIE: caffeine pills (ExtensiveHealth.CaffeinePills) spawn where
+    -- vanilla puts its vitamins, a little rarer -- vanilla's vitamins stay
+    if medicationLootMultiplier > 0 and ProceduralDistributions and ProceduralDistributions.list then
+        local found = {}
+        for name, dist in pairs(ProceduralDistributions.list) do
+            local items = type(dist) == "table" and dist.items or nil
+            if type(items) == "table" then
+                for i = 1, #items - 1, 2 do
+                    if items[i] == "PillsVitamins" or items[i] == "Base.PillsVitamins" then
+                        found[name] = (found[name] or 0) + (tonumber(items[i + 1]) or 0)
+                    end
+                end
+            end
+        end
+        for name, chance in pairs(found) do
+            if chance > 0 then tryAddMed(name, "ExtensiveHealth.CaffeinePills", chance * 0.75) end
+        end
+    end
+
     -- =========================================
     -- SUMMARY
     -- =========================================

@@ -52,7 +52,7 @@ D.DISEASES = {
     trichinosis = { "muscle_pain", "stiffness", "fever", "nausea", "fatigue", "weakness", "thirst", "spasm", "health_loss" },
     hyperkeratotic_scabies = { "itch", "skin_pain", "fever", "health_loss" },
     cellulitis = { "wound_inflamed", "skin_pain", "fever", "nausea", "fatigue" },
-    wound_infection = { "wound_inflamed", "fever" },
+    wound_infection = { "wound_inflamed", "skin_pain", "fever" },
     sepsis = { "fever", "fatigue", "confusion", "health_loss", "weakness" },
     tetanus = { "stiffness", "spasm", "muscle_pain", "short_breath", "weakness", "slow", "fatigue", "fever", "health_loss" },
     tuberculosis = { "cough", "cough_blood", "fever", "fatigue", "weakness", "hunger", "slow" },
@@ -114,6 +114,11 @@ end
 --     tetanus / trichinosis; one part without stiffness = cellulitis / scabies
 --   nausea: the Sickness stat (Queasy moodle) - also raised by trichinosis
 --     and aspergillosis
+-- Not measured (R45): hunger, thirst, tiredness, weakness, short breath and
+-- stress are everyday needs -- a hungry player is not a sick one. EHR's
+-- illnesses make them RISE FASTER, which only shows over time, so they are
+-- "observe" signs. Arm / leg stiffness needs pain with it (workouts stiffen
+-- muscles too).
 local function partName(name)
     if BodyPartType and BodyPartType.FromString and BodyPartType.getDisplayName then
         local ok, n = pcall(function() return BodyPartType.getDisplayName(BodyPartType.FromString(name)) end)
@@ -130,7 +135,8 @@ local function partPain(names, minPain, stiff)
             local p = v.parts and v.parts[n]
             if p then
                 local s = tonumber(p.stiff) or 0
-                local ok = stiff == nil or (stiff == "with" and s >= 10) or (stiff == "without" and s < 10)
+                local sNeed = 10 + (tonumber(v.stiffFloor) or 0)   -- above GTP's vitamin D floor
+                local ok = stiff == nil or (stiff == "with" and s >= sNeed) or (stiff == "without" and s < sNeed)
                 if ok and (tonumber(p.pain) or 0) > m then m, at = tonumber(p.pain), n end
             end
         end
@@ -139,22 +145,33 @@ local function partPain(names, minPain, stiff)
 end
 local function partStiff(names, minStiff)
     return function(v)
+        local need = minStiff + (tonumber(v.stiffFloor) or 0)   -- above GTP's vitamin D floor
         local m, at = 0, nil
         for _, n in ipairs(names) do
             local p = v.parts and v.parts[n]
             if p and (tonumber(p.stiff) or 0) > m then m, at = tonumber(p.stiff), n end
         end
-        return m >= minStiff, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
+        return m >= need, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
     end
+end
+-- arm / leg stiffness that comes with pain: on the part itself, or
+-- overall (trichinosis strains every muscle and raises the Pain stat)
+local function strainedMuscle(v)
+    local on, reading = partStiff(LIMBS, 10)(v)
+    if not on then return false end
+    local m = 0
+    for _, n in ipairs(LIMBS) do
+        local p = v.parts and v.parts[n]
+        if p and (tonumber(p.stiff) or 0) >= 10 + (tonumber(v.stiffFloor) or 0) and (tonumber(p.pain) or 0) > m then m = tonumber(p.pain) end
+    end
+    if m >= 5 or (v.PAIN or 0) >= 0.4 then return true, reading end
+    return false
 end
 D.SIGN_LIMBS = LIMBS
 D.SIGNS = {
     fever = { at = "stats", test = temp(">=", 37.5) },
     chills = { at = "stats", test = temp("<=", 35.8) },
     overheat = { at = "stats", test = temp(">=", 40.3) },
-    fatigue = { at = "stats", test = stat("FATIGUE", ">=", 0.4) },
-    weakness = { at = "stats", test = stat("ENDURANCE", "<=", 0.5) },
-    short_breath = { at = "stats", test = stat("ENDURANCE", "<=", 0.3) },
     health_loss = { at = "stats", test = function(v)
         if type(v.health) ~= "number" then return false end
         return v.health < 80, tostring(math.floor(v.health + 0.5))
@@ -163,20 +180,27 @@ D.SIGNS = {
         if type(v.health) ~= "number" then return false end
         return v.health < 25, tostring(math.floor(v.health + 0.5))
     end },
-    thirst = { at = "stats", test = stat("THIRST", ">=", 0.25) },
-    hunger = { at = "stats", test = stat("HUNGER", ">=", 0.25) },
     nausea = { at = "stats", test = function(v)
         local x = math.max(v.SICKNESS or 0, v.FOOD_SICKNESS or 0)
         return x >= 0.25, pct(x)
     end },
-    stress = { at = "stats", test = stat("STRESS", ">=", 0.4) },
     headache = { at = "stats", test = partPain({ "Head" }, 10) },
     chest_pain = { at = "stats", test = partPain({ "Torso_Upper" }, 10, "without") },
     abdominal = { at = "stats", test = partPain({ "Torso_Lower", "Groin" }, 10, "without") },
     back_pain = { at = "stats", test = partPain({ "Torso_Lower" }, 10, "with") },
-    muscle_pain = { at = "stats", test = partPain(LIMBS, 10, "with") },
+    muscle_pain = { at = "stats", test = function(v)
+        local on, reading = partPain(LIMBS, 10, "with")(v)
+        if on then return on, reading end
+        return strainedMuscle(v)
+    end },
     skin_pain = { at = "stats", test = partPain(D.SKIN_PARTS, 10, "without") },
-    stiffness = { at = "stats", test = partStiff(D.STIFF_PARTS, 10) },
+    stiffness = { at = "stats", test = function(v)
+        -- the neck (tetanus) always counts; arms and legs only with pain --
+        -- a workout leaves them stiff too, without pain (vanilla)
+        local on, reading = partStiff({ "Neck" }, 10)(v)
+        if on then return on, reading end
+        return strainedMuscle(v)
+    end },
     wound_inflamed = { at = "stats", test = function(v)
         for name, p in pairs(v.parts or {}) do
             if p.infected then return true, partName(name) end
@@ -296,13 +320,45 @@ function D.activeIds(patient, exam)
     return list
 end
 
+-- when the CURRENT bout of `id` began (game hours), or nil
+function D.onset(get, id)
+    id = D.normalize(id)
+    if id == "sepsis" then
+        local s = get("EHR_Sepsis")
+        return type(s) == "table" and tonumber(s.startTime) or nil
+    end
+    if id == "wound_infection" then
+        local w = get("EHR_WoundInfection")
+        local first
+        for _, pd in pairs(type(w) == "table" and type(w.parts) == "table" and w.parts or {}) do
+            local t = type(pd) == "table" and (tonumber(pd.stage) or 0) > 0 and tonumber(pd.startTime) or nil
+            if t and (not first or t < first) then first = t end
+        end
+        return first
+    end
+    local dis = get("EHR_Disease")
+    local active = type(dis) == "table" and type(dis.active) == "table" and dis.active or {}
+    for k, v in pairs(active) do
+        if type(v) == "table" and D.normalize(k) == id then return tonumber(v.startTime) end
+    end
+    return nil
+end
+
+-- Request 2026-10-02: an illness that was cured and caught again must be
+-- diagnosed again -- a diagnosis only counts for the bout it was made in
+-- (made before that bout began = an old one). The server also drops
+-- diagnoses of illnesses that are gone (D.prune).
 function D.isDiagnosed(patient, id, exam)
     if not D.enabled() then return true end
     id = D.normalize(id)
     if not D.DISEASES[id] then return true end
     local data
     if type(exam) == "table" then data = exam[D.KEY] else data = D.store(patient) end
-    return type(data) == "table" and data[id] ~= nil
+    local at = type(data) == "table" and data[id] or nil
+    if at == nil then return false end
+    local onset = tonumber(at) and D.onset(D.getter(patient, exam), id)
+    if onset and onset > tonumber(at) + 0.01 then return false end
+    return true
 end
 
 -- can the doctor recognise (and so pick) this illness?
@@ -338,8 +394,11 @@ function D.prune(patient)
     if type(data) ~= "table" then return false end
     local get = D.getter(patient, nil)
     local changed = false
-    for id in pairs(data) do
-        if not D.isActive(get, id, patient, nil) then data[id] = nil; changed = true end
+    for id, at in pairs(data) do
+        local onset = tonumber(at) and D.onset(get, id)
+        if not D.isActive(get, id, patient, nil) or (onset and onset > tonumber(at) + 0.01) then
+            data[id] = nil; changed = true
+        end
     end
     return changed
 end
@@ -417,7 +476,8 @@ end
 local function pruneAll()
     if isClient and isClient() then return end
     local online = getOnlinePlayers and getOnlinePlayers()
-    if online then
+    -- (single player: the online list is empty -> the local players)
+    if online and online:size() > 0 then
         for i = 0, online:size() - 1 do
             local p = online:get(i)
             if p and D.prune(p) then SV.push(p) end

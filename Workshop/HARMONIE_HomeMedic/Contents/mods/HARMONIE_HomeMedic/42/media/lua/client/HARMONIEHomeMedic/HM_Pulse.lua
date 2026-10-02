@@ -121,7 +121,13 @@ function P.vitalsFor(panel)
         v = rowsToVitals(st and st.rows)
         if panel.player and panel.player.isDead and panel.player:isDead() then v.dead = true end
     else
-        v = St.vitals(panel.player)
+        -- read the body a few times a second, not every frame
+        local t = nowMs()
+        if not panel.hmPulseV or panel.hmPulseVPlayer ~= panel.player or t - (panel.hmPulseVAt or 0) > 300 then
+            panel.hmPulseV, panel.hmPulseVPlayer, panel.hmPulseVAt = St.vitals(panel.player), panel.player, t
+        end
+        v = {}
+        for k, x in pairs(panel.hmPulseV) do v[k] = x end
     end
     -- the window's own blood numbers (remote exam data included)
     local ok, summary = pcall(function() return panel:getBloodSummary() end)

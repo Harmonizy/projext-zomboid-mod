@@ -328,6 +328,25 @@ module ExtensiveHealth
         Balanced multi-dose package sizes
     ========================================= **/
 
+    /* HARMONIE: caffeine pills as their own item (EHR used to turn vanilla's
+       Base.PillsVitamins into them, which clashed with Garden to Plate's
+       multivitamins) */
+    item CaffeinePills
+    {
+        DisplayCategory = FirstAid,
+        ItemType = base:drainable,
+        DisplayName = Caffeine Pills,
+        Weight = 0.2,
+        Icon = PillsCaffeine,
+        Medical = true,
+        Tooltip = Tooltip_CaffeinePills,
+        UseDelta = 0.0417,
+        UseWhileEquipped = false,
+        StaticModel = CaffeinePills,
+        WorldStaticModel = CaffeinePills,
+        Tags = base:consumable,
+    }
+
     item ColdFluTablets
     {
         DisplayCategory = FirstAid,

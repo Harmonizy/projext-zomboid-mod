@@ -193,7 +193,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
             local status, col = statusFor(self, id, exam, treatments[rawId] ~= nil or treatments[id] ~= nil)
             local hint = surgeryHint(id)
             if hint then lines[#lines + 1] = hint end
-            cards[#cards + 1] = { title = diseaseName(id), stage = stage, status = status, statusColor = col, lines = lines,
+            cards[#cards + 1] = { id = id, title = diseaseName(id), stage = stage, status = status, statusColor = col, lines = lines,
                 tip = codex(id, "Treatment") or "" }
         end
     end
@@ -207,7 +207,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
         local hint = surgeryHint("sepsis")
         if hint then lines[#lines + 1] = hint end
         local status, col = statusFor(self, "sepsis", exam, treatments.sepsis ~= nil)
-        cards[#cards + 1] = { title = diseaseName("sepsis"), stage = st, status = status, statusColor = col,
+        cards[#cards + 1] = { id = "sepsis", title = diseaseName("sepsis"), stage = st, status = status, statusColor = col,
             lines = lines, tip = codex("sepsis", "Treatment") or "" }
     end
 
@@ -226,7 +226,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
                     local okT, t = pcall(BodyPartType.FromString, part)
                     if okT and t then where = BodyPartType.getDisplayName(t) or part end
                 end
-                cards[#cards + 1] = { title = diseaseName("wound_infection") .. " - " .. tostring(where), stage = st,
+                cards[#cards + 1] = { id = "wound_infection", title = diseaseName("wound_infection") .. " - " .. tostring(where), stage = st,
                     status = treatments.wound_infection and L("Treating", "TREATING") or L("Untreated", "UNTREATED"),
                     statusColor = treatments.wound_infection and { 0.35, 0.85, 0.45 } or { 0.95, 0.75, 0.25 },
                     lines = lines, tip = codex("wound_infection", "Treatment") or "" }
@@ -256,7 +256,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
 
     -- Knox
     if D.isActive(get, "knox_infection", patient, exam) and seen("knox_infection") then
-        cards[#cards + 1] = { title = diseaseName("knox_infection"), status = L("Untreated", "UNTREATED"),
+        cards[#cards + 1] = { id = "knox_infection", title = diseaseName("knox_infection"), status = L("Untreated", "UNTREATED"),
             statusColor = { 0.95, 0.30, 0.28 }, lines = { surgeryHint("knox") or "", surgeryHint("knox_bite") or "" },
             tip = codex("knox_infection", "Treatment") or "" }
     end
@@ -331,6 +331,53 @@ local function drawScrollbar(self, x, top, viewH, contentH, scroll)
 end
 
 -- findings cards (right column)
+-- ------------------------------------------------------------- shortcut buttons
+-- A diagnosed illness gets "Handbook" and (when an operation treats it)
+-- "Surgery" buttons, on the first tab's rows and on the Diagnosis cards.
+-- -> list of { label, action, sid, id, hot }
+function C.shortcuts(panel, id)
+    local _, patient, exam = parties(panel)
+    local out = { { label = L("Btn_Handbook", "Handbook"), action = "handbook", id = id } }
+    local list = S.surgeriesFor(id)
+    if #list > 0 then
+        local hot = S.needsSurgery(patient, id, exam) or S.isHeld(patient, id, exam)
+        out[#out + 1] = { label = S.T("Btn_Surgery", "Surgery"), action = "surgery", sid = list[1], id = id, hot = hot }
+    end
+    return out
+end
+
+-- draw buttons right-aligned ending at rightX; -> hit boxes
+function C.drawButtons(panel, list, rightX, by)
+    local c = EHR_HealthPanelUI.Colors
+    local bh = fh() + 8
+    local mx, my = panel:getLocalMousePosition()
+    local hits = {}
+    local x = rightX
+    for i = #list, 1, -1 do
+        local b = list[i]
+        local bw = tw(b.label) + 20
+        x = x - bw
+        local hov = mx >= x and mx <= x + bw and my >= by and my <= by + bh
+        local bg = b.hot and c.accent or c.accentDark
+        panel:drawRect(x, by, bw, bh, hov and 0.95 or (b.hot and 0.55 or 0.75), bg.r * (b.hot and 0.45 or 1), bg.g * (b.hot and 0.45 or 1), bg.b * (b.hot and 0.45 or 1))
+        panel:drawRectBorder(x, by, bw, bh, 1, c.accent.r, c.accent.g, c.accent.b)
+        panel:drawText(b.label, x + 10, by + 4, c.text.r, c.text.g, c.text.b, 1, FONT)
+        hits[#hits + 1] = { x = x, y = by, w = bw, h = bh, action = b.action, sid = b.sid, id = b.id }
+        x = x - 6
+    end
+    return hits
+end
+
+-- go where a button points
+function C.go(panel, b)
+    if b.action == "surgery" then panel.hmSurgerySelect = { sid = b.sid, id = b.id } end
+    if b.action == "handbook" then
+        panel.hmBookSelect = panel.hmBookSelect or {}
+        panel.hmBookSelect.hmJournal = b.id
+    end
+    panel:setActiveTab(b.action)
+end
+
 local function drawCards(self, st, cards, x, w, top, viewH, mx, my)
     local c = EHR_HealthPanelUI.Colors
     local y = top - st.scrollR
@@ -339,7 +386,8 @@ local function drawCards(self, st, cards, x, w, top, viewH, mx, my)
         for _, l in ipairs(card.lines or {}) do
             if l and l ~= "" then for _, wl in ipairs(wrap("- " .. l, w - 24)) do lines[#lines + 1] = wl end end
         end
-        local h = 12 + fh(FONT_M) + 6 + #lines * (fh() + 2) + 10
+        local btns = card.id and C.shortcuts(self, card.id) or nil
+        local h = 12 + fh(FONT_M) + 6 + #lines * (fh() + 2) + 10 + (btns and (fh() + 14) or 0)
         if y + h >= top and y <= top + viewH then
             local hovered = inside(mx, my, x, math.max(y, top), w, math.min(y + h, top + viewH) - math.max(y, top))
             self:drawRect(x, y, w, h - 6, hovered and 0.55 or 0.4, c.panelSoft.r, c.panelSoft.g, c.panelSoft.b)
@@ -355,6 +403,15 @@ local function drawCards(self, st, cards, x, w, top, viewH, mx, my)
             for _, l in ipairs(lines) do
                 self:drawText(l, x + 14, ly, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT)
                 ly = ly + fh() + 2
+            end
+            if btns then
+                local by = y + h - 6 - (fh() + 8) - 8
+                for _, hb in ipairs(C.drawButtons(self, btns, x + w - 10, by)) do
+                    if hb.y + hb.h >= top and hb.y <= top + viewH then
+                        hb.kind = "goto"
+                        st.hits[#st.hits + 1] = hb
+                    end
+                end
             end
             if hovered and card.tip and card.tip ~= "" then st.tip = card.tip end
         end
@@ -552,6 +609,8 @@ function EHR_HealthPanelUI:onDiagnosisMouseDown(x, y)
         if inside(x, y, h.x, h.y, h.w, h.h) then
             if h.kind == "tag" then
                 st.tags[h.id] = not st.tags[h.id] or nil
+            elseif h.kind == "goto" then
+                C.go(self, h)
             elseif h.kind == "clear" then
                 st.tags = {}
             elseif h.kind == "pick" then
@@ -642,29 +701,16 @@ local function rowButton(panel, diseaseId, disease, x, y, w, rowH)
     local id = D.normalize(type(disease) == "table" and disease.isKnox and "knox_infection" or diseaseId)
     if not D.gated(id) then return end
     local doctor, patient, exam = parties(panel)
-    local label, action, sid
+    local list
     if D.enabled() and not D.isDiagnosed(patient, id, exam) then
         if not D.knows(doctor, id) then return end
-        label, action = L("Btn_Diagnose", "Diagnose"), "diagnosis"
+        list = { { label = L("Btn_Diagnose", "Diagnose"), action = "diagnosis", id = id } }
     else
-        local list = S.surgeriesFor(id)
-        if #list == 0 then return end
-        local needed = S.needsSurgery(patient, id, exam) or S.isHeld(patient, id, exam)
-        if not needed then return end
-        label, action, sid = S.T("Btn_Surgery", "Surgery"), "surgery", list[1]
+        list = C.shortcuts(panel, id)
     end
-    local c = EHR_HealthPanelUI.Colors
-    local bh = fh() + 8
-    local bw = tw(label) + 20
-    local bx = x + w - bw - 12
-    local by = y + rowH - bh - 8
-    local mx, my = panel:getLocalMousePosition()
-    local hov = mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
-    panel:drawRect(bx, by, bw, bh, hov and 0.95 or 0.75, c.accentDark.r, c.accentDark.g, c.accentDark.b)
-    panel:drawRectBorder(bx, by, bw, bh, 1, c.accent.r, c.accent.g, c.accent.b)
-    panel:drawText(label, bx + 10, by + 4, c.text.r, c.text.g, c.text.b, 1, FONT)
+    local by = y + rowH - (fh() + 8) - 8
     panel.hmRowButtons = panel.hmRowButtons or {}
-    table.insert(panel.hmRowButtons, { x = bx, y = by, w = bw, h = bh, action = action, sid = sid, id = id })
+    for _, b in ipairs(C.drawButtons(panel, list, x + w - 12, by)) do table.insert(panel.hmRowButtons, b) end
 end
 
 local function installRowButtons()
@@ -687,8 +733,7 @@ local function installRowButtons()
         if self.activeTab == "ehr" and not self.hmCollapsed then
             for _, b in ipairs(self.hmRowButtons or {}) do
                 if x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h and y >= self:getEHRContentTop() then
-                    if b.action == "surgery" then self.hmSurgerySelect = { sid = b.sid, id = b.id } end
-                    self:setActiveTab(b.action)
+                    C.go(self, b)
                     return true
                 end
             end
@@ -718,6 +763,22 @@ local function install()
                 return copy
             end
             return info
+        end
+    end
+    -- a surgical treatment has no medicine item: EHR fell back to a "+" or to
+    -- whatever item happened to match the operation's name. Draw the Surgery
+    -- tab's own icon (square, made for this) instead.
+    local origIcon = EHR_HealthPanelUI.drawMedicationIcon
+    if origIcon then
+        function EHR_HealthPanelUI:drawMedicationIcon(treatment, x, y, size)
+            if type(treatment) == "table" and treatment.source == S.TREATMENT_SOURCE then
+                self.hmSurgeryIcon = self.hmSurgeryIcon or (getTexture and getTexture("media/textures/HARMONIE_HomeMedic/tab_surgery.png")) or false
+                if self.hmSurgeryIcon and self.drawTextureScaled then
+                    self:drawTextureScaled(self.hmSurgeryIcon, x, y, size, size, 1, 1, 1, 1)
+                    return
+                end
+            end
+            return origIcon(self, treatment, x, y, size)
         end
     end
     local origName = EHR_HealthPanelUI.getTreatmentName
