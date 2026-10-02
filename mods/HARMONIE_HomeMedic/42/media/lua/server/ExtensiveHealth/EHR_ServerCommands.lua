@@ -4677,6 +4677,7 @@ local function OnClientCommand(module, command, player, args)
                 EHR_Immunity = targetData.EHR_Immunity,
                 EHR_Initialized = targetData.EHR_Initialized,
                 HM_Diagnosis = targetData.HM_Diagnosis,  -- HARMONIE: diagnoses (HM_Diagnosis)
+                HARMONIE_Vitamins = targetData.HARMONIE_Vitamins,  -- HARMONIE: Garden to Plate vitamins (HM_Vitamins)
                 serverWorldHour = serverWorldHour,
                 snapshotTimestamp = getTimestampMs and getTimestampMs() or 0,
             }

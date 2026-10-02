@@ -318,8 +318,9 @@ local function signRows(player, out)
     for _, vit in ipairs(HARMONIE_GTP and HARMONIE_GTP.Vitamins or {}) do
         local e = gtp and gtp[vit]
         if e and e.active then
-            out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Sign_Vit" .. vit, t = "Vitamin " .. vit .. " deficiency",
-                vit = vit, bad = true, s = tostring(round(e.value, 1)) .. " / " .. tostring(e.max) }
+            -- the symptom only: naming the deficiency is the diagnosis's job (HM_Vitamins)
+            out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Sign_Vit" .. vit, t = "Vitamin " .. vit .. " deficiency signs",
+                vit = vit, bad = true, s = "" }
             any = true
         end
     end

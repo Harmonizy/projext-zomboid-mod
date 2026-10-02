@@ -20,6 +20,7 @@ EHR_MedicalJournalUI.instance = nil
 
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Text"
+require "HARMONIEHomeMedic/HM_Vitamins"
 local WINDOW_WIDTH = 900
 local WINDOW_HEIGHT = 640
 local PADDING = 14
@@ -485,6 +486,11 @@ function EHR_MedicalJournalUI:getTexture(path)
 end
 
 function EHR_MedicalJournalUI:getDiseaseIcon(diseaseId, known)
+    -- HARMONIE: vitamin deficiencies (HM_Vitamins) have their own icons
+    local vit = HM_Vitamins and HM_Vitamins.letter(diseaseId)
+    if vit then
+        return self:getTexture(known and ("media/textures/HARMONIE_HomeMedic/vit_" .. vit .. ".png") or DiseaseIcons.unknown)
+    end
     local id = normalizeDiseaseId(diseaseId)
     local path = known and DiseaseIcons[id] or DiseaseIcons.unknown
     return self:getTexture(path or DiseaseIcons.unknown)
@@ -536,10 +542,33 @@ function EHR_MedicalJournalUI:getCatalogEntry(diseaseId)
     }
 end
 
+-- HARMONIE: a vitamin deficiency of our Garden to Plate mod (HM_Vitamins)
+function EHR_MedicalJournalUI:getVitaminEntry(letter)
+    local V = HM_Vitamins
+    local id = V.id(letter)
+    local known = HM_Diagnosis and HM_Diagnosis.knows(self.player, id) == true
+    local realName = codexText(id, "Name", "Vitamin " .. letter .. " Deficiency")
+    return {
+        id = id,
+        info = {},
+        category = "nutrition",
+        known = known,
+        realName = realName,
+        displayName = known and realName or L("UI_EHR_Codex_UnknownCategory_nutrition", "Unknown Nutritional Condition"),
+        incubation = codexText(id, "Incubation", "Days without the vitamin"),
+        duration = codexText(id, "Duration", "Until the vitamin is back to Sufficient"),
+        canKill = false,
+        lockedDesc = L("UI_HomeMedic_Hb_VitLocked", "Reach First Aid 5 or Cooking 3, or be a Nutritionist, to recognise vitamin deficiencies."),
+    }
+end
+
 function EHR_MedicalJournalUI:getCatalogEntries()
     local entries = {}
     for _, diseaseId in ipairs(CatalogOrder) do
         table.insert(entries, self:getCatalogEntry(diseaseId))
+    end
+    if HM_Vitamins and HM_Vitamins.registered then
+        for _, letter in ipairs(HM_Vitamins.LETTERS) do table.insert(entries, self:getVitaminEntry(letter)) end
     end
     -- HARMONIE: alphabetical by the name shown (HM_SortKey: Thai-aware)
     if HM_SortKey then
@@ -827,7 +856,7 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
         self:drawText(L("UI_EHR_Codex_KnowledgeUnavailable", "Knowledge unavailable"), x, y, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
         y = y + 28
         return self:drawWrappedText(
-            L("UI_EHR_Codex_LockedDesc", "Read the matching disease flyer or reach First Aid level 8 to unlock symptoms, causes, prevention, and treatment notes."),
+            entry.lockedDesc or L("UI_EHR_Codex_LockedDesc", "Read the matching disease flyer or reach First Aid level 8 to unlock symptoms, causes, prevention, and treatment notes."),
             x + 8, y, w - 16, c.textDim, UIFont.Small, 19
         )
     end
