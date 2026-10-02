@@ -29,6 +29,14 @@ function TWA_PracticeAction:start()
     if self.proc.sound and not isServer() then TWASound.keepPlaying(self, self.proc.sound, "ActionSounds") end
 end
 
+-- 2026-10-02: an action taken off the queue before it ever started (the
+-- one ahead of it was cancelled, the player moved...) gets forceCancel(),
+-- not stop() -- free the crafting window's one-at-a-time lock here too, or
+-- the window stays "running" with no action behind it.
+function TWA_PracticeAction:forceCancel()
+    if self.onEnd then self.onEnd() end
+end
+
 function TWA_PracticeAction:stop()
     if self.onEnd then self.onEnd() end
     ISBaseTimedAction.stop(self)

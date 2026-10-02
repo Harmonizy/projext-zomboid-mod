@@ -2021,7 +2021,7 @@ function TWACraftWindow:drawProcedureDetails()
     -- built-in action-progress bar reads (ISBaseTimedAction:getJobDelta()).
     if inProgress then
         local barW, barH = w - 20, 14
-        local frac = self.activeAction:getJobDelta() or 0
+        local frac = TWACraftWindow.jobDelta(self.activeAction)
         self:drawRect(x + 10, ty, barW, barH, 0.9, 0.05, 0.05, 0.05)
         self:drawRect(x + 10, ty, barW * math.max(0, math.min(1, frac)), barH, 1, 1, 0.7, 0.2)
         self:drawRectBorder(x + 10, ty, barW, barH, 0.8, 0.5, 0.5, 0.5)
@@ -2097,6 +2097,16 @@ function TWACraftWindow:onAdminSkills()
     if self.selectedRecipe then TWAAdminGrant.request(self.player, self.selectedRecipe.id, "skills") end
 end
 
+-- 2026-10-02 (error in ISBaseTimedAction:getJobDelta): a queued action
+-- has no Java action behind it (self.action) until it really starts --
+-- waiting behind a walk or another action -- and getJobDelta() reads that.
+-- 0 until it starts.
+function TWACraftWindow.jobDelta(action)
+    if not action or not action.action then return 0 end
+    local ok, v = pcall(action.getJobDelta, action)
+    return ok and tonumber(v) or 0
+end
+
 function TWACraftWindow:drawCenterActionRow()
     local running = self.activeCenterAction ~= nil
     local started = self.active ~= nil
@@ -2115,7 +2125,7 @@ function TWACraftWindow:drawCenterActionRow()
     if not running then return end
 
     local x, y, w, h = self.centerProgressBarX, self.centerProgressBarY, self.centerProgressBarW, self.centerProgressBarH
-    local frac = self.activeCenterAction:getJobDelta() or 0
+    local frac = TWACraftWindow.jobDelta(self.activeCenterAction)
     self:drawRect(x, y, w, h, 0.9, 0.05, 0.05, 0.05)
     self:drawRect(x, y, w * math.max(0, math.min(1, frac)), h, 1, 1, 0.7, 0.2)
     self:drawRectBorder(x, y, w, h, 0.8, 0.5, 0.5, 0.5)

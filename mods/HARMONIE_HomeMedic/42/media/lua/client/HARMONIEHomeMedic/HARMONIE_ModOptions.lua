@@ -38,6 +38,9 @@ if PZAPI and PZAPI.ModOptions and not O.page then
     hook(O.bloodVision, function(v) V.enabled = v == true end)
     O.bloodVisionStrength = add("addSlider", "bloodVisionStrength", T("bloodVisionStrength"), 0.25, 1.5, 0.25, 1, T("bloodVisionStrength_tooltip"))
     hook(O.bloodVisionStrength, function(v) V.strength = tonumber(v) or 1 end)
+    -- 2026-10-02: the medical window opens / closes with the character
+    -- window (HM_FollowCharacterWindow reads this tick box itself)
+    O.followCharWindow = add("addTickBox", "followCharWindow", T("followCharWindow"), true, T("followCharWindow_tooltip"))
     if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
 end
 

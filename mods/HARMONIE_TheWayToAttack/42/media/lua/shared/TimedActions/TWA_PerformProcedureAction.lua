@@ -78,6 +78,14 @@ function TWA_PerformProcedureAction:stopSound()
     self.actionSound = nil
 end
 
+-- 2026-10-02: an action taken off the queue before it ever started (the
+-- one ahead of it was cancelled, the player moved...) gets forceCancel(),
+-- not stop() -- free the crafting window's one-at-a-time lock here too, or
+-- the window stays "running" with no action behind it.
+function TWA_PerformProcedureAction:forceCancel()
+    if self.onEnd then self.onEnd() end
+end
+
 function TWA_PerformProcedureAction:stop()
     self:stopSound()
     if self.onEnd then self.onEnd() end
