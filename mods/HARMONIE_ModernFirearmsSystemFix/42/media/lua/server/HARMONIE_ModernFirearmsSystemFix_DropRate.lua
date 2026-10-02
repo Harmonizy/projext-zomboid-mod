@@ -18,10 +18,9 @@
     declarations) by a single sandbox multiplier -- leaving every vanilla
     item's own weight in the same containers untouched.
 
-    Wrapped from Events.OnGameStart, matching HARMONIE_SVU3PW_Hooks.lua's
-    reasoning: guarantees every mod's Lua (including this mod's ~165
-    distribution-editing files) has already executed, regardless of which
-    mod's files happen to load first within the same tick.
+    Run from the distribution-merge events (see the bottom of this file):
+    every mod's file-load Lua (including that mod's ~165 distribution-
+    editing files) has executed by then, and the loot is not built yet.
 
     Scope: guns and ammo only. Attachments/parts (media/lua/server/item/Part,
     ~236 more items) are NOT included -- left at the mod's own hardcoded
@@ -272,6 +271,9 @@ local function getMultiplier()
     return 1.0
 end
 
+-- each entry is scaled once, however many times this runs: [items table]
+-- = { [weight index] = true } (weak keys, so a dropped table is not held)
+local done = setmetatable({}, { __mode = "k" })
 local function scaleDropRates()
     if not ProceduralDistributions or not ProceduralDistributions.list then
         print("HARMONIE ModernFirearmsSystem Fix: ProceduralDistributions.list not found -- is ModernFirearmsSystem installed and enabled?")
@@ -285,13 +287,16 @@ local function scaleDropRates()
     for _, containerData in pairs(ProceduralDistributions.list) do
         if containerData and containerData.items then
             local items = containerData.items
+            local mark = done[items]
+            if not mark then mark = {}; done[items] = mark end
             for i = 1, #items - 1, 2 do
                 local name = items[i]
                 local weight = items[i + 1]
-                if type(name) == "string" and type(weight) == "number" then
+                if not mark[i + 1] and type(name) == "string" and type(weight) == "number" then
                     local shortName = name:match("^Base%.(.+)$")
                     if shortName and HARMONIE_ModernFirearmsSystemFix_Items[shortName] then
                         items[i + 1] = weight * multiplier
+                        mark[i + 1] = true
                         scaledCount = scaledCount + 1
                     end
                 end
@@ -302,4 +307,15 @@ local function scaleDropRates()
     print(string.format("HARMONIE ModernFirearmsSystem Fix: scaled %d loot entries by x%.2f.", scaledCount, multiplier))
 end
 
-Events.OnGameStart.Add(scaleDropRates)
+-- 2026-10-02 (MP audit): OnGameStart was the wrong place: it is a CLIENT
+-- event (a dedicated server, where loot is rolled, never fires it), and the
+-- game builds its loot tables from ProceduralDistributions during world
+-- load, before OnGameStart. Now it runs at both distribution-merge events
+-- (they fire in single player and on the server): OnPreDistributionMerge
+-- is where EHR adds its own loot and is known to reach the loot tables;
+-- OnPostDistributionMerge catches anything added later. Every entry is
+-- scaled only once (see `done`), so running twice is safe.
+local hooked = false
+if Events.OnPreDistributionMerge then Events.OnPreDistributionMerge.Add(scaleDropRates); hooked = true end
+if Events.OnPostDistributionMerge then Events.OnPostDistributionMerge.Add(scaleDropRates); hooked = true end
+if not hooked then Events.OnGameStart.Add(scaleDropRates) end

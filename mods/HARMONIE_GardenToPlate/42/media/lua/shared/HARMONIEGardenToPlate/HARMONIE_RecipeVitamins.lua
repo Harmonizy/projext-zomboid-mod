@@ -248,6 +248,15 @@ function ISAddItemInRecipe:complete()
         -- item's real final state (vitamins included) is set.
         if isServer() then
             sendItemStats(self.baseItem)
+            -- 0.7.6 (MP audit): sendItemStats is the vanilla call for the
+            -- dish's own stats; whether it carries ModData is not certain.
+            -- The eat hook reads the vitamins on the CLIENT's copy of the
+            -- dish, so also send the ModData itself where the game has
+            -- the call for it (B42 syncItemModData).
+            if syncItemModData then
+                local who, item = self.character, self.baseItem
+                pcall(function() syncItemModData(who, item) end)
+            end
         end
     end
     return result

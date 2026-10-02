@@ -18,6 +18,7 @@ require "ISUI/ISScrollingListBox"
 require "ISUI/ISContextMenu"
 require "TimedActions/TWA_PracticeAction"
 require "TimedActions/ISTimedActionQueue"
+require "HARMONIE_TWA_AdminGrant"
 
 -- NeatUI Framework (Workshop 3508537032, require=NeatUI_Framework in
 -- mod.info forces load order) -- no `require "neatui_framework/..."` needed,
@@ -1267,6 +1268,23 @@ function TWACraftWindow:createChildren()
     self.soundButton:setTooltip(getText("IGUI_TWA_Tooltip_Sound"))
     self:addChild(self.soundButton)
 
+    -- Request 2026-10-02: admin-only buttons under the center column --
+    -- spawn what the selected recipe still lacks / raise the skills it asks
+    -- for (TWAAdminGrant; the server checks the access level again).
+    local adminW = math.floor((CENTER_W - 30) / 2)
+    self.adminItemsButton = TWANeatButton:new(centerX, panelBottom + 10, adminW, 24, getText("IGUI_TWA_AdminItems"), self, TWACraftWindow.onAdminItems)
+    self.adminItemsButton.neatTint = { r = 0.85, g = 0.3, b = 0.85 }
+    self.adminItemsButton:setTooltip(getText("IGUI_TWA_Tooltip_AdminItems"))
+    self.adminItemsButton:initialise()
+    self.adminItemsButton:setVisible(false)
+    self:addChild(self.adminItemsButton)
+    self.adminSkillsButton = TWANeatButton:new(centerX + adminW + 10, panelBottom + 10, adminW, 24, getText("IGUI_TWA_AdminSkills"), self, TWACraftWindow.onAdminSkills)
+    self.adminSkillsButton.neatTint = { r = 0.85, g = 0.3, b = 0.85 }
+    self.adminSkillsButton:setTooltip(getText("IGUI_TWA_Tooltip_AdminSkills"))
+    self.adminSkillsButton:initialise()
+    self.adminSkillsButton:setVisible(false)
+    self:addChild(self.adminSkillsButton)
+
     self.centerX = centerX
     self.contentTop = contentTop
     self.rightX = rightX
@@ -2072,9 +2090,21 @@ end
 -- the exact same row while active. Called unconditionally near the top of
 -- render(), before the "no recipe selected" early-return, so the row
 -- always reflects the real current state even in that branch.
+function TWACraftWindow:onAdminItems()
+    if self.selectedRecipe then TWAAdminGrant.request(self.player, self.selectedRecipe.id, "items") end
+end
+function TWACraftWindow:onAdminSkills()
+    if self.selectedRecipe then TWAAdminGrant.request(self.player, self.selectedRecipe.id, "skills") end
+end
+
 function TWACraftWindow:drawCenterActionRow()
     local running = self.activeCenterAction ~= nil
     local started = self.active ~= nil
+    if self.adminItemsButton then
+        local admin = self.selectedRecipe ~= nil and TWAAdminGrant.isAllowed(self.player)
+        self.adminItemsButton:setVisible(admin and true or false)
+        self.adminSkillsButton:setVisible(admin and true or false)
+    end
     self.startButton:setVisible(not running and not started)
     self.startButton.enable = self:canStart() and true or false
     self.cancelButton:setVisible(not running and started)

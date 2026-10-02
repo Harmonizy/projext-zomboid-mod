@@ -2598,6 +2598,21 @@ verified on a real dedicated server by this repo) ***
     client), with a flag on the action so it happens exactly once. Same for
     our own client-only action classes that send their command from
     complete() (EHR_ApplyBandagePackAction: perform() now calls it on MP).
+  - *** NEVER call player:transmitModData() from a client, and NEVER keep
+    server-only state in the player's ModData *** (2026-10-02, real bug that
+    broke TWA crafting on servers: closing the window lost the items, Finish
+    gave nothing). transmitModData() sends the client's copy of the WHOLE
+    player ModData and the server's copy is REPLACED by it. Our own Garden to
+    Plate did this every 10 s, wiping TWA's server-side TWA_ActiveCraft (the
+    client never has it) -- and rolling back anything EHR/Home Medic wrote on
+    the server since the last sync. Rules:
+      * client -> server: send only YOUR key, as a sendClientCommand; the
+        server writes that one key (GTP VitData.sync, 0.7.3);
+      * state only the server owns (a record to pay out from, an anti-cheat
+        token): keep it in Global ModData (ModData.getOrCreate("<Mod>_..."),
+        keyed by username) -- saved with the world, untouched by any client
+        sync (TWA active craft, round 30). EHR's own SafeTransmitModData
+        already refuses to do a full client transmit for this reason.
   - *** Never rely on OnPlayerGetDamage to notice zombie bites in MP *** --
     MP zombie hits are applied by the server and pushed to the client
     without firing it (TOC's isIgnoredPartInfected flag was never set, so a
@@ -3260,11 +3275,43 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     client isValid() stops re-checking server-owned items after start(),
     client-side effects of a vanilla action hooked in perform() too (once,
     flagged), and no OnPlayerGetDamage for zombie bites.
+[ ] Syncing player data? NEVER player:transmitModData() from a client (it
+    overwrites the server's whole player ModData, other mods' keys too):
+    send your own key with sendClientCommand. Server-only records go in
+    Global ModData, not the player's ModData (section 8.15).
 [ ] Looping players on the server? getOnlinePlayers() is EMPTY in single
     player -- fall back to getSpecificPlayer(0..3) when it has no entries
     (HM_Diagnosis prune never ran in SP because of this).
 [ ] Widening a "which tool works" spec (hammer/wrench/etc.)? Find vanilla's own
     real recipe for the closest matching task first and mirror its exact
     tags[...] combo (section 8.14) — don't default to "add every related tag".
+[ ] MoodleFramework setThresholds(bad4..bad1, good1..good4): a nil threshold
+    is NOT "off" -- MF falls back to its defaults (0.6-0.9), so a nil Good
+    side shows "Good lvl4" at a full value. To never show a side, pass a
+    value the stat can never reach (GTP vitamins: 2.0).
+[ ] Describing what a mod's illness/effect does? Read the code that RUNS,
+    not the description or the definition table: EHR keeps fields nothing
+    reads (staminaPenalty), and its def.effects are applied only for the
+    environmental illnesses. Keep ONE table of the truth and make every
+    text (chips, handbook, cards) read from it, so the words always match
+    (HM_Diagnosis.STAGE_SIGNS).
+[ ] Kahlua is Lua 5.1: no goto/labels, no load(string) -- test with
+    lupa.lua51 + loadstring so a 5.4-only construct can't slip through.
+[ ] Code that must run on the SERVER (loot tables, server-side hooks,
+    timers registered in an init): a dedicated server never fires
+    OnGameStart (nor the local OnCreatePlayer). Also hook
+    OnServerStarted, with a once-only guard (event docs: OnGameStart and
+    OnCreatePlayer are "(Client)", OnServerStarted is "(Server)").
+    Loot weights: change ProceduralDistributions at file load or in
+    OnPreDistributionMerge (EHR's own loot goes in there and works); the
+    loot is built during world load, so OnGameStart is too late. If the
+    exact order is unsure, run at Pre AND Post merge and mark each entry
+    so it is changed only once (ModernFirearmsSystemFix DropRate).
+    Confirmed in the B42 Java docs: syncItemModData(IsoPlayer,
+    InventoryItem), syncItemFields, sendItemStats, sendAddItemToContainer.
+[ ] Writing an item's ModData on the server (in complete())? The client's
+    copy of that item does not get it by itself: set it BEFORE
+    sendAddItemToContainer for a new item, or sync it afterwards
+    (sendItemStats / syncItemModData) for an item already in a container.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

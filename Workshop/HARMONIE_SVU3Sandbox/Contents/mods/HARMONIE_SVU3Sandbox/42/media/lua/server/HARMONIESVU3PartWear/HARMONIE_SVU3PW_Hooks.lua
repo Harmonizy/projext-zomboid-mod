@@ -41,12 +41,15 @@ local function getMultiplier()
     return 1.0
 end
 
+local wrapped = false
 local function wrapInstallComplete()
+    if wrapped then return end
     if not (ATATuning2 and ATATuning2.InstallComplete and ATATuning2.InstallComplete.Tuning) then
         print("HARMONIE SVU3 Part Wear: ATATuning2.InstallComplete.Tuning not found -- is Standardized Vehicle Upgrades 3 (Core) installed and enabled?")
         return
     end
 
+    wrapped = true
     local original_InstallComplete_Tuning = ATATuning2.InstallComplete.Tuning
     function ATATuning2.InstallComplete.Tuning(vehicle, part)
         original_InstallComplete_Tuning(vehicle, part)
@@ -70,4 +73,8 @@ local function wrapInstallComplete()
     print("HARMONIE SVU3 Part Wear: wrapped ATATuning2.InstallComplete.Tuning successfully.")
 end
 
+-- 2026-10-02 (MP audit): a dedicated server never fires OnGameStart, so
+-- the wrap was never installed where parts are really installed.
+-- OnServerStarted covers it; `wrapped` stops a second wrap on a host.
 Events.OnGameStart.Add(wrapInstallComplete)
+if Events.OnServerStarted then Events.OnServerStarted.Add(wrapInstallComplete) end

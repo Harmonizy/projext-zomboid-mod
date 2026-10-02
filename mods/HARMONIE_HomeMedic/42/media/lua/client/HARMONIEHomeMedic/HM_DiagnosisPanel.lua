@@ -158,6 +158,52 @@ local function tagName(tag) return L("Tag_" .. tag, tag) end
 C.tagName = tagName
 C.effectLines = effectLines
 
+-- R59: what an illness does at a stage, in the diagnosis chips' words
+-- (HM_Diagnosis.STAGE_SIGNS) + the real numbers of its stage table
+-- -> { "Signs: a, b, c", "Health -1 per hour", ... }
+function C.signText(id, tags)
+    local names = {}
+    local notes = D.SIGN_NOTES and D.SIGN_NOTES[id] or {}
+    for _, t in ipairs(tags or {}) do
+        local n = tagName(t)
+        if notes[t] then n = n .. " (" .. HM_Text("UI_HomeMedic_Hb_Note_" .. notes[t], notes[t]) .. ")" end
+        names[#names + 1] = n
+    end
+    return table.concat(names, " / ")   -- (sign names have commas in them)
+end
+function C.stageLines(id, stage)
+    local out = {}
+    local tags = D.stageSigns(id, stage)
+    if #tags > 0 then
+        out[#out + 1] = L("SignsNow", "Signs: %1", C.signText(id, tags))
+    else
+        out[#out + 1] = L("NoSignsYet", "No signs yet (it is still incubating)")
+    end
+    local tbl, fields = D.realEffects(id, stage)
+    if tbl then
+        local seen = {}
+        for _, k in ipairs(fields) do
+            local v = tbl[k]
+            if v ~= nil and FIELD[k] then
+                local ok, line = pcall(FIELD[k], v)
+                if ok and line and not seen[line] then seen[line] = true; out[#out + 1] = line end
+            end
+        end
+    end
+    return out
+end
+
+-- the card's tooltip: the handbook's treatment text (real medicines and
+-- care, R59), else EHR's codex note
+local function treatTip(id)
+    local H = HM_Handbook
+    if H and H.treatment then
+        local ok, t = pcall(H.treatment, id)
+        if ok and t and t ~= "" then return t end
+    end
+    return codex(id, "Treatment") or ""
+end
+
 -- -> cards { title, stage, status, statusColor, lines, tip } of DIAGNOSED
 -- illnesses (+ blood loss), and how many illnesses are still undiagnosed
 function EHR_HealthPanelUI:collectDiagnosis()
@@ -183,18 +229,12 @@ function EHR_HealthPanelUI:collectDiagnosis()
         local id = D.normalize(rawId)
         if type(e) == "table" and (not D.gated(id) or seen(id)) then
             local stage = tonumber(e.stage) or 1
-            local def = EHR and EHR.Disease and EHR.Disease.Diseases and EHR.Disease.Diseases[rawId]
-            local lines = effectLines(def and def.effects and def.effects[stage])
-            if #lines == 0 then
-                local tags = {}
-                for _, t in ipairs(D.DISEASES[id] or {}) do tags[#tags + 1] = tagName(t) end
-                if #tags > 0 then lines = { table.concat(tags, ", ") } end
-            end
+            local lines = D.STAGE_SIGNS[id] and C.stageLines(id, stage) or {}
             local status, col = statusFor(self, id, exam, treatments[rawId] ~= nil or treatments[id] ~= nil)
             local hint = surgeryHint(id)
             if hint then lines[#lines + 1] = hint end
             cards[#cards + 1] = { id = id, title = diseaseName(id), stage = stage, status = status, statusColor = col, lines = lines,
-                tip = codex(id, "Treatment") or "" }
+                tip = treatTip(id) }
         end
     end
 
@@ -202,24 +242,22 @@ function EHR_HealthPanelUI:collectDiagnosis()
     local sep = get("EHR_Sepsis")
     if type(sep) == "table" and (tonumber(sep.stage) or 0) > 0 and seen("sepsis") then
         local st = tonumber(sep.stage)
-        local eff = EHR and EHR.Sepsis and EHR.Sepsis.StageEffects and EHR.Sepsis.StageEffects[st]
-        local lines = effectLines(eff)
+        local lines = C.stageLines("sepsis", st)
         local hint = surgeryHint("sepsis")
         if hint then lines[#lines + 1] = hint end
         local status, col = statusFor(self, "sepsis", exam, treatments.sepsis ~= nil)
         cards[#cards + 1] = { id = "sepsis", title = diseaseName("sepsis"), stage = st, status = status, statusColor = col,
-            lines = lines, tip = codex("sepsis", "Treatment") or "" }
+            lines = lines, tip = treatTip("sepsis") }
     end
 
     -- infected wounds (per body part; one diagnosis covers them all)
     local wi = get("EHR_WoundInfection")
-    local cfg = EHR and EHR.WoundInfection and EHR.WoundInfection.Config
     if type(wi) == "table" and type(wi.parts) == "table" and D.isActive(get, "wound_infection", patient, exam)
             and seen("wound_infection") then
         for part, pd in pairs(wi.parts) do
             local st = type(pd) == "table" and tonumber(pd.stage) or 0
             if st > 0 then
-                local lines = effectLines(cfg and cfg.STAGE_EFFECTS and cfg.STAGE_EFFECTS[st])
+                local lines = C.stageLines("wound_infection", st)
                 lines[#lines + 1] = surgeryHint("wound_infection")
                 local where = part
                 if BodyPartType and BodyPartType.FromString and BodyPartType.getDisplayName then
@@ -229,7 +267,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
                 cards[#cards + 1] = { id = "wound_infection", title = diseaseName("wound_infection") .. " - " .. tostring(where), stage = st,
                     status = treatments.wound_infection and L("Treating", "TREATING") or L("Untreated", "UNTREATED"),
                     statusColor = treatments.wound_infection and { 0.35, 0.85, 0.45 } or { 0.95, 0.75, 0.25 },
-                    lines = lines, tip = codex("wound_infection", "Treatment") or "" }
+                    lines = lines, tip = treatTip("wound_infection") }
             end
         end
     end
@@ -257,7 +295,7 @@ function EHR_HealthPanelUI:collectDiagnosis()
     -- Knox
     if D.isActive(get, "knox_infection", patient, exam) and seen("knox_infection") then
         cards[#cards + 1] = { id = "knox_infection", title = diseaseName("knox_infection"), status = L("Untreated", "UNTREATED"),
-            statusColor = { 0.95, 0.30, 0.28 }, lines = { surgeryHint("knox") or "", surgeryHint("knox_bite") or "" },
+            statusColor = { 0.95, 0.30, 0.28 }, lines = { C.stageLines("knox_infection")[1], surgeryHint("knox") or "", surgeryHint("knox_bite") or "" },
             tip = codex("knox_infection", "Treatment") or "" }
     end
     return cards, unknown

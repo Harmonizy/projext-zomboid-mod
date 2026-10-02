@@ -70,6 +70,8 @@ local MOODLE_NAMES = {
 -- actually matters, without visibly shifting the real threshold (0.0001
 -- of the 0-1 ratio scale = 0.01 out of a 0-100 Reserve value).
 local BOUNDARY_EPSILON = 0.0001
+-- above any value the moodle is ever given (0..1): the Good side never shows
+local NO_GOOD = 2.0
 
 -- Applies (or re-applies, on a live threshold change) this mod's own band
 -- boundaries onto the moodle's 4 MoodleFramework levels, per the header note.
@@ -78,7 +80,12 @@ local function applyThresholds(moodle)
     local criticalRatio = HARMONIE_GTP.Config.criticalThreshold / HARMONIE_GTP.Config.maxValue - BOUNDARY_EPSILON
     moodle:setThresholds(
         criticalRatio, criticalRatio, sufficientRatio, sufficientRatio, -- bad4, bad3, bad2, bad1
-        nil, nil, nil, nil -- good1..good4: unreachable, no Good side wanted
+        -- good1..good4: UNREACHABLE (the value is 0..1). 0.7.5 fix: these used
+        -- to be nil, which MoodleFramework does NOT read as "off" -- a nil
+        -- falls back to its defaults (0.6/0.7/0.8/0.9), so a full reserve
+        -- showed a "Good" level-4 moodle with no text (the raw key
+        -- Moodles_VitaminA_Good_lvl4 on screen, reported on a server).
+        NO_GOOD, NO_GOOD, NO_GOOD, NO_GOOD
     )
 end
 

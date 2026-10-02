@@ -31,38 +31,195 @@ D.WRONG_LOCK_MS = 8000
 -- groups keep the chip grid readable; order = display order
 D.GROUPS = {
     { id = "general", tags = { "fever", "chills", "overheat", "fatigue", "weakness", "slow", "health_loss", "collapse" } },
-    { id = "breath", tags = { "runny_nose", "sneeze", "cough", "cough_blood", "chest_pain", "short_breath" } },
+    { id = "breath", tags = { "runny_nose", "sneeze", "cough", "chest_pain", "short_breath" } },
     { id = "gut", tags = { "nausea", "vomit", "abdominal", "bloody_stool", "thirst", "hunger" } },
     { id = "body", tags = { "muscle_pain", "stiffness", "spasm", "back_pain", "itch", "skin_pain", "wound_inflamed" } },
-    { id = "mind", tags = { "headache", "dizziness", "blurred", "eye_burn", "confusion", "hallucination", "sleepless", "craving", "stress" } },
+    { id = "mind", tags = { "headache", "dizziness", "eye_burn", "confusion", "hallucination", "sleepless", "craving", "stress" } },
 }
 
--- illness -> signs it can show (all stages together)
-D.DISEASES = {
-    common_cold = { "runny_nose", "sneeze", "fever", "fatigue", "weakness" },
-    pneumonia = { "cough", "chest_pain", "short_breath", "fever", "fatigue", "weakness", "health_loss" },
-    dysentery = { "abdominal", "bloody_stool", "vomit", "thirst", "hunger", "slow", "weakness" },
-    hypothermia = { "chills", "slow", "weakness", "fatigue", "confusion", "dizziness", "collapse", "health_loss" },
-    heat_stroke = { "overheat", "fever", "thirst", "slow", "weakness", "confusion", "dizziness", "collapse", "health_loss" },
-    corpse_sickness = { "nausea", "vomit", "cough", "eye_burn", "dizziness", "fatigue", "weakness", "slow", "thirst" },
-    cadaveric_aspergillosis = { "cough", "short_breath", "chest_pain", "fever", "nausea", "fatigue", "weakness", "slow", "thirst", "health_loss" },
-    food_poisoning = { "nausea", "vomit", "weakness", "hunger", "thirst" },
-    gastroenteritis = { "nausea", "vomit", "weakness", "thirst", "hunger" },
-    toxin_poisoning = { "nausea", "vomit", "weakness", "thirst", "fatigue", "dizziness", "abdominal", "health_loss" },
-    trichinosis = { "muscle_pain", "stiffness", "fever", "nausea", "fatigue", "weakness", "thirst", "spasm", "health_loss" },
-    hyperkeratotic_scabies = { "itch", "skin_pain", "fever", "health_loss" },
-    cellulitis = { "wound_inflamed", "skin_pain", "fever", "nausea", "fatigue" },
-    wound_infection = { "wound_inflamed", "skin_pain", "fever" },
-    sepsis = { "fever", "fatigue", "confusion", "health_loss", "weakness" },
-    tetanus = { "stiffness", "spasm", "muscle_pain", "short_breath", "weakness", "slow", "fatigue", "fever", "health_loss" },
-    tuberculosis = { "cough", "cough_blood", "fever", "fatigue", "weakness", "hunger", "slow" },
-    ahtr = { "back_pain", "weakness", "nausea", "fever", "health_loss" },
-    concussion = { "headache", "dizziness", "blurred", "nausea" },
-    delirium = { "hallucination", "confusion" },
-    insomnia = { "sleepless", "fatigue", "stress", "headache" },
-    painkiller_addiction = { "craving", "stress", "thirst" },
-    knox_infection = { "fever", "nausea", "confusion", "health_loss", "fatigue" },
+-- Request 2026-10-02 (R59): what each illness REALLY does, per stage --
+-- read from the code that runs, not from the descriptions:
+--   EHR.Disease.ApplyEffects (per-illness code), EHR.Environmental.
+--   ApplyDiseaseEffects (stage tables -- only cold, pneumonia, dysentery,
+--   hypothermia and heat stroke), EHR.BodyTemp.DiseaseFeverTargets (fever),
+--   food sickness (nausea), EHR.Sepsis.StageEffects, the wound infection
+--   STAGE_EFFECTS. A dizzy spell always blurs the sight (EHR.ToxinVision),
+--   so "dizziness" covers both. The diagnosis chips, the handbook (tab 5)
+--   and the condition cards all read THIS table, so they use the same words.
+-- [stage] = signs; all = every stage
+D.STAGE_SIGNS = {
+    common_cold = {
+        [1] = { "sneeze" },
+        [2] = { "runny_nose", "sneeze", "fever", "fatigue" },
+        [3] = { "runny_nose", "sneeze", "fever", "fatigue" },
+        [4] = { "sneeze" },
+    },
+    pneumonia = {
+        [1] = { "cough", "chest_pain", "fever", "fatigue" },
+        [2] = { "cough", "chest_pain", "fever", "fatigue", "weakness" },
+        [3] = { "cough", "chest_pain", "fever", "fatigue", "weakness", "health_loss" },
+        [4] = { "cough", "chest_pain", "fever", "fatigue", "weakness", "health_loss" },
+    },
+    dysentery = {
+        [1] = { "thirst", "hunger" },
+        [2] = { "abdominal", "bloody_stool", "vomit", "thirst", "hunger" },
+        [3] = { "abdominal", "bloody_stool", "vomit", "thirst", "hunger", "slow" },
+        [4] = { "thirst", "hunger" },
+    },
+    hypothermia = {
+        [1] = { "chills", "slow", "weakness", "fatigue" },
+        [2] = { "chills", "slow", "weakness", "fatigue", "confusion", "health_loss" },
+        [3] = { "chills", "slow", "weakness", "fatigue", "confusion", "health_loss", "dizziness" },
+        [4] = { "chills", "slow", "weakness", "fatigue", "confusion", "health_loss", "dizziness", "collapse" },
+    },
+    heat_stroke = {
+        all = { "overheat", "fever", "thirst", "slow", "confusion", "dizziness", "collapse", "health_loss" },
+    },
+    corpse_sickness = {
+        [1] = { "nausea", "weakness", "dizziness" },
+        [2] = { "nausea", "weakness", "cough", "eye_burn", "dizziness", "thirst" },
+        [3] = { "nausea", "weakness", "cough", "eye_burn", "dizziness", "thirst", "collapse" },
+        [4] = { "nausea", "weakness", "cough", "dizziness" },
+    },
+    cadaveric_aspergillosis = {
+        [1] = { "nausea", "fatigue", "weakness", "cough" },
+        [2] = { "nausea", "fatigue", "weakness", "cough", "fever", "short_breath" },
+        [3] = { "nausea", "fatigue", "weakness", "cough", "fever", "short_breath", "health_loss" },
+        [4] = { "nausea", "fatigue", "weakness", "cough", "fever" },
+    },
+    food_poisoning = {
+        [1] = {},
+        [2] = { "nausea", "vomit", "weakness" },
+        [3] = { "nausea", "vomit", "weakness", "hunger", "thirst" },
+        [4] = { "nausea", "weakness" },
+    },
+    gastroenteritis = {
+        [1] = {},
+        [2] = { "nausea", "vomit", "weakness", "thirst", "hunger" },
+        [3] = { "nausea", "vomit", "weakness", "thirst", "hunger" },
+        [4] = { "nausea", "weakness" },
+    },
+    toxin_poisoning = {
+        [1] = {},
+        [2] = { "nausea", "vomit", "weakness", "thirst", "fatigue", "dizziness" },
+        [3] = { "nausea", "vomit", "weakness", "thirst", "fatigue", "dizziness", "hunger", "health_loss" },
+        [4] = { "nausea", "weakness", "thirst" },
+    },
+    trichinosis = {
+        [1] = { "weakness", "fatigue", "nausea", "muscle_pain", "stiffness" },
+        [2] = { "weakness", "fatigue", "nausea", "muscle_pain", "stiffness", "fever", "thirst", "spasm" },
+        [3] = { "weakness", "fatigue", "nausea", "muscle_pain", "stiffness", "fever", "thirst", "spasm", "health_loss" },
+        [4] = { "weakness", "fatigue", "nausea", "muscle_pain", "stiffness", "fever" },
+    },
+    hyperkeratotic_scabies = {
+        [1] = { "itch", "skin_pain" },
+        [2] = { "itch", "skin_pain", "fever", "health_loss" },
+        [3] = { "itch", "skin_pain", "fever", "health_loss" },
+        [4] = { "skin_pain", "fever", "health_loss" },
+    },
+    cellulitis = {
+        [1] = { "skin_pain", "wound_inflamed", "weakness" },
+        [2] = { "skin_pain", "wound_inflamed", "weakness", "nausea", "fatigue", "fever" },
+        [3] = { "skin_pain", "wound_inflamed", "weakness", "nausea", "fatigue", "fever" },
+        [4] = { "skin_pain", "wound_inflamed", "weakness", "nausea", "fatigue", "fever" },
+    },
+    wound_infection = {
+        [1] = { "wound_inflamed" },
+        [2] = { "wound_inflamed", "skin_pain" },
+        [3] = { "wound_inflamed", "skin_pain", "fever" },
+        [4] = { "wound_inflamed", "skin_pain", "fever" },
+    },
+    sepsis = {
+        [1] = { "fever", "fatigue", "health_loss" },
+        [2] = { "fever", "fatigue", "health_loss", "confusion" },
+        [3] = { "fever", "fatigue", "health_loss", "confusion" },
+        [4] = { "fever", "fatigue", "health_loss", "confusion" },
+    },
+    tetanus = {
+        [1] = {},
+        [2] = { "stiffness", "muscle_pain", "weakness", "fatigue", "health_loss" },
+        [3] = { "stiffness", "muscle_pain", "spasm", "weakness", "fatigue", "fever", "health_loss" },
+        [4] = { "fever", "weakness" },
+    },
+    tuberculosis = {
+        [1] = { "cough" },
+        [2] = { "cough", "fever", "fatigue", "weakness" },
+        [3] = { "cough", "fever", "fatigue", "weakness" },
+        [4] = { "cough", "fever", "fatigue", "weakness" },
+    },
+    ahtr = {
+        [1] = {},
+        [2] = { "back_pain", "weakness", "nausea", "fever", "health_loss" },
+        [3] = { "back_pain", "weakness", "nausea", "fever", "health_loss" },
+        [4] = { "back_pain", "weakness", "nausea", "fever", "health_loss" },
+    },
+    concussion = { all = { "headache", "nausea", "dizziness", "health_loss" } },
+    delirium = { all = { "hallucination", "confusion" } },
+    insomnia = { all = { "sleepless", "fatigue", "stress", "headache" } },
+    painkiller_addiction = { all = { "craving", "stress", "thirst" } },
+    knox_infection = { all = { "fever", "nausea", "fatigue", "health_loss" } },
 }
+-- a sign that only shows in some cases: [illness][tag] = note key
+D.SIGN_NOTES = {
+    toxin_poisoning = { health_loss = "MushroomOnly" },
+}
+
+-- signs of `id` at `stage` (nil stage = every stage together)
+function D.stageSigns(id, stage)
+    local t = D.STAGE_SIGNS[id]
+    if not t then return {} end
+    if t.all then return t.all end
+    if stage then return t[tonumber(stage)] or {} end
+    return D.DISEASES[id] or {}
+end
+
+-- illness -> signs it can show (all stages together, chip-grid order)
+D.DISEASES = {}
+for id, stages in pairs(D.STAGE_SIGNS) do
+    local set = {}
+    for _, list in pairs(stages) do
+        for _, t in ipairs(list) do set[t] = true end
+    end
+    local out = {}
+    for _, grp in ipairs(D.GROUPS) do
+        for _, t in ipairs(grp.tags) do
+            if set[t] then out[#out + 1] = t; set[t] = nil end
+        end
+    end
+    for t in pairs(set) do out[#out + 1] = t end   -- (a tag missing from GROUPS)
+    D.DISEASES[id] = out
+end
+
+-- the stage-table numbers EHR really applies besides the signs above:
+-- [illness] = where its stage table is ("disease" = def.effects, read by
+-- EHR only for these environmental illnesses; "sepsis"; "wound"). Fields
+-- like staminaPenalty are in the tables but nothing reads them.
+D.REAL_EFFECTS = {
+    common_cold = "disease", pneumonia = "disease", dysentery = "disease",
+    hypothermia = "disease", heat_stroke = "disease",
+    sepsis = "sepsis", wound_infection = "wound",
+}
+D.REAL_FIELDS = {
+    disease = { "healthDrainPerHour", "enduranceCap", "fatigueCap", "movementPenalty", "canSprint" },
+    sepsis = { "healthDamagePerHour", "minHealth" },
+    wound = { "healingPenalty" },
+}
+-- -> the stage table and the fields of it that are real, or nil
+function D.realEffects(id, stage)
+    local src = D.REAL_EFFECTS[id]
+    local tbl
+    if src == "disease" then
+        local def = EHR and EHR.Disease and EHR.Disease.Diseases and EHR.Disease.Diseases[id]
+        tbl = def and def.effects and def.effects[tonumber(stage) or 1]
+    elseif src == "sepsis" then
+        tbl = EHR and EHR.Sepsis and EHR.Sepsis.StageEffects and EHR.Sepsis.StageEffects[tonumber(stage) or 1]
+    elseif src == "wound" then
+        local cfg = EHR and EHR.WoundInfection and EHR.WoundInfection.Config
+        tbl = cfg and cfg.STAGE_EFFECTS and cfg.STAGE_EFFECTS[tonumber(stage) or 1]
+    end
+    if type(tbl) ~= "table" then return nil end
+    return tbl, D.REAL_FIELDS[src]
+end
 D.ORDER = {
     "common_cold", "pneumonia", "tuberculosis", "cadaveric_aspergillosis", "corpse_sickness", "food_poisoning",
     "gastroenteritis", "dysentery", "toxin_poisoning", "trichinosis", "hypothermia", "heat_stroke", "wound_infection",

@@ -5,5 +5,5 @@ poster=poster.png
 icon=icon.png
 require=ModernFirearmsSystem
 author=HARMONIE
-modversion=0.2.0
+modversion=0.2.2
 versionMin=42.0.0

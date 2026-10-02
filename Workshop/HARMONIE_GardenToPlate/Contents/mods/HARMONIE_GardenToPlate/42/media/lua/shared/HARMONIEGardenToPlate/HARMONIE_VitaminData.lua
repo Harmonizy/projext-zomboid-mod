@@ -73,10 +73,46 @@ local VitData = HARMONIE_GTP.VitData
     singleplayer would be a harmless no-op either way, but being explicit
     keeps intent clear.
 ]]--
-local function sync(character)
-    if isClient() then
-        character:transmitModData()
+--[[
+    0.7.3 (2026-10-02, real server bug): transmitModData() sends this
+    client's copy of the WHOLE player ModData, which replaces the server's.
+    Everything other mods keep server-side on the player was rolled back
+    every time this ran (every 10 s from the checker): TheWayToAttack's
+    active craft vanished (closing the crafting window lost the items,
+    Finish gave nothing), and EHR / Home Medic state written by the server
+    could be undone. Now only HARMONIE_Vitamins goes to the server, as a
+    client command; the server writes that one key (and, for an admin
+    editing another player, forwards it to that player's own client).
+]]--
+VitData.NET = "HARMONIE_GTP"
+
+local function plainCopy(store)
+    local out = {}
+    for _, vit in ipairs(HARMONIE_GTP.Vitamins or {}) do
+        local e = type(store) == "table" and store[vit]
+        if type(e) == "table" then
+            out[vit] = { value = tonumber(e.value) or 0, pauseDays = tonumber(e.pauseDays) or 0,
+                afflicted = e.afflicted == true, afflictedDays = tonumber(e.afflictedDays) or 0,
+                traitGranted = e.traitGranted == true }
+        end
     end
+    return out
+end
+VitData.plainCopy = plainCopy
+
+local function sync(character)
+    if not (isClient() and sendClientCommand) then return end
+    local md = character and character:getModData()
+    if not md or type(md.HARMONIE_Vitamins) ~= "table" then return end
+    local me = getPlayer and getPlayer() or character
+    local args = { data = plainCopy(md.HARMONIE_Vitamins) }
+    if character ~= me then
+        -- an admin editing another player (HARMONIE_AdminPanel)
+        local ok, id = pcall(function() return character:getOnlineID() end)
+        if not ok or id == nil then return end
+        args.target = id
+    end
+    sendClientCommand(me, VitData.NET, "sync", args)
 end
 
 local function ensureStore(character)
@@ -300,4 +336,39 @@ function VitData.AddPauseDays(character, vit, days)
     local store = ensureStore(character)
     store[vit].pauseDays = math.max(0, store[vit].pauseDays + days)
     sync(character)
+end
+
+-- ---------------------------------------------------------------- network
+-- server: a client's vitamins (or an admin's edit of another player's)
+if Events and Events.OnClientCommand then
+    Events.OnClientCommand.Add(function(module, command, player, args)
+        if module ~= VitData.NET or command ~= "sync" or not player or type(args) ~= "table"
+                or type(args.data) ~= "table" then return end
+        local target = player
+        if args.target ~= nil then
+            local ok, lvl = pcall(function() return player:getAccessLevel() end)
+            if not ok or not lvl or lvl == "" or string.lower(tostring(lvl)) == "none" then return end
+            target = nil
+            local online = getOnlinePlayers and getOnlinePlayers()
+            for i = 0, (online and online:size() or 0) - 1 do
+                local p = online:get(i)
+                if p and p:getOnlineID() == tonumber(args.target) then target = p end
+            end
+            if not target then return end
+        end
+        local data = plainCopy(args.data)
+        target:getModData().HARMONIE_Vitamins = data
+        if target ~= player and sendServerCommand then
+            sendServerCommand(target, VitData.NET, "set", { data = data })
+        end
+    end)
+end
+
+-- client: an admin changed this player's vitamins
+if Events and Events.OnServerCommand then
+    Events.OnServerCommand.Add(function(module, command, args)
+        if module ~= VitData.NET or command ~= "set" or type(args) ~= "table" or type(args.data) ~= "table" then return end
+        local p = getPlayer and getPlayer()
+        if p then p:getModData().HARMONIE_Vitamins = plainCopy(args.data) end
+    end)
 end

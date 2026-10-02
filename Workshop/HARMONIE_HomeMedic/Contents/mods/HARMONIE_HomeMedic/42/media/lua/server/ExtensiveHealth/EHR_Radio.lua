@@ -218,6 +218,11 @@ end
 if Events and Events.OnGameStart then
     Events.OnGameStart.Add(EHR.Radio.Initialize)
 end
+-- HARMONIE (MP audit 2026-10-02): a dedicated server never fires
+-- OnGameStart, so the hourly broadcasts were never scheduled there.
+if Events and Events.OnServerStarted then
+    Events.OnServerStarted.Add(EHR.Radio.Initialize)
+end
 
 if Events and Events.OnLoadRadioScripts then
     Events.OnLoadRadioScripts.Add(registerChannel)
