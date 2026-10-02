@@ -56,15 +56,16 @@ local function anyVitaminAfflicted(character)
     return false
 end
 
-local original_ISTakePillAction_complete = ISTakePillAction.complete
-
-function ISTakePillAction:complete()
-    local item = self.item
+-- MULTIPLAYER (2026-10-02 audit): complete() runs on the server in MP,
+-- which never loads this client/ file; the client's copy ends through
+-- perform(). The pill's type is read at start(), granted once (flag) from
+-- complete() in single player or perform() on a multiplayer client. The
+-- pause days live in the player's ModData, which VitData transmits.
+local function grant(self, fullType)
+    if self.gtpGranted then return end
+    self.gtpGranted = true
     local character = self.character
-    local result = original_ISTakePillAction_complete(self)
-
-    local ok, fullType = pcall(function() return item and item:getFullType() end)
-    if ok and fullType == VITAMIN_PILLS_TYPE and character then
+    if fullType == VITAMIN_PILLS_TYPE and character then
         -- Checked BEFORE granting the pause days, since that's what
         -- decides whether this was genuine relief or just a precaution.
         local wasAfflicted = anyVitaminAfflicted(character)
@@ -74,6 +75,29 @@ function ISTakePillAction:complete()
         local keys = wasAfflicted and PillsTakenLineKeys or PillsTakenPrecautionLineKeys
         character:Say(getText(keys[ZombRand(#keys) + 1]))
     end
+end
 
+local function typeOf(self)
+    local ok, t = pcall(function() return self.item and self.item:getFullType() end)
+    return ok and t or nil
+end
+
+local original_ISTakePillAction_start = ISTakePillAction.start
+function ISTakePillAction:start()
+    self.gtpType = typeOf(self)
+    return original_ISTakePillAction_start(self)
+end
+
+local original_ISTakePillAction_complete = ISTakePillAction.complete
+function ISTakePillAction:complete()
+    local t = self.gtpType or typeOf(self)
+    local result = original_ISTakePillAction_complete(self)
+    grant(self, t)
     return result
+end
+
+local original_ISTakePillAction_perform = ISTakePillAction.perform
+function ISTakePillAction:perform()
+    if isClient() and not self.gtpGranted then grant(self, self.gtpType or typeOf(self)) end
+    return original_ISTakePillAction_perform(self)
 end

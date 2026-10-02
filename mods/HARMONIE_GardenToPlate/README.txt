@@ -296,3 +296,9 @@ HARMONIE_PillsHook.lua
    และบรรทัดสถานะสด (Band + ผลเสียกำลังทำงานหรือไม่ + จำนวนวันวิกฤติ) ต่อวิตามิน ทุกช่องกรอกมี
    tooltip อธิบาย (ของ 5 ค่า sandbox ใช้ tooltip เดียวกับหน้า Sandbox Options ของเกมเลย ไม่พิมพ์ซ้ำ)
    คีย์แปลใหม่ทั้งหมดมีครบทั้ง EN/TH (media/lua/shared/Translate/{EN,TH}/IG_UI.json)
+
+0.7.3 (2026-10-02) แก้ MP: กินอาหาร/กินยาวิตามินบนเซิร์ฟเวอร์ไม่ได้วิตามิน
+   hook ของ ISEatFoodAction / ISTakePillAction อยู่ในโฟลเดอร์ client และครอบ complete() -- แต่ใน MP
+   complete() ทำงานบนเซิร์ฟเวอร์ซึ่งไม่โหลดไฟล์ client เลย ส่วนฝั่ง client จบที่ perform() แทน
+   -> ตอนนี้อ่านค่าวิตามินตอน start() (ของยังครบ), ให้ใน complete() (เล่นคนเดียว) และใน perform()
+   เมื่อเป็น client ของ MP, มี flag กันให้ซ้ำ (แบบเดียวกับ EHR_MedicationHook)
