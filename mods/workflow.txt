@@ -3297,5 +3297,16 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     (HM_Diagnosis.STAGE_SIGNS).
 [ ] Kahlua is Lua 5.1: no goto/labels, no load(string) -- test with
     lupa.lua51 + loadstring so a 5.4-only construct can't slip through.
+[ ] Code that must run on the SERVER (loot tables, server-side hooks,
+    timers registered in an init): a dedicated server never fires
+    OnGameStart (nor the local OnCreatePlayer). Also hook
+    OnServerStarted, with a once-only guard. Loot weights: change
+    ProceduralDistributions in OnPostDistributionMerge (or at file load) --
+    the game parses it into ItemPickerJava right after that event, so a
+    change at OnGameStart never reaches the loot even in single player.
+[ ] Writing an item's ModData on the server (in complete())? The client's
+    copy of that item does not get it by itself: set it BEFORE
+    sendAddItemToContainer for a new item, or sync it afterwards
+    (sendItemStats / syncItemModData) for an item already in a container.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

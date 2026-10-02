@@ -18,10 +18,9 @@
     declarations) by a single sandbox multiplier -- leaving every vanilla
     item's own weight in the same containers untouched.
 
-    Wrapped from Events.OnGameStart, matching HARMONIE_SVU3PW_Hooks.lua's
-    reasoning: guarantees every mod's Lua (including this mod's ~165
-    distribution-editing files) has already executed, regardless of which
-    mod's files happen to load first within the same tick.
+    Run from Events.OnPostDistributionMerge (see the bottom of this file):
+    every mod's Lua (including that mod's ~165 distribution-editing files)
+    has executed by then, and the loot tables are not parsed yet.
 
     Scope: guns and ammo only. Attachments/parts (media/lua/server/item/Part,
     ~236 more items) are NOT included -- left at the mod's own hardcoded
@@ -272,13 +271,16 @@ local function getMultiplier()
     return 1.0
 end
 
+local scaled = false
 local function scaleDropRates()
+    if scaled then return end
     if not ProceduralDistributions or not ProceduralDistributions.list then
         print("HARMONIE ModernFirearmsSystem Fix: ProceduralDistributions.list not found -- is ModernFirearmsSystem installed and enabled?")
         return
     end
 
     local multiplier = getMultiplier()
+    scaled = true
     if multiplier == 1.0 then return end
 
     local scaledCount = 0
@@ -302,4 +304,15 @@ local function scaleDropRates()
     print(string.format("HARMONIE ModernFirearmsSystem Fix: scaled %d loot entries by x%.2f.", scaledCount, multiplier))
 end
 
-Events.OnGameStart.Add(scaleDropRates)
+-- 2026-10-02 (MP audit): OnGameStart was too late and the wrong place.
+-- The game turns ProceduralDistributions into its loot tables
+-- (ItemPickerJava.Parse) right after OnPostDistributionMerge, before
+-- OnGameStart -- so a change made at OnGameStart never reached the loot at
+-- all -- and a dedicated server never fires OnGameStart. OnPostDistribution
+-- Merge runs in single player and on the server (where loot is rolled),
+-- after every mod's file-load inserts; `scaled` keeps it to one pass.
+if Events.OnPostDistributionMerge then
+    Events.OnPostDistributionMerge.Add(scaleDropRates)
+else
+    Events.OnGameStart.Add(scaleDropRates)
+end

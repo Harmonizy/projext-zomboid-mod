@@ -590,6 +590,11 @@ if Events then
     if Events.OnGameStart then
         Events.OnGameStart.Add(EHR.Professions.PatchScalpelScriptTags)
     end
+    -- HARMONIE (MP audit 2026-10-02): the server's item scripts too (no
+    -- OnGameStart on a dedicated server); patching twice is a no-op.
+    if Events.OnServerStarted then
+        Events.OnServerStarted.Add(EHR.Professions.PatchScalpelScriptTags)
+    end
     if Events.OnCreatePlayer then
         Events.OnCreatePlayer.Add(EHR.Professions.OnCreatePlayer)
     end
