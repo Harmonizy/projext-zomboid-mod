@@ -89,7 +89,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: O-, O+, A-, A+, B-, B+, AB-, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagOPos"] = {
@@ -99,7 +99,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: O+, A+, B+, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagANeg"] = {
@@ -109,7 +109,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: A-, A+, AB-, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagAPos"] = {
@@ -119,7 +119,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: A+, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagBNeg"] = {
@@ -129,7 +129,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: B-, B+, AB-, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagBPos"] = {
@@ -139,7 +139,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: B+, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagABNeg"] = {
@@ -149,7 +149,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: AB-, AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.BloodBagABPos"] = {
@@ -159,7 +159,7 @@ EHR.Tooltips.Data = {
             "Restores 500mL blood volume",
         },
         bloodCompatibility = "Compatible with: AB+",
-        warning = "PERISHABLE: Freeze for storage. Spoils after 2h outside frozen storage!",
+        warning = "PERISHABLE: Keep it in a fridge or freezer. Spoils 24h after it leaves one (stale after 12h)!",
         perishable = true,
     },
     ["ExtensiveHealth.EmptyBloodBag"] = {

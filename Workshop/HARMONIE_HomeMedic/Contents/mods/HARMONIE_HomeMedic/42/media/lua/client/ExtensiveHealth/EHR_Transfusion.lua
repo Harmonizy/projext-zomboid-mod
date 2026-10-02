@@ -57,8 +57,10 @@ end
 EHR.Transfusion.BloodBagAmount = 500   -- mL
 EHR.Transfusion.SalineAmount = 250     -- mL
 EHR.Transfusion.DrawBloodAmount = 500  -- mL taken when drawing blood
-EHR.Transfusion.BLOOD_BAG_FRESH_HOURS = 1.0
-EHR.Transfusion.BLOOD_BAG_SPOIL_HOURS = 2.0
+-- HARMONIE (request 2026-10-02): a bag lasts 24 game hours outside a fridge
+-- or freezer (stale after 12); was 1 h / 2 h
+EHR.Transfusion.BLOOD_BAG_FRESH_HOURS = 12.0
+EHR.Transfusion.BLOOD_BAG_SPOIL_HOURS = 24.0
 
 -- Time to administer (in game ticks, ~30 ticks = 1 second)
 EHR.Transfusion.TransfusionTime = 300  -- ~10 seconds
@@ -238,9 +240,14 @@ function EHR.Transfusion.UpdateBloodBagSpoilage(item)
     if elapsed < 0 then elapsed = 0 end
     if elapsed > 24 then elapsed = 24 end
 
+    -- HARMONIE: count the time since the last check as warm only when the bag
+    -- was out of cold storage then AND now. Before, a bag left unchecked in a
+    -- freezer (nobody near it) got up to 24 h of "warm" time the moment it
+    -- was taken out, so it was rotten at once and its option vanished.
+    local wasCold = data.isFrozen == true
     data.isFrozen = EHR.Transfusion.IsBloodBagFrozenOrStored(item)
 
-    if not data.isFrozen and not data.rotten then
+    if not data.isFrozen and not wasCold and not data.rotten then
         data.warmElapsed = (data.warmElapsed or 0) + elapsed
     end
     data.lastCheckHour = currentHour
@@ -925,14 +932,17 @@ function EHR.Transfusion.OnFillInventoryContextMenu(playerNum, context, items)
     if not player then return end
 
     -- Get the actual item(s) from the selection
+    -- HARMONIE: the first blood bag / saline bag in the selection (was only
+    -- the first selected entry, so a mixed selection showed no option)
     local item = nil
     for _, v in ipairs(items) do
-        if type(v) == "table" then
-            item = v.items[1]
-        else
-            item = v
+        local it = v
+        if type(v) == "table" and v.items then it = v.items[1] end
+        if it and (EHR.Transfusion.IsBloodBag(it) or EHR.Transfusion.IsSalineBag(it)) then
+            item = it
+            break
         end
-        break
+        if not item then item = it end
     end
 
     if not item then return end
@@ -1137,8 +1147,8 @@ end
 
 -- ============================================
 -- BLOOD BAG FREEZING SYSTEM
--- Blood bags can be frozen indefinitely. Outside frozen
--- storage they become stale after 1 hour and spoil after 2 hours.
+-- Blood bags keep indefinitely in a freezer or a powered fridge. Outside
+-- them they become stale after 12 hours and spoil after 24 (HARMONIE).
 -- ============================================
 
 EHR.Transfusion.FREEZE_GRACE_PERIOD = EHR.Transfusion.BLOOD_BAG_SPOIL_HOURS
@@ -1170,6 +1180,11 @@ function EHR.Transfusion.IsInFreezer(item)
             local typeLower = string.lower(containerType)
             if string.find(typeLower, "freezer") then
                 return true
+            end
+            -- HARMONIE: a fridge keeps blood too, while it has power
+            if string.find(typeLower, "fridge") then
+                local okP, powered = pcall(function() return container:isPowered() end)
+                if not okP or powered then return true end
             end
         end
 

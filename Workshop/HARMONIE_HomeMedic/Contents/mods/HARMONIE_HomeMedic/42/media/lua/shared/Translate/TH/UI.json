@@ -2171,7 +2171,7 @@
     "UI_HomeMedic_Surg_Anes_Alcohol": "เมาสุรา",
     "UI_HomeMedic_Surg_Anes_Asleep": "หลับอยู่",
     "UI_HomeMedic_Surg_Row_Blood": "Blood - ปริมาณเลือด",
-    "UI_HomeMedic_Surg_Tip_Blood": "การผ่าตัดเสียเลือดราว %1 mL - มากขึ้นถ้าห้ามเลือดไม่ดี หลังผ่าตัดเลือดจะเหลือไม่เกิน 70%% (น้อยกว่านั้นถ้าผ่าไม่ดี) จะอ่อนเพลียจนกว่าเลือดจะกลับมา",
+    "UI_HomeMedic_Surg_Tip_Blood": "การผ่าตัดเสียเลือดราว %1 mL - มากขึ้นถ้าห้ามเลือดไม่ดี หลังผ่าตัดเลือดจะเหลือไม่เกิน 70%% (น้อยกว่านั้นถ้าผ่าไม่ดี) จะอ่อนเพลียจนกว่าเลือดจะกลับมา ไม่ต้องใช้ถุงเลือด",
     "UI_HomeMedic_Surg_Row_Patient": "Patient - คนไข้",
     "UI_HomeMedic_Surg_Tip_Patient": "ต้องอยู่ข้างคนไข้ - ผ่าตัดตัวเองทุกขั้นจะสั่นกว่าปกติ",
     "UI_HomeMedic_Surg_Slot_blade": "Blade - มีดผ่าตัด",
@@ -2764,5 +2764,16 @@
     "UI_HomeMedic_Dose_HaveIt": "มียาติดตัวอยู่",
     "UI_HomeMedic_Dose_NoItem": "ไม่มียาติดตัว!",
     "UI_HomeMedic_Dose_Btn_Ok": "รับทราบ",
-    "UI_HomeMedic_Dose_Btn_Later": "เตือนอีกครั้งใน 1 ชม."
+    "UI_HomeMedic_Dose_Btn_Later": "เตือนอีกครั้งใน 1 ชม.",
+    "UI_HomeMedic_Stat_VitPenalty": "ผลเสียกำลังทำงาน",
+    "UI_HomeMedic_Stat_VitNeed": "ต้องการต่อวัน",
+    "UI_HomeMedic_Stat_VitPause": "วันพักสะสม",
+    "UI_HomeMedic_Stat_VitYes": "ใช่",
+    "UI_HomeMedic_Stat_VitNo": "ไม่",
+    "UI_HomeMedic_Stat_VitBand_critical": "วิกฤต",
+    "UI_HomeMedic_Stat_VitBand_low": "ต่ำ",
+    "UI_HomeMedic_Stat_VitBand_sufficient": "เพียงพอ",
+    "UI_HomeMedic_Surg_Row_StartQ": "คุณภาพเริ่มต้น",
+    "UI_HomeMedic_Surg_Tip_StartQ": "ใช้อุปกรณ์ที่ถูกต้อง เริ่มผ่าตัดที่ 100%% ส่วนอุปกรณ์ด้นสดแต่ละชิ้น (มีดแทนมีดผ่าตัด ด้ายแทนไหมเย็บแผล ผ้าขี้ริ้วแทนผ้าพันแผล...) จะลดลงไปเรื่อยๆ และซ้อนกัน",
+    "UI_HomeMedic_Surg_StartQ": "คุณภาพเริ่มต้น: %1%%"
 }

@@ -809,7 +809,7 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     end
 
     -- supplies
-    local qSum, qN = 0, 0
+    local startQ, improvised = 1, {}
     -- transfusion: needed when the operation would leave the patient low on blood
     local ptype = S.bloodType(patient, exam)
     local bv = modData(patient, exam, "EHR_Blood")
@@ -820,7 +820,7 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     -- transfusion is worth it only for someone who would end below that
     local after = raw and math.min(raw, S.POSTOP_MAX) or nil
     local worth = raw ~= nil and raw < S.POSTOP_MAX
-    local must = after ~= nil and after < S.TRANSFUSE_BELOW
+    local must = false   -- no transfusion in surgery any more (request 2026-10-02)
     r.bloodAfter, r.mustTransfuse = after, must
     local function optionNames(slot, n)
         local out = {}
@@ -845,7 +845,12 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
             if fill then
                 value = (call(fill.item, "getDisplayName") or fullType(fill.item)) .. " - " .. S.T("Where_" .. fill.where, fill.where)
                 state = fill.q >= 0.8 and "ok" or "warn"
-                if slot.kind == "tool" then qSum = qSum + fill.q; qN = qN + 1 end
+                if not slot.transfusion and fill.q < 1 then
+                    local f = 1 - (1 - fill.q) * S.IMPROVISED_COST
+                    startQ = startQ * f
+                    improvised[#improvised + 1] = (call(fill.item, "getDisplayName") or fullType(fill.item))
+                        .. " -" .. math.floor((1 - f) * 100 + 0.5) .. "%"
+                end
                 if slot.transfusion == "blood" then
                     value = value .. "  [" .. tostring(fill.donor or "?") .. " -> " .. tostring(ptype or "?") .. "] "
                         .. (fill.compatible and S.T("Compatible", "compatible") or S.T("Incompatible", "INCOMPATIBLE"))
@@ -867,13 +872,13 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
               tip = S.T("Tip_Slot_" .. slotId, "") .. "\n\n" .. S.T("Tip_Options", "Accepts: %1", table.concat(opts, ", "))
                   .. "\n" .. S.T("Tip_Sources", "Found in your inventory, on the floor or in containers next to you.") })
     end
-    if must and not r.slots.blood and not r.slots.saline then
-        row({ key = "transfusion", required = true, state = "fail",
-              label = S.T("Row_Transfusion", "Transfusion"),
-              value = S.T("Transfuse_Must", "Needed: blood after ~%1% (blood bag or saline)", math.floor(after * 100 + 0.5)),
-              tip = S.T("Tip_Transfusion", "This operation would leave the patient with too little blood. Have a blood bag of a compatible type (or saline) at hand: it goes in during the operation.") })
-    end
-    r.toolQ = qN > 0 and (qSum / qN) or 1
+    -- starting quality: 100% with proper instruments, less per improvised one
+    r.toolQ = startQ
+    row({ key = "startq", state = startQ >= 0.999 and "ok" or "warn",
+          label = S.T("Row_StartQ", "Starting quality"),
+          value = math.floor(startQ * 100 + 0.5) .. "%",
+          tip = S.T("Tip_StartQ", "Proper instruments start the operation at 100%. Each improvised one lowers it, and they stack.")
+              .. (#improvised > 0 and ("\n\n" .. table.concat(improvised, "\n")) or "") })
 
     -- asepsis
     local asep, parts = S.asepsis(doctor, r.slots.antiseptic ~= nil)
@@ -904,8 +909,10 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     -- blood
     local bf = S.bloodFraction(patient)
     if bf then
-        row({ key = "blood", state = bf >= 0.7 and "ok" or (bf >= 0.55 and "warn" or "fail"),
-              label = S.T("Row_Blood", "Blood volume"), value = math.floor(bf * 100 + 0.5) .. "%",
+        local afterTxt = r.bloodAfter and (" -> ~" .. math.floor(r.bloodAfter * 100 + 0.5) .. "%") or ""
+        local low = r.bloodAfter or bf
+        row({ key = "blood", state = low >= 0.62 and "ok" or (low >= 0.45 and "warn" or "fail"),
+              label = S.T("Row_Blood", "Blood volume"), value = math.floor(bf * 100 + 0.5) .. "%" .. afterTxt,
               tip = S.T("Tip_Blood", "The operation costs about %1 mL of blood (more if hemostasis goes badly).", s.bloodLoss) })
     end
 
@@ -941,7 +948,8 @@ function S.quality(sid, scores, toolQ)
         wsum = wsum + w
     end
     local q = wsum > 0 and sum / wsum or 0
-    return q * (0.75 + 0.25 * math.max(0, math.min(1, toolQ or 1)))
+    -- toolQ = the starting quality (S.evaluate: improvised instruments)
+    return q * math.max(0, math.min(1, toolQ or 1))
 end
 
 -- Difficulty knobs for the minigames (client) from who operates and how.

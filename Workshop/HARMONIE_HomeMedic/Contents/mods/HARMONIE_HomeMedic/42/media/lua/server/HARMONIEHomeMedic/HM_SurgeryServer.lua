@@ -154,9 +154,11 @@ function SV.Begin(doctor, args)
     S.Sources.forget(doctor)
     SV.permits[keyOf(doctor)] = permit
 
-    local d = S.difficulty(doctor, patient, permit.anesthesia, permit.toolQ)
+    -- the instruments only set the starting quality (S.quality), the games
+    -- play the same with any of them (request 2026-10-02)
+    local d = S.difficulty(doctor, patient, permit.anesthesia, 1)
     SV.reply(doctor, "Begin", { permit = permit.id, sid = sid, part = args.part,
-        skill = d.skill, shake = d.shake, tool = d.tool })
+        skill = d.skill, shake = d.shake, tool = d.tool, startQ = permit.toolQ })
 end
 
 -- ------------------------------------------------------------ outcome

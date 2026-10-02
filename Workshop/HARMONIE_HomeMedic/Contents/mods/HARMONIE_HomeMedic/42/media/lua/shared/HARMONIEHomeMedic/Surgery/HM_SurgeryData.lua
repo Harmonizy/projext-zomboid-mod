@@ -78,8 +78,9 @@ S.Supplies = {
         { type = "ExtensiveHealth.IVFluids", q = 1.0 }, { type = "ExtensiveHealth.SalineBag", q = 0.8 }, { match = "saline", q = 0.8 } } },
     genekit = { kind = "use", required = true, options = {
         { type = "ExtensiveHealth.GeneTherapyKit", q = 1.0 } } },
-    -- transfusion during the operation (S.evaluate makes one of them required
-    -- when the operation would leave the patient below S.TRANSFUSE_BELOW)
+    -- transfusion slots: no longer part of any operation (request
+    -- 2026-10-02: the operation itself leaves the patient low on blood, see
+    -- S.POSTOP_MAX); kept so old references still resolve
     blood = { kind = "use", required = false, transfusion = "blood", options = { { match = "bloodbag", q = 1.0 } } },
     saline = { kind = "use", required = false, transfusion = "saline", options = {
         { type = "ExtensiveHealth.SalineBag", q = 1.0 }, { match = "saline", q = 1.0 } } },
@@ -95,6 +96,11 @@ S.TRANSFUSE_BELOW = 0.62
 -- band: tired, slower), lower when the bleeding was badly controlled, down
 -- to POSTOP_MIN (EHR's "critical" band: no endurance, blackouts).
 S.POSTOP_MAX = 0.704
+-- Request 2026-10-02: proper instruments start the operation at 100%;
+-- each improvised one (supply option q < 1: a kitchen knife for a scalpel,
+-- thread for suture, a rag for a dressing...) lowers the STARTING quality,
+-- one factor per kind of supply, multiplied: 1 - (1 - q) * IMPROVISED_COST.
+S.IMPROVISED_COST = 0.3   -- a fully improvised kit starts near 50% (success needs 45%)
 S.POSTOP_MIN = 0.555
 -- hemostasis (P02) / incision (P01) scores 0..1 -> the most blood left
 function S.postOpCap(hemo, incision)
@@ -116,38 +122,38 @@ local TOC_ARMS = { "Hand_L", "Hand_R", "ForeArm_L", "ForeArm_R", "UpperArm_L", "
 S.Surgeries = {
     debridement = { tier = "clinical",
         steps = { "P01", "P04", "P03", "P02", "P08" },
-        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic" },
         bloodLoss = 250, pain = 55,
         targets = { wound_infection = {}, cellulitis = { treat = 24 }, tetanus = { treat = 48 },
                     sepsis = { treat = 36 }, hyperkeratotic_scabies = { treat = 24, anyPart = true } } },
     abscess_drainage = { tier = "clinical",
         steps = { "P01", "P05", "P03", "P08" },
-        supplies = { "blade", "syringe", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "syringe", "suture", "dressing", "antiseptic" },
         bloodLoss = 120, pain = 40,
         targets = { wound_infection = {}, cellulitis = { treat = 24 } } },
     foreign_body = { tier = "clinical",
         steps = { "P01", "P06", "P02", "P08" },
-        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic" },
         bloodLoss = 150, pain = 45,
         targets = { foreign_body = {} } },
     parasite_extraction = { tier = "advanced", parts = LIMBS, knowledge = { "trichinosis" },
         steps = { "P01", "P06", "P03", "P08" },
-        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic" },
         bloodLoss = 200, pain = 50,
         targets = { trichinosis = { treat = 48, anyPart = true } } },
     thoracic = { tier = "advanced", parts = { "Torso_Upper" }, knowledge = { "pneumonia", "cadaveric_aspergillosis" },
         steps = { "P01", "P15", "P09", "P08" },
-        supplies = { "blade", "forceps", "syringe", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "forceps", "syringe", "suture", "dressing", "antiseptic" },
         bloodLoss = 450, pain = 70,
         targets = { pneumonia = { treat = 48, anyPart = true }, cadaveric_aspergillosis = { treat = 72, anyPart = true } } },
     organ_salvage = { tier = "advanced", parts = { "Torso_Lower" }, knowledge = { "sepsis", "toxin_poisoning" },
         steps = { "P01", "P15", "P03", "P08" },
-        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "forceps", "suture", "dressing", "antiseptic" },
         bloodLoss = 500, pain = 70,
         targets = { sepsis = { treat = 24, anyPart = true }, toxin_poisoning = { treat = 24, anyPart = true } } },
     neurosurgery = { tier = "master", parts = { "Head" }, knowledge = { "concussion" },
         steps = { "P13", "P14", "P02", "P08" },
-        supplies = { "drill", "forceps", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "drill", "forceps", "suture", "dressing", "antiseptic" },
         bloodLoss = 300, pain = 60,
         -- concussion heals by itself; the operation (hematoma evacuation)
         -- ends it at once, with all its symptoms
@@ -159,7 +165,7 @@ S.Surgeries = {
         targets = { ahtr = { treat = 24, anyPart = true } } },
     amputation = { tier = "master", parts = TOC_ARMS, needsTOC = true,
         steps = { "P01", "P07", "P02", "P08" },
-        supplies = { "blade", "saw", "suture", "dressing", "antiseptic", "blood", "saline" },
+        supplies = { "blade", "saw", "suture", "dressing", "antiseptic" },
         bloodLoss = 700, pain = 90,
         targets = { knox_bite = {}, necrosis = {} } },
     experimental = { tier = "master", parts = ARMS, knowledge = { "knox_infection" },
