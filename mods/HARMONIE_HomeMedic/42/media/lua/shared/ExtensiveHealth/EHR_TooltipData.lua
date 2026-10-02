@@ -277,7 +277,7 @@ EHR.Tooltips.Data = {
         },
         warning = "Frequent or closely spaced doses can cause Painkiller Addiction.",
     },
-    ["Base.PillsVitamins"] = {
+    ["ExtensiveHealth.CaffeinePills"] = {
         category = "OTC Medication",
         tier = 1,
         description = "Strong caffeine pills.",

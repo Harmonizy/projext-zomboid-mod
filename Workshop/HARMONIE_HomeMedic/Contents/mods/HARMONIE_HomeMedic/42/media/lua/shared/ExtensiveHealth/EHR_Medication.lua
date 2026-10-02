@@ -182,8 +182,9 @@ EHR.Medication.Database = {
         usageMessage = "You take painkillers. The pain begins to fade.",
     },
 
-    -- Base.PillsVitamins (B42 caffeine pills)
-    ["Base.PillsVitamins"] = {
+    -- HARMONIE: caffeine pills are their own item (was Base.PillsVitamins,
+    -- which Garden to Plate uses as multivitamins)
+    ["ExtensiveHealth.CaffeinePills"] = {
         tier = 1,
         treats = {},
         displayName = "Caffeine Pills",
@@ -2498,7 +2499,7 @@ EHR.Medication.DosingSchedules = {
     ["Base.Antibiotics"] = { doseInterval = 4, dosesRequired = 6 },
     ["Base.Pills"] = { doseInterval = 3, dosesRequired = 1, activeHours = 3 },
     ["ExtensiveHealth.HomemadePainkillers"] = { doseInterval = 3, dosesRequired = 1, activeHours = 3 },
-    ["Base.PillsVitamins"] = { doseInterval = 12, dosesRequired = 1 },
+    ["ExtensiveHealth.CaffeinePills"] = { doseInterval = 12, dosesRequired = 1 },
     ["Base.PillsSleepingTablets"] = { doseInterval = 8, dosesRequired = 1 },
     ["ExtensiveHealth.HomemadeSleepingPills"] = { doseInterval = 8, dosesRequired = 1 },
     ["Base.PillsAntiDep"] = { doseInterval = 12, dosesRequired = 14 },

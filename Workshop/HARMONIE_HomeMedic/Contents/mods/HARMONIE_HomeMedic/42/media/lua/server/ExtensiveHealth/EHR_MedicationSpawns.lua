@@ -78,7 +78,7 @@ EHR.MedicationSpawns.DrainableMeds = {
     ["Base.PillsAntiDep"] = true,
     ["Base.PillsBeta"] = true,
     ["Base.PillsSleepingTablets"] = true,
-    ["Base.PillsVitamins"] = true,
+    ["ExtensiveHealth.CaffeinePills"] = true,
     ["Base.Antibiotics"] = true,
 
     -- EHR Tier 1 - OTC

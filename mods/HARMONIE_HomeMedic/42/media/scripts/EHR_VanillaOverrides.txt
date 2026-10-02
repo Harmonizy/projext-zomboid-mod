@@ -67,21 +67,8 @@ module Base
         Tags = base:consumable,
     }
 
-    item PillsVitamins
-    {
-        DisplayCategory = FirstAid,
-        ItemType = base:drainable,
-        DisplayName = Caffeine Pills,
-        Weight = 0.2,
-        Icon = PillsCaffeine,
-        Medical = true,
-        Tooltip = Tooltip_CaffeinePills,
-        UseDelta = 0.0417,
-        UseWhileEquipped = false,
-        StaticModel = CaffeinePills,
-        WorldStaticModel = CaffeinePills,
-        Tags = base:consumable,
-    }
+    /* HARMONIE: PillsVitamins is vanilla's (and Garden to Plate's) vitamins again;
+       the caffeine pills are ExtensiveHealth.CaffeinePills (EHR_Items.txt) */
 
     item Antibiotics
     {
