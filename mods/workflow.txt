@@ -3285,5 +3285,17 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 [ ] Widening a "which tool works" spec (hammer/wrench/etc.)? Find vanilla's own
     real recipe for the closest matching task first and mirror its exact
     tags[...] combo (section 8.14) — don't default to "add every related tag".
+[ ] MoodleFramework setThresholds(bad4..bad1, good1..good4): a nil threshold
+    is NOT "off" -- MF falls back to its defaults (0.6-0.9), so a nil Good
+    side shows "Good lvl4" at a full value. To never show a side, pass a
+    value the stat can never reach (GTP vitamins: 2.0).
+[ ] Describing what a mod's illness/effect does? Read the code that RUNS,
+    not the description or the definition table: EHR keeps fields nothing
+    reads (staminaPenalty), and its def.effects are applied only for the
+    environmental illnesses. Keep ONE table of the truth and make every
+    text (chips, handbook, cards) read from it, so the words always match
+    (HM_Diagnosis.STAGE_SIGNS).
+[ ] Kahlua is Lua 5.1: no goto/labels, no load(string) -- test with
+    lupa.lua51 + loadstring so a 5.4-only construct can't slip through.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

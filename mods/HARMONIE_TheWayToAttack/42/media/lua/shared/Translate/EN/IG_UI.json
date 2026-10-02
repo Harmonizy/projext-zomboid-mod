@@ -497,5 +497,9 @@
     "IGUI_TWA_MG_Purify_Gauge_Mechanical": "Force",
     "IGUI_TWA_MG_Purify_Hint2_control": "Size = how long it takes (small, medium, large). Deep flaws have a narrower band.",
     "IGUI_TWA_MG_Purify_AllFound": "Every flaw found.",
-    "IGUI_TWA_Tooltip_PracticeLocked": "Practice unlocks after you have done this procedure for real at least once."
+    "IGUI_TWA_Tooltip_PracticeLocked": "Practice unlocks after you have done this procedure for real at least once.",
+    "IGUI_TWA_AdminItems": "Admin: spawn items",
+    "IGUI_TWA_AdminSkills": "Admin: set skills",
+    "IGUI_TWA_Tooltip_AdminItems": "Admins only. Spawns what this recipe still lacks: the base and supplementary item, one of each tool and every procedure's materials (added up). Nearby containers count. A forge or light can't be spawned.",
+    "IGUI_TWA_Tooltip_AdminSkills": "Admins only. Raises each skill to the highest level this recipe's procedures ask for (never lowers one)."
 }

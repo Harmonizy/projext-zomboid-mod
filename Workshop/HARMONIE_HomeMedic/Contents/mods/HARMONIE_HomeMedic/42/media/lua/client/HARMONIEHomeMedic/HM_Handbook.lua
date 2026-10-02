@@ -5,16 +5,16 @@
     game, and pair every sign with where it shows, so a diagnosis can be
     made step by step:
 
-    HM_Handbook.symptoms(id)   -- per stage, from the stage effects EHR
-                                  applies (EHR.Disease.Diseases[id].effects,
-                                  EHR.Sepsis.StageEffects, wound infection
-                                  STAGE_EFFECTS); the sign list otherwise
+    HM_Handbook.symptoms(id)   -- per stage, the signs the code really
+                                  gives (HM_Diagnosis.STAGE_SIGNS, R59) and
+                                  the real numbers of the stage table
     HM_Handbook.howToCheck(id) -- each sign of the illness (HM_Diagnosis)
                                   and where to read it: tab 3 "Signs" with
                                   the threshold, or watch the patient
     HM_Handbook.treatment(id)  -- the medicines EHR.Medication.Database
                                   lists for it: tier 2+ cure, tier 0-1 only
                                   ease the symptoms; plus "no cure" notes
+                                  and what else really helps (H.CARE)
 ]]--
 
 require "HARMONIEHomeMedic/HM_Text"
@@ -30,37 +30,36 @@ local function tagName(tag)
     return HM_Text("UI_HomeMedic_Diag_Tag_" .. tag, tag)
 end
 
-local function stageTables(id)
-    if id == "sepsis" then return EHR and EHR.Sepsis and EHR.Sepsis.StageEffects end
-    if id == "wound_infection" then
-        local cfg = EHR and EHR.WoundInfection and EHR.WoundInfection.Config
-        return cfg and cfg.STAGE_EFFECTS
-    end
-    local def = EHR and EHR.Disease and EHR.Disease.Diseases and EHR.Disease.Diseases[id]
-    return def and def.effects
-end
-
+-- R59: per stage, the signs of HM_Diagnosis.STAGE_SIGNS (what the code
+-- really does, in the diagnosis chips' words) + the real numbers of the
+-- stage table (HM_Diagnosis.Client.stageLines)
 function H.symptoms(id)
-    local c = C()
+    local D, c = HM_Diagnosis, C()
+    local st = D and D.STAGE_SIGNS and D.STAGE_SIGNS[id]
+    if not st then return nil end
     local lines = {}
-    local stages = stageTables(id)
-    if type(stages) == "table" and c and c.effectLines then
+    if st.all then
+        lines[#lines + 1] = L("AllStages", "Every stage: %1", c and c.signText and c.signText(id, st.all) or "")
+    else
         local keys = {}
-        for k in pairs(stages) do if type(k) == "number" then keys[#keys + 1] = k end end
+        for k in pairs(st) do if type(k) == "number" then keys[#keys + 1] = k end end
         table.sort(keys)
         for _, k in ipairs(keys) do
-            local eff = c.effectLines(stages[k])
-            if #eff > 0 then lines[#lines + 1] = L("Stage", "Stage %1: %2", k, table.concat(eff, ", ")) end
+            local parts = c and c.stageLines and c.stageLines(id, k) or {}
+            -- "Signs: a, b" -> "a, b" inside the stage line
+            local tags = D.stageSigns(id, k)
+            local first = #tags > 0 and c.signText(id, tags) or L("NoSigns", "no signs yet")
+            local rest = {}
+            for i = 2, #parts do rest[#rest + 1] = parts[i] end
+            local text = first
+            if #rest > 0 then text = text .. "; " .. table.concat(rest, ", ") end
+            lines[#lines + 1] = L("Stage", "Stage %1: %2", k, text)
         end
     end
-    local tags = {}
-    for _, t in ipairs(HM_Diagnosis and HM_Diagnosis.DISEASES[id] or {}) do tags[#tags + 1] = tagName(t) end
-    if #tags > 0 then lines[#lines + 1] = L("Signs", "Signs: %1", table.concat(tags, ", ")) end
     local def = EHR and EHR.Disease and EHR.Disease.Diseases and EHR.Disease.Diseases[id]
     if def and def.reverseProgression then
         lines[#lines + 1] = L("Reverse", "Starts at its worst stage and eases by itself over time.")
     end
-    if #lines == 0 then return nil end
     return table.concat(lines, "\n")
 end
 
@@ -142,6 +141,23 @@ function H.medNames(id)
     return out
 end
 
+-- what helps besides medicine, checked in EHR's code (R59):
+--   hypothermia: its stage follows the body temperature (EHR.BodyTemp), and
+--     it cannot kill while IsWarmEnoughForRecovery
+--   heat stroke: a cold bath (EHR_HeatStrokeBath, 8 water, 3 h) cures it
+--   dysentery: it kills by thirst (killMechanic "dehydration")
+--   insomnia: only a sleep aid lets you fall asleep (HasActiveSleepAid)
+--   painkiller addiction: an active painkiller dose holds off withdrawal
+--   (concussion eases with time -- the "Reverse" line of H.symptoms;
+--     delirium does NOT: it lasts until a medicine cures it)
+H.CARE = {
+    hypothermia = "Warm up: get dry and warm (warm room, fire, dry clothes). The stage follows the body temperature, and it cannot kill while you are warm.",
+    heat_stroke = "Cool down: a cold bath (right-click a bathtub with 8 units of water, 3 hours) cures it.",
+    dysentery = "Keep drinking: it kills through thirst.",
+    insomnia = "Only a sleep aid lets you fall asleep while it lasts.",
+    painkiller_addiction = "An active painkiller dose holds the withdrawal off for a while.",
+}
+
 function H.treatment(id)
     local cure, ease = {}, {}
     for _, m in ipairs(H.meds()) do
@@ -152,6 +168,9 @@ function H.treatment(id)
         end
     end
     local lines = {}
+    -- R59: what else really helps, read from the code
+    local care = H.CARE[id]
+    if care then lines[#lines + 1] = L("Care_" .. id, care) end
     if #cure > 0 then lines[#lines + 1] = L("Cures", "Cures it (course of treatment): %1", table.concat(cure, ", ")) end
     if #ease > 0 then lines[#lines + 1] = L("Eases", "Only eases the symptoms: %1", table.concat(ease, ", ")) end
     local def = EHR and EHR.Disease and EHR.Disease.Diseases and EHR.Disease.Diseases[id]

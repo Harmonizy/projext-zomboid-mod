@@ -597,6 +597,16 @@ local function onGameStart()
     MODULE.UpdateAll()
 end
 
+-- HARMONIE (request 2026-10-02): no EHR disease / exposure moodles at all --
+-- nothing is registered with MoodleFramework, so none of them can appear
+-- (the medical window shows the conditions instead). The code above stays
+-- for reference; set EHR.Moodles.ENABLED = true to bring them back.
+MODULE.ENABLED = MODULE.ENABLED == true
+if not MODULE.ENABLED then
+    if EHR.Log then EHR.Log("EHR_Moodles.lua: disabled (HARMONIE)") end
+    return
+end
+
 -- Register before EHR's own OnCreatePlayer callback so MoodleFramework creates
 -- every object first and EHR only configures/updates the returned instances.
 installMF27ConstructorGuard()

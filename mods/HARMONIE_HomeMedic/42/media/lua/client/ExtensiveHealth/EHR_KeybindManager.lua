@@ -164,14 +164,7 @@ function EHR.Keybinds.Initialize(forceRefresh)
         "UI_EHR_OpenHealthPanelCompact_tt",
         "When enabled, EHR health panels open in compact mode. Disable to open them expanded."
     )
-    ensureTickBox(
-        EHR.Keybinds.IDs.SHOW_EHR_MOODLES,
-        "UI_EHR_ShowMoodles",
-        "Show EHR moodles",
-        true,
-        "UI_EHR_ShowMoodles_tt",
-        "Show EHR condition and exposure moodles. Disable if another mod's moodles overlap; the EHR monitor and all mechanics remain active."
-    )
+    -- HARMONIE: EHR's moodles are gone (EHR_Moodles.lua), so is their switch
 
     EHR.Keybinds.initialized = true
     EHR.Log("Keybinds: Initialization complete")
