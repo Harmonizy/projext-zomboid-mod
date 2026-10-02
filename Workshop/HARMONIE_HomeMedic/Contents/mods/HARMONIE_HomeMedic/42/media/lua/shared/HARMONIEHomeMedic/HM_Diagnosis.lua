@@ -52,7 +52,7 @@ D.DISEASES = {
     trichinosis = { "muscle_pain", "stiffness", "fever", "nausea", "fatigue", "weakness", "thirst", "spasm", "health_loss" },
     hyperkeratotic_scabies = { "itch", "skin_pain", "fever", "health_loss" },
     cellulitis = { "wound_inflamed", "skin_pain", "fever", "nausea", "fatigue" },
-    wound_infection = { "wound_inflamed", "fever" },
+    wound_infection = { "wound_inflamed", "skin_pain", "fever" },
     sepsis = { "fever", "fatigue", "confusion", "health_loss", "weakness" },
     tetanus = { "stiffness", "spasm", "muscle_pain", "short_breath", "weakness", "slow", "fatigue", "fever", "health_loss" },
     tuberculosis = { "cough", "cough_blood", "fever", "fatigue", "weakness", "hunger", "slow" },
@@ -114,6 +114,11 @@ end
 --     tetanus / trichinosis; one part without stiffness = cellulitis / scabies
 --   nausea: the Sickness stat (Queasy moodle) - also raised by trichinosis
 --     and aspergillosis
+-- Not measured (R45): hunger, thirst, tiredness, weakness, short breath and
+-- stress are everyday needs -- a hungry player is not a sick one. EHR's
+-- illnesses make them RISE FASTER, which only shows over time, so they are
+-- "observe" signs. Arm / leg stiffness needs pain with it (workouts stiffen
+-- muscles too).
 local function partName(name)
     if BodyPartType and BodyPartType.FromString and BodyPartType.getDisplayName then
         local ok, n = pcall(function() return BodyPartType.getDisplayName(BodyPartType.FromString(name)) end)
@@ -147,14 +152,24 @@ local function partStiff(names, minStiff)
         return m >= minStiff, string.format("%d", math.floor(m + 0.5)) .. (at and (" (" .. partName(at) .. ")") or "")
     end
 end
+-- arm / leg stiffness that comes with pain: on the part itself, or
+-- overall (trichinosis strains every muscle and raises the Pain stat)
+local function strainedMuscle(v)
+    local on, reading = partStiff(LIMBS, 10)(v)
+    if not on then return false end
+    local m = 0
+    for _, n in ipairs(LIMBS) do
+        local p = v.parts and v.parts[n]
+        if p and (tonumber(p.stiff) or 0) >= 10 and (tonumber(p.pain) or 0) > m then m = tonumber(p.pain) end
+    end
+    if m >= 5 or (v.PAIN or 0) >= 0.4 then return true, reading end
+    return false
+end
 D.SIGN_LIMBS = LIMBS
 D.SIGNS = {
     fever = { at = "stats", test = temp(">=", 37.5) },
     chills = { at = "stats", test = temp("<=", 35.8) },
     overheat = { at = "stats", test = temp(">=", 40.3) },
-    fatigue = { at = "stats", test = stat("FATIGUE", ">=", 0.4) },
-    weakness = { at = "stats", test = stat("ENDURANCE", "<=", 0.5) },
-    short_breath = { at = "stats", test = stat("ENDURANCE", "<=", 0.3) },
     health_loss = { at = "stats", test = function(v)
         if type(v.health) ~= "number" then return false end
         return v.health < 80, tostring(math.floor(v.health + 0.5))
@@ -163,20 +178,27 @@ D.SIGNS = {
         if type(v.health) ~= "number" then return false end
         return v.health < 25, tostring(math.floor(v.health + 0.5))
     end },
-    thirst = { at = "stats", test = stat("THIRST", ">=", 0.25) },
-    hunger = { at = "stats", test = stat("HUNGER", ">=", 0.25) },
     nausea = { at = "stats", test = function(v)
         local x = math.max(v.SICKNESS or 0, v.FOOD_SICKNESS or 0)
         return x >= 0.25, pct(x)
     end },
-    stress = { at = "stats", test = stat("STRESS", ">=", 0.4) },
     headache = { at = "stats", test = partPain({ "Head" }, 10) },
     chest_pain = { at = "stats", test = partPain({ "Torso_Upper" }, 10, "without") },
     abdominal = { at = "stats", test = partPain({ "Torso_Lower", "Groin" }, 10, "without") },
     back_pain = { at = "stats", test = partPain({ "Torso_Lower" }, 10, "with") },
-    muscle_pain = { at = "stats", test = partPain(LIMBS, 10, "with") },
+    muscle_pain = { at = "stats", test = function(v)
+        local on, reading = partPain(LIMBS, 10, "with")(v)
+        if on then return on, reading end
+        return strainedMuscle(v)
+    end },
     skin_pain = { at = "stats", test = partPain(D.SKIN_PARTS, 10, "without") },
-    stiffness = { at = "stats", test = partStiff(D.STIFF_PARTS, 10) },
+    stiffness = { at = "stats", test = function(v)
+        -- the neck (tetanus) always counts; arms and legs only with pain --
+        -- a workout leaves them stiff too, without pain (vanilla)
+        local on, reading = partStiff({ "Neck" }, 10)(v)
+        if on then return on, reading end
+        return strainedMuscle(v)
+    end },
     wound_inflamed = { at = "stats", test = function(v)
         for name, p in pairs(v.parts or {}) do
             if p.infected then return true, partName(name) end

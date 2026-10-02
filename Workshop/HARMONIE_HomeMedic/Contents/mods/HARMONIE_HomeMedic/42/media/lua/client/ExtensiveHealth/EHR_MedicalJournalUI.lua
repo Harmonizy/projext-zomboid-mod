@@ -19,6 +19,7 @@ EHR_MedicalJournalUI = ISPanel:derive("EHR_MedicalJournalUI")
 EHR_MedicalJournalUI.instance = nil
 
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
+require "HARMONIEHomeMedic/HM_Text"
 local WINDOW_WIDTH = 900
 local WINDOW_HEIGHT = 640
 local PADDING = 14
@@ -539,6 +540,14 @@ function EHR_MedicalJournalUI:getCatalogEntries()
     local entries = {}
     for _, diseaseId in ipairs(CatalogOrder) do
         table.insert(entries, self:getCatalogEntry(diseaseId))
+    end
+    -- HARMONIE: alphabetical by the name shown (HM_SortKey: Thai-aware)
+    if HM_SortKey then
+        for _, e in ipairs(entries) do e.sortKey = HM_SortKey(e.displayName) end
+        table.sort(entries, function(a, b)
+            if a.sortKey ~= b.sortKey then return a.sortKey < b.sortKey end
+            return tostring(a.id) < tostring(b.id)
+        end)
     end
     return entries
 end
