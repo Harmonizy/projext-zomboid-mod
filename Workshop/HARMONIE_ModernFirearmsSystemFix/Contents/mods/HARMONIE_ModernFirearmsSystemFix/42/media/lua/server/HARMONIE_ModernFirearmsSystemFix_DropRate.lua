@@ -18,9 +18,9 @@
     declarations) by a single sandbox multiplier -- leaving every vanilla
     item's own weight in the same containers untouched.
 
-    Run from Events.OnPostDistributionMerge (see the bottom of this file):
-    every mod's Lua (including that mod's ~165 distribution-editing files)
-    has executed by then, and the loot tables are not parsed yet.
+    Run from the distribution-merge events (see the bottom of this file):
+    every mod's file-load Lua (including that mod's ~165 distribution-
+    editing files) has executed by then, and the loot is not built yet.
 
     Scope: guns and ammo only. Attachments/parts (media/lua/server/item/Part,
     ~236 more items) are NOT included -- left at the mod's own hardcoded
@@ -271,29 +271,32 @@ local function getMultiplier()
     return 1.0
 end
 
-local scaled = false
+-- each entry is scaled once, however many times this runs: [items table]
+-- = { [weight index] = true } (weak keys, so a dropped table is not held)
+local done = setmetatable({}, { __mode = "k" })
 local function scaleDropRates()
-    if scaled then return end
     if not ProceduralDistributions or not ProceduralDistributions.list then
         print("HARMONIE ModernFirearmsSystem Fix: ProceduralDistributions.list not found -- is ModernFirearmsSystem installed and enabled?")
         return
     end
 
     local multiplier = getMultiplier()
-    scaled = true
     if multiplier == 1.0 then return end
 
     local scaledCount = 0
     for _, containerData in pairs(ProceduralDistributions.list) do
         if containerData and containerData.items then
             local items = containerData.items
+            local mark = done[items]
+            if not mark then mark = {}; done[items] = mark end
             for i = 1, #items - 1, 2 do
                 local name = items[i]
                 local weight = items[i + 1]
-                if type(name) == "string" and type(weight) == "number" then
+                if not mark[i + 1] and type(name) == "string" and type(weight) == "number" then
                     local shortName = name:match("^Base%.(.+)$")
                     if shortName and HARMONIE_ModernFirearmsSystemFix_Items[shortName] then
                         items[i + 1] = weight * multiplier
+                        mark[i + 1] = true
                         scaledCount = scaledCount + 1
                     end
                 end
@@ -304,15 +307,15 @@ local function scaleDropRates()
     print(string.format("HARMONIE ModernFirearmsSystem Fix: scaled %d loot entries by x%.2f.", scaledCount, multiplier))
 end
 
--- 2026-10-02 (MP audit): OnGameStart was too late and the wrong place.
--- The game turns ProceduralDistributions into its loot tables
--- (ItemPickerJava.Parse) right after OnPostDistributionMerge, before
--- OnGameStart -- so a change made at OnGameStart never reached the loot at
--- all -- and a dedicated server never fires OnGameStart. OnPostDistribution
--- Merge runs in single player and on the server (where loot is rolled),
--- after every mod's file-load inserts; `scaled` keeps it to one pass.
-if Events.OnPostDistributionMerge then
-    Events.OnPostDistributionMerge.Add(scaleDropRates)
-else
-    Events.OnGameStart.Add(scaleDropRates)
-end
+-- 2026-10-02 (MP audit): OnGameStart was the wrong place: it is a CLIENT
+-- event (a dedicated server, where loot is rolled, never fires it), and the
+-- game builds its loot tables from ProceduralDistributions during world
+-- load, before OnGameStart. Now it runs at both distribution-merge events
+-- (they fire in single player and on the server): OnPreDistributionMerge
+-- is where EHR adds its own loot and is known to reach the loot tables;
+-- OnPostDistributionMerge catches anything added later. Every entry is
+-- scaled only once (see `done`), so running twice is safe.
+local hooked = false
+if Events.OnPreDistributionMerge then Events.OnPreDistributionMerge.Add(scaleDropRates); hooked = true end
+if Events.OnPostDistributionMerge then Events.OnPostDistributionMerge.Add(scaleDropRates); hooked = true end
+if not hooked then Events.OnGameStart.Add(scaleDropRates) end

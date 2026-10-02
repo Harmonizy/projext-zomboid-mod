@@ -3300,10 +3300,15 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 [ ] Code that must run on the SERVER (loot tables, server-side hooks,
     timers registered in an init): a dedicated server never fires
     OnGameStart (nor the local OnCreatePlayer). Also hook
-    OnServerStarted, with a once-only guard. Loot weights: change
-    ProceduralDistributions in OnPostDistributionMerge (or at file load) --
-    the game parses it into ItemPickerJava right after that event, so a
-    change at OnGameStart never reaches the loot even in single player.
+    OnServerStarted, with a once-only guard (event docs: OnGameStart and
+    OnCreatePlayer are "(Client)", OnServerStarted is "(Server)").
+    Loot weights: change ProceduralDistributions at file load or in
+    OnPreDistributionMerge (EHR's own loot goes in there and works); the
+    loot is built during world load, so OnGameStart is too late. If the
+    exact order is unsure, run at Pre AND Post merge and mark each entry
+    so it is changed only once (ModernFirearmsSystemFix DropRate).
+    Confirmed in the B42 Java docs: syncItemModData(IsoPlayer,
+    InventoryItem), syncItemFields, sendItemStats, sendAddItemToContainer.
 [ ] Writing an item's ModData on the server (in complete())? The client's
     copy of that item does not get it by itself: set it BEFORE
     sendAddItemToContainer for a new item, or sync it afterwards
