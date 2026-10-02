@@ -2781,5 +2781,16 @@
     "UI_HomeMedic_Hb_Care_heat_stroke": "Cool down: a cold bath (right-click a bathtub with 8 units of water, 3 hours) cures it.",
     "UI_HomeMedic_Hb_Care_dysentery": "Keep drinking: it kills through thirst.",
     "UI_HomeMedic_Hb_Care_insomnia": "Only a sleep aid lets you fall asleep while it lasts.",
-    "UI_HomeMedic_Hb_Care_painkiller_addiction": "An active painkiller dose holds the withdrawal off for a while."
+    "UI_HomeMedic_Hb_Care_painkiller_addiction": "An active painkiller dose holds the withdrawal off for a while.",
+    "UI_options_HARMONIE_HomeMedic_followCharWindow": "Open with the character window",
+    "UI_options_HARMONIE_HomeMedic_followCharWindow_tooltip": "The medical window opens and closes together with the character window (info / skills / health), however it is opened or closed.",
+    "UI_HomeMedic_Watch_Give": "Put my medical watch on the patient",
+    "UI_HomeMedic_Watch_NoBattery": "Your medical watch has no battery left.",
+    "UI_HomeMedic_Watch_NoWatch": "You have no medical monitor watch with you.",
+    "UI_HomeMedic_Watch_Done": "There, the watch is on.",
+    "UI_HomeMedic_Watch_Fail_TooFar": "Too far away: stand next to the patient.",
+    "UI_HomeMedic_Watch_Fail_Already": "The patient already wears a powered watch.",
+    "UI_HomeMedic_Watch_Fail_NoWatch": "You have no medical monitor watch with you.",
+    "UI_HomeMedic_Watch_Fail_NoBattery": "Your medical watch has no battery left.",
+    "UI_HomeMedic_Watch_Fail_Invalid": "Could not put the watch on."
 }

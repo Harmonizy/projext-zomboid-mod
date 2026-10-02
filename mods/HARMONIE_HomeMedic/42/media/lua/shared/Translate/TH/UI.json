@@ -2781,5 +2781,16 @@
     "UI_HomeMedic_Hb_Care_heat_stroke": "ทำให้ร่างกายเย็นลง: แช่น้ำเย็นในอ่าง (คลิกขวาที่อ่างอาบน้ำ ใช้น้ำ 8 หน่วย นาน 3 ชั่วโมง) รักษาหายได้",
     "UI_HomeMedic_Hb_Care_dysentery": "ดื่มน้ำต่อเนื่อง: โรคนี้ทำให้ตายจากการขาดน้ำ",
     "UI_HomeMedic_Hb_Care_insomnia": "มีแค่ยาช่วยนอนหลับที่ทำให้หลับได้ ระหว่างที่ยายังออกฤทธิ์",
-    "UI_HomeMedic_Hb_Care_painkiller_addiction": "ยาแก้ปวดที่ยังออกฤทธิ์อยู่ ช่วยกดอาการถอนยาไว้ได้ชั่วคราว"
+    "UI_HomeMedic_Hb_Care_painkiller_addiction": "ยาแก้ปวดที่ยังออกฤทธิ์อยู่ ช่วยกดอาการถอนยาไว้ได้ชั่วคราว",
+    "UI_options_HARMONIE_HomeMedic_followCharWindow": "เปิด/ปิดพร้อมหน้าต่างตัวละคร",
+    "UI_options_HARMONIE_HomeMedic_followCharWindow_tooltip": "หน้าต่างการแพทย์จะเปิดและปิดพร้อมกับหน้าต่างตัวละคร (ข้อมูล / ทักษะ / สุขภาพ) ไม่ว่าจะเปิดหรือปิดด้วยวิธีไหน",
+    "UI_HomeMedic_Watch_Give": "ใส่นาฬิกาตรวจสุขภาพของฉันให้ผู้ป่วย",
+    "UI_HomeMedic_Watch_NoBattery": "นาฬิกาตรวจสุขภาพของคุณแบตเตอรี่หมด",
+    "UI_HomeMedic_Watch_NoWatch": "คุณไม่มีนาฬิกาตรวจสุขภาพติดตัว",
+    "UI_HomeMedic_Watch_Done": "เรียบร้อย ใส่นาฬิกาให้แล้ว",
+    "UI_HomeMedic_Watch_Fail_TooFar": "อยู่ไกลเกินไป: ยืนข้างผู้ป่วย",
+    "UI_HomeMedic_Watch_Fail_Already": "ผู้ป่วยสวมนาฬิกาที่มีแบตเตอรี่อยู่แล้ว",
+    "UI_HomeMedic_Watch_Fail_NoWatch": "คุณไม่มีนาฬิกาตรวจสุขภาพติดตัว",
+    "UI_HomeMedic_Watch_Fail_NoBattery": "นาฬิกาตรวจสุขภาพของคุณแบตเตอรี่หมด",
+    "UI_HomeMedic_Watch_Fail_Invalid": "ใส่นาฬิกาให้ไม่สำเร็จ"
 }
