@@ -3320,5 +3320,19 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     And an action taken off the queue before it starts gets forceCancel(),
     NOT stop(): anything stop() cleans up (a UI's "busy" lock) must be
     cleaned up in forceCancel() too (TWA actions, 2026-10-02).
+[ ] Gating anything on the player's access level? In B42 (roles) an
+    ordinary player is "user", NOT "None" -- "anything but none" lets
+    everyone in. Whitelist the staff roles (admin / moderator / overseer /
+    gm, lowercased). And on a multiplayer CLIENT, isDebugEnabled() /
+    getDebug() only say the client was started with -debug: never a
+    reason to show admin tools there (TWA admin + weapon editor, GTP).
+[ ] Porting another mod's media? Copy ONLY the files your own scripts
+    reference. A file at the same path as a vanilla one (models_X/weapons/
+    1handed/HuntingKnife.fbx, textures/weapons/...) silently REPLACES the
+    vanilla asset for every player -- TWA shipped 135 such SOMW files (B41
+    meshes/textures for vanilla knives, hammers, shovels, spears...), so
+    vanilla knives were held backwards in B42. Check: every file under
+    models_X / textures must be named by a mesh= / texture= / Icon= of
+    your own scripts (or by your Lua), 2026-10-02.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

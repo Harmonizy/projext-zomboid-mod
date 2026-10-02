@@ -100,20 +100,27 @@ local function coerce(f, v)
     return n
 end
 
+-- 2026-10-02: B42 roles -- an ordinary player's access level is "user"
+-- (not "None"), so "anything but none" let every player through. Only
+-- these staff roles count (same names EHR's server checks use).
+local STAFF_ROLES = { admin = true, moderator = true, overseer = true, gm = true }
+local function isStaff(player)
+    local ok, lvl = pcall(function() return player:getAccessLevel() end)
+    return ok and lvl ~= nil and STAFF_ROLES[string.lower(tostring(lvl))] == true
+end
+
 function W.isAllowed(player)
     if not TWAConfig.on("AllowWeaponDebug") then return false end
+    if not player then return false end
     -- Round 25: on a server the -debug / isAdmin() globals describe the
-    -- SERVER, not the player who sent the edit -- a server started with
-    -- -debug let every player edit weapons. There only the sender's own
-    -- access level counts.
-    if isServer and isServer() then
-        local lvl = player and player.getAccessLevel and player:getAccessLevel()
-        return lvl ~= nil and lvl ~= "" and string.lower(tostring(lvl)) ~= "none"
+    -- SERVER (and on its clients, only that client), not the player -- in
+    -- multiplayer only the player's own staff role counts.
+    local mp = (isServer and isServer()) or (isClient and isClient())
+    if not mp then
+        if isDebugEnabled and isDebugEnabled() then return true end
+        if isAdmin and isAdmin() then return true end
     end
-    if isDebugEnabled and isDebugEnabled() then return true end
-    if isAdmin and isAdmin() then return true end
-    local lvl = player and player.getAccessLevel and player:getAccessLevel()
-    return lvl ~= nil and lvl ~= "" and string.lower(tostring(lvl)) ~= "none"
+    return isStaff(player)
 end
 
 -- Put the stored overrides back on the weapon (also the unfinished item's 0

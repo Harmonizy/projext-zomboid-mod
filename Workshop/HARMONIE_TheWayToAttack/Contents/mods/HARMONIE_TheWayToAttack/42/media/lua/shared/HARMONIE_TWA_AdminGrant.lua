@@ -51,17 +51,26 @@ local function firstExisting(list)
     return nil
 end
 
--- who may use it: the player's own access level (on a server), or an admin
--- / -debug game locally
-function A.isAllowed(player)
-    if isServer and isServer() then
-        local ok, lvl = pcall(function() return player:getAccessLevel() end)
-        return ok and lvl ~= nil and lvl ~= "" and string.lower(tostring(lvl)) ~= "none"
-    end
-    if isDebugEnabled and isDebugEnabled() then return true end
-    if isAdmin and isAdmin() then return true end
+-- 2026-10-02: B42 roles -- an ordinary player's access level is "user"
+-- (not "None"), so "anything but none" let every player through. Only
+-- these staff roles count (same names EHR's server checks use).
+local STAFF_ROLES = { admin = true, moderator = true, overseer = true, gm = true }
+local function isStaff(player)
     local ok, lvl = pcall(function() return player:getAccessLevel() end)
-    return ok and lvl ~= nil and lvl ~= "" and string.lower(tostring(lvl)) ~= "none"
+    return ok and lvl ~= nil and STAFF_ROLES[string.lower(tostring(lvl))] == true
+end
+
+-- who may use it: a staff role (on a server, checked there for the sender);
+-- a -debug game or an admin only in single player -- on a server's client
+-- those flags say nothing about this player
+function A.isAllowed(player)
+    if not player then return false end
+    local mp = (isServer and isServer()) or (isClient and isClient())
+    if not mp then
+        if isDebugEnabled and isDebugEnabled() then return true end
+        if isAdmin and isAdmin() then return true end
+    end
+    return isStaff(player)
 end
 
 local function procsOf(recipe)

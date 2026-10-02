@@ -129,10 +129,28 @@ function TWANeatButton:new(x, y, w, h, title, target, onclick)
     return o
 end
 
+-- 2026-10-02: the main-step buttons (Start, Confirm procedure, Finish) set
+-- `pulse`: while they can be pressed they glow brighter and dimmer slowly
+-- (one cycle every PULSE_MS) with a soft halo, so the next step stands out.
+TWANeatButton.PULSE_MS = 1600
+function TWANeatButton:pulseLevel()
+    if not self.pulse or self.enable == false or self:isMouseOver() then return nil end
+    local ms = getTimestampMs and getTimestampMs() or 0
+    return 0.5 + 0.5 * math.sin((ms % self.PULSE_MS) / self.PULSE_MS * 2 * math.pi)
+end
+
 function TWANeatButton:render()
     local disabled = self.enable == false
     local alpha = disabled and 0.35 or (self:isMouseOver() and 1 or 0.85)
     local t = self.neatTint
+    local p = self:pulseLevel()
+    if p then
+        -- halo just outside the button, then a brighter tint for the body
+        self:drawRectBorder(-2, -2, self.width + 4, self.height + 4, 0.25 + 0.55 * p, t.r, t.g, t.b)
+        self:drawRectBorder(-1, -1, self.width + 2, self.height + 2, 0.35 + 0.5 * p, 1, 1, 1)
+        alpha = 0.6 + 0.4 * p
+        t = { r = math.min(1, t.r * (0.75 + 0.5 * p)), g = math.min(1, t.g * (0.75 + 0.5 * p)), b = math.min(1, t.b * (0.75 + 0.5 * p)) }
+    end
     local drew = NeatTool.ThreePatch.drawHorizontal(self, 0, 0, self.width, self.height,
         self.neatTextures[1], self.neatTextures[2], self.neatTextures[3], alpha, t.r, t.g, t.b)
     if not drew then
@@ -1177,6 +1195,7 @@ function TWACraftWindow:createChildren()
     self:addChild(self.incompleteButton)
 
     self.finishButton = TWANeatButton:new(centerX + 2 * (btnW + 10), panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinishButtonClicked)
+    self.finishButton.pulse = true
     self.finishButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     self.finishButton:initialise()
@@ -1187,6 +1206,7 @@ function TWACraftWindow:createChildren()
     -- the supplementary item right away (TWA_StartCraftAction) and locks
     -- the window to this recipe; the 3 buttons above replace it after.
     self.startButton = TWANeatButton:new(centerX, panelBottom - btnH, CENTER_W - 20, btnH, getText("IGUI_TWA_StartCraft"), self, TWACraftWindow.onStartButtonClicked)
+    self.startButton.pulse = true
     self.startButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.startButton:setTooltip(getText("IGUI_TWA_Tooltip_StartCraft"))
     self.startButton:initialise()
@@ -1230,6 +1250,7 @@ function TWACraftWindow:createChildren()
     self.procPracticeButton:initialise()
     self:addChild(self.procPracticeButton)
     self.procConfirmButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_ConfirmProcedure"), self, TWACraftWindow.onConfirmProcedure)
+    self.procConfirmButton.pulse = true
     self.procConfirmButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.procConfirmButton:setTooltip(getText("IGUI_TWA_Tooltip_ConfirmProcedure"))
     self.procConfirmButton:initialise()
@@ -2000,6 +2021,8 @@ function TWACraftWindow:drawProcedureDetails()
         and not self.activeProcId and not self.activeCenterAction
     self.procConfirmButton:setVisible(canConfirm or inProgress and true or false)
     self.procConfirmButton.enable = (canConfirm and met) or (inProgress and true or false)
+    -- blink only as "do this next": not as Stop, not as Redo
+    self.procConfirmButton.pulse = (canConfirm and met and not done) and true or false
     -- Done already -> the same button redoes it (request 2026-09-28); while
     -- running it stops it (round 20).
     if inProgress then
