@@ -2598,6 +2598,21 @@ verified on a real dedicated server by this repo) ***
     client), with a flag on the action so it happens exactly once. Same for
     our own client-only action classes that send their command from
     complete() (EHR_ApplyBandagePackAction: perform() now calls it on MP).
+  - *** NEVER call player:transmitModData() from a client, and NEVER keep
+    server-only state in the player's ModData *** (2026-10-02, real bug that
+    broke TWA crafting on servers: closing the window lost the items, Finish
+    gave nothing). transmitModData() sends the client's copy of the WHOLE
+    player ModData and the server's copy is REPLACED by it. Our own Garden to
+    Plate did this every 10 s, wiping TWA's server-side TWA_ActiveCraft (the
+    client never has it) -- and rolling back anything EHR/Home Medic wrote on
+    the server since the last sync. Rules:
+      * client -> server: send only YOUR key, as a sendClientCommand; the
+        server writes that one key (GTP VitData.sync, 0.7.3);
+      * state only the server owns (a record to pay out from, an anti-cheat
+        token): keep it in Global ModData (ModData.getOrCreate("<Mod>_..."),
+        keyed by username) -- saved with the world, untouched by any client
+        sync (TWA active craft, round 30). EHR's own SafeTransmitModData
+        already refuses to do a full client transmit for this reason.
   - *** Never rely on OnPlayerGetDamage to notice zombie bites in MP *** --
     MP zombie hits are applied by the server and pushed to the client
     without firing it (TOC's isIgnoredPartInfected flag was never set, so a
@@ -3260,6 +3275,10 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     client isValid() stops re-checking server-owned items after start(),
     client-side effects of a vanilla action hooked in perform() too (once,
     flagged), and no OnPlayerGetDamage for zombie bites.
+[ ] Syncing player data? NEVER player:transmitModData() from a client (it
+    overwrites the server's whole player ModData, other mods' keys too):
+    send your own key with sendClientCommand. Server-only records go in
+    Global ModData, not the player's ModData (section 8.15).
 [ ] Looping players on the server? getOnlinePlayers() is EMPTY in single
     player -- fall back to getSpecificPlayer(0..3) when it has no entries
     (HM_Diagnosis prune never ran in SP because of this).

@@ -437,16 +437,49 @@ end
 -- Pressing Start takes the base item and the supplementary item (base2)
 -- AWAY, and the craft becomes the character's one active craft until it is
 -- finished, cancelled or left incomplete. The authoritative record lives in
--- the character's own ModData where the timed actions' complete() runs --
--- the server in multiplayer, this machine in single player:
---   TWA_ActiveCraft = { recipeId = "...", map = { [procId] = word, ... } }
+-- the authority -- the server in multiplayer, this machine in single player
+-- (Global ModData since round 30, see S.getActive):
+--   [username] = { recipeId = "...", map = { [procId] = word, ... } }
 -- Every way out goes through giveBack() below, which only ever pays out
 -- against that record and clears it in the same step, so a client can't
 -- make the server hand the same items back twice.
 
+-- ROUND 30 (2026-10-02, real server bug: closing the window lost the items,
+-- Finish gave nothing): the record USED to live in the character's ModData
+-- on the server. Any client that calls player:transmitModData() (our own
+-- Garden to Plate did, every 10 s) sends ITS copy of the whole player
+-- ModData -- which never has TWA_ActiveCraft -- and the server's copy is
+-- replaced, so the record vanished mid-craft. It now lives in the world's
+-- Global ModData (ModData.getOrCreate), keyed by username: saved with the
+-- world, and nothing a client sends about the player touches it.
+S.ACTIVE_KEY = "HARMONIE_TWA_ActiveCrafts"
+
+local function activeStore()
+    if ModData and ModData.getOrCreate then
+        local ok, t = pcall(ModData.getOrCreate, S.ACTIVE_KEY)
+        if ok and type(t) == "table" then return t end
+    end
+    S._activeMem = S._activeMem or {}
+    return S._activeMem
+end
+
+local function activeKey(character)
+    local ok, name = pcall(function() return character:getUsername() end)
+    return (ok and name and name ~= "") and name or tostring(character)
+end
+
 function S.getActive(character)
-    local md = character and character:getModData()
-    return md and md.TWA_ActiveCraft or nil
+    if not character then return nil end
+    local store, key = activeStore(), activeKey(character)
+    local act = store[key]
+    -- an older save still holding it on the character: move it over
+    local md = character:getModData()
+    if not act and md and type(md.TWA_ActiveCraft) == "table" then
+        act = md.TWA_ActiveCraft
+        store[key] = act
+        md.TWA_ActiveCraft = nil
+    end
+    return act
 end
 
 local BOOKMARK_KEYS = { TWA_RecipeId = true, TWA_DoneProcedures = true, TWA_ProcQuality = true,
@@ -485,7 +518,7 @@ end
 function S.beginActive(character, recipeId, map, baseSnap, base2Snap)
     local m = {}
     for k, v in pairs(map or {}) do if S.isWord(v) then m[k] = v end end
-    character:getModData().TWA_ActiveCraft = { recipeId = recipeId, map = m, base = baseSnap, base2 = base2Snap }
+    activeStore()[activeKey(character)] = { recipeId = recipeId, map = m, base = baseSnap, base2 = base2Snap }
 end
 
 -- The progress a base item carries as a bookmark for `recipeId` (resuming),
@@ -500,7 +533,9 @@ function S.bookmarkMap(item, recipeId)
 end
 
 function S.clearActive(character)
-    character:getModData().TWA_ActiveCraft = nil
+    activeStore()[activeKey(character)] = nil
+    local md = character:getModData()
+    if md then md.TWA_ActiveCraft = nil end
 end
 
 -- One procedure's word, recorded into the active craft (only if that craft's
