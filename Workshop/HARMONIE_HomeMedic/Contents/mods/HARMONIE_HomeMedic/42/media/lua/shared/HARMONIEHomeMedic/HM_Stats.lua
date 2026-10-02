@@ -269,6 +269,57 @@ local function signRows(player, out)
     if not any then out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Stats_NoSigns", t = "No measurable signs", s = "" } end
 end
 
+-- ------------------------------------------------------------- abnormal values
+-- row.bad = true when a value is clearly outside the healthy range; the
+-- Body Stats tab draws it red. Ranges by row key (vanilla moodle-ish limits).
+local function above(lim) return function(v) return v > lim end end
+local function below(lim) return function(v) return v < lim end end
+local function outside(lo, hi) return function(v) return v < lo or v > hi end end
+St.ABNORMAL = {
+    UI_HomeMedic_Stat_Health = below(60),
+    UI_HomeMedic_Stat_BodyTemp = outside(36.0, 37.5),
+    UI_HomeMedic_Stat_TEMPERATURE = outside(36.0, 37.5),
+    UI_HomeMedic_Stat_Immunity = below(40),
+    UI_HomeMedic_Stat_InfectionLevel = above(0),
+    UI_HomeMedic_Stat_ENDURANCE = below(0.3),
+    UI_HomeMedic_Stat_FATIGUE = above(0.6),
+    UI_HomeMedic_Stat_HUNGER = above(0.5),
+    UI_HomeMedic_Stat_THIRST = above(0.5),
+    UI_HomeMedic_Stat_PAIN = above(0.3),
+    UI_HomeMedic_Stat_INTOXICATION = above(0.5),
+    UI_HomeMedic_Stat_STRESS = above(0.6),
+    UI_HomeMedic_Stat_PANIC = above(0.5),
+    UI_HomeMedic_Stat_UNHAPPINESS = above(0.6),
+    UI_HomeMedic_Stat_BOREDOM = above(0.7),
+    UI_HomeMedic_Stat_ANGER = above(0.6),
+    UI_HomeMedic_Stat_DISCOMFORT = above(0.6),
+    UI_HomeMedic_Stat_SANITY = below(0.6),
+    UI_HomeMedic_Stat_MORALE = below(0.3),
+    UI_HomeMedic_Stat_NICOTINE_WITHDRAWAL = above(0.5),
+    UI_HomeMedic_Stat_SICKNESS = above(0.25),
+    UI_HomeMedic_Stat_FOOD_SICKNESS = above(0.25),
+    UI_HomeMedic_Stat_POISON = above(0.1),
+    UI_HomeMedic_Stat_ZOMBIE_INFECTION = above(0),
+    UI_HomeMedic_Stat_ZOMBIE_FEVER = above(0),
+    UI_HomeMedic_Stat_Weight = outside(65, 100),
+}
+local function markAbnormal(out)
+    for _, row in ipairs(out) do
+        if row.g == "signs" then
+            row.bad = row.tag ~= nil
+        elseif row.g == "moodles" then
+            row.bad = row.gb == 2 and (row.lv or 0) >= 2
+        elseif row.k == "UI_HomeMedic_Stat_Blood" then
+            row.bad = (row.f or 1) < 0.85
+        else
+            local test = row.k and St.ABNORMAL[row.k]
+            if test and type(row.v) == "number" then row.bad = test(row.v) or nil end
+        end
+        if not row.bad then row.bad = nil end
+    end
+end
+St.markAbnormal = markAbnormal
+
 function St.collect(player)
     local out = {}
     if not player then return out end
@@ -278,6 +329,7 @@ function St.collect(player)
     pcall(vanillaStats, player, out)
     pcall(registryRows, player, out)
     pcall(modernStatusRows, player, out)
+    pcall(markAbnormal, out)
     return out
 end
 

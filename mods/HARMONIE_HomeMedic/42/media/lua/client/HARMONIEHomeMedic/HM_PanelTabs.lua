@@ -62,6 +62,7 @@ local function barColor(row)
 end
 
 local function patientOf(panel) return panel.player end
+local BAD = { r = 1.0, g = 0.33, b = 0.28 }   -- abnormal values (bright red on the dark panel)
 
 -- vanilla moodle icon by moodle type name; tries the game's texture paths,
 -- nil when none is found (a drawn badge is used instead)
@@ -265,9 +266,12 @@ function EHR_HealthPanelUI:hmDrawStats()
                     local labelText = rowLabel(row)
                     if row.g == "moodles" then labelW = colW - 50 end
                     local label = S.fitText(labelText, labelW - (lx - col.x), function(t) return tw(t) end)
-                    local lc = row.g == "signs" and row.tag and c.yellow or c.text
+                    -- abnormal (HM_Stats.markAbnormal): label and value red
+                    local lc = row.bad and BAD or c.text
+                    local vc = row.bad and BAD or c.textDim
+                    if row.bad then self:drawRect(col.x, y - 1, 3, rowH, 0.9, BAD.r, BAD.g, BAD.b) end
                     self:drawText(label, lx, y + 2, lc.r, lc.g, lc.b, 1, FONT)
-                    self:drawText(value, col.x + colW - 6 - valueW, y + 2, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT)
+                    self:drawText(value, col.x + colW - 6 - valueW, y + 2, vc.r, vc.g, vc.b, 1, FONT)
                     if row.f then
                         local bx = col.x + labelW + 6
                         local bw = colW - labelW - valueW - 24

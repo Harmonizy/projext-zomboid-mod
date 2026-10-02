@@ -748,64 +748,10 @@ if Events and Events.OnServerCommand and not C.registered then
 end
 
 -- ============================================================= menus
-local function menuFor(context, doctor, patient, bodyPart, exam)
-    if not context or not doctor or not patient or not bodyPart then return false end
-    if SandboxVars and SandboxVars.HomeMedic and SandboxVars.HomeMedic.SurgeryEnabled == false then return false end
-    local list = C.surgeriesFor(doctor, patient, bodyPart, exam)
-    local first = list[1]
-    if not first then return false end
-    local opt = context:addOption(S.T("Menu", "Surgery"), doctor, C.openPrep, patient, bodyPart, first, exam)
-    if ISToolTip then
-        local tip = ISToolTip:new()
-        tip:initialise()
-        tip:setVisible(false)
-        tip.description = S.T("MenuTip", "Open the pre-op checklist.")
-        opt.toolTip = tip
-    end
-    return true
-end
-C.menuFor = menuFor
-
-function C.install()
-    if C.installed then return end
-    C.installed = true
-    if ISHealthPanel and ISHealthPanel.doBodyPartContextMenu then
-        local orig = ISHealthPanel.doBodyPartContextMenu
-        ISHealthPanel.doBodyPartContextMenu = function(self, bodyPart, x, y, ...)
-            local r = orig(self, bodyPart, x, y, ...)
-            local patient = self.character
-            local doctor = self.otherPlayer or self.character
-            local pn = doctor and doctor.getPlayerNum and doctor:getPlayerNum() or 0
-            local context = getPlayerContextMenu and getPlayerContextMenu(pn)
-            if context and menuFor(context, doctor, patient, bodyPart, nil) then
-                context:setVisible(true)
-                context:bringToTop()
-            end
-            return r
-        end
-    end
-    if EHR_HealthPanelUI and EHR_HealthPanelUI.openRemoteBodyPartContextMenu then
-        local orig = EHR_HealthPanelUI.openRemoteBodyPartContextMenu
-        function EHR_HealthPanelUI:openRemoteBodyPartContextMenu(bodyPart, x, y, bodyPartType)
-            local shown = orig(self, bodyPart, x, y, bodyPartType)
-            if not self.isRemoteHealthPanel or not bodyPart then return shown end
-            local doctor = self.remoteDoctor
-            local pn = self.playerNum or (doctor and doctor:getPlayerNum()) or 0
-            local context
-            if shown then context = getPlayerContextMenu(pn)
-            else
-                context = ISContextMenu.get(pn, x + self:getAbsoluteX(), y + self:getAbsoluteY())
-                context.origin = self.bodyPartPanel or self
-            end
-            if context and menuFor(context, doctor, self.player, bodyPart, self.remoteExamData) then
-                context:setVisible(true)
-                context:bringToTop()
-                return true
-            end
-            if not shown and context then context:setVisible(false) end
-            return shown
-        end
-    end
-end
+-- Request 2026-10-02: no "Surgery" entry in the body-part right-click menu;
+-- operations start from the medical window's Surgery tab only (the tab and
+-- the first tab's Surgery button). C.install stays for callers.
+function C.menuFor() return false end
+function C.install() C.installed = true end
 
 if Events and Events.OnGameStart then Events.OnGameStart.Add(C.install) end
