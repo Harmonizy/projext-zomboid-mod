@@ -197,9 +197,7 @@ D.SIGNS = {
     stiffness = { at = "stats", test = function(v)
         -- the neck (tetanus) always counts; arms and legs only with pain --
         -- a workout leaves them stiff too, without pain (vanilla)
-        -- (raw stiffness here: GTP's vitamin D floor IS a stiffness sign,
-        -- of the vitamin D deficiency -- HM_Vitamins)
-        local on, reading = partStiff({ "Neck" }, 10)({ parts = v.parts })
+        local on, reading = partStiff({ "Neck" }, 10)(v)
         if on then return on, reading end
         return strainedMuscle(v)
     end },

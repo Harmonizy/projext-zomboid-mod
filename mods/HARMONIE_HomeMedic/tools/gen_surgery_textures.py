@@ -5,10 +5,7 @@ Writes 42/media/textures/HARMONIE_HomeMedic/surg_dot.png (filled circle) and
 surg_ring.png (ring), white on transparent, antialiased, 128 px -- the games
 tint and scale them (HM_SurgeryGames.lua) -- and tab_*.png, the
 medical window's tab icons (one badge style: monitor, immunity, stats,
-diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button
--- and vit_<A..K>.png, the disease-handbook icons of the vitamin
-deficiencies (HM_Vitamins; a fruit-like disc with the letter stroked by
-hand, no font).
+diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button.
 """
 import os
 import numpy as np
@@ -182,68 +179,6 @@ def tab_meds(size=128):
     return _done(img, size)
 
 
-# vitamin letters as strokes on a 0..1 box (x right, y down)
-LETTERS = {
-    "A": [[(0.05, 1), (0.5, 0), (0.95, 1)], [(0.25, 0.6), (0.75, 0.6)]],
-    "B": [[(0.1, 0), (0.1, 1)], "B"],
-    "C": ["C"],
-    "D": [[(0.1, 0), (0.1, 1)], "D"],
-    "E": [[(0.9, 0), (0.1, 0), (0.1, 1), (0.9, 1)], [(0.1, 0.5), (0.75, 0.5)]],
-    "K": [[(0.1, 0), (0.1, 1)], [(0.9, 0), (0.1, 0.58)], [(0.38, 0.38), (0.9, 1)]],
-}
-VIT_COLOURS = {"A": (240, 128, 40), "B": (196, 150, 72), "C": (250, 190, 40),
-               "D": (250, 222, 90), "E": (120, 196, 80), "K": (60, 150, 80)}
-
-
-def _letter_paths(ch):
-    import math
-    out = []
-    for part in LETTERS[ch]:
-        if part == "B":   # two bowls
-            for y0, y1, w in ((0, 0.5, 0.72), (0.5, 1, 0.82)):
-                ry = (y1 - y0) / 2
-                pts = [(0.1, y0)]
-                for k in range(13):
-                    a = -math.pi / 2 + math.pi * k / 12
-                    pts.append((w + 0.12 * math.cos(a) - 0.0, y0 + ry + ry * math.sin(a)))
-                pts.append((0.1, y1))
-                out.append(pts)
-        elif part == "D":
-            pts = [(0.1, 0)]
-            for k in range(17):
-                a = -math.pi / 2 + math.pi * k / 16
-                pts.append((0.42 + 0.48 * math.cos(a), 0.5 + 0.5 * math.sin(a)))
-            pts.append((0.1, 1))
-            out.append(pts)
-        elif part == "C":
-            pts = []
-            for k in range(21):
-                a = math.radians(-50 - 260 * k / 20)
-                pts.append((0.55 + 0.45 * math.cos(a), 0.5 + 0.5 * math.sin(a)))
-            out.append(pts)
-        else:
-            out.append(part)
-    return out
-
-
-def vit_icon(letter, size=256):
-    """A vitamin: coloured disc (a fruit), a leaf, its letter."""
-    img, d, s = _canvas(size)
-    col = VIT_COLOURS[letter]
-    dark = tuple(int(c * 0.55) for c in col) + (255,)
-    d.ellipse([22 * s, 28 * s, 106 * s, 112 * s], fill=col + (255,), outline=dark, width=int(4 * s))
-    d.ellipse([34 * s, 38 * s, 54 * s, 54 * s], fill=(255, 255, 255, 90))       # shine
-    d.polygon([(64 * s, 30 * s), (80 * s, 12 * s), (92 * s, 18 * s), (74 * s, 32 * s)], fill=(80, 170, 90, 255))
-    bx, by, bw, bh = 46, 48, 36, 46
-    for path in _letter_paths(letter):
-        pts = [((bx + x * bw) * s, (by + y * bh) * s) for x, y in path]
-        d.line(pts, fill=(28, 30, 38, 255), width=int(8 * s), joint="curve")
-        r = 4 * s
-        for px, py in (pts[0], pts[-1]):
-            d.ellipse([px - r, py - r, px + r, py + r], fill=(28, 30, 38, 255))
-    return _done(img, size)
-
-
 TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats,
         "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook, "tab_surgery": tab_surgery,
         "tab_meds": tab_meds}
@@ -257,6 +192,4 @@ if __name__ == "__main__":
         fn().save(os.path.join(OUT, name + ".png"))
     pin_icon(True).save(os.path.join(OUT, "pin_on.png"))
     pin_icon(False).save(os.path.join(OUT, "pin_off.png"))
-    for letter in LETTERS:
-        vit_icon(letter).save(os.path.join(OUT, "vit_" + letter + ".png"))
     print("wrote", OUT)

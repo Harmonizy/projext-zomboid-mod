@@ -21,7 +21,6 @@ require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Diagnosis"
 require "HARMONIEHomeMedic/HM_Stats"
 require "HARMONIEHomeMedic/HM_DiagnoseResultUI"
-require "HARMONIEHomeMedic/HM_Vitamins"
 local S = HM_Surgery
 local D = HM_Diagnosis
 D.Client = D.Client or {}
@@ -231,28 +230,6 @@ function EHR_HealthPanelUI:collectDiagnosis()
                     status = treatments.wound_infection and L("Treating", "TREATING") or L("Untreated", "UNTREATED"),
                     statusColor = treatments.wound_infection and { 0.35, 0.85, 0.45 } or { 0.95, 0.75, 0.25 },
                     lines = lines, tip = codex("wound_infection", "Treatment") or "" }
-            end
-        end
-    end
-
-    -- vitamin deficiencies (our Garden to Plate mod; HM_Vitamins)
-    local V = HM_Vitamins
-    if V and V.registered then
-        local store = V.store(get, patient)
-        local cfg = HARMONIE_GTP and HARMONIE_GTP.Config or {}
-        for _, l in ipairs(V.LETTERS) do
-            local id = V.id(l)
-            local e = store and store[l]
-            if type(e) == "table" and e.afflicted == true and seen(id) then
-                local shielded = (tonumber(e.pauseDays) or 0) >= 1
-                local lines = { L("Vit_Effect_" .. l, l), L("Vit_Endurance", "Endurance capped 10% lower (stacks per vitamin)"),
-                    L("Vit_Level", "Vitamin %1: %2 / %3 (recovers at %4)", l, math.floor((tonumber(e.value) or 0) + 0.5),
-                        cfg.maxValue or 100, cfg.sufficientThreshold or 50) }
-                if shielded then lines[#lines + 1] = L("Vit_Shielded", "Held off for now by banked days (multivitamin or a good meal).") end
-                cards[#cards + 1] = { id = id, title = diseaseName(id),
-                    status = shielded and L("Vit_StatusShielded", "HELD OFF") or L("Vit_Status", "DEFICIENT"),
-                    statusColor = shielded and { 0.45, 0.70, 1.0 } or { 0.95, 0.75, 0.25 },
-                    lines = lines, tip = codex(id, "Prevention") or "" }
             end
         end
     end

@@ -70,34 +70,28 @@ function M:getCatalogEntries()
     local out = {}
     for _, m in ipairs(H.meds()) do
         out[#out + 1] = { id = m.id, med = m.med, displayName = m.name, realName = m.name, known = true,
-            curative = m.curative, tier = m.tier, treats = m.treats, food = m.food, vitamin = m.vitamin, iconType = m.iconType }
+            curative = m.curative, tier = m.tier, treats = m.treats }
     end
     return out
 end
 
 function M:getFilters()
-    local out = {
+    return {
         { id = "all", label = L("Filter_all", "All") },
         { id = "cure", label = L("Filter_cure", "Cures") },
         { id = "ease", label = L("Filter_ease", "Eases symptoms") },
     }
-    if HM_Vitamins and HM_Vitamins.registered then out[#out + 1] = { id = "vitamin", label = L("Filter_vitamin", "Vitamins") } end
-    return out
 end
 
 function M:entryMatches(entry, filter)
     if filter == "cure" then return entry.curative end
     if filter == "ease" then return not entry.curative end
-    if filter == "vitamin" then return entry.vitamin == true end
     return true
 end
 
 -- search: name, kind, the illnesses it treats and the symptoms it eases
 function M:searchText(entry)
     local parts = { entry.displayName or "", entry.curative and L("Kind_cure", "Cures") or L("Kind_ease", "Eases symptoms") }
-    if entry.food and H.foodNames then
-        for _, n in ipairs(H.foodNames(entry.food, 8)) do parts[#parts + 1] = n end
-    end
     for _, t in ipairs(entry.treats or {}) do parts[#parts + 1] = diseaseName(t) end
     for k in pairs(type(entry.med.symptomReduction) == "table" and entry.med.symptomReduction or {}) do
         parts[#parts + 1] = L("Relief_" .. tostring(k), tostring(k))
@@ -141,7 +135,7 @@ function M.drawListItem(list, y, item, alt)
     list:drawRect(4, y + 4, w - 12, list.itemheight - 8, selected and 0.82 or (alt and 0.38 or 0.24), bg.r, bg.g, bg.b)
     list:drawRectBorder(4, y + 4, w - 12, list.itemheight - 8, 1, selected and C.border.r or C.borderDim.r,
         selected and C.border.g or C.borderDim.g, selected and C.border.b or C.borderDim.b)
-    local icon = ui:itemIcon(e.iconType or e.id, e.med)
+    local icon = ui:itemIcon(e.id, e.med)
     if icon then
         list:drawTextureScaled(icon, 16, y + 14, 48, 48, 1, 1, 1, 1)
     else
@@ -151,31 +145,12 @@ function M.drawListItem(list, y, item, alt)
     local kind = e.curative and L("Kind_cure", "Cures") or L("Kind_ease", "Eases symptoms")
     local kc = e.curative and C.green or C.blue
     list:drawText(kind, 76, y + 42, kc.r, kc.g, kc.b, 1, UIFont.Small)
-    local tier = e.food and L("KindFood", "Food") or L("Tier_" .. tostring(e.tier), "Tier " .. tostring(e.tier))
+    local tier = L("Tier_" .. tostring(e.tier), "Tier " .. tostring(e.tier))
     list:drawText(tier, w - tw(tier) - 18, y + 42, C.textDim.r, C.textDim.g, C.textDim.b, 1, UIFont.Small)
     return y + list.itemheight
 end
 
 -- ------------------------------------------------------------- details
--- a vitamin's food entry (HM_Vitamins): the best sources and how it cures
-function M:drawFoodDetails(entry, x, y, w)
-    local l = entry.food
-    local cfg = HARMONIE_GTP and HARMONIE_GTP.Config or {}
-    y = self:drawInfoSection(L("Description", "Description"), L("FoodDesc",
-        "Eating adds vitamin %1 by how much of the food is eaten. Vitamin %1 deficiency ends when the vitamin is back to %2 (Sufficient); a meal rich in it also banks days that hold the effects off.",
-        l, cfg.sufficientThreshold or 50), x, y, w)
-    local rows = {}
-    for _, f in ipairs(H.topFoods(l, 10)) do
-        rows[#rows + 1] = L("FoodRow", "%1: %2 %3 per whole item", tostring(f.displayName or f.fullType),
-            string.format("%.1f", tonumber(f.amount) or 0), (l == "A" or l == "D" or l == "K") and "mcg" or "mg")
-    end
-    if #rows > 0 then y = self:drawInfoSection(L("FoodBest", "Best sources"), table.concat(rows, "\n"), x, y, w) end
-    local names = {}
-    for _, t in ipairs(entry.treats or {}) do names[#names + 1] = diseaseName(t) end
-    if #names > 0 then y = self:drawInfoSection(L("FoodCures", "Cures"), table.concat(names, ", "), x, y, w) end
-    return y
-end
-
 local function tooltipText(fullType, med)
     local sm = getScriptManager and getScriptManager()
     if sm then
@@ -197,7 +172,7 @@ local FLAGS = { "requiresIVKit", "requiresSyringe", "isTopical", "requiresActive
 function M:drawDiseaseDetails(entry, x, y, w, h)
     local med = entry.med or {}
     local iconSize = 86
-    local icon = self:itemIcon(entry.iconType or entry.id, med)
+    local icon = self:itemIcon(entry.id, med)
     if icon then
         self:drawTextureScaled(icon, x, y, iconSize, iconSize, 1, 1, 1, 1)
     else
@@ -212,19 +187,14 @@ function M:drawDiseaseDetails(entry, x, y, w, h)
     local kc = entry.curative and C.green or C.blue
     self:drawText(fit(kind, tWidth, UIFont.Medium), tx, ty, kc.r, kc.g, kc.b, 1, UIFont.Medium)
     ty = ty + fh(UIFont.Medium) + 2
-    self:drawText(fit(entry.food and L("KindFood", "Food") or L("Tier_" .. tostring(entry.tier), "Tier " .. tostring(entry.tier)), tWidth, UIFont.Medium), tx, ty, C.textDim.r, C.textDim.g, C.textDim.b, 1, UIFont.Medium)
+    self:drawText(fit(L("Tier_" .. tostring(entry.tier), "Tier " .. tostring(entry.tier)), tWidth, UIFont.Medium), tx, ty, C.textDim.r, C.textDim.g, C.textDim.b, 1, UIFont.Medium)
     ty = ty + fh(UIFont.Medium)
     y = math.max(y + iconSize, ty) + 18
     self:drawRect(x, y, w, 1, 0.76, C.border.r, C.border.g, C.border.b)
     y = y + 16
 
-    if entry.food then return self:drawFoodDetails(entry, x, y, w) end
     local desc = tooltipText(entry.id, med)
     if desc and desc ~= "" then y = self:drawInfoSection(L("Description", "Description"), desc, x, y, w) end
-    if med.hmEases then
-        y = self:drawInfoSection(L("VitPillsHead", "Vitamins (Garden to Plate)"), L("VitPillsBody",
-            "Each pill banks one day for every vitamin: a deficiency has no effect while its vitamin has a banked day. It does not raise the vitamins and does not cure a deficiency - food does."), x, y, w)
-    end
 
     -- what it treats
     local names = {}
