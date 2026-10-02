@@ -415,6 +415,7 @@ function Op:new(doctor, info)
     o.steps = S.Surgeries[info.sid].steps
     o.stepIndex, o.scores = 0, {}
     o.params = { skill = tonumber(info.skill) or 0, shake = tonumber(info.shake) or 0, tool = tonumber(info.tool) or 1 }
+    o.startQ = tonumber(info.startQ) or 1
     o.backgroundColor = { r = COL.bg[1], g = COL.bg[2], b = COL.bg[3], a = 0.97 }
     o.borderColor = { r = COL.border[1], g = COL.border[2], b = COL.border[3], a = 1 }
     o.moveWithMouse = true   -- drag by the title bar / edges (not the board)
@@ -577,12 +578,17 @@ function Op:prerender()
     end
     local sx = 16
     local sy = self.height - fh() - 18
+    -- starting quality (improvised instruments lower it; HM_Surgery.evaluate)
+    local sqv = tonumber(self.startQ) or 1
+    local sq = S.T("StartQ", "Starting quality: %1%", math.floor(sqv * 100 + 0.5))
+    local sqc = sqv >= 0.999 and COL.ok or COL.warn
+    self:drawText(sq, self.width - tw(sq) - 16, sy, sqc[1], sqc[2], sqc[3], 1, FONT)
     for n = 1, #self.steps do
         local v = self.scores[n]
         if v then
             local c = v >= 0.75 and COL.ok or (v >= 0.45 and COL.warn or COL.fail)
             local txt = n .. ": " .. math.floor(v * 100 + 0.5) .. "%"
-            if sx + tw(txt) < self.width - 130 then self:drawText(txt, sx, sy, c[1], c[2], c[3], 1, FONT) end
+            if sx + tw(txt) < self.width - tw(sq) - 30 then self:drawText(txt, sx, sy, c[1], c[2], c[3], 1, FONT) end
             sx = sx + tw(txt) + 14
         end
     end

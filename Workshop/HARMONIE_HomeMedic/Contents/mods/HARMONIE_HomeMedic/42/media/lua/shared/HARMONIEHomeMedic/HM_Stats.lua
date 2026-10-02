@@ -214,11 +214,30 @@ function St.gtp(player)
             -- by a banked pause day (VitEffects isActive)
             local active = e.afflicted == true and (tonumber(e.pauseDays) or 0) < 1 and cfg.effectsEnabled ~= false
             out[vit] = { value = v, band = band, afflicted = e.afflicted == true, active = active,
-                max = cfg.maxValue or 100 }
+                max = cfg.maxValue or 100, pauseDays = tonumber(e.pauseDays) or 0,
+                need = G.DailyRequirement and G.DailyRequirement[vit] }
         end
     end
     return out
 end
+
+-- Request 2026-10-02: what GTP's own vitamin window shows, per vitamin --
+-- its band (Critical / Low / Sufficient), whether the penalty is biting,
+-- the daily need and the banked rest days; the tooltip carries GTP's own
+-- status text. (The reserve values themselves already show under "From
+-- other mods".) The status text uses GTP's own keys so it matches its UI.
+local UNIT = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
+local function gtpText(key, fallback, ...)
+    if getText then
+        local ok, t
+        if select("#", ...) > 0 then ok, t = pcall(getText, key, ...) else ok, t = pcall(getText, key) end
+        if ok and t and t ~= key then return t end
+    end
+    local t = fallback
+    for i = 1, select("#", ...) do t = t:gsub("%%" .. i, tostring((select(i, ...)))) end
+    return t
+end
+local BAND = { critical = "Critical", low = "Low", sufficient = "Sufficient" }
 
 local function vitaminRows(player, out)
     local gtp = St.gtp(player)
@@ -227,9 +246,24 @@ local function vitaminRows(player, out)
     for _, vit in ipairs(G.Vitamins) do
         local e = gtp[vit]
         if e then
-            out[#out + 1] = { g = "vitamins", k = "UI_HomeMedic_Stat_Vitamin" .. vit, t = "Vitamin " .. vit, v = e.value,
-                f = clamp01(e.value / e.max), band = e.band, active = e.active or nil,
-                s = tostring(round(e.value, 1)) .. " / " .. tostring(e.max) }
+            local bandWord = BAND[e.band] or "Sufficient"
+            local downside = gtpText("IGUI_HARMONIE_Downside_" .. vit, "")
+            local status
+            if e.band == "critical" then status = downside
+            elseif e.band == "low" then status = gtpText("IGUI_HARMONIE_LowWarning", "If this keeps dropping: %1", downside)
+            else status = gtpText("IGUI_HARMONIE_SufficientNote", "Reserve is healthy. No penalty active.") end
+            local yes = e.active and gtpText("UI_HomeMedic_Stat_VitYes", "Yes") or gtpText("UI_HomeMedic_Stat_VitNo", "No")
+            out[#out + 1] = { g = "vitamins", k = "UI_HomeMedic_Stat_Vitamin" .. vit, t = "Vitamin " .. vit, vit = vit,
+                band = e.band, active = e.active or nil, bad = e.band ~= "sufficient" or nil,
+                s = gtpText("UI_HomeMedic_Stat_VitBand_" .. (e.band or "sufficient"), bandWord), tip = status }
+            out[#out + 1] = { g = "vitamins", k = "UI_HomeMedic_Stat_VitPenalty", t = "Penalty active", indent = 1,
+                bad = e.active or nil, s = yes, tip = e.active and downside or nil }
+            if e.need then
+                out[#out + 1] = { g = "vitamins", k = "UI_HomeMedic_Stat_VitNeed", t = "Daily need", indent = 1,
+                    s = tostring(e.need) .. " " .. (UNIT[vit] or "") }
+            end
+            out[#out + 1] = { g = "vitamins", k = "UI_HomeMedic_Stat_VitPause", t = "Rest days banked", indent = 1,
+                s = tostring(math.floor(e.pauseDays or 0)), tip = gtpText("IGUI_HARMONIE_PauseDaysTooltip", "") }
         end
     end
 end
@@ -365,7 +399,8 @@ local function markAbnormal(out)
         if row.g == "signs" then
             row.bad = row.bad or row.tag ~= nil
         elseif row.g == "vitamins" then
-            row.bad = row.band ~= nil and row.band ~= "sufficient"
+            -- band row: not sufficient; "penalty active" row: yes (set by vitaminRows)
+            if row.band then row.bad = row.band ~= "sufficient" end
         elseif row.g == "moodles" then
             row.bad = row.gb == 2 and (row.lv or 0) >= 2
         elseif row.k == "UI_HomeMedic_Stat_Blood" then

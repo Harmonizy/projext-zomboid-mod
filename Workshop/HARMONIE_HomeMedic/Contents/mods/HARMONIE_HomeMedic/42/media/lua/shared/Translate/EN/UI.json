@@ -2171,7 +2171,7 @@
     "UI_HomeMedic_Surg_Anes_Alcohol": "Drunk",
     "UI_HomeMedic_Surg_Anes_Asleep": "Asleep",
     "UI_HomeMedic_Surg_Row_Blood": "Blood volume",
-    "UI_HomeMedic_Surg_Tip_Blood": "The operation costs about %1 mL of blood - more if hemostasis goes badly. Afterwards the patient is left at 70%% blood at most (less after a messy operation): weak and tired until the blood comes back.",
+    "UI_HomeMedic_Surg_Tip_Blood": "The operation costs about %1 mL of blood - more if hemostasis goes badly. Afterwards the patient is left at 70%% blood at most (less after a messy operation): weak and tired until the blood comes back. No blood bag is needed.",
     "UI_HomeMedic_Surg_Row_Patient": "Patient",
     "UI_HomeMedic_Surg_Tip_Patient": "Stay next to the patient. Operating on yourself makes every step shakier.",
     "UI_HomeMedic_Surg_Slot_blade": "Blade",
@@ -2764,5 +2764,16 @@
     "UI_HomeMedic_Dose_HaveIt": "You have it with you.",
     "UI_HomeMedic_Dose_NoItem": "You do not have it with you!",
     "UI_HomeMedic_Dose_Btn_Ok": "Got it",
-    "UI_HomeMedic_Dose_Btn_Later": "Remind me in an hour"
+    "UI_HomeMedic_Dose_Btn_Later": "Remind me in an hour",
+    "UI_HomeMedic_Stat_VitPenalty": "Penalty active",
+    "UI_HomeMedic_Stat_VitNeed": "Daily need",
+    "UI_HomeMedic_Stat_VitPause": "Rest days banked",
+    "UI_HomeMedic_Stat_VitYes": "Yes",
+    "UI_HomeMedic_Stat_VitNo": "No",
+    "UI_HomeMedic_Stat_VitBand_critical": "Critical",
+    "UI_HomeMedic_Stat_VitBand_low": "Low",
+    "UI_HomeMedic_Stat_VitBand_sufficient": "Sufficient",
+    "UI_HomeMedic_Surg_Row_StartQ": "Starting quality",
+    "UI_HomeMedic_Surg_Tip_StartQ": "Proper instruments start the operation at 100%%. Each improvised one (a knife for a scalpel, thread for suture, a rag for a dressing...) lowers it, and they stack.",
+    "UI_HomeMedic_Surg_StartQ": "Starting quality: %1%%"
 }

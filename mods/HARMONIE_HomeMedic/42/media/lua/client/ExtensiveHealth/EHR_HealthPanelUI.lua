@@ -949,7 +949,7 @@ function EHR_HealthPanelUI:createChildren()
     self.closeButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
     self:addChild(self.closeButton)
 
-    self.expandButton = ISButton:new(self.width - 60, 6, 24, 22, "-", self, EHR_HealthPanelUI.onToggleRight)
+    self.expandButton = ISButton:new(self.width - 90, 6, 24, 22, "-", self, EHR_HealthPanelUI.onToggleRight)
     self.expandButton:initialise()
     self.expandButton:instantiate()
     self.expandButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
@@ -1785,12 +1785,12 @@ function EHR_HealthPanelUI:repositionControls()
         self.closeButton:setY(math.floor((self.HEADER_HEIGHT - self.closeButton.height) / 2))
     end
     if self.expandButton then
-        self.expandButton:setX(self.width - 60)
+        self.expandButton:setX(self.width - 90)  -- HARMONIE: -60 is the pin (HM_Pin.lua)
         self.expandButton:setY(math.floor((self.HEADER_HEIGHT - self.expandButton.height) / 2))
         self.expandButton:setTitle(self.rightExpanded and "-" or "+")
     end
     if self.antibodiesButton then
-        self.antibodiesButton:setX(self.width - 120)  -- HARMONIE: -90 is the pin (HM_Pin.lua)
+        self.antibodiesButton:setX(self.width - 120)  -- HARMONIE: -90 is the -/+ button, -60 the pin (HM_Pin.lua)
         self.antibodiesButton:setY(math.floor((self.HEADER_HEIGHT - self.antibodiesButton.height) / 2))
     end
     if self.administerMedicationButton then

@@ -249,7 +249,7 @@ function EHR_HealthPanelUI:hmDrawStats()
                     local value = tostring(row.s or row.v or "")
                     local valueW = tw(value)
                     local labelW = math.floor(colW * 0.45)
-                    local lx = col.x + 6
+                    local lx = col.x + 6 + (row.indent or 0) * 14
                     if row.g == "moodles" then
                         -- icon, name, level pips (1..4) instead of a bar
                         drawMoodle(self, row, lx, y, rowH - 2)
@@ -289,6 +289,7 @@ function EHR_HealthPanelUI:hmDrawStats()
                         elseif row.g == "moodles" then
                             st.tip = st.tip .. "\n" .. L("MoodleLevel", "Level %1 of 4", tostring(row.lv or 0))
                         end
+                        if row.tip and row.tip ~= "" then st.tip = st.tip .. "\n" .. row.tip end
                     end
                 end
                 y = y + rowH

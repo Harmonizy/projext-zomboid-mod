@@ -127,9 +127,10 @@ end
 -- ------------------------------------------------------------- medical window
 local HEALTH = {
     header = function(panel) return panel.HEADER_HEIGHT or 40 end,
-    -- right side, just left of the -/+ (collapse / expand) button
+    -- right side, next to the close button; the -/+ (collapse / expand)
+    -- button of the monitor tab sits left of it (request 2026-10-02)
     place = function(panel, b)
-        b:setX(panel.width - 90)
+        b:setX(panel.width - 60)
         b:setY(math.floor(((panel.HEADER_HEIGHT or 40) - b.height) / 2))
     end,
     keep = { "closeButton", "expandButton", "antibodiesButton", "administerMedicationButton" },
