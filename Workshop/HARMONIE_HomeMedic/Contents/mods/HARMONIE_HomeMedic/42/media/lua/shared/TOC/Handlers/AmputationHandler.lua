@@ -155,12 +155,50 @@ function AmputationHandler:healInfection(isPartInfected)
     --TOC_DEBUG.print("IgnoredPartInfected: " .. tostring(isPartInfected))
     local bd = self.patientPl:getBodyDamage()
 
+    -- HARMONIE: look at the body itself too. isIgnoredPartInfected is only set
+    -- from OnPlayerGetDamage, which MP zombie hits never fire, so a neck bite
+    -- (or a bite on the OTHER arm) was cured by cutting off one arm.
+    if not isPartInfected then isPartInfected = self:hasBiteElsewhere() end
+
     if infectionLevel < 20 and not isPartInfected then
         plStats:set(CharacterStat.ZOMBIE_INFECTION, 0)
         bd:setInfected(false)
         bd:setInfectionMortalityDuration(-1)
         bd:setInfectionTime(-1)
     end
+end
+
+---HARMONIE: is any body part that is still there (not amputated, after this
+---cut) bitten or carrying the zombie infection?
+---@return boolean
+function AmputationHandler:hasBiteElsewhere()
+    local bd = self.patientPl:getBodyDamage()
+    local DataController = require("TOC/Controllers/DataController")
+    local dcInst = DataController.GetInstance(self.patientPl:getUsername())
+    local gone = {}
+    for i = 1, #StaticData.LIMBS_STR do
+        local limbName = StaticData.LIMBS_STR[i]
+        if limbName == self.limbName or (dcInst and dcInst:getIsCut(limbName)) then
+            local bpt = StaticData.LIMBS_TO_BODYLOCS_IND_BPT[limbName]
+            if bpt then gone[tostring(bpt)] = true end
+        end
+    end
+    for _, dep in ipairs(StaticData.LIMBS_DEPENDENCIES_IND_STR[self.limbName] or {}) do
+        local bpt = StaticData.LIMBS_TO_BODYLOCS_IND_BPT[dep]
+        if bpt then gone[tostring(bpt)] = true end
+    end
+    local found = false
+    pcall(function()
+        local parts = bd:getBodyParts()
+        for i = 0, parts:size() - 1 do
+            local part = parts:get(i)
+            if part and not gone[tostring(part:getType())] and (part:bitten() or part:IsInfected()) then
+                found = true
+                return
+            end
+        end
+    end)
+    return found
 end
 
 --* Main methods *--

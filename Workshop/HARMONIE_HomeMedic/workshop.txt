@@ -25,6 +25,7 @@ description=- English and Thai built in -- every line the character says and eve
 description=- Body Stats shows abnormal values in red (fever, low blood, pain, panic...), so trouble stands out at a glance.
 description=- A cured illness caught again must be diagnosed again. A medicine course pops up a reminder when the next dose is due. After an operation the patient is left weak: 70% blood at most, less after a messy one.
 description=- Surgery starts at 100% quality with proper instruments; each improvised one (kitchen knife, pliers, thread, rags...) lowers it. No blood bag is needed for an operation any more. Blood bags keep 24 hours outside a fridge or freezer.
+description=- Amputating a bitten arm in time still stops the zombie infection -- but not when there is another bite elsewhere (now also checked in multiplayer).
 description=- Caffeine pills are their own item now; vanilla's vitamin pills are vitamins again (and work with our From Garden to Plate mod as multivitamins).
 description=- Translation keys keep the original Extensive Health Rework / The Only Cure names, so other mods that use them keep working. EHR debug menu always available in a -debug game or to server admins.
 description=- Lighter on dedicated servers (per-tick work trimmed); the medical window fits 720p screens; blood-loss vision no longer darkens your windows.
