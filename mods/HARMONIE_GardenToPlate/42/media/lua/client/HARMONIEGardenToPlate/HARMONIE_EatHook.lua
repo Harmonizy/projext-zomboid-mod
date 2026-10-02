@@ -160,22 +160,53 @@ local function maybeSayTasteReaction(character, profile, fullType)
     character:Say(getText(keys[ZombRand(#keys) + 1]))
 end
 
+--[[
+    MULTIPLAYER (2026-10-02 audit): B42 runs complete() on the SERVER in
+    multiplayer, and the server never loads this client/ file -- so in MP
+    eating granted no vitamins at all. The client's copy of the action ends
+    through perform() instead (the same split EHR_MedicationHook handles).
+    So: what to award is read at start() (the item is whole then), awarded
+    in complete() in single player, in perform() on a multiplayer client;
+    a flag on the action keeps it to exactly once.
+]]--
+local function readGains(self)
+    local item = self.item
+    local out = {}
+    pcall(function()
+        out.gains = HARMONIE_GTP.GetVitaminGains(item, self.percentage or 1)
+        out.profile = HARMONIE_GTP.GetVitaminProfileForItem(item)
+        out.fullType = item:getFullType()
+    end)
+    if not out.profile then pcall(HARMONIE_GTP.LogMissingProfile, item, "eat") end
+    return out
+end
+
+local function award(self, r)
+    if self.gtpAwarded or not r then return end
+    self.gtpAwarded = true
+    applyGains(self.character, r.gains)
+    maybeSayTasteReaction(self.character, r.profile, r.fullType)
+end
+
+local original_ISEatFoodAction_start = ISEatFoodAction.start
+function ISEatFoodAction:start()
+    self.gtpRead = readGains(self)
+    return original_ISEatFoodAction_start(self)
+end
+
 local original_ISEatFoodAction_complete = ISEatFoodAction.complete
 
 function ISEatFoodAction:complete()
-    local item = self.item
-    local fraction = self.percentage or 1
+    if self.gtpAwarded then return original_ISEatFoodAction_complete(self) end
     -- Read everything BEFORE calling through -- see file header.
-    local gains = HARMONIE_GTP.GetVitaminGains(item, fraction)
-    local profile = HARMONIE_GTP.GetVitaminProfileForItem(item)
-    local ok, fullType = pcall(function() return item:getFullType() end)
-    if not profile then
-        HARMONIE_GTP.LogMissingProfile(item, "eat")
-    end
-
+    local r = readGains(self)
     local result = original_ISEatFoodAction_complete(self)
-
-    applyGains(self.character, gains)
-    maybeSayTasteReaction(self.character, profile, ok and fullType or nil)
+    award(self, r)
     return result
+end
+
+local original_ISEatFoodAction_perform = ISEatFoodAction.perform
+function ISEatFoodAction:perform()
+    if isClient() and not self.gtpAwarded then award(self, self.gtpRead or readGains(self)) end
+    return original_ISEatFoodAction_perform(self)
 end

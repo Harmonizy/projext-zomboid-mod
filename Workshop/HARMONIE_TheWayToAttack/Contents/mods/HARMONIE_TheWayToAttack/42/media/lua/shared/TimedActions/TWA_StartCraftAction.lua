@@ -23,9 +23,18 @@ require "HARMONIE_TWA_CraftState"
 
 TWA_StartCraftAction = ISBaseTimedAction:derive("TWA_StartCraftAction")
 
+-- A multiplayer client after start(): the server owns the items and checks
+-- them itself; its complete() takes them out of the inventory, and that can
+-- reach this client while its own bar is still on the last tick -- the old
+-- client-side re-check then stopped the action here (no perform, the window
+-- never learned the craft had started; the items were already gone and
+-- Start had to be pressed again). Round 29 fix.
+local function mpClient() return isClient() and not isServer() end
+
 function TWA_StartCraftAction:isValid()
     local S = TWACraftState
     if not self.character or not self.recipe then return false end
+    if mpClient() and self.twaStarted then return true end
     -- Only one craft at a time. (The server holds the record in MP; the
     -- client window enforces the same thing on its side.)
     if (isServer() or not isClient()) and S.getActive(self.character) then return false end
@@ -42,6 +51,7 @@ function TWA_StartCraftAction:update()
 end
 
 function TWA_StartCraftAction:start()
+    self.twaStarted = true
     self:setActionAnim(CharacterActionAnims.Craft)
     if not isServer() then TWASound.keepPlaying(self, "TWA_Craft", "ActionSounds") end
 end
@@ -55,6 +65,12 @@ end
 
 function TWA_StartCraftAction:stop()
     self:stopSound()
+    -- Round 29: stopped on a multiplayer client after the server already
+    -- took the base item (it finished first) -> the craft HAS started.
+    if mpClient() and self.twaStarted and self.onComplete and (self.recipe.base or self.baseItem) then
+        if TWASources and TWASources.forget then TWASources.forget(self.character) end
+        if not TWACraftState.resolveItem(self.character, self.baseItem) then self.onComplete() end
+    end
     if self.onEnd then self.onEnd() end
     ISBaseTimedAction.stop(self)
 end

@@ -52,6 +52,10 @@ function TWA_PerformProcedureAction:checkValid()
         return TWAProcedures.CheckEligibility(self.proc, self.character, true)
     end
     if TWAConfig.on("RequireLight") and self.character:tooDarkToRead() then return false end
+    -- Round 29: a multiplayer client stops re-checking tools/materials once
+    -- the bar runs -- the server owns (and re-checks) them, and its
+    -- complete() may consume them before this client's last tick.
+    if isClient() and self.twaStarted then return true end
     return TWAProcedures.CheckEligibility(self.proc, self.character)
 end
 
@@ -62,6 +66,7 @@ function TWA_PerformProcedureAction:update()
 end
 
 function TWA_PerformProcedureAction:start()
+    self.twaStarted = true
     self:setActionAnim(CharacterActionAnims.Craft)
     if self.proc.sound and not isServer() then TWASound.keepPlaying(self, self.proc.sound, "ActionSounds") end
 end

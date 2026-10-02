@@ -2577,6 +2577,32 @@ verified on a real dedicated server by this repo) ***
   - Light (tooDarkToRead) and nearby placed forge are client-world checks:
     checked client-side before queueing; the server's isValid only re-checks
     tools/materials/skill (CheckEligibility(proc, player, true)).
+  - *** A client's isValid() must NOT re-check, after start(), anything the
+    server's complete() removes or changes *** (2026-10-02, real bug: TWA
+    Start took the base item but the window kept showing Start). isValid()
+    runs every tick on the client too; the server can finish first, its
+    removal reaches the client before the client's last tick, the client's
+    isValid() goes false, the client copy is STOPPED (no perform(), so no
+    onComplete -- the UI never learns it worked) while the server already
+    did the work. Rule: set self.xStarted = true in start(); on an MP client
+    (isClient() and not isServer()) return true from those checks once
+    started -- the server re-checks them itself. Keep only client-world
+    checks (light, distance, patient moved). And in stop(), if the thing the
+    server takes is already gone, treat the action as done.
+  - *** A vanilla action's complete() wrapped from a client/ file does
+    NOTHING in MP *** -- complete() runs on the server, which never loads
+    client/ files; the client copy ends through perform(). Real bug: GTP's
+    eat/pill vitamin hooks (fixed 2026-10-02). Pattern (EHR_MedicationHook,
+    HARMONIE_EatHook): read what you need in start() (the item is whole
+    then), apply in complete() (SP) AND in perform() when isClient() (MP
+    client), with a flag on the action so it happens exactly once. Same for
+    our own client-only action classes that send their command from
+    complete() (EHR_ApplyBandagePackAction: perform() now calls it on MP).
+  - *** Never rely on OnPlayerGetDamage to notice zombie bites in MP *** --
+    MP zombie hits are applied by the server and pushed to the client
+    without firing it (TOC's isIgnoredPartInfected flag was never set, so a
+    neck bite was "cured" by cutting off an arm). Decide from the body
+    itself at the moment it matters (AmputationHandler:hasBiteElsewhere).
 
 Phase 2 (same day, "ให้แยบยลเหมือนม็อดอ้างอิง"): six real games on a shared
 base (client/HARMONIE_TWA_MinigameBase.lua) -- Strike (ring-timing hammer
@@ -3229,6 +3255,14 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     needs LOCAL players (getNumActivePlayers/getSpecificPlayer) or ALL connected
     players (getOnlinePlayers), and if it's not idempotent (rolls dice/creates
     something new), always wrap it in an isClient()/isServer() gate (section 8.7).
+[ ] Writing/changing a timed action or hooking a vanilla one? Go through the
+    B42 MP rules in section 8.15: world changes in complete() (shared/ class),
+    client isValid() stops re-checking server-owned items after start(),
+    client-side effects of a vanilla action hooked in perform() too (once,
+    flagged), and no OnPlayerGetDamage for zombie bites.
+[ ] Looping players on the server? getOnlinePlayers() is EMPTY in single
+    player -- fall back to getSpecificPlayer(0..3) when it has no entries
+    (HM_Diagnosis prune never ran in SP because of this).
 [ ] Widening a "which tool works" spec (hammer/wrench/etc.)? Find vanilla's own
     real recipe for the closest matching task first and mirror its exact
     tags[...] combo (section 8.14) — don't default to "add every related tag".

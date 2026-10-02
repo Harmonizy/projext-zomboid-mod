@@ -472,6 +472,11 @@ if EHR_ApplyBandagePackAction then
             ISHealthPanel.setBodyPartActionForPlayer(self.otherPlayer, self.bodyPart, nil, nil, nil)
         end
         if self.bodyPart then self.bodyPart:setManipulatingUsername(nil) end
+        -- HARMONIE (2026-10-02 MP audit): a multiplayer client ends its copy
+        -- of the action through perform(), not complete() (that one runs on
+        -- the server, which does not have this client-only class) -- send the
+        -- apply request from here too; didApplyPack keeps it to once.
+        if isClient and isClient() then self:complete() end
         ISBaseTimedAction.perform(self)
     end
 
