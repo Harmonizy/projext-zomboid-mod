@@ -3320,5 +3320,11 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     And an action taken off the queue before it starts gets forceCancel(),
     NOT stop(): anything stop() cleans up (a UI's "busy" lock) must be
     cleaned up in forceCancel() too (TWA actions, 2026-10-02).
+[ ] Gating anything on the player's access level? In B42 (roles) an
+    ordinary player is "user", NOT "None" -- "anything but none" lets
+    everyone in. Whitelist the staff roles (admin / moderator / overseer /
+    gm, lowercased). And on a multiplayer CLIENT, isDebugEnabled() /
+    getDebug() only say the client was started with -debug: never a
+    reason to show admin tools there (TWA admin + weapon editor, GTP).
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

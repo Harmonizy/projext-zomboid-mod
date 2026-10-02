@@ -346,8 +346,11 @@ if Events and Events.OnClientCommand then
                 or type(args.data) ~= "table" then return end
         local target = player
         if args.target ~= nil then
+            -- 0.7.7: staff roles only -- in B42 an ordinary player is
+            -- "user", not "None", so the old check let anyone edit others
             local ok, lvl = pcall(function() return player:getAccessLevel() end)
-            if not ok or not lvl or lvl == "" or string.lower(tostring(lvl)) == "none" then return end
+            local STAFF = { admin = true, moderator = true, overseer = true, gm = true }
+            if not ok or not lvl or not STAFF[string.lower(tostring(lvl))] then return end
             target = nil
             local online = getOnlinePlayers and getOnlinePlayers()
             for i = 0, (online and online:size() or 0) - 1 do
