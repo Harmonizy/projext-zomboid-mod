@@ -142,6 +142,30 @@ option HARMONIE_TheWayToAttack.DamageDisplayScale
     translation = HARMONIE_TWA_DamageDisplayScale,
 }
 
+option HARMONIE_TheWayToAttack.ZombieHPBars
+{
+    type = boolean,
+    default = false,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_ZombieHPBars,
+}
+
+option HARMONIE_TheWayToAttack.ZombieHPNumbers
+{
+    type = boolean,
+    default = false,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_ZombieHPNumbers,
+}
+
+option HARMONIE_TheWayToAttack.DamageNumbers
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_DamageNumbers,
+}
+
 option HARMONIE_TheWayToAttack.ShareDamageNumbers
 {
     type = boolean,
@@ -410,7 +434,7 @@ option HARMONIE_TheWayToAttack.StrikeRingSize
     min = 40,
     max = 300,
     default = 140,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_StrikeRingSize,
 }
 
@@ -420,7 +444,7 @@ option HARMONIE_TheWayToAttack.StrikeRingMs
     min = 200,
     max = 5000,
     default = 900,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_StrikeRingMs,
 }
 
@@ -430,7 +454,7 @@ option HARMONIE_TheWayToAttack.StrikeWindowMs
     min = 10,
     max = 500,
     default = 115,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_StrikeWindowMs,
 }
 
@@ -440,7 +464,7 @@ option HARMONIE_TheWayToAttack.StrikeMarkSize
     min = 5,
     max = 80,
     default = 22,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_StrikeMarkSize,
 }
 
@@ -448,7 +472,7 @@ option HARMONIE_TheWayToAttack.SmashOneBlow
 {
     type = boolean,
     default = true,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SmashOneBlow,
 }
 
@@ -458,7 +482,7 @@ option HARMONIE_TheWayToAttack.ForgeCool1
     min = 1000,
     max = 120000,
     default = 14000,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ForgeCool1,
 }
 
@@ -468,7 +492,7 @@ option HARMONIE_TheWayToAttack.ForgeCool2
     min = 1000,
     max = 120000,
     default = 10500,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ForgeCool2,
 }
 
@@ -478,7 +502,7 @@ option HARMONIE_TheWayToAttack.ForgeCool3
     min = 1000,
     max = 120000,
     default = 8000,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ForgeCool3,
 }
 
@@ -488,7 +512,7 @@ option HARMONIE_TheWayToAttack.ForgeCool4
     min = 1000,
     max = 120000,
     default = 6000,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ForgeCool4,
 }
 
@@ -498,7 +522,7 @@ option HARMONIE_TheWayToAttack.ForgeReheatMs
     min = 200,
     max = 20000,
     default = 1800,
-    page = HARMONIE_TWA_Hammer,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ForgeReheatMs,
 }
 
@@ -508,7 +532,7 @@ option HARMONIE_TheWayToAttack.SharpenStrokes
     min = 1,
     max = 40,
     default = 10,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SharpenStrokes,
 }
 
@@ -518,7 +542,7 @@ option HARMONIE_TheWayToAttack.PolishStrokes
     min = 1,
     max = 40,
     default = 10,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_PolishStrokes,
 }
 
@@ -528,7 +552,7 @@ option HARMONIE_TheWayToAttack.FlickMinSpeed
     min = 0.05,
     max = 5.0,
     default = 0.8,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_FlickMinSpeed,
 }
 
@@ -538,7 +562,7 @@ option HARMONIE_TheWayToAttack.SharpenZone
     min = 2.0,
     max = 60.0,
     default = 12.0,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SharpenZone,
 }
 
@@ -548,7 +572,7 @@ option HARMONIE_TheWayToAttack.PolishZone
     min = 2.0,
     max = 60.0,
     default = 14.0,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_PolishZone,
 }
 
@@ -558,7 +582,7 @@ option HARMONIE_TheWayToAttack.SawStrokes
     min = 1,
     max = 60,
     default = 20,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SawStrokes,
 }
 
@@ -568,7 +592,7 @@ option HARMONIE_TheWayToAttack.SawZone
     min = 2.0,
     max = 80.0,
     default = 21.0,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SawZone,
 }
 
@@ -578,7 +602,7 @@ option HARMONIE_TheWayToAttack.WeldZone
     min = 2.0,
     max = 60.0,
     default = 8.0,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_WeldZone,
 }
 
@@ -586,7 +610,7 @@ option HARMONIE_TheWayToAttack.WeldZigzag
 {
     type = boolean,
     default = true,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_WeldZigzag,
 }
 
@@ -596,7 +620,7 @@ option HARMONIE_TheWayToAttack.WeldMaxSpeed
     min = 0.02,
     max = 3.0,
     default = 0.22,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_WeldMaxSpeed,
 }
 
@@ -606,7 +630,7 @@ option HARMONIE_TheWayToAttack.WeldBurnSpeed
     min = 0.0,
     max = 1.0,
     default = 0.025,
-    page = HARMONIE_TWA_Stroke,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_WeldBurnSpeed,
 }
 
@@ -616,7 +640,7 @@ option HARMONIE_TheWayToAttack.WrapZone
     min = 2.0,
     max = 60.0,
     default = 10.0,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_WrapZone,
 }
 
@@ -626,7 +650,7 @@ option HARMONIE_TheWayToAttack.ClothZoneMultiplier
     min = 0.25,
     max = 5.0,
     default = 2.0,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ClothZoneMultiplier,
 }
 
@@ -636,7 +660,7 @@ option HARMONIE_TheWayToAttack.TapeZoneMultiplier
     min = 0.25,
     max = 5.0,
     default = 2.0,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_TapeZoneMultiplier,
 }
 
@@ -646,7 +670,7 @@ option HARMONIE_TheWayToAttack.ScrewTurns
     min = 1.0,
     max = 10.0,
     default = 3.0,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ScrewTurns,
 }
 
@@ -656,7 +680,7 @@ option HARMONIE_TheWayToAttack.ScrewStripAt
     min = 0.05,
     max = 3.0,
     default = 0.5,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ScrewStripAt,
 }
 
@@ -666,7 +690,7 @@ option HARMONIE_TheWayToAttack.ScrewSnugSlack
     min = 0.0,
     max = 0.5,
     default = 0.05,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ScrewSnugSlack,
 }
 
@@ -676,7 +700,7 @@ option HARMONIE_TheWayToAttack.GrindMinSpeed
     min = 0.05,
     max = 5.0,
     default = 0.55,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_GrindMinSpeed,
 }
 
@@ -686,7 +710,7 @@ option HARMONIE_TheWayToAttack.GrindMaxSpeed
     min = 0.1,
     max = 10.0,
     default = 1.25,
-    page = HARMONIE_TWA_Wrap,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_GrindMaxSpeed,
 }
 
@@ -696,7 +720,7 @@ option HARMONIE_TheWayToAttack.HeatZone
     min = 0.005,
     max = 0.3,
     default = 0.035,
-    page = HARMONIE_TWA_Heat,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_HeatZone,
 }
 
@@ -706,7 +730,7 @@ option HARMONIE_TheWayToAttack.CoolZone
     min = 0.005,
     max = 0.3,
     default = 0.025,
-    page = HARMONIE_TWA_Heat,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_CoolZone,
 }
 
@@ -716,7 +740,7 @@ option HARMONIE_TheWayToAttack.CoolDrain
     min = 0.1,
     max = 10.0,
     default = 1.5,
-    page = HARMONIE_TWA_Heat,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_CoolDrain,
 }
 
@@ -726,7 +750,7 @@ option HARMONIE_TheWayToAttack.HeatHoldMs
     min = 500,
     max = 60000,
     default = 4000,
-    page = HARMONIE_TWA_Heat,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_HeatHoldMs,
 }
 
@@ -736,7 +760,7 @@ option HARMONIE_TheWayToAttack.BendHoldMs
     min = 200,
     max = 30000,
     default = 1500,
-    page = HARMONIE_TWA_Heat,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_BendHoldMs,
 }
 
@@ -744,7 +768,7 @@ option HARMONIE_TheWayToAttack.HeatOutsideCosts
 {
     type = boolean,
     default = true,
-    page = HARMONIE_TWA_Heat,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_HeatOutsideCosts,
 }
 
@@ -762,7 +786,7 @@ option HARMONIE_TheWayToAttack.CoatCoverage
     min = 0.3,
     max = 1.0,
     default = 0.9,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_CoatCoverage,
 }
 
@@ -772,7 +796,7 @@ option HARMONIE_TheWayToAttack.PourZone
     min = 0.003,
     max = 0.2,
     default = 0.015,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_PourZone,
 }
 
@@ -782,7 +806,7 @@ option HARMONIE_TheWayToAttack.SutureStitches
     min = 1,
     max = 12,
     default = 3,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SutureStitches,
 }
 
@@ -792,7 +816,7 @@ option HARMONIE_TheWayToAttack.SutureZone
     min = 2.0,
     max = 60.0,
     default = 12.0,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_SutureZone,
 }
 
@@ -802,7 +826,7 @@ option HARMONIE_TheWayToAttack.ExtractGuide
     min = 1.0,
     max = 40.0,
     default = 4.0,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ExtractGuide,
 }
 
@@ -812,7 +836,7 @@ option HARMONIE_TheWayToAttack.ExtractMaxHoles
     min = 1,
     max = 6,
     default = 3,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_ExtractMaxHoles,
 }
 
@@ -822,7 +846,7 @@ option HARMONIE_TheWayToAttack.IncisionZone
     min = 2.0,
     max = 60.0,
     default = 8.0,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_IncisionZone,
 }
 
@@ -830,6 +854,6 @@ option HARMONIE_TheWayToAttack.EngraveWideDepth
 {
     type = boolean,
     default = true,
-    page = HARMONIE_TWA_Other,
+    page = HARMONIE_TWA_Minigame,
     translation = HARMONIE_TWA_EngraveWideDepth,
 }
