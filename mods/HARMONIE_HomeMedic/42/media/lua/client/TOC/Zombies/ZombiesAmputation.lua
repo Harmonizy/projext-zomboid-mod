@@ -123,11 +123,29 @@ end
 Events.OnInitGlobalModData.Add(SetupZombiesModData)
 
 
+-- HARMONIE 0.24.1 (lag with many zombies): OnZombieUpdate runs for EVERY
+-- zombie EVERY frame. GetZombieID turns the outfit id into a 64-character
+-- binary string, splits it into a table and parses it back -- per zombie
+-- per frame, a heap of garbage with a big horde. Now: nothing at all while
+-- no zombie has a stored amputation (the usual case), and the id is
+-- worked out once per zombie (kept while its outfit id stays the same;
+-- the game reuses zombie objects, so the outfit id is checked).
+local idCache = setmetatable({}, { __mode = "k" })
+local function cachedZombieID(zombie)
+    local outfit = zombie:getPersistentOutfitID()
+    local c = idCache[zombie]
+    if c and c.outfit == outfit then return c.id end
+    local id = GetZombieID(zombie)
+    idCache[zombie] = { outfit = outfit, id = id }
+    return id
+end
+
 ---@param zombie IsoZombie
 local function ReapplyAmputation(zombie)
+    if not localOnlyZombiesMD or next(localOnlyZombiesMD) == nil then return end
     if not SandboxVars.TOC.EnableZombieAmputations then return end
 
-    local pID = GetZombieID(zombie)
+    local pID = cachedZombieID(zombie)
 
     if localOnlyZombiesMD[pID] ~= nil then
         -- check if zombie has amputation

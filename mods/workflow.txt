@@ -3404,5 +3404,11 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     printing the top ones to console.txt every 10 s on client and server.
     Enable on server + client for a few minutes, then read the
     "[PerfProbe ...]" lines. Remove it afterwards.
+[ ] Code per zombie (OnZombieUpdate, a loop over getZombieList)? It runs
+    zombies x frames times: 300 zombies at 60 fps is 18,000 calls a second.
+    Leave at once when there is nothing to do (HomeMedic 0.24.1: TOC did
+    string/table work for every zombie every frame), cache per zombie what
+    does not change, and in a loop test the cheap things first with direct
+    calls (TWA 0.66.1 zombie HP scan) -- not a pcall per Java call.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

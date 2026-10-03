@@ -134,21 +134,27 @@ function Z.scan()
     local px, py = call(player, "getX") or 0, call(player, "getY") or 0
     local r2 = Z.RADIUS * Z.RADIUS
     local keep = {}
-    for i = 0, list:size() - 1 do
-        local zed = list:get(i)
-        if zed and not call(zed, "isDead") then
-            keep[zed] = Z.full[zed]
-            if math.floor(call(zed, "getZ") or -99) == pz then
-                local dx, dy = (call(zed, "getX") or 0) - px, (call(zed, "getY") or 0) - py
-                if dx * dx + dy * dy <= r2 then
-                    local sq = call(zed, "getCurrentSquare")
-                    if sq and call(sq, "isCanSee", num) then
+    -- 0.66.1 (lag with a big horde): every zombie in the cell is looked at,
+    -- so the cheap tests come first, called directly (one pcall round the
+    -- whole loop instead of one per call), and only zombies close enough
+    -- go on to the dead / same floor / can-see checks.
+    local full = Z.full
+    pcall(function()
+        for i = 0, list:size() - 1 do
+            local zed = list:get(i)
+            if zed then
+                local f = full[zed]
+                if f then keep[zed] = f end
+                local dx, dy = zed:getX() - px, zed:getY() - py
+                if dx * dx + dy * dy <= r2 and math.floor(zed:getZ()) == pz and not zed:isDead() then
+                    local sq = zed:getCurrentSquare()
+                    if sq and sq:isCanSee(num) then
                         out[#out + 1] = zed
                     end
                 end
             end
         end
-    end
+    end)
     -- zombies no longer in the cell are forgotten (no table growing forever)
     Z.full = keep
     for _, zed in ipairs(out) do Z.track(zed) end
