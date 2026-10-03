@@ -998,6 +998,10 @@ function EHR.Concussion.UpdateTracking(player)
 end
 
 function EHR.Concussion.OnPlayerUpdate(player)
+    -- HARMONIE 0.24.0 (server lag): on a multiplayer client OnPlayerUpdate
+    -- also fires for the OTHER players near you; their medical data lives on
+    -- the server, so only this client's own player is worth the work.
+    if isClient and isClient() and player and player.isLocalPlayer and not player:isLocalPlayer() then return end
     local ok, err = pcall(EHR.Concussion.UpdateTracking, player)
     if not ok and EHR and EHR.Log then
         EHR.Log("Concussion tracking error: " .. tostring(err))

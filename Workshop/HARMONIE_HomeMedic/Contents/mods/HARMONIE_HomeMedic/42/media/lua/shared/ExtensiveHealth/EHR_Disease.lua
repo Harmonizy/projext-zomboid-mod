@@ -6282,16 +6282,9 @@ local function processPlayerTick(player)
         EHR.Disease.CheckDialogue(player, modData)
     end
 
-    -- MP: sync ModData periodically from server
-    if isServer and isServer() then
-        state.sync = state.sync + 1
-        if state.sync >= SYNC_TICK_INTERVAL then
-            state.sync = 0
-            if EHR and EHR.SafeTransmitModData then
-                EHR.SafeTransmitModData(player)
-            end
-        end
-    end
+    -- HARMONIE 0.24.0 (server lag): no periodic snapshot here any more --
+    -- EHR_Main already sends the same packet to every player every ~10 s;
+    -- this one doubled it (and EHR_ServerCommands added a third).
     -- CRITICAL FIX: Removed dead code block (lines 1772-1795) that referenced
     -- undefined variables (diseaseId, stats, stage, severity) outside their scope.
     -- This was a copy-paste error that could never execute successfully.

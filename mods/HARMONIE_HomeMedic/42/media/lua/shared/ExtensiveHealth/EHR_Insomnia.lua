@@ -272,6 +272,10 @@ function EHR.Insomnia.UpdateTracking(player)
 end
 
 function EHR.Insomnia.OnPlayerUpdate(player)
+    -- HARMONIE 0.24.0 (server lag): on a multiplayer client OnPlayerUpdate
+    -- also fires for the OTHER players near you; their medical data lives on
+    -- the server, so only this client's own player is worth the work.
+    if isClient and isClient() and player and player.isLocalPlayer and not player:isLocalPlayer() then return end
     local ok, err = pcall(EHR.Insomnia.UpdateTracking, player)
     if not ok and EHR and EHR.Log then
         EHR.Log("Insomnia tracking error: " .. tostring(err))

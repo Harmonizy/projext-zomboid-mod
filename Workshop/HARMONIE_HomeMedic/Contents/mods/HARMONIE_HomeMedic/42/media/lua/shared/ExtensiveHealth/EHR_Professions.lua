@@ -564,6 +564,10 @@ end
 
 function EHR.Professions.OnPlayerUpdate(player)
     if not player then return end
+    -- HARMONIE 0.24.0 (server lag): on a multiplayer client OnPlayerUpdate
+    -- also fires for the OTHER players near you; their medical data lives on
+    -- the server, so only this client's own player is worth the work.
+    if isClient and isClient() and player and player.isLocalPlayer and not player:isLocalPlayer() then return end
 
     local key = getPlayerKey(player)
     local state = playerTickState[key]

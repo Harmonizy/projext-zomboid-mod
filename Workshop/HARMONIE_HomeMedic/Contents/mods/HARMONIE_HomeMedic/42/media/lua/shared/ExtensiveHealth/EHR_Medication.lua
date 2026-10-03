@@ -7209,6 +7209,10 @@ Events.OnFillInventoryObjectContextMenu.Add(OnMedicationContextMenu)
 
 local function OnPlayerUpdate(player)
     if not player or player:isDead() then return end
+    -- HARMONIE 0.24.0 (server lag): on a multiplayer client OnPlayerUpdate
+    -- also fires for the OTHER players near you; their medical data lives on
+    -- the server, so only this client's own player is worth the work.
+    if isClient and isClient() and player and player.isLocalPlayer and not player:isLocalPlayer() then return end
     -- The dedicated/listen server already owns authoritative medication
     -- progression in EHR_ServerCommands at a one-second cadence. Running the
     -- shared per-player callback there as well duplicated the full medication
