@@ -3423,5 +3423,30 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     visibility the page logic sets every frame start hidden. Sizes go
     through S(px) with a layout scale so the window can grow on big
     screens (Options "Window size", Auto by screen height).
+[ ] Setting something up once per player (moodle thresholds, UI state)?
+    Test a death + respawn: a new character can get NEW objects (Moodle
+    Framework moodles) -- remember "done" per object (weak keys) or redo it
+    on OnCreatePlayer, never per playerNum (GTP 0.7.9: Good lvl4 moodle with
+    a raw key after respawning).
+[ ] A Home Medic style window (header + icon tabs + framed content, TWA
+    0.68.0 craft window): derive ISPanel (not ISCollapsableWindow) with
+    moveWithMouse, draw the frame in prerender, and pass a mouse-down to
+    ISPanel.onMouseDown ONLY in the header so the body never drags; give it
+    its own X button. Tabs map onto the existing pages (setTab -> setPage).
+    Check after: every way in (right-click, hotkey, resume, search) lands on
+    the right tab, and a search whose matches are all on another tab
+    switches to it instead of showing an empty list.
+[ ] Tab icons / guide pictures: drawn by our own PIL script (TWA
+    tools/gen_workbench_art.py) -- re-run it and look at the PNGs; never
+    take art from another mod.
+[ ] A UI layout change? Render it: record the window's draw calls in the
+    lupa mock and paint them with PIL (blend onto an RGB image, not RGBA,
+    or alpha looks wrong) -- caught "100%" under the X button and a 700 px
+    window not fitting a 720p screen (TWA 0.68.0).
+[ ] Volume control: match the steps to what really plays (TWA sounds exist
+    as files at 25..200 percent, so the slider snaps to 25 percent).
+[ ] A fix that "clears" a bite/wound on one body part: check the whole-body
+    state too (TOC: infection flag, mortality timer, ZOMBIE_INFECTION stat
+    stayed after the part was cleaned -- HomeMedic 0.25.1).
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

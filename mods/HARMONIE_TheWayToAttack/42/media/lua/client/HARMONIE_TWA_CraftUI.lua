@@ -17,6 +17,7 @@ require "ISUI/ISPanel"
 require "HARMONIE_TWA_Display"
 require "ISUI/ISButton"
 require "ISUI/ISCollapsableWindow"
+require "ISUI/ISPanel"
 require "ISUI/ISTextEntryBox"
 require "ISUI/ISScrollingListBox"
 require "ISUI/ISContextMenu"
@@ -275,7 +276,9 @@ local function S(px) return math.floor(px * UI_S + 0.5) end
 local WINDOW_W, WINDOW_H, LEFT_W, CENTER_W, RIGHT_W, COL_GAP, PANEL_H
 local function applyLayout(scale)
     UI_S = scale or 1
-    WINDOW_W, WINDOW_H = S(1000), S(640)
+    -- R69: Home Medic's layout -- a header (title, volume, close) and a row
+    -- of icon tabs above the content (TWAWorkbench draws them)
+    WINDOW_W, WINDOW_H = S(1000), S(700)
     LEFT_W, COL_GAP, PANEL_H = S(280), S(10), S(520)
     -- craft page: the recipe card on the left, the procedure details on the right
     CENTER_W = S(440)
@@ -302,8 +305,9 @@ function TWACraftUI.layoutScale()
         scale = (sh >= 2000 and 1.5) or (sh >= 1400 and 1.25) or 1
     end
     -- never bigger than the screen
-    scale = math.min(scale, (sw - 20) / 1000, (sh - 40) / 640)
-    return math.max(1, scale)
+    scale = math.min(scale, (sw - 20) / 1000, (sh - 40) / 700)
+    -- R69: the tab bar made the window 700 tall; a 720p screen shrinks it a bit
+    return math.max(0.85, scale)
 end
 
 -- Weapon-modification parts (Grip/Head/Tactical/Weight) are intentionally not
@@ -547,6 +551,7 @@ function TWARecipeScrollList:new(x, y, w, h, ui)
     o.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 0.6 }
     o.filterCategory = "All"
     o.filterTier = "All"
+    o.scope = "weapons" -- R69: "weapons" (tab 2) or "materials" (tab 3)
     o.searchText = ""
     o:setOnMouseDownFunction(o, TWARecipeScrollList.onRowClick)
     return o
@@ -600,6 +605,10 @@ function TWARecipeScrollList:setSearch(text)
 end
 
 function TWARecipeScrollList:matches(recipe)
+    -- R69: tab 2 lists weapons, tab 3 materials (Material + Gem)
+    if (self.scope == "materials") ~= TWACraftUI.isMaterialCategory(recipe.category) then
+        return false
+    end
     if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and self.filterCategory ~= "Favorites"
             and recipe.category ~= self.filterCategory then
         return false
@@ -1129,10 +1138,12 @@ end
 
 -- Main window -----------------------------------------------------------------
 
-TWACraftWindow = ISCollapsableWindow:derive("TWACraftWindow")
+-- R69: an ISPanel with its own header and tab bar (HARMONIE_TWA_Workbench.lua)
+-- instead of a vanilla collapsable window.
+TWACraftWindow = ISPanel:derive("TWACraftWindow")
 
 function TWACraftWindow:new(x, y, player)
-    local o = ISCollapsableWindow:new(x, y, WINDOW_W, WINDOW_H)
+    local o = ISPanel:new(x, y, WINDOW_W, WINDOW_H)
     setmetatable(o, self)
     self.__index = self
     o.player = player or getPlayer()
@@ -1164,12 +1175,16 @@ function TWACraftWindow:new(x, y, player)
     o.activeCenterKind = nil
     o.activeCenterAction = nil
     o.resizable = false
+    o.moveWithMouse = true
+    o.backgroundColor = { r = 0, g = 0, b = 0, a = 0 }
+    o.borderColor = { r = 0, g = 0, b = 0, a = 0 }
+    o.activeTab = "weapons"
     o.title = getText("IGUI_TWA_CraftWindowTitle")
     return o
 end
 
 function TWACraftWindow:createChildren()
-    ISCollapsableWindow.createChildren(self)
+    ISPanel.createChildren(self)
 
     -- R68 ("แยกหน้าต่างคราฟอาวุธ ... เริ่มที่หน้าต่างรวมสูตรก่อน แล้วเมื่อ
     -- กดสูตร ก็ค่อยไปในส่วนการสร้าง และกรรมวิธี และเอาส่วนรวมกรรมวิธี
@@ -1182,7 +1197,7 @@ function TWACraftWindow:createChildren()
     local leftX = 10
     local centerX = leftX + 8
     local rightX = leftX + CENTER_W + COL_GAP
-    local titleH = self:titleBarHeight()
+    local titleH = TWAWorkbench.topHeight(S)
     local contentTop = titleH + 8
     local panelBottom = contentTop + PANEL_H
 
@@ -1197,30 +1212,39 @@ function TWACraftWindow:createChildren()
     -- overlapped the button row starting right under it. Bumped to 18.
     local captionH = S(18)
     local tabH, tabStep = S(24), S(26)
+    -- R69: two sets of category tabs -- weapon recipes (tab 2) and
+    -- material recipes, Material + Gem (tab 3); setPage shows the set of
+    -- the open tab.
     self.filterButtons = {}
+    self.filterButtonsByScope = { weapons = {}, materials = {} }
     self.categoryRowY = contentTop
-    local fx, fy = leftX, contentTop + captionH
-    for _, tab in ipairs(CATEGORY_TABS) do
-        local label = tab.label or getText(tab.labelKey)
-        local w = getTextManager():MeasureStringX(TWAFont.small(), label) + 20
-        if fx + w > leftX + LEFT_W then
-            fx = leftX
-            fy = fy + tabStep
+    local rowEnd = contentTop + captionH
+    for _, scope in ipairs({ "weapons", "materials" }) do
+        local fx, fy = leftX, contentTop + captionH
+        for _, tab in ipairs(CATEGORY_TABS) do
+            if TWACraftUI.tabInScope(tab.key, scope) then
+                local label = tab.label or getText(tab.labelKey)
+                local w = getTextManager():MeasureStringX(TWAFont.small(), label) + 20
+                if fx + w > leftX + LEFT_W then
+                    fx = leftX
+                    fy = fy + tabStep
+                end
+                local btn = TWATabButton:new(fx, fy, w, tabH, label, self, TWACraftWindow.onFilterClick)
+                btn.internal = tab.key
+                -- Note 2026-09-27: "Available" gets a tooltip explaining it.
+                if tab.key == "Available" then
+                    btn:setTooltip(getText("IGUI_TWA_Tooltip_FilterAvailable"))
+                end
+                btn:initialise()
+                self:addChild(btn)
+                self.filterButtons[#self.filterButtons + 1] = btn
+                table.insert(self.filterButtonsByScope[scope], btn)
+                fx = fx + w + 5
+            end
         end
-        local btn = TWATabButton:new(fx, fy, w, tabH, label, self, TWACraftWindow.onFilterClick)
-        btn.internal = tab.key
-        -- Note 2026-09-27: "เขียนหมายเหตุไว้ด้วยตามปุ่มต่างๆ" -- "Available"
-        -- isn't self-explanatory from its label alone (unlike a category
-        -- name), so it gets a real tooltip explaining what it filters by.
-        if tab.key == "Available" then
-            btn:setTooltip(getText("IGUI_TWA_Tooltip_FilterAvailable"))
-        end
-        btn:initialise()
-        self:addChild(btn)
-        self.filterButtons[#self.filterButtons + 1] = btn
-        fx = fx + w + 5
+        rowEnd = math.max(rowEnd, fy)
     end
-    fy = fy + tabStep
+    local fy = rowEnd + tabStep
 
     -- Tier filter row (request 2026-09-26: "filter by tier too"), a second
     -- independent row of tabs under the category ones -- both apply
@@ -1425,15 +1449,8 @@ function TWACraftWindow:createChildren()
     -- Round 14 ("ให้มีปุ่มปิดเสียงใน ui คราฟ กดซ้ำจะกลายเป็นเปิดเสียง ปุ่มให้
     -- เป็นรูปโทรโข่ง ซ่อนไว้ซักมุมใน ui"): a small megaphone in the bottom-
     -- right corner; the same switch as Options > Mods > mute.
-    self.soundOnTex = getTexture("media/textures/TWA_UI_SoundOn.png")
-    self.soundOffTex = getTexture("media/textures/TWA_UI_SoundOff.png")
-    self.soundButton = ISButton:new(WINDOW_W - 34, WINDOW_H - 34, 26, 26, "", self, TWACraftWindow.onSoundToggle)
-    self.soundButton:initialise()
-    self.soundButton:setDisplayBackground(false)
-    if self.soundButton.forceImageSize then self.soundButton:forceImageSize(24, 24) end
-    self.soundButton:setImage(TWASound.muted and self.soundOffTex or self.soundOnTex)
-    self.soundButton:setTooltip(getText("IGUI_TWA_Tooltip_Sound"))
-    self:addChild(self.soundButton)
+    -- R69: the megaphone (mute) is now a volume slider in the header
+    -- (TWAWorkbench).
 
     -- Request 2026-10-02: admin-only buttons under the center column --
     -- spawn what the selected recipe still lacks / raise the skills it asks
@@ -1495,7 +1512,9 @@ function TWACraftWindow:createChildren()
     for _, b in ipairs(self.filterButtons) do table.insert(self.pageWidgets.browse, b) end
     for _, b in ipairs(self.tierFilterButtons) do table.insert(self.pageWidgets.browse, b) end
     self.procCancelButton:setVisible(false)
-    self:setPage(self.page or "browse")
+    -- R69: the craft tab with no recipe, the modify and guide tabs
+    self:createWorkbenchChildren(contentTop, panelBottom)
+    self:setTab(self.activeTab or "weapons")
 end
 
 -- R68: the three pages ------------------------------------------------------
@@ -1512,12 +1531,18 @@ function TWACraftWindow:setPage(page)
         end
     end
     -- buttons the page logic switches every frame start hidden; the rest show
-    local perFrame = { [self.startButton] = true, [self.cancelButton] = true, [self.incompleteButton] = true,
+    local perFrame = { [self.craftGoWeapons] = true, [self.craftGoMaterials] = true, [self.startButton] = true, [self.cancelButton] = true, [self.incompleteButton] = true,
         [self.finishButton] = true, [self.centerAbortButton] = true, [self.procConfirmButton] = true,
         [self.adminItemsButton] = true, [self.adminSkillsButton] = true, [self.continueButton] = true,
         [self.procPracticeButton] = true, [self.procSearchButton] = true }
     for w in pairs(shown) do w:setVisible(not perFrame[w]) end
-    self.title = getText("IGUI_TWA_CraftWindowTitle") .. "  -  " .. getText(self.PAGE_TITLE[page] or "IGUI_TWA_PageRecipes")
+    -- R69: only the open tab's set of category tabs
+    if page == "browse" and self.filterButtonsByScope then
+        for scope, list in pairs(self.filterButtonsByScope) do
+            for _, b in ipairs(list) do b:setVisible(scope == self.recipeList.scope) end
+        end
+    end
+    self.title = getText("IGUI_TWA_CraftWindowTitle")
     if page == "browse" then
         self.recipeList:refresh()
     elseif page == "craft" then
@@ -1546,11 +1571,17 @@ function TWACraftWindow:openRecipe(recipe)
         return
     end
     if not self.active then self:selectRecipe(recipe) end
-    self:setPage("craft")
+    self:setTab("craft")
 end
 
+-- R69: back to the recipe tab this recipe belongs to
 function TWACraftWindow:onBackClicked()
-    self:setPage("browse")
+    if self.page == "practice" then
+        self:setPage("browse")
+        return
+    end
+    local r = self.selectedRecipe
+    self:setTab((r and TWACraftUI.isMaterialCategory(r.category)) and "materials" or "weapons")
 end
 
 function TWACraftWindow:onPracticePageClicked()
@@ -1713,7 +1744,7 @@ function TWACraftWindow:resumeFromItem(item)
     self.selectedProcId = nil
     self.searchBox:setText("")
     self.recipeList:setSearch("")
-    self:setPage("craft")
+    self:setTab("craft")
 end
 
 -- R67: every unfinished (bookmarked) item at hand -- carried, on the floor
@@ -1784,7 +1815,7 @@ end
 function TWACraftWindow:onContinueClicked()
     if self.active then
         self.selectedRecipe = getRecipeById(self.active.recipeId) or self.selectedRecipe
-        self:setPage("craft")
+        self:setTab("craft")
         return
     end
     local list = self:findIncomplete()
@@ -1924,15 +1955,6 @@ function TWACraftWindow:onCancelButtonClicked() self:startCenterAction("cancel")
 function TWACraftWindow:onIncompleteButtonClicked() self:startCenterAction("incomplete") end
 function TWACraftWindow:onFinishButtonClicked() self:startCenterAction("finish") end
 
-function TWACraftWindow:onSoundToggle()
-    if TWAOptions and TWAOptions.toggleMute then
-        TWAOptions.toggleMute()
-    else
-        TWASound.muted = not TWASound.muted
-    end
-    self.soundButton:setImage(TWASound.muted and self.soundOffTex or self.soundOnTex)
-end
-
 function TWACraftWindow:onSearchClearClicked()
     self:applySearch("")
 end
@@ -1942,8 +1964,27 @@ end
 -- the procedure-details magnifying-glass button below).
 function TWACraftWindow:applySearch(text)
     self.searchBox:setText(text or "")
-    self.recipeList:setSearch(text or "")
-    if self.page ~= "browse" then self:setPage("browse") end
+    local list = self.recipeList
+    list:setSearch(text or "")
+    -- R69: weapons and materials are separate tabs; when nothing matches in
+    -- this one but something does in the other (right-click a stone, "find
+    -- recipes" for a smelting procedure), show the other
+    local scope = list.scope
+    if text and text ~= "" and #list.items == 0 then
+        local other = scope == "materials" and "weapons" or "materials"
+        -- (as that tab would show it: its category filter starts at All)
+        local cat = list.filterCategory
+        list.scope, list.filterCategory = other, "All"
+        local found = false
+        for _, recipe in ipairs(TWARecipeData.List) do
+            if list:matches(recipe) then found = true break end
+        end
+        list.scope, list.filterCategory = scope, cat
+        if found then scope = other end
+    end
+    if self.page ~= "browse" or scope ~= list.scope then
+        self:setTab(scope == "materials" and "materials" or "weapons")
+    end
 end
 
 -- Request 2026-09-27: "เพิ่มปุ่มแว่นขยายในรายละเอียดกรรมวิธี...ไป search
@@ -2476,8 +2517,8 @@ end
 -- has already drawn. The ONLY way to draw genuinely BEFORE children is a
 -- real prerender() override.
 function TWACraftWindow:prerender()
-    ISCollapsableWindow.prerender(self)
-    if self.page ~= "browse" then self:drawProcedureDetailsBackground() end
+    self:drawWorkbenchFrame()
+    if (self.page == "craft" and self.selectedRecipe) or self.page == "practice" then self:drawProcedureDetailsBackground() end
 end
 
 -- Request 2026-09-28: Cancel/Incomplete/Finish all show a real progress bar
@@ -2558,12 +2599,15 @@ function TWACraftWindow:drawLockNotice()
 end
 
 function TWACraftWindow:render()
-    ISCollapsableWindow.render(self)
+    ISPanel.render(self)
     self:updateContinueButton()
-    -- Keep the megaphone in step with Options > Mods.
-    if self.soundButton then
-        local want = TWASound.muted and self.soundOffTex or self.soundOnTex
-        if self.soundButton.image ~= want then self.soundButton:setImage(want) end
+    self:drawWorkbenchHeader()
+    -- R69: the modify and guide tabs draw themselves (TWAWorkbench)
+    if self.page == "modify" or self.page == "guide" then
+        self:renderWorkbenchPage()
+        self:drawLockNotice()
+        self:drawHoverTooltip()
+        return
     end
 
     -- R68: the browse and practice pages draw little themselves.
@@ -2599,24 +2643,31 @@ function TWACraftWindow:render()
     end
 
     local centerX, centerY = self.centerX, self.contentTop
+
+    -- R69 ("แท็บ 1 หากยังไม่เลือกสูตรจะมีปุ่มกดให้กลับไปแท็บ 2 หรือ 3 เพื่อ
+    -- เลือกสูตรก่อน"): no recipe yet -> say so, with a button to each list.
+    if not self.selectedRecipe then
+        for _, w in ipairs({ self.startButton, self.cancelButton, self.incompleteButton, self.finishButton,
+                self.centerAbortButton, self.procConfirmButton, self.adminItemsButton, self.adminSkillsButton, self.backButton }) do
+            w:setVisible(false)
+        end
+        self.craftGoWeapons:setVisible(true)
+        self.craftGoMaterials:setVisible(true)
+        self:renderCraftEmpty()
+        self:drawLockNotice()
+        self:drawHoverTooltip()
+        return
+    end
+    self.craftGoWeapons:setVisible(false)
+    self.craftGoMaterials:setVisible(false)
+    self.backButton:setVisible(true)
+
     local cardH = self.panelBottom - self.btnH - 10 - centerY
     self:drawRect(centerX - 8, centerY - 8, CENTER_W, cardH, 0.9, 0.06, 0.06, 0.07)
     self:drawRectBorder(centerX - 8, centerY - 8, CENTER_W, cardH, 0.6, 0.4, 0.4, 0.4)
 
     self:drawProcedureDetails()
     self:drawCenterActionRow()
-
-    if not self.selectedRecipe then
-        drawTextShadowed(self, getText("IGUI_TWA_SelectRecipeFirst"), centerX + 16, centerY + 20, 0.75, 0.75, 0.75, 1, TWAFont.medium())
-        self.finishButton.enable = false
-        self.incompleteButton.enable = false
-        self:drawLockNotice()
-        -- Drawn LAST so it sits on top of everything else this frame (the
-        -- z-order bug from testing: drawing this before later draw calls in
-        -- the same render pass put it visually behind them).
-        self:drawHoverTooltip()
-        return
-    end
 
     local recipe = self.selectedRecipe
     local name = recipeName(recipe)
@@ -2869,11 +2920,13 @@ function TWACraftWindow:render()
 end
 
 function TWACraftWindow:update()
-    ISCollapsableWindow.update(self)
+    ISPanel.update(self)
 end
 
 function TWACraftWindow:onMouseDown(x, y)
-    if self.page ~= "craft" then return ISCollapsableWindow.onMouseDown(self, x, y) end
+    -- R69: the header (drag, volume) and the tab bar first
+    if self:workbenchMouseDown(x, y) then return true end
+    if self.page ~= "craft" then return true end
     local r = self.baseCardRect
     if r and self.selectedRecipe == r.recipe and x >= r.x and x < r.x + r.w and y >= r.y and y < r.y + r.h then
         self:openBaseChooser(r.recipe)
@@ -2887,7 +2940,7 @@ function TWACraftWindow:onMouseDown(x, y)
             end
         end
     end
-    return ISCollapsableWindow.onMouseDown(self, x, y)
+    return true
 end
 
 function TWACraftWindow:close()
@@ -2952,7 +3005,7 @@ function TWACraftUI.open(player, searchText, resumeItem)
     end
     if win.active then
         win.selectedRecipe = S.getRecipeById(win.active.recipeId)
-        win:setPage("craft")
+        win:setTab("craft")
     elseif resumeItem then
         win:resumeFromItem(resumeItem)
     elseif searchText then
