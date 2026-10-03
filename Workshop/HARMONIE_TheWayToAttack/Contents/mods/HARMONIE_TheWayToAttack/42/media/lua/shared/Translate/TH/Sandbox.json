@@ -38,7 +38,7 @@
     "Sandbox_HARMONIE_TWA_AllowWeaponDebug": "ตัวแก้ stats อาวุธสำหรับดีบัก (แอดมิน / -debug)",
     "Sandbox_HARMONIE_TWA_AllowWeaponDebug_tooltip": "แอดมิน และผู้ที่เปิดเกมด้วย -debug คลิกขวาอาวุธเพื่อแก้ stats ได้ทุกค่า ถ้าปิด เมนูนี้จะไม่แสดงเลย",
     "Sandbox_HARMONIE_TWA_DamageDisplayScale": "ตัวคูณการแสดงค่าดาเมจ",
-    "Sandbox_HARMONIE_TWA_DamageDisplayScale_tooltip": "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม",
+    "Sandbox_HARMONIE_TWA_DamageDisplayScale_tooltip": "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ แล้วปัดเป็นจำนวนเต็ม (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม",
     "Sandbox_HARMONIE_TWA_ShareDamageNumbers": "ผู้เล่นอื่นเห็นตัวเลขดาเมจ",
     "Sandbox_HARMONIE_TWA_ShareDamageNumbers_tooltip": "โหมดผู้เล่นหลายคน: ตัวเลขดาเมจจากการตีของคุณจะแสดงให้ผู้เล่นที่อยู่ใกล้เห็นด้วย",
     "Sandbox_HARMONIE_TWA_DamageNumberRange": "ระยะที่ผู้อื่นเห็นตัวเลขดาเมจ (ช่อง)",

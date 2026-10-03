@@ -78,8 +78,8 @@ OPTS = [
   "แอดมิน และผู้ที่เปิดเกมด้วย -debug คลิกขวาอาวุธเพื่อแก้ stats ได้ทุกค่า ถ้าปิด เมนูนี้จะไม่แสดงเลย"),
  # ---- Damage numbers (2026-10-03)
  ("DamageDisplayScale", I, 100, 1, 1000, "HARMONIE_TheWayToAttack", "Damage display multiplier", "ตัวคูณการแสดงค่าดาเมจ",
-  "Damage, DPS and zombie HP are SHOWN multiplied by this (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
-  "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม"),
+  "Damage, DPS and zombie HP are SHOWN multiplied by this and rounded to a whole number (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
+  "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ แล้วปัดเป็นจำนวนเต็ม (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม"),
  ("ShareDamageNumbers", B, True, None, None, "HARMONIE_TheWayToAttack", "Others see damage numbers", "ผู้เล่นอื่นเห็นตัวเลขดาเมจ",
   "Multiplayer: the damage numbers of your hits also show for players near you.",
   "โหมดผู้เล่นหลายคน: ตัวเลขดาเมจจากการตีของคุณจะแสดงให้ผู้เล่นที่อยู่ใกล้เห็นด้วย"),

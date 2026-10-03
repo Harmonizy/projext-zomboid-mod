@@ -38,7 +38,7 @@
     "Sandbox_HARMONIE_TWA_AllowWeaponDebug": "Weapon stat debug editor (admins / -debug)",
     "Sandbox_HARMONIE_TWA_AllowWeaponDebug_tooltip": "Admins, and anyone running with -debug, can right-click a weapon to edit every stat it has. Off: the menu never appears.",
     "Sandbox_HARMONIE_TWA_DamageDisplayScale": "Damage display multiplier",
-    "Sandbox_HARMONIE_TWA_DamageDisplayScale_tooltip": "Damage, DPS and zombie HP are SHOWN multiplied by this (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
+    "Sandbox_HARMONIE_TWA_DamageDisplayScale_tooltip": "Damage, DPS and zombie HP are SHOWN multiplied by this and rounded to a whole number (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
     "Sandbox_HARMONIE_TWA_ShareDamageNumbers": "Others see damage numbers",
     "Sandbox_HARMONIE_TWA_ShareDamageNumbers_tooltip": "Multiplayer: the damage numbers of your hits also show for players near you.",
     "Sandbox_HARMONIE_TWA_DamageNumberRange": "Damage numbers shared within (tiles)",
