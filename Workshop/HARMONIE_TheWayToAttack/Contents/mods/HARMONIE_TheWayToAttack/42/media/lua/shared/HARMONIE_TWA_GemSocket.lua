@@ -25,6 +25,7 @@
 --============================================================================
 
 require "HARMONIE_TWA_CraftState"
+require "HARMONIE_TWA_Display"
 require "HARMONIE_TWA_RecipeData"
 
 TWAGemSocket = TWAGemSocket or {}
@@ -51,8 +52,8 @@ G.ABILITIES = {
 }
 -- The weapon fields a gem can raise: getter/setter names and the label key.
 G.FIELDS = {
-    { key = "MinDamage", get = "getMinDamage", set = "setMinDamage", label = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
-    { key = "MaxDamage", get = "getMaxDamage", set = "setMaxDamage", label = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" },
+    { key = "MinDamage", get = "getMinDamage", set = "setMinDamage", label = "IGUI_TWA_Stat_MinDamage", fmt = "%.0f", scale = true },
+    { key = "MaxDamage", get = "getMaxDamage", set = "setMaxDamage", label = "IGUI_TWA_Stat_MaxDamage", fmt = "%.0f", scale = true },
     { key = "ConditionMax", get = "getConditionMax", set = "setConditionMax", label = "IGUI_TWA_Stat_Condition", fmt = "%.0f" },
 }
 
@@ -82,11 +83,12 @@ function G.describe(ab)
     local parts = {}
     ab = ab or {}
     local both = ab.MinDamage and ab.MinDamage ~= 0 and ab.MinDamage == ab.MaxDamage
-    if both then parts[1] = getText("IGUI_TWA_Socket_Damage") .. " +" .. string.format("%.1f", ab.MinDamage) end
+    -- damage shown x100 (TWADisplay)
+    if both then parts[1] = getText("IGUI_TWA_Socket_Damage") .. " +" .. TWADisplay.fmt(ab.MinDamage) end
     for _, f in ipairs(G.FIELDS) do
         local v = ab[f.key]
         local skip = both and (f.key == "MinDamage" or f.key == "MaxDamage")
-        if v and v ~= 0 and not skip then parts[#parts + 1] = getText(f.label) .. " +" .. string.format(f.fmt, v) end
+        if v and v ~= 0 and not skip then parts[#parts + 1] = getText(f.label) .. " +" .. string.format(f.fmt, f.scale and TWADisplay.dmg(v) or v) end
     end
     if #parts == 0 then return getText("IGUI_TWA_Socket_NoAbility") end
     return table.concat(parts, ", ")

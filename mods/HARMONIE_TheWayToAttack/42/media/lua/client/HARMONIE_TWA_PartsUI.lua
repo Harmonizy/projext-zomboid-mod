@@ -12,6 +12,7 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "HARMONIE_TWA_Display"
 require "ISUI/ISButton"
 require "ISUI/ISCollapsableWindow"
 require "TimedActions/ISInventoryTransferAction"
@@ -30,8 +31,8 @@ local SLOT_GAP = 58
 local STAT_Y0  = 300
 
 local STAT_LINES = {
-    { label = "IGUI_TWA_Stat_MinDamage",  get = "getMinDamage",      fmt = "%.1f" },
-    { label = "IGUI_TWA_Stat_MaxDamage",  get = "getMaxDamage",      fmt = "%.1f" },
+    { label = "IGUI_TWA_Stat_MinDamage",  get = "getMinDamage",      fmt = "%.0f", scale = true },
+    { label = "IGUI_TWA_Stat_MaxDamage",  get = "getMaxDamage",      fmt = "%.0f", scale = true },
     { label = "IGUI_TWA_Stat_CritChance", get = "getCriticalChance", fmt = "%.1f" },
     { label = "IGUI_TWA_Stat_Speed",      get = "getBaseSpeed",      fmt = "%.1f" },
     { label = "IGUI_TWA_Stat_Range",      get = "getMaxRange",       fmt = "%.1f" },
@@ -421,6 +422,7 @@ function TWAPartsWindow:render()
     local sy = STAT_Y0
     for i, st in ipairs(STAT_LINES) do
         local v = weapon[st.get] and weapon[st.get](weapon) or nil
+        if v ~= nil and st.scale then v = TWADisplay.dmg(v) end   -- shown x100
         if v ~= nil then
             self:drawText(getText(st.label) .. ": " .. string.format(st.fmt, v), SLOT_X, sy + (i - 1) * 20, 1, 1, 1, 1,
                 UIFont.Small)
