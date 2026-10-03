@@ -11,6 +11,7 @@
 --============================================================================
 
 require "HARMONIE_TWA_Font"
+require "HARMONIE_TWA_Picker"
 require "ISUI/ISPanel"
 require "HARMONIE_TWA_Display"
 require "ISUI/ISButton"
@@ -1447,22 +1448,27 @@ function TWACraftWindow:baseChoiceType(recipe)
     return choices[1] and choices[1].type or nil
 end
 
+-- R67c: a draggable, scrolling window (TWAPicker) instead of a pop-up menu.
 function TWACraftWindow:openBaseChooser(recipe)
     local choices = self:baseChoices(recipe)
     if #choices == 0 then return end
-    local ctx = ISContextMenu.get(self.player:getPlayerNum(), getMouseX(), getMouseY())
-    local title = ctx:addOption(getText("IGUI_TWA_ChooseBaseTitle"), nil, nil)
-    title.notAvailable = true
-    local window = self
+    local current = self:baseChoiceType(recipe)
+    local rows = {}
     for _, c in ipairs(choices) do
         local it = getItemScript(c.type)
-        local label = (it and it:getDisplayName() or c.type) .. "  x" .. tostring(c.count)
-        local opt = ctx:addOption(label, window, function(w, t)
-            w.baseChoice = w.baseChoice or {}
-            w.baseChoice[recipe.id] = t
-        end, c.type)
-        opt.iconTexture = it and getItemTexture(it:getIcon()) or nil
+        rows[#rows + 1] = {
+            text = it and it:getDisplayName() or c.type,
+            sub = getText("IGUI_TWA_HaveCount", tostring(c.count)),
+            icon = it and getItemTexture(it:getIcon()) or nil,
+            marked = c.type == current,
+            value = c.type,
+        }
     end
+    local window = self
+    TWAPicker.open(getText("IGUI_TWA_ChooseBaseTitle"), rows, function(t)
+        window.baseChoice = window.baseChoice or {}
+        window.baseChoice[recipe.id] = t
+    end, self)
 end
 
 -- Request 2026-09-28: "ไม่สามารถเปลี่ยนไปทำสูตรอื่นได้จนกว่าจะกดยกเลิก" --
@@ -1533,31 +1539,35 @@ function TWACraftWindow:incompleteWhere(it)
     return "IGUI_TWA_Where_Container"
 end
 
-function TWACraftWindow:incompleteLabel(it)
+function TWACraftWindow:incompleteProgress(it)
     local md = it:getModData()
     local recipe = getRecipeById(md.TWA_RecipeId)
     local need, done = recipe and #recipe.procedures or 0, 0
     for _, pid in ipairs(recipe and recipe.procedures or {}) do
         if type(md.TWA_DoneProcedures) == "table" and md.TWA_DoneProcedures[pid] then done = done + 1 end
     end
-    return getText("IGUI_TWA_ContinuePickRow", it:getDisplayName(), tostring(done), tostring(need),
-        getText(self:incompleteWhere(it)))
+    return done, need
 end
 
+-- R67c: the list is a draggable, scrolling window (TWAPicker).
 function TWACraftWindow:onContinueClicked()
     local list = self:findIncomplete()
     self.incompleteList, self.incompleteScanAt = list, getTimestampMs and getTimestampMs() or 0
     if #list == 0 then return end
     if #list == 1 then self:resumeFromItem(list[1]) return end
-    local ctx = ISContextMenu.get(self.player:getPlayerNum(), getMouseX(), getMouseY())
-    local title = ctx:addOption(getText("IGUI_TWA_ContinuePickTitle"), nil, nil)
-    title.notAvailable = true
+    local rows = {}
     for _, it in ipairs(list) do
-        local label = self:incompleteLabel(it)
-        if it == self.resumeItem then label = "> " .. label end
-        local opt = ctx:addOption(label, self, TWACraftWindow.resumeFromItem, it)
-        opt.iconTexture = it.getTex and it:getTex() or nil
+        local done, need = self:incompleteProgress(it)
+        rows[#rows + 1] = {
+            text = it:getDisplayName(),
+            sub = getText("IGUI_TWA_ContinuePickSub", tostring(done), tostring(need), getText(self:incompleteWhere(it))),
+            icon = it.getTex and it:getTex() or nil,
+            marked = it == self.resumeItem,
+            value = it,
+        }
     end
+    local window = self
+    TWAPicker.open(getText("IGUI_TWA_ContinuePickTitle"), rows, function(it) window:resumeFromItem(it) end, self)
 end
 
 -- Looking at other recipes is free until one is started; after that the
@@ -2675,6 +2685,7 @@ function TWACraftUI.close()
     if win.active then
         TWACraftState.requestGiveBack(win.player, "incomplete", win.active.recipeId)
     end
+    if TWAPicker then TWAPicker.close() end
     win:setVisible(false)
     win:removeFromUIManager()
     TWACraftUI.window = nil
