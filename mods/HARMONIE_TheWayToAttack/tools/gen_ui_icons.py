@@ -3,7 +3,8 @@
 ui คราฟ ... ปุ่มให้เป็นรูปโทรโข่ง"): a megaphone with sound waves (on) and
 the same megaphone crossed out (off). 32x32, drawn 8x and scaled down.
 R68: also the yellow dot that blinks on the next button to press and on
-the procedures still to do (it replaced R67's yellow tick).
+the procedures still to do (it replaced R67's yellow tick); the favourite
+star (on / off) of the recipe list.
 Needs Pillow."""
 import os
 from PIL import Image, ImageDraw
@@ -44,5 +45,22 @@ def dot():
     d.ellipse([84, 76, 132, 116], fill=(255, 244, 170, 255))  # small shine
     img.resize((S, S), Image.LANCZOS).save(os.path.join(OUT, "TWA_UI_DotYellow.png"))
 
-make(True); make(False); dot()
+import math
+def star(on):
+    img = Image.new("RGBA", (W, W), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    pts = []
+    for i in range(10):
+        r = 112 if i % 2 == 0 else 46
+        a = -math.pi / 2 + i * math.pi / 5
+        pts.append((128 + r * math.cos(a), 134 + r * math.sin(a)))
+    if on:
+        d.polygon(pts, fill=(255, 205, 40, 255), outline=(60, 40, 0, 255))
+        d.line(pts + [pts[0]], fill=(60, 40, 0, 255), width=10)
+    else:
+        d.line(pts + [pts[0]], fill=(30, 30, 30, 255), width=22)
+        d.line(pts + [pts[0]], fill=(170, 170, 175, 255), width=12)
+    img.resize((S, S), Image.LANCZOS).save(os.path.join(OUT, "TWA_UI_Star%s.png" % ("On" if on else "Off")))
+
+make(True); make(False); dot(); star(True); star(False)
 print("ok")

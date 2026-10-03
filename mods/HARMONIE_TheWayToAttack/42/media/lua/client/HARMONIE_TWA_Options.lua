@@ -60,6 +60,8 @@ if PZAPI and PZAPI.ModOptions and not O.options then
         BARS = { "Health", "Red", "Green", "Blue", "Purple" }, FONTS = { "Small", "Medium", "Large" } }
     -- R67: text size of this mod's windows (HARMONIE_TWA_Font)
     list("uiFontSize", "size_", Z.FONTS, 1)
+    -- R68: size of the craft window (Auto follows the screen height)
+    list("uiWindowSize", "wsize_", { "Auto", "Normal", "Large", "XLarge" }, 1)
     tick("zhpBar", true)
     tick("zhpText", true)
     tick("zhpDamage", true)

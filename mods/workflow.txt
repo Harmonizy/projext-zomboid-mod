@@ -3410,5 +3410,18 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     string/table work for every zombie every frame), cache per zombie what
     does not change, and in a loop test the cheap things first with direct
     calls (TWA 0.66.1 zombie HP scan) -- not a pcall per Java call.
+[ ] Reading a B42 CharacterStat? Check its range before you assume one:
+    ZOMBIE_INFECTION runs 0-100 (TOC: "< 20"); EHR read it as 0-1, so any
+    bite counted as 100 percent (HomeMedic 0.25.0).
+[ ] A line said "on entering a state" (infected, a stage)? Give it
+    hysteresis: reset only after the state has really been gone a while,
+    say each stage once, rate-limit -- a check that blinks false for one
+    tick otherwise repeats the line every check (HomeMedic 0.25.0).
+[ ] Splitting a big window into pages (TWA 0.67.0 craft window: recipes /
+    craft / practice): keep one window, list each page's widgets
+    (self.pageWidgets) and let setPage show / hide them; widgets whose
+    visibility the page logic sets every frame start hidden. Sizes go
+    through S(px) with a layout scale so the window can grow on big
+    screens (Options "Window size", Auto by screen height).
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

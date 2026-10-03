@@ -49,5 +49,11 @@
     "UI_options_HARMONIE_TWA_zhpLog": "Log hits to console",
     "UI_options_HARMONIE_TWA_zhpLog_tooltip": "Writes every hit you land to console.txt: the weapon's listed damage, the damage really dealt, crit, your skill in that weapon and your endurance. For checking why a hit is lower than the tooltip.",
     "UI_options_HARMONIE_TWA_uiFontSize": "Window text size",
-    "UI_options_HARMONIE_TWA_uiFontSize_tooltip": "Text size in the weapon crafting, weapon parts and gem socket windows. Reopen the window after changing it."
+    "UI_options_HARMONIE_TWA_uiFontSize_tooltip": "Text size in the weapon crafting, weapon parts and gem socket windows. Reopen the window after changing it.",
+    "UI_options_HARMONIE_TWA_uiWindowSize": "Craft window size",
+    "UI_options_HARMONIE_TWA_uiWindowSize_tooltip": "Size of the weapon crafting window. Auto makes it bigger on a big screen (1440p and up). Bigger sizes also bring bigger text. Reopen the window after changing it.",
+    "UI_options_HARMONIE_TWA_wsize_Auto": "Auto",
+    "UI_options_HARMONIE_TWA_wsize_Normal": "Normal",
+    "UI_options_HARMONIE_TWA_wsize_Large": "Large",
+    "UI_options_HARMONIE_TWA_wsize_XLarge": "Extra large"
 }
