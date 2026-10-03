@@ -3398,5 +3398,11 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     OnPlayerUpdate on clients (it fires for the OTHER players too -- skip
     if not player:isLocalPlayer()). One owner per periodic sync; leave out
     what has not changed.
+[ ] Lag you cannot pin down by reading code? Measure it: mods/HARMONIE_PerfProbe
+    (diagnostic mod, file 000_ so it loads first) times every handler added
+    to the frequent Events and counts sendClientCommand / sendServerCommand,
+    printing the top ones to console.txt every 10 s on client and server.
+    Enable on server + client for a few minutes, then read the
+    "[PerfProbe ...]" lines. Remove it afterwards.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.
