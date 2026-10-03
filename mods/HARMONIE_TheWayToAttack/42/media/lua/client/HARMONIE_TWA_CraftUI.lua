@@ -1433,7 +1433,9 @@ function TWACraftWindow:pickItems()
         end
         if not base then return false end
     end
-    if recipe.base2 then
+    -- R69: an unfinished item that already carries its supplementary item
+    -- (taken at the first Start) needs no second one.
+    if recipe.base2 and not S.carriedBase2(base, recipe) then
         base2 = S.pickFreshItem(self.player, recipe.base2)
         if not base2 then return false end
     end
@@ -2451,6 +2453,9 @@ function TWACraftWindow:render()
             if self.resumeItem then
                 owned1 = S.findItem(self.player, self.resumeItem) ~= nil
                 note1 = "IGUI_TWA_ResumeItemNote"
+                -- R69 ("เวลากดทำต่อ แล้วไม่อยากให้มีคำว่ามีอยู่ในวัตถุดิบ"): no
+                -- "Have: N" while continuing an unfinished item either
+                count1, count2 = nil, nil
             else
                 owned1, anyCopy = chosen ~= nil, false
                 for _, t in ipairs(S.baseTypes(recipe)) do
@@ -2464,6 +2469,10 @@ function TWACraftWindow:render()
             -- Request 2026-09-28: "เปลี่ยนคำว่าชิ้นงานตั้งต้นอันที่สองเป็น
             -- ชิ้นงานเสริม".
             note2 = owned2 and "IGUI_TWA_ExtraItemOwned" or "IGUI_TWA_ExtraItemMissing"
+            -- R69: the unfinished item still holds the one taken at Start
+            if self.resumeItem and S.carriedBase2(self.resumeItem, recipe) then
+                owned2, note2 = true, "IGUI_TWA_ExtraInUnfinished"
+            end
         end
         local card1Type, card1Alt = recipe.base, recipe.baseAlt
         if chosen then card1Type = chosen end

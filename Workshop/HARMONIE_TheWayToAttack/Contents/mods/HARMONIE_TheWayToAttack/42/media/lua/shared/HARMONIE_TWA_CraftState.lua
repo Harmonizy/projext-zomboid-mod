@@ -483,7 +483,7 @@ function S.getActive(character)
 end
 
 local BOOKMARK_KEYS = { TWA_RecipeId = true, TWA_DoneProcedures = true, TWA_ProcQuality = true,
-    TWA_Incomplete = true, TWA_OrigBase = true }
+    TWA_Incomplete = true, TWA_OrigBase = true, TWA_OrigBase2 = true }
 
 local function copyPlain(v, depth)
     if type(v) ~= "table" then
@@ -513,6 +513,21 @@ function S.snapshotItem(item)
     end
     snap.md = md
     return snap
+end
+
+-- R69 ("การกดเริ่มทำหมายถึงการ consume วัตถุดิบหลักและเสริมไปเลย จนกว่าจะ
+-- กดยกเลิก ถึงจะคืนวัตถุดิบตั้งต้นและเสริมกลับไป"): Incomplete no longer
+-- hands the supplementary item back -- the unfinished item carries its
+-- snapshot (TWA_OrigBase2) and resuming it takes no new one; only Cancel
+-- pays both back. -> the supplementary snapshot an unfinished item for
+-- `recipe` carries, or nil (none, or one made before 0.66.0, whose
+-- supplementary item was already handed back -- resuming it takes one).
+function S.carriedBase2(item, recipe)
+    if not item or not recipe or not recipe.base2 then return nil end
+    local md = item:getModData()
+    if not md.TWA_Incomplete or md.TWA_RecipeId ~= recipe.id then return nil end
+    if type(md.TWA_OrigBase2) ~= "table" then return nil end
+    return copyPlain(md.TWA_OrigBase2, 0)
 end
 
 function S.beginActive(character, recipeId, map, baseSnap, base2Snap)
@@ -578,7 +593,8 @@ end
 
 -- Hand the active craft's items back and end it.
 --   kind "incomplete": the RESULT item, unfinished (0 damage, progress
---                      bookmarked -- right-click it to carry on), plus base2.
+--                      bookmarked -- right-click it to carry on). R69: base2
+--                      stays taken -- the item carries it (TWA_OrigBase2).
 --   kind "cancel":     the original base and base2 come back as they were;
 --                      progress is dropped.
 -- `recipeId` must match the active craft. Returns true when it paid out.
@@ -598,6 +614,9 @@ function S.giveBack(character, kind, recipeId)
             local md = it:getModData()
             md.TWA_Incomplete = true
             md.TWA_OrigBase = copyPlain(act.base, 0)
+            if recipe.base2 then
+                md.TWA_OrigBase2 = copyPlain(act.base2, 0) or { type = recipe.base2 }
+            end
             S.applyIncomplete(it)
             send(inv, it)
         end
@@ -605,7 +624,7 @@ function S.giveBack(character, kind, recipeId)
         local it, inv = addToInventory(character, act.base, recipe.base)
         send(inv, it)
     end
-    if recipe.base2 then
+    if recipe.base2 and kind == "cancel" then
         local it, inv = addToInventory(character, act.base2, recipe.base2)
         send(inv, it)
     end
