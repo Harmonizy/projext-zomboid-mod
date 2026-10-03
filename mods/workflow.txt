@@ -3384,5 +3384,12 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     uses that item: in MP the item can reach the client's inventory as a
     new copy -- the later action's isValid must find it again by id
     (TWA ISUpgradeWeapon override, 0.65.0), not keep the floor object.
+[ ] Any "take now, give back later" flow (TWA craft: Start / Incomplete /
+    Continue / Cancel)? Write the item ledger down and TEST it as a loop:
+    after N x (pause, resume) and one Cancel the player must hold exactly
+    what they started with -- no more. One rule per item: TWA 0.66.0 --
+    Start takes base + supplementary; they stay taken (the unfinished item
+    carries both snapshots, TWA_OrigBase / TWA_OrigBase2) until Cancel pays
+    both back once; procedure materials are simply used up.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

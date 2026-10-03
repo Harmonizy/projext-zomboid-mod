@@ -23,8 +23,10 @@
 --
 -- ONE CRAFT AT A TIME (request 2026-09-28, later round): the base item was
 -- taken at Start; Incomplete hands it back carrying the progress as a
--- bookmark, plus the supplementary item (TWACraftState.giveBack). Closing
--- the crafting window mid-craft does the same thing.
+-- bookmark (TWACraftState.giveBack). R69: the supplementary item stays
+-- taken -- the unfinished item carries it, so Continue needs no new one and
+-- only Cancel gives it back. Closing the crafting window mid-craft does the
+-- same thing.
 --============================================================================
 
 require "TimedActions/ISBaseTimedAction"

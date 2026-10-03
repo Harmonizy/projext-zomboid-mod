@@ -40,8 +40,10 @@ function TWA_StartCraftAction:isValid()
     if (isServer() or not isClient()) and S.getActive(self.character) then return false end
     -- The base slot also carries an unfinished item being resumed, which a
     -- recipe without a base item can have too.
-    if (self.recipe.base or self.baseItem) and not S.resolveItem(self.character, self.baseItem) then return false end
-    if self.recipe.base2 and not S.resolveItem(self.character, self.base2Item) then return false end
+    local base = (self.recipe.base or self.baseItem) and S.resolveItem(self.character, self.baseItem)
+    if (self.recipe.base or self.baseItem) and not base then return false end
+    -- R69: an unfinished item that carries its supplementary item needs none
+    if self.recipe.base2 and not S.carriedBase2(base, self.recipe) and not S.resolveItem(self.character, self.base2Item) then return false end
     return true
 end
 
@@ -96,15 +98,18 @@ function TWA_StartCraftAction:complete()
     local recipe = self.recipe
     if not recipe or S.getActive(self.character) then return false end
     local base = (recipe.base or self.baseItem) and S.resolveItem(self.character, self.baseItem)
-    local base2 = recipe.base2 and S.resolveItem(self.character, self.base2Item)
-    if ((recipe.base or self.baseItem) and not base) or (recipe.base2 and not base2) then return false end
+    -- R69: resuming an unfinished item that carries the supplementary item
+    -- takes no second one (it was taken at the first Start).
+    local carried = S.carriedBase2(base, recipe)
+    local base2 = recipe.base2 and not carried and S.resolveItem(self.character, self.base2Item)
+    if ((recipe.base or self.baseItem) and not base) or (recipe.base2 and not carried and not base2) then return false end
     -- Only a bookmark for THIS recipe may be resumed through the base slot.
     if not recipe.base and base and base:getModData().TWA_RecipeId ~= recipe.id then return false end
     -- Round 19: a fresh base must really fit the recipe (its type, and for
     -- gem refining the gem's state) -- the client's choice is checked here.
     if recipe.base and base and base:getModData().TWA_RecipeId ~= recipe.id and not S.baseOk(recipe, base) then return false end
     local map = S.bookmarkMap(base, recipe.id)
-    local baseSnap, base2Snap = S.snapshotItem(base), S.snapshotItem(base2)
+    local baseSnap, base2Snap = S.snapshotItem(base), carried or S.snapshotItem(base2)
     if base then S.removeItem(self.character, base) end
     if base2 then S.removeItem(self.character, base2) end
     S.beginActive(self.character, recipe.id, map, baseSnap, base2Snap)
