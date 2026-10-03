@@ -160,7 +160,12 @@ function Z.onHit(zed, attacker, bodyPart, weapon)
     if not me or attacker ~= me then return end
     local before = Z.track(zed)
     local crit = call(attacker, "isCriticalHit") == true
-    Z.pending[#Z.pending + 1] = { zombie = zed, before = before, crit = crit, ticks = 1, weapon = weapon }
+    -- every zombie hit in this same tick belongs to the same swing
+    local now = getTimestampMs()
+    if Z.swingAt ~= now then Z.swingAt, Z.swing = now, { n = 0 } end
+    Z.swing.n = Z.swing.n + 1
+    Z.pending[#Z.pending + 1] = { zombie = zed, before = before, crit = crit, ticks = 1, weapon = weapon,
+        swing = Z.swing, down = down(zed) }
 end
 
 -- 2026-10-03 ("ดาเมจต่ำสุดคือ 140 แต่ดาเมจที่ออกมักต่ำกว่า 100"): the
@@ -169,29 +174,28 @@ end
 -- the tooltip and the real hit can be read off console.txt. (Vanilla does
 -- not hit with the rolled MinDamage-MaxDamage directly: IsoZombie.Hit gets
 -- a "damageSplit" and a "modDelta" already worked out by the game.)
-local SKILL_OF = { Axe = "Axe", Blunt = "Blunt", SmallBlunt = "SmallBlunt", LongBlade = "LongBlade",
-    SmallBlade = "SmallBlade", Spear = "Spear" }
+-- B42: HandWeapon:getWeaponSkill(chr) is the skill level the game itself
+-- uses for this weapon, getPerk() which skill (the old getCategories() is
+-- gone -- the first log read "skill ?=?"). "targets" = how many zombies
+-- this same swing hit (the game splits a swing's damage between them).
 function Z.logHit(c, dealt)
     local w = c.weapon
     local me = getSpecificPlayer and getSpecificPlayer(0)
     local minD, maxD = tonumber(call(w, "getMinDamage")) or 0, tonumber(call(w, "getMaxDamage")) or 0
-    local skill, level = "?", "?"
-    local cats = call(w, "getCategories")
-    for i = 0, (cats and cats:size() or 0) - 1 do
-        local name = tostring(cats:get(i))
-        if SKILL_OF[name] and Perks and Perks[SKILL_OF[name]] then
-            skill, level = name, tostring(call(me, "getPerkLevel", Perks[SKILL_OF[name]]))
-            break
-        end
-    end
+    local perk = call(w, "getPerk")
+    local skill = tostring(perk and (call(perk, "getId") or perk) or "?")
+    local level = tostring(call(w, "getWeaponSkill", me) or "?")
     local endurance = "?"
     local stats = call(me, "getStats")
     if stats and CharacterStat and CharacterStat.ENDURANCE then
         endurance = string.format("%.2f", tonumber(call(stats, "get", CharacterStat.ENDURANCE)) or 0)
     end
-    print(string.format("[TWA hit] %s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)  crit=%s  skill %s=%s  endurance=%s  zombieHP %.3f->%.3f",
+    local cond = tostring(call(w, "getCondition") or "?") .. "/" .. tostring(call(w, "getConditionMax") or "?")
+    local after = c.before - dealt
+    print(string.format("[TWA hit] %s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)%s  crit=%s  skill %s=%s  targets=%d  zombieDown=%s  endurance=%s  condition=%s  zombieHP %.3f->%.3f",
         tostring(call(w, "getFullType") or "?"), minD, maxD, dealt, minD > 0 and dealt / minD * 100 or 0,
-        tostring(c.crit), skill, level, endurance, c.before, c.before - dealt))
+        after <= 0.0001 and " [killed: the hit may have been bigger]" or "",
+        tostring(c.crit), skill, level, c.targets or 1, tostring(c.down), endurance, cond, c.before, after))
 end
 
 function Z.settle()
@@ -203,7 +207,10 @@ function Z.settle()
             local after = tonumber(call(c.zombie, "getHealth")) or c.before
             local dealt = c.before - after
             if dealt > 0 then
-                if opt("zhpLog", false) == true then pcall(Z.logHit, c, dealt) end
+                if opt("zhpLog", false) == true then
+                    c.targets = c.swing and c.swing.n or 1
+                    pcall(Z.logHit, c, dealt)
+                end
                 if Z.showDamage() then Z.addPopup(c.zombie, dealt, c.crit) end
                 if TWADamageShare and TWADamageShare.send then TWADamageShare.send(c.zombie, dealt, c.crit) end
             end
