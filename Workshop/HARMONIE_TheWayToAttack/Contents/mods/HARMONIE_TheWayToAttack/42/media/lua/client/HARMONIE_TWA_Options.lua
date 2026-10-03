@@ -37,16 +37,38 @@ if PZAPI and PZAPI.ModOptions and not O.options then
         getText("UI_options_HARMONIE_TWA_mute_tooltip"))
     O.mute.onChange = function(_, value) TWASound.muted = value and true or false end
     O.mute.onChangeApply = function(_, value) TWASound.muted = value and true or false end
-    -- 2026-10-03: zombie health bars / HP numbers / damage numbers
-    -- (HARMONIE_TWA_ZombieHP reads these tick boxes itself)
-    O.zhpBar = O.options:addTickBox("zhpBar", getText("UI_options_HARMONIE_TWA_zhpBar"), true,
-        getText("UI_options_HARMONIE_TWA_zhpBar_tooltip"))
-    O.zhpText = O.options:addTickBox("zhpText", getText("UI_options_HARMONIE_TWA_zhpText"), true,
-        getText("UI_options_HARMONIE_TWA_zhpText_tooltip"))
-    O.zhpDamage = O.options:addTickBox("zhpDamage", getText("UI_options_HARMONIE_TWA_zhpDamage"), true,
-        getText("UI_options_HARMONIE_TWA_zhpDamage_tooltip"))
-    O.zhpHeight = O.options:addSlider("zhpHeight", getText("UI_options_HARMONIE_TWA_zhpHeight"), 0, 10, 1, 0,
-        getText("UI_options_HARMONIE_TWA_zhpHeight_tooltip"))
+    -- 2026-10-03: zombie health bars / HP numbers / damage numbers and how
+    -- they look (HARMONIE_TWA_ZombieHP reads these itself)
+    local function T(k) return getText("UI_options_HARMONIE_TWA_" .. k) end
+    local function tick(id, default) O[id] = O.options:addTickBox(id, T(id), default, T(id .. "_tooltip")) end
+    local function slider(id, lo, hi, step, default) O[id] = O.options:addSlider(id, T(id), lo, hi, step, default, T(id .. "_tooltip")) end
+    -- a list of named choices: a combo box when this game's ModOptions has
+    -- one, else a numbered slider (getValue() is the 1-based index either way)
+    local function list(id, prefix, keys, default)
+        local o = O.options
+        if o.addComboBox then
+            local ok, box = pcall(o.addComboBox, o, id, T(id), T(id .. "_tooltip"))
+            if ok and box and box.addItem then
+                for i, k in ipairs(keys) do box:addItem(T(prefix .. k), i == default) end
+                O[id] = box
+                return
+            end
+        end
+        slider(id, 1, #keys, 1, default)
+    end
+    local Z = { COLORS = { "Yellow", "White", "Orange", "Red", "Green", "Cyan", "Pink", "Purple" },
+        BARS = { "Health", "Red", "Green", "Blue", "Purple" }, FONTS = { "Small", "Medium", "Large" } }
+    tick("zhpBar", true)
+    tick("zhpText", true)
+    tick("zhpDamage", true)
+    list("zhpBarColor", "bar_", Z.BARS, 1)
+    slider("zhpBarWidth", 20, 100, 2, 44)
+    slider("zhpBarThick", 2, 14, 1, 6)
+    slider("zhpHeight", 0, 20, 1, 0)
+    list("zhpNumColor", "color_", Z.COLORS, 1)
+    list("zhpCritColor", "color_", Z.COLORS, 4)
+    list("zhpNumSize", "size_", Z.FONTS, 2)
+    slider("zhpNumHeight", 0, 20, 1, 0)
     if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
     local function readSaved()
         if O.volume.getValue then O.applyVolume(O.volume:getValue()) end

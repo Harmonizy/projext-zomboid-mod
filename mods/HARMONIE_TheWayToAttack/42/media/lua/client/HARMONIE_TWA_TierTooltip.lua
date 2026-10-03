@@ -85,8 +85,8 @@ end
 -- only -- same 2-column layout and same translation keys HARMONIE_TWA_
 -- CraftUI.lua's own STAT_GRID already uses.
 local STATIC_STAT_GRID = {
-    { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.0f", scale = true },
-      { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.0f", scale = true } },
+    { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%s", scale = true },
+      { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%s", scale = true } },
     { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%" },
       { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" } },
     { { key = "baseSpeed", labelKey = "IGUI_TWA_Stat_Speed", fmt = "%.2f", default = 1.0 },
@@ -267,9 +267,9 @@ function ISToolTipInv:render()
         local typeText = weaponTypeText(item, stats)
         if typeText then gridDef[1] = { typeText, "IGUI_TWA_Stat_Type", "%s" } end
         for _, cellDef in ipairs({
-            -- shown x100 (TWADisplay, request 2026-10-03)
-            { TWADisplay.dmg(dps), "IGUI_TWA_Stat_DPS", "%.0f" },
-            { TWADisplay.dmg(minD), "IGUI_TWA_Stat_MinDamage", "%.0f" }, { TWADisplay.dmg(maxD), "IGUI_TWA_Stat_MaxDamage", "%.0f" },
+            -- shown multiplied (TWADisplay: sandbox DamageDisplayScale)
+            { TWADisplay.fmt(dps), "IGUI_TWA_Stat_DPS", "%s" },
+            { TWADisplay.fmt(minD), "IGUI_TWA_Stat_MinDamage", "%s" }, { TWADisplay.fmt(maxD), "IGUI_TWA_Stat_MaxDamage", "%s" },
             { baseSpeed, "IGUI_TWA_Stat_Speed", "%.2f" }, { weight, "IGUI_TWA_StatWeight", "%.1f" },
             { maxRange, "IGUI_TWA_Stat_Range", "%.2f" }, { critChance, "IGUI_TWA_Stat_CritChance", "%.0f%%" },
             { condMax, "IGUI_TWA_Stat_Condition", "%.0f" }, { condLower, "IGUI_TWA_Stat_Durability", "1:%.0f" },
@@ -311,7 +311,7 @@ function ISToolTipInv:render()
                     local v = stats[cellDef.key]
                     if v == nil then v = cellDef.default end
                     if v ~= nil then
-                        if cellDef.scale then v = TWADisplay.dmg(v) end
+                        if cellDef.scale then v = TWADisplay.fmt(v) end
                         gridDef[#gridDef + 1] = { v, cellDef.labelKey, cellDef.fmt }
                     end
                 end
