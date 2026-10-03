@@ -11,6 +11,7 @@
 --============================================================================
 
 require "HARMONIE_TWA_Font"
+require "HARMONIE_TWA_Favorites"
 require "HARMONIE_TWA_Picker"
 require "ISUI/ISPanel"
 require "HARMONIE_TWA_Display"
@@ -265,13 +266,45 @@ end
 
 TWACraftUI = TWACraftUI or {}
 
-local WINDOW_W = 1000
-local WINDOW_H = 640
-local LEFT_W = 280
-local CENTER_W = 380
-local RIGHT_W = 300
-local COL_GAP = 10
-local PANEL_H = 520
+-- R68 ("ขนาดหน้าต่างเล็กไป สำหรับคนจอใหญ่"): every size below is laid out
+-- for scale 1 and multiplied by the window scale (Options > Mods > "Window
+-- size": Auto / Normal / Large / Extra large; Auto picks by screen height).
+-- The text size follows (TWAFont.bump). S(px) scales one number.
+local UI_S = 1
+local function S(px) return math.floor(px * UI_S + 0.5) end
+local WINDOW_W, WINDOW_H, LEFT_W, CENTER_W, RIGHT_W, COL_GAP, PANEL_H
+local function applyLayout(scale)
+    UI_S = scale or 1
+    WINDOW_W, WINDOW_H = S(1000), S(640)
+    LEFT_W, COL_GAP, PANEL_H = S(280), S(10), S(520)
+    -- craft page: the recipe card on the left, the procedure details on the right
+    CENTER_W = S(440)
+    RIGHT_W = WINDOW_W - 10 - CENTER_W - COL_GAP - 10
+    if TWAFont then TWAFont.bump = (UI_S >= 1.45 and 2) or (UI_S >= 1.2 and 1) or 0 end
+end
+applyLayout(1)
+
+TWACraftUI.SCALES = { 1, 1.25, 1.5 }
+function TWACraftUI.layoutScale()
+    local choice = 1
+    local o = TWAOptions and TWAOptions.uiWindowSize
+    if o and o.getValue then
+        local ok, v = pcall(o.getValue, o)
+        if ok then choice = math.floor(tonumber(v) or 1) end
+    end
+    local core = getCore()
+    local sw = core and core:getScreenWidth() or 1920
+    local sh = core and core:getScreenHeight() or 1080
+    local scale
+    if choice >= 2 and choice <= 4 then
+        scale = TWACraftUI.SCALES[choice - 1]
+    else
+        scale = (sh >= 2000 and 1.5) or (sh >= 1400 and 1.25) or 1
+    end
+    -- never bigger than the screen
+    scale = math.min(scale, (sw - 20) / 1000, (sh - 40) / 640)
+    return math.max(1, scale)
+end
 
 -- Weapon-modification parts (Grip/Head/Tactical/Weight) are intentionally not
 -- listed here any more -- request 2026-09-26: they're out of scope for this
@@ -293,6 +326,7 @@ local CATEGORY_TABS = {
     -- เป็น ทั้งหมด, avalaible เป็น คราฟได้"); the weapon categories stay
     -- plain English as before.
     { key = "All", labelKey = "IGUI_TWA_FilterAll" },
+    { key = "Favorites", labelKey = "IGUI_TWA_FilterFavorites" }, -- R68
     { key = "Available", labelKey = "IGUI_TWA_FilterAvailable" },
     { key = "Axe", label = "Axe" },
     { key = "SmallBlade", label = "Small Blade" },
@@ -506,7 +540,7 @@ function TWARecipeScrollList:new(x, y, w, h, ui)
     setmetatable(o, self)
     self.__index = self
     o.ui = ui
-    o.itemheight = 52 + 2 * TWAFont.grow(0) -- R67: taller rows for bigger text
+    o.itemheight = S(58) + 2 * TWAFont.grow(0) -- R67/R68: taller rows for bigger text / a bigger window
     o.font = TWAFont.small()
     o.drawBorder = true
     o.backgroundColor = { r = 0.07, g = 0.07, b = 0.08, a = 0.95 }
@@ -519,10 +553,33 @@ function TWARecipeScrollList:new(x, y, w, h, ui)
 end
 
 function TWARecipeScrollList:onRowClick(recipe)
-    -- Always selectable, even without the base item owned yet -- the center
-    -- panel is how the player finds out what's needed in the first place;
+    -- Always selectable, even without the base item owned yet -- the craft
+    -- page is how the player finds out what's needed in the first place;
     -- Finish itself stays gated on actually owning it (see allProceduresDone).
-    self.ui:selectRecipe(recipe)
+    -- R68: picking a recipe opens its craft page.
+    self.ui:openRecipe(recipe)
+end
+
+-- R68: the star at the right end of a row (left of the scroll bar) marks
+-- a favourite instead of opening the recipe.
+TWARecipeScrollList.STAR_PX = 22
+function TWARecipeScrollList:starRect()
+    local size = S(self.STAR_PX)
+    return self:getWidth() - 16 - size - 6, size
+end
+function TWARecipeScrollList:onMouseDown(x, y)
+    if #self.items > 0 then
+        local row = self:rowAt(x, y)
+        local sx, size = self:starRect()
+        if row >= 1 and row <= #self.items and x >= sx - 4 and x <= sx + size + 4 then
+            local recipe = self.items[row].item
+            TWAFavorites.toggle(recipe.id)
+            getSoundManager():playUISound("UISelectListItem")
+            self:refresh()
+            return true
+        end
+    end
+    return ISScrollingListBox.onMouseDown(self, x, y)
 end
 
 function TWARecipeScrollList:setFilter(cat)
@@ -543,7 +600,11 @@ function TWARecipeScrollList:setSearch(text)
 end
 
 function TWARecipeScrollList:matches(recipe)
-    if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and recipe.category ~= self.filterCategory then
+    if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and self.filterCategory ~= "Favorites"
+            and recipe.category ~= self.filterCategory then
+        return false
+    end
+    if self.filterCategory == "Favorites" and not TWAFavorites.isFav(recipe.id) then
         return false
     end
     if self.filterCategory == "Available" and not ownsBase(recipe, getPlayer()) then
@@ -598,14 +659,16 @@ function TWARecipeScrollList:refresh()
             local name = recipeName(recipe)
             local st = recipeStats(recipe)
             matched[#matched + 1] = { name = name, recipe = recipe, tier = (st and st.tier) or 99,
-                can = ownsBase(recipe, getPlayer()) and true or false }
+                can = ownsBase(recipe, getPlayer()) and true or false, fav = TWAFavorites.isFav(recipe.id) }
         end
     end
     -- Round 9 ("สูตรอยากให้เรียงจาก tier ต่ำไปสูง ก่อนแล้วค่อยเรียงตามตัวอักษร"):
     -- lowest tier first, then by name within a tier.
     -- R67 ("ฟิลเตอร์สูตรที่คราฟได้มาอันแรก แล้วค่อยตามความแรร์ และตัวอักษร"):
     -- the recipes whose base items are at hand come first.
+    -- R68: favourites before everything else.
     table.sort(matched, function(a, b)
+        if a.fav ~= b.fav then return a.fav end
         if a.can ~= b.can then return a.can end
         if a.tier ~= b.tier then return a.tier < b.tier end
         return a.name < b.name
@@ -615,38 +678,79 @@ function TWARecipeScrollList:refresh()
     end
 end
 
+TWARecipeScrollList.STAR_ON = getTexture("media/textures/TWA_UI_StarOn.png")
+TWARecipeScrollList.STAR_OFF = getTexture("media/textures/TWA_UI_StarOff.png")
+
+-- R68: the list is the whole recipe page now, so a row has room for more:
+-- picture | name, rarity - category, base item status | the procedures it
+-- needs (small icons) | favourite star.
 function TWARecipeScrollList:doDrawItem(y, entry, alt)
     local recipe = entry.item
     local h = entry.height or self.itemheight
+    local w = self:getWidth()
     local owned = ownsBase(recipe, getPlayer())
     local selected = self.ui.selectedRecipe == recipe
     local hovered = self.mouseoverselected == entry.index
-    local pad = 6
-    drawNeatCard(self, 2, y + 2, self:getWidth() - 4, h - 4, owned, selected, hovered)
+    local pad = S(6)
+    drawNeatCard(self, 2, y + 2, w - 4, h - 4, owned, selected, hovered)
     -- Rarity-tier color strip on the left edge of the card (request
-    -- 2026-09-26: "color the recipe list by tier") -- a thin bar rather than
-    -- tinting the whole card, so it stays legible alongside the owned/
-    -- selected/hovered card-background states above.
+    -- 2026-09-26: "color the recipe list by tier").
     local stats = recipeStats(recipe)
     local tierInfo = stats and stats.tier and TIER_INFO[stats.tier]
     if tierInfo then
         self:drawRect(2, y + 2, 4, h - 4, 1, tierInfo.r, tierInfo.g, tierInfo.b)
     end
     local tex = recipeIcon(recipe)
-    local iconSize = h - 4 * pad
+    local iconSize = h - 2 * pad
     local tint = owned and 1 or 0.4
     if tex then
-        self:drawRect(pad + 2, y + pad, iconSize, iconSize, 0.5, 0, 0, 0)
-        self:drawTextureScaled(tex, pad + 2, y + pad, iconSize, iconSize, 1, tint, tint, tint)
+        self:drawRect(pad + 4, y + pad, iconSize, iconSize, 0.5, 0, 0, 0)
+        self:drawTextureScaled(tex, pad + 4, y + pad, iconSize, iconSize, 1, tint, tint, tint)
     end
-    -- No green tick on the recipe row (round 7: "ติ้กเขียวถูกในสูตรให้เอาออก";
-    -- round 8 clarified it is ONLY this one -- the others are back).
-    local textX = pad + iconSize + 10
-    drawTextShadowed(self, entry.text, textX, y + pad, 0.95, 0.95, 0.95, 1, self.font)
+    -- No green tick on the recipe row (round 7).
+    local textX = pad + 4 + iconSize + S(10)
+    local lh = TWAFont.lineH()
+    local ty = y + math.max(2, math.floor((h - 3 * lh) / 2))
+    drawTextShadowed(self, entry.text, textX, ty, 0.95, 0.95, 0.95, 1, self.font)
+    if tierInfo then
+        local label = tierInfo.name
+        if stats and stats.categories then label = label .. "  -  " .. stats.categories end
+        drawTextShadowed(self, label, textX, ty + lh, tierInfo.r, tierInfo.g, tierInfo.b, 1, TWAFont.small())
+    end
     local statusKey = owned and "IGUI_TWA_BaseItemOwned"
         or (recipe.base and "IGUI_TWA_BaseItemMissing" or "IGUI_TWA_NoBaseItemNeeded")
     local sr, sg, sb = owned and 0.45 or 0.9, owned and 0.95 or 0.45, 0.45
-    drawTextShadowed(self, getText(statusKey), textX, y + h - 22, sr, sg, sb, 1, TWAFont.small())
+    drawTextShadowed(self, getText(statusKey), textX, ty + 2 * lh, sr, sg, sb, 1, TWAFont.small())
+
+    -- the procedures, right-aligned before the star (as many as fit)
+    local sx, size = self:starRect()
+    local ps, gap = S(26), S(4)
+    local nameRight = textX + math.max(getTextManager():MeasureStringX(self.font, entry.text), S(160)) + S(16)
+    local room = sx - S(10) - nameRight
+    local fit = math.floor((room + gap) / (ps + gap))
+    local procs = recipe.procedures or {}
+    if fit > 0 and #procs > 0 then
+        local n = math.min(fit, #procs)
+        local px = sx - S(10) - n * (ps + gap) + gap
+        local py = y + math.floor((h - ps) / 2)
+        for i = 1, n do
+            local proc = TWAProcedures.List[procs[i]]
+            local ptex = proc and TWAProcScrollList.getProcTexture(nil, proc)
+            self:drawRect(px, py, ps, ps, 0.6, 0.02, 0.02, 0.03)
+            if ptex then self:drawTextureScaled(ptex, px + 2, py + 2, ps - 4, ps - 4, 0.9, 1, 1, 1) end
+            if i == n and n < #procs then
+                drawTextShadowed(self, "+" .. tostring(#procs - n + 1), px + 2, py + 2, 1, 1, 1, 1, TWAFont.small())
+            end
+            px = px + ps + gap
+        end
+    end
+    -- the favourite star
+    local fav = TWAFavorites.isFav(recipe.id)
+    local star = fav and self.STAR_ON or self.STAR_OFF
+    local starY = y + math.floor((h - size) / 2)
+    if star then
+        self:drawTextureScaled(star, sx, starY, size, size, fav and 1 or 0.6, 1, 1, 1)
+    end
     return y + h
 end
 
@@ -1067,9 +1171,17 @@ end
 function TWACraftWindow:createChildren()
     ISCollapsableWindow.createChildren(self)
 
+    -- R68 ("แยกหน้าต่างคราฟอาวุธ ... เริ่มที่หน้าต่างรวมสูตรก่อน แล้วเมื่อ
+    -- กดสูตร ก็ค่อยไปในส่วนการสร้าง และกรรมวิธี และเอาส่วนรวมกรรมวิธี
+    -- ทั้งหมดไปไว้ในหมวดหมู่ฝึกกรรมวิธี"): the window has three pages
+    -- (setPage): "browse" = filters + search on the left, the recipe list
+    -- filling the rest; "craft" = the recipe card on the left (centerX)
+    -- and the procedure details on the right (rightX); "practice" = every
+    -- procedure (the library grid) on the left and the same details box,
+    -- with the Practice button, on the right.
     local leftX = 10
-    local centerX = leftX + LEFT_W + COL_GAP
-    local rightX = centerX + CENTER_W + COL_GAP
+    local centerX = leftX + 8
+    local rightX = leftX + CENTER_W + COL_GAP
     local titleH = self:titleBarHeight()
     local contentTop = titleH + 8
     local panelBottom = contentTop + PANEL_H
@@ -1083,7 +1195,8 @@ function TWACraftWindow:createChildren()
     -- มันเลยไปบัง filter" -- UIFont.Small's real rendered height leaves only
     -- ~2px of clearance at 14, so the caption's own text bottom edge
     -- overlapped the button row starting right under it. Bumped to 18.
-    local captionH = 18
+    local captionH = S(18)
+    local tabH, tabStep = S(24), S(26)
     self.filterButtons = {}
     self.categoryRowY = contentTop
     local fx, fy = leftX, contentTop + captionH
@@ -1092,9 +1205,9 @@ function TWACraftWindow:createChildren()
         local w = getTextManager():MeasureStringX(TWAFont.small(), label) + 20
         if fx + w > leftX + LEFT_W then
             fx = leftX
-            fy = fy + 26
+            fy = fy + tabStep
         end
-        local btn = TWATabButton:new(fx, fy, w, 24, label, self, TWACraftWindow.onFilterClick)
+        local btn = TWATabButton:new(fx, fy, w, tabH, label, self, TWACraftWindow.onFilterClick)
         btn.internal = tab.key
         -- Note 2026-09-27: "เขียนหมายเหตุไว้ด้วยตามปุ่มต่างๆ" -- "Available"
         -- isn't self-explanatory from its label alone (unlike a category
@@ -1107,7 +1220,7 @@ function TWACraftWindow:createChildren()
         self.filterButtons[#self.filterButtons + 1] = btn
         fx = fx + w + 5
     end
-    fy = fy + 26
+    fy = fy + tabStep
 
     -- Tier filter row (request 2026-09-26: "filter by tier too"), a second
     -- independent row of tabs under the category ones -- both apply
@@ -1124,9 +1237,9 @@ function TWACraftWindow:createChildren()
         local w = getTextManager():MeasureStringX(TWAFont.small(), label) + 20
         if tfx + w > leftX + LEFT_W then
             tfx = leftX
-            fy = fy + 26
+            fy = fy + tabStep
         end
-        local btn = TWATierTabButton:new(tfx, fy, w, 24, label, self, TWACraftWindow.onTierFilterClick)
+        local btn = TWATierTabButton:new(tfx, fy, w, tabH, label, self, TWACraftWindow.onTierFilterClick)
         btn.internal = tab.key
         if type(tab.key) == "number" and TIER_INFO[tab.key] then
             local c = TIER_INFO[tab.key]
@@ -1137,7 +1250,7 @@ function TWACraftWindow:createChildren()
         self.tierFilterButtons[#self.tierFilterButtons + 1] = btn
         tfx = tfx + w + 5
     end
-    local searchY = fy + 30
+    local searchY = fy + tabStep + S(4)
 
     -- Search box + an explicit Search button beside it (request 2026-09-28:
     -- "มีปุ่มกดค้นหาในช่องค้นหาทางซ้าย") -- the box already searches live as
@@ -1147,27 +1260,28 @@ function TWACraftWindow:createChildren()
     -- search button just above.
     -- Request 2026-09-28: "มีกากบาทในช่องค้นหา เพื่อล้างคำที่อยู่ในช่องค้นหา"
     -- -- a small X between the box and the Search button empties the box.
-    local searchBtnW, clearW = 60, 22
-    self.searchBox = ISTextEntryBox:new("", leftX, searchY, LEFT_W - searchBtnW - clearW - 8, 24)
+    local searchBtnW, clearW = S(60), S(22)
+    self.searchBox = ISTextEntryBox:new("", leftX, searchY, LEFT_W - searchBtnW - clearW - 8, tabH)
     self.searchBox:initialise()
     self.searchBox:setPlaceholderText(getText("IGUI_TWA_SearchPlaceholder"))
     local window = self
     self.searchBox.onTextChange = function(box) window.recipeList:setSearch(box:getText()) end
     self:addChild(self.searchBox)
 
-    self.searchClearButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW - clearW - 4, searchY, clearW, 24, "X", self, TWACraftWindow.onSearchClearClicked)
+    self.searchClearButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW - clearW - 4, searchY, clearW, tabH, "X", self, TWACraftWindow.onSearchClearClicked)
     self.searchClearButton:setTooltip(getText("IGUI_TWA_Tooltip_ClearSearch"))
     self.searchClearButton:initialise()
     self:addChild(self.searchClearButton)
 
-    self.searchButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW, searchY, searchBtnW, 24, getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchButtonClicked)
+    self.searchButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW, searchY, searchBtnW, tabH, getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchButtonClicked)
     self.searchButton:initialise()
     self:addChild(self.searchButton)
 
     -- Recipe list (fills the rest of the left column down to the same bottom
     -- edge the center/right panels use).
-    local listY = searchY + 30
-    self.recipeList = TWARecipeScrollList:new(leftX, listY, LEFT_W, panelBottom - listY, self)
+    -- R68: the recipe list fills the browse page right of the filters.
+    local listX = leftX + LEFT_W + COL_GAP
+    self.recipeList = TWARecipeScrollList:new(listX, contentTop, WINDOW_W - listX - 10, PANEL_H, self)
     self.recipeList:initialise()
     self:addChild(self.recipeList)
     self.recipeList:refresh()
@@ -1191,13 +1305,14 @@ function TWACraftWindow:createChildren()
     -- since that grid already scrolls.
     -- Round 6 (request 2026-09-28: "ui ทางขวาให้แบ่งครึ่งขนาด ส่วนบน ส่วน
     -- ล่าง"): grid and details box now split the column in half.
-    local detailsH = math.floor((PANEL_H - 8) / 2)
-    local gridH = PANEL_H - detailsH - 8
-    self.procLibrary = TWAProcScrollList:new(rightX, contentTop, RIGHT_W, gridH, self)
+    -- R68: every procedure lives on the practice page (left); the details
+    -- box takes the whole right column on the craft and practice pages.
+    local detailsH = PANEL_H
+    self.procLibrary = TWAProcScrollList:new(leftX, contentTop, CENTER_W, PANEL_H, self)
     self.procLibrary:initialise()
     self:addChild(self.procLibrary)
     self.procLibrary:populate()
-    self.procDetailsY = contentTop + gridH + 8
+    self.procDetailsY = contentTop
     self.procDetailsH = detailsH
 
     -- Cancel / Incomplete / Finish buttons (center panel bottom). Incomplete
@@ -1208,7 +1323,7 @@ function TWACraftWindow:createChildren()
     -- going. 3-way split of the same row Cancel/Finish already used.
     -- R68 ("ปุ่มเสร็จสิ้นให้ใหญ่ที่สุด ให้ปุ่มไม่สมบูรณ์และยกเลิกขนาดลดลง"):
     -- Cancel and Incomplete a quarter of the row each, Finish half.
-    local btnH, rowW, btnGap = 30, CENTER_W - 20, 8
+    local btnH, rowW, btnGap = S(30), CENTER_W - 20, 8
     local smallW = math.floor((rowW - 2 * btnGap) / 4)
     local btnW = smallW
     local finishW = rowW - 2 * smallW - 2 * btnGap
@@ -1246,7 +1361,7 @@ function TWACraftWindow:createChildren()
     -- + this one Abort button in the exact same row -- mirrors
     -- procConfirmButton/procCancelButton's own toggle pattern in the right
     -- panel, just for the center panel's 3 actions instead of 1.
-    local abortBtnW = 70
+    local abortBtnW = S(70)
     self.centerAbortButton = TWANeatButton:new(centerX + (CENTER_W - 20) - abortBtnW, panelBottom - btnH, abortBtnW, btnH, getText("IGUI_TWA_AbortAction"), self, TWACraftWindow.onAbortCenterAction)
     self.centerAbortButton.neatTint = { r = 0.9, g = 0.3, b = 0.25 }
     self.centerAbortButton:setTooltip(getText("IGUI_TWA_Tooltip_AbortAction"))
@@ -1264,7 +1379,7 @@ function TWACraftWindow:createChildren()
     -- SELECTS it now, see onProcedureCellClicked; these two buttons, drawn
     -- in the same spot and toggled mutually exclusive every frame in
     -- drawProcedureDetails, are the only way to actually start/stop one).
-    local procBtnH = 26
+    local procBtnH = S(28)
     local procBtnY = self.procDetailsY + detailsH - procBtnH - 8
     -- Round 13 ("เพิ่มปุ่มฝึกในรายละเอียดกรรมวิธีแต่ละอัน"): a Practice button
     -- at the left of the row -- plays the procedure's minigame for nothing
@@ -1273,7 +1388,9 @@ function TWACraftWindow:createChildren()
     -- row, just left of the Find button; the main button takes the whole
     -- bottom row.
     local practiceW = 0
-    self.procPracticeButton = TWANeatButton:new(rightX + RIGHT_W - 70 - 8 - 60, self.procDetailsY + 6, 60, 22, getText("IGUI_TWA_Practice"), self, TWACraftWindow.onPracticeProcedure)
+    -- R68: on the practice page Practice is the big button at the bottom
+    self.procPracticeButton = TWANeatButton:new(rightX + 10, procBtnY, RIGHT_W - 20, procBtnH, getText("IGUI_TWA_Practice"), self, TWACraftWindow.onPracticeProcedure)
+    self.procPracticeButton.pulse = true
     self.procPracticeButton.neatTint = { r = 0.55, g = 0.8, b = 0.55 }
     self.procPracticeButton:setTooltip(getText("IGUI_TWA_Tooltip_Practice"))
     self.procPracticeButton:initialise()
@@ -1300,7 +1417,7 @@ function TWACraftWindow:createChildren()
     -- procedure is actually selected there -- visibility toggled in
     -- drawProcedureDetails() the same way procConfirmButton/procCancelButton
     -- already are.
-    self.procSearchButton = TWANeatButton:new(rightX + RIGHT_W - 70, self.procDetailsY + 6, 60, 22, getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchByProcedure)
+    self.procSearchButton = TWANeatButton:new(rightX + RIGHT_W - S(70), self.procDetailsY + 6, S(60), S(22), getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchByProcedure)
     self.procSearchButton:setTooltip(getText("IGUI_TWA_Tooltip_FindRecipesForProcedure"))
     self.procSearchButton:initialise()
     self:addChild(self.procSearchButton)
@@ -1321,14 +1438,22 @@ function TWACraftWindow:createChildren()
     -- Request 2026-10-02: admin-only buttons under the center column --
     -- spawn what the selected recipe still lacks / raise the skills it asks
     -- for (TWAAdminGrant; the server checks the access level again).
-    local adminW = math.floor((CENTER_W - 30) / 2)
-    self.adminItemsButton = TWANeatButton:new(centerX, panelBottom + 10, adminW, 24, getText("IGUI_TWA_AdminItems"), self, TWACraftWindow.onAdminItems)
+    -- R68: back to the recipe list (craft and practice pages), then the
+    -- admin buttons beside it.
+    local backW = S(150)
+    self.backButton = TWANeatButton:new(leftX, panelBottom + 10, backW, S(26), getText("IGUI_TWA_BackToRecipes"), self, TWACraftWindow.onBackClicked)
+    self.backButton:initialise()
+    self.backButton:setVisible(false)
+    self:addChild(self.backButton)
+    local adminX = leftX + backW + 10
+    local adminW = math.floor((CENTER_W - backW - 30) / 2)
+    self.adminItemsButton = TWANeatButton:new(adminX, panelBottom + 10, adminW, S(26), getText("IGUI_TWA_AdminItems"), self, TWACraftWindow.onAdminItems)
     self.adminItemsButton.neatTint = { r = 0.85, g = 0.3, b = 0.85 }
     self.adminItemsButton:setTooltip(getText("IGUI_TWA_Tooltip_AdminItems"))
     self.adminItemsButton:initialise()
     self.adminItemsButton:setVisible(false)
     self:addChild(self.adminItemsButton)
-    self.adminSkillsButton = TWANeatButton:new(centerX + adminW + 10, panelBottom + 10, adminW, 24, getText("IGUI_TWA_AdminSkills"), self, TWACraftWindow.onAdminSkills)
+    self.adminSkillsButton = TWANeatButton:new(adminX + adminW + 10, panelBottom + 10, adminW, S(26), getText("IGUI_TWA_AdminSkills"), self, TWACraftWindow.onAdminSkills)
     self.adminSkillsButton.neatTint = { r = 0.85, g = 0.3, b = 0.85 }
     self.adminSkillsButton:setTooltip(getText("IGUI_TWA_Tooltip_AdminSkills"))
     self.adminSkillsButton:initialise()
@@ -1339,17 +1464,97 @@ function TWACraftWindow:createChildren()
     -- บนพื้น หรือในกล่อง"): under the recipe list, shown while an unfinished
     -- weapon is carried, on the floor or in a container nearby (TWASources).
     -- Several found: the click opens a list to choose from.
-    self.continueButton = TWANeatButton:new(leftX, panelBottom + 10, LEFT_W, 26, "", self, TWACraftWindow.onContinueClicked)
+    -- R68: under the search box on the browse page: Continue (or back to
+    -- the craft already started), then the practice page.
+    local sideY = searchY + tabH + S(12)
+    self.continueButton = TWANeatButton:new(leftX, sideY, LEFT_W, S(28), "", self, TWACraftWindow.onContinueClicked)
     self.continueButton.neatTint = { r = 0.55, g = 0.6, b = 0.95 }
     self.continueButton:initialise()
     self.continueButton:setVisible(false)
     self:addChild(self.continueButton)
+    self.practicePageButton = TWANeatButton:new(leftX, sideY + S(36), LEFT_W, S(28), getText("IGUI_TWA_PracticePage"), self, TWACraftWindow.onPracticePageClicked)
+    self.practicePageButton.neatTint = { r = 0.55, g = 0.8, b = 0.55 }
+    self.practicePageButton:setTooltip(getText("IGUI_TWA_Tooltip_PracticePage"))
+    self.practicePageButton:initialise()
+    self:addChild(self.practicePageButton)
 
     self.centerX = centerX
     self.contentTop = contentTop
     self.rightX = rightX
     self.panelBottom = panelBottom
     self.btnH = btnH
+
+    -- which widgets belong to which page (setPage shows / hides them)
+    self.pageWidgets = {
+        browse = { self.searchBox, self.searchClearButton, self.searchButton, self.recipeList,
+            self.continueButton, self.practicePageButton },
+        craft = { self.backButton, self.startButton, self.cancelButton, self.incompleteButton, self.finishButton,
+            self.centerAbortButton, self.procConfirmButton, self.adminItemsButton, self.adminSkillsButton },
+        practice = { self.backButton, self.procLibrary, self.procPracticeButton, self.procSearchButton },
+    }
+    for _, b in ipairs(self.filterButtons) do table.insert(self.pageWidgets.browse, b) end
+    for _, b in ipairs(self.tierFilterButtons) do table.insert(self.pageWidgets.browse, b) end
+    self.procCancelButton:setVisible(false)
+    self:setPage(self.page or "browse")
+end
+
+-- R68: the three pages ------------------------------------------------------
+TWACraftWindow.PAGE_TITLE = { browse = "IGUI_TWA_PageRecipes", craft = "IGUI_TWA_PageCraft", practice = "IGUI_TWA_PagePractice" }
+
+function TWACraftWindow:setPage(page)
+    self.page = page
+    if not self.pageWidgets then return end
+    local shown = {}
+    for _, w in ipairs(self.pageWidgets[page] or {}) do shown[w] = true end
+    for _, list in pairs(self.pageWidgets) do
+        for _, w in ipairs(list) do
+            if not shown[w] then w:setVisible(false) end
+        end
+    end
+    -- buttons the page logic switches every frame start hidden; the rest show
+    local perFrame = { [self.startButton] = true, [self.cancelButton] = true, [self.incompleteButton] = true,
+        [self.finishButton] = true, [self.centerAbortButton] = true, [self.procConfirmButton] = true,
+        [self.adminItemsButton] = true, [self.adminSkillsButton] = true, [self.continueButton] = true,
+        [self.procPracticeButton] = true, [self.procSearchButton] = true }
+    for w in pairs(shown) do w:setVisible(not perFrame[w]) end
+    self.title = getText("IGUI_TWA_CraftWindowTitle") .. "  -  " .. getText(self.PAGE_TITLE[page] or "IGUI_TWA_PageRecipes")
+    if page == "browse" then
+        self.recipeList:refresh()
+    elseif page == "craft" then
+        -- show the first procedure still to do of this recipe
+        local recipe = self.selectedRecipe
+        local inRecipe = false
+        for _, pid in ipairs(recipe and recipe.procedures or {}) do
+            if pid == self.selectedProcId then inRecipe = true end
+        end
+        if recipe and not inRecipe then
+            self.selectedProcId = recipe.procedures[1]
+            local done = self:currentDone()
+            for _, pid in ipairs(recipe.procedures) do
+                if not done[pid] then self.selectedProcId = pid break end
+            end
+        end
+    end
+end
+
+-- a recipe picked on the browse page: its craft page (or, with another
+-- craft already started, a notice -- one craft at a time)
+function TWACraftWindow:openRecipe(recipe)
+    if not recipe then return end
+    if self.active and recipe.id ~= self.active.recipeId then
+        self:flashLocked()
+        return
+    end
+    if not self.active then self:selectRecipe(recipe) end
+    self:setPage("craft")
+end
+
+function TWACraftWindow:onBackClicked()
+    self:setPage("browse")
+end
+
+function TWACraftWindow:onPracticePageClicked()
+    self:setPage("practice")
 end
 
 function TWACraftWindow:onFilterClick(button)
@@ -1508,6 +1713,7 @@ function TWACraftWindow:resumeFromItem(item)
     self.selectedProcId = nil
     self.searchBox:setText("")
     self.recipeList:setSearch("")
+    self:setPage("craft")
 end
 
 -- R67: every unfinished (bookmarked) item at hand -- carried, on the floor
@@ -1529,8 +1735,18 @@ function TWACraftWindow:updateContinueButton()
         self.incompleteScanAt = now
         self.incompleteList = self:findIncomplete()
     end
+    if self.page ~= "browse" then btn:setVisible(false) return end
+    -- R68: a craft already started -> this button goes back to it
+    if self.active then
+        local r = getRecipeById(self.active.recipeId)
+        btn:setVisible(true)
+        btn.title = getText("IGUI_TWA_BackToCraft", r and recipeName(r) or "?")
+        btn.pulse = true
+        btn:setTooltip(getText("IGUI_TWA_Tooltip_BackToCraft"))
+        return
+    end
     local list = self.incompleteList
-    local show = #list > 0 and not self.active and not self.activeProcId and not self.activeCenterAction
+    local show = #list > 0 and not self.activeProcId and not self.activeCenterAction
     btn:setVisible(show)
     if not show then return end
     btn.title = getText("IGUI_TWA_ContinueCraft", tostring(#list))
@@ -1566,6 +1782,11 @@ end
 
 -- R67c: the list is a draggable, scrolling window (TWAPicker).
 function TWACraftWindow:onContinueClicked()
+    if self.active then
+        self.selectedRecipe = getRecipeById(self.active.recipeId) or self.selectedRecipe
+        self:setPage("craft")
+        return
+    end
     local list = self:findIncomplete()
     self.incompleteList, self.incompleteScanAt = list, getTimestampMs and getTimestampMs() or 0
     if #list == 0 then return end
@@ -1722,6 +1943,7 @@ end
 function TWACraftWindow:applySearch(text)
     self.searchBox:setText(text or "")
     self.recipeList:setSearch(text or "")
+    if self.page ~= "browse" then self:setPage("browse") end
 end
 
 -- Request 2026-09-27: "เพิ่มปุ่มแว่นขยายในรายละเอียดกรรมวิธี...ไป search
@@ -1837,6 +2059,11 @@ function TWACraftWindow:onConfirmProcedure()
 end
 
 function TWACraftWindow:onPracticeProcedure()
+    -- R68: the same button stops a practice that is running
+    if self.practicing then
+        if self.activeAction then self.activeAction:forceStop() end
+        return
+    end
     local procId = self.selectedProcId
     if not procId or self.activeProcId or self.activeCenterAction or self.practicing then return end
     if not TWACraftState.hasTried(self.player, procId) then return end
@@ -2075,6 +2302,7 @@ function TWACraftWindow:drawProcedureDetails()
     local x, y, w = self.rightX, self.procDetailsY, RIGHT_W
 
     local proc = self.selectedProcId and TWAProcedures.List[self.selectedProcId]
+    local practicePage = self.page == "practice"
     if not proc then
         drawTextShadowed(self, getText("IGUI_TWA_SelectProcedureFirst"), x + 10, y + 10, 0.7, 0.7, 0.7, 1, TWAFont.small())
         self.procConfirmButton:setVisible(false)
@@ -2083,7 +2311,22 @@ function TWACraftWindow:drawProcedureDetails()
         self.procPracticeButton:setVisible(false)
         return
     end
-    self.procSearchButton:setVisible(true)
+    -- R68: Practice and Find recipes only on the practice page; Confirm only
+    -- on the craft page.
+    self.procSearchButton:setVisible(practicePage)
+    self.procPracticeButton:setVisible(practicePage)
+    if practicePage then
+        local tried = TWACraftState.hasTried(self.player, self.selectedProcId)
+        self.procPracticeButton.enable = tried and not self.activeProcId and not self.activeCenterAction and not self.practicing
+        self.procPracticeButton.pulse = self.procPracticeButton.enable
+        if self.practicing then
+            self.procPracticeButton:setTitle(getText("IGUI_TWA_StopProcedure"))
+            self.procPracticeButton.enable = true
+            self.procPracticeButton.pulse = false
+        else
+            self.procPracticeButton:setTitle(getText("IGUI_TWA_Practice"))
+        end
+    end
 
     local ty = y + 8
     drawTextShadowed(self, getText(proc.nameKey), x + 10, ty, 1, 0.9, 0.6, 1, TWAFont.medium())
@@ -2132,18 +2375,22 @@ function TWACraftWindow:drawProcedureDetails()
     -- Round 18: Practice only for a procedure this character has done before.
     -- Round 23 ("ให้ปุ่มฝึกอยู่ตลอดแต่กดไม่ได้ถ้ายังไม่เคยทำ พร้อมมี hover
     -- คำอธิบาย"): always there; greyed out until done once for real.
+    -- R68: only on the practice page (set above); there it is the Stop
+    -- button while a practice runs.
     local tried = TWACraftState.hasTried(self.player, self.selectedProcId)
-    self.procPracticeButton:setVisible(true)
-    self.procPracticeButton.enable = tried and not self.activeProcId and not self.activeCenterAction and not self.practicing
+    self.procPracticeButton:setVisible(practicePage)
+    if not self.practicing then
+        self.procPracticeButton.enable = tried and not self.activeProcId and not self.activeCenterAction
+    end
     self.procPracticeButton:setTooltip(getText(tried and "IGUI_TWA_Tooltip_Practice" or "IGUI_TWA_Tooltip_PracticeLocked"))
     -- The last practice result for this procedure, for a few seconds.
     if self.practiceWord and self.practiceProc == self.selectedProcId and getTimestampMs() < (self.practiceUntil or 0) then
         local pc = TWACraftState.WORD_COLOR[self.practiceWord] or { r = 1, g = 1, b = 1 }
         drawTextShadowed(self, getText("IGUI_TWA_PracticeResult", TWACraftState.wordText(self.practiceWord)), x + 10, self.procBtnY - 18, pc.r, pc.g, pc.b, 1, TWAFont.small())
     end
-    local canConfirm = belongsToRecipe and self:isActiveRecipe() and not inProgress
+    local canConfirm = not practicePage and belongsToRecipe and self:isActiveRecipe() and not inProgress
         and not self.activeProcId and not self.activeCenterAction
-    self.procConfirmButton:setVisible(canConfirm or inProgress and true or false)
+    self.procConfirmButton:setVisible((not practicePage) and (canConfirm or inProgress) and true or false)
     self.procConfirmButton.enable = (canConfirm and met) or (inProgress and true or false)
     -- blink only as "do this next": not as Stop, not as Redo
     self.procConfirmButton.pulse = (canConfirm and met and not done) and true or false
@@ -2158,8 +2405,11 @@ function TWACraftWindow:drawProcedureDetails()
     end
     -- Picked from the checklist before the craft is started: say why the
     -- button isn't there.
-    if belongsToRecipe and not self:isActiveRecipe() and not inProgress then
-        drawTextShadowed(self, getText("IGUI_TWA_StartFirst"), x + 100, self.procBtnY + 4, 1, 0.8, 0.3, 1, TWAFont.small())
+    if not practicePage and belongsToRecipe and not self:isActiveRecipe() and not inProgress then
+        drawTextShadowed(self, getText("IGUI_TWA_StartFirst"), x + 10, self.procBtnY + 4, 1, 0.8, 0.3, 1, TWAFont.small())
+    end
+    if practicePage and not TWACraftState.hasTried(self.player, self.selectedProcId) then
+        drawTextShadowed(self, getText("IGUI_TWA_PracticeNeedsTry"), x + 10, self.procBtnY - TWAFont.grow(18), 1, 0.8, 0.3, 1, TWAFont.small())
     end
 
     -- Progress bar while the timed action is actually running (request
@@ -2227,7 +2477,7 @@ end
 -- real prerender() override.
 function TWACraftWindow:prerender()
     ISCollapsableWindow.prerender(self)
-    self:drawProcedureDetailsBackground()
+    if self.page ~= "browse" then self:drawProcedureDetailsBackground() end
 end
 
 -- Request 2026-09-28: Cancel/Incomplete/Finish all show a real progress bar
@@ -2300,7 +2550,7 @@ function TWACraftWindow:drawLockNotice()
     if getTimestampMs() >= (self.lockMsgUntil or 0) then return end
     local text = getText(self.lockMsgKey or "IGUI_TWA_LockedToRecipe")
     local w = getTextManager():MeasureStringX(TWAFont.small(), text) + 16
-    local x = self.centerX + (CENTER_W - 16 - w) / 2
+    local x = (self.width - w) / 2
     local y = self.panelBottom - self.btnH - 40
     self:drawRect(x, y, w, 22, 0.95, 0.25, 0.05, 0.05)
     self:drawRectBorder(x, y, w, 22, 1, 0.9, 0.4, 0.3)
@@ -2316,14 +2566,21 @@ function TWACraftWindow:render()
         if self.soundButton.image ~= want then self.soundButton:setImage(want) end
     end
 
+    -- R68: the browse and practice pages draw little themselves.
+    if self.page == "practice" then
+        self:drawProcedureDetails()
+        self:drawLockNotice()
+        self:drawHoverTooltip()
+        return
+    end
     -- Filter-section captions (request 2026-09-26: "arrange the filter
     -- section to look nicer") -- small labels above each tab row so it
     -- reads as "filter by category" / "filter by rarity" at a glance
     -- instead of two unlabeled rows running together.
-    if self.categoryRowY then
+    if self.page == "browse" and self.categoryRowY then
         drawTextShadowed(self, getText("IGUI_TWA_FilterSectionCategory"), 10, self.categoryRowY, 0.6, 0.6, 0.6, 1, TWAFont.small())
     end
-    if self.tierRowY then
+    if self.page == "browse" and self.tierRowY then
         drawTextShadowed(self, getText("IGUI_TWA_FilterSectionRarity"), 10, self.tierRowY, 0.6, 0.6, 0.6, 1, TWAFont.small())
     end
 
@@ -2335,6 +2592,12 @@ function TWACraftWindow:render()
     -- produced a noticeably light grey panel that washed out white and red
     -- text on top (bug report 2026-09-26; same root cause as drawNeatCard's
     -- note above).
+    if self.page == "browse" then
+        self:drawLockNotice()
+        self:drawHoverTooltip()
+        return
+    end
+
     local centerX, centerY = self.centerX, self.contentTop
     local cardH = self.panelBottom - self.btnH - 10 - centerY
     self:drawRect(centerX - 8, centerY - 8, CENTER_W, cardH, 0.9, 0.06, 0.06, 0.07)
@@ -2364,7 +2627,7 @@ function TWACraftWindow:render()
     -- tinted by the recipe's rarity tier (request 2026-09-26: "show/filter
     -- by tier"), and the tier name itself is shown under the item name in
     -- that same color.
-    local ICON = 100
+    local ICON = S(100)
     local stats = recipeStats(recipe)
     local tierInfo = stats and stats.tier and TIER_INFO[stats.tier]
     self:drawRect(centerX, centerY, ICON, ICON, 0.6, 0, 0, 0)
@@ -2376,7 +2639,7 @@ function TWACraftWindow:render()
     else
         self:drawRectBorder(centerX, centerY, ICON, ICON, 0.6, 0.5, 0.5, 0.5)
     end
-    drawTextShadowed(self, name, centerX + ICON + 12, centerY + 6, 1, 1, 1, 1, TWAFont.medium())
+    drawTextShadowed(self, name, centerX + ICON + 12, centerY + S(6), 1, 1, 1, 1, TWAFont.medium())
     if tierInfo then
         -- Weapon category shown right next to the tier name (request
         -- 2026-09-26: "หมวดหมู่ให้เอาไปไว้ข้างๆ tier" -- put the category
@@ -2385,7 +2648,7 @@ function TWACraftWindow:render()
         if stats and stats.categories then
             tierLabel = tierLabel .. "  -  " .. stats.categories -- round 23: no middle dot (can show as "?")
         end
-        drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, TWAFont.small())
+        drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + TWAFont.grow(S(26), TWAFont.medium()), tierInfo.r, tierInfo.g, tierInfo.b, 1, TWAFont.small())
     end
 
     -- Request 2026-09-28: "หมวดหมู่วัตถุดิบ ไม่ต้องแสดง stats สถานะ" --
@@ -2393,9 +2656,10 @@ function TWACraftWindow:render()
     -- stats at all, so the grid below would only ever show placeholder "-"/
     -- default values for them -- skipped entirely for this one category,
     -- the base-item card/procedure grid just start higher up instead.
-    local statY = centerY + 44
+    local statTop = centerY + TWAFont.grow(S(26), TWAFont.medium()) + TWAFont.lineH() + S(4)
+    local statY = statTop
     if recipe.category ~= "Material" and not recipe.roll and not recipe.keepType then
-        statY = self:drawStatGrid(centerX + ICON + 12, centerY + 44, CENTER_W - ICON - 20)
+        statY = self:drawStatGrid(centerX + ICON + 12, statTop, CENTER_W - ICON - 20)
     end
 
     -- Base-item requirement box(es) -- request 2026-09-26: the old bare-
@@ -2516,7 +2780,7 @@ function TWACraftWindow:render()
         end
     end
     local gridLeft, gridTop = centerX, baseY + 20
-    local cell, gap = 44, 8
+    local cell, gap = S(44), S(8)
     local wordH = showWords and 16 or 0
     local perRow = math.max(1, math.floor((CENTER_W - 16 + gap) / (cell + gap)))
     local px, py = gridLeft, gridTop
@@ -2609,6 +2873,7 @@ function TWACraftWindow:update()
 end
 
 function TWACraftWindow:onMouseDown(x, y)
+    if self.page ~= "craft" then return ISCollapsableWindow.onMouseDown(self, x, y) end
     local r = self.baseCardRect
     if r and self.selectedRecipe == r.recipe and x >= r.x and x < r.x + r.w and y >= r.y and y < r.y + r.h then
         self:openBaseChooser(r.recipe)
@@ -2654,6 +2919,8 @@ function TWACraftUI.open(player, searchText, resumeItem)
         return
     end
 
+    -- R68: the window's size for this screen / the player's choice
+    applyLayout(TWACraftUI.layoutScale())
     local core = getCore()
     local x = core and math.max(0, (core:getScreenWidth() - WINDOW_W) / 2) or 100
     local y = core and math.max(0, (core:getScreenHeight() - WINDOW_H) / 2) or 100
@@ -2685,6 +2952,7 @@ function TWACraftUI.open(player, searchText, resumeItem)
     end
     if win.active then
         win.selectedRecipe = S.getRecipeById(win.active.recipeId)
+        win:setPage("craft")
     elseif resumeItem then
         win:resumeFromItem(resumeItem)
     elseif searchText then

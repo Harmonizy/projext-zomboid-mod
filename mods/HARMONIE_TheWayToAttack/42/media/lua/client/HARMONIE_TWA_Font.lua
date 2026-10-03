@@ -9,7 +9,8 @@
 --   TWAFont.lineH(f)  line height of a font (for multi-line text)
 --   TWAFont.grow(px, f) a spacing laid out for UIFont.Small, grown by how
 --                     much taller font `f` (default small()) is
--- Small is the old look.
+-- Small is the old look. F.bump (set by the craft window's size, R68) adds
+-- one or two steps on top of the chosen size.
 --============================================================================
 
 TWAFont = TWAFont or {}
@@ -26,7 +27,8 @@ function F.level()
         if ok then v = math.floor(tonumber(r) or 1) end
     end
     if v < 1 or v > #BODY then v = 1 end
-    return v
+    -- R68: a bigger window (TWACraftUI layout scale) brings bigger text
+    return math.min(#BODY, v + (tonumber(F.bump) or 0))
 end
 
 local function font(name)

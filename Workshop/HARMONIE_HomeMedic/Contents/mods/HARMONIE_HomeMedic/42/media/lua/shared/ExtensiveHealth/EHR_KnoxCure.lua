@@ -15,7 +15,7 @@ pcall(function() require "ExtensiveHealth/EHR_DiseaseDefinitions" end)
 
     B42 API Compatibility (v1.1.0):
     - Uses bodyDamage:IsInfected() / setInfected() for boolean infection flag
-    - Uses CharacterStat.ZOMBIE_INFECTION for infection progress (0-1 scale)
+    - Uses CharacterStat.ZOMBIE_INFECTION for infection progress (stat 0-100, returned as 0-1)
     - Uses CharacterStat.ZOMBIE_FEVER for zombie fever stat
     - Uses bodyPart:bitten() for bite detection while preserving visible bite wounds
     - Tick-based infection suppression for immune players
@@ -195,20 +195,38 @@ end
 local function handleKnoxInfectionDialogue(player, data, isInfected, currentHour)
     if not player or not data then return end
 
+    -- HARMONIE 0.25.0 ("ขึ้นรัวมาก ไม่ควรขึ้นข้อความเดิมซ้ำๆ"): the infected
+    -- check can blink false for a moment (a stale stat being cleared, a
+    -- timer between updates); that reset everything and the stage line was
+    -- said again every ~2 s. Now the dialogue only resets after a whole game
+    -- hour without the infection, a stage line is said once per stage (the
+    -- stage never steps back down for dialogue) and no two stage lines come
+    -- closer than 30 game minutes.
     if not isInfected then
+        if data.knoxDialogueActive == true then
+            data.knoxClearSinceHour = data.knoxClearSinceHour or currentHour
+            if currentHour - data.knoxClearSinceHour < 1.0 then return end
+        end
         data.knoxDialogueActive = false
         data.knoxLastDialogueStage = nil
         data.knoxNextRandomDialogueHour = nil
+        data.knoxClearSinceHour = nil
+        data.knoxLastEntryHour = nil
         return
     end
+    data.knoxClearSinceHour = nil
 
     local stage = getKnoxDialogueStage(player)
+    if data.knoxDialogueActive == true and tonumber(data.knoxLastDialogueStage) then
+        stage = math.max(stage, tonumber(data.knoxLastDialogueStage))
+    end
     local definition = getKnoxDialogueDefinition()
     local entryLines = definition.stageEntryDialogue or KNOX_DIALOGUE_FALLBACK.stageEntryDialogue
     local randomLines = definition.dialogue or KNOX_DIALOGUE_FALLBACK.dialogue
 
     if data.knoxDialogueActive ~= true then
         sayKnoxDialogue(player, entryLines and (entryLines[stage] or entryLines[1]), true)
+        data.knoxLastEntryHour = currentHour
         data.knoxDialogueActive = true
         data.knoxLastDialogueStage = stage
         data.knoxNextRandomDialogueHour = currentHour + randomKnoxDelay(2.0, 2.0)
@@ -216,7 +234,9 @@ local function handleKnoxInfectionDialogue(player, data, isInfected, currentHour
     end
 
     if data.knoxLastDialogueStage ~= stage then
+        if currentHour - (tonumber(data.knoxLastEntryHour) or -99) < 0.5 then return end
         sayKnoxDialogue(player, entryLines and entryLines[stage], true)
+        data.knoxLastEntryHour = currentHour
         data.knoxLastDialogueStage = stage
         data.knoxNextRandomDialogueHour = currentHour + randomKnoxDelay(1.5, 1.5)
         return
@@ -534,7 +554,7 @@ end
 
     B42 API Reference:
     - bodyDamage:IsInfected() - Boolean flag for Knox virus infection
-    - CharacterStat.ZOMBIE_INFECTION - Infection progress stat (0-1 scale)
+    - CharacterStat.ZOMBIE_INFECTION - Infection progress stat (0-100; GetInfectionProgress returns 0-1)
     - CharacterStat.ZOMBIE_FEVER - Fever from zombie infection
 ]]--
 function EHR.KnoxCure.IsInfected(player)
@@ -659,19 +679,24 @@ end
     Get infection progress (0-1 scale)
     Uses CharacterStat.ZOMBIE_INFECTION in B42
 ]]--
+EHR.KnoxCure.INFECTION_STAT_MAX = 100
+
 function EHR.KnoxCure.GetInfectionProgress(player)
     if not player then return 0 end
 
     local stats = player:getStats()
     if not stats then return 0 end
 
-    -- B42: Use CharacterStat.ZOMBIE_INFECTION (0-1 scale)
+    -- HARMONIE 0.25.0: B42's ZOMBIE_INFECTION stat runs 0-100 (TOC's own
+    -- amputation check uses "< 20"), not 0-1 as this file assumed -- any
+    -- bite read as 100 percent, so the stage-4 "*resigned*" line came right
+    -- after being bitten. Returned as 0-1 like every caller expects.
     if CharacterStat and CharacterStat.ZOMBIE_INFECTION then
         local success, level = pcall(function()
             return stats:get(CharacterStat.ZOMBIE_INFECTION)
         end)
         if success and level then
-            return level
+            return math.max(0, math.min(1, (tonumber(level) or 0) / EHR.KnoxCure.INFECTION_STAT_MAX))
         end
     end
 
@@ -696,7 +721,7 @@ function EHR.KnoxCure.SetInfectionProgress(player, progress)
     -- (infection will restart from 0% rather than being fully cured)
     if CharacterStat and CharacterStat.ZOMBIE_INFECTION then
         pcall(function()
-            stats:set(CharacterStat.ZOMBIE_INFECTION, progress)
+            stats:set(CharacterStat.ZOMBIE_INFECTION, progress * EHR.KnoxCure.INFECTION_STAT_MAX)
         end)
     end
 
