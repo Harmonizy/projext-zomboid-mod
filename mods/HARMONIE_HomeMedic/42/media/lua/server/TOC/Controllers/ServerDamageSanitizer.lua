@@ -41,12 +41,16 @@ function ServerDamageSanitizer.SanitizePlayer(playerObj)
     local bd = playerObj:getBodyDamage()
     if not bd then return end
 
+    local cleared = false
+    local gone = {}
     for i = 1, #StaticData.LIMBS_STR do
         local limbName = StaticData.LIMBS_STR[i]
         if dcInst:getIsCut(limbName) then
             local bptEnum = StaticData.LIMBS_TO_BODYLOCS_IND_BPT[limbName]
+            if bptEnum then gone[tostring(bptEnum)] = true end
             local part = bptEnum and bd:getBodyPart(bptEnum) or nil
             if part and (part:bitten() or part:IsInfected()) then
+                cleared = true
                 TOC_DEBUG.print("ServerDamageSanitizer: clearing bite on missing limb - " .. limbName)
                 part:SetBitten(false)
                 if part.setBiteTime then part:setBiteTime(0) end
@@ -58,6 +62,38 @@ function ServerDamageSanitizer.SanitizePlayer(playerObj)
             elseif part and dcInst:getIsInfected(limbName) and not part:HasInjury() then
                 -- Wound visual already clean but the modData flag stayed stale.
                 dcInst:setIsInfected(limbName, false)
+            end
+        end
+    end
+
+    -- HARMONIE (HomeMedic 0.25.1, "TOC ยังสามารถโดนกัดในจุดที่ไม่มีอวัยวะ หรือ
+    -- จุดที่ใส่แขนเทียมได้ไหม ไม่ควรทำได้"): clearing the part alone left the
+    -- WHOLE-body Knox infection running (BodyDamage infected flag, mortality
+    -- timer, the ZOMBIE_INFECTION stat) -- a bite on a limb that is not there
+    -- (a prosthesis included: it only sits on a cut limb) still killed. When
+    -- that bite was the only one, the infection goes with it -- the same
+    -- calls AmputationHandler uses when an amputation saves the patient.
+    if cleared then
+        local elsewhere = false
+        pcall(function()
+            local parts = bd:getBodyParts()
+            for i = 0, parts:size() - 1 do
+                local part = parts:get(i)
+                if part and not gone[tostring(part:getType())] and (part:bitten() or part:IsInfected()) then
+                    elsewhere = true
+                    return
+                end
+            end
+        end)
+        if not elsewhere then
+            TOC_DEBUG.print("ServerDamageSanitizer: the bite was only on a missing limb - clearing the infection")
+            pcall(function() bd:setInfected(false) end)
+            pcall(function() bd:setInfectionMortalityDuration(-1) end)
+            pcall(function() bd:setInfectionTime(-1) end)
+            local stats = playerObj:getStats()
+            if stats and CharacterStat then
+                if CharacterStat.ZOMBIE_INFECTION then pcall(function() stats:set(CharacterStat.ZOMBIE_INFECTION, 0) end) end
+                if CharacterStat.ZOMBIE_FEVER then pcall(function() stats:set(CharacterStat.ZOMBIE_FEVER, 0) end) end
             end
         end
     end
