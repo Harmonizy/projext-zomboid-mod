@@ -3,10 +3,10 @@
 --
 -- Request 2026-10-03: every damage the player sees -- min / max damage and
 -- DPS in the weapon tooltip and windows, the numbers that pop up on a hit,
--- a zombie's HP -- is shown multiplied (a 0.85 hit reads 8.5 at x10). Only
+-- a zombie's HP -- is shown multiplied (a 0.85 hit reads 85 at x100). Only
 -- the display: the game keeps computing with its own values (weapons keep
 -- MinDamage 0.5 etc., zombies keep their health ~1-2).
--- The multiplier is the sandbox option DamageDisplayScale (default 10).
+-- The multiplier is the sandbox option DamageDisplayScale (default 100).
 --============================================================================
 
 require "HARMONIE_TWA_Config"

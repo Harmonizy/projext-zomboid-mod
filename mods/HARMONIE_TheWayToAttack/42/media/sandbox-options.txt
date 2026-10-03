@@ -137,7 +137,7 @@ option HARMONIE_TheWayToAttack.DamageDisplayScale
     type = integer,
     min = 1,
     max = 1000,
-    default = 10,
+    default = 100,
     page = HARMONIE_TheWayToAttack,
     translation = HARMONIE_TWA_DamageDisplayScale,
 }

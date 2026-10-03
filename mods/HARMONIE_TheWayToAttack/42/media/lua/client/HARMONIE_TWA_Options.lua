@@ -69,6 +69,7 @@ if PZAPI and PZAPI.ModOptions and not O.options then
     list("zhpCritColor", "color_", Z.COLORS, 4)
     list("zhpNumSize", "size_", Z.FONTS, 2)
     slider("zhpNumHeight", 0, 20, 1, 0)
+    tick("zhpLog", false)
     if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
     local function readSaved()
         if O.volume.getValue then O.applyVolume(O.volume:getValue()) end

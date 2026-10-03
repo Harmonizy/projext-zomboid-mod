@@ -45,5 +45,7 @@
     "UI_options_HARMONIE_TWA_color_Purple": "Purple",
     "UI_options_HARMONIE_TWA_size_Small": "Small",
     "UI_options_HARMONIE_TWA_size_Medium": "Medium",
-    "UI_options_HARMONIE_TWA_size_Large": "Large"
+    "UI_options_HARMONIE_TWA_size_Large": "Large",
+    "UI_options_HARMONIE_TWA_zhpLog": "Log hits to console",
+    "UI_options_HARMONIE_TWA_zhpLog_tooltip": "Writes every hit you land to console.txt: the weapon's listed damage, the damage really dealt, crit, your skill in that weapon and your endurance. For checking why a hit is lower than the tooltip."
 }

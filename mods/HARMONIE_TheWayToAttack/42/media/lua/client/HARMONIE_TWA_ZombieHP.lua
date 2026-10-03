@@ -154,13 +154,44 @@ function Z.addPopup(zed, amount, crit, x, y, z)
         born = getTimestampMs(), slot = slotFor(zed) }
 end
 
-function Z.onHit(zed, attacker)
+function Z.onHit(zed, attacker, bodyPart, weapon)
     if not zed then return end
     local me = getSpecificPlayer and getSpecificPlayer(0)
     if not me or attacker ~= me then return end
     local before = Z.track(zed)
     local crit = call(attacker, "isCriticalHit") == true
-    Z.pending[#Z.pending + 1] = { zombie = zed, before = before, crit = crit, ticks = 1 }
+    Z.pending[#Z.pending + 1] = { zombie = zed, before = before, crit = crit, ticks = 1, weapon = weapon }
+end
+
+-- 2026-10-03 ("ดาเมจต่ำสุดคือ 140 แต่ดาเมจที่ออกมักต่ำกว่า 100"): the
+-- option "Log hits to console" prints every hit next to the weapon's
+-- listed damage and the player's skill in that weapon, so the gap between
+-- the tooltip and the real hit can be read off console.txt. (Vanilla does
+-- not hit with the rolled MinDamage-MaxDamage directly: IsoZombie.Hit gets
+-- a "damageSplit" and a "modDelta" already worked out by the game.)
+local SKILL_OF = { Axe = "Axe", Blunt = "Blunt", SmallBlunt = "SmallBlunt", LongBlade = "LongBlade",
+    SmallBlade = "SmallBlade", Spear = "Spear" }
+function Z.logHit(c, dealt)
+    local w = c.weapon
+    local me = getSpecificPlayer and getSpecificPlayer(0)
+    local minD, maxD = tonumber(call(w, "getMinDamage")) or 0, tonumber(call(w, "getMaxDamage")) or 0
+    local skill, level = "?", "?"
+    local cats = call(w, "getCategories")
+    for i = 0, (cats and cats:size() or 0) - 1 do
+        local name = tostring(cats:get(i))
+        if SKILL_OF[name] and Perks and Perks[SKILL_OF[name]] then
+            skill, level = name, tostring(call(me, "getPerkLevel", Perks[SKILL_OF[name]]))
+            break
+        end
+    end
+    local endurance = "?"
+    local stats = call(me, "getStats")
+    if stats and CharacterStat and CharacterStat.ENDURANCE then
+        endurance = string.format("%.2f", tonumber(call(stats, "get", CharacterStat.ENDURANCE)) or 0)
+    end
+    print(string.format("[TWA hit] %s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)  crit=%s  skill %s=%s  endurance=%s  zombieHP %.3f->%.3f",
+        tostring(call(w, "getFullType") or "?"), minD, maxD, dealt, minD > 0 and dealt / minD * 100 or 0,
+        tostring(c.crit), skill, level, endurance, c.before, c.before - dealt))
 end
 
 function Z.settle()
@@ -172,6 +203,7 @@ function Z.settle()
             local after = tonumber(call(c.zombie, "getHealth")) or c.before
             local dealt = c.before - after
             if dealt > 0 then
+                if opt("zhpLog", false) == true then pcall(Z.logHit, c, dealt) end
                 if Z.showDamage() then Z.addPopup(c.zombie, dealt, c.crit) end
                 if TWADamageShare and TWADamageShare.send then TWADamageShare.send(c.zombie, dealt, c.crit) end
             end

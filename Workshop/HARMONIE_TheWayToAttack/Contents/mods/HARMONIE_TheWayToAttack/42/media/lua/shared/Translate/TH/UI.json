@@ -45,5 +45,7 @@
     "UI_options_HARMONIE_TWA_color_Purple": "ม่วง",
     "UI_options_HARMONIE_TWA_size_Small": "เล็ก",
     "UI_options_HARMONIE_TWA_size_Medium": "กลาง",
-    "UI_options_HARMONIE_TWA_size_Large": "ใหญ่"
+    "UI_options_HARMONIE_TWA_size_Large": "ใหญ่",
+    "UI_options_HARMONIE_TWA_zhpLog": "บันทึกการตีลง console",
+    "UI_options_HARMONIE_TWA_zhpLog_tooltip": "เขียนทุกครั้งที่ตีโดนลง console.txt: ดาเมจที่อาวุธระบุ ดาเมจที่ออกจริง คริติคอล เลเวลสกิลอาวุธ และความอึด ใช้ดูว่าทำไมดาเมจจริงต่ำกว่าใน tooltip"
 }
