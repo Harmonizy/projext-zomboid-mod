@@ -95,7 +95,14 @@ end
 -- Tracked per playerNum+vitamin so a threshold only needs re-applying once
 -- right after the moodle first exists, or again later if the sandbox/admin
 -- panel changes criticalThreshold/sufficientThreshold live.
-local appliedThresholdKey = {}
+-- 0.7.9 (2026-10-03, "ตอนเกิดใหม่ขึ้น moodle แบบนี้" -- Moodles_VitaminD_Good_lvl4
+-- on screen after respawning): this used to be keyed by playerNum+vitamin,
+-- but a new character gets NEW moodle objects from MoodleFramework, with its
+-- default thresholds (Good from 0.6 up) -- the old key said "already done"
+-- and the new moodles never got ours. Now keyed by the moodle object itself
+-- (weak keys), so every new moodle gets them, and a new character is
+-- updated right away (OnCreatePlayer) instead of up to 10 s later.
+local appliedThresholdKey = setmetatable({}, { __mode = "k" })
 
 local function updatePlayerMoodles(player)
     local playerNum = player:getPlayerNum()
@@ -104,10 +111,9 @@ local function updatePlayerMoodles(player)
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         local moodle = MF.getMoodle(MOODLE_NAMES[vit], playerNum)
         if moodle then
-            local trackKey = playerNum .. ":" .. vit
-            if appliedThresholdKey[trackKey] ~= currentKey then
+            if appliedThresholdKey[moodle] ~= currentKey then
                 applyThresholds(moodle)
-                appliedThresholdKey[trackKey] = currentKey
+                appliedThresholdKey[moodle] = currentKey
             end
 
             local value = HARMONIE_GTP.VitData.Get(player, vit) / HARMONIE_GTP.Config.maxValue
@@ -137,3 +143,13 @@ for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
 end
 
 Events.OnTick.Add(onMoodleTick)
+
+-- a new character (respawn): its moodles exist now -- set them up at once
+-- (registered after MoodleFramework's own OnCreatePlayer, which makes them)
+Events.OnCreatePlayer.Add(function(playerNum, player)
+    -- and set every moodle's thresholds again, in case MoodleFramework reset
+    -- an existing one instead of making a new one
+    appliedThresholdKey = setmetatable({}, { __mode = "k" })
+    lastCheckMs = 0
+    if player and not player:isDead() then pcall(updatePlayerMoodles, player) end
+end)
