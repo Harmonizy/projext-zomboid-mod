@@ -10,7 +10,12 @@
     so a fixed default key still works instead of the feature going dark.
 
     IDs:
-      AssessNutrition -> default Keyboard.KEY_N
+      AssessNutritionKey -> no key by default (R67, 2026-10-03: "เอาปุ่มดู
+                         vitamin ด้วยตัว N ออก แต่ให้ยังสามารถตั้งค่าได้
+                         ด้วยผู้เล่นเองว่าเอาปุ่มอะไร"). Renamed from
+                         "AssessNutrition": ModOptions saves every option,
+                         so the old id would keep N for anyone who already
+                         had a saved options file.
       OpenAdminPanel  -> default Keyboard.KEY_SLASH ("/"); still gated at
                          use-time by isAdmin()/getDebug() in
                          HARMONIE_Hotkeys.lua, so non-admins holding this
@@ -24,12 +29,12 @@ local MOD_OPTIONS_ID = "HARMONIE_GardenToPlate"
 local MOD_NAME = "HARMONIE: Garden to Plate"
 
 HARMONIE_GTP.Keybinds.IDs = {
-    ASSESS_NUTRITION = "AssessNutrition",
+    ASSESS_NUTRITION = "AssessNutritionKey",
     OPEN_ADMIN_PANEL = "OpenAdminPanel",
 }
 
 local DEFAULT_KEYS = {
-    [HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION] = 49, -- Keyboard.KEY_N
+    [HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION] = 0, -- none: the player picks one
     [HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL] = 53, -- Keyboard.KEY_SLASH ("/")
 }
 
@@ -75,7 +80,7 @@ function HARMONIE_GTP.Keybinds.Initialize()
         HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION,
         "IGUI_HARMONIE_KeybindAssess", "Assess Nutritional Status",
         DEFAULT_KEYS[HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION],
-        "IGUI_HARMONIE_KeybindAssess_tt", "Opens the Nutrition Assessment window for yourself, or the nearest other player if one is close by."
+        "IGUI_HARMONIE_KeybindAssess_tt", "Opens the Nutrition Assessment window for yourself, or the nearest other player if one is close by. No key by default: pick one here."
     )
     ensureKeyBind(
         HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL,

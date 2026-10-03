@@ -2,6 +2,7 @@
 """Draws the crafting window's sound button icons (round 14: "ปุ่มปิดเสียงใน
 ui คราฟ ... ปุ่มให้เป็นรูปโทรโข่ง"): a megaphone with sound waves (on) and
 the same megaphone crossed out (off). 32x32, drawn 8x and scaled down.
+R67: also the yellow tick that blinks beside the next button to press.
 Needs Pillow."""
 import os
 from PIL import Image, ImageDraw
@@ -34,5 +35,17 @@ def make(on):
     out = img.resize((S, S), Image.LANCZOS)
     out.save(os.path.join(OUT, "TWA_UI_Sound%s.png" % ("On" if on else "Off")))
 
-make(True); make(False)
+def tick():
+    img = Image.new("RGBA", (W, W), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    pts = [(40, 136), (100, 196), (216, 64)]
+    d.line(pts, fill=(30, 22, 0, 255), width=56, joint="curve")
+    for p in pts:
+        d.ellipse([p[0] - 28, p[1] - 28, p[0] + 28, p[1] + 28], fill=(30, 22, 0, 255))
+    d.line(pts, fill=(255, 214, 30, 255), width=34, joint="curve")
+    for p in pts:
+        d.ellipse([p[0] - 17, p[1] - 17, p[0] + 17, p[1] + 17], fill=(255, 214, 30, 255))
+    img.resize((S, S), Image.LANCZOS).save(os.path.join(OUT, "TWA_UI_TickYellow.png"))
+
+make(True); make(False); tick()
 print("ok")

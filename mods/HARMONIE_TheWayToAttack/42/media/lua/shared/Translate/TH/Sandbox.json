@@ -13,7 +13,7 @@
     "Sandbox_HARMONIE_TWA_ProcedureSeconds": "เวลาทำกรรมวิธี (วินาที)",
     "Sandbox_HARMONIE_TWA_ProcedureSeconds_tooltip": "ระยะเวลาของแถบเวลาหลังเล่นมินิเกมของกรรมวิธี เป็นวินาทีจริง (ทุกกรรมวิธี)",
     "Sandbox_HARMONIE_TWA_NearbyRadius": "ใช้ของที่อยู่รอบตัว (ช่อง)",
-    "Sandbox_HARMONIE_TWA_NearbyRadius_tooltip": "เครื่องมือ วัตถุดิบ และวัตถุดิบตั้งต้น หาได้จากกล่องและบนพื้นรอบตัวในระยะกี่ช่อง 0 = ใช้ได้เฉพาะของที่พกติดตัว",
+    "Sandbox_HARMONIE_TWA_NearbyRadius_tooltip": "เครื่องมือ วัตถุดิบ และวัตถุดิบตั้งต้น หาได้จากกล่องและบนพื้นรอบตัวในระยะกี่ช่อง (อย่างน้อย 1 ช่อง)",
     "Sandbox_HARMONIE_TWA_ProcedureXPMultiplier": "ตัวคูณ XP จากกรรมวิธี",
     "Sandbox_HARMONIE_TWA_ProcedureXPMultiplier_tooltip": "คูณ XP ที่ได้จากกรรมวิธีที่ทำสำเร็จ (ฐาน: 5 x เลเวลสกิลที่กรรมวิธีต้องการ) 0 = ไม่ได้ XP",
     "Sandbox_HARMONIE_TWA_RequireLight": "ทำกรรมวิธีต้องมีแสง",

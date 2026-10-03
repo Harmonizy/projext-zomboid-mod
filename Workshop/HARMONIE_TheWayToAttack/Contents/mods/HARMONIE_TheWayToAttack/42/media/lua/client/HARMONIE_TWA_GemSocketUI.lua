@@ -17,6 +17,7 @@
 -- (TWAGemSocket).
 --============================================================================
 
+require "HARMONIE_TWA_Font"
 require "ISUI/ISPanel"
 require "HARMONIE_TWA_Display"
 require "HARMONIE_TWA_MinigameBase"
@@ -47,11 +48,11 @@ local WHITE = { r = 1, g = 1, b = 1 }
 local GOLD = { r = 1, g = 0.8, b = 0.3 }
 
 local function shadowText(panel, text, x, y, c, a, font)
-    panel:drawText(text, x + 1, y + 1, 0, 0, 0, (a or 1) * 0.8, font or UIFont.Small)
-    panel:drawText(text, x, y, c.r, c.g, c.b, a or 1, font or UIFont.Small)
+    panel:drawText(text, x + 1, y + 1, 0, 0, 0, (a or 1) * 0.8, font or TWAFont.small())
+    panel:drawText(text, x, y, c.r, c.g, c.b, a or 1, font or TWAFont.small())
 end
 
-local function textW(text, font) return getTextManager():MeasureStringX(font or UIFont.Small, text) end
+local function textW(text, font) return getTextManager():MeasureStringX(font or TWAFont.small(), text) end
 
 -- Shorten `text` to `maxW` pixels by whole characters (Thai is 3 bytes a
 -- letter in UTF-8 -- cutting bytes would leave a broken letter).
@@ -366,7 +367,7 @@ function TWAGemSocketUI:drawAll()
     -- title: a little hammer, the title, the close cross
     self:line(22, 36, 38, 20, 5, 1, { r = 0.55, g = 0.36, b = 0.18 })
     self:quad(32, 12, 46, 26, 40, 32, 26, 18, 1, 0.8, 0.82, 0.86)
-    shadowText(self, getText("IGUI_TWA_Socket_Title"), 56, 13, WHITE, 1, UIFont.Medium)
+    shadowText(self, getText("IGUI_TWA_Socket_Title"), 56, 13, WHITE, 1, TWAFont.medium())
     self:line(W - 38, 16, W - 18, 36, 2, 0.8, WHITE)
     self:line(W - 18, 16, W - 38, 36, 2, 0.8, WHITE)
     -- the three panels
@@ -375,7 +376,7 @@ function TWAGemSocketUI:drawAll()
         self:drawRectBorder(p[1], TOP, p[2], BOTTOM_Y - TOP - 12, 0.7, 0.2, 0.2, 0.22)
     end
     if not self:weaponOk() then
-        shadowText(self, getText("IGUI_TWA_Socket_Gone"), CX + 20, TOP + 20, { r = 1, g = 0.5, b = 0.4 }, 1, UIFont.Medium)
+        shadowText(self, getText("IGUI_TWA_Socket_Gone"), CX + 20, TOP + 20, { r = 1, g = 0.5, b = 0.4 }, 1, TWAFont.medium())
         return
     end
     local info = self:weaponInfo()
@@ -385,7 +386,7 @@ function TWAGemSocketUI:drawAll()
     -- hint at the bottom left
     self:drawRect(LX + 4, BOTTOM_Y + 10, 16, 24, 0.8, 0.3, 0.3, 0.32)
     self:line(LX + 12, BOTTOM_Y + 10, LX + 12, BOTTOM_Y + 20, 1, 0.9, { r = 0.1, g = 0.1, b = 0.1 })
-    shadowText(self, getText("IGUI_TWA_Socket_Hint1"), LX + 30, BOTTOM_Y + 4, { r = 0.85, g = 0.85, b = 0.85 }, 1, UIFont.Medium)
+    shadowText(self, getText("IGUI_TWA_Socket_Hint1"), LX + 30, BOTTOM_Y + 4, { r = 0.85, g = 0.85, b = 0.85 }, 1, TWAFont.medium())
     shadowText(self, getText("IGUI_TWA_Socket_Hint2"), LX + 30, BOTTOM_Y + 26, { r = 0.6, g = 0.6, b = 0.6 }, 1)
     self:drawParticles()
 end
@@ -433,7 +434,7 @@ function TWAGemSocketUI:gradeBadge(x, y, grade, col)
     self:drawRect(x, y, w, 22, 1, col.r * 0.35, col.g * 0.35, col.b * 0.35)
     self:drawRectBorder(x, y, w, 22, 1, col.r, col.g, col.b)
     local t = grade or "-"
-    shadowText(self, t, x + (w - textW(t, UIFont.Medium)) / 2, y + 1, col, 1, UIFont.Medium)
+    shadowText(self, t, x + (w - textW(t, TWAFont.medium())) / 2, y + 1, col, 1, TWAFont.medium())
 end
 
 function TWAGemSocketUI:drawLeft(i)
@@ -444,7 +445,7 @@ function TWAGemSocketUI:drawLeft(i)
     local tex = wpn:getTexture()
     if tex then self:drawTextureScaled(tex, x + 6, y + 6, 72, 72, 1, 1, 1, 1) end
     local nx = x + 98
-    shadowText(self, wpn:getDisplayName(), nx, y + 2, WHITE, 1, UIFont.Medium)
+    shadowText(self, wpn:getDisplayName(), nx, y + 2, WHITE, 1, TWAFont.medium())
     -- Round 19 ("ไม่อยากให้มี ? ในจุดแสดง tier"): no middle dot (the game
     -- font may not have it), the tier and the type drawn side by side.
     local tx2 = nx
@@ -560,7 +561,7 @@ end
 function TWAGemSocketUI:drawRight(i)
     local wpn = self.weapon
     local x, y = RX + 16, TOP + 12
-    shadowText(self, getText("IGUI_TWA_Socket_InfoTitle"), x, y, WHITE, 1, UIFont.Medium)
+    shadowText(self, getText("IGUI_TWA_Socket_InfoTitle"), x, y, WHITE, 1, TWAFont.medium())
     self:line(x, y + 26, x + 100, y + 26, 2, 0.7, GOLD)
     y = y + 38
     local vx = RX + 180
@@ -626,7 +627,7 @@ function TWAGemSocketUI:notice(x, y, w, h, c, k1, k2, dim)
     self:drawRect(x, y, w, h, 0.9, c.r * 0.12, c.g * 0.12, c.b * 0.12)
     self:drawRectBorder(x, y, w, h, a, c.r, c.g, c.b)
     self:disc(x + 20, y + 22, 11, a, c, 16)
-    shadowText(self, "!", x + 17, y + 14, { r = 0.1, g = 0.1, b = 0.1 }, a, UIFont.Medium)
+    shadowText(self, "!", x + 17, y + 14, { r = 0.1, g = 0.1, b = 0.1 }, a, TWAFont.medium())
     shadowText(self, getText(k1), x + 40, y + 12, c, a)
     local lines = {}
     local cur = ""

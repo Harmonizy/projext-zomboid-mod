@@ -47,5 +47,7 @@
     "UI_options_HARMONIE_TWA_size_Medium": "กลาง",
     "UI_options_HARMONIE_TWA_size_Large": "ใหญ่",
     "UI_options_HARMONIE_TWA_zhpLog": "บันทึกการตีลง console",
-    "UI_options_HARMONIE_TWA_zhpLog_tooltip": "เขียนทุกครั้งที่ตีโดนลง console.txt: ดาเมจที่อาวุธระบุ ดาเมจที่ออกจริง คริติคอล เลเวลสกิลอาวุธ และความอึด ใช้ดูว่าทำไมดาเมจจริงต่ำกว่าใน tooltip"
+    "UI_options_HARMONIE_TWA_zhpLog_tooltip": "เขียนทุกครั้งที่ตีโดนลง console.txt: ดาเมจที่อาวุธระบุ ดาเมจที่ออกจริง คริติคอล เลเวลสกิลอาวุธ และความอึด ใช้ดูว่าทำไมดาเมจจริงต่ำกว่าใน tooltip",
+    "UI_options_HARMONIE_TWA_uiFontSize": "ขนาดตัวอักษรในหน้าต่าง",
+    "UI_options_HARMONIE_TWA_uiFontSize_tooltip": "ขนาดตัวอักษรในหน้าต่างคราฟอาวุธ ชิ้นส่วนอาวุธ และใส่อัญมณี เปิดหน้าต่างใหม่หลังเปลี่ยนค่า"
 }

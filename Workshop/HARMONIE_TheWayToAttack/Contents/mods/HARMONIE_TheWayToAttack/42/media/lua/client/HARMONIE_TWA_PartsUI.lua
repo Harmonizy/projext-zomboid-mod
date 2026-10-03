@@ -11,11 +11,14 @@
 -- melee in HARMONIE_TWA_UpgradeAction.lua.
 --============================================================================
 
+require "HARMONIE_TWA_Font"
 require "ISUI/ISPanel"
 require "HARMONIE_TWA_Display"
+require "HARMONIE_TWA_Sources"
 require "ISUI/ISButton"
 require "ISUI/ISCollapsableWindow"
 require "TimedActions/ISInventoryTransferAction"
+require "TimedActions/ISGrabItemAction"
 require "TimedActions/ISUpgradeWeapon"
 require "TimedActions/ISRemoveWeaponUpgrade"
 
@@ -44,6 +47,19 @@ local STAT_LINES = {
 
 -- Helpers ---------------------------------------------------------------------
 
+local function partFits(item, player, weapon, slot)
+    local isWeaponPart = instanceof(item, "WeaponPart")
+    if not isWeaponPart then
+        local okCategory, category = pcall(function() return item:getCategory() end)
+        isWeaponPart = okCategory and category == "WeaponPart"
+    end
+    if isWeaponPart and item:getPartType() == slot and not item:isBroken() then
+        local ok, allowed = pcall(function() return item:canAttach(player, weapon) end)
+        return ok and allowed
+    end
+    return false
+end
+
 local function scanParts(container, player, weapon, slot, result, visited)
     if not container or visited[tostring(container)] then return end
     visited[tostring(container)] = true
@@ -52,15 +68,7 @@ local function scanParts(container, player, weapon, slot, result, visited)
     for index = 0, items:size() - 1 do
         local item = items:get(index)
         if item then
-            local isWeaponPart = instanceof(item, "WeaponPart")
-            if not isWeaponPart then
-                local okCategory, category = pcall(function() return item:getCategory() end)
-                isWeaponPart = okCategory and category == "WeaponPart"
-            end
-            if isWeaponPart and item:getPartType() == slot and not item:isBroken() then
-                local ok, allowed = pcall(function() return item:canAttach(player, weapon) end)
-                if ok and allowed then result[#result + 1] = item end
-            end
+            if partFits(item, player, weapon, slot) then result[#result + 1] = item end
             if instanceof(item, "InventoryContainer") then
                 scanParts(item:getInventory(), player, weapon, slot, result, visited)
             end
@@ -68,52 +76,22 @@ local function scanParts(container, player, weapon, slot, result, visited)
     end
 end
 
-local function getReachableContainers(player)
-    local containers = {}
-    local seen = {}
-    local function addContainer(container)
-        if container and not seen[tostring(container)] then
-            seen[tostring(container)] = true
-            containers[#containers + 1] = container
+-- R67 ("อะไรที่หาไอเท็มในตัว ให้สามารถหาได้บนพื้นและในกล่องรอบตัวเสมอ"):
+-- the same places crafting looks (TWASources: carried, containers and the
+-- floor around you) -- loose parts on the floor included now.
+local function scanAllParts(player, weapon, slot)
+    local result, visited = {}, {}
+    local src = TWASources.get(player)
+    for _, container in ipairs(src.conts) do
+        scanParts(container, player, weapon, slot, result, visited)
+    end
+    for _, item in ipairs(src.floor) do
+        if partFits(item, player, weapon, slot) then result[#result + 1] = item end
+        if instanceof(item, "InventoryContainer") then
+            scanParts(item:getInventory(), player, weapon, slot, result, visited)
         end
     end
-
-    addContainer(player:getInventory())
-
-    local square = player:getCurrentSquare()
-    if not square then return containers end
-    local cx, cy, cz = square:getX(), square:getY(), square:getZ()
-
-    for dx = -1, 1 do
-        for dy = -1, 1 do
-            local gridSquare = getCell():getGridSquare(cx + dx, cy + dy, cz)
-            if gridSquare then
-                local objects = gridSquare:getObjects()
-                if objects then
-                    for i = 0, objects:size() - 1 do
-                        local obj = objects:get(i)
-                        if obj then
-                            local ok, container = pcall(function() return obj:getContainer() end)
-                            if ok then addContainer(container) end
-                        end
-                    end
-                end
-                local worldObjects = gridSquare:getWorldObjects()
-                if worldObjects then
-                    for i = 0, worldObjects:size() - 1 do
-                        local worldObject = worldObjects:get(i)
-                        if worldObject then
-                            local ok, item = pcall(function() return worldObject:getItem() end)
-                            if ok and item and instanceof(item, "InventoryContainer") then
-                                addContainer(item:getInventory())
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return containers
+    return result
 end
 
 -- Slot button -------------------------------------------------------------
@@ -154,7 +132,7 @@ function TWASlotButton:render()
     else
         self:drawRectBorder(6, 6, self.height - 12, self.height - 12, 0.3, 1, 1, 1)
     end
-    self:drawText(self.label, self.height, 12, 1, 1, 1, 1, UIFont.Small)
+    self:drawText(self.label, self.height, 12, 1, 1, 1, 1, TWAFont.small())
 end
 
 function TWASlotButton:onMouseUp(x, y)
@@ -218,7 +196,11 @@ function TWAAddPartButton:onMouseDown()
     local player = getPlayer()
     local part = self.part
     local srcContainer = part:getContainer()
-    if srcContainer and srcContainer ~= player:getInventory() then
+    local worldItem = part.getWorldItem and part:getWorldItem()
+    if worldItem and ISGrabItemAction then
+        -- a loose part on the floor: pick it up first
+        ISTimedActionQueue.add(ISGrabItemAction:new(player, worldItem, 50))
+    elseif srcContainer and srcContainer ~= player:getInventory() then
         ISTimedActionQueue.add(ISInventoryTransferAction:new(player, part, srcContainer, player:getInventory()))
     end
     ISTimedActionQueue.add(ISUpgradeWeapon:new(player, self.weapon, part, 1))
@@ -293,11 +275,7 @@ function TWASelectPane:renderInventory()
     local alreadyDone = {}
     local itemNum = 0
     local rowCount = -1
-    local partResult = {}
-    local visited = {}
-    for _, container in ipairs(getReachableContainers(player)) do
-        scanParts(container, player, weapon, self.slotKey, partResult, visited)
-    end
+    local partResult = scanAllParts(player, weapon, self.slotKey)
 
     for _, part in ipairs(partResult) do
         if not alreadyDone[part:getFullType()] then
@@ -410,7 +388,7 @@ function TWAPartsWindow:prerender()
         if tex then
             self:drawTextureScaled(tex, 16, titleY + 8, 32, 32, 1, 1, 1, 1)
         end
-        self:drawText(weapon:getDisplayName(), 56, titleY + 16, 1, 1, 1, 1, UIFont.Medium)
+        self:drawText(weapon:getDisplayName(), 56, titleY + 16, 1, 1, 1, 1, TWAFont.medium())
     end
 end
 
@@ -425,7 +403,7 @@ function TWAPartsWindow:render()
         if v ~= nil and st.scale then v = TWADisplay.fmt(v) end   -- shown multiplied (TWADisplay)
         if v ~= nil then
             self:drawText(getText(st.label) .. ": " .. string.format(st.fmt, v), SLOT_X, sy + (i - 1) * 20, 1, 1, 1, 1,
-                UIFont.Small)
+                TWAFont.small())
         end
     end
 end

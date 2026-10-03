@@ -67,6 +67,7 @@ end
 
 local function onKeyPressed(key)
     if isChatWindowOpen() then return end
+    if not key or key == 0 then return end -- an unbound action is key 0
 
     local playerObj = getSpecificPlayer(0)
     if not playerObj or playerObj:isDead() then return end
