@@ -18,6 +18,7 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "HARMONIE_TWA_Display"
 require "HARMONIE_TWA_MinigameBase"
 require "HARMONIE_TWA_CraftUI"
 require "HARMONIE_TWA_GemSocket"
@@ -409,9 +410,10 @@ function TWAGemSocketUI:weaponInfo()
     local function d(f) return (prev[f] or 0) - (now[f] or 0) end
     i.dMin, i.dMax, i.dCond = d("MinDamage"), d("MaxDamage"), d("ConditionMax")
     i.rows = {
-        { "IGUI_TWA_Stat_DPS", string.format("%.2f", i.dps), (i.dMin ~= 0 or i.dMax ~= 0) and string.format("%.2f", ((i.minD + i.dMin + i.maxD + i.dMax) / 2) * i.speed) },
-        { "IGUI_TWA_Stat_MinDamage", string.format("%.1f", i.minD), i.dMin ~= 0 and string.format("%.1f", i.minD + i.dMin) },
-        { "IGUI_TWA_Stat_MaxDamage", string.format("%.1f", i.maxD), i.dMax ~= 0 and string.format("%.1f", i.maxD + i.dMax) },
+        -- damage shown x100 (TWADisplay, request 2026-10-03)
+        { "IGUI_TWA_Stat_DPS", TWADisplay.fmt(i.dps), (i.dMin ~= 0 or i.dMax ~= 0) and TWADisplay.fmt(((i.minD + i.dMin + i.maxD + i.dMax) / 2) * i.speed) },
+        { "IGUI_TWA_Stat_MinDamage", TWADisplay.fmt(i.minD), i.dMin ~= 0 and TWADisplay.fmt(i.minD + i.dMin) },
+        { "IGUI_TWA_Stat_MaxDamage", TWADisplay.fmt(i.maxD), i.dMax ~= 0 and TWADisplay.fmt(i.maxD + i.dMax) },
         { "IGUI_TWA_Stat_Speed", string.format("%.2f", i.speed) },
         { "IGUI_TWA_StatWeight", string.format("%.1f", wpn:getActualWeight()) },
         { "IGUI_TWA_Stat_Range", string.format("%.2f", wpn:getMaxRange()) },

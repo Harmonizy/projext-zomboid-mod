@@ -3334,5 +3334,10 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     vanilla knives were held backwards in B42. Check: every file under
     models_X / textures must be named by a mesh= / texture= / Icon= of
     your own scripts (or by your Lua), 2026-10-02.
+[ ] Showing a game number scaled for the player (TWA shows damage / DPS /
+    zombie HP x100)? Scale ONLY where it is drawn, through one helper
+    (TWADisplay.dmg / .fmt) -- never the stored or computed value -- and
+    find every place it is drawn (tooltip, windows, gem text, popups).
+    Tests that read the text must expect the shown number.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

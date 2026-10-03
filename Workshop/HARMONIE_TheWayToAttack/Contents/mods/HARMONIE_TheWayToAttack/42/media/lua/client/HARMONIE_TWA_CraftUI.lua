@@ -11,6 +11,7 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "HARMONIE_TWA_Display"
 require "ISUI/ISButton"
 require "ISUI/ISCollapsableWindow"
 require "ISUI/ISTextEntryBox"
@@ -1806,9 +1807,10 @@ local HANDEDNESS_LABELS = { [true] = "IGUI_TWA_Stat_TwoHanded", [false] = "IGUI_
 -- the one stat everything else here explains (drives the whole tier
 -- system) -- flag if you actually wanted it dropped.
 local STAT_GRID = {
-    { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%.2f", always = true } },
-    { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
-      { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" } },
+    -- `scale`: damage shown x100 (TWADisplay, request 2026-10-03)
+    { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%.0f", always = true, scale = true } },
+    { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.0f", scale = true },
+      { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.0f", scale = true } },
     -- `always = true` (request 2026-09-26: "always show attack speed") --
     -- shown even when the baked value is missing. `default = 1.0` (request
     -- 2026-09-26: "ความเร็วโจมตีหากไม่มีให้ขึ้น 1.0 แทน" -- if missing, show
@@ -1853,6 +1855,7 @@ function TWACraftWindow:drawStatGrid(x, y, w)
     for _, row in ipairs(STAT_GRID) do
         for col, cellDef in ipairs(row) do
             local v = cellDef.derive and cellDef.derive(stats) or stats[cellDef.key]
+            if v ~= nil and cellDef.scale then v = TWADisplay.dmg(v) end
             if v ~= nil or cellDef.always then
                 local cx = x + (col - 1) * colW
                 local valueText = (v ~= nil) and string.format(cellDef.fmt, v)

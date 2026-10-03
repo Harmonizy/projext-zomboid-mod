@@ -37,6 +37,16 @@ if PZAPI and PZAPI.ModOptions and not O.options then
         getText("UI_options_HARMONIE_TWA_mute_tooltip"))
     O.mute.onChange = function(_, value) TWASound.muted = value and true or false end
     O.mute.onChangeApply = function(_, value) TWASound.muted = value and true or false end
+    -- 2026-10-03: zombie health bars / HP numbers / damage numbers
+    -- (HARMONIE_TWA_ZombieHP reads these tick boxes itself)
+    O.zhpBar = O.options:addTickBox("zhpBar", getText("UI_options_HARMONIE_TWA_zhpBar"), true,
+        getText("UI_options_HARMONIE_TWA_zhpBar_tooltip"))
+    O.zhpText = O.options:addTickBox("zhpText", getText("UI_options_HARMONIE_TWA_zhpText"), true,
+        getText("UI_options_HARMONIE_TWA_zhpText_tooltip"))
+    O.zhpDamage = O.options:addTickBox("zhpDamage", getText("UI_options_HARMONIE_TWA_zhpDamage"), true,
+        getText("UI_options_HARMONIE_TWA_zhpDamage_tooltip"))
+    O.zhpHeight = O.options:addSlider("zhpHeight", getText("UI_options_HARMONIE_TWA_zhpHeight"), 0, 10, 1, 0,
+        getText("UI_options_HARMONIE_TWA_zhpHeight_tooltip"))
     if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
     local function readSaved()
         if O.volume.getValue then O.applyVolume(O.volume:getValue()) end

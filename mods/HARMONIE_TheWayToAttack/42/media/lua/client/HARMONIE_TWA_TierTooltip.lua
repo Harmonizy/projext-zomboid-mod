@@ -57,6 +57,7 @@
 --============================================================================
 
 require "ISUI/ISToolTipInv"
+require "HARMONIE_TWA_Display"
 
 -- Full 8-tier fixed-DPS scale -- SAME thresholds gen_craftdata.js bakes for
 -- non-weapon items, ported to Lua so weapon tier can be computed live here
@@ -84,8 +85,8 @@ end
 -- only -- same 2-column layout and same translation keys HARMONIE_TWA_
 -- CraftUI.lua's own STAT_GRID already uses.
 local STATIC_STAT_GRID = {
-    { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.1f" },
-      { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.1f" } },
+    { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%.0f", scale = true },
+      { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%.0f", scale = true } },
     { { key = "critChance", labelKey = "IGUI_TWA_Stat_CritChance", fmt = "%.0f%%" },
       { key = "maxRange", labelKey = "IGUI_TWA_Stat_Range", fmt = "%.2f" } },
     { { key = "baseSpeed", labelKey = "IGUI_TWA_Stat_Speed", fmt = "%.2f", default = 1.0 },
@@ -257,7 +258,7 @@ function ISToolTipInv:render()
         local dps = ((minD + maxD) / 2) * baseSpeed
         local tier = tierFromDps(dps)
         local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
-        local label = TIER_NAMES[tier] .. " (DPS " .. string.format("%.2f", dps) .. ")"
+        local label = TIER_NAMES[tier] .. " (DPS " .. TWADisplay.fmt(dps) .. ")"
 
         self:setHeight(self.height + (textH + 6))
         y = y + drawStatStrip(self, 2, y, self.width - 4, label, c, font)
@@ -266,8 +267,9 @@ function ISToolTipInv:render()
         local typeText = weaponTypeText(item, stats)
         if typeText then gridDef[1] = { typeText, "IGUI_TWA_Stat_Type", "%s" } end
         for _, cellDef in ipairs({
-            { dps, "IGUI_TWA_Stat_DPS", "%.2f" },
-            { minD, "IGUI_TWA_Stat_MinDamage", "%.1f" }, { maxD, "IGUI_TWA_Stat_MaxDamage", "%.1f" },
+            -- shown x100 (TWADisplay, request 2026-10-03)
+            { TWADisplay.dmg(dps), "IGUI_TWA_Stat_DPS", "%.0f" },
+            { TWADisplay.dmg(minD), "IGUI_TWA_Stat_MinDamage", "%.0f" }, { TWADisplay.dmg(maxD), "IGUI_TWA_Stat_MaxDamage", "%.0f" },
             { baseSpeed, "IGUI_TWA_Stat_Speed", "%.2f" }, { weight, "IGUI_TWA_StatWeight", "%.1f" },
             { maxRange, "IGUI_TWA_Stat_Range", "%.2f" }, { critChance, "IGUI_TWA_Stat_CritChance", "%.0f%%" },
             { condMax, "IGUI_TWA_Stat_Condition", "%.0f" }, { condLower, "IGUI_TWA_Stat_Durability", "1:%.0f" },
@@ -298,7 +300,7 @@ function ISToolTipInv:render()
             local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
             local label = TIER_NAMES[tier]
             if stats.dps then
-                label = label .. " (DPS " .. string.format("%.2f", stats.dps) .. ")"
+                label = label .. " (DPS " .. TWADisplay.fmt(stats.dps) .. ")"
             end
             self:setHeight(self.height + (textH + 6))
             y = y + drawStatStrip(self, 2, y, self.width - 4, label, c, font)
@@ -309,6 +311,7 @@ function ISToolTipInv:render()
                     local v = stats[cellDef.key]
                     if v == nil then v = cellDef.default end
                     if v ~= nil then
+                        if cellDef.scale then v = TWADisplay.dmg(v) end
                         gridDef[#gridDef + 1] = { v, cellDef.labelKey, cellDef.fmt }
                     end
                 end
