@@ -22,7 +22,18 @@ function ISUpgradeWeapon:isValid()
         if self.weapon:getWeaponPart(self.part:getPartType()) then
             return false
         end
-        return self.character:getInventory():contains(self.part)
+        local inv = self.character:getInventory()
+        if inv:contains(self.part) then return true end
+        -- R68 (MP): a part just picked up off the floor can reach this
+        -- client's inventory as a new copy of the item -- find it by id
+        local id = self.part.getID and self.part:getID()
+        for _, m in ipairs({ "getItemWithIDRecursiv", "getItemById", "getItemWithID" }) do
+            if id and inv[m] then
+                local ok, found = pcall(inv[m], inv, id)
+                if ok and found then self.part = found return true end
+            end
+        end
+        return false
     end
     return oldUpgradeIsValid(self)
 end

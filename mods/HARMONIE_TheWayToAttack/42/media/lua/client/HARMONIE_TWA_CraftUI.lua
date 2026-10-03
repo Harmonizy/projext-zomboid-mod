@@ -134,27 +134,35 @@ end
 
 -- 2026-10-02: the main-step buttons (Start, Confirm procedure, Finish) set
 -- `pulse` to stand out while they can be pressed.
--- R67 ("การกระพริบบนปุ่มต่างๆที่เคยทำ ให้เป็นติ๊กสีเหลืองกระพริบแทน เพราะ
--- แบบเดิมยังไกด์ไลน์ผู้เล่นไม่ค่อยดี"): instead of the button glowing, a
--- yellow tick blinks at its left edge (fades in and out once every
--- PULSE_MS) -- "press this next". Hidden while the mouse is on the button.
-TWANeatButton.PULSE_MS = 900
-TWANeatButton.TICK_TEX = getTexture("media/textures/TWA_UI_TickYellow.png")
+-- R67: a blinking yellow tick instead of the glow; R68 ("เปลี่ยนติ๊กเหลือง
+-- เป็นจุดเหลือง และทำให้ขึ้นในกรรมวิธีที่ต้องทำที่ยังไม่ได้ทำด้วย"): a
+-- blinking yellow DOT, on these buttons (left edge) and on every required
+-- procedure of a started craft that is not done yet. It fades in and out
+-- once every BLINK_MS -- "this is next".
+TWABlink = TWABlink or {}
+TWABlink.MS = 900
+TWABlink.TEX = getTexture("media/textures/TWA_UI_DotYellow.png")
+function TWABlink.level()
+    local ms = getTimestampMs and getTimestampMs() or 0
+    return 0.5 + 0.5 * math.sin((ms % TWABlink.MS) / TWABlink.MS * 2 * math.pi)
+end
+function TWABlink.draw(panel, x, y, size, p)
+    local a = 0.2 + 0.8 * (p or TWABlink.level())
+    if TWABlink.TEX then
+        panel:drawTextureScaled(TWABlink.TEX, x, y, size, size, a, 1, 1, 1)
+    else
+        panel:drawRect(x, y, size, size, a, 1, 0.84, 0.1)
+    end
+end
+
 function TWANeatButton:pulseLevel()
     if not self.pulse or self.enable == false or self:isMouseOver() then return nil end
-    local ms = getTimestampMs and getTimestampMs() or 0
-    return 0.5 + 0.5 * math.sin((ms % self.PULSE_MS) / self.PULSE_MS * 2 * math.pi)
+    return TWABlink.level()
 end
 
 function TWANeatButton:drawTick(p)
-    local size = math.min(22, self.height - 4)
-    local x, y = 4, (self.height - size) / 2
-    local a = 0.15 + 0.85 * p
-    if self.TICK_TEX then
-        self:drawTextureScaled(self.TICK_TEX, x, y, size, size, a, 1, 1, 1)
-    else
-        self:drawRect(x, y, size, size, a, 1, 0.84, 0.1)
-    end
+    local size = math.min(14, self.height - 8)
+    TWABlink.draw(self, 6, (self.height - size) / 2, size, p)
 end
 
 function TWANeatButton:render()
@@ -1198,19 +1206,24 @@ function TWACraftWindow:createChildren()
     -- straight onto the recipe's own base item's ModData, so someone else
     -- (or the same player later) can pick up that exact item and keep
     -- going. 3-way split of the same row Cancel/Finish already used.
-    local btnW, btnH = (CENTER_W - 20) / 3, 30
+    -- R68 ("ปุ่มเสร็จสิ้นให้ใหญ่ที่สุด ให้ปุ่มไม่สมบูรณ์และยกเลิกขนาดลดลง"):
+    -- Cancel and Incomplete a quarter of the row each, Finish half.
+    local btnH, rowW, btnGap = 30, CENTER_W - 20, 8
+    local smallW = math.floor((rowW - 2 * btnGap) / 4)
+    local btnW = smallW
+    local finishW = rowW - 2 * smallW - 2 * btnGap
     self.cancelButton = TWANeatButton:new(centerX, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Cancel"), self, TWACraftWindow.onCancelButtonClicked)
     self.cancelButton:setTooltip(getText("IGUI_TWA_Tooltip_CancelStarted"))
     self.cancelButton:initialise()
     self:addChild(self.cancelButton)
 
-    self.incompleteButton = TWANeatButton:new(centerX + btnW + 10, panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Incomplete"), self, TWACraftWindow.onIncompleteButtonClicked)
+    self.incompleteButton = TWANeatButton:new(centerX + smallW + btnGap, panelBottom - btnH, smallW, btnH, getText("IGUI_TWA_Incomplete"), self, TWACraftWindow.onIncompleteButtonClicked)
     self.incompleteButton.neatTint = { r = 0.55, g = 0.6, b = 0.95 }
     self.incompleteButton:setTooltip(getText("IGUI_TWA_Tooltip_IncompleteStarted"))
     self.incompleteButton:initialise()
     self:addChild(self.incompleteButton)
 
-    self.finishButton = TWANeatButton:new(centerX + 2 * (btnW + 10), panelBottom - btnH, btnW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinishButtonClicked)
+    self.finishButton = TWANeatButton:new(centerX + 2 * (smallW + btnGap), panelBottom - btnH, finishW, btnH, getText("IGUI_TWA_Finish"), self, TWACraftWindow.onFinishButtonClicked)
     self.finishButton.pulse = true
     self.finishButton.neatTint = { r = 1, g = 0.55, b = 0.15 }
     self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
@@ -2429,7 +2442,9 @@ function TWACraftWindow:render()
         local count1 = chosen and S.countBase(self.player, recipe, chosen) or 0
         local count2 = recipe.base2 and freeCount({ recipe.base2 }) or 0
         if self:isActiveRecipe() then
-            -- Already taken at Start.
+            -- Already taken at Start. R68 ("เวลากดเริ่มทำแล้ว ให้เอาคำว่า มีอยู่
+            -- ในวัตถุดิบตั้งต้นและเสริมออก"): no "Have: N" once started.
+            count1, count2 = nil, nil
             owned1, note1 = true, "IGUI_TWA_BaseTaken"
             owned2, note2 = true, "IGUI_TWA_ExtraTaken"
         else
@@ -2517,6 +2532,8 @@ function TWACraftWindow:render()
                 self:drawTextureScaled(tex2, px + 6, py + 6, cell - 12, cell - 12, 1, tint, tint, tint)
             end
             if done then drawCheckBadge(self, px, py, cell) end
+            -- R68: a started craft's procedures still to do blink a yellow dot
+            if not done and self:isActiveRecipe() then TWABlink.draw(self, px + 3, py + 3, 12) end
             local w = showWords and TWACraftState.wordFor(procId, doneNow, qualityNow)
             if w then
                 local wc = TWACraftState.WORD_COLOR[w]

@@ -3377,5 +3377,12 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     onPick, owner) (a draggable window with a scrolling list), not a
     pop-up ISContextMenu: a menu cannot be moved and runs off the screen
     with many rows (0.64.2). Close it when its owner window closes.
+[ ] "Next step" hint in TWA = TWABlink (blinking yellow dot,
+    textures/TWA_UI_DotYellow.png): buttons set .pulse; anything drawn by
+    hand calls TWABlink.draw(panel, x, y, size). One look everywhere.
+[ ] Chaining a pick-up (ISGrabItemAction off the floor) and an action that
+    uses that item: in MP the item can reach the client's inventory as a
+    new copy -- the later action's isValid must find it again by id
+    (TWA ISUpgradeWeapon override, 0.65.0), not keep the floor object.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

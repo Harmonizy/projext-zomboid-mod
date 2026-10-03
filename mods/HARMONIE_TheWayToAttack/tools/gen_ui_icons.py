@@ -2,7 +2,8 @@
 """Draws the crafting window's sound button icons (round 14: "ปุ่มปิดเสียงใน
 ui คราฟ ... ปุ่มให้เป็นรูปโทรโข่ง"): a megaphone with sound waves (on) and
 the same megaphone crossed out (off). 32x32, drawn 8x and scaled down.
-R67: also the yellow tick that blinks beside the next button to press.
+R68: also the yellow dot that blinks on the next button to press and on
+the procedures still to do (it replaced R67's yellow tick).
 Needs Pillow."""
 import os
 from PIL import Image, ImageDraw
@@ -35,17 +36,13 @@ def make(on):
     out = img.resize((S, S), Image.LANCZOS)
     out.save(os.path.join(OUT, "TWA_UI_Sound%s.png" % ("On" if on else "Off")))
 
-def tick():
+def dot():
     img = Image.new("RGBA", (W, W), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    pts = [(40, 136), (100, 196), (216, 64)]
-    d.line(pts, fill=(30, 22, 0, 255), width=56, joint="curve")
-    for p in pts:
-        d.ellipse([p[0] - 28, p[1] - 28, p[0] + 28, p[1] + 28], fill=(30, 22, 0, 255))
-    d.line(pts, fill=(255, 214, 30, 255), width=34, joint="curve")
-    for p in pts:
-        d.ellipse([p[0] - 17, p[1] - 17, p[0] + 17, p[1] + 17], fill=(255, 214, 30, 255))
-    img.resize((S, S), Image.LANCZOS).save(os.path.join(OUT, "TWA_UI_TickYellow.png"))
+    d.ellipse([28, 28, 228, 228], fill=(30, 22, 0, 255))
+    d.ellipse([52, 52, 204, 204], fill=(255, 214, 30, 255))
+    d.ellipse([84, 76, 132, 116], fill=(255, 244, 170, 255))  # small shine
+    img.resize((S, S), Image.LANCZOS).save(os.path.join(OUT, "TWA_UI_DotYellow.png"))
 
-make(True); make(False); tick()
+make(True); make(False); dot()
 print("ok")
