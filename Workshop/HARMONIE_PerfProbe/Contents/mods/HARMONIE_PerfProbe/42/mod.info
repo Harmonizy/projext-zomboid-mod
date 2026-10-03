@@ -1,0 +1,7 @@
+name=HARMONIE - Perf Probe (diagnostic)
+id=HARMONIE_PerfProbe
+description=Diagnostic only -- turn on for a few minutes to find what makes a game lag, then turn off. Every 10 seconds it writes to console.txt which mod code took the most time (per event handler: OnTick, OnPlayerUpdate, OnRenderTick, UI draws, server/client commands...), how many frames ran, and how many network commands each mod sent, on the client AND on the server. Changes nothing in the game.
+poster=poster.png
+icon=icon.png
+modversion=0.1.0
+versionMin=42.0.0

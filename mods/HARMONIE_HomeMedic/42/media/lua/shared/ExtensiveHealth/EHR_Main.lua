@@ -595,13 +595,13 @@ function EHR.MarkInitDataReceived(player)
     initDataRequestAttempts = 0
 end
 
-function EHR.SyncEHRModDataToClient(player)
+function EHR.SyncEHRModDataToClient(player, opts)
     if not player or not sendServerCommand then return false end
 
     local data = player:getModData()
     if not data then return false end
 
-    local packet = EHR.MedicalStateSync.Build(data, player)
+    local packet = EHR.MedicalStateSync.Build(data, player, opts)
     if not packet then return false end
     sendServerCommand(player, "EHR_Sync", "UpdateModData", packet)
 
@@ -682,7 +682,10 @@ local function processPlayerTick(player)
         end
     end
 
-    if syncDue and not EHR.SyncEHRModDataToClient(player) then
+    -- HARMONIE 0.24.0: the ONE periodic snapshot (EHR_Disease and
+    -- EHR_ServerCommands used to send the same one again), light: unchanged
+    -- journal / known diseases are left out (EHR_MedicalStateSync).
+    if syncDue and not EHR.SyncEHRModDataToClient(player, { periodic = true }) then
         EHR.Log("EHR MP sync skipped: sendServerCommand unavailable")
     end
 end

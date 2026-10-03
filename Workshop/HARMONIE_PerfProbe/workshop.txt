@@ -1,0 +1,9 @@
+version=1
+title=HARMONIE - Perf Probe (diagnostic)
+description=Diagnostic only. Turn it on for a few minutes to find what makes a game lag, then turn it off.
+description=
+description=Every 10 seconds it writes to console.txt (client and server) which mod code took the most time per event handler, how many frames ran, and how many network commands each mod sent. Changes nothing in the game.
+description=
+description=Mod ID: HARMONIE_PerfProbe
+tags=Build 42;Misc
+visibility=unlisted

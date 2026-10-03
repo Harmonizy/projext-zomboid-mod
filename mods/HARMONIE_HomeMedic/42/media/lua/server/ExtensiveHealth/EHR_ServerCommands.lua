@@ -5066,7 +5066,8 @@ local function OnServerTick()
     syncTickCounter = syncTickCounter + 1
     if syncTickCounter >= SYNC_INTERVAL_TICKS then
         syncTickCounter = 0
-        syncAllPlayers()
+        -- HARMONIE 0.24.0 (server lag): no syncAllPlayers() here -- EHR_Main
+        -- sends every player its snapshot every ~10 s already.
 
         local nowMs = getServerNowMs()
         pruneTimedEntries(EHR.ServerCommands.PendingExamConsents, nowMs)
