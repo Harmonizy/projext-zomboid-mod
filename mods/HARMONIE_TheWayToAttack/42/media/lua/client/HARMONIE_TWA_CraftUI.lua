@@ -1324,7 +1324,7 @@ function TWACraftWindow:createChildren()
     -- R67 ("เพิ่มปุ่มทำต่อในหน้าการคราฟอาวุธ กรณีเจออาวุธที่ไม่สมบูรณ์ในตัว
     -- บนพื้น หรือในกล่อง"): under the recipe list, shown while an unfinished
     -- weapon is carried, on the floor or in a container nearby (TWASources).
-    -- Each click picks up the next one found.
+    -- Several found: the click opens a list to choose from.
     self.continueButton = TWANeatButton:new(leftX, panelBottom + 10, LEFT_W, 26, "", self, TWACraftWindow.onContinueClicked)
     self.continueButton.neatTint = { r = 0.55, g = 0.6, b = 0.95 }
     self.continueButton:initialise()
@@ -1523,15 +1523,41 @@ function TWACraftWindow:updateContinueButton()
     btn:setTooltip(table.concat(lines, " <LINE> "))
 end
 
+-- R67b ("การกดปุ่มทำต่อ ... หากมีหลายอัน ก็ให้ขึ้นหน้าต่างให้เลือกได้ว่าจะ
+-- ทำต่ออะไร"): one unfinished weapon -> straight to it; several -> a list
+-- to pick from (picture, name, procedures done / needed, where it lies).
+function TWACraftWindow:incompleteWhere(it)
+    if it.getWorldItem and it:getWorldItem() then return "IGUI_TWA_Where_Floor" end
+    local c = it.getContainer and it:getContainer()
+    if c and c.isInCharacterInventory and c:isInCharacterInventory(self.player) then return "IGUI_TWA_Where_Carried" end
+    return "IGUI_TWA_Where_Container"
+end
+
+function TWACraftWindow:incompleteLabel(it)
+    local md = it:getModData()
+    local recipe = getRecipeById(md.TWA_RecipeId)
+    local need, done = recipe and #recipe.procedures or 0, 0
+    for _, pid in ipairs(recipe and recipe.procedures or {}) do
+        if type(md.TWA_DoneProcedures) == "table" and md.TWA_DoneProcedures[pid] then done = done + 1 end
+    end
+    return getText("IGUI_TWA_ContinuePickRow", it:getDisplayName(), tostring(done), tostring(need),
+        getText(self:incompleteWhere(it)))
+end
+
 function TWACraftWindow:onContinueClicked()
     local list = self:findIncomplete()
     self.incompleteList, self.incompleteScanAt = list, getTimestampMs and getTimestampMs() or 0
     if #list == 0 then return end
-    local pick = list[1]
-    for i, it in ipairs(list) do
-        if it == self.resumeItem then pick = list[i % #list + 1] break end
+    if #list == 1 then self:resumeFromItem(list[1]) return end
+    local ctx = ISContextMenu.get(self.player:getPlayerNum(), getMouseX(), getMouseY())
+    local title = ctx:addOption(getText("IGUI_TWA_ContinuePickTitle"), nil, nil)
+    title.notAvailable = true
+    for _, it in ipairs(list) do
+        local label = self:incompleteLabel(it)
+        if it == self.resumeItem then label = "> " .. label end
+        local opt = ctx:addOption(label, self, TWACraftWindow.resumeFromItem, it)
+        opt.iconTexture = it.getTex and it:getTex() or nil
     end
-    self:resumeFromItem(pick)
 end
 
 -- Looking at other recipes is free until one is started; after that the
