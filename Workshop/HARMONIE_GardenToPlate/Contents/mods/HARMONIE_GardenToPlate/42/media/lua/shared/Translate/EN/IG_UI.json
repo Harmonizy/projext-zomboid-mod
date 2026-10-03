@@ -4,7 +4,7 @@
     "IGUI_HARMONIE_AssessOther": "Assess %1's Nutritional Status",
     "IGUI_HARMONIE_AssessOtherDesc": "View this player's vitamin reserves (Critical/Low/Sufficient).",
     "IGUI_HARMONIE_KeybindAssess": "Assess Nutritional Status",
-    "IGUI_HARMONIE_KeybindAssess_tt": "Opens the Nutrition Assessment window for yourself, or the nearest other player if one is close by.",
+    "IGUI_HARMONIE_KeybindAssess_tt": "Opens the Nutrition Assessment window for yourself, or the nearest other player if one is close by. No key by default: pick one here.",
     "IGUI_HARMONIE_KeybindAdmin": "Nutrition Admin Panel",
     "IGUI_HARMONIE_KeybindAdmin_tt": "Admin/debug only: opens the live vitamin + sandbox tuning panel. Bound to / by default.",
     "IGUI_HARMONIE_Band_Critical": "Critical",

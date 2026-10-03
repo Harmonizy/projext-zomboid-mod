@@ -10,6 +10,7 @@
 -- (generated) and HARMONIE_TWA_Procedures.lua (the procedure library).
 --============================================================================
 
+require "HARMONIE_TWA_Font"
 require "ISUI/ISPanel"
 require "HARMONIE_TWA_Display"
 require "ISUI/ISButton"
@@ -131,38 +132,47 @@ function TWANeatButton:new(x, y, w, h, title, target, onclick)
 end
 
 -- 2026-10-02: the main-step buttons (Start, Confirm procedure, Finish) set
--- `pulse`: while they can be pressed they glow brighter and dimmer slowly
--- (one cycle every PULSE_MS) with a soft halo, so the next step stands out.
-TWANeatButton.PULSE_MS = 1600
+-- `pulse` to stand out while they can be pressed.
+-- R67 ("การกระพริบบนปุ่มต่างๆที่เคยทำ ให้เป็นติ๊กสีเหลืองกระพริบแทน เพราะ
+-- แบบเดิมยังไกด์ไลน์ผู้เล่นไม่ค่อยดี"): instead of the button glowing, a
+-- yellow tick blinks at its left edge (fades in and out once every
+-- PULSE_MS) -- "press this next". Hidden while the mouse is on the button.
+TWANeatButton.PULSE_MS = 900
+TWANeatButton.TICK_TEX = getTexture("media/textures/TWA_UI_TickYellow.png")
 function TWANeatButton:pulseLevel()
     if not self.pulse or self.enable == false or self:isMouseOver() then return nil end
     local ms = getTimestampMs and getTimestampMs() or 0
     return 0.5 + 0.5 * math.sin((ms % self.PULSE_MS) / self.PULSE_MS * 2 * math.pi)
 end
 
+function TWANeatButton:drawTick(p)
+    local size = math.min(22, self.height - 4)
+    local x, y = 4, (self.height - size) / 2
+    local a = 0.15 + 0.85 * p
+    if self.TICK_TEX then
+        self:drawTextureScaled(self.TICK_TEX, x, y, size, size, a, 1, 1, 1)
+    else
+        self:drawRect(x, y, size, size, a, 1, 0.84, 0.1)
+    end
+end
+
 function TWANeatButton:render()
     local disabled = self.enable == false
     local alpha = disabled and 0.35 or (self:isMouseOver() and 1 or 0.85)
     local t = self.neatTint
-    local p = self:pulseLevel()
-    if p then
-        -- halo just outside the button, then a brighter tint for the body
-        self:drawRectBorder(-2, -2, self.width + 4, self.height + 4, 0.25 + 0.55 * p, t.r, t.g, t.b)
-        self:drawRectBorder(-1, -1, self.width + 2, self.height + 2, 0.35 + 0.5 * p, 1, 1, 1)
-        alpha = 0.6 + 0.4 * p
-        t = { r = math.min(1, t.r * (0.75 + 0.5 * p)), g = math.min(1, t.g * (0.75 + 0.5 * p)), b = math.min(1, t.b * (0.75 + 0.5 * p)) }
-    end
     local drew = NeatTool.ThreePatch.drawHorizontal(self, 0, 0, self.width, self.height,
         self.neatTextures[1], self.neatTextures[2], self.neatTextures[3], alpha, t.r, t.g, t.b)
     if not drew then
         self:drawRectBorder(0, 0, self.width, self.height, alpha, t.r, t.g, t.b)
     end
     if self.title and self.title ~= "" then
-        local font = self.font or UIFont.Small
+        local font = self.font or TWAFont.small()
         local textW = getTextManager():MeasureStringX(font, self.title)
         local textH = getTextManager():getFontHeight(font)
         drawTextShadowed(self, self.title, (self.width - textW) / 2, (self.height - textH) / 2, 1, 1, 1, 1, font)
     end
+    local p = self:pulseLevel()
+    if p then self:drawTick(p) end
 end
 
 -- Flat, guaranteed-readable filter tab: NOT texture-based (that's what broke
@@ -217,7 +227,7 @@ function TWATierTabButton:render()
         self:drawRect(0, self.height - 3, self.width, 3, 1, t.r, t.g, t.b)
     end
     if self.title and self.title ~= "" then
-        local font = self.font or UIFont.Small
+        local font = self.font or TWAFont.small()
         local textW = getTextManager():MeasureStringX(font, self.title)
         local textH = getTextManager():getFontHeight(font)
         drawTextShadowed(self, self.title, (self.width - textW) / 2, (self.height - textH) / 2 - 1, 1, 1, 1, 1, font)
@@ -237,7 +247,7 @@ function TWATabButton:render()
     self:drawRectBorder(0, 0, self.width, self.height, active and 1 or 0.5,
         active and 1 or 0.4, active and 0.7 or 0.4, active and 0.2 or 0.4)
     if self.title and self.title ~= "" then
-        local font = self.font or UIFont.Small
+        local font = self.font or TWAFont.small()
         local textW = getTextManager():MeasureStringX(font, self.title)
         local textH = getTextManager():getFontHeight(font)
         drawTextShadowed(self, self.title, (self.width - textW) / 2, (self.height - textH) / 2, 1, 1, 1, 1, font)
@@ -487,8 +497,8 @@ function TWARecipeScrollList:new(x, y, w, h, ui)
     setmetatable(o, self)
     self.__index = self
     o.ui = ui
-    o.itemheight = 52
-    o.font = UIFont.Small
+    o.itemheight = 52 + 2 * TWAFont.grow(0) -- R67: taller rows for bigger text
+    o.font = TWAFont.small()
     o.drawBorder = true
     o.backgroundColor = { r = 0.07, g = 0.07, b = 0.08, a = 0.95 }
     o.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 0.6 }
@@ -578,12 +588,16 @@ function TWARecipeScrollList:refresh()
         if self:matches(recipe) then
             local name = recipeName(recipe)
             local st = recipeStats(recipe)
-            matched[#matched + 1] = { name = name, recipe = recipe, tier = (st and st.tier) or 99 }
+            matched[#matched + 1] = { name = name, recipe = recipe, tier = (st and st.tier) or 99,
+                can = ownsBase(recipe, getPlayer()) and true or false }
         end
     end
     -- Round 9 ("สูตรอยากให้เรียงจาก tier ต่ำไปสูง ก่อนแล้วค่อยเรียงตามตัวอักษร"):
     -- lowest tier first, then by name within a tier.
+    -- R67 ("ฟิลเตอร์สูตรที่คราฟได้มาอันแรก แล้วค่อยตามความแรร์ และตัวอักษร"):
+    -- the recipes whose base items are at hand come first.
     table.sort(matched, function(a, b)
+        if a.can ~= b.can then return a.can end
         if a.tier ~= b.tier then return a.tier < b.tier end
         return a.name < b.name
     end)
@@ -623,7 +637,7 @@ function TWARecipeScrollList:doDrawItem(y, entry, alt)
     local statusKey = owned and "IGUI_TWA_BaseItemOwned"
         or (recipe.base and "IGUI_TWA_BaseItemMissing" or "IGUI_TWA_NoBaseItemNeeded")
     local sr, sg, sb = owned and 0.45 or 0.9, owned and 0.95 or 0.45, 0.45
-    drawTextShadowed(self, getText(statusKey), textX, y + h - 22, sr, sg, sb, 1, UIFont.Small)
+    drawTextShadowed(self, getText(statusKey), textX, y + h - 22, sr, sg, sb, 1, TWAFont.small())
     return y + h
 end
 
@@ -643,7 +657,7 @@ function TWAProcScrollList:new(x, y, w, h, ui)
     setmetatable(o, self)
     self.__index = self
     o.ui = ui
-    o.font = UIFont.Small
+    o.font = TWAFont.small()
     o.drawBorder = true
     o.backgroundColor = { r = 0.07, g = 0.07, b = 0.08, a = 0.95 }
     o.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 0.6 }
@@ -941,7 +955,7 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
         local h = entry.height or self.headerHeight
         self:drawRect(0, y, self:getWidth(), h, 0.9, 0.16, 0.13, 0.1)
         self:drawRectBorder(0, y, self:getWidth(), h, 0.5, 0.5, 0.4, 0.3)
-        drawTextShadowed(self, getText(entry.item.header), self.cellPad, y + 3, 0.9, 0.75, 0.4, 1, UIFont.Small)
+        drawTextShadowed(self, getText(entry.item.header), self.cellPad, y + 3, 0.9, 0.75, 0.4, 1, TWAFont.small())
         return y + h
     end
     local ids = entry.item.row
@@ -1066,7 +1080,7 @@ function TWACraftWindow:createChildren()
     local fx, fy = leftX, contentTop + captionH
     for _, tab in ipairs(CATEGORY_TABS) do
         local label = tab.label or getText(tab.labelKey)
-        local w = getTextManager():MeasureStringX(UIFont.Small, label) + 20
+        local w = getTextManager():MeasureStringX(TWAFont.small(), label) + 20
         if fx + w > leftX + LEFT_W then
             fx = leftX
             fy = fy + 26
@@ -1098,7 +1112,7 @@ function TWACraftWindow:createChildren()
     local tfx = leftX
     for _, tab in ipairs(TIER_TABS) do
         local label = tab.label or getText(tab.labelKey)
-        local w = getTextManager():MeasureStringX(UIFont.Small, label) + 20
+        local w = getTextManager():MeasureStringX(TWAFont.small(), label) + 20
         if tfx + w > leftX + LEFT_W then
             tfx = leftX
             fy = fy + 26
@@ -1307,6 +1321,16 @@ function TWACraftWindow:createChildren()
     self.adminSkillsButton:setVisible(false)
     self:addChild(self.adminSkillsButton)
 
+    -- R67 ("เพิ่มปุ่มทำต่อในหน้าการคราฟอาวุธ กรณีเจออาวุธที่ไม่สมบูรณ์ในตัว
+    -- บนพื้น หรือในกล่อง"): under the recipe list, shown while an unfinished
+    -- weapon is carried, on the floor or in a container nearby (TWASources).
+    -- Each click picks up the next one found.
+    self.continueButton = TWANeatButton:new(leftX, panelBottom + 10, LEFT_W, 26, "", self, TWACraftWindow.onContinueClicked)
+    self.continueButton.neatTint = { r = 0.55, g = 0.6, b = 0.95 }
+    self.continueButton:initialise()
+    self.continueButton:setVisible(false)
+    self:addChild(self.continueButton)
+
     self.centerX = centerX
     self.contentTop = contentTop
     self.rightX = rightX
@@ -1463,6 +1487,51 @@ function TWACraftWindow:resumeFromItem(item)
     self.selectedProcId = nil
     self.searchBox:setText("")
     self.recipeList:setSearch("")
+end
+
+-- R67: every unfinished (bookmarked) item at hand -- carried, on the floor
+-- or in a container nearby -- rescanned at most once a second.
+function TWACraftWindow:findIncomplete()
+    local list = {}
+    TWASources.get(self.player):forEachItem(function(it)
+        local id = it and it:getModData().TWA_RecipeId
+        if id and getRecipeById(id) then list[#list + 1] = it end
+    end)
+    return list
+end
+
+function TWACraftWindow:updateContinueButton()
+    local btn = self.continueButton
+    if not btn then return end
+    local now = getTimestampMs and getTimestampMs() or 0
+    if not self.incompleteList or now - (self.incompleteScanAt or 0) >= 1000 then
+        self.incompleteScanAt = now
+        self.incompleteList = self:findIncomplete()
+    end
+    local list = self.incompleteList
+    local show = #list > 0 and not self.active and not self.activeProcId and not self.activeCenterAction
+    btn:setVisible(show)
+    if not show then return end
+    btn.title = getText("IGUI_TWA_ContinueCraft", tostring(#list))
+    -- the tick says "press me" only until one of them is picked up
+    btn.pulse = self.resumeItem == nil
+    local lines = { getText("IGUI_TWA_Tooltip_ContinueCraft") }
+    for i, it in ipairs(list) do
+        if i > 10 then lines[#lines + 1] = "... (+" .. (#list - 10) .. ")" break end
+        lines[#lines + 1] = (it == self.resumeItem and "> " or "- ") .. it:getDisplayName()
+    end
+    btn:setTooltip(table.concat(lines, " <LINE> "))
+end
+
+function TWACraftWindow:onContinueClicked()
+    local list = self:findIncomplete()
+    self.incompleteList, self.incompleteScanAt = list, getTimestampMs and getTimestampMs() or 0
+    if #list == 0 then return end
+    local pick = list[1]
+    for i, it in ipairs(list) do
+        if it == self.resumeItem then pick = list[i % #list + 1] break end
+    end
+    self:resumeFromItem(pick)
 end
 
 -- Looking at other recipes is free until one is started; after that the
@@ -1767,9 +1836,9 @@ function TWACraftWindow:drawHoverTooltip()
     self.hoverTooltip = nil
     if not tip then return end
 
-    local tw, th = 0, #tip.lines * 16 + 8
+    local tw, th = 0, #tip.lines * TWAFont.grow(16) + 8
     for _, l in ipairs(tip.lines) do
-        tw = math.max(tw, getTextManager():MeasureStringX(UIFont.Small, l))
+        tw = math.max(tw, getTextManager():MeasureStringX(TWAFont.small(), l))
     end
     tw = tw + 12
     -- Prefer drawing to the LEFT of the procedure button (toward the center
@@ -1782,7 +1851,7 @@ function TWACraftWindow:drawHoverTooltip()
     self:drawRect(tx, ty, tw, th, 0.95, 0, 0, 0)
     self:drawRectBorder(tx, ty, tw, th, 1, 0.6, 0.6, 0.6)
     for i, l in ipairs(tip.lines) do
-        self:drawText(l, tx + 6, ty + 4 + (i - 1) * 16, 1, 0.6, 0.6, 1, UIFont.Small)
+        self:drawText(l, tx + 6, ty + 4 + (i - 1) * TWAFont.grow(16), 1, 0.6, 0.6, 1, TWAFont.small())
     end
 end
 
@@ -1849,8 +1918,8 @@ function TWACraftWindow:drawStatGrid(x, y, w)
     local recipe = self.selectedRecipe
     local stats = TWARecipeData.Stats[recipe.result]
     if not stats then return y end
-    drawTextShadowed(self, getText("IGUI_TWA_StatsHeader"), x, y, 0.9, 0.75, 0.4, 1, UIFont.Small)
-    y = y + 20
+    drawTextShadowed(self, getText("IGUI_TWA_StatsHeader"), x, y, 0.9, 0.75, 0.4, 1, TWAFont.small())
+    y = y + TWAFont.grow(20)
     local colW = w / 2
     for _, row in ipairs(STAT_GRID) do
         for col, cellDef in ipairs(row) do
@@ -1861,10 +1930,10 @@ function TWACraftWindow:drawStatGrid(x, y, w)
                 local valueText = (v ~= nil) and string.format(cellDef.fmt, v)
                     or (cellDef.default and string.format(cellDef.fmt, cellDef.default))
                     or "-"
-                drawTextShadowed(self, getText(cellDef.labelKey) .. ": " .. valueText, cx, y, 0.85, 0.85, 0.85, 1, UIFont.Small)
+                drawTextShadowed(self, getText(cellDef.labelKey) .. ": " .. valueText, cx, y, 0.85, 0.85, 0.85, 1, TWAFont.small())
             end
         end
-        y = y + 18
+        y = y + TWAFont.grow(18)
     end
     -- `DamageCategory` ("Slash") is NOT shown as its own stat -- verified
     -- against media/lua/shared/Definitions/DamageModelDefinitions.lua
@@ -1884,7 +1953,8 @@ end
 -- slot instead of duplicating the 8 draw calls.
 -- `noteKey` (optional) replaces the owned/missing status line.
 function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey, count)
-    local CARD_H = 40
+    local grow = TWAFont.grow(0) -- R67: room for bigger text
+    local CARD_H = 40 + 2 * grow
     self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
     self:drawRectBorder(x, y, w, CARD_H, 0.4, 0.4, 0.4, 0.4)
     if owned and TWA_NEAT.check then
@@ -1900,11 +1970,11 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey,
         self:drawTextureScaled(icon, x + 4, y + 4, 32, 32, owned and 1 or 0.55, 1, 1, 1)
         tx = x + 42
     end
-    drawTextShadowed(self, baseDisplayName(fullType, altType), tx, y + 5, 0.9, 0.9, 0.9, 1, UIFont.Small)
+    drawTextShadowed(self, baseDisplayName(fullType, altType), tx, y + 5, 0.9, 0.9, 0.9, 1, TWAFont.small())
     if count then
         local ct = getText("IGUI_TWA_HaveCount", tostring(count))
-        local cw = getTextManager():MeasureStringX(UIFont.Small, ct)
-        drawTextShadowed(self, ct, x + w - 30 - cw, y + 21, count > 0 and 0.75 or 0.95, count > 0 and 0.85 or 0.5, count > 0 and 1 or 0.45, 1, UIFont.Small)
+        local cw = getTextManager():MeasureStringX(TWAFont.small(), ct)
+        drawTextShadowed(self, ct, x + w - 30 - cw, y + 21 + grow, count > 0 and 0.75 or 0.95, count > 0 and 0.85 or 0.5, count > 0 and 1 or 0.45, 1, TWAFont.small())
     end
     -- A list of accepted types ("any stone"): hovering the card lists them.
     if type(altType) == "table" then
@@ -1922,7 +1992,7 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey,
     local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
     local statusText = getText(statusKey, self.baseStateText)
     if statusKey == "IGUI_TWA_BaseNeedsState" then self.baseStateText = nil end
-    drawTextShadowed(self, statusText, tx, y + 21, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, UIFont.Small)
+    drawTextShadowed(self, statusText, tx, y + 21 + grow, owned and 0.45 or 0.95, owned and 0.95 or 0.45, 0.45, 1, TWAFont.small())
     return y + CARD_H + 6 + 4
 end
 
@@ -1955,7 +2025,7 @@ function TWACraftWindow:drawProcedureDetails()
 
     local proc = self.selectedProcId and TWAProcedures.List[self.selectedProcId]
     if not proc then
-        drawTextShadowed(self, getText("IGUI_TWA_SelectProcedureFirst"), x + 10, y + 10, 0.7, 0.7, 0.7, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_SelectProcedureFirst"), x + 10, y + 10, 0.7, 0.7, 0.7, 1, TWAFont.small())
         self.procConfirmButton:setVisible(false)
         self.procCancelButton:setVisible(false)
         self.procSearchButton:setVisible(false)
@@ -1965,8 +2035,8 @@ function TWACraftWindow:drawProcedureDetails()
     self.procSearchButton:setVisible(true)
 
     local ty = y + 8
-    drawTextShadowed(self, getText(proc.nameKey), x + 10, ty, 1, 0.9, 0.6, 1, UIFont.Medium)
-    ty = ty + 22
+    drawTextShadowed(self, getText(proc.nameKey), x + 10, ty, 1, 0.9, 0.6, 1, TWAFont.medium())
+    ty = ty + TWAFont.grow(22, TWAFont.medium())
 
     local done = self.selectedRecipe and self:currentDone()[self.selectedProcId]
     local inProgress = self.activeProcId == self.selectedProcId and self.activeAction
@@ -1980,7 +2050,7 @@ function TWACraftWindow:drawProcedureDetails()
     local statusColor = (done or met) and { r = 0.5, g = 0.9, b = 0.5 } or { r = 0.95, g = 0.45, b = 0.45 }
     if busy then statusColor = { r = 1, g = 0.8, b = 0.3 } end
     local statusText = getText(statusKey)
-    drawTextShadowed(self, statusText, x + 10, ty, statusColor.r, statusColor.g, statusColor.b, 1, UIFont.Small)
+    drawTextShadowed(self, statusText, x + 10, ty, statusColor.r, statusColor.g, statusColor.b, 1, TWAFont.small())
     -- Request 2026-09-28: the quality word this procedure scored for the
     -- selected recipe, on the same line as its status (keeps every
     -- requirement line below it in view -- see detailsH's own note).
@@ -1988,10 +2058,10 @@ function TWACraftWindow:drawProcedureDetails()
         and TWACraftState.wordFor(self.selectedProcId, self:currentDone(), self:currentQuality())
     if word then
         local wc = TWACraftState.WORD_COLOR[word]
-        local wx = x + 10 + getTextManager():MeasureStringX(UIFont.Small, statusText) + 8
-        drawTextShadowed(self, getText("IGUI_TWA_TooltipQuality", TWACraftState.wordText(word)), wx, ty, wc.r, wc.g, wc.b, 1, UIFont.Small)
+        local wx = x + 10 + getTextManager():MeasureStringX(TWAFont.small(), statusText) + 8
+        drawTextShadowed(self, getText("IGUI_TWA_TooltipQuality", TWACraftState.wordText(word)), wx, ty, wc.r, wc.g, wc.b, 1, TWAFont.small())
     end
-    ty = ty + 20
+    ty = ty + TWAFont.grow(20)
 
     -- Confirm/Cancel buttons (request 2026-09-26: "performing a procedure
     -- needs a confirm button first, and a cancel button while it's in
@@ -2018,7 +2088,7 @@ function TWACraftWindow:drawProcedureDetails()
     -- The last practice result for this procedure, for a few seconds.
     if self.practiceWord and self.practiceProc == self.selectedProcId and getTimestampMs() < (self.practiceUntil or 0) then
         local pc = TWACraftState.WORD_COLOR[self.practiceWord] or { r = 1, g = 1, b = 1 }
-        drawTextShadowed(self, getText("IGUI_TWA_PracticeResult", TWACraftState.wordText(self.practiceWord)), x + 10, self.procBtnY - 18, pc.r, pc.g, pc.b, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_PracticeResult", TWACraftState.wordText(self.practiceWord)), x + 10, self.procBtnY - 18, pc.r, pc.g, pc.b, 1, TWAFont.small())
     end
     local canConfirm = belongsToRecipe and self:isActiveRecipe() and not inProgress
         and not self.activeProcId and not self.activeCenterAction
@@ -2038,7 +2108,7 @@ function TWACraftWindow:drawProcedureDetails()
     -- Picked from the checklist before the craft is started: say why the
     -- button isn't there.
     if belongsToRecipe and not self:isActiveRecipe() and not inProgress then
-        drawTextShadowed(self, getText("IGUI_TWA_StartFirst"), x + 100, self.procBtnY + 4, 1, 0.8, 0.3, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_StartFirst"), x + 100, self.procBtnY + 4, 1, 0.8, 0.3, 1, TWAFont.small())
     end
 
     -- Progress bar while the timed action is actually running (request
@@ -2068,7 +2138,7 @@ function TWACraftWindow:drawProcedureDetails()
         local line = self.procLibrary:describeOne(r)
         -- Hovering a line that accepts several items lists them all.
         local alts = self.procLibrary:altsOf(r)
-        if #alts > 1 and mx >= x and mx < x + w and my >= ty and my < ty + 16 then
+        if #alts > 1 and mx >= x and mx < x + w and my >= ty and my < ty + TWAFont.grow(16) then
             local tipLines = { getText("IGUI_TWA_AcceptsAny") }
             for i, n in ipairs(alts) do
                 if i > 20 then tipLines[#tipLines + 1] = "... (+" .. (#alts - 20) .. ")" break end
@@ -2076,19 +2146,19 @@ function TWACraftWindow:drawProcedureDetails()
             end
             self.hoverTooltip = { lines = tipLines, x = x, y = ty }
         end
-        local wrapped = wrapTextLines(line, reqMaxWidth, UIFont.Small)
+        local wrapped = wrapTextLines(line, reqMaxWidth, TWAFont.small())
         for _, wline in ipairs(wrapped) do
             if ty > textBottom then break end
             if r.met then
-                drawTextShadowed(self, wline, x + 10, ty, 0.85, 0.85, 0.85, 1, UIFont.Small)
+                drawTextShadowed(self, wline, x + 10, ty, 0.85, 0.85, 0.85, 1, TWAFont.small())
             else
-                drawTextShadowed(self, wline, x + 10, ty, 0.95, 0.6, 0.6, 1, UIFont.Small)
+                drawTextShadowed(self, wline, x + 10, ty, 0.95, 0.6, 0.6, 1, TWAFont.small())
             end
-            ty = ty + 16
+            ty = ty + TWAFont.grow(16)
         end
     end
     if #reqs == 0 then
-        drawTextShadowed(self, getText("IGUI_TWA_ProcedureRequirementsMet"), x + 10, ty, 0.75, 0.75, 0.75, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_ProcedureRequirementsMet"), x + 10, ty, 0.75, 0.75, 0.75, 1, TWAFont.small())
     end
 end
 
@@ -2157,8 +2227,8 @@ function TWACraftWindow:drawCenterActionRow()
     self:drawRectBorder(x, y, w, h, 0.8, 0.5, 0.5, 0.5)
     local KIND_KEY = { start = "IGUI_TWA_StartCraft", cancel = "IGUI_TWA_Cancel", incomplete = "IGUI_TWA_Incomplete", finish = "IGUI_TWA_Finish" }
     local label = getText(KIND_KEY[self.activeCenterKind] or "IGUI_TWA_Finish")
-    local textH = getTextManager():getFontHeight(UIFont.Small)
-    drawTextShadowed(self, label, x + 6, y + (h - textH) / 2, 1, 1, 1, 1, UIFont.Small)
+    local textH = getTextManager():getFontHeight(TWAFont.small())
+    drawTextShadowed(self, label, x + 6, y + (h - textH) / 2, 1, 1, 1, 1, TWAFont.small())
 end
 
 -- "Locked to this recipe" / "busy" notice, drawn over the bottom of the
@@ -2167,27 +2237,28 @@ end
 -- จากการ์ด"): a note ends a clear gap above the button row, however many
 -- lines it wraps to.
 function TWACraftWindow:drawNoteAboveButtons(note, x)
-    local lines = wrapTextLines(note, CENTER_W - 24, UIFont.Small)
+    local lines = wrapTextLines(note, CENTER_W - 24, TWAFont.small())
     local bottom = self.panelBottom - self.btnH - 30 -- the card ends at -18
-    local y0 = bottom - #lines * 14
+    local y0 = bottom - #lines * TWAFont.grow(14)
     for i, l in ipairs(lines) do
-        drawTextShadowed(self, l, x, y0 + (i - 1) * 14, 0.75, 0.85, 1, 1, UIFont.Small)
+        drawTextShadowed(self, l, x, y0 + (i - 1) * TWAFont.grow(14), 0.75, 0.85, 1, 1, TWAFont.small())
     end
 end
 
 function TWACraftWindow:drawLockNotice()
     if getTimestampMs() >= (self.lockMsgUntil or 0) then return end
     local text = getText(self.lockMsgKey or "IGUI_TWA_LockedToRecipe")
-    local w = getTextManager():MeasureStringX(UIFont.Small, text) + 16
+    local w = getTextManager():MeasureStringX(TWAFont.small(), text) + 16
     local x = self.centerX + (CENTER_W - 16 - w) / 2
     local y = self.panelBottom - self.btnH - 40
     self:drawRect(x, y, w, 22, 0.95, 0.25, 0.05, 0.05)
     self:drawRectBorder(x, y, w, 22, 1, 0.9, 0.4, 0.3)
-    drawTextShadowed(self, text, x + 8, y + 4, 1, 0.9, 0.8, 1, UIFont.Small)
+    drawTextShadowed(self, text, x + 8, y + 4, 1, 0.9, 0.8, 1, TWAFont.small())
 end
 
 function TWACraftWindow:render()
     ISCollapsableWindow.render(self)
+    self:updateContinueButton()
     -- Keep the megaphone in step with Options > Mods.
     if self.soundButton then
         local want = TWASound.muted and self.soundOffTex or self.soundOnTex
@@ -2199,10 +2270,10 @@ function TWACraftWindow:render()
     -- reads as "filter by category" / "filter by rarity" at a glance
     -- instead of two unlabeled rows running together.
     if self.categoryRowY then
-        drawTextShadowed(self, getText("IGUI_TWA_FilterSectionCategory"), 10, self.categoryRowY, 0.6, 0.6, 0.6, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_FilterSectionCategory"), 10, self.categoryRowY, 0.6, 0.6, 0.6, 1, TWAFont.small())
     end
     if self.tierRowY then
-        drawTextShadowed(self, getText("IGUI_TWA_FilterSectionRarity"), 10, self.tierRowY, 0.6, 0.6, 0.6, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_FilterSectionRarity"), 10, self.tierRowY, 0.6, 0.6, 0.6, 1, TWAFont.small())
     end
 
     -- Center panel gets its own explicit dark card background so it reads as
@@ -2222,7 +2293,7 @@ function TWACraftWindow:render()
     self:drawCenterActionRow()
 
     if not self.selectedRecipe then
-        drawTextShadowed(self, getText("IGUI_TWA_SelectRecipeFirst"), centerX + 16, centerY + 20, 0.75, 0.75, 0.75, 1, UIFont.Medium)
+        drawTextShadowed(self, getText("IGUI_TWA_SelectRecipeFirst"), centerX + 16, centerY + 20, 0.75, 0.75, 0.75, 1, TWAFont.medium())
         self.finishButton.enable = false
         self.incompleteButton.enable = false
         self:drawLockNotice()
@@ -2254,7 +2325,7 @@ function TWACraftWindow:render()
     else
         self:drawRectBorder(centerX, centerY, ICON, ICON, 0.6, 0.5, 0.5, 0.5)
     end
-    drawTextShadowed(self, name, centerX + ICON + 12, centerY + 6, 1, 1, 1, 1, UIFont.Medium)
+    drawTextShadowed(self, name, centerX + ICON + 12, centerY + 6, 1, 1, 1, 1, TWAFont.medium())
     if tierInfo then
         -- Weapon category shown right next to the tier name (request
         -- 2026-09-26: "หมวดหมู่ให้เอาไปไว้ข้างๆ tier" -- put the category
@@ -2263,7 +2334,7 @@ function TWACraftWindow:render()
         if stats and stats.categories then
             tierLabel = tierLabel .. "  -  " .. stats.categories -- round 23: no middle dot (can show as "?")
         end
-        drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, UIFont.Small)
+        drawTextShadowed(self, tierLabel, centerX + ICON + 12, centerY + 24, tierInfo.r, tierInfo.g, tierInfo.b, 1, TWAFont.small())
     end
 
     -- Request 2026-09-28: "หมวดหมู่วัตถุดิบ ไม่ต้องแสดง stats สถานะ" --
@@ -2291,7 +2362,7 @@ function TWACraftWindow:render()
     elseif not recipe.base then
         self:drawRect(centerX, baseY, CENTER_W - 16, 30, 0.85, 0.08, 0.08, 0.09)
         self:drawRectBorder(centerX, baseY, CENTER_W - 16, 30, 0.4, 0.4, 0.4, 0.4)
-        drawTextShadowed(self, getText("IGUI_TWA_NoBaseItemNeeded"), centerX + 8, baseY + 8, 0.75, 0.75, 0.75, 1, UIFont.Small)
+        drawTextShadowed(self, getText("IGUI_TWA_NoBaseItemNeeded"), centerX + 8, baseY + 8, 0.75, 0.75, 0.75, 1, TWAFont.small())
         baseY = baseY + 30 + 10
     else
         -- request 2026-09-27: "ทำให้สูตรไอเท็ม uncommon ทุกชิ้นใช้ชิ้นส่วน
@@ -2360,7 +2431,7 @@ function TWACraftWindow:render()
     end
 
     -- Required-procedure checklist grid
-    drawTextShadowed(self, getText("IGUI_TWA_RequiredProcedures"), centerX, baseY, 0.85, 0.85, 0.85, 1, UIFont.Small)
+    drawTextShadowed(self, getText("IGUI_TWA_RequiredProcedures"), centerX, baseY, 0.85, 0.85, 0.85, 1, TWAFont.small())
     -- Request 2026-09-28: every procedure's quality word under its icon, and
     -- the running overall quality (average of what's scored so far) on the
     -- header's right. Material recipes have no quality (same request).
@@ -2375,13 +2446,13 @@ function TWACraftWindow:render()
             local oc = TWACraftState.WORD_COLOR[oWord]
             -- Word only (round 6: "คุณภาพรวมให้แสดงแค่คำ ไม่ต้องแสดงตัวเลข").
             local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord))
-            local lw = getTextManager():MeasureStringX(UIFont.Small, label)
+            local lw = getTextManager():MeasureStringX(TWAFont.small(), label)
             -- Round 23 ("หัวข้อคุณภาพรวมโดดเด่นกว่านี้ แต่ไม่ต้องเด่นมากเกิน"): a
             -- small badge in the word's colour behind it.
             local bx, bw = centerX + CENTER_W - 16 - lw - 8, lw + 12
             self:drawRect(bx, baseY - 2, bw, 18, 0.9, oc.r * 0.18, oc.g * 0.18, oc.b * 0.18)
             self:drawRectBorder(bx, baseY - 2, bw, 18, 0.9, oc.r, oc.g, oc.b)
-            drawTextShadowed(self, label, bx + 6, baseY, oc.r, oc.g, oc.b, 1, UIFont.Small)
+            drawTextShadowed(self, label, bx + 6, baseY, oc.r, oc.g, oc.b, 1, TWAFont.small())
         end
     end
     local gridLeft, gridTop = centerX, baseY + 20
@@ -2413,7 +2484,7 @@ function TWACraftWindow:render()
             local w = showWords and TWACraftState.wordFor(procId, doneNow, qualityNow)
             if w then
                 local wc = TWACraftState.WORD_COLOR[w]
-                drawTextShadowed(self, TWACraftState.wordText(w), px, py + cell + 1, wc.r, wc.g, wc.b, 1, UIFont.Small)
+                drawTextShadowed(self, TWACraftState.wordText(w), px, py + cell + 1, wc.r, wc.g, wc.b, 1, TWAFont.small())
             end
             -- These are plain drawn rects, not widgets, so hover has no free
             -- isMouseOver() -- check bounds directly and hand the name up
@@ -2440,10 +2511,10 @@ function TWACraftWindow:render()
         local note = getText("IGUI_TWA_MaterialFinishRule")
         local _, why = TWACraftState.canFinish(recipe, self:currentMap())
         local bad = why == "materialQuality"
-        local lines = wrapTextLines(note, CENTER_W - 24, UIFont.Small)
-        local ny = self.panelBottom - self.btnH - 30 - #lines * 14 -- round 19: inside the card (it ends at -18)
+        local lines = wrapTextLines(note, CENTER_W - 24, TWAFont.small())
+        local ny = self.panelBottom - self.btnH - 30 - #lines * TWAFont.grow(14) -- round 19: inside the card (it ends at -18)
         for i, l in ipairs(lines) do
-            drawTextShadowed(self, l, centerX, ny + (i - 1) * 14, bad and 1 or 0.8, bad and 0.5 or 0.8, bad and 0.4 or 0.8, 1, UIFont.Small)
+            drawTextShadowed(self, l, centerX, ny + (i - 1) * TWAFont.grow(14), bad and 1 or 0.8, bad and 0.5 or 0.8, bad and 0.4 or 0.8, 1, TWAFont.small())
         end
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishMaterial"))
     elseif recipe.roll then

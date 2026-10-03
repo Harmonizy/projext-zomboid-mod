@@ -5,7 +5,8 @@
 -- รอบๆหรือพื้นได้ไหม"): tools, materials and base items count not only
 -- what the character carries (bags included) but also what lies in any
 -- container, and on the floor, within the sandbox "NearbyRadius" tiles
--- (default 1, the same reach as vanilla crafting). 0 = carried only.
+-- (default 1, the same reach as vanilla crafting). R67 ("อะไรที่หาไอเท็มใน
+-- ตัว ให้สามารถหาได้บนพื้นและในกล่องรอบตัวเสมอ"): never less than 1 tile.
 --
 -- TWASources.get(player) returns one object that answers the handful of
 -- ItemContainer questions the crafting code asks (first item of a type,
@@ -65,7 +66,7 @@ function TWASources.get(player)
     local c = client and cache[player]
     if c and now - c.at < 400 then return c.src end
     local conts, floor = { player:getInventory() }, {}
-    nearby(player, math.floor(TWAConfig.num("NearbyRadius", 0)), conts, floor)
+    nearby(player, math.max(1, math.floor(TWAConfig.num("NearbyRadius", 1))), conts, floor)
     local src = setmetatable({ conts = conts, floor = floor, inv = player:getInventory() }, Multi)
     if client then cache[player] = { at = now, src = src } end
     return src

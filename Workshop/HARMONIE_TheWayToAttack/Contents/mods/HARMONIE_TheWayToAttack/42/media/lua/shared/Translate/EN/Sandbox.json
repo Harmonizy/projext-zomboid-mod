@@ -13,7 +13,7 @@
     "Sandbox_HARMONIE_TWA_ProcedureSeconds": "Procedure time (seconds)",
     "Sandbox_HARMONIE_TWA_ProcedureSeconds_tooltip": "How long the time bar after a procedure's minigame takes, in real seconds (every procedure).",
     "Sandbox_HARMONIE_TWA_NearbyRadius": "Use items nearby (tiles)",
-    "Sandbox_HARMONIE_TWA_NearbyRadius_tooltip": "Tools, materials and base items are also found in containers and on the floor this many tiles around you. 0 = only what you carry.",
+    "Sandbox_HARMONIE_TWA_NearbyRadius_tooltip": "Tools, materials and base items are also found in containers and on the floor this many tiles around you (at least 1).",
     "Sandbox_HARMONIE_TWA_ProcedureXPMultiplier": "Procedure XP multiplier",
     "Sandbox_HARMONIE_TWA_ProcedureXPMultiplier_tooltip": "Multiplies the skill XP a finished procedure gives (base: 5 x the procedure's skill level). 0 = no XP.",
     "Sandbox_HARMONIE_TWA_RequireLight": "Procedures need light",

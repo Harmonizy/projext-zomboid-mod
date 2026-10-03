@@ -64,17 +64,24 @@ Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
     if target then
         -- Request 2026-09-27/28: a base item previously bookmarked via the
         -- Incomplete button carries its own saved progress in ModData (see
-        -- HARMONIE_TWA_CraftUI.lua's onIncomplete) -- right-clicking THAT
-        -- exact item resumes it directly instead of just prefilling a
-        -- search.
+        -- HARMONIE_TWA_CraftUI.lua's onIncomplete).
         if target:getModData().TWA_RecipeId then
             resumeItem = target
         end
         searchName = TWACraftUI.autoSearchNameFor(target:getFullType())
     end
 
+    -- Request 2026-10-03 (R67): "การคลิกขวาอาวุธที่สร้างไม่เสร็จ ไม่สมบูรณ์
+    -- ให้มีขึ้นว่าทำต่อ ... ส่วนการกดคราฟอาวุธในอาวุธที่ไม่สมบูรณ์ก็ให้เป็น
+    -- หน้าคราฟอาวุธปกติ ไม่เป็นการทำต่อ" -- resuming is its own option now;
+    -- the plain craft option never resumes.
+    if resumeItem then
+        context:addOption(getText("IGUI_TWA_ContextMenu_ContinueCraft"), player, function()
+            TWACraftUI.open(player, searchName, resumeItem)
+        end)
+    end
     context:addOption(getText("IGUI_TWA_ContextMenu_OpenCraftUI"), player, function()
-        TWACraftUI.open(player, searchName, resumeItem)
+        TWACraftUI.open(player, searchName)
     end)
 end)
 

@@ -3355,5 +3355,23 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     (read off a real log: 2.6 -> 2.382 at 7/11). A real hit is NOT the
     rolled min-max: IsoZombie.Hit gets a damageSplit/modDelta the game has
     already worked out (skill, targets hit, ...).
+[ ] Changing a keybind's DEFAULT (PZAPI ModOptions addKeyBind)? ModOptions
+    saves every option, so players who ever saved options keep the old
+    key. To really change it, give the option a new id (GTP 0.7.8:
+    AssessNutrition -> AssessNutritionKey, default 0 = none), and ignore
+    key 0 in OnKeyPressed.
+[ ] Taking another mod's context-menu option away (MFS Fix 0.2.3, Inspect
+    only on guns) without its source: add your OnFillInventoryObject
+    ContextMenu handler at OnGameStart, so it runs after the handlers that
+    mod added at file load, and remove by label (context:removeOptionByName).
+    In a mock, items are tables -- don't tell items from stacks by type().
+[ ] "Look for items" anywhere in TWA = TWASources (carried + containers +
+    floor around you, NearbyRadius, never under 1 tile since 0.64.0).
+    A floor item has no container: pick it up with ISGrabItemAction
+    (its getWorldItem()) before a timed action that needs it in hand.
+[ ] Window text size option (TWA 0.64.0, TWAFont): draw with
+    TWAFont.small()/.medium(), and grow fixed spacing with TWAFont.grow(px)
+    (px for Small + however much taller the chosen font is); size rows /
+    cards from it when they are created.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.
