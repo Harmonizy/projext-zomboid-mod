@@ -76,6 +76,16 @@ OPTS = [
  ("AllowWeaponDebug", B, True, None, None, "HARMONIE_TheWayToAttack", "Weapon stat debug editor (admins / -debug)", "ตัวแก้ stats อาวุธสำหรับดีบัก (แอดมิน / -debug)",
   "Admins, and anyone running with -debug, can right-click a weapon to edit every stat it has. Off: the menu never appears.",
   "แอดมิน และผู้ที่เปิดเกมด้วย -debug คลิกขวาอาวุธเพื่อแก้ stats ได้ทุกค่า ถ้าปิด เมนูนี้จะไม่แสดงเลย"),
+ # ---- Damage numbers (2026-10-03)
+ ("DamageDisplayScale", I, 100, 1, 1000, "HARMONIE_TheWayToAttack", "Damage display multiplier", "ตัวคูณการแสดงค่าดาเมจ",
+  "Damage, DPS and zombie HP are SHOWN multiplied by this (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
+  "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม"),
+ ("ShareDamageNumbers", B, True, None, None, "HARMONIE_TheWayToAttack", "Others see damage numbers", "ผู้เล่นอื่นเห็นตัวเลขดาเมจ",
+  "Multiplayer: the damage numbers of your hits also show for players near you.",
+  "โหมดผู้เล่นหลายคน: ตัวเลขดาเมจจากการตีของคุณจะแสดงให้ผู้เล่นที่อยู่ใกล้เห็นด้วย"),
+ ("DamageNumberRange", I, 30, 5, 100, "HARMONIE_TheWayToAttack", "Damage numbers shared within (tiles)", "ระยะที่ผู้อื่นเห็นตัวเลขดาเมจ (ช่อง)",
+  "How near a player must be to see someone else's damage numbers.",
+  "ผู้เล่นต้องอยู่ใกล้แค่ไหนจึงจะเห็นตัวเลขดาเมจของคนอื่น"),
  # ---- Quality & grade
  ("BadBelow", D, 2.5, 0.0, 3.0, "HARMONIE_TWA_Quality", "Overall Bad below", "คุณภาพรวม แย่ ถ้าต่ำกว่า",
   "The procedures' average score (Bad=1, Good=2, Excellent=3) below this is an overall Bad.",

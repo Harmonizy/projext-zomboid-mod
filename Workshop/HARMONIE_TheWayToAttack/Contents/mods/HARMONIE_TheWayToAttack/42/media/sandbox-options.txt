@@ -132,6 +132,34 @@ option HARMONIE_TheWayToAttack.AllowWeaponDebug
     translation = HARMONIE_TWA_AllowWeaponDebug,
 }
 
+option HARMONIE_TheWayToAttack.DamageDisplayScale
+{
+    type = integer,
+    min = 1,
+    max = 1000,
+    default = 100,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_DamageDisplayScale,
+}
+
+option HARMONIE_TheWayToAttack.ShareDamageNumbers
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_ShareDamageNumbers,
+}
+
+option HARMONIE_TheWayToAttack.DamageNumberRange
+{
+    type = integer,
+    min = 5,
+    max = 100,
+    default = 30,
+    page = HARMONIE_TheWayToAttack,
+    translation = HARMONIE_TWA_DamageNumberRange,
+}
+
 option HARMONIE_TheWayToAttack.BadBelow
 {
     type = double,
