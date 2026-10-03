@@ -3347,5 +3347,13 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
     registered at file load, nothing sent in single player.
 [ ] Drawing over the world but under the UI windows: OnPreUIDraw (after
     the world, before the UI). OnPostUIDraw draws on top of every window.
+[ ] B42 weapon facts (TWA hit log, 2026-10-03): HandWeapon:getCategories()
+    is GONE (Item has getWeaponCategories() -> WeaponCategory set) -- use
+    weapon:getWeaponSkill(chr) for the skill level the game itself applies
+    and weapon:getPerk() for which skill. getMaxDamage() drops with
+    condition: max = min + (scriptMax - min) * (0.5 + 0.5 * cond/condMax)
+    (read off a real log: 2.6 -> 2.382 at 7/11). A real hit is NOT the
+    rolled min-max: IsoZombie.Hit gets a damageSplit/modDelta the game has
+    already worked out (skill, targets hit, ...).
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

@@ -43,7 +43,7 @@ end
 
 -- client: send one of my hits (only in multiplayer, only when sharing is on)
 function S.send(zed, amount, crit)
-    if not (isClient and isClient()) or not TWAConfig.on("ShareDamageNumbers") then return end
+    if not (isClient and isClient()) or not TWAConfig.on("ShareDamageNumbers") or not TWAConfig.on("DamageNumbers") then return end
     local me = getSpecificPlayer and getSpecificPlayer(0)
     if not me or not zed then return end
     sendClientCommand(me, S.NET, S.CMD, {
@@ -66,7 +66,7 @@ end
 
 -- server: check one number and pass it on -> how many players got it
 function S.relay(sender, args)
-    if not TWAConfig.on("ShareDamageNumbers") then return 0 end
+    if not TWAConfig.on("ShareDamageNumbers") or not TWAConfig.on("DamageNumbers") then return 0 end
     if not sender or call(sender, "isDead") or type(args) ~= "table" then return 0 end
     local a, x, y, z = finite(args.a), finite(args.x), finite(args.y), finite(args.z)
     if not (a and x and y and z) or a <= 0 or a > S.MAX_AMOUNT then return 0 end

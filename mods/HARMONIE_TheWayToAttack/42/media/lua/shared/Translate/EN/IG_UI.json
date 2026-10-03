@@ -501,5 +501,6 @@
     "IGUI_TWA_AdminItems": "Admin: spawn items",
     "IGUI_TWA_AdminSkills": "Admin: set skills",
     "IGUI_TWA_Tooltip_AdminItems": "Admins only. Spawns what this recipe still lacks: the base and supplementary item, one of each tool and every procedure's materials (added up). Nearby containers count. A forge or light can't be spawned.",
-    "IGUI_TWA_Tooltip_AdminSkills": "Admins only. Raises each skill to the highest level this recipe's procedures ask for (never lowers one)."
+    "IGUI_TWA_Tooltip_AdminSkills": "Admins only. Raises each skill to the highest level this recipe's procedures ask for (never lowers one).",
+    "IGUI_TWA_Crit": "CRITICAL"
 }

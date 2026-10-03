@@ -23,13 +23,10 @@ function D.dmg(v)
     return (tonumber(v) or 0) * D.scale()
 end
 
--- -> "8.5" / "12" (one decimal, none when it is .0)
+-- -> "85" / "120": a whole number, never a decimal (request 2026-10-03:
+-- "ฉันไม่อยากเห็นทศนิยมในการแสดงผลให้ผู้เล่นเห็น"); rounded half up
 function D.fmt(v)
     local n = D.dmg(v)
-    local neg = n < 0
-    if neg then n = -n end
-    local r = math.floor(n * 10 + 0.5) / 10
-    local s
-    if r == math.floor(r) then s = tostring(math.floor(r)) else s = string.format("%.1f", r) end
-    return neg and ("-" .. s) or s
+    if n < 0 then return "-" .. tostring(math.floor(-n + 0.5)) end
+    return tostring(math.floor(n + 0.5))
 end

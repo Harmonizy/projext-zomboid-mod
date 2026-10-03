@@ -37,7 +37,7 @@ Z.DOWN_Z = 0.2          -- lying on the ground
 Z.LIFT_PX = 12          -- base gap above that point
 Z.HEIGHT_STEP_PX = 3    -- per step of a height option
 Z.POPUP_MS = 800
-Z.CRIT_MS = 1200
+Z.CRIT_MS = 1500
 Z.POPUP_RISE = 22
 
 -- choices shared with HARMONIE_TWA_Options (the order = the option index)
@@ -69,9 +69,11 @@ local function choice(name, default, n)
     if v < 1 or v > n then v = default end
     return v
 end
-function Z.showBar() return opt("zhpBar", true) == true end
-function Z.showText() return opt("zhpText", true) == true end
-function Z.showDamage() return opt("zhpDamage", true) == true end
+-- the server's sandbox allows it (2026-10-03: bars and HP numbers off by
+-- default, damage numbers on) AND the player has not hidden it
+function Z.showBar() return TWAConfig.on("ZombieHPBars") and opt("zhpBar", true) == true end
+function Z.showText() return TWAConfig.on("ZombieHPNumbers") and opt("zhpText", true) == true end
+function Z.showDamage() return TWAConfig.on("DamageNumbers") and opt("zhpDamage", true) == true end
 function Z.barLift() return Z.LIFT_PX + (tonumber(opt("zhpHeight", 0)) or 0) * Z.HEIGHT_STEP_PX end
 function Z.numberLift() return Z.LIFT_PX + (tonumber(opt("zhpNumHeight", 0)) or 0) * Z.HEIGHT_STEP_PX end
 function Z.barSize() return math.floor(tonumber(opt("zhpBarWidth", 44)) or 44), math.floor(tonumber(opt("zhpBarThick", 6)) or 6) end
@@ -82,11 +84,21 @@ local function color(name, default)
 end
 function Z.numberColor() return color("zhpNumColor", 1) end
 function Z.critColor() return color("zhpCritColor", 4) end
+-- the fonts from small to huge (only the ones this game has)
+local FONT_STEPS = { "Small", "Medium", "Large", "Massive", "Title" }
+local function fontAt(i)
+    for k = math.min(i, #FONT_STEPS), 1, -1 do
+        local f = UIFont and UIFont[FONT_STEPS[k]]
+        if f then return f end
+    end
+    return UIFont.Small
+end
 function Z.numberFont(crit)
     local i = choice("zhpNumSize", 2, #Z.FONTS)
-    if crit then i = i + 1 end   -- a crit is one size up (Large -> Massive)
-    local names = { "Small", "Medium", "Large", "Massive" }
-    return UIFont[names[math.min(i, 4)]] or UIFont.Medium
+    -- 2026-10-03 ("คริติคอลยังไม่โดดเด่น ดูเหมือนยังขนาดเท่าเดิม"): a crit
+    -- is TWO sizes up and never smaller than Massive
+    if crit then i = math.max(i + 2, 4) end
+    return fontAt(i)
 end
 
 -- ------------------------------------------------------------- tracking
@@ -160,7 +172,12 @@ function Z.onHit(zed, attacker, bodyPart, weapon)
     if not me or attacker ~= me then return end
     local before = Z.track(zed)
     local crit = call(attacker, "isCriticalHit") == true
-    Z.pending[#Z.pending + 1] = { zombie = zed, before = before, crit = crit, ticks = 1, weapon = weapon }
+    -- every zombie hit in this same tick belongs to the same swing
+    local now = getTimestampMs()
+    if Z.swingAt ~= now then Z.swingAt, Z.swing = now, { n = 0 } end
+    Z.swing.n = Z.swing.n + 1
+    Z.pending[#Z.pending + 1] = { zombie = zed, before = before, crit = crit, ticks = 1, weapon = weapon,
+        swing = Z.swing, down = down(zed) }
 end
 
 -- 2026-10-03 ("ดาเมจต่ำสุดคือ 140 แต่ดาเมจที่ออกมักต่ำกว่า 100"): the
@@ -169,29 +186,28 @@ end
 -- the tooltip and the real hit can be read off console.txt. (Vanilla does
 -- not hit with the rolled MinDamage-MaxDamage directly: IsoZombie.Hit gets
 -- a "damageSplit" and a "modDelta" already worked out by the game.)
-local SKILL_OF = { Axe = "Axe", Blunt = "Blunt", SmallBlunt = "SmallBlunt", LongBlade = "LongBlade",
-    SmallBlade = "SmallBlade", Spear = "Spear" }
+-- B42: HandWeapon:getWeaponSkill(chr) is the skill level the game itself
+-- uses for this weapon, getPerk() which skill (the old getCategories() is
+-- gone -- the first log read "skill ?=?"). "targets" = how many zombies
+-- this same swing hit (the game splits a swing's damage between them).
 function Z.logHit(c, dealt)
     local w = c.weapon
     local me = getSpecificPlayer and getSpecificPlayer(0)
     local minD, maxD = tonumber(call(w, "getMinDamage")) or 0, tonumber(call(w, "getMaxDamage")) or 0
-    local skill, level = "?", "?"
-    local cats = call(w, "getCategories")
-    for i = 0, (cats and cats:size() or 0) - 1 do
-        local name = tostring(cats:get(i))
-        if SKILL_OF[name] and Perks and Perks[SKILL_OF[name]] then
-            skill, level = name, tostring(call(me, "getPerkLevel", Perks[SKILL_OF[name]]))
-            break
-        end
-    end
+    local perk = call(w, "getPerk")
+    local skill = tostring(perk and (call(perk, "getId") or perk) or "?")
+    local level = tostring(call(w, "getWeaponSkill", me) or "?")
     local endurance = "?"
     local stats = call(me, "getStats")
     if stats and CharacterStat and CharacterStat.ENDURANCE then
         endurance = string.format("%.2f", tonumber(call(stats, "get", CharacterStat.ENDURANCE)) or 0)
     end
-    print(string.format("[TWA hit] %s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)  crit=%s  skill %s=%s  endurance=%s  zombieHP %.3f->%.3f",
+    local cond = tostring(call(w, "getCondition") or "?") .. "/" .. tostring(call(w, "getConditionMax") or "?")
+    local after = c.before - dealt
+    print(string.format("[TWA hit] %s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)%s  crit=%s  skill %s=%s  targets=%d  zombieDown=%s  endurance=%s  condition=%s  zombieHP %.3f->%.3f",
         tostring(call(w, "getFullType") or "?"), minD, maxD, dealt, minD > 0 and dealt / minD * 100 or 0,
-        tostring(c.crit), skill, level, endurance, c.before, c.before - dealt))
+        after <= 0.0001 and " [killed: the hit may have been bigger]" or "",
+        tostring(c.crit), skill, level, c.targets or 1, tostring(c.down), endurance, cond, c.before, after))
 end
 
 function Z.settle()
@@ -203,7 +219,10 @@ function Z.settle()
             local after = tonumber(call(c.zombie, "getHealth")) or c.before
             local dealt = c.before - after
             if dealt > 0 then
-                if opt("zhpLog", false) == true then pcall(Z.logHit, c, dealt) end
+                if opt("zhpLog", false) == true then
+                    c.targets = c.swing and c.swing.n or 1
+                    pcall(Z.logHit, c, dealt)
+                end
                 if Z.showDamage() then Z.addPopup(c.zombie, dealt, c.crit) end
                 if TWADamageShare and TWADamageShare.send then TWADamageShare.send(c.zombie, dealt, c.crit) end
             end
@@ -265,6 +284,34 @@ end
 local function text(tm, font, s, x, y, r, g, b, a)
     tm:DrawStringCentre(font, x + 1, y + 1, s, 0, 0, 0, a * 0.85)
     tm:DrawStringCentre(font, x, y, s, r, g, b, a)
+end
+
+-- a critical hit: a huge number with a thick outline and a glow in its
+-- colour, a "CRITICAL" tag over it, a pop-in and a shake at the start
+function Z.drawCrit(tm, s, x, y, age, a, r, g, b)
+    local font = Z.numberFont(true)
+    local fh = tm:getFontHeight(font)
+    local pop = age < 120 and (120 - age) / 120 or 0      -- 1 -> 0 over the first 0.12 s
+    if age < 300 then x = x + ((math.floor(age / 35) % 2 == 0) and 3 or -3) end
+    y = y - fh * 0.5 + pop * 14
+    s = s .. "!"
+    -- glow: the colour, wide and soft
+    for _, d in ipairs({ { -3, 0 }, { 3, 0 }, { 0, -3 }, { 0, 3 } }) do
+        tm:DrawStringCentre(font, x + d[1], y + d[2], s, r, g, b, a * 0.25)
+    end
+    -- thick dark outline
+    for _, d in ipairs({ { -2, 0 }, { 2, 0 }, { 0, -2 }, { 0, 2 }, { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 } }) do
+        tm:DrawStringCentre(font, x + d[1], y + d[2], s, 0, 0, 0, a * 0.9)
+    end
+    -- the number, brightened during the pop
+    local k = 1 + 0.4 * pop
+    tm:DrawStringCentre(font, x, y, s, math.min(1, r * k), math.min(1, g * k), math.min(1, b * k), a)
+    -- the tag
+    local tag = getText and getText("IGUI_TWA_Crit") or "CRITICAL"
+    if not tag or tag == "IGUI_TWA_Crit" then tag = "CRITICAL" end
+    local ty = y - tm:getFontHeight(UIFont.Small) - 1
+    tm:DrawStringCentre(UIFont.Small, x + 1, ty + 1, tag, 0, 0, 0, a * 0.9)
+    tm:DrawStringCentre(UIFont.Small, x, ty, tag, 1, 1, 1, a)
 end
 
 function Z.render()
@@ -338,9 +385,7 @@ function Z.render()
                     local a = t < 0.7 and 1 or (1 - (t - 0.7) / 0.3)
                     local s = TWADisplay.fmt(p.amount)
                     if p.crit then
-                        -- a short shake at the start makes it stand out
-                        if age < 180 then x = x + ((math.floor(age / 30) % 2 == 0) and 2 or -2) end
-                        text(tm, Z.numberFont(true), s .. "!", x, y - 4, cr, cg, cb, a)
+                        Z.drawCrit(tm, s, x, y, age, a, cr, cg, cb)
                     else
                         text(tm, Z.numberFont(false), s, x, y, nr, ng, nb, a)
                     end

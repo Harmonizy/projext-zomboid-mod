@@ -21,13 +21,13 @@ MOD = "HARMONIE_TheWayToAttack"
 PAGES = [
     ("HARMONIE_TheWayToAttack", "TWA 1. General crafting", "TWA 1. การคราฟทั่วไป"),
     ("HARMONIE_TWA_Quality", "TWA 2. Quality & grade", "TWA 2. คุณภาพและเกรด"),
-    ("HARMONIE_TWA_Minigame", "TWA 3. Minigames (all)", "TWA 3. มินิเกม (ทั้งหมด)"),
-    ("HARMONIE_TWA_Hammer", "TWA 4. Hammering & forging", "TWA 4. ตอก ตี และตีเหล็ก"),
-    ("HARMONIE_TWA_Stroke", "TWA 5. Sharpen, saw, weld", "TWA 5. ลับ เลื่อย เชื่อม"),
-    ("HARMONIE_TWA_Wrap", "TWA 6. Wrap, screw, grind", "TWA 6. พัน ขันน็อต ลับหินหมุน"),
-    ("HARMONIE_TWA_Heat", "TWA 7. Heat, quench, bend", "TWA 7. เป่าลม จุ่มน้ำ หักกิ่ง"),
-    ("HARMONIE_TWA_Other", "TWA 8. Coat, pour, sew, drill, carve", "TWA 8. เคลือบ เท เย็บ เจาะ กรีด"),
+    # 2026-10-03 ("sandbox setting minigame the way to attack เอารวมเป็นแท็บ
+    # เดียว"): the 6 minigame pages are one tab now; their option names
+    # already say which game they tune, and they stay in game order.
+    ("HARMONIE_TWA_Minigame", "TWA 3. Minigames", "TWA 3. มินิเกม"),
 ]
+MERGED_INTO_MINIGAME = ("HARMONIE_TWA_Hammer", "HARMONIE_TWA_Stroke", "HARMONIE_TWA_Wrap",
+                        "HARMONIE_TWA_Heat", "HARMONIE_TWA_Other")
 
 # key, type, default, min, max, page, EN name, TH name, EN tip, TH tip
 B, I, D = "boolean", "integer", "double"
@@ -78,8 +78,17 @@ OPTS = [
   "แอดมิน และผู้ที่เปิดเกมด้วย -debug คลิกขวาอาวุธเพื่อแก้ stats ได้ทุกค่า ถ้าปิด เมนูนี้จะไม่แสดงเลย"),
  # ---- Damage numbers (2026-10-03)
  ("DamageDisplayScale", I, 100, 1, 1000, "HARMONIE_TheWayToAttack", "Damage display multiplier", "ตัวคูณการแสดงค่าดาเมจ",
-  "Damage, DPS and zombie HP are SHOWN multiplied by this (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
-  "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม"),
+  "Damage, DPS and zombie HP are SHOWN multiplied by this and rounded to a whole number (100: a 0.8 hit reads 80). Only the display: the game computes with its own values.",
+  "ดาเมจ DPS และเลือดซอมบี้จะแสดงคูณด้วยค่านี้ แล้วปัดเป็นจำนวนเต็ม (100: ตี 0.8 แสดงเป็น 80) เปลี่ยนแค่การแสดงผล เกมยังคำนวณด้วยค่าเดิม"),
+ ("ZombieHPBars", B, False, None, None, "HARMONIE_TheWayToAttack", "Zombie health bars", "หลอดเลือดซอมบี้",
+  "Players may show a health bar over the zombies near them (each player can still hide it in Options > Mods). Off: never shown.",
+  "ผู้เล่นแสดงหลอดเลือดเหนือซอมบี้ใกล้ตัวได้ (แต่ละคนยังซ่อนเองได้ใน Options > Mods) ถ้าปิด จะไม่แสดงเลย"),
+ ("ZombieHPNumbers", B, False, None, None, "HARMONIE_TheWayToAttack", "Zombie HP numbers", "ตัวเลขเลือดซอมบี้",
+  "Players may show the zombies' HP as numbers (each player can still hide them). Off: never shown.",
+  "ผู้เล่นแสดงเลือดซอมบี้เป็นตัวเลขได้ (แต่ละคนยังซ่อนเองได้) ถ้าปิด จะไม่แสดงเลย"),
+ ("DamageNumbers", B, True, None, None, "HARMONIE_TheWayToAttack", "Damage numbers", "ตัวเลขดาเมจ",
+  "Players may show the damage numbers that rise from a hit zombie (each player can still hide them). Off: never shown.",
+  "ผู้เล่นแสดงตัวเลขดาเมจที่เด้งจากซอมบี้ที่โดนตีได้ (แต่ละคนยังซ่อนเองได้) ถ้าปิด จะไม่แสดงเลย"),
  ("ShareDamageNumbers", B, True, None, None, "HARMONIE_TheWayToAttack", "Others see damage numbers", "ผู้เล่นอื่นเห็นตัวเลขดาเมจ",
   "Multiplayer: the damage numbers of your hits also show for players near you.",
   "โหมดผู้เล่นหลายคน: ตัวเลขดาเมจจากการตีของคุณจะแสดงให้ผู้เล่นที่อยู่ใกล้เห็นด้วย"),
@@ -255,6 +264,9 @@ def fmt(v):
     if isinstance(v, bool): return "true" if v else "false"
     if isinstance(v, float): return ("%.4f" % v).rstrip("0").rstrip(".") if v != int(v) else "%.1f" % v
     return str(v)
+
+OPTS = [(o[0], o[1], o[2], o[3], o[4], "HARMONIE_TWA_Minigame" if o[5] in MERGED_INTO_MINIGAME else o[5]) + tuple(o[6:])
+        for o in OPTS]
 
 keys = set()
 out = ["VERSION = 1,", ""]
