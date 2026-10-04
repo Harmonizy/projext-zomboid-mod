@@ -415,18 +415,12 @@ local function pct(v) return tostring(math.floor((tonumber(v) or 0) * 100 + 0.5)
 
 function HMSettingsUI.homeMedicRows()
     local O = HARMONIE_HomeMedic_Options or {}
-    local K = EHR and EHR.Keybinds
-    local page = K and K.modOptions
-    local compact = page and page.getOption and K.IDs and page:getOption(K.IDs.OPEN_HEALTH_PANEL_COMPACT) or nil
     local function T(k) return text("UI_options_HARMONIE_HomeMedic_" .. k) end
     local function panel() return EHR and EHR.UI and EHR.UI.HealthPanelInstance end
     local rows = {
         { kind = "section", label = text("UI_HomeMedic_Set_Window", "Window") },
     }
-    if compact then
-        rows[#rows + 1] = { kind = "tick", label = text("UI_EHR_OpenHealthPanelCompact"), tip = text("UI_EHR_OpenHealthPanelCompact_tt"),
-            get = function() return optGet(compact, true) == true end, set = function(v) optSet(compact, v) end }
-    end
+    -- (0.26.1: no "open compact" row -- the window always opens expanded)
     if O.followCharWindow then
         rows[#rows + 1] = { kind = "tick", label = T("followCharWindow"), tip = T("followCharWindow_tooltip"),
             get = function() return optGet(O.followCharWindow, true) == true end, set = function(v) optSet(O.followCharWindow, v) end }

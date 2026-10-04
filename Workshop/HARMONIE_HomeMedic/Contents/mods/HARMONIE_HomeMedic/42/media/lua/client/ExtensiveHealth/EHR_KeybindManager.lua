@@ -156,14 +156,8 @@ function EHR.Keybinds.Initialize(forceRefresh)
         "UI_EHR_PrimaryHealthPanel_tt",
         "When enabled, the EHR hotkey opens the EHR panel and the heart button opens vanilla health. Disable to swap them."
     )
-    ensureTickBox(
-        EHR.Keybinds.IDs.OPEN_HEALTH_PANEL_COMPACT,
-        "UI_EHR_OpenHealthPanelCompact",
-        "Open EHR panels compact",
-        true,
-        "UI_EHR_OpenHealthPanelCompact_tt",
-        "When enabled, EHR health panels open in compact mode. Disable to open them expanded."
-    )
+    -- HARMONIE 0.26.1: no "open compact" switch -- the window always opens
+    -- expanded (EHR.UI.ShouldOpenHealthPanelCompact)
     -- HARMONIE: EHR's moodles are gone (EHR_Moodles.lua), so is their switch
 
     EHR.Keybinds.initialized = true
