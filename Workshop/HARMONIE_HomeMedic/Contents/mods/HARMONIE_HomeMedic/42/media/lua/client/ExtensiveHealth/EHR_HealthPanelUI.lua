@@ -579,11 +579,11 @@ function EHR.UI.ShouldHeartButtonOpenEHR()
     return false
 end
 
--- HARMONIE (0.26.1, "หน้าต่าง ehr ให้เปิดแบบขยายก่อนเสมอ บางคนไม่รู้ว่ามีปุ่มย่อ
--- ขยาย"): the medical window always opens expanded (the -/+ in its header
--- still folds the right side away); the "open compact" option is gone.
 function EHR.UI.ShouldOpenHealthPanelCompact()
-    return false
+    if EHR.Keybinds and EHR.Keybinds.ShouldOpenHealthPanelCompact then
+        return EHR.Keybinds.ShouldOpenHealthPanelCompact()
+    end
+    return false -- HARMONIE 0.26.1: expanded by default
 end
 
 function EHR.UI.ToggleVanillaHealthPanel(player)
