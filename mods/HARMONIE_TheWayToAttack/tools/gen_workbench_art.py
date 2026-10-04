@@ -6,7 +6,8 @@ Writes 42/media/textures/TWA_UI/:
       the five tab icons, one badge style (dark amber plate, yellow rim),
       the same layout as Home Medic's tab badges but in yellow;
   guide_*.png -- the pictures of the guide tab (512 x 288), simple drawn
-      scenes of the window and the craft steps.
+      scenes of the window and the craft steps;
+  pin_on / pin_off .png -- the window's pin button (R70).
 All drawn here with Pillow (4x supersampled), nothing copied.
 """
 import os, math
@@ -298,16 +299,40 @@ def guide_practice():
 
 
 def guide_modify():
-    """Ch.8: parts and gem sockets."""
+    """Ch.8: gem sockets (R70: the parts page is not in tab 4)."""
     img, d, k = scene()
-    d.polygon([(60 * k, 200 * k), (360 * k, 80 * k), (380 * k, 92 * k), (80 * k, 214 * k)], fill=STEEL)
-    d.line([(40 * k, 190 * k), (100 * k, 230 * k)], fill=YEL, width=int(10 * k))
-    for (x, y, c) in ((160, 160, RED), (230, 132, BLUE), (300, 104, GREEN)):
-        d.ellipse([(x - 14) * k, (y - 14) * k, (x + 14) * k, (y + 14) * k], fill=c, outline=CREAM, width=int(3 * k))
-    for i in range(4):
-        box(d, k, 400, 40 + i * 54, 90, 44, fill=(40, 32, 16, 255), outline=YEL_D, width=2, r=6)
-        d.rectangle([414 * k, (56 + i * 54) * k, 476 * k, (66 + i * 54) * k], fill=CREAM)
+    d.polygon([(60 * k, 170 * k), (330 * k, 60 * k), (350 * k, 72 * k), (80 * k, 184 * k)], fill=STEEL)
+    d.line([(40 * k, 160 * k), (100 * k, 200 * k)], fill=YEL, width=int(10 * k))
+    # the sockets row: three set, one empty, one picked (gold ring)
+    for i, c in enumerate((RED, BLUE, GREEN, None, None)):
+        x, y = 120 + i * 62, 236
+        d.ellipse([(x - 22) * k, (y - 22) * k, (x + 22) * k, (y + 22) * k], fill=DARK, outline=(YEL if i == 4 else STEEL_D), width=int(4 * k))
+        if c:
+            d.polygon([(x * k, (y - 13) * k), ((x + 12) * k, y * k), (x * k, (y + 13) * k), ((x - 12) * k, y * k)], fill=c)
+    # the gem picker
+    for r in range(2):
+        for cc in range(3):
+            box(d, k, 400 + cc * 34, 60 + r * 40, 30, 32, fill=(40, 32, 16, 255), outline=YEL_D, width=2, r=4)
+    d.polygon([(415 * k, 66 * k), (423 * k, 76 * k), (415 * k, 86 * k), (407 * k, 76 * k)], fill=BLUE)
+    arrow(d, k, 430, 150, 380, 220)
     gdone(img, "guide_modify")
+
+
+def pin_icon(pinned, size=64):
+    """The window's pin: upright (pinned) or tipped over (unpinned), yellow."""
+    big = size * 4
+    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    s = big / 64.0
+    col = CREAM if pinned else (190, 176, 150, 255)
+    head = YEL if pinned else YEL_D
+    d.ellipse([16 * s, 2 * s, 48 * s, 34 * s], fill=head, outline=DARK, width=int(2 * s))
+    d.rectangle([25 * s, 30 * s, 39 * s, 38 * s], fill=col)
+    d.polygon([(12 * s, 38 * s), (52 * s, 38 * s), (47 * s, 46 * s), (17 * s, 46 * s)], fill=col)
+    d.polygon([(29 * s, 46 * s), (35 * s, 46 * s), (32 * s, 63 * s)], fill=col)
+    if not pinned:
+        img = img.rotate(45, resample=Image.BICUBIC, center=(big / 2, big / 2))
+    img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, "pin_on.png" if pinned else "pin_off.png"))
 
 
 def guide_settings():
@@ -326,4 +351,6 @@ def guide_settings():
 for f in (tab_craft, tab_weapons, tab_materials, tab_modify, tab_guide, guide_open, guide_recipes, guide_flow,
           guide_minigame, guide_quality, guide_pause, guide_practice, guide_modify, guide_settings):
     f()
+pin_icon(True)
+pin_icon(False)
 print("ok")

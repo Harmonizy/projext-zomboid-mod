@@ -176,7 +176,11 @@ function TWANeatButton:render()
     if not drew then
         self:drawRectBorder(0, 0, self.width, self.height, alpha, t.r, t.g, t.b)
     end
-    if self.title and self.title ~= "" then
+    -- R70: a picture instead of text (the window's pin)
+    if self.icon then
+        local sz = math.min(self.width, self.height) - 6
+        self:drawTextureScaled(self.icon, (self.width - sz) / 2, (self.height - sz) / 2, sz, sz, disabled and 0.4 or 1, 1, 1, 1)
+    elseif self.title and self.title ~= "" then
         local font = self.font or TWAFont.small()
         local textW = getTextManager():MeasureStringX(font, self.title)
         local textH = getTextManager():getFontHeight(font)
@@ -267,6 +271,24 @@ end
 
 TWACraftUI = TWACraftUI or {}
 
+-- R70 ("ข้อความล้นในแต่ละสูตร ของหน้ารายการสูตร"): shorten `text` to `maxW`
+-- pixels by whole characters (Thai is 3 bytes a letter in UTF-8 -- cutting
+-- bytes would leave a broken letter), ".." at the end.
+function TWACraftUI.fitText(text, maxW, font)
+    text = tostring(text or "")
+    local tm = getTextManager()
+    font = font or TWAFont.small()
+    if maxW <= 0 then return "" end
+    if tm:MeasureStringX(font, text) <= maxW then return text end
+    local s = text
+    while #s > 0 and tm:MeasureStringX(font, s .. "..") > maxW do
+        local i = #s
+        while i > 1 and s:byte(i) >= 0x80 and s:byte(i) < 0xC0 do i = i - 1 end
+        s = s:sub(1, i - 1)
+    end
+    return s .. ".."
+end
+
 -- R68 ("ขนาดหน้าต่างเล็กไป สำหรับคนจอใหญ่"): every size below is laid out
 -- for scale 1 and multiplied by the window scale (Options > Mods > "Window
 -- size": Auto / Normal / Large / Extra large; Auto picks by screen height).
@@ -279,7 +301,8 @@ local function applyLayout(scale)
     -- R69: Home Medic's layout -- a header (title, volume, close) and a row
     -- of icon tabs above the content (TWAWorkbench draws them)
     WINDOW_W, WINDOW_H = S(1000), S(700)
-    LEFT_W, COL_GAP, PANEL_H = S(280), S(10), S(520)
+    -- R70: PANEL_H 520 -> 494, the card title strips take the rest
+    LEFT_W, COL_GAP, PANEL_H = S(280), S(10), S(494)
     -- craft page: the recipe card on the left, the procedure details on the right
     CENTER_W = S(440)
     RIGHT_W = WINDOW_W - 10 - CENTER_W - COL_GAP - 10
@@ -298,16 +321,29 @@ function TWACraftUI.layoutScale()
     local core = getCore()
     local sw = core and core:getScreenWidth() or 1920
     local sh = core and core:getScreenHeight() or 1080
+    if TWAWorkbench and TWAWorkbench.ensurePrefs then TWAWorkbench.ensurePrefs() end
     local scale
-    if choice >= 2 and choice <= 4 then
+    if TWACraftUI.userScale then
+        -- R70: the size the player dragged the window to
+        scale = TWACraftUI.userScale
+    elseif choice >= 2 and choice <= 4 then
         scale = TWACraftUI.SCALES[choice - 1]
     else
         scale = (sh >= 2000 and 1.5) or (sh >= 1400 and 1.25) or 1
     end
     -- never bigger than the screen
-    scale = math.min(scale, (sw - 20) / 1000, (sh - 40) / 700)
+    scale = math.min(scale, TWACraftUI.maxScale())
     -- R69: the tab bar made the window 700 tall; a 720p screen shrinks it a bit
-    return math.max(0.85, scale)
+    return math.max(TWACraftUI.MIN_SCALE, scale)
+end
+
+TWACraftUI.MIN_SCALE = 0.85
+-- never bigger than the screen
+function TWACraftUI.maxScale()
+    local core = getCore()
+    local sw = core and core:getScreenWidth() or 1920
+    local sh = core and core:getScreenHeight() or 1080
+    return math.max(TWACraftUI.MIN_SCALE, math.min((sw - 20) / 1000, (sh - 40) / 700))
 end
 
 -- Weapon-modification parts (Grip/Head/Tactical/Weight) are intentionally not
@@ -544,7 +580,9 @@ function TWARecipeScrollList:new(x, y, w, h, ui)
     setmetatable(o, self)
     self.__index = self
     o.ui = ui
-    o.itemheight = S(58) + 2 * TWAFont.grow(0) -- R67/R68: taller rows for bigger text / a bigger window
+    -- R67/R68: taller rows for bigger text / a bigger window; R70: always
+    -- room for the three lines of text (Thai lines are taller)
+    o.itemheight = math.max(S(58) + 2 * TWAFont.grow(0), 3 * TWAFont.lineH() + S(12))
     o.font = TWAFont.small()
     o.drawBorder = true
     o.backgroundColor = { r = 0.07, g = 0.07, b = 0.08, a = 0.95 }
@@ -720,21 +758,32 @@ function TWARecipeScrollList:doDrawItem(y, entry, alt)
     local textX = pad + 4 + iconSize + S(10)
     local lh = TWAFont.lineH()
     local ty = y + math.max(2, math.floor((h - 3 * lh) / 2))
-    drawTextShadowed(self, entry.text, textX, ty, 0.95, 0.95, 0.95, 1, self.font)
+    -- R70: every line stops before the star; the procedure icons go right
+    -- of the WIDEST line, and only as many as fit
+    local sx, size = self:starRect()
+    local textMax = sx - S(10) - textX
+    local tm = getTextManager()
+    local small = TWAFont.small()
+    local name = TWACraftUI.fitText(entry.text, textMax, self.font)
+    local widest = tm:MeasureStringX(self.font, name)
+    drawTextShadowed(self, name, textX, ty, 0.95, 0.95, 0.95, 1, self.font)
     if tierInfo then
         local label = tierInfo.name
         if stats and stats.categories then label = label .. "  -  " .. stats.categories end
-        drawTextShadowed(self, label, textX, ty + lh, tierInfo.r, tierInfo.g, tierInfo.b, 1, TWAFont.small())
+        label = TWACraftUI.fitText(label, textMax, small)
+        widest = math.max(widest, tm:MeasureStringX(small, label))
+        drawTextShadowed(self, label, textX, ty + lh, tierInfo.r, tierInfo.g, tierInfo.b, 1, small)
     end
     local statusKey = owned and "IGUI_TWA_BaseItemOwned"
         or (recipe.base and "IGUI_TWA_BaseItemMissing" or "IGUI_TWA_NoBaseItemNeeded")
     local sr, sg, sb = owned and 0.45 or 0.9, owned and 0.95 or 0.45, 0.45
-    drawTextShadowed(self, getText(statusKey), textX, ty + 2 * lh, sr, sg, sb, 1, TWAFont.small())
+    local status = TWACraftUI.fitText(getText(statusKey), textMax, small)
+    widest = math.max(widest, tm:MeasureStringX(small, status))
+    drawTextShadowed(self, status, textX, ty + 2 * lh, sr, sg, sb, 1, small)
 
     -- the procedures, right-aligned before the star (as many as fit)
-    local sx, size = self:starRect()
     local ps, gap = S(26), S(4)
-    local nameRight = textX + math.max(getTextManager():MeasureStringX(self.font, entry.text), S(160)) + S(16)
+    local nameRight = textX + math.max(widest, S(160)) + S(16)
     local room = sx - S(10) - nameRight
     local fit = math.floor((room + gap) / (ps + gap))
     local procs = recipe.procedures or {}
@@ -1198,7 +1247,8 @@ function TWACraftWindow:createChildren()
     local centerX = leftX + 8
     local rightX = leftX + CENTER_W + COL_GAP
     local titleH = TWAWorkbench.topHeight(S)
-    local contentTop = titleH + 8
+    -- R70: every page's parts sit in cards with a title strip on top
+    local contentTop = titleH + 8 + TWAWorkbench.cardTitleH(S)
     local panelBottom = contentTop + PANEL_H
 
     -- Filter tabs (wrap over rows as needed), directly under the title bar.
@@ -2518,7 +2568,8 @@ end
 -- real prerender() override.
 function TWACraftWindow:prerender()
     self:drawWorkbenchFrame()
-    if (self.page == "craft" and self.selectedRecipe) or self.page == "practice" then self:drawProcedureDetailsBackground() end
+    -- R70: the cards replace the details box / recipe card backgrounds
+    if not self.wbCollapsed then self:drawPageCards() end
 end
 
 -- Request 2026-09-28: Cancel/Incomplete/Finish all show a real progress bar
@@ -2598,7 +2649,19 @@ function TWACraftWindow:drawLockNotice()
     drawTextShadowed(self, text, x + 8, y + 4, 1, 0.9, 0.8, 1, TWAFont.small())
 end
 
+-- R70: folded up (unpinned, mouse away) only the header draws; the size
+-- grip and its preview go over everything else
 function TWACraftWindow:render()
+    if self.wbCollapsed then
+        ISPanel.render(self)
+        self:drawWorkbenchHeader()
+        return
+    end
+    self:renderBody()
+    self:drawWorkbenchOverlay()
+end
+
+function TWACraftWindow:renderBody()
     ISPanel.render(self)
     self:updateContinueButton()
     self:drawWorkbenchHeader()
@@ -2661,10 +2724,6 @@ function TWACraftWindow:render()
     self.craftGoWeapons:setVisible(false)
     self.craftGoMaterials:setVisible(false)
     self.backButton:setVisible(true)
-
-    local cardH = self.panelBottom - self.btnH - 10 - centerY
-    self:drawRect(centerX - 8, centerY - 8, CENTER_W, cardH, 0.9, 0.06, 0.06, 0.07)
-    self:drawRectBorder(centerX - 8, centerY - 8, CENTER_W, cardH, 0.6, 0.4, 0.4, 0.4)
 
     self:drawProcedureDetails()
     self:drawCenterActionRow()
@@ -2921,6 +2980,7 @@ end
 
 function TWACraftWindow:update()
     ISPanel.update(self)
+    self:updatePin()
 end
 
 function TWACraftWindow:onMouseDown(x, y)
@@ -2963,6 +3023,7 @@ function TWACraftUI.open(player, searchText, resumeItem)
     if not player then return end
     if TWACraftUI.window and TWACraftUI.window:getIsVisible() then
         local win = TWACraftUI.window
+        if win.wbExpand then win:wbExpand() end
         win:bringToTop()
         if resumeItem then
             win:resumeFromItem(resumeItem)
@@ -3036,6 +3097,55 @@ function TWACraftUI.close()
     win:setVisible(false)
     win:removeFromUIManager()
     TWACraftUI.window = nil
+end
+
+-- R70: build the window again at the current layout scale / text size
+-- (dragged size, A- / A+), keeping where it is and what it shows. Nothing is
+-- handed back: the started craft simply carries over to the new window.
+-- Not while busy (TWACraftWindow:isBusy) -- the callers check.
+local CARRY = { "active", "selectedRecipe", "selectedProcId", "resumeItem", "baseChoice", "activeTab",
+    "guidePage", "modifyWeapon", "lockMsgUntil", "lockMsgKey" }
+function TWACraftUI.rebuild()
+    local old = TWACraftUI.window
+    if not old then return end
+    applyLayout(TWACraftUI.layoutScale())
+    local win = TWACraftWindow:new(old.x, old.y, old.player)
+    for _, f in ipairs(CARRY) do win[f] = old[f] end
+    local list = old.recipeList
+    local page, search = old.page, old.searchBox and old.searchBox:getText() or ""
+    if TWAPicker then TWAPicker.close() end
+    old:setVisible(false)
+    old:removeFromUIManager()
+    TWACraftUI.window = win
+    win:initialise()
+    win:addToUIManager()
+    if list then
+        win.recipeList.scope = list.scope
+        win.recipeList.filterCategory = list.filterCategory
+        win.recipeList.filterTier = list.filterTier
+    end
+    win.searchBox:setText(search)
+    win.recipeList:setSearch(search)
+    win:setTab(win.activeTab or "weapons")
+    if page == "practice" then win:setPage("practice") end
+    -- still on the screen
+    local core = getCore()
+    if core then
+        win:setX(math.max(0, math.min(win.x, core:getScreenWidth() - win.width)))
+        win:setY(math.max(0, math.min(win.y, core:getScreenHeight() - win.height)))
+    end
+    win:bringToTop()
+    return win
+end
+
+-- R70: right-click a weapon > "Modify weapon (gems)" -> tab 4 for that weapon
+function TWACraftUI.openModify(player, weapon)
+    TWACraftUI.open(player)
+    local win = TWACraftUI.window
+    if not win then return end
+    win.modifyWeapon = weapon
+    if win.wbExpand then win:wbExpand() end
+    win:setTab("modify")
 end
 
 function TWACraftUI.toggle()

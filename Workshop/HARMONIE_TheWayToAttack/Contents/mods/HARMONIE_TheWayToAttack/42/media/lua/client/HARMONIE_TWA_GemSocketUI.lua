@@ -29,15 +29,41 @@ TWAGemSocketUI = TWAMinigameBase:derive("TWAGemSocketUI")
 
 local B = TWAMinigameBase
 local G = TWAGemSocket
-local W, H = 1000, 680
-local LX, LW = 16, 320
-local CX, CW = 348, 320
-local RX, RW = 684, 300
-local TOP = 56
-local SOCKET_Y = 336
-local PICK_Y = 424
-local CELL, GAP, PER_ROW = 48, 6, 6
-local BOTTOM_Y = 616
+-- R70 ("เอาหน้าทั้งหน้าของหน้าต่างเปลี่ยนอัญมณีมาไว้ในแท็บ 4"): the layout
+-- is worked out from the panel's size (TWAGemSocketUI.layout) so the same
+-- page also fills the craft window's tab 4 at any window size. These are
+-- set from the instance's layout before each draw / click (useLayout).
+local W, H, LX, LW, CX, CW, RX, RW, TOP, SOCKET_Y, PICK_Y, BOTTOM_Y, PER_ROW
+local CELL, GAP = 48, 6
+
+function TWAGemSocketUI.layout(w, h, embedded)
+    if not embedded then
+        -- the stand-alone window (as before)
+        return { W = 1000, H = 680, LX = 16, LW = 320, CX = 348, CW = 320, RX = 684, RW = 300,
+            TOP = 56, SOCKET_Y = 336, PICK_Y = 424, BOTTOM_Y = 616, PER_ROW = 6 }
+    end
+    local m, g = 8, 10
+    local avail = w - 2 * m - 2 * g
+    local L = { W = w, H = h, LX = m, TOP = 8 }
+    L.LW = math.floor(avail * 0.33)
+    L.CW = math.floor(avail * 0.34)
+    L.RW = avail - L.LW - L.CW
+    L.CX = L.LX + L.LW + g
+    L.RX = L.CX + L.CW + g
+    L.BOTTOM_Y = h - 52
+    -- the gem picker (3 rows) at the bottom of the centre panel, the sockets
+    -- above it, the weapon's picture in what is left
+    L.PICK_Y = L.BOTTOM_Y - 12 - (22 + 3 * (CELL + GAP)) - 4
+    L.SOCKET_Y = L.PICK_Y - 84
+    L.PER_ROW = math.max(3, math.min(6, math.floor((L.CW - 8 + GAP) / (CELL + GAP))))
+    return L
+end
+
+local function useLayout(o)
+    local L = o.lay
+    W, H, LX, LW, CX, CW, RX, RW = L.W, L.H, L.LX, L.LW, L.CX, L.CW, L.RX, L.RW
+    TOP, SOCKET_Y, PICK_Y, BOTTOM_Y, PER_ROW = L.TOP, L.SOCKET_Y, L.PICK_Y, L.BOTTOM_Y, L.PER_ROW
+end
 
 local GRADE_COLOR = {
     S = { r = 1.0, g = 0.85, b = 0.15 }, A = { r = 0.4, g = 0.9, b = 1.0 }, B = { r = 0.4, g = 0.9, b = 0.4 },
@@ -92,11 +118,13 @@ end
 
 function TWAGemSocketUI.open(player, weapon)
     if TWAGemSocketUI.instance then TWAGemSocketUI.instance:close() end
-    local x = (getCore():getScreenWidth() - W) / 2
-    local y = (getCore():getScreenHeight() - H) / 2
-    local o = ISPanel:new(math.floor(x), math.floor(y), W, H)
+    local lay = TWAGemSocketUI.layout(1000, 680, false)
+    local x = (getCore():getScreenWidth() - lay.W) / 2
+    local y = (getCore():getScreenHeight() - lay.H) / 2
+    local o = ISPanel:new(math.floor(x), math.floor(y), lay.W, lay.H)
     setmetatable(o, TWAGemSocketUI)
     TWAGemSocketUI.__index = TWAGemSocketUI
+    o.lay = lay
     o.player, o.weapon = player, weapon
     o.background = false
     o.moveWithMouse = true
@@ -115,22 +143,54 @@ function TWAGemSocketUI.open(player, weapon)
     return o
 end
 
+-- R70: the same page inside another panel (the craft window's tab 4): no
+-- title bar, no Close button, not movable; the weapon is set by the owner
+-- (setWeapon) and may be nil.
+function TWAGemSocketUI.embed(parent, x, y, w, h, player)
+    local o = ISPanel:new(x, y, w, h)
+    setmetatable(o, TWAGemSocketUI)
+    TWAGemSocketUI.__index = TWAGemSocketUI
+    o.lay = TWAGemSocketUI.layout(w, h, true)
+    o.embedded = true
+    o.player = player
+    o.background = false
+    o.moveWithMouse = false
+    o.elapsed = 0
+    o.particles, o.flashes = {}, {}
+    o.shakeX, o.shakeY = 0, 0
+    o:initialise()
+    parent:addChild(o)
+    return o
+end
+
+-- a different weapon: forget the socket / gem picked for the old one
+function TWAGemSocketUI:setWeapon(weapon)
+    if weapon == self.weapon then return end
+    self.weapon = weapon
+    self.selKey, self.pick = nil, nil
+    self.gemCache, self.nextCheck, self.pickRow = nil, nil, 0
+end
+
 -- The minigame kit draws at the play-area offset; this window has none.
 function TWAGemSocketUI:ox() return 0 end
 function TWAGemSocketUI:oy() return 0 end
 
 function TWAGemSocketUI:createChildren()
     ISPanel.createChildren(self)
-    self.confirmBtn = TWANeatButton:new(W - 16 - 190 - 12 - 230, BOTTOM_Y, 230, 44, getText("IGUI_TWA_Socket_Confirm"), self, TWAGemSocketUI.onConfirm)
+    useLayout(self)
+    local confirmX = self.embedded and (W - 8 - 230) or (W - 16 - 190 - 12 - 230)
+    self.confirmBtn = TWANeatButton:new(confirmX, BOTTOM_Y + (self.embedded and 4 or 0), 230, self.embedded and 40 or 44, getText("IGUI_TWA_Socket_Confirm"), self, TWAGemSocketUI.onConfirm)
     self.confirmBtn.neatTint = { r = 1, g = 0.8, b = 0.4 }
     self.confirmBtn:initialise()
     self:addChild(self.confirmBtn)
+    if self.embedded then return end
     self.closeBtn = TWANeatButton:new(W - 16 - 190, BOTTOM_Y, 190, 44, getText("IGUI_TWA_Socket_Close"), self, TWAGemSocketUI.close)
     self.closeBtn:initialise()
     self:addChild(self.closeBtn)
 end
 
 function TWAGemSocketUI:close()
+    if self.embedded then return end
     self:setVisible(false)
     self:removeFromUIManager()
     if TWAGemSocketUI.instance == self then TWAGemSocketUI.instance = nil end
@@ -194,7 +254,9 @@ function TWAGemSocketUI:socketKeys()
 end
 
 function TWAGemSocketUI:socketPos(idx, n)
-    local size, gap = 44, 8 -- six fit across the centre panel
+    -- six fit across the centre panel (smaller when it is narrow)
+    local gap = 8
+    local size = math.max(24, math.min(44, math.floor((CW - 16 - (n - 1) * gap) / math.max(1, n))))
     local total = n * size + (n - 1) * gap
     local x0 = CX + (CW - total) / 2
     return x0 + (idx - 1) * (size + gap) + size / 2, SOCKET_Y + size / 2, size / 2
@@ -216,6 +278,7 @@ end
 -- Input ----------------------------------------------------------------------
 
 function TWAGemSocketUI:onMouseDown(x, y)
+    useLayout(self)
     if not self:weaponOk() then return true end
     local keys = self:socketKeys()
     for i, k in ipairs(keys) do
@@ -235,7 +298,7 @@ function TWAGemSocketUI:onMouseDown(x, y)
             return true
         end
     end
-    if x >= W - 44 and x <= W - 12 and y >= 10 and y <= 42 then self:close() return true end
+    if not self.embedded and x >= W - 44 and x <= W - 12 and y >= 10 and y <= 42 then self:close() return true end
     return ISPanel.onMouseDown(self, x, y)
 end
 
@@ -274,6 +337,7 @@ function TWAGemSocketUI:pendingOp()
 end
 
 function TWAGemSocketUI:onConfirm()
+    useLayout(self)
     local op = self:pendingOp()
     if op == "insert" then
         local gem
@@ -310,6 +374,7 @@ end
 -- Frame loop -----------------------------------------------------------------
 
 function TWAGemSocketUI:prerender()
+    useLayout(self)
     local now = getTimestampMs()
     local dt = math.min(200, now - (self.lastTick or now))
     self.lastTick = now
@@ -341,7 +406,7 @@ function TWAGemSocketUI:prerender()
     local ok, err = pcall(self.drawAll, self)
     if not ok then
         print("[HARMONIE_TheWayToAttack] gem socket window error: " .. tostring(err))
-        self:close()
+        if self.embedded then self:setWeapon(nil) else self:close() end
     end
 end
 
@@ -359,17 +424,19 @@ end
 
 function TWAGemSocketUI:drawAll()
     local wpn = self.weapon
-    -- backdrop and frame
-    self:drawRect(0, 0, W, H, 0.96, 0.035, 0.035, 0.045)
-    self:gradient(0, 0, W, 50, { r = 0.1, g = 0.09, b = 0.12 }, { r = 0.05, g = 0.05, b = 0.06 }, 8, 1)
-    self:drawRectBorder(0, 0, W, H, 1, 0.45, 0.42, 0.38)
-    self:line(0, 50, W, 50, 1, 0.8, { r = 0.3, g = 0.28, b = 0.25 })
-    -- title: a little hammer, the title, the close cross
-    self:line(22, 36, 38, 20, 5, 1, { r = 0.55, g = 0.36, b = 0.18 })
-    self:quad(32, 12, 46, 26, 40, 32, 26, 18, 1, 0.8, 0.82, 0.86)
-    shadowText(self, getText("IGUI_TWA_Socket_Title"), 56, 13, WHITE, 1, TWAFont.medium())
-    self:line(W - 38, 16, W - 18, 36, 2, 0.8, WHITE)
-    self:line(W - 18, 16, W - 38, 36, 2, 0.8, WHITE)
+    if not self.embedded then
+        -- backdrop and frame
+        self:drawRect(0, 0, W, H, 0.96, 0.035, 0.035, 0.045)
+        self:gradient(0, 0, W, 50, { r = 0.1, g = 0.09, b = 0.12 }, { r = 0.05, g = 0.05, b = 0.06 }, 8, 1)
+        self:drawRectBorder(0, 0, W, H, 1, 0.45, 0.42, 0.38)
+        self:line(0, 50, W, 50, 1, 0.8, { r = 0.3, g = 0.28, b = 0.25 })
+        -- title: a little hammer, the title, the close cross
+        self:line(22, 36, 38, 20, 5, 1, { r = 0.55, g = 0.36, b = 0.18 })
+        self:quad(32, 12, 46, 26, 40, 32, 26, 18, 1, 0.8, 0.82, 0.86)
+        shadowText(self, getText("IGUI_TWA_Socket_Title"), 56, 13, WHITE, 1, TWAFont.medium())
+        self:line(W - 38, 16, W - 18, 36, 2, 0.8, WHITE)
+        self:line(W - 18, 16, W - 38, 36, 2, 0.8, WHITE)
+    end
     -- the three panels
     for _, p in ipairs({ { LX, LW }, { CX, CW }, { RX, RW } }) do
         self:drawRect(p[1], TOP, p[2], BOTTOM_Y - TOP - 12, 0.9, 0.055, 0.055, 0.065)
@@ -383,7 +450,8 @@ function TWAGemSocketUI:drawAll()
     self:drawLeft(info)
     self:drawCentre(info)
     self:drawRight(info)
-    -- hint at the bottom left
+    -- hint at the bottom left (not in tab 4: it is about the right-click)
+    if self.embedded then self:drawParticles() return end
     self:drawRect(LX + 4, BOTTOM_Y + 10, 16, 24, 0.8, 0.3, 0.3, 0.32)
     self:line(LX + 12, BOTTOM_Y + 10, LX + 12, BOTTOM_Y + 20, 1, 0.9, { r = 0.1, g = 0.1, b = 0.1 })
     shadowText(self, getText("IGUI_TWA_Socket_Hint1"), LX + 30, BOTTOM_Y + 4, { r = 0.85, g = 0.85, b = 0.85 }, 1, TWAFont.medium())
@@ -445,7 +513,7 @@ function TWAGemSocketUI:drawLeft(i)
     local tex = wpn:getTexture()
     if tex then self:drawTextureScaled(tex, x + 6, y + 6, 72, 72, 1, 1, 1, 1) end
     local nx = x + 98
-    shadowText(self, wpn:getDisplayName(), nx, y + 2, WHITE, 1, TWAFont.medium())
+    shadowText(self, fitText(wpn:getDisplayName(), LX + LW - 8 - nx, TWAFont.medium()), nx, y + 2, WHITE, 1, TWAFont.medium())
     -- Round 19 ("ไม่อยากให้มี ? ในจุดแสดง tier"): no middle dot (the game
     -- font may not have it), the tier and the type drawn side by side.
     local tx2 = nx
@@ -459,15 +527,17 @@ function TWAGemSocketUI:drawLeft(i)
     y = y + 104
     self:line(LX + 12, y, LX + LW - 12, y, 1, 0.7, { r = 0.25, g = 0.24, b = 0.24 })
     y = y + 10
-    local vx = LX + 190
+    local vx = LX + math.floor(LW * 0.59)
+    -- R70: the rows close up when the panel is short (tab 4)
+    local step = math.max(TWAFont.lineH(), math.min(25, math.floor((BOTTOM_Y - 14 - y) / #i.rows)))
     for _, r in ipairs(i.rows) do
-        shadowText(self, getText(r[1]), LX + 16, y, { r = 0.82, g = 0.82, b = 0.82 }, 1)
+        shadowText(self, fitText(getText(r[1]), vx - LX - 22), LX + 16, y, { r = 0.82, g = 0.82, b = 0.82 }, 1)
         shadowText(self, r[2], vx, y, WHITE, 1)
         if r[3] then
             local ax = vx + textW(r[2]) + 6
             shadowText(self, "> " .. r[3], ax, y, { r = 0.45, g = 1, b = 0.5 }, 1)
         end
-        y = y + 25
+        y = y + step
     end
 end
 
@@ -512,12 +582,14 @@ end
 
 function TWAGemSocketUI:drawCentre(i)
     local wpn = self.weapon
-    local cx, cy = CX + CW / 2, TOP + 130
-    -- spotlight and the weapon, big
-    self:velvet(CX + 1, TOP + 1, CW - 2, 262, { tint = { r = 0.06, g = 0.055, b = 0.09 } })
-    self:glow(cx, cy, 110, i.gradeCol, 0.35 + 0.1 * math.sin(self.elapsed * 0.003))
+    -- spotlight and the weapon, big (R70: sized to the room above the sockets)
+    local spotH = math.max(60, SOCKET_Y - TOP - 20)
+    local half = math.floor(math.min(110, (spotH - 20) / 2, (CW - 20) / 2))
+    local cx, cy = CX + CW / 2, TOP + math.floor(spotH / 2)
+    self:velvet(CX + 1, TOP + 1, CW - 2, spotH, { tint = { r = 0.06, g = 0.055, b = 0.09 } })
+    self:glow(cx, cy, half, i.gradeCol, 0.35 + 0.1 * math.sin(self.elapsed * 0.003))
     local tex = wpn:getTexture()
-    if tex then self:drawTextureScaled(tex, cx - 110, cy - 110, 220, 220, 1, 1, 1, 1) end
+    if tex then self:drawTextureScaled(tex, cx - half, cy - half, 2 * half, 2 * half, 1, 1, 1, 1) end
     -- sockets
     local keys = self:socketKeys()
     if #keys == 0 then
@@ -564,14 +636,14 @@ function TWAGemSocketUI:drawRight(i)
     shadowText(self, getText("IGUI_TWA_Socket_InfoTitle"), x, y, WHITE, 1, TWAFont.medium())
     self:line(x, y + 26, x + 100, y + 26, 2, 0.7, GOLD)
     y = y + 38
-    local vx = RX + 180
+    local vx = RX + math.floor(RW * 0.5)
     local rows = {
         { "IGUI_TWA_Socket_WeaponName", wpn:getDisplayName() },
         { "IGUI_TWA_Stat_Type", i.type ~= "" and i.type or "-" },
         { "IGUI_TWA_Socket_Grade", nil },
     }
     for _, r in ipairs(rows) do
-        shadowText(self, getText(r[1]), x, y, { r = 0.8, g = 0.8, b = 0.8 }, 1)
+        shadowText(self, fitText(getText(r[1]), vx - x - 6), x, y, { r = 0.8, g = 0.8, b = 0.8 }, 1)
         if r[2] then
             local v = fitText(r[2], RX + RW - 12 - vx)
             shadowText(self, v, vx, y, r[1] == "IGUI_TWA_Stat_Type" and i.tierCol or WHITE, 1) -- round 23: type in the tier colour
@@ -585,6 +657,7 @@ function TWAGemSocketUI:drawRight(i)
     y = y + 10
     shadowText(self, getText("IGUI_TWA_Socket_Effects"), x, y, WHITE, 1)
     y = y + 24
+    local effectsTop = y + 22
     -- every socketed gem and what it gives (round 19: by gem and state)
     local list = G.list(wpn)
     if #list == 0 then
@@ -592,6 +665,7 @@ function TWAGemSocketUI:drawRight(i)
         y = y + 22
     end
     for _, g in ipairs(list) do
+        if y > BOTTOM_Y - 12 - 2 * 76 - 54 then break end -- R70: never under the rules
         local c = gemColour(g.type)
         self:quad(x + 6, y + 2, x + 12, y + 8, x + 6, y + 14, x, y + 8, 1, c.r, c.g, c.b)
         local nm = gemName(g.type) .. " (" .. getText("IGUI_TWA_GemState_" .. g.state) .. ")"
@@ -609,9 +683,17 @@ function TWAGemSocketUI:drawRight(i)
         shadowText(self, fitText(getText("IGUI_TWA_Socket_EffectTotalAll", G.describe(total)), RW - 30), x, y, { r = 0.45, g = 1, b = 0.5 }, 1)
     end
     -- the two rules
-    local by = BOTTOM_Y - 12 - 166
-    self:notice(RX + 10, by, RW - 20, 76, { r = 1, g = 0.6, b = 0.2 }, "IGUI_TWA_Socket_RuleNormal", "IGUI_TWA_Socket_RuleNormal2", false)
-    self:notice(RX + 10, by + 82, RW - 20, 76, { r = 0.35, g = 0.65, b = 1 }, "IGUI_TWA_Socket_RuleSpecial", "IGUI_TWA_Socket_RuleSpecial2", not G.hasSpecial(wpn))
+    -- R70: each box as tall as its text needs (a narrow panel wraps more)
+    local h1 = self:noticeHeight(RW - 20, "IGUI_TWA_Socket_RuleNormal2")
+    local h2 = self:noticeHeight(RW - 20, "IGUI_TWA_Socket_RuleSpecial2")
+    local by = BOTTOM_Y - 12 - 4 - h2 - 6 - h1
+    if by < effectsTop then
+        -- no room (a small window): the two rules as one line each
+        h1, h2 = 30, 30
+        by = BOTTOM_Y - 12 - 4 - h2 - 6 - h1
+    end
+    self:notice(RX + 10, by, RW - 20, h1, { r = 1, g = 0.6, b = 0.2 }, "IGUI_TWA_Socket_RuleNormal", "IGUI_TWA_Socket_RuleNormal2", false)
+    self:notice(RX + 10, by + h1 + 6, RW - 20, h2, { r = 0.35, g = 0.65, b = 1 }, "IGUI_TWA_Socket_RuleSpecial", "IGUI_TWA_Socket_RuleSpecial2", not G.hasSpecial(wpn))
 end
 
 -- A small coloured dot for a gem's state (its tier colour).
@@ -622,22 +704,34 @@ function TWAGemSocketUI:stateDot(x, y, state)
     self:disc(x, y, 3, 1, c, 10)
 end
 
+local function noticeLines(text, maxW)
+    local lines = {}
+    local cur = ""
+    for word in text:gmatch("%S+") do
+        local cand = cur == "" and word or (cur .. " " .. word)
+        if textW(cand) > maxW and cur ~= "" then lines[#lines + 1] = cur; cur = word else cur = cand end
+    end
+    if cur ~= "" then lines[#lines + 1] = cur end
+    return lines
+end
+
+function TWAGemSocketUI:noticeHeight(w, k2)
+    local n = math.min(5, #noticeLines(getText(k2), w - 50))
+    return math.max(76, 18 + TWAFont.lineH() + n * TWAFont.lineH() + 8)
+end
+
 function TWAGemSocketUI:notice(x, y, w, h, c, k1, k2, dim)
     local a = dim and 0.4 or 1
     self:drawRect(x, y, w, h, 0.9, c.r * 0.12, c.g * 0.12, c.b * 0.12)
     self:drawRectBorder(x, y, w, h, a, c.r, c.g, c.b)
-    self:disc(x + 20, y + 22, 11, a, c, 16)
-    shadowText(self, "!", x + 17, y + 14, { r = 0.1, g = 0.1, b = 0.1 }, a, TWAFont.medium())
-    shadowText(self, getText(k1), x + 40, y + 12, c, a)
-    local lines = {}
-    local cur = ""
-    for word in getText(k2):gmatch("%S+") do
-        local cand = cur == "" and word or (cur .. " " .. word)
-        if textW(cand) > w - 50 and cur ~= "" then lines[#lines + 1] = cur; cur = word else cur = cand end
-    end
-    if cur ~= "" then lines[#lines + 1] = cur end
-    for n, l in ipairs(lines) do
-        if n <= 3 then shadowText(self, l, x + 40, y + 18 + n * 15, { r = 0.8, g = 0.8, b = 0.8 }, a) end
+    local cy = h < 40 and math.floor(h / 2) or 22
+    self:disc(x + 20, y + cy, 11, a, c, 16)
+    shadowText(self, "!", x + 17, y + cy - 8, { r = 0.1, g = 0.1, b = 0.1 }, a, TWAFont.medium())
+    shadowText(self, fitText(getText(k1), w - 48), x + 40, y + (h < 40 and math.floor((h - TWAFont.lineH()) / 2) or 12), c, a)
+    local lh = TWAFont.lineH()
+    if h < 40 then return end -- title only
+    for n, l in ipairs(noticeLines(getText(k2), w - 50)) do
+        if n <= 5 then shadowText(self, l, x + 40, y + 12 + n * lh, { r = 0.8, g = 0.8, b = 0.8 }, a) end
     end
 end
 
@@ -652,6 +746,9 @@ if Events and Events.OnFillInventoryObjectContextMenu then
         if not item or not G.canUse(item) then return end
         -- round 22: a weapon in the bags, a container nearby or on the floor
         if not TWASources.get(player):findById(item:getID()) then return end
-        context:addOption(getText("IGUI_TWA_Socket_Menu"), player, TWAGemSocketUI.open, item)
+        -- R70: the gem page lives in the craft window's tab 4 now
+        context:addOption(getText("IGUI_TWA_Socket_Menu"), player, function(p, it)
+            if TWACraftUI and TWACraftUI.openModify then TWACraftUI.openModify(p, it) else TWAGemSocketUI.open(p, it) end
+        end, item)
     end)
 end

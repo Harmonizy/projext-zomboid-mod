@@ -17,6 +17,7 @@ TWAFont = TWAFont or {}
 local F = TWAFont
 
 local BODY = { "Small", "Medium", "Large" }
+F.LEVELS = #BODY
 local HEAD = { "Medium", "Large", "Large" }
 
 function F.level()
@@ -27,8 +28,23 @@ function F.level()
         if ok then v = math.floor(tonumber(r) or 1) end
     end
     if v < 1 or v > #BODY then v = 1 end
-    -- R68: a bigger window (TWACraftUI layout scale) brings bigger text
-    return math.min(#BODY, v + (tonumber(F.bump) or 0))
+    -- R68: a bigger window (TWACraftUI layout scale) brings bigger text;
+    -- R70: plus the craft window's A- / A+ (F.userStep, saved)
+    return math.max(1, math.min(#BODY, F.rawLevel(v)))
+end
+
+-- the level before it is held to Small..Large (the A- / A+ buttons stop there)
+function F.rawLevel(v)
+    if not v then
+        local o = TWAOptions and TWAOptions.uiFontSize
+        v = 1
+        if o and o.getValue then
+            local ok, r = pcall(o.getValue, o)
+            if ok then v = math.floor(tonumber(r) or 1) end
+        end
+        if v < 1 or v > #BODY then v = 1 end
+    end
+    return v + (tonumber(F.bump) or 0) + (tonumber(F.userStep) or 0)
 end
 
 local function font(name)
