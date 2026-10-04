@@ -106,6 +106,22 @@ function TWACraftWindow:createWorkbenchChildren(contentTop, panelBottom)
     self.closeX.neatTint = { r = 0.9, g = 0.35, b = 0.25 }
     self.closeX:initialise()
     self:addChild(self.closeX)
+    -- R70 ("ปรับขนาดหน้าต่าง และตัวอักษร pin unpin ได้เหมือน ehr"): pin,
+    -- A+ / A- (text size) left of the X; the size grip is the bottom-right
+    -- corner (drawn in drawWorkbenchOverlay)
+    local hy = self.closeX.y
+    self.pinBtn = TWANeatButton:new(self.closeX.x - cs - 6, hy, cs, cs, "", self, function(win) win:togglePin() end)
+    self.pinBtn:initialise()
+    self:addChild(self.pinBtn)
+    self.textPlus = TWANeatButton:new(self.pinBtn.x - cs - 10, hy, cs, cs, "A+", self, function(win) win:changeTextSize(1) end)
+    self.textPlus:setTooltip(getText("IGUI_TWA_TextBigger"))
+    self.textPlus:initialise()
+    self:addChild(self.textPlus)
+    self.textMinus = TWANeatButton:new(self.textPlus.x - cs - 4, hy, cs, cs, "A-", self, function(win) win:changeTextSize(-1) end)
+    self.textMinus:setTooltip(getText("IGUI_TWA_TextSmaller"))
+    self.textMinus:initialise()
+    self:addChild(self.textMinus)
+    self:refreshHeaderButtons()
 
     -- tab 1 without a recipe: to tab 2 / tab 3
     local bw, bh = S(self, 260), S(self, 34)
@@ -121,17 +137,11 @@ function TWACraftWindow:createWorkbenchChildren(contentTop, panelBottom)
     table.insert(self.pageWidgets.craft, self.craftGoWeapons)
     table.insert(self.pageWidgets.craft, self.craftGoMaterials)
 
-    -- tab 4: open the parts window / the gem socket window for the held weapon
-    local mx = 10 + S(self, 440) + S(self, 20)
-    local mw = w - mx - 20
-    self.modifyParts = TWANeatButton:new(mx, panelBottom - S(self, 90), mw, S(self, 34), getText("IGUI_TWA_ModifyParts"), self, TWACraftWindow.onModifyParts)
-    self.modifyParts:initialise()
-    self:addChild(self.modifyParts)
-    self.modifyGems = TWANeatButton:new(mx, panelBottom - S(self, 46), mw, S(self, 34), getText("IGUI_TWA_ModifyGems"), self, TWACraftWindow.onModifyGems)
-    self.modifyGems.neatTint = { r = 0.45, g = 0.75, b = 1 }
-    self.modifyGems:initialise()
-    self:addChild(self.modifyGems)
-    self.pageWidgets.modify = { self.modifyParts, self.modifyGems }
+    -- tab 4 (R70: "เอาหน้าทั้งหน้าของหน้าต่างเปลี่ยนอัญมณีมาไว้ในแท็บ 4 ...
+    -- ยังไม่ต้องการใช้หน้าเปลี่ยนชิ้นส่วนอาวุธ"): the whole gem socket page,
+    -- in the card; no parts button
+    self.gemPanel = TWAGemSocketUI.embed(self, 10, contentTop, w - 20, panelBottom - contentTop, self.player)
+    self.pageWidgets.modify = { self.gemPanel }
 
     -- tab 5: one button per chapter, previous / next
     self.guideButtons = {}
@@ -202,8 +212,9 @@ end
 function TWACraftWindow:volumeRect()
     local h = S(self, W.HEADER_H)
     local sw = S(self, 150)
-    -- room right of the bar for "100%" / "Muted" before the X
-    local x = self.closeX and (self.closeX.x - sw - S(self, 80)) or (self.width - sw - 100)
+    -- room right of the bar for "100%" / "Muted" before the header buttons
+    local left = self.textMinus or self.closeX
+    local x = left and (left.x - sw - S(self, 76)) or (self.width - sw - 100)
     return x, math.floor(h / 2) - 4, sw, 8
 end
 
@@ -220,6 +231,7 @@ function TWACraftWindow:drawWorkbenchFrame()
     self:drawRectBorder(0, 0, self.width, self.height, 1, C.border[1], C.border[2], C.border[3])
     self:drawRect(1, 1, self.width - 2, hh - 1, C.header[4], C.header[1], C.header[2], C.header[3])
     self:drawRect(0, hh - 1, self.width, 1, 0.8, C.border[1], C.border[2], C.border[3])
+    if self.wbCollapsed then return end -- R70: folded up to the header
     -- tab bar
     self:drawRect(1, hh, self.width - 2, th, 0.92, 0.03, 0.024, 0.01)
     self:drawRect(0, hh + th - 1, self.width, 1, 0.8, C.border[1], C.border[2], C.border[3])
@@ -327,87 +339,36 @@ function TWACraftWindow:heldWeapon()
     return nil
 end
 
+-- the weapon tab 4 works on: the one picked by right-click (while it is
+-- still at hand), else the melee weapon in the main hand
+function TWACraftWindow:modifyTarget()
+    local w = self.modifyWeapon
+    if w and TWASources and not TWASources.get(self.player):findById(w:getID()) then
+        self.modifyWeapon, w = nil, nil
+    end
+    return w or self:heldWeapon()
+end
+
 function TWACraftWindow:renderModify()
     local C = W.C
-    local small, med = TWAFont.small(), TWAFont.medium()
-    local lh = TWAFont.lineH(small)
-    local x, y = 18, self.contentTop
-    local weapon = self:heldWeapon()
-    self.modifyParts.enable = weapon ~= nil
-    self.modifyGems.enable = weapon ~= nil and TWAGemSocket and TWAGemSocket.canUse(weapon) or false
-    if not weapon then
-        local lines = wrap(getText("IGUI_TWA_ModifyNoWeapon"), self.width - 80, med)
-        for i, l in ipairs(lines) do
-            shadowText(self, l, x, y + 20 + (i - 1) * (lh + 6), C.text[1], C.text[2], C.text[3], 1, med)
-        end
-        return
-    end
-    -- the weapon card
-    local cardW = S(self, 440)
-    local icon = weapon.getTex and weapon:getTex()
-    local isz = S(self, 96)
-    self:drawRect(x, y, isz, isz, 0.6, 0, 0, 0)
-    if icon then self:drawTextureScaled(icon, x, y, isz, isz, 1, 1, 1, 1) end
-    self:drawRectBorder(x, y, isz, isz, 1, C.border[1], C.border[2], C.border[3])
-    local tx = x + isz + 12
-    shadowText(self, weapon:getDisplayName(), tx, y + 4, 1, 1, 1, 1, med)
-    local md = weapon:getModData()
-    local ty = y + TWAFont.lineH(med) + 8
-    if md.TWA_Grade then
-        shadowText(self, getText("IGUI_TWA_ModifyGrade", tostring(md.TWA_Grade)), tx, ty, C.accent[1], C.accent[2], C.accent[3], 1, small)
-        ty = ty + lh
-    end
-    local function stat(key, v)
-        shadowText(self, getText(key) .. ": " .. v, tx, ty, 0.85, 0.85, 0.85, 1, small)
-        ty = ty + lh
-    end
-    stat("IGUI_TWA_Stat_MinDamage", TWADisplay.fmt(weapon:getMinDamage()))
-    stat("IGUI_TWA_Stat_MaxDamage", TWADisplay.fmt(weapon:getMaxDamage()))
-    stat("IGUI_TWA_Stat_Speed", tostring(math.floor((tonumber(weapon:getBaseSpeed()) or 0) * 100 + 0.5)) .. "%")  -- no decimals on screen
-    stat("IGUI_TWA_Stat_Condition", tostring(weapon:getCondition()) .. " / " .. tostring(weapon:getConditionMax()))
-
-    -- parts
-    local py = math.max(ty, y + isz) + 16
-    shadowText(self, getText("IGUI_TWA_ModifyPartsHeader"), x, py, C.accent[1], C.accent[2], C.accent[3], 1, small)
-    py = py + lh + 4
-    for _, sl in ipairs(TWAPartSystem.Slots) do
-        local part = TWAPartSystem.GetPart(weapon, sl.key)
-        local name = part and part:getDisplayName() or getText("IGUI_TWA_ModifyEmpty")
-        shadowText(self, getText(sl.label) .. ": " .. name, x + 10, py, part and 0.9 or 0.6, part and 0.9 or 0.6, part and 0.9 or 0.6, 1, small)
-        py = py + lh
-    end
-    -- gems
-    py = py + 10
-    shadowText(self, getText("IGUI_TWA_ModifyGemsHeader"), x, py, C.accent[1], C.accent[2], C.accent[3], 1, small)
-    py = py + lh + 4
+    local weapon = self:modifyTarget()
     local G = TWAGemSocket
-    if not G or not G.canUse(weapon) then
-        shadowText(self, getText("IGUI_TWA_ModifyNoSockets"), x + 10, py, 0.65, 0.65, 0.65, 1, small)
-    else
-        shadowText(self, getText("IGUI_TWA_ModifySockets", tostring(G.filledCount(weapon)), tostring(G.totalSlots(weapon))), x + 10, py, 0.9, 0.9, 0.9, 1, small)
-        py = py + lh
-        for _, g in ipairs(G.list(weapon)) do
-            local it = getScriptManager and getScriptManager():getItem(g.type)
-            local n = it and it:getDisplayName() or g.type
-            shadowText(self, "- " .. n .. "  (" .. getText("IGUI_TWA_GemState_" .. tostring(g.state or "Raw")) .. ")", x + 20, py, 0.75, 0.85, 1, 1, small)
-            py = py + lh
-        end
+    local ok = weapon ~= nil and G and G.canUse(weapon)
+    self.gemPanel:setWeapon(ok and weapon or nil)
+    self.gemPanel:setVisible(ok and true or false)
+    if ok then return end
+    local med = TWAFont.medium()
+    local lh = TWAFont.lineH(med)
+    local key = weapon and "IGUI_TWA_ModifyNoSockets" or "IGUI_TWA_ModifyNoWeapon"
+    local lines = wrap(getText(key), self.width - 80, med)
+    local y = self.contentTop + S(self, 40)
+    if weapon then
+        shadowText(self, weapon:getDisplayName(), 30, y, 1, 1, 1, 1, med)
+        y = y + lh + 6
     end
-    -- what the buttons do
-    local mx = self.modifyParts.x
-    local hy = self.contentTop
-    for i, l in ipairs(wrap(getText("IGUI_TWA_ModifyHelp"), self.width - mx - 30, small)) do
-        shadowText(self, l, mx, hy + (i - 1) * lh, C.textDim[1], C.textDim[2], C.textDim[3], 1, small)
+    for i, l in ipairs(lines) do
+        shadowText(self, l, 30, y + (i - 1) * (lh + 6), C.text[1], C.text[2], C.text[3], 1, med)
     end
-end
-
-function TWACraftWindow:onModifyParts()
-    if self:heldWeapon() and TWAPartsUI then TWAPartsUI.open(self.player) end
-end
-
-function TWACraftWindow:onModifyGems()
-    local w = self:heldWeapon()
-    if w and TWAGemSocketUI then TWAGemSocketUI.open(self.player, w) end
 end
 
 function TWACraftWindow:renderGuide()
@@ -418,8 +379,6 @@ function TWACraftWindow:renderGuide()
     local x = 10 + S(self, 220) + S(self, 20)
     local w = self.width - x - 20
     local y = self.contentTop
-    shadowText(self, tostring(i) .. ". " .. getText("IGUI_TWA_Guide_" .. ch.key .. "_Title"), x, y, C.accent[1], C.accent[2], C.accent[3], 1, med)
-    y = y + TWAFont.lineH(med) + 8
     local pic = texture("media/textures/TWA_UI/" .. ch.pic .. ".png")
     if pic then
         local pw = math.min(w, S(self, 512))
@@ -444,8 +403,270 @@ function TWACraftWindow:renderGuide()
     self.guideNext.pulse = i < #W.GUIDE
 end
 
+-- ----------------------------------------------------------------- preferences
+-- R70: the window's size (dragged), the text step (A- / A+) and the pin,
+-- kept in Zomboid/Lua/HARMONIE_TWA_Window.txt (this computer only).
+W.PREFS_FILE = "HARMONIE_TWA_Window.txt"
+W.pinned = true
+
+function W.ensurePrefs()
+    if W.prefsLoaded then return end
+    W.prefsLoaded = true
+    if not getFileReader then return end
+    local ok, reader = pcall(getFileReader, W.PREFS_FILE, true)
+    if not ok or not reader then return end
+    pcall(function()
+        local line = reader:readLine()
+        while line do
+            local k, v = line:match("^%s*([%w_]+)%s*=%s*(%S+)")
+            if k == "scale" then TWACraftUI.userScale = tonumber(v)
+            elseif k == "text" then TWAFont.userStep = math.max(-4, math.min(4, math.floor(tonumber(v) or 0)))
+            elseif k == "pinned" then W.pinned = v ~= "0" end
+            line = reader:readLine()
+        end
+    end)
+    pcall(function() reader:close() end)
+end
+
+function W.savePrefs()
+    if not getFileWriter then return end
+    local ok, writer = pcall(getFileWriter, W.PREFS_FILE, true, false)
+    if not ok or not writer then return end
+    pcall(function()
+        if TWACraftUI.userScale then writer:write("scale=" .. string.format("%.3f", TWACraftUI.userScale) .. "\n") end
+        writer:write("text=" .. tostring(TWAFont.userStep or 0) .. "\n")
+        writer:write("pinned=" .. (W.pinned and "1" or "0") .. "\n")
+    end)
+    pcall(function() writer:close() end)
+end
+
+function TWACraftWindow:refreshHeaderButtons()
+    if self.pinBtn then
+        self.pinBtn.icon = texture("media/textures/TWA_UI/" .. (W.pinned and "pin_on" or "pin_off") .. ".png")
+        if not self.pinBtn.icon then self.pinBtn:setTitle(W.pinned and "P" or "U") end
+        self.pinBtn:setTooltip(getText(W.pinned and "IGUI_TWA_Unpin" or "IGUI_TWA_Pin"))
+    end
+    if self.textPlus then
+        local raw = TWAFont.rawLevel()
+        self.textPlus.enable = raw < (TWAFont.LEVELS or 3)
+        self.textMinus.enable = raw > 1
+    end
+end
+
+-- busy: a procedure, a center action or a practice is running -- the window
+-- is not rebuilt then (their results come back to this window)
+function TWACraftWindow:isBusy()
+    return self.activeProcId ~= nil or self.activeCenterAction ~= nil or self.practicing and true or false
+end
+
+function TWACraftWindow:changeTextSize(d)
+    local raw = TWAFont.rawLevel()
+    if (d > 0 and raw >= (TWAFont.LEVELS or 3)) or (d < 0 and raw <= 1) then return end
+    if self:isBusy() then self:flashLocked("IGUI_TWA_BusyCantResize") return end
+    TWAFont.userStep = math.max(-4, math.min(4, (TWAFont.userStep or 0) + d))
+    W.savePrefs()
+    TWACraftUI.rebuild()
+end
+
+-- pin / unpin: unpinned, the window folds up to its header a moment after
+-- the mouse leaves it and unfolds when the mouse comes back (Home Medic's pin)
+W.FOLD_DELAY_MS = 350
+function TWACraftWindow:togglePin()
+    W.pinned = not W.pinned
+    self.wbLeaveAt = nil
+    if W.pinned then self:wbExpand() end
+    self:refreshHeaderButtons()
+    W.savePrefs()
+end
+
+local HEADER_KEEP = { "closeX", "pinBtn", "textPlus", "textMinus" }
+function TWACraftWindow:wbCollapse()
+    if self.wbCollapsed then return end
+    local keep = {}
+    for _, f in ipairs(HEADER_KEEP) do if self[f] then keep[self[f]] = true end end
+    self.wbHidden = {}
+    for _, child in pairs(self.children or {}) do
+        if child and not keep[child] and child:getIsVisible() then
+            child:setVisible(false)
+            self.wbHidden[#self.wbHidden + 1] = child
+        end
+    end
+    self.wbFullH = self.height
+    self.wbCollapsed = true
+    self:setHeight(S(self, W.HEADER_H))
+end
+
+function TWACraftWindow:wbExpand()
+    if not self.wbCollapsed then return end
+    self.wbCollapsed = false
+    if self.wbFullH then self:setHeight(self.wbFullH) end
+    for _, child in ipairs(self.wbHidden or {}) do child:setVisible(true) end
+    self.wbHidden = nil
+    self.wbLeaveAt = nil
+    -- the page decides again what shows
+    if self.page then self:setPage(self.page) end
+end
+
+function TWACraftWindow:updatePin()
+    local busy = self:isBusy() or self.wbResizing or self.moving or self.draggingVolume
+        or (TWAPicker and TWAPicker.current and TWAPicker.current.owner == self)
+    if W.pinned or busy then
+        if W.pinned and self.wbCollapsed then self:wbExpand() end
+        self.wbLeaveAt = nil
+        return
+    end
+    local mx, my = getMouseX(), getMouseY()
+    local x, y = self:getAbsoluteX(), self:getAbsoluteY()
+    local over = mx >= x and mx <= x + self.width and my >= y and my <= y + self.height
+    local now = getTimestampMs and getTimestampMs() or 0
+    if over then
+        self.wbLeaveAt = nil
+        if self.wbCollapsed then self:wbExpand() end
+    elseif not self.wbCollapsed then
+        self.wbLeaveAt = self.wbLeaveAt or now
+        if now - self.wbLeaveAt >= W.FOLD_DELAY_MS then self:wbCollapse() end
+    end
+end
+
+-- the size grip (bottom-right corner): drag to scale the whole window --
+-- everything in it and the text grow / shrink together; right-click it to
+-- go back to the size from Options > Mods
+W.GRIP = 18
+function TWACraftWindow:inGrip(x, y)
+    if self.wbCollapsed then return false end
+    local g = W.GRIP
+    return x >= self.width - g and y >= self.height - g
+end
+
+function TWACraftWindow:drawWorkbenchOverlay()
+    if self.wbCollapsed then return end
+    local C = W.C
+    local x, y = self.width - 16, self.height - 16
+    for i, len in ipairs({ 12, 8, 4 }) do
+        local o = (i - 1) * 4
+        self:drawRect(x + 10 - o, y + 14 - len, 2, len, 0.85 - 0.15 * (i - 1), C.accent[1], C.accent[2], C.accent[3])
+    end
+    if self.wbResizing and self.wbPreview then
+        local w, h = math.floor(1000 * self.wbPreview), math.floor(700 * self.wbPreview)
+        self:drawRectBorder(0, 0, w, h, 0.9, C.accent[1], C.accent[2], C.accent[3])
+        self:drawRectBorder(1, 1, w - 2, h - 2, 0.5, C.accent[1], C.accent[2], C.accent[3])
+        local t = tostring(math.floor(self.wbPreview * 100 + 0.5)) .. "%"
+        shadowText(self, t, w - 60, h - 40, C.accent[1], C.accent[2], C.accent[3], 1, TWAFont.medium())
+    end
+end
+
+function TWACraftWindow:resizeMove()
+    local dx = getMouseX() - self.wbResizeMX
+    local dy = getMouseY() - self.wbResizeMY
+    local s = math.max((self.wbResizeW + dx) / 1000, (self.wbResizeH + dy) / 700)
+    self.wbPreview = math.max(TWACraftUI.MIN_SCALE, math.min(TWACraftUI.maxScale(), s))
+end
+
+function TWACraftWindow:resizeEnd()
+    self.wbResizing = false
+    local s = self.wbPreview
+    self.wbPreview = nil
+    if not s or math.abs(s - self.width / 1000) < 0.01 then return end
+    if self:isBusy() then self:flashLocked("IGUI_TWA_BusyCantResize") return end
+    TWACraftUI.userScale = s
+    W.savePrefs()
+    TWACraftUI.rebuild()
+end
+
+function TWACraftWindow:onRightMouseDown(x, y)
+    if self:inGrip(x, y) and TWACraftUI.userScale then
+        if self:isBusy() then self:flashLocked("IGUI_TWA_BusyCantResize") return true end
+        TWACraftUI.userScale = nil
+        W.savePrefs()
+        TWACraftUI.rebuild()
+        return true
+    end
+    return false
+end
+
+-- ----------------------------------------------------------------- cards
+-- R70 ("หน้าต่างคราฟอยากให้มี card ภายใน แบ่งส่วนต่างๆเหมือนหน้าต่าง ehr"):
+-- every part of a page sits in a card -- a dark plate, a thin amber frame
+-- with corner marks and a title strip on top (the content starts below it,
+-- W.cardTitleH).
+W.CARD_T = 26
+function W.cardTitleH(S) return S(W.CARD_T) end
+
+function TWACraftWindow:drawCard(x, y, w, h, title)
+    local C = W.C
+    self:drawRect(x, y, w, h, 0.93, 0.052, 0.042, 0.02)
+    self:drawRectBorder(x, y, w, h, 0.75, C.borderDim[1], C.borderDim[2], C.borderDim[3])
+    local th = S(self, W.CARD_T)
+    self:drawRect(x + 1, y + 1, w - 2, th - 1, 0.55, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRect(x + 6, y + th - 1, w - 12, 1, 0.8, C.border[1], C.border[2], C.border[3])
+    -- corner marks
+    local k = S(self, 9)
+    local a, r, g, b = 0.95, C.accent[1], C.accent[2], C.accent[3]
+    for _, c in ipairs({ { x, y, 1, 1 }, { x + w, y, -1, 1 }, { x, y + h, 1, -1 }, { x + w, y + h, -1, -1 } }) do
+        local cx, cy, dx, dy = c[1], c[2], c[3], c[4]
+        self:drawRect(dx > 0 and cx or cx - k, dy > 0 and cy or cy - 2, k, 2, a, r, g, b)
+        self:drawRect(dx > 0 and cx or cx - 2, dy > 0 and cy or cy - k, 2, k, a, r, g, b)
+    end
+    if title and title ~= "" then
+        local font = TWAFont.small()
+        local fh = getTextManager():getFontHeight(font)
+        local t = TWACraftUI.fitText(title, w - 20, font)
+        self:drawRect(x + 8, y + math.floor((th - 8) / 2), 3, 8, 1, r, g, b)
+        shadowText(self, t, x + 16, y + math.floor((th - fh) / 2), r, g, b, 1, font)
+    end
+end
+
+-- behind the children (prerender): the cards of the open page
+function TWACraftWindow:drawPageCards()
+    local th = S(self, W.CARD_T)
+    local top = self.contentTop - th - 4
+    local bottom = self.panelBottom + 4
+    local page = self.page
+    if page == "browse" then
+        local lw = self.recipeList.x - 10 - 6
+        self:drawCard(4, top, lw + 4, bottom - top, getText("IGUI_TWA_Card_Filters"))
+        local lx = self.recipeList.x - 6
+        local key = self.recipeList.scope == "materials" and "IGUI_TWA_Card_MaterialList" or "IGUI_TWA_Card_WeaponList"
+        self:drawCard(lx, top, self.width - 4 - lx, bottom - top, getText(key, tostring(#self.recipeList.items)))
+    elseif page == "craft" and not self.selectedRecipe then
+        self:drawCard(4, top, self.width - 8, bottom - top, getText("IGUI_TWA_Tab_Craft"))
+    elseif page == "craft" or page == "practice" then
+        local rx = self.rightX - 4
+        local leftKey = page == "practice" and "IGUI_TWA_Card_AllProcedures" or "IGUI_TWA_Card_Recipe"
+        self:drawCard(4, top, rx - 6 - 4, bottom - top, getText(leftKey))
+        local proc = self.selectedProcId and TWAProcedures.List[self.selectedProcId]
+        local title = getText("IGUI_TWA_Card_Procedure")
+        if proc then title = title .. ": " .. getText(proc.nameKey) end
+        self:drawCard(rx, top, self.width - 4 - rx, bottom - top, title)
+    elseif page == "modify" then
+        local wpn = self:modifyTarget()
+        local title = getText("IGUI_TWA_Card_GemSockets")
+        if wpn then title = title .. ": " .. wpn:getDisplayName() end
+        self:drawCard(4, top, self.width - 8, bottom - top, title)
+    elseif page == "guide" then
+        local gw = S(self, 220)
+        self:drawCard(4, top, gw + 12, bottom - top, getText("IGUI_TWA_Card_Chapters"))
+        local i = math.max(1, math.min(#W.GUIDE, self.guidePage or 1))
+        local x = 10 + gw + S(self, 20) - 8
+        self:drawCard(x, top, self.width - 4 - x, bottom - top,
+            tostring(i) .. ". " .. getText("IGUI_TWA_Guide_" .. W.GUIDE[i].key .. "_Title"))
+    end
+end
+
 -- ----------------------------------------------------------------- mouse
 function TWACraftWindow:workbenchMouseDown(x, y)
+    if self.wbCollapsed then
+        if y < S(self, W.HEADER_H) then ISPanel.onMouseDown(self, x, y) end
+        return true
+    end
+    if self:inGrip(x, y) then
+        self.wbResizing = true
+        self.wbResizeMX, self.wbResizeMY = getMouseX(), getMouseY()
+        self.wbResizeW, self.wbResizeH = self.width, self.height
+        self.wbPreview = self.width / 1000
+        self:bringToTop()
+        return true
+    end
     for _, t in ipairs(self.tabBounds or {}) do
         if x >= t.x and x <= t.x + t.w and y >= t.y and y <= t.y + t.h then
             getSoundManager():playUISound("UISelectListItem")
@@ -471,6 +692,7 @@ function TWACraftWindow:workbenchMouseDown(x, y)
 end
 
 function TWACraftWindow:onMouseMove(dx, dy)
+    if self.wbResizing then self:resizeMove() return end
     if self.draggingVolume then
         self:volumeFromMouse(self:getMouseX())
         return
@@ -479,6 +701,7 @@ function TWACraftWindow:onMouseMove(dx, dy)
 end
 
 function TWACraftWindow:onMouseMoveOutside(dx, dy)
+    if self.wbResizing then self:resizeMove() return end
     if self.draggingVolume then
         self:volumeFromMouse(self:getMouseX())
         return
@@ -487,11 +710,13 @@ function TWACraftWindow:onMouseMoveOutside(dx, dy)
 end
 
 function TWACraftWindow:onMouseUp(x, y)
+    if self.wbResizing then self:resizeEnd() return end
     self.draggingVolume = false
     ISPanel.onMouseUp(self, x, y)
 end
 
 function TWACraftWindow:onMouseUpOutside(x, y)
+    if self.wbResizing then self:resizeEnd() return end
     self.draggingVolume = false
     ISPanel.onMouseUpOutside(self, x, y)
 end

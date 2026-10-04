@@ -62,6 +62,8 @@ if PZAPI and PZAPI.ModOptions and not O.options then
     list("uiFontSize", "size_", Z.FONTS, 1)
     -- R68: size of the craft window (Auto follows the screen height)
     list("uiWindowSize", "wsize_", { "Auto", "Normal", "Large", "XLarge" }, 1)
+    -- R70: open / close the craft window together with the vanilla one
+    tick("followVanillaCraft", true)
     tick("zhpBar", true)
     tick("zhpText", true)
     tick("zhpDamage", true)

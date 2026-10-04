@@ -3448,5 +3448,25 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 [ ] A fix that "clears" a bite/wound on one body part: check the whole-body
     state too (TOC: infection flag, mortality timer, ZOMBIE_INFECTION stat
     stayed after the part was cleaned -- HomeMedic 0.25.1).
+[ ] Putting a whole window's page inside another window (TWA 0.69.0: the
+    gem socket page in the craft window's tab 4)? Make its layout numbers
+    come from the panel's size (one layout function, set before each draw /
+    click), add an "embedded" mode (no title, no Close, not movable, the
+    owner sets the item), and check it at the smallest window size too --
+    things that fit at 1000 px overlap at 850 (shrink or shorten them).
+[ ] Window size / text size changed by the player (drag grip, A- / A+)?
+    Rebuild the window instead of moving every widget: a new window at the
+    new scale, the state carried over (started craft, tab, recipe, search,
+    filters), the old one removed WITHOUT the close logic (no hand-back).
+    Never while an action is running -- its result comes back to the old
+    window. Save the choice in a small file in Zomboid/Lua.
+[ ] Following a vanilla window you cannot read the source of (B42 crafting
+    window)? Guard every step: wrap the open function at OnGameStart (after
+    other mods replaced it), find the window by name ("Handcraft") under
+    the UI tables, and also poll a few ticks for hidden / removed -- plus
+    an option to switch the link off.
+[ ] A long text in a list row: cut each line to the room it has (by whole
+    characters -- Thai is 3 bytes a letter), place the next thing after the
+    WIDEST line, and size the row from the font (TWA 0.69.0 recipe rows).
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.
