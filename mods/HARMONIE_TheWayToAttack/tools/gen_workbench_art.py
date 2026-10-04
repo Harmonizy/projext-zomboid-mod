@@ -7,7 +7,8 @@ Writes 42/media/textures/TWA_UI/:
       the same layout as Home Medic's tab badges but in yellow;
   guide_*.png -- the pictures of the guide tab (512 x 288), simple drawn
       scenes of the window and the craft steps;
-  pin_on / pin_off .png -- the window's pin button (R70).
+  pin_on / pin_off .png -- the window's pin button (R70);
+  icon_*.png -- glyphs of the small buttons and the settings window (R71).
 All drawn here with Pillow (4x supersampled), nothing copied.
 """
 import os, math
@@ -348,9 +349,68 @@ def guide_settings():
     gdone(img, "guide_settings")
 
 
+def ui_icon(name, draw, size=64):
+    """A plain glyph for a small button (white-ish on transparent)."""
+    big = size * 4
+    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    draw(d, big / 64.0)
+    img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, name + ".png"))
+
+
+def g_close(d, s):
+    w = int(7 * s)
+    d.line([(16 * s, 16 * s), (48 * s, 48 * s)], fill=CREAM, width=w)
+    d.line([(48 * s, 16 * s), (16 * s, 48 * s)], fill=CREAM, width=w)
+
+
+def g_settings(d, s):
+    """A gear: 8 teeth round a ring."""
+    cx = cy = 32 * s
+    for i in range(8):
+        a = i * math.pi / 4
+        pts = []
+        for da, r in ((-0.22, 20), (-0.16, 27), (0.16, 27), (0.22, 20)):
+            pts.append((cx + math.cos(a + da) * r * s, cy + math.sin(a + da) * r * s))
+        d.polygon(pts, fill=CREAM)
+    d.ellipse([cx - 20 * s, cy - 20 * s, cx + 20 * s, cy + 20 * s], fill=CREAM)
+    d.ellipse([cx - 8 * s, cy - 8 * s, cx + 8 * s, cy + 8 * s], fill=(0, 0, 0, 0))
+
+
+def g_search(d, s):
+    d.ellipse([10 * s, 10 * s, 40 * s, 40 * s], outline=CREAM, width=int(6 * s))
+    d.line([(36 * s, 36 * s), (54 * s, 54 * s)], fill=CREAM, width=int(8 * s))
+
+
+def g_left(d, s):
+    d.polygon([(42 * s, 14 * s), (42 * s, 50 * s), (18 * s, 32 * s)], fill=CREAM)
+
+
+def g_right(d, s):
+    d.polygon([(22 * s, 14 * s), (22 * s, 50 * s), (46 * s, 32 * s)], fill=CREAM)
+
+
+def g_check(d, s):
+    d.line([(14 * s, 34 * s), (27 * s, 47 * s), (51 * s, 18 * s)], fill=YEL, width=int(8 * s), joint="curve")
+
+
+def g_minus(d, s):
+    d.rectangle([14 * s, 28 * s, 50 * s, 36 * s], fill=CREAM)
+
+
+def g_plus(d, s):
+    d.rectangle([14 * s, 28 * s, 50 * s, 36 * s], fill=CREAM)
+    d.rectangle([28 * s, 14 * s, 36 * s, 50 * s], fill=CREAM)
+
+
 for f in (tab_craft, tab_weapons, tab_materials, tab_modify, tab_guide, guide_open, guide_recipes, guide_flow,
           guide_minigame, guide_quality, guide_pause, guide_practice, guide_modify, guide_settings):
     f()
 pin_icon(True)
 pin_icon(False)
+# R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์"): the small buttons' glyphs
+for n, g in (("icon_close", g_close), ("icon_settings", g_settings), ("icon_search", g_search),
+             ("icon_left", g_left), ("icon_right", g_right), ("icon_check", g_check),
+             ("icon_minus", g_minus), ("icon_plus", g_plus)):
+    ui_icon(n, g)
 print("ok")

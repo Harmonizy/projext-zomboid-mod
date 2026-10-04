@@ -947,7 +947,33 @@ function EHR_HealthPanelUI:createChildren()
     self.closeButton:initialise()
     self.closeButton:instantiate()
     self.closeButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
+    -- HARMONIE R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์"): header buttons are symbols
+    local closeIcon = getTexture and getTexture("media/textures/HARMONIE_HomeMedic/icon_close.png") or nil
+    if closeIcon then
+        self.closeButton:setTitle("")
+        self.closeButton:setImage(closeIcon)
+        self.closeButton:forceImageSize(16, 16)
+    end
     self:addChild(self.closeButton)
+
+    -- HARMONIE R71: the gear -> the settings window (HM_Settings.lua)
+    self.hmSettingsBtn = ISButton:new(self.width - 120, 6, 24, 22, "", self, function()
+        if HMSettingsUI and HMSettingsUI.openHomeMedic then HMSettingsUI.openHomeMedic() end
+    end)
+    self.hmSettingsBtn:initialise()
+    self.hmSettingsBtn:instantiate()
+    self.hmSettingsBtn.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
+    self.hmSettingsBtn.backgroundColor = { r = 0.03, g = 0.06, b = 0.10, a = 0.85 }
+    self.hmSettingsBtn.backgroundColorMouseOver = { r = 0.08, g = 0.20, b = 0.36, a = 0.95 }
+    local gearIcon = getTexture and getTexture("media/textures/HARMONIE_HomeMedic/icon_settings.png") or nil
+    if gearIcon then
+        self.hmSettingsBtn:setImage(gearIcon)
+        self.hmSettingsBtn:forceImageSize(16, 16)
+    else
+        self.hmSettingsBtn:setTitle("S")
+    end
+    self.hmSettingsBtn:setTooltip(safeText("UI_HomeMedic_Set_Title", "Settings - Home Medic"))
+    self:addChild(self.hmSettingsBtn)
 
     self.expandButton = ISButton:new(self.width - 90, 6, 24, 22, "-", self, EHR_HealthPanelUI.onToggleRight)
     self.expandButton:initialise()
@@ -1787,14 +1813,26 @@ function EHR_HealthPanelUI:repositionControls()
     if self.expandButton then
         self.expandButton:setX(self.width - 90)  -- HARMONIE: -60 is the pin (HM_Pin.lua)
         self.expandButton:setY(math.floor((self.HEADER_HEIGHT - self.expandButton.height) / 2))
-        self.expandButton:setTitle(self.rightExpanded and "-" or "+")
+        -- HARMONIE R71: a minus / plus symbol
+        local sym = getTexture and getTexture("media/textures/HARMONIE_HomeMedic/" .. (self.rightExpanded and "icon_minus" or "icon_plus") .. ".png") or nil
+        if sym then
+            self.expandButton:setTitle("")
+            self.expandButton:setImage(sym)
+            self.expandButton:forceImageSize(14, 14)
+        else
+            self.expandButton:setTitle(self.rightExpanded and "-" or "+")
+        end
+    end
+    if self.hmSettingsBtn then
+        self.hmSettingsBtn:setX(self.width - 120)  -- HARMONIE R71: the gear, left of the -/+
+        self.hmSettingsBtn:setY(math.floor((self.HEADER_HEIGHT - self.hmSettingsBtn.height) / 2))
     end
     if self.antibodiesButton then
-        self.antibodiesButton:setX(self.width - 120)  -- HARMONIE: -90 is the -/+ button, -60 the pin (HM_Pin.lua)
+        self.antibodiesButton:setX(self.width - 150)  -- HARMONIE: -120 the gear, -90 the -/+ button, -60 the pin (HM_Pin.lua)
         self.antibodiesButton:setY(math.floor((self.HEADER_HEIGHT - self.antibodiesButton.height) / 2))
     end
     if self.administerMedicationButton then
-        self.administerMedicationButton:setX(self.width - 304)
+        self.administerMedicationButton:setX(self.width - 334)
         self.administerMedicationButton:setY(math.floor((self.HEADER_HEIGHT - self.administerMedicationButton.height) / 2))
     end
 end
@@ -3209,9 +3247,9 @@ function EHR_HealthPanelUI:drawHeader()
     self:drawRect(0, self.HEADER_HEIGHT - 1, self.width, 1, 0.85, c.border.r, c.border.g, c.border.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
     local titleX = 14
-    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0))
+    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0) - (self.hmSettingsBtn and 30 or 0))
     self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
-    local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0)  -- (blood type moved)
+    local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0) + (self.hmSettingsBtn and 30 or 0)  -- (blood type moved)
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
         rightReserve = rightReserve + 30
     end

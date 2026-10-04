@@ -5,7 +5,8 @@ Writes 42/media/textures/HARMONIE_HomeMedic/surg_dot.png (filled circle) and
 surg_ring.png (ring), white on transparent, antialiased, 128 px -- the games
 tint and scale them (HM_SurgeryGames.lua) -- and tab_*.png, the
 medical window's tab icons (one badge style: monitor, immunity, stats,
-diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button.
+diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button,
+and icon_*.png, the glyphs of the small buttons and the settings window (R71).
 """
 import os
 import numpy as np
@@ -184,6 +185,59 @@ TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats
         "tab_meds": tab_meds}
 
 
+# R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์ ... เพิ่มปุ่มตั้งค่า"): glyphs of the
+# small buttons and the settings window (cream; the check mark blue)
+def ui_icon(name, draw, size=64):
+    from PIL import ImageDraw
+    big = size * 4
+    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    draw(ImageDraw.Draw(img), big / 64.0)
+    img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, name + ".png"))
+
+
+def g_close(d, s):
+    w = int(7 * s)
+    d.line([(16 * s, 16 * s), (48 * s, 48 * s)], fill=CREAM, width=w)
+    d.line([(48 * s, 16 * s), (16 * s, 48 * s)], fill=CREAM, width=w)
+
+
+def g_settings(d, s):
+    import math
+    cx = cy = 32 * s
+    for i in range(8):
+        a = i * math.pi / 4
+        pts = [(cx + math.cos(a + da) * r * s, cy + math.sin(a + da) * r * s)
+               for da, r in ((-0.22, 20), (-0.16, 27), (0.16, 27), (0.22, 20))]
+        d.polygon(pts, fill=CREAM)
+    d.ellipse([cx - 20 * s, cy - 20 * s, cx + 20 * s, cy + 20 * s], fill=CREAM)
+    d.ellipse([cx - 8 * s, cy - 8 * s, cx + 8 * s, cy + 8 * s], fill=(0, 0, 0, 0))
+
+
+def g_left(d, s):
+    d.polygon([(42 * s, 14 * s), (42 * s, 50 * s), (18 * s, 32 * s)], fill=CREAM)
+
+
+def g_right(d, s):
+    d.polygon([(22 * s, 14 * s), (22 * s, 50 * s), (46 * s, 32 * s)], fill=CREAM)
+
+
+def g_check(d, s):
+    d.line([(14 * s, 34 * s), (27 * s, 47 * s), (51 * s, 18 * s)], fill=RED, width=int(8 * s), joint="curve")
+
+
+def g_minus(d, s):
+    d.rectangle([14 * s, 28 * s, 50 * s, 36 * s], fill=CREAM)
+
+
+def g_plus(d, s):
+    d.rectangle([14 * s, 28 * s, 50 * s, 36 * s], fill=CREAM)
+    d.rectangle([28 * s, 14 * s, 36 * s, 50 * s], fill=CREAM)
+
+
+ICONS = {"icon_close": g_close, "icon_settings": g_settings, "icon_left": g_left, "icon_right": g_right,
+         "icon_check": g_check, "icon_minus": g_minus, "icon_plus": g_plus}
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     disc().save(os.path.join(OUT, "surg_dot.png"))
@@ -192,4 +246,6 @@ if __name__ == "__main__":
         fn().save(os.path.join(OUT, name + ".png"))
     pin_icon(True).save(os.path.join(OUT, "pin_on.png"))
     pin_icon(False).save(os.path.join(OUT, "pin_off.png"))
+    for name, fn in ICONS.items():
+        ui_icon(name, fn)
     print("wrote", OUT)

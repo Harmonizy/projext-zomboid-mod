@@ -27,6 +27,27 @@ function O.toggleMute()
     O.setMuted(not TWASound.muted)
 end
 
+-- R71: read / change one option from code (the settings window): the value
+-- is set, the option's own change handler runs, and it is saved
+function O.get(id, default)
+    local o = O[id]
+    if o and o.getValue then
+        local ok, v = pcall(o.getValue, o)
+        if ok and v ~= nil then return v end
+    end
+    return default
+end
+
+function O.set(id, v)
+    local o = O[id]
+    if not o then return end
+    if o.setValue then pcall(o.setValue, o, v) end
+    -- a combo box keeps its choice in .selected (1-based), like getValue()
+    if type(v) == "number" and type(o.selected) == "number" then o.selected = v end
+    if o.onChangeApply then pcall(o.onChangeApply, o, v) end
+    if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
+end
+
 if PZAPI and PZAPI.ModOptions and not O.options then
     O.options = PZAPI.ModOptions:create("HARMONIE_TheWayToAttack", getText("UI_options_HARMONIE_TWA_title"))
     O.volume = O.options:addSlider("soundVolume", getText("UI_options_HARMONIE_TWA_volume"), 0, 2, 0.25, 1,
@@ -40,8 +61,18 @@ if PZAPI and PZAPI.ModOptions and not O.options then
     -- 2026-10-03: zombie health bars / HP numbers / damage numbers and how
     -- they look (HARMONIE_TWA_ZombieHP reads these itself)
     local function T(k) return getText("UI_options_HARMONIE_TWA_" .. k) end
-    local function tick(id, default) O[id] = O.options:addTickBox(id, T(id), default, T(id .. "_tooltip")) end
-    local function slider(id, lo, hi, step, default) O[id] = O.options:addSlider(id, T(id), lo, hi, step, default, T(id .. "_tooltip")) end
+    -- R71: every option is also listed in O.DEFS (in order) for the
+    -- settings window (HARMONIE_TWA_Settings)
+    O.DEFS = {}
+    local function def(d) O.DEFS[#O.DEFS + 1] = d end
+    local function tick(id, default)
+        O[id] = O.options:addTickBox(id, T(id), default, T(id .. "_tooltip"))
+        def({ id = id, kind = "tick" })
+    end
+    local function slider(id, lo, hi, step, default, keep)
+        O[id] = O.options:addSlider(id, T(id), lo, hi, step, default, T(id .. "_tooltip"))
+        if not keep then def({ id = id, kind = "slider", min = lo, max = hi, step = step }) end
+    end
     -- a list of named choices: a combo box when this game's ModOptions has
     -- one, else a numbered slider (getValue() is the 1-based index either way)
     local function list(id, prefix, keys, default)
@@ -51,10 +82,12 @@ if PZAPI and PZAPI.ModOptions and not O.options then
             if ok and box and box.addItem then
                 for i, k in ipairs(keys) do box:addItem(T(prefix .. k), i == default) end
                 O[id] = box
+                def({ id = id, kind = "choice", prefix = prefix, keys = keys })
                 return
             end
         end
-        slider(id, 1, #keys, 1, default)
+        slider(id, 1, #keys, 1, default, true)
+        def({ id = id, kind = "choice", prefix = prefix, keys = keys })
     end
     local Z = { COLORS = { "Yellow", "White", "Orange", "Red", "Green", "Cyan", "Pink", "Purple" },
         BARS = { "Health", "Red", "Green", "Blue", "Purple" }, FONTS = { "Small", "Medium", "Large" } }

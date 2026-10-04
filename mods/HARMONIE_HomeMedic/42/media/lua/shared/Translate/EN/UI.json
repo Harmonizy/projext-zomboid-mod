@@ -2792,5 +2792,15 @@
     "UI_HomeMedic_Watch_Fail_Already": "The patient already wears a powered watch.",
     "UI_HomeMedic_Watch_Fail_NoWatch": "You have no medical monitor watch with you.",
     "UI_HomeMedic_Watch_Fail_NoBattery": "Your medical watch has no battery left.",
-    "UI_HomeMedic_Watch_Fail_Invalid": "Could not put the watch on."
+    "UI_HomeMedic_Watch_Fail_Invalid": "Could not put the watch on.",
+    "UI_HomeMedic_Set_Title": "Settings - Home Medic",
+    "UI_HomeMedic_Set_Window": "Window",
+    "UI_HomeMedic_Set_Pin": "Keep the medical window open (pin)",
+    "UI_HomeMedic_Set_Pin_Tip": "Off: the medical window folds up to its title bar when the mouse leaves it, and opens again when the mouse comes back. The same as the pin in its title bar.",
+    "UI_HomeMedic_Set_ResetSize": "Window size and place",
+    "UI_HomeMedic_Set_ResetSize_Tip": "Puts the medical window back to its normal size in the middle of the screen. Drag its bottom-right corner to make it bigger or smaller.",
+    "UI_HomeMedic_Set_Reset": "Reset",
+    "UI_HomeMedic_Set_Sound": "Sound",
+    "UI_HomeMedic_Set_Vision": "Vision",
+    "UI_HomeMedic_Set_KeysNote": "Keys (medical monitor, journal and others): Options > Mods > Home Medic. Everything here is also on that page."
 }

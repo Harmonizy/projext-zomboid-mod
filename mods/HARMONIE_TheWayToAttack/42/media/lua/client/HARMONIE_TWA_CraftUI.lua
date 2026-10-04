@@ -1334,7 +1334,8 @@ function TWACraftWindow:createChildren()
     -- search button just above.
     -- Request 2026-09-28: "มีกากบาทในช่องค้นหา เพื่อล้างคำที่อยู่ในช่องค้นหา"
     -- -- a small X between the box and the Search button empties the box.
-    local searchBtnW, clearW = S(60), S(22)
+    -- R71: the clear and search buttons are symbols (square)
+    local searchBtnW, clearW = tabH, tabH
     self.searchBox = ISTextEntryBox:new("", leftX, searchY, LEFT_W - searchBtnW - clearW - 8, tabH)
     self.searchBox:initialise()
     self.searchBox:setPlaceholderText(getText("IGUI_TWA_SearchPlaceholder"))
@@ -1343,11 +1344,16 @@ function TWACraftWindow:createChildren()
     self:addChild(self.searchBox)
 
     self.searchClearButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW - clearW - 4, searchY, clearW, tabH, "X", self, TWACraftWindow.onSearchClearClicked)
+    self.searchClearButton.icon = getTexture("media/textures/TWA_UI/icon_close.png")
+    if self.searchClearButton.icon then self.searchClearButton:setTitle("") end
     self.searchClearButton:setTooltip(getText("IGUI_TWA_Tooltip_ClearSearch"))
     self.searchClearButton:initialise()
     self:addChild(self.searchClearButton)
 
     self.searchButton = TWANeatButton:new(leftX + LEFT_W - searchBtnW, searchY, searchBtnW, tabH, getText("IGUI_TWA_FindRecipes"), self, TWACraftWindow.onSearchButtonClicked)
+    self.searchButton.icon = getTexture("media/textures/TWA_UI/icon_search.png")
+    if self.searchButton.icon then self.searchButton:setTitle("") end
+    self.searchButton:setTooltip(getText("IGUI_TWA_FindRecipes"))
     self.searchButton:initialise()
     self:addChild(self.searchButton)
 
