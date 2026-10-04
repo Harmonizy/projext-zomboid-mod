@@ -425,7 +425,7 @@ function HMSettingsUI.homeMedicRows()
     }
     if compact then
         rows[#rows + 1] = { kind = "tick", label = text("UI_EHR_OpenHealthPanelCompact"), tip = text("UI_EHR_OpenHealthPanelCompact_tt"),
-            get = function() return optGet(compact, true) == true end, set = function(v) optSet(compact, v) end }
+            get = function() return optGet(compact, false) == true end, set = function(v) optSet(compact, v) end }
     end
     if O.followCharWindow then
         rows[#rows + 1] = { kind = "tick", label = T("followCharWindow"), tip = T("followCharWindow_tooltip"),

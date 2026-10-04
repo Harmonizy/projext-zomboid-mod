@@ -37,7 +37,9 @@ EHR.Keybinds.IDs = {
     TOGGLE_DEBUG = "ToggleDebugMenu",
     TOGGLE_JOURNAL = "ToggleMedicalJournal",
     PRIMARY_HEALTH_PANEL = "PrimaryHealthPanel",
-    OPEN_HEALTH_PANEL_COMPACT = "OpenHealthPanelCompact",
+    -- HARMONIE 0.26.1 ("แค่ต้องการให้เป็นแบบขยาย default"): default now OFF
+    -- (open expanded); a new id so the old saved "on" does not carry over
+    OPEN_HEALTH_PANEL_COMPACT = "OpenHealthPanelCompact2",
     SHOW_EHR_MOODLES = "ShowEHRMoodles",
 }
 
@@ -160,7 +162,7 @@ function EHR.Keybinds.Initialize(forceRefresh)
         EHR.Keybinds.IDs.OPEN_HEALTH_PANEL_COMPACT,
         "UI_EHR_OpenHealthPanelCompact",
         "Open EHR panels compact",
-        true,
+        false,
         "UI_EHR_OpenHealthPanelCompact_tt",
         "When enabled, EHR health panels open in compact mode. Disable to open them expanded."
     )
@@ -262,7 +264,7 @@ function EHR.Keybinds.IsEHRPrimaryHealthPanel()
 end
 
 function EHR.Keybinds.ShouldOpenHealthPanelCompact()
-    return EHR.Keybinds.GetOptionBoolean(EHR.Keybinds.IDs.OPEN_HEALTH_PANEL_COMPACT, true)
+    return EHR.Keybinds.GetOptionBoolean(EHR.Keybinds.IDs.OPEN_HEALTH_PANEL_COMPACT, false)
 end
 
 function EHR.Keybinds.ShouldShowMoodles()

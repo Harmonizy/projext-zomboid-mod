@@ -583,7 +583,7 @@ function EHR.UI.ShouldOpenHealthPanelCompact()
     if EHR.Keybinds and EHR.Keybinds.ShouldOpenHealthPanelCompact then
         return EHR.Keybinds.ShouldOpenHealthPanelCompact()
     end
-    return true
+    return false -- HARMONIE 0.26.1: expanded by default
 end
 
 function EHR.UI.ToggleVanillaHealthPanel(player)
