@@ -133,7 +133,7 @@ local HEALTH = {
         b:setX(panel.width - 60)
         b:setY(math.floor(((panel.HEADER_HEIGHT or 40) - b.height) / 2))
     end,
-    keep = { "closeButton", "expandButton", "antibodiesButton", "administerMedicationButton" },
+    keep = { "closeButton", "expandButton", "antibodiesButton", "administerMedicationButton", "hmSettingsBtn" },
 }
 
 local function installHealth()

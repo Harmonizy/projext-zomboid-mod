@@ -2792,5 +2792,15 @@
     "UI_HomeMedic_Watch_Fail_Already": "ผู้ป่วยสวมนาฬิกาที่มีแบตเตอรี่อยู่แล้ว",
     "UI_HomeMedic_Watch_Fail_NoWatch": "คุณไม่มีนาฬิกาตรวจสุขภาพติดตัว",
     "UI_HomeMedic_Watch_Fail_NoBattery": "นาฬิกาตรวจสุขภาพของคุณแบตเตอรี่หมด",
-    "UI_HomeMedic_Watch_Fail_Invalid": "ใส่นาฬิกาให้ไม่สำเร็จ"
+    "UI_HomeMedic_Watch_Fail_Invalid": "ใส่นาฬิกาให้ไม่สำเร็จ",
+    "UI_HomeMedic_Set_Title": "ตั้งค่า - Home Medic",
+    "UI_HomeMedic_Set_Window": "หน้าต่าง",
+    "UI_HomeMedic_Set_Pin": "ให้หน้าต่างการแพทย์เปิดค้างไว้ (ปักหมุด)",
+    "UI_HomeMedic_Set_Pin_Tip": "ปิด: หน้าต่างการแพทย์จะพับเหลือแถบหัวเมื่อเมาส์ออกจากหน้าต่าง และกางออกเมื่อเมาส์กลับมา เหมือนปุ่มหมุดที่แถบหัว",
+    "UI_HomeMedic_Set_ResetSize": "ขนาดและตำแหน่งหน้าต่าง",
+    "UI_HomeMedic_Set_ResetSize_Tip": "คืนหน้าต่างการแพทย์เป็นขนาดปกติ ไว้กลางจอ ถ้าต้องการขยาย/ย่อ ให้ลากมุมขวาล่างของหน้าต่าง",
+    "UI_HomeMedic_Set_Reset": "รีเซ็ต",
+    "UI_HomeMedic_Set_Sound": "เสียง",
+    "UI_HomeMedic_Set_Vision": "การมองเห็น",
+    "UI_HomeMedic_Set_KeysNote": "ปุ่มลัด (มอนิเตอร์การแพทย์ สมุดบันทึก ฯลฯ): Options > Mods > Home Medic ค่าทั้งหมดในหน้านี้อยู่ในหน้านั้นด้วย"
 }

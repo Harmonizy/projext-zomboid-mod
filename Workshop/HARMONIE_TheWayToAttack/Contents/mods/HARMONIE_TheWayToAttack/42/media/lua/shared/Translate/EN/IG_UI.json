@@ -568,7 +568,7 @@
     "IGUI_TWA_Guide_Modify_Title": "Gem sockets",
     "IGUI_TWA_Guide_Modify_Body": "1. Hold a finished weapon made in this mod in your main hand and open tab 4, or right-click the weapon and choose Modify Weapon (gems).\n2. Its grade decides how many sockets it has (F none, up to 5 for A and S; S also gets a special socket).\n3. Click a socket, then click a gem from the list under it, then press Modify Weapon.\n4. A gem in a normal socket stays for good (a new one replaces it and the old one is lost). The special socket's gem can be taken out again.",
     "IGUI_TWA_Guide_Settings_Title": "Settings",
-    "IGUI_TWA_Guide_Settings_Body": "1. Size: drag the window's bottom-right corner. Everything in it grows or shrinks together. Right-click that corner to go back to the size from Options.\n2. Text: A- and A+ at the top right. The pin next to them: unpinned, the window folds up to its top bar when the mouse leaves it.\n3. Sound: the volume slider at the top (all the way left = muted).\n4. Options > Mods > The Way To Attack: open together with the game's crafting window, window size, text size. The hotkey is in Options > Keybinds.",
+    "IGUI_TWA_Guide_Settings_Body": "1. The gear at the top right opens the settings: text size, window size, the pin, opening with the game's crafting window, sound volume and the zombie health display. Each change works at once.\n2. Size: you can also drag the window's bottom-right corner. Right-click that corner to go back to the size from the settings.\n3. The pin next to the gear: unpinned, the window folds up to its top bar when the mouse leaves it.\n4. The same settings are in Options > Mods > The Way To Attack; the hotkey is in Options > Keybinds.",
     "IGUI_TWA_Card_Filters": "Filters",
     "IGUI_TWA_Card_WeaponList": "Weapon recipes (%1)",
     "IGUI_TWA_Card_MaterialList": "Material recipes (%1)",
@@ -581,5 +581,17 @@
     "IGUI_TWA_TextSmaller": "Smaller text",
     "IGUI_TWA_Pin": "Pin: keep the window open",
     "IGUI_TWA_Unpin": "Unpin: fold up to the header when the mouse leaves",
-    "IGUI_TWA_BusyCantResize": "Wait until the current action is done"
+    "IGUI_TWA_BusyCantResize": "Wait until the current action is done",
+    "IGUI_TWA_Set_Title": "Settings - The Way To Attack",
+    "IGUI_TWA_Set_Window": "Window",
+    "IGUI_TWA_Set_TextSize": "Text size",
+    "IGUI_TWA_Set_TextSize_Tip": "Text of this mod's windows. Bigger windows also bring bigger text; this goes one step up or down from that.",
+    "IGUI_TWA_Set_WindowSize_Tip": "Size of the craft window. Auto grows it on big screens. Dragging the window's bottom-right corner sets your own size (shown as Custom); picking one here goes back to these sizes.",
+    "IGUI_TWA_Set_CustomSize": "Custom %1%",
+    "IGUI_TWA_Set_Pin": "Keep the window open (pin)",
+    "IGUI_TWA_Set_Pin_Tip": "Off: the craft window folds up to its top bar when the mouse leaves it, and opens again when the mouse comes back.",
+    "IGUI_TWA_Set_Sound": "Sound",
+    "IGUI_TWA_Set_Volume_Tip": "Volume of this mod's sounds. All the way left = muted.",
+    "IGUI_TWA_Set_ZombieHP": "Zombie health display",
+    "IGUI_TWA_Set_KeysNote": "Keys (open the craft window and others): Options > Keybinds. Everything here is also in Options > Mods > The Way To Attack."
 }

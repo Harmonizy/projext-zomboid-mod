@@ -3468,5 +3468,17 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 [ ] A long text in a list row: cut each line to the room it has (by whole
     characters -- Thai is 3 bytes a letter), place the next thing after the
     WIDEST line, and size the row from the font (TWA 0.69.0 recipe rows).
+[ ] Small header / tool buttons: a symbol (our own icon PNG), not a word
+    or "A+" / "X" text -- a tooltip says what it does (R71, both mods).
+[ ] A settings window for a mod: one generic window (rows: section, tick,
+    slider, choice, step, button, note) drawn by hand, the rows built once
+    per open, each row's get() read live; a change = option:setValue +
+    its onChangeApply + PZAPI.ModOptions:save, so it is the same value as
+    Options > Mods (TWA HARMONIE_TWA_Settings, Home Medic HM_Settings --
+    the same code in each mod's colours). Keep any per-row geometry the
+    mouse needs (slider bar) on the cached row, not on a rebuilt one.
+[ ] Text size in an old window with hand-placed text (EHR): do not just
+    swap the fonts -- everything overlaps. Re-layout first, or leave it out
+    and say so.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.

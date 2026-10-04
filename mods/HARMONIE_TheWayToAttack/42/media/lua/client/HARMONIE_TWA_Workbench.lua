@@ -102,25 +102,26 @@ function TWACraftWindow:createWorkbenchChildren(contentTop, panelBottom)
     local w = self.width
     -- close (top right)
     local cs = S(self, 26)
-    self.closeX = TWANeatButton:new(w - cs - 8, math.floor((S(self, W.HEADER_H) - cs) / 2), cs, cs, "X", self, TWACraftWindow.close)
+    self.closeX = TWANeatButton:new(w - cs - 8, math.floor((S(self, W.HEADER_H) - cs) / 2), cs, cs, "", self, TWACraftWindow.close)
     self.closeX.neatTint = { r = 0.9, g = 0.35, b = 0.25 }
+    -- R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์"): symbols, not words
+    self.closeX.icon = texture("media/textures/TWA_UI/icon_close.png")
+    if not self.closeX.icon then self.closeX:setTitle("X") end
     self.closeX:initialise()
     self:addChild(self.closeX)
-    -- R70 ("ปรับขนาดหน้าต่าง และตัวอักษร pin unpin ได้เหมือน ehr"): pin,
-    -- A+ / A- (text size) left of the X; the size grip is the bottom-right
-    -- corner (drawn in drawWorkbenchOverlay)
+    -- R70: the pin left of the X; the size grip is the bottom-right corner
+    -- (drawn in drawWorkbenchOverlay). R71: the gear (settings window: text
+    -- size, window size, sound, zombie health display...) replaces A- / A+.
     local hy = self.closeX.y
     self.pinBtn = TWANeatButton:new(self.closeX.x - cs - 6, hy, cs, cs, "", self, function(win) win:togglePin() end)
     self.pinBtn:initialise()
     self:addChild(self.pinBtn)
-    self.textPlus = TWANeatButton:new(self.pinBtn.x - cs - 10, hy, cs, cs, "A+", self, function(win) win:changeTextSize(1) end)
-    self.textPlus:setTooltip(getText("IGUI_TWA_TextBigger"))
-    self.textPlus:initialise()
-    self:addChild(self.textPlus)
-    self.textMinus = TWANeatButton:new(self.textPlus.x - cs - 4, hy, cs, cs, "A-", self, function(win) win:changeTextSize(-1) end)
-    self.textMinus:setTooltip(getText("IGUI_TWA_TextSmaller"))
-    self.textMinus:initialise()
-    self:addChild(self.textMinus)
+    self.settingsBtn = TWANeatButton:new(self.pinBtn.x - cs - 6, hy, cs, cs, "", self, function() W.openSettings() end)
+    self.settingsBtn.icon = texture("media/textures/TWA_UI/icon_settings.png")
+    if not self.settingsBtn.icon then self.settingsBtn:setTitle("S") end
+    self.settingsBtn:setTooltip(getText("IGUI_TWA_Set_Title"))
+    self.settingsBtn:initialise()
+    self:addChild(self.settingsBtn)
     self:refreshHeaderButtons()
 
     -- tab 1 without a recipe: to tab 2 / tab 3
@@ -213,7 +214,7 @@ function TWACraftWindow:volumeRect()
     local h = S(self, W.HEADER_H)
     local sw = S(self, 150)
     -- room right of the bar for "100%" / "Muted" before the header buttons
-    local left = self.textMinus or self.closeX
+    local left = self.settingsBtn or self.closeX
     local x = left and (left.x - sw - S(self, 76)) or (self.width - sw - 100)
     return x, math.floor(h / 2) - 4, sw, 8
 end
@@ -446,11 +447,6 @@ function TWACraftWindow:refreshHeaderButtons()
         if not self.pinBtn.icon then self.pinBtn:setTitle(W.pinned and "P" or "U") end
         self.pinBtn:setTooltip(getText(W.pinned and "IGUI_TWA_Unpin" or "IGUI_TWA_Pin"))
     end
-    if self.textPlus then
-        local raw = TWAFont.rawLevel()
-        self.textPlus.enable = raw < (TWAFont.LEVELS or 3)
-        self.textMinus.enable = raw > 1
-    end
 end
 
 -- busy: a procedure, a center action or a practice is running -- the window
@@ -459,13 +455,29 @@ function TWACraftWindow:isBusy()
     return self.activeProcId ~= nil or self.activeCenterAction ~= nil or self.practicing and true or false
 end
 
-function TWACraftWindow:changeTextSize(d)
+function TWACraftWindow:changeTextSize(d) return W.stepText(d) end
+
+-- R71: the window built again after a size / text change (when it is open
+-- and not busy); the settings window stays on top
+function W.relayout()
+    local win = TWACraftUI.window
+    if not win then return true end
+    if win:isBusy() then win:flashLocked("IGUI_TWA_BusyCantResize") return false end
+    TWACraftUI.rebuild()
+    if TWASettingsUI and TWASettingsUI.instance then TWASettingsUI.instance:bringToTop() end
+    return true
+end
+
+-- one text step up / down (Small..Large, on top of the window's own bump)
+function W.stepText(d)
+    W.ensurePrefs()
     local raw = TWAFont.rawLevel()
-    if (d > 0 and raw >= (TWAFont.LEVELS or 3)) or (d < 0 and raw <= 1) then return end
-    if self:isBusy() then self:flashLocked("IGUI_TWA_BusyCantResize") return end
+    if (d > 0 and raw >= (TWAFont.LEVELS or 3)) or (d < 0 and raw <= 1) then return false end
+    local win = TWACraftUI.window
+    if win and win:isBusy() then win:flashLocked("IGUI_TWA_BusyCantResize") return false end
     TWAFont.userStep = math.max(-4, math.min(4, (TWAFont.userStep or 0) + d))
     W.savePrefs()
-    TWACraftUI.rebuild()
+    return W.relayout()
 end
 
 -- pin / unpin: unpinned, the window folds up to its header a moment after
@@ -479,7 +491,7 @@ function TWACraftWindow:togglePin()
     W.savePrefs()
 end
 
-local HEADER_KEEP = { "closeX", "pinBtn", "textPlus", "textMinus" }
+local HEADER_KEEP = { "closeX", "pinBtn", "settingsBtn" }
 function TWACraftWindow:wbCollapse()
     if self.wbCollapsed then return end
     local keep = {}
@@ -582,6 +594,81 @@ function TWACraftWindow:onRightMouseDown(x, y)
         return true
     end
     return false
+end
+
+-- ----------------------------------------------------------------- settings
+-- R71: the rows of the settings window (HARMONIE_TWA_Settings)
+local SIZE_NAMES = { "Small", "Medium", "Large" }
+function W.settingsRows()
+    W.ensurePrefs()
+    local O = TWAOptions or {}
+    local function T(k) return getText("UI_options_HARMONIE_TWA_" .. k) end
+    local function oget(id, d) return O.get and O.get(id, d) or d end
+    local function oset(id, v) if O.set then O.set(id, v) end end
+    local rows = {
+        { kind = "section", label = getText("IGUI_TWA_Set_Window") },
+        { kind = "step", label = getText("IGUI_TWA_Set_TextSize"), tip = getText("IGUI_TWA_Set_TextSize_Tip"),
+            text = function() return T("size_" .. SIZE_NAMES[TWAFont.level()]) end,
+            minus = function() W.stepText(-1) end, plus = function() W.stepText(1) end },
+        { kind = "choice", label = T("uiWindowSize"), tip = getText("IGUI_TWA_Set_WindowSize_Tip"),
+            values = { T("wsize_Auto"), T("wsize_Normal"), T("wsize_Large"), T("wsize_XLarge") },
+            get = function()
+                if TWACraftUI.userScale then return 0 end
+                return math.floor(tonumber(oget("uiWindowSize", 1)) or 1)
+            end,
+            text = function() return getText("IGUI_TWA_Set_CustomSize", tostring(math.floor((TWACraftUI.userScale or 1) * 100 + 0.5))) end,
+            set = function(i)
+                TWACraftUI.userScale = nil
+                oset("uiWindowSize", i)
+                W.savePrefs()
+                W.relayout()
+            end },
+        { kind = "tick", label = getText("IGUI_TWA_Set_Pin"), tip = getText("IGUI_TWA_Set_Pin_Tip"),
+            get = function() return W.pinned end,
+            set = function(v)
+                if v == W.pinned then return end
+                local win = TWACraftUI.window
+                if win then win:togglePin() else W.pinned = v; W.savePrefs() end
+            end },
+        { kind = "tick", label = T("followVanillaCraft"), tip = T("followVanillaCraft_tooltip"),
+            get = function() return oget("followVanillaCraft", true) == true end,
+            set = function(v) oset("followVanillaCraft", v) end },
+        { kind = "section", label = getText("IGUI_TWA_Set_Sound") },
+        { kind = "slider", label = T("volume"), tip = getText("IGUI_TWA_Set_Volume_Tip"), min = 0, max = 2, step = 0.25,
+            get = W.volume, set = W.setVolume,
+            fmt = function(v) return v <= 0 and getText("IGUI_TWA_VolumeMuted") or (tostring(math.floor(v * 100 + 0.5)) .. "%") end },
+        { kind = "section", label = getText("IGUI_TWA_Set_ZombieHP") },
+    }
+    for _, d in ipairs(O.DEFS or {}) do
+        if d.id:sub(1, 3) == "zhp" then
+            local id = d.id
+            local r = { label = T(id), tip = T(id .. "_tooltip") }
+            if d.kind == "tick" then
+                r.kind = "tick"
+                r.get = function() return oget(id, false) == true end
+                r.set = function(v) oset(id, v) end
+            elseif d.kind == "slider" then
+                r.kind, r.min, r.max, r.step = "slider", d.min, d.max, d.step
+                r.get = function() return tonumber(oget(id, d.min)) or d.min end
+                r.set = function(v) oset(id, v) end
+                r.fmt = function(v) return tostring(math.floor(v + 0.5)) end
+            else
+                r.kind = "choice"
+                r.values = {}
+                for i, k in ipairs(d.keys) do r.values[i] = T(d.prefix .. k) end
+                r.get = function() return math.floor(tonumber(oget(id, 1)) or 1) end
+                r.set = function(i) oset(id, i) end
+            end
+            rows[#rows + 1] = r
+        end
+    end
+    rows[#rows + 1] = { kind = "note", label = getText("IGUI_TWA_Set_KeysNote") }
+    return rows
+end
+
+function W.openSettings()
+    if not TWASettingsUI then return end
+    TWASettingsUI.open(getText("IGUI_TWA_Set_Title"), W.settingsRows)
 end
 
 -- ----------------------------------------------------------------- cards
