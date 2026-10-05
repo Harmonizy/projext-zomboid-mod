@@ -13,6 +13,27 @@ older versions are not tracked here any more (see git history if ever
 needed).
 
 ==============================================================================
+2026-10-05 (TWA 0.71.0, R74/R75) SKILL LEVELS LOWERED -- the numbers in the
+per-procedure list below are the OLD ones for these; the code is the truth
+==============================================================================
+First pass ("ผลรวมสกิลทั้งสายไม่เกิน 9"), then the levels the user set:
+  bars (Blacksmith): CoolCast 1, ForgeShape 2, ForgeFold 4, ForgeComplex 6,
+                     ForgeVacuum 8 (were 2/4/6/8/10);
+                     GrindMetal Glassmaking 1, WeldWorkComplex MetalWelding 1
+  weapons:           AnnealMetal, MakeRivetedHandle Blacksmith 1 (were 4);
+                     MakeLongHandle, StropLeather Carving 1; TaperPoint
+                     FlintKnapping 1 (were 2)
+  gems (Glassmaking): Sawing, Preforming 1, Faceting 2, Polishing 4,
+                     FineCutting 6, QualityControl 8 (were 2/2/4/6/8/10)
+Times follow level * 10 + 10 for weapon / bar procedures; the gem procedures
+keep their hand-set times. Whole chain now: legendary weapon 13 at most
+(Blacksmith 8 + five level-1 skills), gem chain Glassmaking 8.
+R75: every level the crafter has above a recipe's needs (per skill the
+highest level its procedures ask for, summed over the skills) lowers the
+average needed for an Excellent overall quality by 0.05 (TWACraftState
+EXCELLENT_PER_LEVEL; GoodBelow 2.9 -> 2.85 ..., never below BadBelow).
+
+==============================================================================
 CURRENT LIBRARY -- 57 procedures, 10 categories, in real display order
 ==============================================================================
 Every procedure's `time` below is now DERIVED, not hand-picked (request

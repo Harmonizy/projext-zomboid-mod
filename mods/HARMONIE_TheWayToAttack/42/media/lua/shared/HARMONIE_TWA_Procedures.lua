@@ -435,7 +435,7 @@ TWAProcedures.List = {
     StropLeather = {
         category = "Sharpness", nameKey = "IGUI_TWA_Proc_StropLeather", icon = "FleshingTool",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets", "Base.DenimStrips" }, qty = 1 } }, skill = "Carving:2", time = 30, sound = "TWA_Whetstone",
+        consumes = { { itemTypes = { "Base.LeatherStrips", "Base.RippedSheets", "Base.DenimStrips" }, qty = 1 } }, skill = "Carving:1", time = 20, sound = "TWA_Whetstone",
     },
     -- PrecisionGrind removed entirely (request 2026-09-28: "เอากรรมวิธี
     -- เจียระไนออก แล้วเอาชุบแข็งไปแทนในเงื่อนไขเจียระไนนั้นๆ") -- QuenchHarden
@@ -481,7 +481,7 @@ TWAProcedures.List = {
     TaperPoint = {
         category = "Piercing", nameKey = "IGUI_TWA_Proc_TaperPoint", icon = "SpearHead_Crude01",
         tool = { { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.SmallFileSet" } },
-        consumes = {}, skill = "FlintKnapping:2", time = 30, sound = "TWA_Whetstone",
+        consumes = {}, skill = "FlintKnapping:1", time = 20, sound = "TWA_Whetstone",
     },
 
     -- ===== Handle (ติดตั้งด้าม) -- by MaxRange =====
@@ -506,7 +506,7 @@ TWAProcedures.List = {
     MakeLongHandle = {
         category = "Handle", nameKey = "IGUI_TWA_Proc_MakeLongHandle", icon = "LongHandle",
         tool = { kind = "tag", value = "SHARP_KNIFE" },
-        consumes = { { itemTypes = { "Base.LongHandle", "Base.LongStick" }, qty = 1 } }, skill = "Carving:2", time = 30, sound = "TWA_Carve",
+        consumes = { { itemTypes = { "Base.LongHandle", "Base.LongStick" }, qty = 1 } }, skill = "Carving:1", time = 20, sound = "TWA_Carve",
     },
     -- Material changed (request 2026-09-28: "พันยึดแน่นหนา ให้ใช้แค่เอ็น
     -- ตกปลาหรือเอ็นสัตว์แทน สกิลเหมือนเดิม") -- real vanilla items
@@ -529,7 +529,7 @@ TWAProcedures.List = {
     MakeRivetedHandle = {
         category = "Handle", nameKey = "IGUI_TWA_Proc_MakeRivetedHandle", icon = "MetalTube",
         consumes = { { itemTypes = { "Base.LongHandle", "Base.LongStick" }, qty = 1 }, { itemTypes = { "Base.MetalPipe", "Base.SteelBarHalf" }, qty = 1 } },
-        skill = "Blacksmith:4", time = 50, sound = "TWA_Hammer",
+        skill = "Blacksmith:1", time = 20, sound = "TWA_Hammer",
     },
     -- Qty trimmed 2->1 (request 2026-09-28: "ขันน๊อต...ให้ใช้น็อต 1 อัน" --
     -- also fixed the Thai spelling "ขันน๊อต"->"ขันน็อต" in the translation).
@@ -863,7 +863,7 @@ TWAProcedures.List = {
     CoolCast = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_CoolCast", icon = "CeramicCast_Bar_Unfired",
         tool = { kind = "type", value = "Base.Tongs" },
-        skill = "Blacksmith:2", forgeTier = 1, time = 30, sound = "TWA_Craft",
+        skill = "Blacksmith:1", forgeTier = 1, time = 20, sound = "TWA_Craft",
     },
     -- Moved to its own new "Density" category (request 2026-09-28: "ย้ายชุบ
     -- แข็ง อบเย็น ไปหมวดใหม่ สร้างความหนาแน่น ให้อยู่ถัดจากหมวดสร้างความ
@@ -884,7 +884,7 @@ TWAProcedures.List = {
     WeldWorkComplex = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_WeldWorkComplex", icon = "WeldingRods",
         tool = { kind = "tag", value = "WELDING_MASK" }, tool2 = { kind = "type", value = "Base.BlowTorch" },
-        consumes = { { itemTypes = SCRAP_METALS, qty = 2 } }, skill = "MetalWelding:2", time = 30, sound = "TWA_Weld",
+        consumes = { { itemTypes = SCRAP_METALS, qty = 2 } }, skill = "MetalWelding:1", time = 20, sound = "TWA_Weld",
     },
     -- Icon changed (request 2026-09-28) -- user gave "File" (the item's own
     -- type name, Base.File, already used elsewhere in this file as a
@@ -925,39 +925,39 @@ TWAProcedures.List = {
     GemSawing = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemSawing", icon = "TWA_Ruby",
         tool = { kind = "tag", value = "SAW" },
-        consumes = {}, skill = "Glassmaking:2", time = 30, sound = "TWA_Saw",
+        consumes = {}, skill = "Glassmaking:1", time = 30, sound = "TWA_Saw",
     },
     GemPreforming = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemPreforming", icon = "TWA_Emerald",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" } },
-        consumes = {}, skill = "Glassmaking:2", time = 30, sound = "TWA_Grind",
+        consumes = {}, skill = "Glassmaking:1", time = 30, sound = "TWA_Grind",
     },
     GemFaceting = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemFaceting", icon = "TWA_Topaz",
         tool = { { kind = "type", value = "Base.SmallFileSet" }, { kind = "type", value = "Base.File" } },
-        consumes = {}, skill = "Glassmaking:4", time = 40, sound = "TWA_Grind",
+        consumes = {}, skill = "Glassmaking:2", time = 40, sound = "TWA_Grind",
     },
     GemPolishing = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemPolishing", icon = "TWA_Opal",
         tool = { kind = "type", value = "Base.Whetstone" },
         consumes = { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips", "Base.LeatherStrips" }, qty = 1 } },
-        skill = "Glassmaking:6", time = 30, sound = "TWA_Whetstone",
+        skill = "Glassmaking:4", time = 30, sound = "TWA_Whetstone",
     },
     GemFineCutting = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemFineCutting", icon = "TWA_Tanzanite",
         tool = { kind = "type", value = "Base.SmallFileSet" },
-        consumes = {}, skill = "Glassmaking:8", time = 40, sound = "TWA_Grind",
+        consumes = {}, skill = "Glassmaking:6", time = 40, sound = "TWA_Grind",
     },
     GemQualityControl = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemQualityControl", icon = "TWA_Alexandrite",
-        consumes = {}, skill = "Glassmaking:10", time = 20, sound = "TWA_Craft",
+        consumes = {}, skill = "Glassmaking:8", time = 20, sound = "TWA_Craft",
     },
     -- Icon changed to "StoneWheel" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
     GrindMetal = {
         category = "Metallurgy", nameKey = "IGUI_TWA_Proc_GrindMetal", icon = "StoneWheel",
         tool = { { kind = "type", value = "Base.Whetstone" }, { kind = "type", value = "Base.File" }, { kind = "type", value = "Base.SmallFileSet" } },
-        skill = "Glassmaking:2", time = 30, sound = "TWA_Craft",
+        skill = "Glassmaking:1", time = 20, sound = "TWA_Craft",
     },
     -- Icon changed to "KnifeSushi" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
@@ -993,7 +993,7 @@ TWAProcedures.List = {
             { kind = "type", value = "Base.HammerStone" }, { kind = "type", value = "Base.Stone2" },
         },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:4", forgeTier = 2, time = 50, sound = "TWA_Hammer",
+        skill = "Blacksmith:2", forgeTier = 2, time = 30, sound = "TWA_Hammer",
     },
     -- New procedure (request 2026-09-28): "ขั้น 4 ให้ใช้ อบเย็น แทน
     -- ตีขึ้นรูป ใช้สกิล blacksmith 4 ใช้คีมจับเหล็ก ต้องการเตาตีเหล็กธรรมดา
@@ -1009,7 +1009,7 @@ TWAProcedures.List = {
     AnnealMetal = {
         category = "Density", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "SteelMold_Ingot",
         tool = { kind = "type", value = "Base.Tongs" },
-        skill = "Blacksmith:4", forgeTier = 2, time = 50, sound = "TWA_Craft",
+        skill = "Blacksmith:1", forgeTier = 2, time = 20, sound = "TWA_Craft",
     },
     -- Icon changed (request 2026-09-28, follow-up) -- user gave
     -- "BallPeenHammer" (the item's own type name); its real Icon field is
@@ -1023,7 +1023,7 @@ TWAProcedures.List = {
         },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:6", forgeTier = 2, time = 70, sound = "TWA_Hammer",
+        skill = "Blacksmith:4", forgeTier = 2, time = 50, sound = "TWA_Hammer",
     },
     -- Icon changed to "SmithingHammer" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
@@ -1035,7 +1035,7 @@ TWAProcedures.List = {
         },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 3 } },
-        skill = "Blacksmith:8", forgeTier = 3, time = 90, sound = "TWA_Hammer",
+        skill = "Blacksmith:6", forgeTier = 3, time = 70, sound = "TWA_Hammer",
     },
     -- Icon changed (request 2026-09-28) -- user gave "SledgeHammer"; the
     -- real item is Base.Sledgehammer (lowercase h), whose real Icon field
@@ -1049,7 +1049,7 @@ TWAProcedures.List = {
         },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 4 } },
-        skill = "Blacksmith:10", forgeTier = 3, time = 110, sound = "TWA_Hammer",
+        skill = "Blacksmith:8", forgeTier = 3, time = 90, sound = "TWA_Hammer",
     },
 }
 

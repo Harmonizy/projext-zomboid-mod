@@ -9,3 +9,41 @@ option HARMONIE_SVU3PartWear.ProtectionDamageMultiplier
     page = HARMONIE_SVU3PartWear,
     translation = HARMONIE_ProtectionDamageMultiplier,
 }
+
+option HARMONIE_SVU3PartWear.MaxInstallSkillTotal
+{
+    type = integer,
+    default = 14,
+    min = 1,
+    max = 30,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_MaxInstallSkillTotal,
+}
+
+option HARMONIE_SVU3PartWear.VehicleTierScaling
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_VehicleTierScaling,
+}
+
+option HARMONIE_SVU3PartWear.VehicleTierCount
+{
+    type = integer,
+    default = 3,
+    min = 1,
+    max = 10,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_VehicleTierCount,
+}
+
+option HARMONIE_SVU3PartWear.VehicleTierLowestPercent
+{
+    type = integer,
+    default = 50,
+    min = 10,
+    max = 100,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_VehicleTierLowestPercent,
+}

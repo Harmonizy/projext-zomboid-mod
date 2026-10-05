@@ -50,9 +50,9 @@ function TWA_FinishCraftAction:isValid()
     -- by it; a multiplayer client only has the words it was handed.
     if isServer() or not isClient() then
         local act = S.getActive(self.character)
-        return act ~= nil and act.recipeId == self.recipeId and (S.canFinish(self.recipe, act.map))
+        return act ~= nil and act.recipeId == self.recipeId and (S.canFinish(self.recipe, act.map, self.character))
     end
-    return (S.canFinish(self.recipe, self.qmap))
+    return (S.canFinish(self.recipe, self.qmap, self.character))
 end
 
 -- Round 12: the workshop sound, replayed while the bar runs (client only).
@@ -114,7 +114,7 @@ function TWA_FinishCraftAction:complete()
     -- The base items were already taken at Start; the words come from the
     -- authoritative active-craft record, never from the client.
     local act = S.getActive(self.character)
-    if not act or act.recipeId ~= self.recipeId or not S.canFinish(recipe, act.map) then return false end
+    if not act or act.recipeId ~= self.recipeId or not S.canFinish(recipe, act.map, self.character) then return false end
     local map = act.map
     S.clearActive(self.character)
 
@@ -124,7 +124,7 @@ function TWA_FinishCraftAction:complete()
     if recipe.keepType then
         local snap = act.base
         if not snap or not snap.type then return false end
-        local word = S.overall(recipe, map) or "Bad"
+        local word = S.overall(recipe, map, self.character) or "Bad"
         if ZombRand(100) < S.gemBreakChance(word) then
             S.reportRefine(self.character, self.token, true, snap.type, snap.md and snap.md.TWA_GemState)
             return true
@@ -143,7 +143,7 @@ function TWA_FinishCraftAction:complete()
     -- Round 16: a rolling recipe (Gemstone) gives what the roll picked.
     local rolled = S.isRollRecipe(recipe)
     -- Round 17: the better the overall quality, the likelier a gem.
-    local rollWord = rolled and (S.overall(recipe, map) or "Bad") or nil
+    local rollWord = rolled and (S.overall(recipe, map, self.character) or "Bad") or nil
     local newItem = inv:AddItem(rolled and S.rollGemstone(recipe, nil, rollWord) or recipe.result)
     if newItem then
         -- Stamped BEFORE the item is sent to the client, so it arrives with
@@ -166,7 +166,7 @@ function TWA_FinishCraftAction:complete()
                 .. " -> " .. tostring(newItem:getFullType()))
         end
         if not S.isMaterialRecipe(recipe) and not rolled then
-            local word = S.overall(recipe, map) or S.LEGACY_WORD
+            local word = S.overall(recipe, map, self.character) or S.LEGACY_WORD
             md.TWA_Quality = word
             md.TWA_Grade = S.rollGrade(word)
         end

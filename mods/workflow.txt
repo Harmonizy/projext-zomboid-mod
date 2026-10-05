@@ -3480,5 +3480,12 @@ tests of CraftState/actions/minigame. Much better than brace counting (see
 [ ] Text size in an old window with hand-placed text (EHR): do not just
     swap the fonts -- everything overlaps. Re-layout first, or leave it out
     and say so.
+[ ] Changing what a recipe "needs" (skill levels): count the WHOLE chain
+    -- the weapon's procedures plus the material bar it takes (base /
+    base2), per skill the highest level, summed -- a script over
+    TWARecipeData + TWAProcedures prints it; show the user the totals
+    when they pick levels (TWA 0.71.0: legendary 13, gems 8). Procedure time follows
+    level * 10 + 10 (gem procedures: hand-set). Tests that hard-code a
+    level (minigame speed) change with it.
 [ ] Done? Commit + push (section 8.1) and tell the user which mods need
     re-publishing on Workshop.
