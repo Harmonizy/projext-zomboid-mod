@@ -19,6 +19,7 @@
 require "HARMONIEGardenToPlate/HARMONIE_KeybindManager"
 require "HARMONIEGardenToPlate/HARMONIE_NutritionUI"
 require "HARMONIEGardenToPlate/HARMONIE_AdminPanel"
+require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 
@@ -75,6 +76,8 @@ local function onKeyPressed(key)
     if key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION) then
         local target = findNearestOtherPlayer(playerObj) or playerObj
         HARMONIE_NutritionUI.Open(target, playerObj)
+    elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE) then
+        GTPGuide.toggle(playerObj)
     elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL) then
         if isAdmin() or getDebug() then
             local target = findNearestOtherPlayer(playerObj) or playerObj

@@ -31,11 +31,14 @@ local MOD_NAME = "HARMONIE: Garden to Plate"
 HARMONIE_GTP.Keybinds.IDs = {
     ASSESS_NUTRITION = "AssessNutritionKey",
     OPEN_ADMIN_PANEL = "OpenAdminPanel",
+    -- 2026-10-05: the vitamin guide window (HARMONIE_VitaminGuide.lua)
+    OPEN_GUIDE = "OpenVitaminGuide",
 }
 
 local DEFAULT_KEYS = {
     [HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION] = 0, -- none: the player picks one
     [HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL] = 53, -- Keyboard.KEY_SLASH ("/")
+    [HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE] = 0, -- none: the player picks one
 }
 
 HARMONIE_GTP.Keybinds.initialized = false
@@ -88,6 +91,18 @@ function HARMONIE_GTP.Keybinds.Initialize()
         DEFAULT_KEYS[HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL],
         "IGUI_HARMONIE_KeybindAdmin_tt", "Admin/debug only: opens the live vitamin + sandbox tuning panel. Bound to / by default."
     )
+    ensureKeyBind(
+        HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE,
+        "IGUI_GTPG_KeybindGuide", "Open Vitamin Guide",
+        DEFAULT_KEYS[HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE],
+        "IGUI_GTPG_KeybindGuide_tt", "Opens / closes the vitamin guide window. No key by default: pick one here."
+    )
+    -- the guide opens / closes with the Nutritional Assessment window
+    local mo = HARMONIE_GTP.Keybinds.modOptions
+    if mo and mo.addTickBox and not mo:getOption("GuideWithAssessment") then
+        mo:addTickBox("GuideWithAssessment", optionText("IGUI_GTPG_OptFollow", "Open the vitamin guide with the assessment"),
+            true, optionText("IGUI_GTPG_OptFollow_tt", "The vitamin guide window opens beside the Nutritional Assessment window and closes with it."))
+    end
 
     HARMONIE_GTP.Keybinds.initialized = true
 end
