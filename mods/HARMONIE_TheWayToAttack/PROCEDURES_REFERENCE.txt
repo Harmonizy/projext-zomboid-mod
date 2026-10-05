@@ -13,6 +13,29 @@ older versions are not tracked here any more (see git history if ever
 needed).
 
 ==============================================================================
+2026-10-05 (TWA 0.71.0, R74) SKILL LEVELS LOWERED -- the numbers below in
+the per-procedure list are the OLD ones for these 18; the code is the truth
+==============================================================================
+Request: "การทำอาวุธถึง legendary หรือตีบวกมณี ไม่ใช้ระดับสกิลผลรวมจนเกิน
+อย่างละ 9" -- the SUM of the highest level of every skill a whole chain needs
+(the weapon's procedures + its material bar's) is at most 9; the same for the
+gem chain (Raw -> Pure). Before: worst weapon chain 18 (Blacksmith 8-10 +
+6 more skills), gem chain 10 (Glassmaking 10).
+  weapons:  AnnealMetal, MakeRivetedHandle  Blacksmith 4 -> 2
+            MakeLongHandle, StropLeather    Carving 2 -> 1
+            TaperPoint                      FlintKnapping 2 -> 1
+  bars:     CoolCast 2 -> 1, ForgeShape 4 -> 2, ForgeFold 6 -> 3,
+            ForgeComplex 8 -> 3, ForgeVacuum 10 -> 4 (Blacksmith);
+            GrindMetal Glassmaking 2 -> 1; WeldWorkComplex MetalWelding 2 -> 1
+  gems:     GemSawing, GemPreforming 2 -> 1, GemFaceting 4 -> 3,
+            GemPolishing 6 -> 5, GemFineCutting 8 -> 7, GemQualityControl 10 -> 9
+Times follow the rule (level * 10 + 10) for the weapon / bar procedures; the
+gem procedures keep their hand-set times. Result: worst chain 9 (e.g. a
+legendary double-bit axe: Blacksmith 4, Carving 1, FlintKnapping 1,
+Glassmaking 1, MetalWelding 1, Woodwork 1), gem chain 9 (Glassmaking 9).
+A new procedure must keep every chain at 9 or less.
+
+==============================================================================
 CURRENT LIBRARY -- 57 procedures, 10 categories, in real display order
 ==============================================================================
 Every procedure's `time` below is now DERIVED, not hand-picked (request
