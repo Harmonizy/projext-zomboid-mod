@@ -1,5 +1,7 @@
 {
     "Sandbox_HARMONIE_SVU3PartWear": "HARMONIE: SVU3 Part Wear",
     "Sandbox_HARMONIE_ProtectionDamageMultiplier": "Protection part damage multiplier",
-    "Sandbox_HARMONIE_ProtectionDamageMultiplier_tooltip": "Multiplies how much condition Standardized Vehicle Upgrades 3's own protection/armor parts (bullbars, window/door/trunk armor, wheel chains) lose each time they absorb damage for the vehicle part they protect. 1.0 = SVU3's own unmodified values. Higher = they break down faster from use."
+    "Sandbox_HARMONIE_ProtectionDamageMultiplier_tooltip": "Multiplies how much condition Standardized Vehicle Upgrades 3's own protection/armor parts (bullbars, window/door/trunk armor, wheel chains) lose each time they absorb damage for the vehicle part they protect. 1.0 = SVU3's own unmodified values. Higher = they break down faster from use.",
+    "Sandbox_HARMONIE_MaxInstallSkillTotal": "Max total skill to install an upgrade",
+    "Sandbox_HARMONIE_MaxInstallSkillTotal_tooltip": "The skill levels one SVU3 upgrade needs to install (e.g. welding + mechanics) add up to at most this. An upgrade that needs more has its highest skill lowered until it fits. SVU3's own highest is 14 (the plows)."
 }
