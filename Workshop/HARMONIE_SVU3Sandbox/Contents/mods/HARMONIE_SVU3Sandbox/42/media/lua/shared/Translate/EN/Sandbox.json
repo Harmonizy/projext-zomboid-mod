@@ -3,5 +3,11 @@
     "Sandbox_HARMONIE_ProtectionDamageMultiplier": "Protection part damage multiplier",
     "Sandbox_HARMONIE_ProtectionDamageMultiplier_tooltip": "Multiplies how much condition Standardized Vehicle Upgrades 3's own protection/armor parts (bullbars, window/door/trunk armor, wheel chains) lose each time they absorb damage for the vehicle part they protect. 1.0 = SVU3's own unmodified values. Higher = they break down faster from use.",
     "Sandbox_HARMONIE_MaxInstallSkillTotal": "Max total skill to install an upgrade",
-    "Sandbox_HARMONIE_MaxInstallSkillTotal_tooltip": "The skill levels one SVU3 upgrade needs to install (e.g. welding + mechanics) add up to at most this. An upgrade that needs more has its highest skill lowered until it fits. SVU3's own highest is 14 (the plows)."
+    "Sandbox_HARMONIE_MaxInstallSkillTotal_tooltip": "The skill levels one SVU3 upgrade needs to install (e.g. welding + mechanics) add up to at most this, after the vehicle tier. An upgrade that needs more has its highest skill lowered until it fits. SVU3's own highest is 14 (the plows).",
+    "Sandbox_HARMONIE_VehicleTierScaling": "Install skills by vehicle tier",
+    "Sandbox_HARMONIE_VehicleTierScaling_tooltip": "Cars SVU3 can upgrade are ranked by weight and front/rear end strength and split into tiers. Bigger, tougher cars need SVU3's own skill levels to install upgrades; smaller cars need less (see the two options below). The tiers are listed in console.txt when the game starts.",
+    "Sandbox_HARMONIE_VehicleTierCount": "Vehicle tiers",
+    "Sandbox_HARMONIE_VehicleTierCount_tooltip": "How many tiers the cars are split into. The top tier uses SVU3's own install skill levels.",
+    "Sandbox_HARMONIE_VehicleTierLowestPercent": "Lowest tier skill (%)",
+    "Sandbox_HARMONIE_VehicleTierLowestPercent_tooltip": "The install skill levels of the lowest tier, as a percent of SVU3's own. The tiers between go up evenly to 100%. Levels are rounded and never below 1."
 }

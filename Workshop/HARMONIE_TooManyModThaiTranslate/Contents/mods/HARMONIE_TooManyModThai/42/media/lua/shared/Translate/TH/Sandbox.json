@@ -512,5 +512,11 @@
     "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier_tooltip": "คูณความถี่ที่ปืนและกระสุนราว 230 ชิ้นของ ModernFirearmsSystem จะปรากฏใน loot เพิ่มเติมจากค่าน้ำหนักที่ตั้งตายตัวของ mod เอง (mod ต้นฉบับไม่มีตัวปรับอัตรา มีแค่สวิตช์เปิด-ปิดรายกระบอก) 1.0 = อัตราเดิมของ mod ไม่เปลี่ยนแปลง 0 = ไม่ดรอปเลย (เหมือนปิดสวิตช์ทุกกระบอก) ไม่มีผลกับ loot ของ vanilla หรืออุปกรณ์เสริม/part ของ mod นี้",
     "Sandbox_ModernFirearmsSystemSandboxGun_M1918_Spawn": "อัตราการเกิด M1918",
     "Sandbox_HARMONIE_MaxInstallSkillTotal": "สกิลรวมสูงสุดที่ใช้ติดตั้งอัปเกรด",
-    "Sandbox_HARMONIE_MaxInstallSkillTotal_tooltip": "ระดับสกิลที่อัปเกรด SVU3 แต่ละชิ้นต้องใช้ตอนติดตั้ง (เช่น งานเชื่อมโลหะ + ช่างยนต์) รวมกันได้ไม่เกินค่านี้ ถ้าชิ้นไหนต้องใช้มากกว่า จะลดสกิลที่สูงสุดลงจนพอดี ค่าสูงสุดของ SVU3 เองคือ 14 (ใบมีดดันหิมะ/Plow)"
+    "Sandbox_HARMONIE_MaxInstallSkillTotal_tooltip": "ระดับสกิลที่อัปเกรด SVU3 แต่ละชิ้นต้องใช้ตอนติดตั้ง (เช่น งานเชื่อมโลหะ + ช่างยนต์) รวมกันได้ไม่เกินค่านี้ (หลังปรับตามระดับรถแล้ว) ถ้าชิ้นไหนต้องใช้มากกว่า จะลดสกิลที่สูงสุดลงจนพอดี ค่าสูงสุดของ SVU3 เองคือ 14 (ใบมีดดันหิมะ/Plow)",
+    "Sandbox_HARMONIE_VehicleTierScaling": "สกิลติดตั้งตามระดับรถ",
+    "Sandbox_HARMONIE_VehicleTierScaling_tooltip": "รถที่ SVU3 อัปเกรดได้ จะถูกจัดลำดับตามน้ำหนักและความทนด้านหน้า/หลัง แล้วแบ่งเป็นระดับ รถใหญ่และทนกว่าใช้สกิลติดตั้งตามค่าเดิมของ SVU3 รถเล็กกว่าใช้สกิลน้อยลง (ดูสองค่าด้านล่าง) รายชื่อรถในแต่ละระดับจะเขียนไว้ใน console.txt ตอนเริ่มเกม",
+    "Sandbox_HARMONIE_VehicleTierCount": "จำนวนระดับรถ",
+    "Sandbox_HARMONIE_VehicleTierCount_tooltip": "แบ่งรถเป็นกี่ระดับ ระดับสูงสุดใช้สกิลติดตั้งตามค่าเดิมของ SVU3",
+    "Sandbox_HARMONIE_VehicleTierLowestPercent": "สกิลของระดับต่ำสุด (%)",
+    "Sandbox_HARMONIE_VehicleTierLowestPercent_tooltip": "สกิลติดตั้งของรถระดับต่ำสุด คิดเป็นเปอร์เซ็นต์ของค่าเดิมของ SVU3 ระดับที่อยู่ระหว่างกลางจะไล่ขึ้นเท่าๆ กันจนถึง 100% ปัดเศษ และไม่ต่ำกว่า 1"
 }
