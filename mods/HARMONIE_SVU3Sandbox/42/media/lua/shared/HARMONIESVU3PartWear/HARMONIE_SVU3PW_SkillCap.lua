@@ -199,6 +199,7 @@ function C.vehicleTiers(names)
         if st then stats[n] = st; have[#have + 1] = n end
     end
     local tiers, read = {}, {}
+    C.statsOf = stats -- for the window (HARMONIE_SVU3_Window)
     if #have == 0 then return tiers, read end
     local rk = {}
     for _, key in ipairs(C.STATS) do
@@ -359,6 +360,7 @@ function C.applyTiers()
     end
     local refMain, refSecond = C.reference(names)
     local tiers, read, manual = {}, {}, {}
+    C.statsOf = {}
     if enabled then
         tiers, read = C.vehicleTiers(names)
         local exact, prefix = C.parseOverrides(sv("VehicleTierOverrides", ""))
@@ -373,6 +375,7 @@ function C.applyTiers()
         local car = ATA2TuningTable[name]
         local tier = tiers[name] or C.TIERS
         car.__harmonieTier = enabled and tier or nil
+        car.__harmonieManual = manual[name] or nil
         local main, second = C.tierCeiling(tier)
         for partName, models in pairs(car.parts) do
             for modelName, model in pairs(models) do
@@ -392,6 +395,8 @@ function C.applyTiers()
 end
 
 C.applyAll = C.applyTiers
+
+function C.enabled() return sv("VehicleTierScaling", true) ~= false end
 
 local function wrapAddNewCars()
     if C.wrapped or not ATA2Tuning_AddNewCars then return end

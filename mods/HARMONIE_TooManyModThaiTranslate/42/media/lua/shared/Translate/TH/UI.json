@@ -3025,5 +3025,10 @@
     "UI_trait_moredesc_soto_breathing_vehicle": "ฟื้นฟูความอึด x3 ขณะนั่งหรืออยู่ในยานพาหนะ (SOTO)",
     "UI_trait_moredesc_soto_generatorexpert_xp": "XP ไฟฟ้า +5 ต่อการซ่อมเครื่องปั่นไฟหนึ่งครั้ง (SOTO)",
     "UI_trait_moredesc_soto_marathonrunner_scale": "ผลจะเพิ่มขึ้นตามฟิตเนส; ลดลงถ้าน้ำหนักเกินหรืออ้วน (SOTO)",
-    "UI_trait_moredesc_soto_pacifist_sandbox": "สามารถหายไปเองตามเวลาได้ ถ้าเปิดใช้ตัวเลือก PacifistRemovable ใน SOTO sandbox"
+    "UI_trait_moredesc_soto_pacifist_sandbox": "สามารถหายไปเองตามเวลาได้ ถ้าเปิดใช้ตัวเลือก PacifistRemovable ใน SOTO sandbox",
+    "UI_options_HARMONIE_HSVU_title": "HARMONIE - SVU3 Sandbox",
+    "UI_options_HARMONIE_HSVU_follow": "เปิดพร้อมหน้าต่างการดัดแปลงรถ",
+    "UI_options_HARMONIE_HSVU_follow_tooltip": "หน้าต่างอัปเกรดรถจะเปิดข้างๆ หน้าต่างการดัดแปลงของรถ และปิดพร้อมกัน",
+    "UI_options_HARMONIE_HSVU_key": "เปิดหน้าต่างอัปเกรดรถ",
+    "UI_options_HARMONIE_HSVU_key_tooltip": "เปิด / ปิดหน้าต่างอัปเกรดรถ สำหรับรถที่คุณนั่งอยู่หรือยืนอยู่ข้างๆ"
 }
