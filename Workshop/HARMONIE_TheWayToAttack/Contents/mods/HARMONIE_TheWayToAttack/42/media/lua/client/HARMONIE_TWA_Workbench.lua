@@ -47,6 +47,12 @@ W.GUIDE = {
     { key = "Steps", pic = "guide_flow" },
     { key = "Minigame", pic = "guide_minigame" },
     { key = "Quality", pic = "guide_quality" },
+    -- R73 ("ให้หน้าคู่มืออธิบายความหมายของแต่ละค่าในอาวุธที่แสดง เอาให้คนทั่วไป
+    -- เข้าใจได้"): what every number in a weapon's tooltip means -- text
+    -- only, so every line fits
+    { key = "StatsDamage" },
+    { key = "StatsHandling" },
+    { key = "StatsWear" },
     { key = "Pause", pic = "guide_pause" },
     { key = "Practice", pic = "guide_practice" },
     { key = "Modify", pic = "guide_modify" },
@@ -380,18 +386,34 @@ function TWACraftWindow:renderGuide()
     local x = 10 + S(self, 220) + S(self, 20)
     local w = self.width - x - 20
     local y = self.contentTop
-    local pic = texture("media/textures/TWA_UI/" .. ch.pic .. ".png")
+    local bottom = self.guidePrev.y - 8
+    -- R73: the text always fits -- the picture shrinks (or is left out) to
+    -- make room, and a text too long even then drops to the smallest font
+    local body = getText("IGUI_TWA_Guide_" .. ch.key .. "_Body")
+    local lh = TWAFont.lineH(small)
+    local lines = wrap(body, w, small)
+    if #lines * lh > bottom - y and small ~= UIFont.Small then
+        small = UIFont.Small
+        lh = TWAFont.lineH(small)
+        lines = wrap(body, w, small)
+    end
+    local pic = ch.pic and texture("media/textures/TWA_UI/" .. ch.pic .. ".png")
     if pic then
         local pw = math.min(w, S(self, 512))
         local ph = math.floor(pw * 288 / 512)
-        local px = x + math.floor((w - pw) / 2)
-        self:drawTextureScaled(pic, px, y, pw, ph, 1, 1, 1, 1)
-        self:drawRectBorder(px, y, pw, ph, 0.8, C.borderDim[1], C.borderDim[2], C.borderDim[3])
-        y = y + ph + 10
+        local room = bottom - y - #lines * lh - 10
+        if room < ph then
+            ph = room
+            pw = math.floor(ph * 512 / 288)
+        end
+        if ph >= S(self, 90) then
+            local px = x + math.floor((w - pw) / 2)
+            self:drawTextureScaled(pic, px, y, pw, ph, 1, 1, 1, 1)
+            self:drawRectBorder(px, y, pw, ph, 0.8, C.borderDim[1], C.borderDim[2], C.borderDim[3])
+            y = y + ph + 10
+        end
     end
-    local lh = TWAFont.lineH(small)
-    local bottom = self.guidePrev.y - 8
-    for _, l in ipairs(wrap(getText("IGUI_TWA_Guide_" .. ch.key .. "_Body"), w, small)) do
+    for _, l in ipairs(lines) do
         if y + lh > bottom then break end
         shadowText(self, l, x, y, C.text[1], C.text[2], C.text[3], 1, small)
         y = y + lh
