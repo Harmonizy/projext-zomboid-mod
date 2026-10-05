@@ -529,7 +529,7 @@ TWAProcedures.List = {
     MakeRivetedHandle = {
         category = "Handle", nameKey = "IGUI_TWA_Proc_MakeRivetedHandle", icon = "MetalTube",
         consumes = { { itemTypes = { "Base.LongHandle", "Base.LongStick" }, qty = 1 }, { itemTypes = { "Base.MetalPipe", "Base.SteelBarHalf" }, qty = 1 } },
-        skill = "Blacksmith:2", time = 30, sound = "TWA_Hammer",
+        skill = "Blacksmith:1", time = 20, sound = "TWA_Hammer",
     },
     -- Qty trimmed 2->1 (request 2026-09-28: "ขันน๊อต...ให้ใช้น็อต 1 อัน" --
     -- also fixed the Thai spelling "ขันน๊อต"->"ขันน็อต" in the translation).
@@ -935,22 +935,22 @@ TWAProcedures.List = {
     GemFaceting = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemFaceting", icon = "TWA_Topaz",
         tool = { { kind = "type", value = "Base.SmallFileSet" }, { kind = "type", value = "Base.File" } },
-        consumes = {}, skill = "Glassmaking:3", time = 40, sound = "TWA_Grind",
+        consumes = {}, skill = "Glassmaking:2", time = 40, sound = "TWA_Grind",
     },
     GemPolishing = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemPolishing", icon = "TWA_Opal",
         tool = { kind = "type", value = "Base.Whetstone" },
         consumes = { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips", "Base.LeatherStrips" }, qty = 1 } },
-        skill = "Glassmaking:5", time = 30, sound = "TWA_Whetstone",
+        skill = "Glassmaking:4", time = 30, sound = "TWA_Whetstone",
     },
     GemFineCutting = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemFineCutting", icon = "TWA_Tanzanite",
         tool = { kind = "type", value = "Base.SmallFileSet" },
-        consumes = {}, skill = "Glassmaking:7", time = 40, sound = "TWA_Grind",
+        consumes = {}, skill = "Glassmaking:6", time = 40, sound = "TWA_Grind",
     },
     GemQualityControl = {
         category = "Gemcutting", nameKey = "IGUI_TWA_Proc_GemQualityControl", icon = "TWA_Alexandrite",
-        consumes = {}, skill = "Glassmaking:9", time = 20, sound = "TWA_Craft",
+        consumes = {}, skill = "Glassmaking:8", time = 20, sound = "TWA_Craft",
     },
     -- Icon changed to "StoneWheel" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
@@ -1009,7 +1009,7 @@ TWAProcedures.List = {
     AnnealMetal = {
         category = "Density", nameKey = "IGUI_TWA_Proc_AnnealMetal", icon = "SteelMold_Ingot",
         tool = { kind = "type", value = "Base.Tongs" },
-        skill = "Blacksmith:2", forgeTier = 2, time = 30, sound = "TWA_Craft",
+        skill = "Blacksmith:1", forgeTier = 2, time = 20, sound = "TWA_Craft",
     },
     -- Icon changed (request 2026-09-28, follow-up) -- user gave
     -- "BallPeenHammer" (the item's own type name); its real Icon field is
@@ -1023,7 +1023,7 @@ TWAProcedures.List = {
         },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 2 } },
-        skill = "Blacksmith:3", forgeTier = 2, time = 40, sound = "TWA_Hammer",
+        skill = "Blacksmith:4", forgeTier = 2, time = 50, sound = "TWA_Hammer",
     },
     -- Icon changed to "SmithingHammer" (request 2026-09-28) -- real, self-
     -- referential icon confirmed.
@@ -1035,7 +1035,7 @@ TWAProcedures.List = {
         },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 3 } },
-        skill = "Blacksmith:3", forgeTier = 3, time = 40, sound = "TWA_Hammer",
+        skill = "Blacksmith:6", forgeTier = 3, time = 70, sound = "TWA_Hammer",
     },
     -- Icon changed (request 2026-09-28) -- user gave "SledgeHammer"; the
     -- real item is Base.Sledgehammer (lowercase h), whose real Icon field
@@ -1049,7 +1049,7 @@ TWAProcedures.List = {
         },
         tool2 = { kind = "type", value = "Base.Tongs" },
         consumes = { { itemTypes = { "Base.Charcoal", "Base.CharcoalCrafted", "Base.Coke" }, qty = 4 } },
-        skill = "Blacksmith:4", forgeTier = 3, time = 50, sound = "TWA_Hammer",
+        skill = "Blacksmith:8", forgeTier = 3, time = 90, sound = "TWA_Hammer",
     },
 }
 

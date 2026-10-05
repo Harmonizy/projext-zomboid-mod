@@ -286,25 +286,72 @@ function S.rollGemstone(recipe, rand, word)
     return slot[rand(#slot) + 1]
 end
 
-function S.canFinish(recipe, map)
+function S.canFinish(recipe, map, player)
     if not S.allDone(recipe, map) then return false, "notDone" end
     if S.isMaterialRecipe(recipe) and TWAConfig.on("MaterialNeedsGood") then
-        local word = S.overall(recipe, map)
+        local word = S.overall(recipe, map, player)
         if word ~= "Good" and word ~= "Excellent" then return false, "materialQuality" end
     end
     return true
 end
 
-function S.wordForAverage(avg)
+-- R75 ("หากเลเวลสูงกว่าสกิลที่ใช้ในกรรมวิธีจะหักลบค่า คุณภาพรวมเป็น เยี่ยม
+-- เลเวลละ 0.05"): every skill level the crafter has ABOVE what the recipe's
+-- procedures need (per skill: the highest level any procedure asks for)
+-- lowers the average needed for an Excellent overall quality by 0.05
+-- (GoodBelow 2.9 -> 2.85 -> 2.8 ...), never below BadBelow (2.5).
+S.EXCELLENT_PER_LEVEL = 0.05
+
+-- the skills a recipe's procedures need: { SkillName = highest level }
+function S.recipeSkills(recipe)
+    local need = {}
+    for _, procId in ipairs(recipe and recipe.procedures or {}) do
+        local p = TWAProcedures and TWAProcedures.List[procId]
+        if p and p.skill then
+            for name, lvl in tostring(p.skill):gmatch("(%a+):(%d+)") do
+                lvl = tonumber(lvl)
+                if (need[name] or 0) < lvl then need[name] = lvl end
+            end
+        end
+    end
+    return need
+end
+
+-- levels above the recipe's needs (summed over its skills) -> how much lower
+-- the Excellent cut point is
+function S.levelsAbove(recipe, player)
+    if not player or not player.getPerkLevel or not Perks then return 0 end
+    local total = 0
+    for name, req in pairs(S.recipeSkills(recipe)) do
+        local perk = Perks[name]
+        if perk then
+            local ok, have = pcall(player.getPerkLevel, player, perk)
+            if ok and tonumber(have) and have > req then total = total + (have - req) end
+        end
+    end
+    return total
+end
+
+function S.excellentBonus(recipe, player)
+    return S.levelsAbove(recipe, player) * S.EXCELLENT_PER_LEVEL
+end
+
+-- the average needed for Excellent with that bonus
+function S.excellentCut(bonus)
+    return math.max(TWAConfig.num("BadBelow"), TWAConfig.num("GoodBelow") - (bonus or 0))
+end
+
+function S.wordForAverage(avg, bonus)
     -- Cut points from the sandbox (round 9); S.BAD_BELOW/GOOD_BELOW are the defaults.
     if avg < TWAConfig.num("BadBelow") then return "Bad" end
-    if avg < TWAConfig.num("GoodBelow") then return "Good" end
+    if avg < S.excellentCut(bonus) - 1e-9 then return "Good" end
     return "Excellent"
 end
 
 -- Average of the procedures scored so far (Miss/untried left out), and its
--- word. nil when nothing is scored yet.
-function S.overall(recipe, map)
+-- word. nil when nothing is scored yet. `player` (optional, R75): the
+-- crafter, whose spare skill levels make Excellent easier.
+function S.overall(recipe, map, player)
     local sum, n = 0, 0
     for _, procId in ipairs(recipe.procedures) do
         local sc = S.SCORE[map[procId] or ""]
@@ -315,7 +362,7 @@ function S.overall(recipe, map)
     end
     if n == 0 then return nil, nil end
     local avg = sum / n
-    return S.wordForAverage(avg), avg
+    return S.wordForAverage(avg, player and S.excellentBonus(recipe, player) or 0), avg
 end
 
 function S.rollGrade(word)

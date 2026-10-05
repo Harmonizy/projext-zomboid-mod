@@ -1907,7 +1907,7 @@ end
 
 function TWACraftWindow:allProceduresDone()
     if not self:isActiveRecipe() then return false end
-    return (TWACraftState.canFinish(self.selectedRecipe, self:currentMap()))
+    return (TWACraftState.canFinish(self.selectedRecipe, self:currentMap(), self.player))
 end
 
 -- Incomplete hands out the unfinished result item (round 6), so every
@@ -2881,7 +2881,7 @@ function TWACraftWindow:renderBody()
     -- Good or better (TWACraftState.canFinish), even though the material
     -- itself carries no quality.
     do
-        local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap())
+        local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap(), self.player)
         if oWord then
             local oc = TWACraftState.WORD_COLOR[oWord]
             -- Word only (round 6: "คุณภาพรวมให้แสดงแค่คำ ไม่ต้องแสดงตัวเลข").
@@ -2951,7 +2951,7 @@ function TWACraftWindow:renderBody()
     -- The material rule, spelled out where the Finish button is (round 7).
     if TWACraftState.isMaterialRecipe(recipe) then
         local note = getText("IGUI_TWA_MaterialFinishRule")
-        local _, why = TWACraftState.canFinish(recipe, self:currentMap())
+        local _, why = TWACraftState.canFinish(recipe, self:currentMap(), self.player)
         local bad = why == "materialQuality"
         local lines = wrapTextLines(note, CENTER_W - 24, TWAFont.small())
         local ny = self.panelBottom - self.btnH - 30 - #lines * TWAFont.grow(14) -- round 19: inside the card (it ends at -18)
