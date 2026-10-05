@@ -10,16 +10,6 @@ option HARMONIE_SVU3PartWear.ProtectionDamageMultiplier
     translation = HARMONIE_ProtectionDamageMultiplier,
 }
 
-option HARMONIE_SVU3PartWear.MaxInstallSkillTotal
-{
-    type = integer,
-    default = 14,
-    min = 1,
-    max = 30,
-    page = HARMONIE_SVU3PartWear,
-    translation = HARMONIE_MaxInstallSkillTotal,
-}
-
 option HARMONIE_SVU3PartWear.VehicleTierScaling
 {
     type = boolean,
@@ -28,22 +18,70 @@ option HARMONIE_SVU3PartWear.VehicleTierScaling
     translation = HARMONIE_VehicleTierScaling,
 }
 
-option HARMONIE_SVU3PartWear.VehicleTierCount
+option HARMONIE_SVU3PartWear.Tier1MainSkill
 {
     type = integer,
-    default = 3,
+    default = 4,
     min = 1,
     max = 10,
     page = HARMONIE_SVU3PartWear,
-    translation = HARMONIE_VehicleTierCount,
+    translation = HARMONIE_Tier1MainSkill,
 }
 
-option HARMONIE_SVU3PartWear.VehicleTierLowestPercent
+option HARMONIE_SVU3PartWear.Tier1SecondSkill
 {
     type = integer,
-    default = 50,
-    min = 10,
-    max = 100,
+    default = 2,
+    min = 1,
+    max = 10,
     page = HARMONIE_SVU3PartWear,
-    translation = HARMONIE_VehicleTierLowestPercent,
+    translation = HARMONIE_Tier1SecondSkill,
+}
+
+option HARMONIE_SVU3PartWear.Tier2MainSkill
+{
+    type = integer,
+    default = 6,
+    min = 1,
+    max = 10,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_Tier2MainSkill,
+}
+
+option HARMONIE_SVU3PartWear.Tier2SecondSkill
+{
+    type = integer,
+    default = 4,
+    min = 1,
+    max = 10,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_Tier2SecondSkill,
+}
+
+option HARMONIE_SVU3PartWear.Tier3MainSkill
+{
+    type = integer,
+    default = 8,
+    min = 1,
+    max = 10,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_Tier3MainSkill,
+}
+
+option HARMONIE_SVU3PartWear.Tier3SecondSkill
+{
+    type = integer,
+    default = 6,
+    min = 1,
+    max = 10,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_Tier3SecondSkill,
+}
+
+option HARMONIE_SVU3PartWear.VehicleTierOverrides
+{
+    type = string,
+    default = none,
+    page = HARMONIE_SVU3PartWear,
+    translation = HARMONIE_VehicleTierOverrides,
 }
