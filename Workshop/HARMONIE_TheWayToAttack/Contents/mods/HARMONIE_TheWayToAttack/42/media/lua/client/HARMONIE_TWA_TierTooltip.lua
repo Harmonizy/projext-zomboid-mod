@@ -258,17 +258,16 @@ function ISToolTipInv:render()
         local dps = ((minD + maxD) / 2) * baseSpeed
         local tier = tierFromDps(dps)
         local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
-        local label = TIER_NAMES[tier] .. " (DPS " .. TWADisplay.fmt(dps) .. ")"
+        -- R72 ("ใน tooltip อาวุธ เอาหัวข้อ ประเภท และ DPS ออก"): the tier
+        -- name only (the DPS still picks the tier), no Type / DPS cells
+        local label = TIER_NAMES[tier]
 
         self:setHeight(self.height + (textH + 6))
         y = y + drawStatStrip(self, 2, y, self.width - 4, label, c, font)
 
         local gridDef = {}
-        local typeText = weaponTypeText(item, stats)
-        if typeText then gridDef[1] = { typeText, "IGUI_TWA_Stat_Type", "%s" } end
         for _, cellDef in ipairs({
             -- shown multiplied (TWADisplay: sandbox DamageDisplayScale)
-            { TWADisplay.fmt(dps), "IGUI_TWA_Stat_DPS", "%s" },
             { TWADisplay.fmt(minD), "IGUI_TWA_Stat_MinDamage", "%s" }, { TWADisplay.fmt(maxD), "IGUI_TWA_Stat_MaxDamage", "%s" },
             { baseSpeed, "IGUI_TWA_Stat_Speed", "%.2f" }, { weight, "IGUI_TWA_StatWeight", "%.1f" },
             { maxRange, "IGUI_TWA_Stat_Range", "%.2f" }, { critChance, "IGUI_TWA_Stat_CritChance", "%.0f%%" },
@@ -298,10 +297,7 @@ function ISToolTipInv:render()
         end
         if tier and TIER_NAMES[tier] then
             local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
-            local label = TIER_NAMES[tier]
-            if stats.dps then
-                label = label .. " (DPS " .. TWADisplay.fmt(stats.dps) .. ")"
-            end
+            local label = TIER_NAMES[tier] -- R72: no DPS
             self:setHeight(self.height + (textH + 6))
             y = y + drawStatStrip(self, 2, y, self.width - 4, label, c, font)
 
