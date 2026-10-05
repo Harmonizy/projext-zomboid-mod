@@ -76,23 +76,26 @@ function C.capSkills(skills, max)
 end
 
 -- every install of every upgrade of every car in a tuning table
+-- (returns how many, and "part.model" -> number of cars, for the console)
 function C.capTable(carsTable, max)
-    local changed = 0
+    local changed, which = 0, {}
     for _, car in pairs(carsTable or {}) do
         if type(car) == "table" and type(car.parts) == "table" then
-            for _, models in pairs(car.parts) do
+            for partName, models in pairs(car.parts) do
                 if type(models) == "table" then
-                    for _, model in pairs(models) do
+                    for modelName, model in pairs(models) do
                         local install = type(model) == "table" and model.install
                         if type(install) == "table" and C.capSkills(install.skills, max) > 0 then
                             changed = changed + 1
+                            local key = tostring(partName) .. "." .. tostring(modelName)
+                            which[key] = (which[key] or 0) + 1
                         end
                     end
                 end
             end
         end
     end
-    return changed
+    return changed, which
 end
 
 -- ------------------------------------------------------------ vehicle tiers
@@ -273,9 +276,12 @@ function C.capAll()
     if not ATA2TuningTable then return end
     C.applyTiers()
     local max = C.maxTotal()
-    local n = C.capTable(ATA2TuningTable, max)
+    local n, which = C.capTable(ATA2TuningTable, max)
     if n > 0 then
-        print(string.format("HARMONIE SVU3 Sandbox: %d upgrade install(s) lowered to a skill total of %d.", n, max))
+        local list = {}
+        for key, cars in pairs(which) do list[#list + 1] = key .. " x" .. cars end
+        table.sort(list)
+        print(string.format("HARMONIE SVU3 Sandbox: %d upgrade install(s) lowered to a skill total of %d: %s", n, max, table.concat(list, ", ")))
     end
 end
 

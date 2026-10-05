@@ -517,6 +517,6 @@
     "Sandbox_HARMONIE_VehicleTierScaling_tooltip": "รถที่ SVU3 อัปเกรดได้ จะถูกจัดลำดับตามน้ำหนักและความทนด้านหน้า/หลัง แล้วแบ่งเป็นระดับ รถใหญ่และทนกว่าใช้สกิลติดตั้งตามค่าเดิมของ SVU3 รถเล็กกว่าใช้สกิลน้อยลง (ดูสองค่าด้านล่าง) รายชื่อรถในแต่ละระดับจะเขียนไว้ใน console.txt ตอนเริ่มเกม",
     "Sandbox_HARMONIE_VehicleTierCount": "จำนวนระดับรถ",
     "Sandbox_HARMONIE_VehicleTierCount_tooltip": "แบ่งรถเป็นกี่ระดับ ระดับสูงสุดใช้สกิลติดตั้งตามค่าเดิมของ SVU3",
-    "Sandbox_HARMONIE_VehicleTierLowestPercent": "สกิลของระดับต่ำสุด (%)",
-    "Sandbox_HARMONIE_VehicleTierLowestPercent_tooltip": "สกิลติดตั้งของรถระดับต่ำสุด คิดเป็นเปอร์เซ็นต์ของค่าเดิมของ SVU3 ระดับที่อยู่ระหว่างกลางจะไล่ขึ้นเท่าๆ กันจนถึง 100% ปัดเศษ และไม่ต่ำกว่า 1"
+    "Sandbox_HARMONIE_VehicleTierLowestPercent": "สกิลของระดับต่ำสุด (%%)",
+    "Sandbox_HARMONIE_VehicleTierLowestPercent_tooltip": "สกิลติดตั้งของรถระดับต่ำสุด คิดเป็นเปอร์เซ็นต์ของค่าเดิมของ SVU3 ระดับที่อยู่ระหว่างกลางจะไล่ขึ้นเท่าๆ กันจนถึง 100%% ปัดเศษ และไม่ต่ำกว่า 1"
 }

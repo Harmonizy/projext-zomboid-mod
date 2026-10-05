@@ -8,6 +8,6 @@
     "Sandbox_HARMONIE_VehicleTierScaling_tooltip": "Cars SVU3 can upgrade are ranked by weight and front/rear end strength and split into tiers. Bigger, tougher cars need SVU3's own skill levels to install upgrades; smaller cars need less (see the two options below). The tiers are listed in console.txt when the game starts.",
     "Sandbox_HARMONIE_VehicleTierCount": "Vehicle tiers",
     "Sandbox_HARMONIE_VehicleTierCount_tooltip": "How many tiers the cars are split into. The top tier uses SVU3's own install skill levels.",
-    "Sandbox_HARMONIE_VehicleTierLowestPercent": "Lowest tier skill (%)",
-    "Sandbox_HARMONIE_VehicleTierLowestPercent_tooltip": "The install skill levels of the lowest tier, as a percent of SVU3's own. The tiers between go up evenly to 100%. Levels are rounded and never below 1."
+    "Sandbox_HARMONIE_VehicleTierLowestPercent": "Lowest tier skill (%%)",
+    "Sandbox_HARMONIE_VehicleTierLowestPercent_tooltip": "The install skill levels of the lowest tier, as a percent of SVU3's own. The tiers between go up evenly to 100%%. Levels are rounded and never below 1."
 }
