@@ -221,5 +221,10 @@
     "IGUI_GTPG_Other_NotTracked_Title": "What gives no vitamins",
     "IGUI_GTPG_Other_NotTracked_Body": "Milk and anything else you drink from a container, candy and snacks, herbs, spices and seeds. Canned condensed milk (a solid food) does count. A food not in the All foods tab gives no vitamins.",
     "IGUI_GTPG_Other_Tips_Title": "Tips",
-    "IGUI_GTPG_Other_Tips_Body": "- D is the hardest one: fish (salmon is best), eggs, cheese, butter, mushrooms.\n- B: meat, fish, beans and lentils, peanuts.\n- A: carrots, sweet potatoes, leafy greens, butter, eggs.\n- C: bell peppers, oranges, pineapple, broccoli, brussels sprouts, rosehips.\n- K: leafy greens such as kale, spinach, dandelions, grape leaves and brussels sprouts.\n- E: olive or vegetable oil, nuts, avocado, beans.\nA vegetable garden, some fishing and eggs cover all six. Sort the All foods tab by a vitamin to see what to grow or find."
+    "IGUI_GTPG_Other_Tips_Body": "- D is the hardest one: fish (salmon is best), eggs, cheese, butter, mushrooms.\n- B: meat, fish, beans and lentils, peanuts.\n- A: carrots, sweet potatoes, leafy greens, butter, eggs.\n- C: bell peppers, oranges, pineapple, broccoli, brussels sprouts, rosehips.\n- K: leafy greens such as kale, spinach, dandelions, grape leaves and brussels sprouts.\n- E: olive or vegetable oil, nuts, avocado, beans.\nA vegetable garden, some fishing and eggs cover all six. Sort the All foods tab by a vitamin to see what to grow or find.",
+    "IGUI_GTPG_SearchHint": "Search a food...",
+    "IGUI_GTPG_Card_SourcesLocked": "%1: where to get it (%2 foods, A-Z)",
+    "IGUI_GTPG_LockedHint": "Amounts and the richest-first order need Cooking %1 or the Nutritionist trait.",
+    "IGUI_GTPG_NoMatch": "No food matches the search.",
+    "IGUI_GTPG_FoodsHintLocked": "A dot = the food has that vitamin. Click a vitamin picture to list only foods with it, or Food for all."
 }

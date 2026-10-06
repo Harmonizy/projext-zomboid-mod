@@ -63,6 +63,7 @@ end
 -- (confirmed via ISChat.lua, used throughout that file for the same
 -- "ignore other input while chat is focused" purpose).
 local function isChatWindowOpen()
+    if GTPGuide and GTPGuide.typing and GTPGuide.typing() then return true end -- typing in the guide's search box
     return ISChat and ISChat.focused or false
 end
 

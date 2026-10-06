@@ -29,11 +29,21 @@
 -- its own. Not tied to the character info window (EHR replaces parts of
 -- it).
 --
--- Everything is drawn in render() (no child widgets); the size, text step
--- and pin are kept in Zomboid/Lua/HARMONIE_GTP_Guide.txt.
+-- Everything is drawn in render() except the search box (an
+-- ISTextEntryBox, shown on the Vitamins and All foods tabs); the size,
+-- text step and pin are kept in Zomboid/Lua/HARMONIE_GTP_Guide.txt.
+--
+-- Request 2026-10-06 ("ทำตามที่แนะนำเลย อย่าลืมทำช่อง search"): every
+-- food's NAME and picture is shown to everyone, but the numbers -- amount,
+-- Reserve per serving, the richest-first order -- need the same knowledge
+-- as the food tooltip and the Vitamins tab's best-foods list: Cooking 3 or
+-- the Nutritionist trait (H.knows). Without it the lists are A-Z and the
+-- table only marks which vitamins a food has. A search box filters both
+-- lists by name.
 --============================================================================
 
 require "ISUI/ISPanel"
+require "ISUI/ISTextEntryBox"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
@@ -220,6 +230,35 @@ function H.bandOf(player, v)
     return HARMONIE_GTP.GetBand(val)
 end
 
+-- the numbers need Cooking 3 or the Nutritionist trait (see the header)
+H.KNOW_COOKING = 3
+function H.knows(player)
+    if not player then return false end
+    local ok, lvl = pcall(function() return player:getPerkLevel(Perks.Cooking) end)
+    if ok and (tonumber(lvl) or 0) >= H.KNOW_COOKING then return true end
+    local ok2, t = pcall(function() return player:hasTrait(CharacterTrait.NUTRITIONIST) end)
+    return ok2 and t == true
+end
+
+-- the search text matches the food's shown name (or its item type)
+function H.matches(f, q)
+    if not q or q == "" then return true end
+    if string.lower(f.name):find(q, 1, true) then return true end
+    return string.lower(f.fullType):find(q, 1, true) ~= nil
+end
+
+-- the foods with vitamin `v`, A-Z (what someone without the knowledge sees)
+function H.foodsWithByName(v)
+    H.byVitName = H.byVitName or {}
+    if H.byVitName[v] then return H.byVitName[v] end
+    local out = {}
+    for _, f in ipairs(H.foods()) do
+        if (f.prof[v] or 0) > 0 then out[#out + 1] = f end
+    end
+    H.byVitName[v] = out
+    return out
+end
+
 local BAND_COL = { critical = "bad", low = "warn", sufficient = "good" }
 local BAND_KEY = { critical = "IGUI_HARMONIE_Band_Critical", low = "IGUI_HARMONIE_Band_Low", sufficient = "IGUI_HARMONIE_Band_Sufficient" }
 
@@ -280,6 +319,66 @@ function Win:new(x, y, w, h, player)
 end
 
 function Win:contentTop() return H.HEADER_H + H.TAB_H + 6 end
+
+-- the search box (the only child widget); built again when the text size
+-- changes, keeping what was typed
+function Win:createChildren()
+    ISPanel.createChildren(self)
+    self:buildSearch("")
+end
+
+function Win:buildSearch(text)
+    if self.search then
+        self:removeChild(self.search)
+        self.search = nil
+    end
+    local font = H.small()
+    local box = ISTextEntryBox:new(text or "", 0, 0, 200, lineH(font) + 6)
+    box.font = font
+    box:initialise()
+    box:instantiate()
+    if box.setPlaceholderText then box:setPlaceholderText(T("IGUI_GTPG_SearchHint")) end
+    self:addChild(box)
+    box:setVisible(false)
+    self.search = box
+    self.searchFont = font
+end
+
+function Win:query()
+    if not self.search then return "" end
+    local ok, t = pcall(self.search.getText, self.search)
+    t = ok and t or ""
+    t = t:gsub("^%s+", ""):gsub("%s+$", "")
+    return string.lower(t)
+end
+
+-- puts the box (and its clear button) at x, y, w on this frame; returns
+-- the height used
+function Win:placeSearch(x, y, w)
+    local box = self.search
+    if not box then return 0 end
+    if self.searchFont ~= H.small() then
+        self:buildSearch(box:getText())
+        box = self.search
+    end
+    local h = box.height
+    local bw = w - h - 4
+    if box.x ~= x or box.y ~= y or box.width ~= bw then
+        box:setX(x)
+        box:setY(y)
+        box:setWidth(bw)
+    end
+    self.searchShown = true
+    local C = H.C
+    local clear = { x = x + bw + 4, y = y, w = h, h = h, clear = true }
+    local has = self:query() ~= ""
+    self:drawRect(clear.x, clear.y, clear.w, clear.h, has and 0.9 or 0.4, 0.04, 0.16, 0.07)
+    self:drawRectBorder(clear.x, clear.y, clear.w, clear.h, has and 1 or 0.5, C.border[1], C.border[2], C.border[3])
+    local icon = texture(UI_DIR .. "icon_close.png")
+    if icon then self:drawTextureScaled(icon, clear.x + 3, clear.y + 3, clear.w - 6, clear.h - 6, has and 1 or 0.35, 1, 1, 1) end
+    if has then self.clicks[#self.clicks + 1] = clear end
+    return h
+end
 
 function Win:headerButtons()
     local s = 26
@@ -400,12 +499,14 @@ end
 function Win:render()
     if not self.collapsed then
         self.clicks = {}
+        self.searchShown = false
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
         if self.tab == "overview" then self:renderOverview(x, y, w, h)
         elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
         elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
         else self:renderOther(x, y, w, h) end
+        if self.search and self.search:getIsVisible() ~= self.searchShown then self.search:setVisible(self.searchShown) end
         local C = H.C
         local gx, gy = self.width - 16, self.height - 16
         for i, len in ipairs({ 12, 8, 4 }) do
@@ -413,6 +514,7 @@ function Win:render()
             self:drawRect(gx + 10 - o, gy + 14 - len, 2, len, 0.85 - 0.15 * (i - 1), C.accent[1], C.accent[2], C.accent[3])
         end
     end
+    if self.collapsed and self.search and self.search:getIsVisible() then self.search:setVisible(false) end
     self:drawHoverTip()
     self:updatePin()
 end
@@ -556,15 +658,29 @@ function Win:renderVitamins(x, y, w, h)
         used = used + 4 + self:paragraphs(need, ex, yy + used + 4, ew - 8, C.accent, sf)
         return used
     end)
-    -- where to get it
-    local list = H.foodsWith(v)
+    -- where to get it: names for everyone, numbers with the knowledge
+    local knows = H.knows(self.player)
+    local q = self:query()
+    local all = knows and H.foodsWith(v) or H.foodsWithByName(v)
+    local list = {}
+    for _, f in ipairs(all) do if H.matches(f, q) then list[#list + 1] = f end end
     local fy = y + topH + 8
-    local fx, fy2, fw, fh2 = self:drawCard(rx, fy, rw, h - topH - 8, T("IGUI_GTPG_Card_Sources", H.vitName(v), tostring(#list)))
-    local top = list[1] and list[1].prof[v] or 1
+    local titleKey = knows and "IGUI_GTPG_Card_Sources" or "IGUI_GTPG_Card_SourcesLocked"
+    local fx, fy2, fw, fh2 = self:drawCard(rx, fy, rw, h - topH - 8, T(titleKey, H.vitName(v), tostring(#list)))
+    local used = self:placeSearch(fx, fy2, fw)
+    fy2 = fy2 + used + 6
+    fh2 = fh2 - used - 6
+    if not knows then
+        local hint = T("IGUI_GTPG_LockedHint", tostring(H.KNOW_COOKING))
+        local hh = self:paragraphs(hint, fx, fy2, fw - 8, C.warn, sf)
+        fy2 = fy2 + hh + 4
+        fh2 = fh2 - hh - 4
+    end
+    local top = all[1] and all[1].prof[v] or 1
     local itemH = math.max(30, lh + 14)
     local cols = fw >= 560 and 2 or 1
     local colW = math.floor((fw - 8 - (cols - 1) * 10) / cols)
-    self:scrolled("src" .. v, fx, fy2, fw, fh2, function(yy)
+    self:scrolled("src" .. v .. "|" .. q, fx, fy2, fw, fh2, function(yy)
         local start = yy
         for i, f in ipairs(list) do
             local col = (i - 1) % cols
@@ -573,18 +689,18 @@ function Win:renderVitamins(x, y, w, h)
             local tx = ix + itemH + 2
             local amount = H.fmt1(f.prof[v]) .. " " .. H.UNITS[v]
             local gain = "+" .. H.fmt1(H.reserveOf(v, f.prof[v]))
-            local right = gain
-            shadowText(self, right, ix + colW - tw(sf, right) - 4, yy + 1, C.accent, 1, sf)
+            local right = knows and gain or ""
+            if knows then shadowText(self, right, ix + colW - tw(sf, right) - 4, yy + 1, C.accent, 1, sf) end
             shadowText(self, fit(f.name, ix + colW - tw(sf, right) - 14 - tx, sf), tx, yy + 1, f.canned and C.warn or C.text, 1, sf)
-            self:drawBar(tx, yy + lh + 2, colW - (tx - ix) - 8, 4, f.prof[v] / top, C.accent)
+            if knows then self:drawBar(tx, yy + lh + 2, colW - (tx - ix) - 8, 4, f.prof[v] / top, C.accent) end
             local r = { x = ix, y = yy, w = colW, h = itemH }
-            if inside(r, mx, my) and inside(self.scrollBox and self.scrollBox["src" .. v], mx, my) then
+            if knows and inside(r, mx, my) and inside(self.scrollBox and self.scrollBox["src" .. v .. "|" .. q], mx, my) then
                 self.hoverTip = { text = T("IGUI_GTPG_FoodTip", f.name, amount, gain, H.vitName(v)), x = ix + 20, y = yy + itemH }
             end
             if col == cols - 1 or i == #list then yy = yy + itemH + 4 end
         end
         if #list == 0 then
-            shadowText(self, T("IGUI_GTPG_NoFoods"), fx, yy, C.textDim, 1, sf)
+            shadowText(self, T(q ~= "" and "IGUI_GTPG_NoMatch" or "IGUI_GTPG_NoFoods"), fx, yy, C.textDim, 1, sf)
             yy = yy + lh
         end
         return yy - start
@@ -597,7 +713,14 @@ function Win:renderFoods(x, y, w, h)
     local sf = H.small()
     local lh = lineH(sf)
     local foods = H.foods()
+    local knows = H.knows(self.player)
+    local q = self:query()
     local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPG_Card_AllFoods", tostring(#foods)))
+    local used = self:placeSearch(cx, cy, math.min(cw, 420))
+    cy = cy + used + 6
+    if not knows then
+        cy = cy + self:paragraphs(T("IGUI_GTPG_LockedHint", tostring(H.KNOW_COOKING)), cx, cy, cw - 8, C.warn, sf) + 4
+    end
     -- column headers (click to sort)
     local colW = math.max(54, math.floor((cw - 8) * 0.085))
     local nameW = cw - 8 - colW * #HARMONIE_GTP.Vitamins
@@ -622,15 +745,22 @@ function Win:renderFoods(x, y, w, h)
         if active then self:drawRect(r.x, r.y + r.h - 2, r.w, 2, 1, C.accent[1], C.accent[2], C.accent[3]) end
         clickable(self, r)
     end
-    shadowText(self, fit(T("IGUI_GTPG_FoodsHint"), cw, sf), cx, cy + hh + 4, C.textDim, 1, sf)
+    shadowText(self, fit(T(knows and "IGUI_GTPG_FoodsHint" or "IGUI_GTPG_FoodsHintLocked"), cw, sf), cx, cy + hh + 4, C.textDim, 1, sf)
     local listY = cy + hh + lh + 8
     -- sorted copy
+    -- sorted / filtered copy: with the knowledge a vitamin column sorts
+    -- richest first; without it, it keeps only the foods with that vitamin, A-Z
     local key = self.sortKey
-    if self.sortedFor ~= key then
-        self.sortedFor = key
+    local sig = key .. "|" .. q .. "|" .. tostring(knows)
+    if self.sortedFor ~= sig then
+        self.sortedFor = sig
         self.sorted = {}
-        for i, f in ipairs(foods) do self.sorted[i] = f end
-        if key ~= "name" then
+        for _, f in ipairs(foods) do
+            if H.matches(f, q) and (key == "name" or knows or (f.prof[key] or 0) > 0) then
+                self.sorted[#self.sorted + 1] = f
+            end
+        end
+        if key ~= "name" and knows then
             table.sort(self.sorted, function(a, b)
                 local va, vb = a.prof[key] or 0, b.prof[key] or 0
                 if va ~= vb then return va > vb end
@@ -648,6 +778,10 @@ function Win:renderFoods(x, y, w, h)
     local rowH = math.max(26, lh + 8)
     self:scrolled("foods", cx, listY, cw, y + h - 6 - listY, function(yy)
         local start = yy
+        if #self.sorted == 0 then
+            shadowText(self, T("IGUI_GTPG_NoMatch"), cx, yy, C.textDim, 1, sf)
+            yy = yy + lh
+        end
         for i, f in ipairs(self.sorted) do
             if i % 2 == 0 then self:drawRect(cx, yy, cw - 8, rowH, 0.35, 0.05, 0.16, 0.07) end
             if f.icon then self:drawTextureScaled(f.icon, cx + 2, yy + 1, rowH - 2, rowH - 2, 1, 1, 1, 1) end
@@ -657,9 +791,15 @@ function Win:renderFoods(x, y, w, h)
                 if amt and amt > 0 then
                     local g = H.reserveOf(v, amt)
                     local bx = cx + nameW + (j - 1) * colW
-                    self:drawRect(bx + 2, yy + 2, colW - 6, rowH - 4, 0.15 + 0.6 * math.min(1, g / maxBy[v]), C.accentDark[1] * 2, C.accentDark[2] * 2, C.accentDark[3] * 2)
-                    local s = H.fmt1(g)
-                    shadowText(self, s, bx + math.floor((colW - tw(sf, s)) / 2), yy + math.floor((rowH - fh(sf)) / 2), C.text, 1, sf)
+                    if knows then
+                        self:drawRect(bx + 2, yy + 2, colW - 6, rowH - 4, 0.15 + 0.6 * math.min(1, g / maxBy[v]), C.accentDark[1] * 2, C.accentDark[2] * 2, C.accentDark[3] * 2)
+                        local s = H.fmt1(g)
+                        shadowText(self, s, bx + math.floor((colW - tw(sf, s)) / 2), yy + math.floor((rowH - fh(sf)) / 2), C.text, 1, sf)
+                    else
+                        -- only "has it": a dot, no amount
+                        local d = math.max(6, math.floor(rowH / 3))
+                        self:drawRect(bx + math.floor((colW - d) / 2) - 2, yy + math.floor((rowH - d) / 2), d, d, 0.95, C.accent[1], C.accent[2], C.accent[3])
+                    end
                 end
             end
             yy = yy + rowH
@@ -758,7 +898,9 @@ function Win:onMouseDown(x, y)
     for _, r in ipairs(self.clicks or {}) do
         if inside(r, x, y) then
             getSoundManager():playUISound("UISelectListItem")
-            if r.vit then
+            if r.clear then
+                if self.search then self.search:setText("") end
+            elseif r.vit then
                 self.vit = r.vit
                 self.tab = "vitamins"
             elseif r.sort then
@@ -923,6 +1065,14 @@ function H.close()
     win:setVisible(false)
     win:removeFromUIManager()
     win.inManager = false
+end
+
+-- true while the player types in the search box (hotkeys stay quiet)
+function H.typing()
+    local box = H.isOpen() and H.window.search
+    if not box or not box:getIsVisible() then return false end
+    local ok, f = pcall(function() return box:isFocused() end)
+    return ok and f == true
 end
 
 function H.toggle(player, beside)
