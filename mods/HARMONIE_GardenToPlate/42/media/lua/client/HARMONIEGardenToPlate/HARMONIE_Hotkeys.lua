@@ -19,6 +19,7 @@
 require "HARMONIEGardenToPlate/HARMONIE_KeybindManager"
 require "HARMONIEGardenToPlate/HARMONIE_NutritionUI"
 require "HARMONIEGardenToPlate/HARMONIE_AdminPanel"
+require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 
@@ -62,6 +63,7 @@ end
 -- (confirmed via ISChat.lua, used throughout that file for the same
 -- "ignore other input while chat is focused" purpose).
 local function isChatWindowOpen()
+    if GTPGuide and GTPGuide.typing and GTPGuide.typing() then return true end -- typing in the guide's search box
     return ISChat and ISChat.focused or false
 end
 
@@ -75,6 +77,8 @@ local function onKeyPressed(key)
     if key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION) then
         local target = findNearestOtherPlayer(playerObj) or playerObj
         HARMONIE_NutritionUI.Open(target, playerObj)
+    elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE) then
+        GTPGuide.toggle(playerObj)
     elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL) then
         if isAdmin() or getDebug() then
             local target = findNearestOtherPlayer(playerObj) or playerObj

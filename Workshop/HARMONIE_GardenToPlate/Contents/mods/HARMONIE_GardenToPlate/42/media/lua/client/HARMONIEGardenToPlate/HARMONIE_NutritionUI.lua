@@ -14,6 +14,8 @@
 require "ISUI/ISCollapsableWindow"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
+require "ISUI/ISButton"
+require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
 
 HARMONIE_NutritionUI = ISCollapsableWindow:derive("HARMONIE_NutritionUI")
 
@@ -22,6 +24,9 @@ local PADDING = 10
 local NAME_COL_WIDTH = 90
 local BAND_COL_WIDTH = 90
 local WINDOW_WIDTH = PADDING * 2 + NAME_COL_WIDTH + BAND_COL_WIDTH + 30
+-- 2026-10-05: a button under the rows opens the vitamin guide
+-- (HARMONIE_VitaminGuide.lua), which also opens / closes with this window
+local GUIDE_BTN_H = 24
 
 local BandColor = {
     critical   = {r = 0.85, g = 0.25, b = 0.25},
@@ -53,6 +58,13 @@ end
 
 function HARMONIE_NutritionUI:createChildren()
     ISCollapsableWindow.createChildren(self)
+    local bw = self.width - PADDING * 2
+    self.guideButton = ISButton:new(PADDING, self.height - PADDING - GUIDE_BTN_H, bw, GUIDE_BTN_H,
+        getText("IGUI_GTPG_OpenGuide"), self, function(win) GTPGuide.toggle(win.assessor, win) end)
+    self.guideButton:initialise()
+    self.guideButton.backgroundColor = { r = 0.06, g = 0.24, b = 0.10, a = 0.9 }
+    self.guideButton.borderColor = { r = 0.32, g = 0.76, b = 0.40, a = 1 }
+    self:addChild(self.guideButton)
 end
 
 function HARMONIE_NutritionUI:prerender()
@@ -65,8 +77,9 @@ function HARMONIE_NutritionUI:prerender()
         self:drawText(getText("IGUI_HARMONIE_AssessmentLocked", HARMONIE_GTP.Config.assessmentRequiredFirstAid),
             PADDING, y, 1, 0.4, 0.4, 1, UIFont.Small)
         y = y + ROW_HEIGHT
-        self:drawRect(PADDING, y, self.width - PADDING * 2, self.height - y - PADDING, 0.35, 0.6, 0.1, 0.1)
-        self:drawRectBorder(PADDING, y, self.width - PADDING * 2, self.height - y - PADDING, 1, 0.6, 0.15, 0.15)
+        local boxH = self.height - y - PADDING * 2 - GUIDE_BTN_H
+        self:drawRect(PADDING, y, self.width - PADDING * 2, boxH, 0.35, 0.6, 0.1, 0.1)
+        self:drawRectBorder(PADDING, y, self.width - PADDING * 2, boxH, 1, 0.6, 0.15, 0.15)
         return
     end
 
@@ -96,7 +109,7 @@ end
 ]]--
 function HARMONIE_NutritionUI:new(x, y, target, assessor)
     local rowCount = #HARMONIE_GTP.Vitamins
-    local height = 40 + rowCount * ROW_HEIGHT + PADDING
+    local height = 40 + rowCount * ROW_HEIGHT + PADDING * 2 + GUIDE_BTN_H
     local o = ISCollapsableWindow:new(x, y, WINDOW_WIDTH, height)
     setmetatable(o, self)
     self.__index = self
@@ -116,6 +129,7 @@ function HARMONIE_NutritionUI:close()
     if HARMONIE_NutritionUI.instance == self then
         HARMONIE_NutritionUI.instance = nil
     end
+    pcall(GTPGuide.onAssessmentClosed)
 end
 
 --[[
@@ -132,10 +146,11 @@ function HARMONIE_NutritionUI.Open(target, assessor)
     end
 
     local screenW, screenH = getCore():getScreenWidth(), getCore():getScreenHeight()
-    local height = 40 + #HARMONIE_GTP.Vitamins * ROW_HEIGHT + PADDING
+    local height = 40 + #HARMONIE_GTP.Vitamins * ROW_HEIGHT + PADDING * 2 + GUIDE_BTN_H
     local window = HARMONIE_NutritionUI:new(screenW / 2 - WINDOW_WIDTH / 2, screenH / 2 - height / 2, target, assessor)
     window:initialise()
     window:addToUIManager()
     HARMONIE_NutritionUI.instance = window
+    pcall(GTPGuide.onAssessmentOpened, window)
     return window
 end
