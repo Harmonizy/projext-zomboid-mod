@@ -153,11 +153,12 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
         -- description only appears once the assessor can actually read the
         -- result -- otherwise it explains why not, same idea as EHR's
         -- "Too Far Away" vs normal description switch on its Examine Health option
-        if playerObj:getPerkLevel(Perks.Doctor) < HARMONIE_GTP.Config.assessmentRequiredFirstAid then
-            tooltip.description = getText("IGUI_HARMONIE_AssessmentLocked", HARMONIE_GTP.Config.assessmentRequiredFirstAid)
-        else
-            tooltip.description = getText("IGUI_HARMONIE_AssessOtherDesc")
-        end
+        -- 0.13.2: never locked; it says how much this assessor will see
+        -- (the one rule every vitamin window uses, HARMONIE_GTP.VitaminView)
+        local view = HARMONIE_GTP.VitaminView(playerObj)
+        local n2, n5 = HARMONIE_GTP.VitaminViewLevels()
+        tooltip.description = getText("IGUI_HARMONIE_AssessOtherDesc") .. " <LINE> " ..
+            getText("IGUI_HARMONIE_AssessView_" .. view, n2, n5)
         option.toolTip = tooltip
     end
 end

@@ -319,8 +319,77 @@ function K.scan(player, force)
         K.lastRecipesLog = sig
         log("vanilla evolved recipes in reach: %s", sig)
     end
+    s.heat = K.findHeat(player)
     scanCache[player] = s
     return s
+end
+
+-- ---------------------------------------------------------------- heat
+-- 0.13.2: a stove, oven, fireplace, grill, campfire or cooking pit within K.HEAT_RANGE
+-- tiles on the player's floor (lit or not -- the step only needs it there).
+-- Several checks, because a B42 campfire is not a class of its own: the
+-- object's Java class, its container's type, its sprite name.
+K.HEAT_RANGE = 2
+K.HEAT_CLASSES = { "IsoStove", "IsoFireplace", "IsoBarbecue" }
+K.HEAT_CONTAINERS = { stove = true, fireplace = true, barbecue = true, woodstove = true, campfire = true, grill = true }
+-- sprite names: exact ones (camping_01 also holds tents, wells and
+-- composters -- vanilla entity_campfire.txt is camping_01_6, its cooking
+-- pits camping_03_16 / _19), then words in the name
+K.HEAT_SPRITE_NAMES = { camping_01_4 = true, camping_01_5 = true, camping_01_6 = true, camping_01_7 = true,
+    camping_03_16 = true, camping_03_19 = true }
+K.HEAT_SPRITES = { "campfire", "fireplace", "stove", "oven", "barbecue", "bbq", "cooking_pit" }
+K.NOT_HEAT_CONTAINERS = { microwave = true, fridge = true, freezer = true }
+
+function K.heatKind(obj)
+    if not obj then return nil end
+    local cont = call(obj, "getContainer")
+    local ct = cont and tostring(call(cont, "getType") or "") or ""
+    if K.NOT_HEAT_CONTAINERS[ct] then return nil end
+    if instanceof then
+        for _, cls in ipairs(K.HEAT_CLASSES) do
+            local ok, is = pcall(instanceof, obj, cls)
+            if ok and is then return cls end
+        end
+    end
+    if K.HEAT_CONTAINERS[ct] then return "container:" .. ct end
+    local sp = call(obj, "getSprite")
+    local name = sp and tostring(call(sp, "getName") or "") or ""
+    name = name:lower()
+    if K.HEAT_SPRITE_NAMES[name] then return "sprite:" .. name end
+    for _, key in ipairs(K.HEAT_SPRITES) do
+        if name:find(key, 1, true) then return "sprite:" .. name end
+    end
+    return nil
+end
+
+function K.findHeat(player)
+    local sq = call(player, "getCurrentSquare")
+    local cell = getCell and getCell()
+    if not sq or not cell then return nil end
+    local px, py, pz = call(sq, "getX"), call(sq, "getY"), call(sq, "getZ")
+    if not px then return nil end
+    for dx = -K.HEAT_RANGE, K.HEAT_RANGE do
+        for dy = -K.HEAT_RANGE, K.HEAT_RANGE do
+            local s2 = cell:getGridSquare(px + dx, py + dy, pz)
+            local objs = s2 and call(s2, "getObjects")
+            for i = 0, (objs and objs:size() or 0) - 1 do
+                local obj = objs:get(i)
+                local kind = K.heatKind(obj)
+                if kind then
+                    if kind ~= K.lastHeatKind then
+                        K.lastHeatKind = kind
+                        log("heat source in reach: %s", kind)
+                    end
+                    return obj
+                end
+            end
+        end
+    end
+    if K.lastHeatKind ~= false then
+        K.lastHeatKind = false
+        log("no stove / fire / grill within %d tiles", K.HEAT_RANGE)
+    end
+    return nil
 end
 function K.forget(player) if player then scanCache[player] = nil else scanCache = setmetatable({}, { __mode = "k" }) end end
 
@@ -409,7 +478,9 @@ function K.plan(player, dish, scan)
     local p = { dish = dish, level = level, fam = fam, recipe = recipe, base = fam and fam.base, slots = {}, procs = {},
         adds = {}, ready = true, reasons = {}, preview = { cal = 0, carb = 0, fat = 0, prot = 0, hunger = 0, vit = {} } }
     local function no(reason) p.ready = false; p.reasons[#p.reasons + 1] = reason end
-    if level < (dish.level or 0) then no("level") end
+    -- 0.13.2 (owner: "มีสูตรอาหารที่ไม่ต้องการเลเวล ให้เห็นทุกสูตร"): no recipe
+    -- or step is locked by the Cooking level any more; dish.level and
+    -- proc.level are only a suggested level (K.difficulty: harder below it)
     if not recipe then no("base") end
     local maxItems = recipe and K.maxItems(recipe) or nil
     if not maxItems then maxItems = K.baseNeed(dish.family).max end
@@ -493,7 +564,13 @@ function K.plan(player, dish, scan)
     for _, pid in ipairs(dish.procs) do
         local proc = K.PROCS[pid]
         local pp = { id = pid, proc = proc, ok = true, tools = {}, help = {} }
-        if level < (proc.level or 0) then pp.ok = false; pp.levelLow = true end
+        pp.levelLow = level < (proc.level or 0)
+        -- 0.13.2 (owner: "กรรมวิธีทำอาหารบางอันควรต้องการให้มีเตาหรือกองไฟใน
+        -- ระยะถึงจะทำได้"): a hot step needs a stove, fire or grill in reach
+        if proc.heat then
+            pp.heat = scan and scan.heat or nil
+            if not pp.heat then pp.ok = false; pp.noHeat = true end
+        end
         for _, g in ipairs(proc.tools or {}) do
             local it, grade = K.findTool(scan, g)
             pp.tools[#pp.tools + 1] = { group = g, item = it, grade = grade, fallback = grade == "makeshift" or grade == "bare" }
@@ -503,7 +580,7 @@ function K.plan(player, dish, scan)
             local it = K.findTool(scan, g)
             pp.help[#pp.help + 1] = { group = g, item = it }
         end
-        if not pp.ok then no(pp.levelLow and "stepLevel" or "tools") end
+        if not pp.ok then no(pp.noHeat and "heat" or "tools") end
         p.procs[#p.procs + 1] = pp
     end
     if #p.adds == 0 then no("ingredients") end
@@ -514,6 +591,9 @@ end
 function K.difficulty(player, pp)
     local lvl = K.level(player)
     local d = 0.75 - lvl * 0.06
+    -- below a step's suggested level it is harder still (0.13.2)
+    local below = math.max(0, ((pp.proc and pp.proc.level) or 0) - lvl)
+    d = d + below * 0.05
     -- a good tool keeps it as it is, an ok one a little harder, a makeshift
     -- one or bare hands clearly harder
     for _, t in ipairs(pp.tools or {}) do d = d + (K.GRADE_COST[t.grade] or 0) end
@@ -635,10 +715,6 @@ function K.serveQuality(player, args)
     local dish = K.DISH_BY_ID[tostring(args.dish)]
     if not dish then
         log("quality from %s for unknown dish %s -- rejected", tostring(call(player, "getUsername")), tostring(args.dish))
-        return nil
-    end
-    if K.level(player) < (dish.level or 0) then
-        log("quality from %s for %s rejected: Cooking %d, the dish needs %d", tostring(call(player, "getUsername")), dish.id, K.level(player), dish.level or 0)
         return nil
     end
     local item = findInInventory(player, tonumber(args.id))

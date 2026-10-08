@@ -82,7 +82,7 @@ function F.nextStep()
     local pp = plan.procs[r.step]
     if not pp or not pp.ok then
         r.phase = "blocked"
-        r.blockedBy = pp and (pp.levelLow and "stepLevel" or "tools") or "?"
+        r.blockedBy = pp and (pp.noHeat and "heat" or "tools") or "?"
         log("step %s blocked: %s", pid, r.blockedBy)
         return
     end

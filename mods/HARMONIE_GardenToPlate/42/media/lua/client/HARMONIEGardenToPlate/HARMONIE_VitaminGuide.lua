@@ -67,7 +67,10 @@ H.GRIP = 18
 H.DEFAULT_W, H.DEFAULT_H = 940, 660
 H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
-H.TABS = { "overview", "check", "vitamins", "foods", "cook", "calendar", "other" }
+-- 0.13.2 (owner: "แท็บทำอาหารไว้แรกสุด -ปิดแท็บฤดูกาล -แท็บภาพรวมกับแท็บตรวจ
+-- สามารถเอามารวมกันได้ไหม"): Cooking first; the planting calendar tab is
+-- closed (Win:renderCalendar stays, unused); Overview and Check are one tab
+H.TABS = { "cook", "overview", "vitamins", "foods", "other" }
 H.NEAR_TILES = 3 -- how close another survivor must be to check them
 H.UNITS = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
 -- 2026-10-08: "Grow" first -- Fruit Farming (B42) by leina is built in
@@ -322,7 +325,7 @@ function Win:new(x, y, w, h, player)
     setmetatable(o, self)
     self.__index = self
     o.player = player
-    o.tab = "overview"
+    o.tab = H.TABS[1]
     o.vit = "A"
     o.sortKey = "name"
     o.scroll = {}
@@ -547,8 +550,6 @@ function Win:render()
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
         if self.settingsOpen then self:renderSettings(x, y, w, h)
-        elseif self.tab == "check" then self:renderCheck(x, y, w, h)
-        elseif self.tab == "calendar" then self:renderCalendar(x, y, w, h)
         elseif self.tab == "overview" then self:renderOverview(x, y, w, h)
         elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
         elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
@@ -624,56 +625,6 @@ local function clickable(self, r) self.clicks[#self.clicks + 1] = r end
 -- the drawing helpers, for the tabs kept in their own files (Cooking)
 H.util = { T = T, shadowText = shadowText, fit = fit, wrap = wrap, inside = inside, clickable = clickable,
     lineH = lineH, fh = fh, tw = tw, texture = texture, UI_DIR = UI_DIR }
-
--- ----------------------------------------------------------------- tab 1
-function Win:renderOverview(x, y, w, h)
-    local C = H.C
-    local sf = H.small()
-    local lh = lineH(sf)
-    local leftW = math.min(320, math.floor(w * 0.36))
-    local rowH = math.max(30, lh + 12)
-    local statusH = H.CARD_T + 12 + #HARMONIE_GTP.Vitamins * rowH + lh * 2 + 6
-    statusH = math.min(statusH, h - 140)
-    local cx, cy, cw = self:drawCard(x, y, leftW, statusH, T("IGUI_GTPG_Card_Status"))
-    local mx, my = self:getMouseX(), self:getMouseY()
-    for _, v in ipairs(HARMONIE_GTP.Vitamins) do
-        if cy + rowH > y + statusH - lh * 2 then break end
-        local r = { x = cx, y = cy, w = cw, h = rowH - 4, vit = v }
-        if inside(r, mx, my) then self:drawRect(r.x, r.y, r.w, r.h, 0.5, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
-        local icon = H.vitIcon(v)
-        if icon then self:drawTextureScaled(icon, cx + 2, cy + 1, rowH - 6, rowH - 6, 1, 1, 1, 1) end
-        shadowText(self, H.vitName(v), cx + rowH + 2, cy + math.floor((rowH - 4 - fh(sf)) / 2), C.text, 1, sf)
-        local band = self.player and H.bandOf(self.player, v)
-        if band then
-            local bt = T(BAND_KEY[band])
-            local pause = HARMONIE_GTP.VitData.GetPauseDays(self.player, v) >= 1
-            local mark = pause and " +" or ""
-            shadowText(self, bt .. mark, cx + cw - tw(sf, bt .. mark) - 4, cy + math.floor((rowH - 4 - fh(sf)) / 2), C[BAND_COL[band]], 1, sf)
-        end
-        clickable(self, r)
-        cy = cy + rowH
-    end
-    self:paragraphs(T("IGUI_GTPG_StatusHint"), cx, y + statusH - lh * 2 - 4, cw, C.textDim, sf)
-    -- where to see it
-    local wy = y + statusH + 8
-    local wx, wy2, ww, wh = self:drawCard(x, wy, leftW, h - statusH - 8, T("IGUI_GTPG_Card_WhereToSee"))
-    self:scrolled("where", wx, wy2, ww, wh, function(yy)
-        return self:paragraphs(T("IGUI_GTPG_WhereToSee", tostring(cfg().assessmentRequiredFirstAid)), wx, yy, ww - 8, C.text, sf)
-    end)
-    -- how it works
-    local rx = x + leftW + 8
-    local hx, hy, hw, hh2 = self:drawCard(rx, y, w - leftW - 8, h, T("IGUI_GTPG_Card_HowItWorks"))
-    local c = cfg()
-    local body = T("IGUI_GTPG_HowItWorks", tostring(c.maxValue), tostring(c.criticalThreshold), tostring(c.sufficientThreshold),
-        tostring(c.decayPerDay), H.fmt1(100 / (tonumber(c.reserveGainDivisor) or 10)), tostring(c.reservePerPauseDay))
-    local afflictedNote = c.effectsEnabled and T("IGUI_GTPG_EffectsOn") or T("IGUI_GTPG_EffectsOff")
-    self:scrolled("how", hx, hy, hw, hh2, function(yy)
-        local used = self:paragraphs(body, hx, yy, hw - 8, C.text, sf)
-        used = used + 6
-        used = used + self:paragraphs(afflictedNote, hx, yy + used, hw - 8, c.effectsEnabled and C.warn or C.textDim, sf)
-        return used
-    end)
-end
 
 -- ----------------------------------------------------------------- tab 2
 function Win:renderVitamins(x, y, w, h)
@@ -949,24 +900,16 @@ function Win:renderOther(x, y, w, h)
     end)
 end
 
--- ----------------------------------------------------------------- tab 2: check
--- Request 2026-10-08 ("อยากให้มีแท็บสำหรับตรวจสอบและดูโภชนาการคนอื่นด้วย
--- การดูตัวเองและคนอื่นสามารถดูได้แต่ดูได้จำกัด และรายละเอียดมากขึ้นเมื่อเลเวล
--- ถึงขั้น"): yourself or a survivor within H.NEAR_TILES tiles. What you see
--- grows with the viewer's First Aid (Perks.Doctor):
---   yourself  0: band + banked pause days   3: + Reserve number and bar
---             5: + deficiency active / days in deficiency
---   others    0: only how they look (well / unwell)   3: band per vitamin
---             5 (assessmentRequiredFirstAid): Reserve, pause days, deficiency
+-- ----------------------------------------------------------------- overview + check
+-- Request 2026-10-08 ("อยากให้มีแท็บสำหรับตรวจสอบและดูโภชนาการคนอื่นด้วย"):
+-- yourself or a survivor within H.NEAR_TILES tiles. 0.13.2: what you see
+-- of anyone follows HARMONIE_GTP.VitaminView (HARMONIE_VitaminConfig.lua).
 -- Another player's vitamins are READ ONLY (VitData.Peek: their ModData,
 -- or in MP the copy the server sends; never VitData.Get).
-H.CHECK_SELF = { 3, 5 }
-function H.checkOther() return { 3, tonumber(cfg().assessmentRequiredFirstAid) or 5 } end
+function H.checkOther() return { HARMONIE_GTP.VitaminViewLevels() } end
+H.CHECK_SELF = H.checkOther()
 
-function H.firstAid(player)
-    local ok, v = pcall(function() return player:getPerkLevel(Perks.Doctor) end)
-    return ok and (tonumber(v) or 0) or 0
-end
+function H.firstAid(player) return HARMONIE_GTP.FirstAidOf(player) end
 
 function H.readStore(target)
     -- 0.11.1: in MP another player's store is asked from the server
@@ -1022,14 +965,20 @@ function Win:checkTargets()
     return self.targets
 end
 
-function Win:renderCheck(x, y, w, h)
+-- 0.13.2: Overview + Check in one tab. Left: who (you first, then anyone
+-- within H.NEAR_TILES) and what your First Aid lets you tell; right: their
+-- vitamins, then how the system works and where else to look. What shows
+-- follows the one rule of every vitamin window (HARMONIE_GTP.VitaminView):
+-- the state of each vitamin always, the Reserve from First Aid 2, pause
+-- days and deficiencies from 5 -- the same for yourself and for others.
+function Win:renderOverview(x, y, w, h)
     local C = H.C
     local sf, mf = H.small(), H.medium()
     local lh = lineH(sf)
     local mx, my = self:getMouseX(), self:getMouseY()
     local leftW = math.min(300, math.floor(w * 0.32))
     local targets = self:checkTargets()
-    local listH = math.min(math.floor(h * 0.45), H.CARD_T + 18 + math.max(3, #targets) * (lh + 12) + lh * 2)
+    local listH = math.min(math.floor(h * 0.4), H.CARD_T + 18 + math.max(3, #targets) * (lh + 12) + lh * 2)
     -- who
     local cx, cy, cw = self:drawCard(x, y, leftW, listH, T("IGUI_GTPG_Card_Who"))
     for _, p in ipairs(targets) do
@@ -1048,16 +997,17 @@ function Win:renderCheck(x, y, w, h)
         cy = cy + r.h + 2
     end
     self:paragraphs(T("IGUI_GTPG_WhoHint", tostring(H.NEAR_TILES)), cx, y + listH - lh * 2 - 4, cw - 4, C.textDim, sf)
-    -- what your First Aid lets you see
-    local fa = H.firstAid(self.player)
-    local target = self.checkTarget or self.player
-    local isSelf = target == self.player
-    local levels = isSelf and H.CHECK_SELF or H.checkOther()
+    -- what your First Aid lets you tell (the same for yourself and others)
+    local view, fa = HARMONIE_GTP.VitaminView(self.player)
+    local n2, n5 = HARMONIE_GTP.VitaminViewLevels()
+    if view ~= self.loggedView then
+        self.loggedView = view
+        log("vitamins shown at level %s (First Aid %d)", view, fa)
+    end
     local ly = y + listH + 8
     local lx, ly2, lw = self:drawCard(x, ly, leftW, h - listH - 8, T("IGUI_GTPG_Card_Detail", tostring(fa)))
-    local who = isSelf and "Self" or "Other"
-    local steps = { { 0, T("IGUI_GTPG_Detail" .. who .. "0") }, { levels[1], T("IGUI_GTPG_Detail" .. who .. "1") }, { levels[2], T("IGUI_GTPG_Detail" .. who .. "2") } }
-    self:scrolled("detail" .. who, lx, ly2, lw, y + h - 6 - ly2, function(yy)
+    local steps = { { 0, T("IGUI_GTPG_DetailView0") }, { n2, T("IGUI_GTPG_DetailView1") }, { n5, T("IGUI_GTPG_DetailView2") } }
+    self:scrolled("detail", lx, ly2, lw, y + h - 6 - ly2, function(yy)
         local start = yy
         for _, st in ipairs(steps) do
             local have = fa >= st[1]
@@ -1071,74 +1021,83 @@ function Win:renderCheck(x, y, w, h)
     -- the result
     local rx = x + leftW + 8
     local rw = w - leftW - 8
-    local tx, ty, tw2, th2 = self:drawCard(rx, y, rw, h, T("IGUI_GTPG_Card_Result", playerName(target)))
+    local target = self.checkTarget or self.player
+    local showNum = view ~= "name"
+    local showMore = view == "full"
+    local rowH = lh * (showMore and 3 or (showNum and 2 or 1)) + 14
+    local resH = math.min(math.floor(h * 0.62), H.CARD_T + 12 + #HARMONIE_GTP.Vitamins * rowH + lh + 8)
+    local tx, ty, tw2, th2 = self:drawCard(rx, y, rw, resH, T("IGUI_GTPG_Card_Result", playerName(target)))
     local store = H.readStore(target)
     if not store then
         logOnce("nodata:" .. playerName(target), "check: no vitamin data for %s yet (MP: asked the server)", playerName(target))
         self:paragraphs(T("IGUI_GTPG_NoData"), tx, ty, tw2 - 8, C.textDim, sf)
-        return
-    end
-    local c = cfg()
-    local function bandOfValue(v) return HARMONIE_GTP.GetBand(tonumber(v) or 0) end
-    if not isSelf and fa < levels[1] then
-        -- only how they look
-        local unwell = false
-        for _, v in ipairs(HARMONIE_GTP.Vitamins) do
-            local e = store[v]
-            if type(e) == "table" and e.afflicted and (tonumber(e.pauseDays) or 0) < 1 then unwell = true end
-        end
-        shadowText(self, T(unwell and "IGUI_GTPG_LooksUnwell" or "IGUI_GTPG_LooksWell"), tx, ty, unwell and C.warn or C.good, 1, mf)
-        self:paragraphs(T("IGUI_GTPG_LooksHint", tostring(levels[1])), tx, ty + lineH(mf) + 6, tw2 - 8, C.textDim, sf)
-        return
-    end
-    local showNum = fa >= levels[isSelf and 1 or 2]
-    local showMore = fa >= levels[2]
-    local rowH = lh * (showMore and 3 or 2) + 14
-    self:scrolled("result", tx, ty, tw2, th2, function(yy)
-        local start = yy
-        for _, v in ipairs(HARMONIE_GTP.Vitamins) do
-            local e = store[v]
-            if type(e) == "table" then
-                local value = tonumber(e.value) or 0
-                local band = bandOfValue(value)
-                local col = C[BAND_COL[band]]
-                self:drawRect(tx, yy, tw2 - 8, rowH - 4, 0.45, 0.03, 0.12, 0.05)
-                self:drawRect(tx, yy, 3, rowH - 4, 1, col[1], col[2], col[3])
-                local icon = H.vitIcon(v)
-                local isz = math.min(rowH - 12, 36)
-                if icon then self:drawTextureScaled(icon, tx + 8, yy + 4, isz, isz, 1, 1, 1, 1) end
-                local nx = tx + isz + 16
-                shadowText(self, H.vitName(v), nx, yy + 4, C.text, 1, sf)
-                local bt = T(BAND_KEY[band])
-                shadowText(self, bt, tx + tw2 - 16 - tw(sf, bt), yy + 4, col, 1, sf)
-                local line2 = {}
-                if isSelf or showMore then
-                    local pd = math.floor(tonumber(e.pauseDays) or 0)
-                    line2[#line2 + 1] = T("IGUI_GTPG_PauseDays", tostring(pd))
-                end
-                if showNum then
-                    line2[#line2 + 1] = T("IGUI_GTPG_ReserveOf", tostring(math.floor(value + 0.5)), tostring(c.maxValue))
-                    self:drawBar(nx, yy + lh * 2 + 6, tw2 - (nx - tx) - 20, 5, value / (tonumber(c.maxValue) or 100), col)
-                end
-                if #line2 > 0 then shadowText(self, fit(table.concat(line2, "   "), tw2 - (nx - tx) - 16, sf), nx, yy + 4 + lh, C.textDim, 1, sf) end
-                if showMore then
-                    local s
-                    if e.afflicted then
-                        s = T((tonumber(e.pauseDays) or 0) >= 1 and "IGUI_GTPG_DeficiencyQuiet" or "IGUI_GTPG_DeficiencyActive",
-                            tostring(math.floor(tonumber(e.afflictedDays) or 0)), tostring(c.sufficientThreshold))
-                    else
-                        s = T("IGUI_GTPG_NoDeficiency")
+    else
+        local c = cfg()
+        self:scrolled("result", tx, ty, tw2, th2, function(yy)
+            local start = yy
+            for _, v in ipairs(HARMONIE_GTP.Vitamins) do
+                local e = store[v]
+                if type(e) == "table" then
+                    local value = tonumber(e.value) or 0
+                    local band = HARMONIE_GTP.GetBand(value)
+                    local col = C[BAND_COL[band]]
+                    local r = { x = tx, y = yy, w = tw2 - 8, h = rowH - 4, vit = v }
+                    local over = inside(r, mx, my) and inside(self.scrollBox and self.scrollBox.result, mx, my)
+                    self:drawRect(tx, yy, tw2 - 8, rowH - 4, over and 0.7 or 0.45, 0.03, 0.12, 0.05)
+                    self:drawRect(tx, yy, 3, rowH - 4, 1, col[1], col[2], col[3])
+                    local icon = H.vitIcon(v)
+                    local isz = math.min(rowH - 8, 36)
+                    if icon then self:drawTextureScaled(icon, tx + 8, yy + math.floor((rowH - 4 - isz) / 2), isz, isz, 1, 1, 1, 1) end
+                    local nx = tx + isz + 16
+                    shadowText(self, H.vitName(v), nx, yy + 4, C.text, 1, sf)
+                    local bt = T(BAND_KEY[band])
+                    shadowText(self, bt, tx + tw2 - 16 - tw(sf, bt), yy + 4, col, 1, sf)
+                    if showNum then
+                        local line2 = { T("IGUI_GTPG_ReserveOf", tostring(math.floor(value + 0.5)), tostring(c.maxValue)) }
+                        if showMore then line2[#line2 + 1] = T("IGUI_GTPG_PauseDays", tostring(math.floor(tonumber(e.pauseDays) or 0))) end
+                        shadowText(self, fit(table.concat(line2, "   "), tw2 - (nx - tx) - 16, sf), nx, yy + 4 + lh, C.textDim, 1, sf)
+                        self:drawBar(nx, yy + lh * 2 + 6, tw2 - (nx - tx) - 20, 5, value / (tonumber(c.maxValue) or 100), col)
                     end
-                    shadowText(self, fit(s, tw2 - (nx - tx) - 16, sf), nx, yy + 12 + lh * 2, e.afflicted and C.bad or C.textDim, 1, sf)
+                    if showMore then
+                        local s2
+                        if e.afflicted then
+                            s2 = T((tonumber(e.pauseDays) or 0) >= 1 and "IGUI_GTPG_DeficiencyQuiet" or "IGUI_GTPG_DeficiencyActive",
+                                tostring(math.floor(tonumber(e.afflictedDays) or 0)), tostring(c.sufficientThreshold))
+                        else
+                            s2 = T("IGUI_GTPG_NoDeficiency")
+                        end
+                        shadowText(self, fit(s2, tw2 - (nx - tx) - 16, sf), nx, yy + 12 + lh * 2, e.afflicted and C.bad or C.textDim, 1, sf)
+                    end
+                    if over then
+                        self.hoverTip = { text = T("IGUI_GTPG_Vit_" .. v .. "_Effect") .. " " .. T("IGUI_GTPG_ClickToRead"), x = nx, y = yy + rowH }
+                    end
+                    clickable(self, r)
+                    yy = yy + rowH
                 end
-                local r = { x = tx, y = yy, w = tw2 - 8, h = rowH - 4 }
-                if inside(r, mx, my) and inside(self.scrollBox and self.scrollBox.result, mx, my) then
-                    self.hoverTip = { text = T("IGUI_GTPG_Vit_" .. v .. "_Effect"), x = nx, y = yy + rowH }
-                end
-                yy = yy + rowH
             end
-        end
-        return yy - start
+            if view ~= "full" then
+                yy = yy + 2 + self:paragraphs(T(view == "name" and "IGUI_GTPG_ViewMore_Name" or "IGUI_GTPG_ViewMore_Numbers", tostring(n2), tostring(n5)),
+                    tx, yy + 2, tw2 - 12, C.textDim, sf)
+            end
+            return yy - start
+        end)
+    end
+    -- how it works + where else to look
+    local hy0 = y + resH + 8
+    local hx, hy, hw, hh2 = self:drawCard(rx, hy0, rw, h - resH - 8, T("IGUI_GTPG_Card_HowItWorks"))
+    local c = cfg()
+    local body = T("IGUI_GTPG_HowItWorks", tostring(c.maxValue), tostring(c.criticalThreshold), tostring(c.sufficientThreshold),
+        tostring(c.decayPerDay), H.fmt1(100 / (tonumber(c.reserveGainDivisor) or 10)), tostring(c.reservePerPauseDay))
+    local afflictedNote = c.effectsEnabled and T("IGUI_GTPG_EffectsOn") or T("IGUI_GTPG_EffectsOff")
+    self:scrolled("how", hx, hy, hw, hh2, function(yy)
+        local used = self:paragraphs(body, hx, yy, hw - 8, C.text, sf)
+        used = used + 6
+        used = used + self:paragraphs(afflictedNote, hx, yy + used, hw - 8, c.effectsEnabled and C.warn or C.textDim, sf)
+        used = used + 10
+        shadowText(self, T("IGUI_GTPG_Card_WhereToSee"), hx, yy + used, C.accent, 1, sf)
+        used = used + lh + 2
+        used = used + self:paragraphs(T("IGUI_GTPG_WhereToSee", tostring(n2), tostring(n5)), hx, yy + used, hw - 8, C.text, sf)
+        return used
     end)
 end
 
@@ -1548,7 +1507,9 @@ function H.isOpen()
     return H.window ~= nil and H.window.inManager and H.window:getIsVisible()
 end
 
-function H.open(player, beside)
+-- `tab` (0.13.2): which tab to show ("cook" from a stove's right-click menu,
+-- "overview" beside the assessment window); nil keeps the current one
+function H.open(player, beside, tab)
     H.ensurePrefs()
     player = player or getPlayer()
     if not player then log("open: no player, not opened"); return end
@@ -1569,6 +1530,11 @@ function H.open(player, beside)
     end
     win.player = player
     win.openedByLink = beside ~= nil
+    if tab and tab ~= win.tab then
+        log("open on tab %s (was %s)", tostring(tab), tostring(win.tab))
+        win.tab = tab
+        win.settingsOpen = false
+    end
     if not H.isOpen() then
         win:addToUIManager()
         win.inManager = true
@@ -1597,13 +1563,15 @@ function H.typing()
 end
 
 function H.toggle(player, beside)
-    if H.isOpen() then H.close() else H.open(player, beside) end
+    if H.isOpen() then H.close() else H.open(player, beside, beside and "overview" or nil) end
 end
 
 -- the Nutritional Assessment window (HARMONIE_NutritionUI) opened / closed
 function H.onAssessmentOpened(assessWindow)
     if not H.followEnabled() or H.isOpen() then return end
-    H.open(assessWindow and assessWindow.assessor or getPlayer(), assessWindow)
+    H.open(assessWindow and assessWindow.assessor or getPlayer(), assessWindow, "overview")
+    -- show the one being assessed
+    if H.window and assessWindow and assessWindow.target then H.window.checkTarget = assessWindow.target end
 end
 
 function H.onAssessmentClosed()

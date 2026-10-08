@@ -31,7 +31,7 @@
          back.
       5. Every vitamin applies its own direct stat penalty (see
          HARMONIE_VitaminEffects.lua's header for the full mapping and
-         API citations): A Intoxication floor (blurred vision), B Stress
+         API citations): A night blindness (0.13.2; was an Intoxication floor), B Stress
          floor, C a random Head-scratch check (its own 1-game-hour block,
          separate from the 6-hour symptom block above), D muscle-strain
          (Stiffness) floor on every body part, E unhappiness floor, K a

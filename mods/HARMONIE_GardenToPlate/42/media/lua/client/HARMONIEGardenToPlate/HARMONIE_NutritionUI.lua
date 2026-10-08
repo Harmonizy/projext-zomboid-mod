@@ -1,14 +1,14 @@
 --[[
     HARMONIE - From Garden to Plate
     Nutrition Assessment window, opened via right-click on self or another
-    survivor. Shows Critical/Low/Sufficient bands for all 6 vitamins.
-    Locked (red overlay, no real values shown) unless the assessor's First
-    Aid perk is >= HARMONIE_GTP.Config.assessmentRequiredFirstAid.
-
-    Text-only display -- no gauge/bar. Each row also shows a "+" (green)
-    if the vitamin still has banked pause days (decay is being held off)
-    or a "-" (red) if none are left (actively decaying that day) -- see
-    HARMONIE_VitaminData.lua's pauseDays.
+    survivor. 0.13.2: the same rule as every other vitamin window
+    (HARMONIE_GTP.VitaminView, by the ASSESSOR's First Aid):
+      no skill   each vitamin's state (Critical / Low / Sufficient)
+      2          + the Reserve number
+      5          + banked pause days ("+N" green, "-" red when none left
+                   and the vitamin is actively decaying -- see
+                   HARMONIE_VitaminData.lua's pauseDays)
+    A line under the rows says what more First Aid would show.
 ]]--
 
 require "ISUI/ISCollapsableWindow"
@@ -23,7 +23,8 @@ local ROW_HEIGHT = 26
 local PADDING = 10
 local NAME_COL_WIDTH = 90
 local BAND_COL_WIDTH = 90
-local WINDOW_WIDTH = PADDING * 2 + NAME_COL_WIDTH + BAND_COL_WIDTH + 30
+local NUM_COL_WIDTH = 44
+local WINDOW_WIDTH = PADDING * 2 + NAME_COL_WIDTH + BAND_COL_WIDTH + NUM_COL_WIDTH + 40
 -- 2026-10-05: a button under the rows opens the vitamin guide
 -- (HARMONIE_VitaminGuide.lua), which also opens / closes with this window
 local GUIDE_BTN_H = 24
@@ -49,12 +50,18 @@ local VitaminNameKey = {
     K = "IGUI_HARMONIE_Vitamin_K",
 }
 
-function HARMONIE_NutritionUI:isLocked()
-    -- B42 renamed the First Aid perk's internal id to "Doctor" (the skill
-    -- book / UI still call it First Aid, but Perks.FirstAid doesn't exist
-    -- and getPerkLevel(nil) silently behaved as "always locked")
-    return self.assessor:getPerkLevel(Perks.Doctor) < HARMONIE_GTP.Config.assessmentRequiredFirstAid
+-- what the assessor may see: "name", "numbers" or "full" (one rule for
+-- every window, HARMONIE_VitaminConfig.lua)
+function HARMONIE_NutritionUI:viewLevel()
+    local view, fa = HARMONIE_GTP.VitaminView(self.assessor)
+    if view ~= self.loggedView and HARMONIE_GTP.Log then
+        self.loggedView = view
+        HARMONIE_GTP.Log("Assess", "assessment shows %s (assessor First Aid %d)", view, fa)
+    end
+    return view
 end
+-- kept for anything that still asks: nothing is locked any more
+function HARMONIE_NutritionUI:isLocked() return false end
 
 function HARMONIE_NutritionUI:createChildren()
     ISCollapsableWindow.createChildren(self)
@@ -71,34 +78,36 @@ function HARMONIE_NutritionUI:prerender()
     ISCollapsableWindow.prerender(self)
 
     local y = self:titleBarHeight() + PADDING
-    local locked = self:isLocked()
-
-    if locked then
-        self:drawText(getText("IGUI_HARMONIE_AssessmentLocked", HARMONIE_GTP.Config.assessmentRequiredFirstAid),
-            PADDING, y, 1, 0.4, 0.4, 1, UIFont.Small)
-        y = y + ROW_HEIGHT
-        local boxH = self.height - y - PADDING * 2 - GUIDE_BTN_H
-        self:drawRect(PADDING, y, self.width - PADDING * 2, boxH, 0.35, 0.6, 0.1, 0.1)
-        self:drawRectBorder(PADDING, y, self.width - PADDING * 2, boxH, 1, 0.6, 0.15, 0.15)
-        return
-    end
+    local view = self:viewLevel()
+    local numX = PADDING + NAME_COL_WIDTH + BAND_COL_WIDTH
+    local pauseX = numX + NUM_COL_WIDTH
 
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         local value = HARMONIE_GTP.VitData.Get(self.target, vit)
         local band = HARMONIE_GTP.GetBand(value)
         local color = BandColor[band]
-        local hasPauseDays = HARMONIE_GTP.VitData.GetPauseDays(self.target, vit) >= 1
 
         self:drawText(getText(VitaminNameKey[vit]), PADDING, y, 1, 1, 1, 1, UIFont.Small)
         self:drawText(getText(BandTextKey[band]), PADDING + NAME_COL_WIDTH, y, color.r, color.g, color.b, 1, UIFont.Small)
 
-        if hasPauseDays then
-            self:drawText("+", PADDING + NAME_COL_WIDTH + BAND_COL_WIDTH, y, 0.3, 0.8, 0.35, 1, UIFont.Small)
-        else
-            self:drawText("-", PADDING + NAME_COL_WIDTH + BAND_COL_WIDTH, y, 0.85, 0.25, 0.25, 1, UIFont.Small)
+        if view ~= "name" then
+            self:drawText(tostring(math.floor((tonumber(value) or 0) + 0.5)), numX, y, 0.85, 0.9, 0.85, 1, UIFont.Small)
+        end
+        if view == "full" then
+            local pd = math.floor(tonumber(HARMONIE_GTP.VitData.GetPauseDays(self.target, vit)) or 0)
+            if pd >= 1 then
+                self:drawText("+" .. tostring(pd), pauseX, y, 0.3, 0.8, 0.35, 1, UIFont.Small)
+            else
+                self:drawText("-", pauseX, y, 0.85, 0.25, 0.25, 1, UIFont.Small)
+            end
         end
 
         y = y + ROW_HEIGHT
+    end
+    if view ~= "full" then
+        local n2, n5 = HARMONIE_GTP.VitaminViewLevels()
+        local key = view == "name" and "IGUI_HARMONIE_ViewHint_Name" or "IGUI_HARMONIE_ViewHint_Numbers"
+        self:drawText(getText(key, view == "name" and n2 or n5), PADDING, y, 0.75, 0.75, 0.6, 1, UIFont.Small)
     end
 end
 
@@ -109,7 +118,7 @@ end
 ]]--
 function HARMONIE_NutritionUI:new(x, y, target, assessor)
     local rowCount = #HARMONIE_GTP.Vitamins
-    local height = 40 + rowCount * ROW_HEIGHT + PADDING * 2 + GUIDE_BTN_H
+    local height = 40 + (rowCount + 1) * ROW_HEIGHT + PADDING * 2 + GUIDE_BTN_H
     local o = ISCollapsableWindow:new(x, y, WINDOW_WIDTH, height)
     setmetatable(o, self)
     self.__index = self
@@ -147,7 +156,7 @@ function HARMONIE_NutritionUI.Open(target, assessor)
     end
 
     local screenW, screenH = getCore():getScreenWidth(), getCore():getScreenHeight()
-    local height = 40 + #HARMONIE_GTP.Vitamins * ROW_HEIGHT + PADDING * 2 + GUIDE_BTN_H
+    local height = 40 + (#HARMONIE_GTP.Vitamins + 1) * ROW_HEIGHT + PADDING * 2 + GUIDE_BTN_H
     local window = HARMONIE_NutritionUI:new(screenW / 2 - WINDOW_WIDTH / 2, screenH / 2 - height / 2, target, assessor)
     window:initialise()
     window:addToUIManager()

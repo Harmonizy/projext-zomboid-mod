@@ -288,11 +288,18 @@ function EHR_HealthPanelUI:hmDrawStats()
 
     -- group rows into two balanced columns
     local groups = {}
+    local viewer = self.remoteDoctor or (getPlayer and getPlayer())
+    local hidden = 0
     for _, row in ipairs(st.rows or {}) do
-        local g = row.g or "body"
-        groups[g] = groups[g] or {}
-        table.insert(groups[g], row)
+        if St.vitaminRowShown and not St.vitaminRowShown(row, viewer) then
+            hidden = hidden + 1
+        else
+            local g = row.g or "body"
+            groups[g] = groups[g] or {}
+            table.insert(groups[g], row)
+        end
     end
+    if hidden > 0 then HMLogOnce("vitview:" .. tostring(hidden), "StatsUI", "%d vitamin rows hidden by the viewer's First Aid (GTP's rule)", hidden) end
     local top, viewH = b.y + 48, b.h - 56
     local colW = math.floor((b.w - 28 - 18) / 2)
     local cols = { { x = b.x + 14, h = 0, items = {} }, { x = b.x + 14 + colW + 18, h = 0, items = {} } }

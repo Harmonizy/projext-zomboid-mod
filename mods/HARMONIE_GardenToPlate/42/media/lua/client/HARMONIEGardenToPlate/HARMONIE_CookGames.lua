@@ -631,8 +631,15 @@ local function wrap(text, f, maxW)
             if w(word) <= maxW then
                 cur = word
             else
-                for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+                -- UTF-8 characters by their lead byte (no patterns: the
+                -- game's Lua is picky about byte escapes in patterns)
+                local i, n = 1, #word
+                while i <= n do
+                    local b = string.byte(word, i)
+                    local len = (b >= 240 and 4) or (b >= 224 and 3) or (b >= 192 and 2) or 1
+                    local ch = string.sub(word, i, i + len - 1)
                     if w(cur .. ch) > maxW and cur ~= "" then lines[#lines + 1] = cur; cur = ch else cur = cur .. ch end
+                    i = i + len
                 end
             end
         end
@@ -720,7 +727,8 @@ function P:render()
     self:drawRectBorder(r.x, r.y, r.w, r.h, 1, C.bad[1], C.bad[2], C.bad[3])
     self:text(T("IGUI_GTPC_Game_Cancel"), r.x + r.w / 2, r.y + 7, C.text, UIFont.Small, true)
     -- the cook's speech bubble (on top of everything)
-    self:drawBubble()
+    local okB, errB = pcall(function() self:drawBubble() end)
+    if not okB then K.logOnce("bubble", "speech bubble draw error: %s", tostring(errB)) end
     -- the word
     if self.done and self.result then
         local col = ({ Excellent = C.good, Good = C.accent, Bad = C.warn, Miss = C.bad })[self.result] or C.text

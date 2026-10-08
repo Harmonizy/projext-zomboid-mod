@@ -5,7 +5,13 @@
     (the "N" hotkey window, which assesses ANY target survivor and gates behind
     the ASSESSOR's own First Aid), this panel always shows the viewing player's
     own character and gates its own richer detail behind THAT SAME character's
-    own skills:
+    own skills.
+
+    0.13.2: the First Aid part now follows the one rule every vitamin window
+    uses (HARMONIE_GTP.VitaminView, HARMONIE_VitaminConfig.lua): no skill =
+    band word and what goes wrong; First Aid 2 = + Reserve number and bar;
+    First Aid 5 = + pause days and whether the penalty bites. The list
+    below is the older history of this tab:
       - No skill required: band word (Critical/Low/Sufficient), what goes wrong
         at Critical, banked pause-days, and a tooltip explaining what pause days
         do and exactly how to clear an affliction.
@@ -158,7 +164,9 @@ local VitaminDownsideKey = {
 -- unrelated file just to avoid duplicating 6 lines.
 local VitaminUnit = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
 
-local FIRST_AID_DETAIL_LEVEL = 3
+-- 0.13.2: what this tab shows follows the one rule every vitamin window
+-- uses (HARMONIE_GTP.VitaminView): state name always, the Reserve number
+-- from First Aid 2, pause days and whether the penalty bites from 5
 local COOKING_FOOD_LEVEL = 3
 
 -- Real vanilla trait (B42's data-driven Registry system, not a hardcoded
@@ -365,7 +373,13 @@ function HARMONIE_VitaminPanel:refreshLayout()
     local player = self:getPlayer()
     if not player then return end
 
-    local hasFirstAidDetail = player:getPerkLevel(Perks.Doctor) >= FIRST_AID_DETAIL_LEVEL
+    local view = HARMONIE_GTP.VitaminView(player)
+    local hasFirstAidDetail = view ~= "name"
+    local hasFull = view == "full"
+    if view ~= self.loggedView then
+        self.loggedView = view
+        if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Panel", "vitamin tab shows %s (First Aid %d)", view, HARMONIE_GTP.FirstAidOf(player)) end
+    end
     local hasCookingFoodList = player:getPerkLevel(Perks.Cooking) >= COOKING_FOOD_LEVEL
     local hasNutritionistTrait = NUTRITIONIST_TRAIT ~= nil and player:hasTrait(NUTRITIONIST_TRAIT)
     -- Either a cook (knows from experience) or someone with the real
@@ -401,10 +415,13 @@ function HARMONIE_VitaminPanel:refreshLayout()
         else
             local vit = item.item
             local data = self:buildRowLines(vit, player, textWidth, hasFirstAidDetail)
+            data.full = hasFull
+            -- the colour must not tell what the text hides (penalty biting)
+            if not hasFull then data.statusColor = getStatusColor(data.band, false) end
             item.data = data
             item.hasFirstAidDetail = hasFirstAidDetail
 
-            local contentHeight = headerHeight + (#data.statusLines * lineHeight) + lineHeight * 2 -- pause days + penalty active lines
+            local contentHeight = headerHeight + (#data.statusLines * lineHeight) + (hasFull and lineHeight * 2 or 0) -- pause days + penalty active lines
             if data.numbersText then contentHeight = contentHeight + BAR_HEIGHT + 4 + lineHeight end
 
             item.height = math.max(ICON_SIZE, contentHeight) + ROW_GAP
@@ -538,25 +555,24 @@ function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
         lineY = lineY + lineHeight
     end
 
-    -- Pause-days ("rest days banked") -- always visible, no skill gate.
-    local pauseDaysColor = data.pauseDays >= 1 and Colors.safe or Colors.textDim
-    local pauseDaysY = lineY
-    self:drawText(data.pauseDaysLabel, textX, pauseDaysY, pauseDaysColor.r, pauseDaysColor.g, pauseDaysColor.b, 1, UIFont.Small)
-
     local mouseX, mouseY = self:getMouseX(), self:getMouseY()
-    local labelWidth = getTextManager():MeasureStringX(UIFont.Small, data.pauseDaysLabel)
     local hoveredTooltip = nil
-    if mouseX >= textX and mouseX <= textX + labelWidth and mouseY >= pauseDaysY and mouseY <= pauseDaysY + lineHeight then
-        hoveredTooltip = self:getPauseDaysTooltip()
-    end
-    lineY = lineY + lineHeight
+    -- Pause days and whether the penalty bites: First Aid 5 (0.13.2)
+    if data.full then
+        local pauseDaysColor = data.pauseDays >= 1 and Colors.safe or Colors.textDim
+        local pauseDaysY = lineY
+        self:drawText(data.pauseDaysLabel, textX, pauseDaysY, pauseDaysColor.r, pauseDaysColor.g, pauseDaysColor.b, 1, UIFont.Small)
+        local labelWidth = getTextManager():MeasureStringX(UIFont.Small, data.pauseDaysLabel)
+        if mouseX >= textX and mouseX <= textX + labelWidth and mouseY >= pauseDaysY and mouseY <= pauseDaysY + lineHeight then
+            hoveredTooltip = self:getPauseDaysTooltip()
+        end
+        lineY = lineY + lineHeight
 
-    -- Whether the deficiency penalty is actually biting right now -- always
-    -- visible, no skill gate. Distinct from the band: Critical + banked
-    -- pause days means the penalty is currently shielded off, not active.
-    local penaltyColor = data.penaltyActive and Colors.critical or Colors.textDim
-    self:drawText(data.penaltyActiveLabel, textX, lineY, penaltyColor.r, penaltyColor.g, penaltyColor.b, 1, UIFont.Small)
-    lineY = lineY + lineHeight
+        -- Critical + banked pause days means the penalty is shielded off
+        local penaltyColor = data.penaltyActive and Colors.critical or Colors.textDim
+        self:drawText(data.penaltyActiveLabel, textX, lineY, penaltyColor.r, penaltyColor.g, penaltyColor.b, 1, UIFont.Small)
+        lineY = lineY + lineHeight
+    end
 
     -- First Aid-gated exact numbers, now with a fill bar underneath --
     -- same drawRect-background + drawRect-fill + drawRectBorder pattern

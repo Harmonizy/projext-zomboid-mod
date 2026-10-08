@@ -30,8 +30,11 @@
         of its kinds (vanilla FoodType: Vegetables, Fruits, Berry, Beef,
         Poultry, Fish, Seafood, Bean, Herb ... -- so modded foods count
         too) that vanilla's own recipe accepts; poisonous food never;
-      - 24 preparation steps, about 90 dishes from Cooking level 0 to 10,
-        each unlocked at its level, hot drinks included.
+      - 25 preparation steps, 99 dishes, hot drinks included. 0.13.2:
+        every dish can be made at any Cooking level -- its `level` is the
+        suggested one (shown in the tab; the steps are harder below it).
+        Tossing, flipping and steeping need a stove, fire or grill within
+        two tiles (K.findHeat).
 
     Item types below were checked against vanilla B42's own ItemName list
     (media/lua/shared/Translate/EN/ItemName.json). Whether vanilla lets an
@@ -129,12 +132,14 @@ K.TOOL_GRADES = { "best", "ok", "makeshift" }
 -- groups (a "bare" group never blocks); help: optional groups that make it
 -- easier. cursor: what is drawn at the mouse -- "tool" (the real tool item),
 -- "ingredient" (the food being worked), "spice" (the seasoning used),
--- "base" (the pan or pot), "hand". level: Cooking level needed; time:
+-- "base" (the pan or pot), "hand". level: the suggested Cooking level
+-- (0.13.2: never a lock -- below it the minigame is harder); time:
 -- seconds of the timed action at level 0 (4 percent quicker per level);
 -- xp: vanilla Cooking XP when done.
-local function proc(game, variant, tools, help, level, time, xp, cursor)
+-- heat (0.13.2): the step needs a stove, fire or grill in reach (K.findHeat)
+local function proc(game, variant, tools, help, level, time, xp, cursor, heat)
     return { game = game, variant = variant, tools = tools, help = help, level = level, time = time, xp = xp, icon = variant,
-        cursor = cursor or (#tools > 0 and "tool" or "hand") }
+        cursor = cursor or (#tools > 0 and "tool" or "hand"), heat = heat == true }
 end
 K.PROCS = {
     wash    = proc("scrub",  "wash",    {},            {},           0, 3, 1, "hand"),
@@ -149,9 +154,9 @@ K.PROCS = {
     crack   = proc("ring",   "crack",   {},            { "bowl" },   0, 2, 1, "ingredient"),
     knead   = proc("ring",   "knead",   {},            { "rollingpin" }, 2, 6, 3, "hand"),
     pound   = proc("ring",   "pound",   { "pounder" }, { "board" },  2, 4, 2),
-    toss    = proc("ring",   "toss",    {},            {},           1, 3, 2, "hand"),
-    flip    = proc("watch",  "flip",    { "spatula" }, {},           1, 3, 2),
-    steep   = proc("watch",  "steep",   {},            {},           0, 3, 1, "ingredient"),
+    toss    = proc("ring",   "toss",    {},            {},           1, 3, 2, "hand", true),
+    flip    = proc("watch",  "flip",    { "spatula" }, {},           1, 3, 2, nil, true),
+    steep   = proc("watch",  "steep",   {},            {},           0, 3, 1, "ingredient", true),
     roll    = proc("lane",   "roll",    { "roller" },  {},           2, 5, 3),
     grate   = proc("lane",   "grate",   { "grater" },  {},           1, 3, 2, "ingredient"),
     zest    = proc("lane",   "zest",    { "grater" },  {},           2, 3, 2, "ingredient"),
@@ -296,225 +301,229 @@ local SPICE = { optional = true, spice = true }
 local VEG, VEGO = x({ "veg" }), x({ "veg" }, true)
 local FRUIT, BERRY = x({ "fruit", "berry" }), x({ "berry" })
 
-K.DISHES = {
+-- 0.13.2: added one at a time -- a single 99-entry constructor broke the
+-- game's Lua compiler (K.DISHES came out nil: "Expected a table" in the tab)
+K.DISHES = {}
+local function dish(t) K.DISHES[#K.DISHES + 1] = t end
+do
     -- ===== soups (vanilla Soup: a cooking pot with water, 6)
-    { id = "VegSoup",      family = "soup", level = 0, procs = { "wash", "peel", "chop", "season", "stir" },
-      slots = { s(G.root, 2, VEG), s(G.leafy, 1, VEG), s(G.onion, 1), s(G.greens, 1, VEGO), s(G.herb, 1, SPICE), s(G.salt, 1, SPICE) } },
-    { id = "NettleSoup",   family = "soup", level = 0, procs = { "wash", "chop", "season", "stir" },
-      slots = { s({ "Base.Nettles", "Base.Dandelions", "Base.Spinach" }, 2), s(G.potato, 1), s(G.onion, 1), s(G.salt, 1, SPICE) } },
-    { id = "TomatoSoup",   family = "soup", level = 1, procs = { "wash", "chop", "mash", "season", "stir" },
-      slots = { s(G.tomato, 3), s(G.onion, 1), s(G.garlic, 1, OPT), s(G.italian, 1, SPICE) } },
-    { id = "LentilSoup",   family = "soup", level = 1, procs = { "wash", "chop", "season", "stir" },
-      slots = { s(G.drybeans, 2, x({ "bean" })), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.garlic, 1, OPT), s(G.herb, 1, SPICE) } },
-    { id = "ChickenSoup",  family = "soup", level = 1, procs = { "wash", "trim", "chop", "season", "stir" },
-      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.leafy, 1, VEGO), s(G.herb, 1, SPICE), s(G.salt, 1, SPICE) } },
-    { id = "PumpkinSoup",  family = "soup", level = 2, procs = { "wash", "peel", "chop", "mash", "season" },
-      slots = { s({ "Base.Pumpkin", "Base.PumpkinSliced", "Base.PumpkinSmashed", "Base.Squash", "Base.SweetPotato" }, 3), s(G.onion, 1), s(G.garlic, 1, OPT), s(G.salt, 1, SPICE) } },
-    { id = "MushroomSoup", family = "soup", level = 2, procs = { "wash", "slice", "season", "stir" },
-      slots = { s(G.mushroom, 3, x({ "mushroom" })), s(G.onion, 1), s(G.potato, 1, OPT), s(G.herb, 1, SPICE) } },
-    { id = "CornSoup",     family = "soup", level = 3, procs = { "wash", "peel", "slice", "chop", "stir" },
-      slots = { s({ "Base.Corn", "Base.CannedCornOpen" }, 2), s(G.potato, 1), s(G.onion, 1), s({ "Base.Leek", "Base.GreenOnions" }, 1, OPT), s(G.salt, 1, SPICE) } },
-    { id = "FishSoup",     family = "soup", level = 3, procs = { "scale", "trim", "peel", "chop", "season", "stir" },
-      slots = { s(G.fish, 2, x({ "fish" })), s(G.potato, 1), s({ "Base.Leek", "Base.Onion" }, 1), s(G.tomato, 1, OPT), s(G.herb, 1, SPICE) } },
-    { id = "GardenBroth",  family = "soup", level = 5, procs = { "wash", "peel", "chop", "grind", "season", "stir" },
-      slots = { s(G.root, 2, VEG), s(G.greens, 2, VEG), s(G.leafy, 1, VEG), s(G.garlic, 1, SPICE), s(G.herb, 1, SPICE) } },
+    dish { id = "VegSoup",      family = "soup", level = 0, procs = { "wash", "peel", "chop", "season", "stir" },
+      slots = { s(G.root, 2, VEG), s(G.leafy, 1, VEG), s(G.onion, 1), s(G.greens, 1, VEGO), s(G.herb, 1, SPICE), s(G.salt, 1, SPICE) } }
+    dish { id = "NettleSoup",   family = "soup", level = 0, procs = { "wash", "chop", "season", "stir" },
+      slots = { s({ "Base.Nettles", "Base.Dandelions", "Base.Spinach" }, 2), s(G.potato, 1), s(G.onion, 1), s(G.salt, 1, SPICE) } }
+    dish { id = "TomatoSoup",   family = "soup", level = 1, procs = { "wash", "chop", "mash", "season", "stir" },
+      slots = { s(G.tomato, 3), s(G.onion, 1), s(G.garlic, 1, OPT), s(G.italian, 1, SPICE) } }
+    dish { id = "LentilSoup",   family = "soup", level = 1, procs = { "wash", "chop", "season", "stir" },
+      slots = { s(G.drybeans, 2, x({ "bean" })), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.garlic, 1, OPT), s(G.herb, 1, SPICE) } }
+    dish { id = "ChickenSoup",  family = "soup", level = 1, procs = { "wash", "trim", "chop", "season", "stir" },
+      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.leafy, 1, VEGO), s(G.herb, 1, SPICE), s(G.salt, 1, SPICE) } }
+    dish { id = "PumpkinSoup",  family = "soup", level = 2, procs = { "wash", "peel", "chop", "mash", "season" },
+      slots = { s({ "Base.Pumpkin", "Base.PumpkinSliced", "Base.PumpkinSmashed", "Base.Squash", "Base.SweetPotato" }, 3), s(G.onion, 1), s(G.garlic, 1, OPT), s(G.salt, 1, SPICE) } }
+    dish { id = "MushroomSoup", family = "soup", level = 2, procs = { "wash", "slice", "season", "stir" },
+      slots = { s(G.mushroom, 3, x({ "mushroom" })), s(G.onion, 1), s(G.potato, 1, OPT), s(G.herb, 1, SPICE) } }
+    dish { id = "CornSoup",     family = "soup", level = 3, procs = { "wash", "peel", "slice", "chop", "stir" },
+      slots = { s({ "Base.Corn", "Base.CannedCornOpen" }, 2), s(G.potato, 1), s(G.onion, 1), s({ "Base.Leek", "Base.GreenOnions" }, 1, OPT), s(G.salt, 1, SPICE) } }
+    dish { id = "FishSoup",     family = "soup", level = 3, procs = { "scale", "trim", "peel", "chop", "season", "stir" },
+      slots = { s(G.fish, 2, x({ "fish" })), s(G.potato, 1), s({ "Base.Leek", "Base.Onion" }, 1), s(G.tomato, 1, OPT), s(G.herb, 1, SPICE) } }
+    dish { id = "GardenBroth",  family = "soup", level = 5, procs = { "wash", "peel", "chop", "grind", "season", "stir" },
+      slots = { s(G.root, 2, VEG), s(G.greens, 2, VEG), s(G.leafy, 1, VEG), s(G.garlic, 1, SPICE), s(G.herb, 1, SPICE) } }
     -- ===== stews (vanilla Stew: a cooking pot with water, 6)
-    { id = "BeanStew",     family = "stew", level = 1, procs = { "wash", "chop", "season", "stir" },
-      slots = { s(G.beans, 2, x({ "bean" })), s(G.tomato, 1), s(G.onion, 1), s(G.pepper, 1, VEGO), s(G.herb, 1, SPICE) } },
-    { id = "BeefStew",     family = "stew", level = 1, procs = { "wash", "peel", "trim", "chop", "season", "stir" },
-      slots = { s(G.beef, 2, x({ "red" })), s(G.potato, 2), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.salt, 1, SPICE), s(G.herb, 1, SPICE) } },
-    { id = "ChickenStew",  family = "stew", level = 2, procs = { "wash", "trim", "peel", "chop", "season", "stir" },
-      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.potato, 1), s(G.carrot, 1, VEG), s(G.mushroom, 1, x({ "mushroom" }, true)), s(G.herb, 1, SPICE) } },
-    { id = "GameStew",     family = "stew", level = 2, procs = { "wash", "trim", "peel", "chop", "season", "stir" },
-      slots = { s(G.game, 2, x({ "red" })), s(G.root, 2, VEG), s(G.mushroom, 1, x({ "mushroom" }, true)), s(G.onion, 1), s(G.roastherb, 1, SPICE) } },
-    { id = "PorkStew",     family = "stew", level = 2, procs = { "wash", "peel", "trim", "chop", "season", "stir" },
-      slots = { s(G.pork, 2), s(G.potato, 1), s({ "Base.Cabbage", "Base.Kale", "Base.Spinach" }, 1, VEG), s(G.onion, 1), s(G.salt, 1, SPICE) } },
-    { id = "Chili",        family = "stew", level = 3, procs = { "wash", "mince", "chop", "season", "stir" },
-      slots = { s(G.mince, 2, x({ "red" })), s(G.beans, 2, x({ "bean" })), s(G.tomato, 1), s(G.pepper, 1, VEGO), s(G.hot, 1, SPICE) } },
-    { id = "HuntersFeast", family = "stew", level = 10, procs = { "wash", "trim", "pound", "peel", "chop", "grind", "season", "stir" },
+    dish { id = "BeanStew",     family = "stew", level = 1, procs = { "wash", "chop", "season", "stir" },
+      slots = { s(G.beans, 2, x({ "bean" })), s(G.tomato, 1), s(G.onion, 1), s(G.pepper, 1, VEGO), s(G.herb, 1, SPICE) } }
+    dish { id = "BeefStew",     family = "stew", level = 1, procs = { "wash", "peel", "trim", "chop", "season", "stir" },
+      slots = { s(G.beef, 2, x({ "red" })), s(G.potato, 2), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.salt, 1, SPICE), s(G.herb, 1, SPICE) } }
+    dish { id = "ChickenStew",  family = "stew", level = 2, procs = { "wash", "trim", "peel", "chop", "season", "stir" },
+      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.potato, 1), s(G.carrot, 1, VEG), s(G.mushroom, 1, x({ "mushroom" }, true)), s(G.herb, 1, SPICE) } }
+    dish { id = "GameStew",     family = "stew", level = 2, procs = { "wash", "trim", "peel", "chop", "season", "stir" },
+      slots = { s(G.game, 2, x({ "red" })), s(G.root, 2, VEG), s(G.mushroom, 1, x({ "mushroom" }, true)), s(G.onion, 1), s(G.roastherb, 1, SPICE) } }
+    dish { id = "PorkStew",     family = "stew", level = 2, procs = { "wash", "peel", "trim", "chop", "season", "stir" },
+      slots = { s(G.pork, 2), s(G.potato, 1), s({ "Base.Cabbage", "Base.Kale", "Base.Spinach" }, 1, VEG), s(G.onion, 1), s(G.salt, 1, SPICE) } }
+    dish { id = "Chili",        family = "stew", level = 3, procs = { "wash", "mince", "chop", "season", "stir" },
+      slots = { s(G.mince, 2, x({ "red" })), s(G.beans, 2, x({ "bean" })), s(G.tomato, 1), s(G.pepper, 1, VEGO), s(G.hot, 1, SPICE) } }
+    dish { id = "HuntersFeast", family = "stew", level = 10, procs = { "wash", "trim", "pound", "peel", "chop", "grind", "season", "stir" },
       slots = { s({ "Base.Venison", "Base.Beef", "Base.Rabbitmeat", "Base.Steak" }, 2, x({ "red" })), s(G.mushroom, 1, x({ "mushroom" })), s(G.root, 1, VEG),
-                s(G.onion, 1), s({ "Base.Garlic", "Base.WildGarlic2" }, 1), s(G.roastherb, 1, SPICE) } },
-    { id = "FishStew",     family = "stew", level = 8, procs = { "scale", "trim", "peel", "chop", "grind", "stir" },
-      slots = { s(G.fish, 2, x({ "fish" })), s(G.shrimp, 1, x({ "fish" }, true)), s(G.tomato, 1), s({ "Base.Leek", "Base.Onion" }, 1), s(G.garlic, 1, SPICE) } },
-    { id = "CurryStew",    family = "stew", level = 7, procs = { "wash", "trim", "peel", "chop", "grind", "season", "stir" },
-      slots = { s(G.chicken, 2, x({ "poultry", "red" })), s(G.potato, 1), s(G.onion, 1), s({ "Base.GingerRoot", "Base.Garlic" }, 1), s(G.hot, 1, SPICE) } },
+                s(G.onion, 1), s({ "Base.Garlic", "Base.WildGarlic2" }, 1), s(G.roastherb, 1, SPICE) } }
+    dish { id = "FishStew",     family = "stew", level = 8, procs = { "scale", "trim", "peel", "chop", "grind", "stir" },
+      slots = { s(G.fish, 2, x({ "fish" })), s(G.shrimp, 1, x({ "fish" }, true)), s(G.tomato, 1), s({ "Base.Leek", "Base.Onion" }, 1), s(G.garlic, 1, SPICE) } }
+    dish { id = "CurryStew",    family = "stew", level = 7, procs = { "wash", "trim", "peel", "chop", "grind", "season", "stir" },
+      slots = { s(G.chicken, 2, x({ "poultry", "red" })), s(G.potato, 1), s(G.onion, 1), s({ "Base.GingerRoot", "Base.Garlic" }, 1), s(G.hot, 1, SPICE) } }
     -- ===== pan dishes (vanilla Stir fry: a frying pan, 4 / Roasted Vegetables: a roasting pan, 6)
-    { id = "VegStirFry",   family = "stirfry", level = 0, procs = { "wash", "chop", "season", "toss" },
-      slots = { s(G.greens, 2, VEG), s({ "Base.Cabbage", "Base.Kale" }, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } },
-    { id = "SproutStirFry", family = "stirfry", level = 1, procs = { "wash", "chop", "season", "toss" },
-      slots = { s(G.sprouts, 2), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } },
-    { id = "MushroomStirFry", family = "stirfry", level = 1, procs = { "wash", "slice", "grind", "toss" },
-      slots = { s(G.mushroom, 2, x({ "mushroom" })), s(G.greens, 1, VEG), s(G.garlic, 1), s(G.asian, 1, SPICE) } },
-    { id = "TofuStirFry",  family = "stirfry", level = 2, procs = { "slice", "chop", "season", "toss" },
-      slots = { s({ "Base.Tofu" }, 2), s(G.greens, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } },
-    { id = "ChickenStirFry", family = "stirfry", level = 2, procs = { "wash", "trim", "chop", "season", "toss" },
-      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.pepper, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } },
-    { id = "BeefStirFry",  family = "stirfry", level = 3, procs = { "trim", "slice", "chop", "season", "toss" },
-      slots = { s({ "Base.Steak", "Base.Beef", "Base.Venison", "Base.Pork" }, 1, x({ "red" })), s({ "Base.BellPepper", "Base.Broccoli" }, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } },
-    { id = "ShrimpStirFry", family = "stirfry", level = 3, procs = { "wash", "trim", "chop", "season", "toss" },
-      slots = { s(G.shrimp, 2, x({ "fish" })), s({ "Base.Broccoli", "Base.Greenpeas", "Base.BellPepper" }, 1, VEG), s(G.garlic, 1), s(G.asian, 1, SPICE) } },
-    { id = "RoastVeg",     family = "roast", level = 1, procs = { "wash", "peel", "chop", "season" },
-      slots = { s(G.root, 3, VEG), s(G.onion, 1), s(G.oil, 1, SPICE), s(G.roastherb, 1, SPICE) } },
-    { id = "RoastChicken", family = "roast", level = 5, procs = { "wash", "trim", "peel", "chop", "season" },
-      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.potato, 2), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.roastherb, 1, SPICE) } },
+    dish { id = "VegStirFry",   family = "stirfry", level = 0, procs = { "wash", "chop", "season", "toss" },
+      slots = { s(G.greens, 2, VEG), s({ "Base.Cabbage", "Base.Kale" }, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "SproutStirFry", family = "stirfry", level = 1, procs = { "wash", "chop", "season", "toss" },
+      slots = { s(G.sprouts, 2), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "MushroomStirFry", family = "stirfry", level = 1, procs = { "wash", "slice", "grind", "toss" },
+      slots = { s(G.mushroom, 2, x({ "mushroom" })), s(G.greens, 1, VEG), s(G.garlic, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "TofuStirFry",  family = "stirfry", level = 2, procs = { "slice", "chop", "season", "toss" },
+      slots = { s({ "Base.Tofu" }, 2), s(G.greens, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "ChickenStirFry", family = "stirfry", level = 2, procs = { "wash", "trim", "chop", "season", "toss" },
+      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.pepper, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "BeefStirFry",  family = "stirfry", level = 3, procs = { "trim", "slice", "chop", "season", "toss" },
+      slots = { s({ "Base.Steak", "Base.Beef", "Base.Venison", "Base.Pork" }, 1, x({ "red" })), s({ "Base.BellPepper", "Base.Broccoli" }, 1, VEG), s(G.onion, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "ShrimpStirFry", family = "stirfry", level = 3, procs = { "wash", "trim", "chop", "season", "toss" },
+      slots = { s(G.shrimp, 2, x({ "fish" })), s({ "Base.Broccoli", "Base.Greenpeas", "Base.BellPepper" }, 1, VEG), s(G.garlic, 1), s(G.asian, 1, SPICE) } }
+    dish { id = "RoastVeg",     family = "roast", level = 1, procs = { "wash", "peel", "chop", "season" },
+      slots = { s(G.root, 3, VEG), s(G.onion, 1), s(G.oil, 1, SPICE), s(G.roastherb, 1, SPICE) } }
+    dish { id = "RoastChicken", family = "roast", level = 5, procs = { "wash", "trim", "peel", "chop", "season" },
+      slots = { s(G.chicken, 2, x({ "poultry" })), s(G.potato, 2), s(G.carrot, 1, VEG), s(G.onion, 1), s(G.roastherb, 1, SPICE) } }
     -- ===== omelette (vanilla: an omelette already started in a pan, 3 fillings)
-    { id = "Omelette",     family = "omelette", level = 1, procs = { "wash", "chop", "grate", "flip" },
+    dish { id = "Omelette",     family = "omelette", level = 1, procs = { "wash", "chop", "grate", "flip" },
       slots = { s({ "Base.Onion", "Base.Leek" }, 1), s({ "Base.BellPepper", "Base.Tomato", "Base.Zucchini", "Base.Broccoli", "Base.Kale" }, 1, VEG),
                 s({ "Base.Cheese", "Base.HamSlice", "Base.MushroomGeneric1", "Base.MushroomsButton" }, 1, OPT),
-                s({ "Base.Chives", "Base.Parsley", "Base.Basil", "Base.Garlic" }, 1, SPICE) } },
-    { id = "HerbOmelette", family = "omelette", level = 2, procs = { "wash", "chop", "flip" },
-      slots = { s({ "Base.Chives", "Base.Parsley", "Base.Basil" }, 2, x({ "herb" })), s({ "Base.Cheese" }, 1, OPT) } },
-    { id = "PotatoOmelette", family = "omelette", level = 3, procs = { "wash", "peel", "slice", "flip" },
-      slots = { s(G.potato, 2), s({ "Base.Onion" }, 1) } },
+                s({ "Base.Chives", "Base.Parsley", "Base.Basil", "Base.Garlic" }, 1, SPICE) } }
+    dish { id = "HerbOmelette", family = "omelette", level = 2, procs = { "wash", "chop", "flip" },
+      slots = { s({ "Base.Chives", "Base.Parsley", "Base.Basil" }, 2, x({ "herb" })), s({ "Base.Cheese" }, 1, OPT) } }
+    dish { id = "PotatoOmelette", family = "omelette", level = 3, procs = { "wash", "peel", "slice", "flip" },
+      slots = { s(G.potato, 2), s({ "Base.Onion" }, 1) } }
     -- ===== cold dishes (vanilla Salad / Fruit Salad: a bowl, 6)
-    { id = "GardenSalad",  family = "salad", level = 0, procs = { "wash", "chop", "season" },
-      slots = { s(G.lettuce, 2, VEG), s(G.salad, 2, VEG), s({ "Base.OilOlive", "Base.OilVegetable", "Base.BalsamicVinegar" }, 1, SPICE) } },
-    { id = "WildSalad",    family = "salad", level = 1, procs = { "wash", "chop", "season" },
-      slots = { s(G.wild, 3, x({ "herb" })), s({ "Base.Lettuce", "Base.Spinach" }, 1, OPT), s({ "Base.OilOlive", "Base.Lemon" }, 1, SPICE) } },
-    { id = "Coleslaw",     family = "salad", level = 1, procs = { "wash", "grate", "season" },
-      slots = { s({ "Base.Cabbage" }, 2), s(G.carrot, 1), s({ "Base.MayonnaiseFull", "Base.RemouladeFull", "Base.BalsamicVinegar" }, 1, SPICE) } },
-    { id = "SproutSalad",  family = "salad", level = 1, procs = { "wash", "chop", "season" },
-      slots = { s(G.sprouts, 2), s(G.carrot, 1, VEG), s({ "Base.Cucumber", "Base.RedRadish" }, 1, VEGO), s({ "Base.Soysauce", "Base.RiceVinegar", "Base.SesameOil" }, 1, SPICE) } },
-    { id = "GreekSalad",   family = "salad", level = 2, procs = { "wash", "chop", "slice", "season" },
-      slots = { s({ "Base.Tomato" }, 1), s({ "Base.Cucumber" }, 1), s({ "Base.Onion" }, 1), s({ "Base.Olives" }, 1, OPT), s({ "Base.Cheese" }, 1), s({ "Base.OilOlive" }, 1, SPICE) } },
-    { id = "ChefSalad",    family = "salad", level = 2, procs = { "wash", "chop", "grate", "season" },
-      slots = { s(G.lettuce, 1), s({ "Base.EggBoiled" }, 1), s({ "Base.HamSlice", "Base.Chicken" }, 1), s({ "Base.Cheese" }, 1), s(G.tomato, 1, OPT) } },
-    { id = "AvocadoSalad", family = "salad", level = 3, procs = { "wash", "core", "slice", "season" },
-      slots = { s({ "Base.Avocado" }, 2), s({ "Base.Tomato" }, 1), s({ "Base.Onion", "Base.GreenOnions" }, 1), s({ "Base.OilOlive", "Base.BalsamicVinegar", "Base.Salt", "Base.Pepper" }, 1, SPICE) } },
-    { id = "FruitSalad",   family = "fruitsalad", level = 0, procs = { "wash", "peel", "chop" },
-      slots = { s(G.fruit, 3, FRUIT), s(G.berry, 1, x({ "berry" }, true)), s({ "Base.Honey", "Base.Lemon", "Base.Lime" }, 1, SPICE) } },
-    { id = "BerryBowl",    family = "fruitsalad", level = 1, procs = { "wash", "core" },
-      slots = { s(G.berry, 3, BERRY), s({ "Base.Honey", "Base.Lemon" }, 1, SPICE) } },
-    { id = "TropicalSalad", family = "fruitsalad", level = 2, procs = { "wash", "peel", "core", "chop", "zest" },
-      slots = { s(G.tropic, 3, FRUIT), s({ "Base.Lime", "Base.Lemon" }, 1, SPICE) } },
+    dish { id = "GardenSalad",  family = "salad", level = 0, procs = { "wash", "chop", "season" },
+      slots = { s(G.lettuce, 2, VEG), s(G.salad, 2, VEG), s({ "Base.OilOlive", "Base.OilVegetable", "Base.BalsamicVinegar" }, 1, SPICE) } }
+    dish { id = "WildSalad",    family = "salad", level = 1, procs = { "wash", "chop", "season" },
+      slots = { s(G.wild, 3, x({ "herb" })), s({ "Base.Lettuce", "Base.Spinach" }, 1, OPT), s({ "Base.OilOlive", "Base.Lemon" }, 1, SPICE) } }
+    dish { id = "Coleslaw",     family = "salad", level = 1, procs = { "wash", "grate", "season" },
+      slots = { s({ "Base.Cabbage" }, 2), s(G.carrot, 1), s({ "Base.MayonnaiseFull", "Base.RemouladeFull", "Base.BalsamicVinegar" }, 1, SPICE) } }
+    dish { id = "SproutSalad",  family = "salad", level = 1, procs = { "wash", "chop", "season" },
+      slots = { s(G.sprouts, 2), s(G.carrot, 1, VEG), s({ "Base.Cucumber", "Base.RedRadish" }, 1, VEGO), s({ "Base.Soysauce", "Base.RiceVinegar", "Base.SesameOil" }, 1, SPICE) } }
+    dish { id = "GreekSalad",   family = "salad", level = 2, procs = { "wash", "chop", "slice", "season" },
+      slots = { s({ "Base.Tomato" }, 1), s({ "Base.Cucumber" }, 1), s({ "Base.Onion" }, 1), s({ "Base.Olives" }, 1, OPT), s({ "Base.Cheese" }, 1), s({ "Base.OilOlive" }, 1, SPICE) } }
+    dish { id = "ChefSalad",    family = "salad", level = 2, procs = { "wash", "chop", "grate", "season" },
+      slots = { s(G.lettuce, 1), s({ "Base.EggBoiled" }, 1), s({ "Base.HamSlice", "Base.Chicken" }, 1), s({ "Base.Cheese" }, 1), s(G.tomato, 1, OPT) } }
+    dish { id = "AvocadoSalad", family = "salad", level = 3, procs = { "wash", "core", "slice", "season" },
+      slots = { s({ "Base.Avocado" }, 2), s({ "Base.Tomato" }, 1), s({ "Base.Onion", "Base.GreenOnions" }, 1), s({ "Base.OilOlive", "Base.BalsamicVinegar", "Base.Salt", "Base.Pepper" }, 1, SPICE) } }
+    dish { id = "FruitSalad",   family = "fruitsalad", level = 0, procs = { "wash", "peel", "chop" },
+      slots = { s(G.fruit, 3, FRUIT), s(G.berry, 1, x({ "berry" }, true)), s({ "Base.Honey", "Base.Lemon", "Base.Lime" }, 1, SPICE) } }
+    dish { id = "BerryBowl",    family = "fruitsalad", level = 1, procs = { "wash", "core" },
+      slots = { s(G.berry, 3, BERRY), s({ "Base.Honey", "Base.Lemon" }, 1, SPICE) } }
+    dish { id = "TropicalSalad", family = "fruitsalad", level = 2, procs = { "wash", "peel", "core", "chop", "zest" },
+      slots = { s(G.tropic, 3, FRUIT), s({ "Base.Lime", "Base.Lemon" }, 1, SPICE) } }
     -- ===== breads (Sandwich: bread slices or a baguette, 4 / Burger: a bun, 4 /
     -- Hotdog: a hot dog to top, 2 / Burrito: a tortilla, 5 / Taco: a taco shell, 5)
-    { id = "BLT",          family = "sandwich", level = 0, procs = { "wash", "slice" },
-      slots = { s({ "Base.Bacon", "Base.BaconRashers" }, 1), s({ "Base.Lettuce", "Base.Kale", "Base.Cabbage" }, 1), s(G.tomato, 1), s({ "Base.MayonnaiseFull", "Base.Mustard" }, 1, SPICE) } },
-    { id = "HamCheese",    family = "sandwich", level = 0, procs = { "slice", "grate" },
-      slots = { s({ "Base.HamSlice", "Base.SalamiSlice", "Base.BaloneySlice" }, 1), s({ "Base.Cheese", "Base.Processedcheese" }, 1), s({ "Base.Lettuce", "Base.Tomato" }, 1, OPT), s({ "Base.Mustard", "Base.MayonnaiseFull" }, 1, SPICE) } },
-    { id = "VeggieSandwich", family = "sandwich", level = 1, procs = { "wash", "slice" },
-      slots = { s({ "Base.Cucumber", "Base.Tomato" }, 2, VEG), s({ "Base.Lettuce", "Base.Spinach" }, 1), s({ "Base.Cheese" }, 1, OPT) } },
-    { id = "EggSandwich",  family = "sandwich", level = 1, procs = { "slice", "chop", "spread" },
-      slots = { s({ "Base.EggBoiled" }, 1), s({ "Base.Lettuce", "Base.Chives" }, 1, OPT), s({ "Base.MayonnaiseFull", "Base.Mustard" }, 1, SPICE) } },
-    { id = "TunaSandwich", family = "sandwich", level = 1, procs = { "chop", "mash", "spread" },
-      slots = { s({ "Base.TunaTinOpen", "Base.CannedSardinesOpen" }, 1), s({ "Base.Lettuce", "Base.Onion" }, 1, OPT), s({ "Base.MayonnaiseFull" }, 1, SPICE) } },
-    { id = "PBJ",          family = "sandwich", level = 0, procs = { "spread" },
-      slots = { s({ "Base.PeanutButter" }, 1), s({ "Base.JamFruit", "Base.JamMarmalade", "Base.Banana" }, 1) } },
-    { id = "Burger",       family = "burger", level = 1, procs = { "mince", "chop", "season" },
-      slots = { s({ "Base.MeatPatty", "Base.MincedMeat" }, 1), s({ "Base.Cheese" }, 1, OPT), s({ "Base.Lettuce", "Base.Onion" }, 1, OPT), s(G.tomato, 1, OPT), s(G.sauce, 1, SPICE) } },
-    { id = "BaconBurger",  family = "burger", level = 3, procs = { "slice", "chop", "grate", "season" },
-      slots = { s({ "Base.MeatPatty" }, 1), s({ "Base.Bacon", "Base.BaconRashers" }, 1), s({ "Base.Cheese" }, 1), s({ "Base.Onion", "Base.Pickles" }, 1, OPT), s(G.sauce, 1, SPICE) } },
-    { id = "HotDog",       family = "hotdog", level = 0, procs = { "chop" },
-      slots = { s({ "Base.Onion", "Base.Tomato", "Base.Lettuce", "Base.Pickles" }, 1), s({ "Base.Cheese", "Base.MincedMeat" }, 1, OPT), s({ "Base.Mustard", "Base.Ketchup" }, 1, SPICE) } },
-    { id = "ChiliDog",     family = "hotdog", level = 2, procs = { "chop", "grate" },
-      slots = { s({ "Base.CannedChiliOpen" }, 1), s({ "Base.Cheese", "Base.Onion" }, 1) } },
-    { id = "BeanBurrito",  family = "burrito", level = 2, procs = { "wash", "chop", "grate", "season" },
-      slots = { s({ "Base.Blackbeans", "Base.RefriedBeans" }, 1), s({ "Base.Cheese" }, 1), s({ "Base.Onion", "Base.Lettuce" }, 1, OPT), s({ "Base.Tomato" }, 1, OPT), s(G.hot, 1, SPICE) } },
-    { id = "ChickenBurrito", family = "burrito", level = 3, procs = { "chop", "slice", "mash", "season" },
-      slots = { s({ "Base.Chicken", "Base.ChickenFillet" }, 1, x({ "poultry" })), s({ "Base.Avocado", "Base.Guacamole" }, 1, OPT), s({ "Base.Tomato", "Base.Dip_Salsa" }, 1), s({ "Base.Cheese" }, 1, OPT), s(G.hot, 1, SPICE) } },
-    { id = "BeefTaco",     family = "taco", level = 2, procs = { "mince", "wash", "chop", "grate", "season" },
-      slots = { s({ "Base.MincedMeat", "Base.MeatPatty", "Base.Beef", "Base.Steak" }, 1), s({ "Base.Lettuce", "Base.Cabbage" }, 1), s({ "Base.Tomato" }, 1, OPT), s({ "Base.Cheese" }, 1, OPT), s(G.hot, 1, SPICE) } },
-    { id = "FishTaco",     family = "taco", level = 6, procs = { "scale", "trim", "grate", "zest" },
-      slots = { s({ "Base.FishFillet", "Base.Salmon", "Base.Shrimp" }, 1, x({ "fish" })), s({ "Base.Cabbage", "Base.Lettuce" }, 1), s({ "Base.Avocado", "Base.Dip_Salsa" }, 1, OPT), s({ "Base.Lime", "Base.Lemon" }, 1, SPICE) } },
+    dish { id = "BLT",          family = "sandwich", level = 0, procs = { "wash", "slice" },
+      slots = { s({ "Base.Bacon", "Base.BaconRashers" }, 1), s({ "Base.Lettuce", "Base.Kale", "Base.Cabbage" }, 1), s(G.tomato, 1), s({ "Base.MayonnaiseFull", "Base.Mustard" }, 1, SPICE) } }
+    dish { id = "HamCheese",    family = "sandwich", level = 0, procs = { "slice", "grate" },
+      slots = { s({ "Base.HamSlice", "Base.SalamiSlice", "Base.BaloneySlice" }, 1), s({ "Base.Cheese", "Base.Processedcheese" }, 1), s({ "Base.Lettuce", "Base.Tomato" }, 1, OPT), s({ "Base.Mustard", "Base.MayonnaiseFull" }, 1, SPICE) } }
+    dish { id = "VeggieSandwich", family = "sandwich", level = 1, procs = { "wash", "slice" },
+      slots = { s({ "Base.Cucumber", "Base.Tomato" }, 2, VEG), s({ "Base.Lettuce", "Base.Spinach" }, 1), s({ "Base.Cheese" }, 1, OPT) } }
+    dish { id = "EggSandwich",  family = "sandwich", level = 1, procs = { "slice", "chop", "spread" },
+      slots = { s({ "Base.EggBoiled" }, 1), s({ "Base.Lettuce", "Base.Chives" }, 1, OPT), s({ "Base.MayonnaiseFull", "Base.Mustard" }, 1, SPICE) } }
+    dish { id = "TunaSandwich", family = "sandwich", level = 1, procs = { "chop", "mash", "spread" },
+      slots = { s({ "Base.TunaTinOpen", "Base.CannedSardinesOpen" }, 1), s({ "Base.Lettuce", "Base.Onion" }, 1, OPT), s({ "Base.MayonnaiseFull" }, 1, SPICE) } }
+    dish { id = "PBJ",          family = "sandwich", level = 0, procs = { "spread" },
+      slots = { s({ "Base.PeanutButter" }, 1), s({ "Base.JamFruit", "Base.JamMarmalade", "Base.Banana" }, 1) } }
+    dish { id = "Burger",       family = "burger", level = 1, procs = { "mince", "chop", "season" },
+      slots = { s({ "Base.MeatPatty", "Base.MincedMeat" }, 1), s({ "Base.Cheese" }, 1, OPT), s({ "Base.Lettuce", "Base.Onion" }, 1, OPT), s(G.tomato, 1, OPT), s(G.sauce, 1, SPICE) } }
+    dish { id = "BaconBurger",  family = "burger", level = 3, procs = { "slice", "chop", "grate", "season" },
+      slots = { s({ "Base.MeatPatty" }, 1), s({ "Base.Bacon", "Base.BaconRashers" }, 1), s({ "Base.Cheese" }, 1), s({ "Base.Onion", "Base.Pickles" }, 1, OPT), s(G.sauce, 1, SPICE) } }
+    dish { id = "HotDog",       family = "hotdog", level = 0, procs = { "chop" },
+      slots = { s({ "Base.Onion", "Base.Tomato", "Base.Lettuce", "Base.Pickles" }, 1), s({ "Base.Cheese", "Base.MincedMeat" }, 1, OPT), s({ "Base.Mustard", "Base.Ketchup" }, 1, SPICE) } }
+    dish { id = "ChiliDog",     family = "hotdog", level = 2, procs = { "chop", "grate" },
+      slots = { s({ "Base.CannedChiliOpen" }, 1), s({ "Base.Cheese", "Base.Onion" }, 1) } }
+    dish { id = "BeanBurrito",  family = "burrito", level = 2, procs = { "wash", "chop", "grate", "season" },
+      slots = { s({ "Base.Blackbeans", "Base.RefriedBeans" }, 1), s({ "Base.Cheese" }, 1), s({ "Base.Onion", "Base.Lettuce" }, 1, OPT), s({ "Base.Tomato" }, 1, OPT), s(G.hot, 1, SPICE) } }
+    dish { id = "ChickenBurrito", family = "burrito", level = 3, procs = { "chop", "slice", "mash", "season" },
+      slots = { s({ "Base.Chicken", "Base.ChickenFillet" }, 1, x({ "poultry" })), s({ "Base.Avocado", "Base.Guacamole" }, 1, OPT), s({ "Base.Tomato", "Base.Dip_Salsa" }, 1), s({ "Base.Cheese" }, 1, OPT), s(G.hot, 1, SPICE) } }
+    dish { id = "BeefTaco",     family = "taco", level = 2, procs = { "mince", "wash", "chop", "grate", "season" },
+      slots = { s({ "Base.MincedMeat", "Base.MeatPatty", "Base.Beef", "Base.Steak" }, 1), s({ "Base.Lettuce", "Base.Cabbage" }, 1), s({ "Base.Tomato" }, 1, OPT), s({ "Base.Cheese" }, 1, OPT), s(G.hot, 1, SPICE) } }
+    dish { id = "FishTaco",     family = "taco", level = 6, procs = { "scale", "trim", "grate", "zest" },
+      slots = { s({ "Base.FishFillet", "Base.Salmon", "Base.Shrimp" }, 1, x({ "fish" })), s({ "Base.Cabbage", "Base.Lettuce" }, 1), s({ "Base.Avocado", "Base.Dip_Salsa" }, 1, OPT), s({ "Base.Lime", "Base.Lemon" }, 1, SPICE) } }
     -- ===== toast and bagels (vanilla Toast: a slice of toast / a bagel, 3)
-    { id = "JamToast",     family = "toast", level = 0, procs = { "spread" },
-      slots = { s({ "Base.Butter", "Base.Margarine" }, 1, OPT), s({ "Base.JamFruit", "Base.JamMarmalade", "Base.Honey", "Base.PeanutButter" }, 1) } },
-    { id = "BeansOnToast", family = "toast", level = 0, procs = { "spread" },
-      slots = { s({ "Base.OpenBeans" }, 1), s({ "Base.Cheese" }, 1, OPT) } },
-    { id = "GarlicToast",  family = "toast", level = 1, procs = { "grind", "chop", "spread" },
-      slots = { s({ "Base.Butter", "Base.Margarine" }, 1), s({ "Base.Garlic", "Base.WildGarlic2" }, 1), s({ "Base.Parsley", "Base.Chives", "Base.Oregano" }, 1, SPICE) } },
-    { id = "AvocadoToast", family = "toast", level = 2, procs = { "core", "mash", "spread", "season" },
-      slots = { s({ "Base.Avocado" }, 1), s({ "Base.Chives", "Base.GreenOnions", "Base.Parsley" }, 1, SPICE) } },
-    { id = "RoeToast",     family = "toast", level = 4, procs = { "spread" },
-      slots = { s({ "Base.Butter" }, 1, OPT), s({ "Base.FishRoe", "Base.CannedRoe_Open", "Base.Caviar" }, 1), s({ "Base.Chives" }, 1, SPICE) } },
+    dish { id = "JamToast",     family = "toast", level = 0, procs = { "spread" },
+      slots = { s({ "Base.Butter", "Base.Margarine" }, 1, OPT), s({ "Base.JamFruit", "Base.JamMarmalade", "Base.Honey", "Base.PeanutButter" }, 1) } }
+    dish { id = "BeansOnToast", family = "toast", level = 0, procs = { "spread" },
+      slots = { s({ "Base.OpenBeans" }, 1), s({ "Base.Cheese" }, 1, OPT) } }
+    dish { id = "GarlicToast",  family = "toast", level = 1, procs = { "grind", "chop", "spread" },
+      slots = { s({ "Base.Butter", "Base.Margarine" }, 1), s({ "Base.Garlic", "Base.WildGarlic2" }, 1), s({ "Base.Parsley", "Base.Chives", "Base.Oregano" }, 1, SPICE) } }
+    dish { id = "AvocadoToast", family = "toast", level = 2, procs = { "core", "mash", "spread", "season" },
+      slots = { s({ "Base.Avocado" }, 1), s({ "Base.Chives", "Base.GreenOnions", "Base.Parsley" }, 1, SPICE) } }
+    dish { id = "RoeToast",     family = "toast", level = 4, procs = { "spread" },
+      slots = { s({ "Base.Butter" }, 1, OPT), s({ "Base.FishRoe", "Base.CannedRoe_Open", "Base.Caviar" }, 1), s({ "Base.Chives" }, 1, SPICE) } }
     -- ===== bread dough (vanilla Bread: the dough itself, 2)
-    { id = "HerbBread",    family = "bread", level = 3, procs = { "chop", "knead" },
-      slots = { s({ "Base.Rosemary", "Base.Thyme", "Base.Oregano", "Base.Garlic" }, 1, x({ "herb" })), s({ "Base.Cheese" }, 1, OPT) } },
-    { id = "SeedBread",    family = "bread", level = 3, procs = { "measure", "knead" },
-      slots = { s(G.seeds, 2) } },
-    { id = "BananaBread",  family = "bread", level = 4, procs = { "peel", "mash", "knead" },
-      slots = { s({ "Base.Banana" }, 1), s({ "Base.ChocolateChips" }, 1, OPT) } },
+    dish { id = "HerbBread",    family = "bread", level = 3, procs = { "chop", "knead" },
+      slots = { s({ "Base.Rosemary", "Base.Thyme", "Base.Oregano", "Base.Garlic" }, 1, x({ "herb" })), s({ "Base.Cheese" }, 1, OPT) } }
+    dish { id = "SeedBread",    family = "bread", level = 3, procs = { "measure", "knead" },
+      slots = { s(G.seeds, 2) } }
+    dish { id = "BananaBread",  family = "bread", level = 4, procs = { "peel", "mash", "knead" },
+      slots = { s({ "Base.Banana" }, 1), s({ "Base.ChocolateChips" }, 1, OPT) } }
     -- ===== baking (Pie / Sweet Pie / Cake: the preparation in its pan, 4 / Muffin: the tray, 1)
-    { id = "VegPie",       family = "pie", level = 3, procs = { "wash", "peel", "chop", "season", "roll" },
-      slots = { s(G.potato, 1), s(G.carrot, 1, VEG), s({ "Base.Leek", "Base.Onion" }, 1), s(G.mushroom, 1, x({ "mushroom", "veg" }, true)) } },
-    { id = "MeatPie",      family = "pie", level = 3, procs = { "wash", "peel", "mince", "chop", "season", "roll" },
+    dish { id = "VegPie",       family = "pie", level = 3, procs = { "wash", "peel", "chop", "season", "roll" },
+      slots = { s(G.potato, 1), s(G.carrot, 1, VEG), s({ "Base.Leek", "Base.Onion" }, 1), s(G.mushroom, 1, x({ "mushroom", "veg" }, true)) } }
+    dish { id = "MeatPie",      family = "pie", level = 3, procs = { "wash", "peel", "mince", "chop", "season", "roll" },
       slots = { s({ "Base.MincedMeat", "Base.Pork", "Base.Rabbitmeat", "Base.Chicken" }, 2, x({ "red", "poultry" })), s(G.potato, 1), s({ "Base.Onion", "Base.Leek", "Base.Carrots" }, 1),
-                s({ "Base.Salt", "Base.Pepper", "Base.Garlic" }, 1, SPICE) } },
-    { id = "ChickenPie",   family = "pie", level = 4, procs = { "trim", "peel", "chop", "season", "roll" },
-      slots = { s(G.chicken, 1, x({ "poultry" })), s(G.carrot, 1), s({ "Base.Leek", "Base.Onion" }, 1), s(G.mushroom, 1, x({ "mushroom" }, true)) } },
-    { id = "ForestPie",    family = "pie", level = 7, procs = { "wash", "trim", "mince", "slice", "grind", "roll" },
+                s({ "Base.Salt", "Base.Pepper", "Base.Garlic" }, 1, SPICE) } }
+    dish { id = "ChickenPie",   family = "pie", level = 4, procs = { "trim", "peel", "chop", "season", "roll" },
+      slots = { s(G.chicken, 1, x({ "poultry" })), s(G.carrot, 1), s({ "Base.Leek", "Base.Onion" }, 1), s(G.mushroom, 1, x({ "mushroom" }, true)) } }
+    dish { id = "ForestPie",    family = "pie", level = 7, procs = { "wash", "trim", "mince", "slice", "grind", "roll" },
       slots = { s({ "Base.MincedMeat", "Base.Rabbitmeat", "Base.Pork" }, 1, x({ "red" })), s(G.mushroom, 2, x({ "mushroom" })), s({ "Base.Onion", "Base.Leek" }, 1),
-                s({ "Base.Garlic", "Base.Pepper", "Base.Salt" }, 1, SPICE) } },
-    { id = "ApplePie",     family = "sweetpie", level = 3, procs = { "wash", "peel", "core", "chop", "roll" },
-      slots = { s(G.apple, 3, FRUIT), s({ "Base.Cinnamon" }, 1, SPICE) } },
-    { id = "BerryPie",     family = "sweetpie", level = 4, procs = { "wash", "core", "measure", "roll" },
-      slots = { s({ "Base.Strewberrie", "Base.Cherry", "Base.BerryBlue", "Base.BerryBlack", "Base.Peach" }, 3, BERRY), s({ "Base.Honey", "Base.Lemon" }, 1, SPICE) } },
-    { id = "PumpkinPie",   family = "sweetpie", level = 6, procs = { "peel", "chop", "mash", "measure", "roll" },
-      slots = { s({ "Base.Pumpkin", "Base.PumpkinSliced", "Base.PumpkinSmashed" }, 2), s({ "Base.Cinnamon" }, 1, SPICE), s({ "Base.Honey" }, 1, SPICE) } },
-    { id = "BananaCake",   family = "cake", level = 4, procs = { "peel", "mash", "measure", "whisk", "fold" },
-      slots = { s({ "Base.Banana", "Base.Apple" }, 2), s({ "Base.Strewberrie", "Base.Orange", "Base.Peach" }, 1, OPT), s({ "Base.Cinnamon", "Base.Honey", "Base.Lemon" }, 1, SPICE) } },
-    { id = "ChocolateCake", family = "cake", level = 6, procs = { "grate", "measure", "whisk", "fold" },
-      slots = { s({ "Base.Chocolate", "Base.ChocolateChips" }, 2), s({ "Base.Strewberrie", "Base.Cherry", "Base.Banana" }, 1, OPT) } },
-    { id = "FruitCake",    family = "cake", level = 8, procs = { "chop", "zest", "measure", "fold" },
-      slots = { s(G.dried, 3), s({ "Base.Lemon", "Base.Orange", "Base.Cinnamon" }, 1, SPICE) } },
-    { id = "FruitMuffins", family = "muffin", level = 3, procs = { "wash", "chop", "measure", "fold" },
-      slots = { s({ "Base.BerryBlue", "Base.BerryBlack", "Base.Banana", "Base.Apple", "Base.Cherry", "Base.Peach" }, 1, FRUIT), s({ "Base.Cinnamon", "Base.Lemon" }, 1, SPICE) } },
-    { id = "ChocoMuffins", family = "muffin", level = 3, procs = { "measure", "fold" },
-      slots = { s({ "Base.ChocolateChips", "Base.Chocolate" }, 1) } },
+                s({ "Base.Garlic", "Base.Pepper", "Base.Salt" }, 1, SPICE) } }
+    dish { id = "ApplePie",     family = "sweetpie", level = 3, procs = { "wash", "peel", "core", "chop", "roll" },
+      slots = { s(G.apple, 3, FRUIT), s({ "Base.Cinnamon" }, 1, SPICE) } }
+    dish { id = "BerryPie",     family = "sweetpie", level = 4, procs = { "wash", "core", "measure", "roll" },
+      slots = { s({ "Base.Strewberrie", "Base.Cherry", "Base.BerryBlue", "Base.BerryBlack", "Base.Peach" }, 3, BERRY), s({ "Base.Honey", "Base.Lemon" }, 1, SPICE) } }
+    dish { id = "PumpkinPie",   family = "sweetpie", level = 6, procs = { "peel", "chop", "mash", "measure", "roll" },
+      slots = { s({ "Base.Pumpkin", "Base.PumpkinSliced", "Base.PumpkinSmashed" }, 2), s({ "Base.Cinnamon" }, 1, SPICE), s({ "Base.Honey" }, 1, SPICE) } }
+    dish { id = "BananaCake",   family = "cake", level = 4, procs = { "peel", "mash", "measure", "whisk", "fold" },
+      slots = { s({ "Base.Banana", "Base.Apple" }, 2), s({ "Base.Strewberrie", "Base.Orange", "Base.Peach" }, 1, OPT), s({ "Base.Cinnamon", "Base.Honey", "Base.Lemon" }, 1, SPICE) } }
+    dish { id = "ChocolateCake", family = "cake", level = 6, procs = { "grate", "measure", "whisk", "fold" },
+      slots = { s({ "Base.Chocolate", "Base.ChocolateChips" }, 2), s({ "Base.Strewberrie", "Base.Cherry", "Base.Banana" }, 1, OPT) } }
+    dish { id = "FruitCake",    family = "cake", level = 8, procs = { "chop", "zest", "measure", "fold" },
+      slots = { s(G.dried, 3), s({ "Base.Lemon", "Base.Orange", "Base.Cinnamon" }, 1, SPICE) } }
+    dish { id = "FruitMuffins", family = "muffin", level = 3, procs = { "wash", "chop", "measure", "fold" },
+      slots = { s({ "Base.BerryBlue", "Base.BerryBlack", "Base.Banana", "Base.Apple", "Base.Cherry", "Base.Peach" }, 1, FRUIT), s({ "Base.Cinnamon", "Base.Lemon" }, 1, SPICE) } }
+    dish { id = "ChocoMuffins", family = "muffin", level = 3, procs = { "measure", "fold" },
+      slots = { s({ "Base.ChocolateChips", "Base.Chocolate" }, 1) } }
     -- ===== pizza (vanilla: a pizza already prepared on its tray, 6)
-    { id = "Margherita",   family = "pizza", level = 3, procs = { "roll", "wash", "slice", "grate", "season" },
-      slots = { s(G.tomato, 2), s({ "Base.Cheese" }, 2), s(G.italian, 1, SPICE) } },
-    { id = "VeggiePizza",  family = "pizza", level = 4, procs = { "roll", "wash", "slice", "grate", "season" },
-      slots = { s({ "Base.BellPepper", "Base.Onion", "Base.Olives" }, 2, VEG), s(G.mushroom, 1, x({ "mushroom" }, true)), s(G.tomato, 1), s({ "Base.Cheese" }, 1), s(G.italian, 1, SPICE) } },
-    { id = "SalamiPizza",  family = "pizza", level = 4, procs = { "roll", "wash", "slice", "grate", "season" },
-      slots = { s({ "Base.Pepperoni", "Base.SalamiSlice", "Base.HamSlice", "Base.Sausage", "Base.Bacon" }, 2), s({ "Base.Cheese" }, 1), s(G.tomato, 1), s(G.pepper, 1, VEGO), s(G.italian, 1, SPICE) } },
+    dish { id = "Margherita",   family = "pizza", level = 3, procs = { "roll", "wash", "slice", "grate", "season" },
+      slots = { s(G.tomato, 2), s({ "Base.Cheese" }, 2), s(G.italian, 1, SPICE) } }
+    dish { id = "VeggiePizza",  family = "pizza", level = 4, procs = { "roll", "wash", "slice", "grate", "season" },
+      slots = { s({ "Base.BellPepper", "Base.Onion", "Base.Olives" }, 2, VEG), s(G.mushroom, 1, x({ "mushroom" }, true)), s(G.tomato, 1), s({ "Base.Cheese" }, 1), s(G.italian, 1, SPICE) } }
+    dish { id = "SalamiPizza",  family = "pizza", level = 4, procs = { "roll", "wash", "slice", "grate", "season" },
+      slots = { s({ "Base.Pepperoni", "Base.SalamiSlice", "Base.HamSlice", "Base.Sausage", "Base.Bacon" }, 2), s({ "Base.Cheese" }, 1), s(G.tomato, 1), s(G.pepper, 1, VEGO), s(G.italian, 1, SPICE) } }
     -- ===== pasta and rice (pasta / rice in a pot of water, 5 -- a saucepan, 4)
-    { id = "TomatoPasta",  family = "pasta", level = 1, procs = { "wash", "chop", "grate", "season", "stir" },
-      slots = { s(G.tomato, 2), s({ "Base.Cheese" }, 1, OPT), s(G.italian, 1, SPICE) } },
-    { id = "CarbonaraPasta", family = "pasta", level = 3, procs = { "chop", "crack", "whisk", "grate", "stir" },
-      slots = { s({ "Base.Bacon", "Base.HamSlice" }, 1), s({ "Base.Egg" }, 1), s({ "Base.Cheese" }, 1), s({ "Base.Pepper" }, 1, SPICE) } },
-    { id = "PestoPasta",   family = "pasta", level = 5, procs = { "wash", "grind", "grate", "stir" },
-      slots = { s({ "Base.Basil", "Base.Parsley" }, 2), s({ "Base.Garlic" }, 1), s({ "Base.Cheese" }, 1, OPT), s({ "Base.OilOlive" }, 1, SPICE) } },
-    { id = "SeafoodPasta", family = "pasta", level = 6, procs = { "trim", "chop", "grind", "season", "stir" },
-      slots = { s(G.shrimp, 2, x({ "fish" })), s(G.tomato, 1), s({ "Base.Garlic" }, 1), s({ "Base.Parsley", "Base.Basil" }, 1, SPICE) } },
-    { id = "FriedRice",    family = "rice", level = 2, procs = { "wash", "chop", "crack", "season", "stir" },
-      slots = { s({ "Base.Egg" }, 1), s({ "Base.Greenpeas", "Base.Carrots", "Base.Corn" }, 2, VEG), s({ "Base.Onion", "Base.Leek" }, 1), s({ "Base.Soysauce", "Base.RiceVinegar", "Base.Garlic" }, 1, SPICE) } },
-    { id = "ChickenRice",  family = "rice", level = 3, procs = { "trim", "chop", "grind", "stir" },
-      slots = { s(G.chicken, 1, x({ "poultry" })), s({ "Base.Greenpeas", "Base.Carrots" }, 2, VEG), s({ "Base.Garlic", "Base.GingerRoot" }, 1, SPICE) } },
-    { id = "MushroomRice", family = "rice", level = 4, procs = { "wash", "slice", "chop", "stir" },
-      slots = { s(G.mushroom, 2, x({ "mushroom" })), s({ "Base.Onion" }, 1), s({ "Base.Parsley", "Base.Basil", "Base.Garlic", "Base.Pepper" }, 1, SPICE) } },
-    { id = "SeafoodRice",  family = "rice", level = 9, procs = { "scale", "trim", "chop", "season", "stir" },
-      slots = { s(G.shrimp, 2, x({ "fish" })), s({ "Base.BellPepper", "Base.Greenpeas" }, 1, VEG), s({ "Base.Onion", "Base.Garlic" }, 1), s(G.hot, 1, SPICE) } },
+    dish { id = "TomatoPasta",  family = "pasta", level = 1, procs = { "wash", "chop", "grate", "season", "stir" },
+      slots = { s(G.tomato, 2), s({ "Base.Cheese" }, 1, OPT), s(G.italian, 1, SPICE) } }
+    dish { id = "CarbonaraPasta", family = "pasta", level = 3, procs = { "chop", "crack", "whisk", "grate", "stir" },
+      slots = { s({ "Base.Bacon", "Base.HamSlice" }, 1), s({ "Base.Egg" }, 1), s({ "Base.Cheese" }, 1), s({ "Base.Pepper" }, 1, SPICE) } }
+    dish { id = "PestoPasta",   family = "pasta", level = 5, procs = { "wash", "grind", "grate", "stir" },
+      slots = { s({ "Base.Basil", "Base.Parsley" }, 2), s({ "Base.Garlic" }, 1), s({ "Base.Cheese" }, 1, OPT), s({ "Base.OilOlive" }, 1, SPICE) } }
+    dish { id = "SeafoodPasta", family = "pasta", level = 6, procs = { "trim", "chop", "grind", "season", "stir" },
+      slots = { s(G.shrimp, 2, x({ "fish" })), s(G.tomato, 1), s({ "Base.Garlic" }, 1), s({ "Base.Parsley", "Base.Basil" }, 1, SPICE) } }
+    dish { id = "FriedRice",    family = "rice", level = 2, procs = { "wash", "chop", "crack", "season", "stir" },
+      slots = { s({ "Base.Egg" }, 1), s({ "Base.Greenpeas", "Base.Carrots", "Base.Corn" }, 2, VEG), s({ "Base.Onion", "Base.Leek" }, 1), s({ "Base.Soysauce", "Base.RiceVinegar", "Base.Garlic" }, 1, SPICE) } }
+    dish { id = "ChickenRice",  family = "rice", level = 3, procs = { "trim", "chop", "grind", "stir" },
+      slots = { s(G.chicken, 1, x({ "poultry" })), s({ "Base.Greenpeas", "Base.Carrots" }, 2, VEG), s({ "Base.Garlic", "Base.GingerRoot" }, 1, SPICE) } }
+    dish { id = "MushroomRice", family = "rice", level = 4, procs = { "wash", "slice", "chop", "stir" },
+      slots = { s(G.mushroom, 2, x({ "mushroom" })), s({ "Base.Onion" }, 1), s({ "Base.Parsley", "Base.Basil", "Base.Garlic", "Base.Pepper" }, 1, SPICE) } }
+    dish { id = "SeafoodRice",  family = "rice", level = 9, procs = { "scale", "trim", "chop", "season", "stir" },
+      slots = { s(G.shrimp, 2, x({ "fish" })), s({ "Base.BellPepper", "Base.Greenpeas" }, 1, VEG), s({ "Base.Onion", "Base.Garlic" }, 1), s(G.hot, 1, SPICE) } }
     -- ===== breakfast (vanilla Oatmeal / Pancakes: the bowl / the pancakes, 3)
-    { id = "FruitOatmeal", family = "oatmeal", level = 0, procs = { "chop", "stir" },
-      slots = { s({ "Base.Banana", "Base.Apple", "Base.Strewberrie", "Base.Peach" }, 2, FRUIT), s({ "Base.Honey", "Base.Sugar", "Base.Cinnamon" }, 1, SPICE) } },
-    { id = "DriedFruitOatmeal", family = "oatmeal", level = 1, procs = { "chop", "stir" },
-      slots = { s(G.dried, 2), s({ "Base.Yoghurt", "Base.CannedMilkOpen" }, 1, OPT), s({ "Base.Cinnamon", "Base.Honey" }, 1, SPICE) } },
-    { id = "FruitPancakes", family = "pancakes", level = 1, procs = { "chop", "measure", "flip" },
-      slots = { s({ "Base.Strewberrie", "Base.Cherry", "Base.BerryBlue", "Base.Banana" }, 1, FRUIT), s({ "Base.Banana", "Base.Peach", "Base.Orange" }, 1, OPT), s({ "Base.Honey", "Base.MapleSyrup", "Base.Cinnamon" }, 1, SPICE) } },
-    { id = "ChocoPancakes", family = "pancakes", level = 2, procs = { "grate", "flip" },
-      slots = { s(G.choc, 1), s({ "Base.Banana", "Base.Strewberrie" }, 1, OPT), s({ "Base.MapleSyrup", "Base.Honey" }, 1, SPICE) } },
-    { id = "BerrySundae",  family = "icecream", level = 0, procs = { "wash", "chop" },
-      slots = { s(G.berry, 2, BERRY), s({ "Base.Honey", "Base.MapleSyrup", "Base.Chocolate" }, 1, OPT) } },
+    dish { id = "FruitOatmeal", family = "oatmeal", level = 0, procs = { "chop", "stir" },
+      slots = { s({ "Base.Banana", "Base.Apple", "Base.Strewberrie", "Base.Peach" }, 2, FRUIT), s({ "Base.Honey", "Base.Sugar", "Base.Cinnamon" }, 1, SPICE) } }
+    dish { id = "DriedFruitOatmeal", family = "oatmeal", level = 1, procs = { "chop", "stir" },
+      slots = { s(G.dried, 2), s({ "Base.Yoghurt", "Base.CannedMilkOpen" }, 1, OPT), s({ "Base.Cinnamon", "Base.Honey" }, 1, SPICE) } }
+    dish { id = "FruitPancakes", family = "pancakes", level = 1, procs = { "chop", "measure", "flip" },
+      slots = { s({ "Base.Strewberrie", "Base.Cherry", "Base.BerryBlue", "Base.Banana" }, 1, FRUIT), s({ "Base.Banana", "Base.Peach", "Base.Orange" }, 1, OPT), s({ "Base.Honey", "Base.MapleSyrup", "Base.Cinnamon" }, 1, SPICE) } }
+    dish { id = "ChocoPancakes", family = "pancakes", level = 2, procs = { "grate", "flip" },
+      slots = { s(G.choc, 1), s({ "Base.Banana", "Base.Strewberrie" }, 1, OPT), s({ "Base.MapleSyrup", "Base.Honey" }, 1, SPICE) } }
+    dish { id = "BerrySundae",  family = "icecream", level = 0, procs = { "wash", "chop" },
+      slots = { s(G.berry, 2, BERRY), s({ "Base.Honey", "Base.MapleSyrup", "Base.Chocolate" }, 1, OPT) } }
     -- ===== hot drinks (vanilla Prepare Beverage: a mug or cup full of water, 3)
-    { id = "HerbalTea",    family = "drink", level = 0, procs = { "wash", "steep" },
-      slots = { s(G.herbtea, 1, x({ "herb" })), s({ "Base.Honey", "Base.Sugar" }, 1, OPT) } },
-    { id = "LemonHoneyTea", family = "drink", level = 0, procs = { "slice", "steep", "measure" },
-      slots = { s({ "Base.Lemon", "Base.Lime" }, 1), s({ "Base.Honey" }, 1), s({ "Base.Teabag2" }, 1, OPT) } },
-    { id = "Coffee",       family = "drink", level = 0, procs = { "measure", "steep" },
-      slots = { s({ "Base.Coffee2" }, 1), s({ "Base.Sugar", "Base.SugarCubes", "Base.SugarPacket" }, 1, OPT), s(G.milk, 1, OPT) } },
-    { id = "RosehipTea",   family = "drink", level = 1, procs = { "wash", "grind", "steep" },
-      slots = { s({ "Base.Rosehips" }, 2), s({ "Base.Honey" }, 1, OPT) } },
-    { id = "GingerTea",    family = "drink", level = 1, procs = { "peel", "slice", "steep" },
-      slots = { s({ "Base.GingerRoot" }, 1), s({ "Base.Lemon", "Base.Lime" }, 1, OPT), s({ "Base.Honey" }, 1, OPT) } },
-    { id = "HotChocolate", family = "drink", level = 1, procs = { "measure", "stir" },
-      slots = { s({ "Base.CocoaPowder" }, 1), s({ "Base.Sugar", "Base.SugarBrown", "Base.Honey" }, 1, OPT), s(G.milk, 1, OPT) } },
-    { id = "ForagerTea",   family = "drink", level = 2, procs = { "wash", "chop", "steep" },
-      slots = { s({ "Base.Nettles", "Base.Dandelions", "Base.Violets", "Base.Thistle" }, 2), s({ "Base.MintHerb", "Base.Honey" }, 1, OPT) } },
-    { id = "BerryTea",     family = "drink", level = 2, procs = { "wash", "mash", "steep" },
-      slots = { s({ "Base.Strewberrie" }, 1), s({ "Base.Teabag2", "Base.MintHerb" }, 1), s({ "Base.Sugar", "Base.Honey" }, 1, OPT) } },
-}
+    dish { id = "HerbalTea",    family = "drink", level = 0, procs = { "wash", "steep" },
+      slots = { s(G.herbtea, 1, x({ "herb" })), s({ "Base.Honey", "Base.Sugar" }, 1, OPT) } }
+    dish { id = "LemonHoneyTea", family = "drink", level = 0, procs = { "slice", "steep", "measure" },
+      slots = { s({ "Base.Lemon", "Base.Lime" }, 1), s({ "Base.Honey" }, 1), s({ "Base.Teabag2" }, 1, OPT) } }
+    dish { id = "Coffee",       family = "drink", level = 0, procs = { "measure", "steep" },
+      slots = { s({ "Base.Coffee2" }, 1), s({ "Base.Sugar", "Base.SugarCubes", "Base.SugarPacket" }, 1, OPT), s(G.milk, 1, OPT) } }
+    dish { id = "RosehipTea",   family = "drink", level = 1, procs = { "wash", "grind", "steep" },
+      slots = { s({ "Base.Rosehips" }, 2), s({ "Base.Honey" }, 1, OPT) } }
+    dish { id = "GingerTea",    family = "drink", level = 1, procs = { "peel", "slice", "steep" },
+      slots = { s({ "Base.GingerRoot" }, 1), s({ "Base.Lemon", "Base.Lime" }, 1, OPT), s({ "Base.Honey" }, 1, OPT) } }
+    dish { id = "HotChocolate", family = "drink", level = 1, procs = { "measure", "stir" },
+      slots = { s({ "Base.CocoaPowder" }, 1), s({ "Base.Sugar", "Base.SugarBrown", "Base.Honey" }, 1, OPT), s(G.milk, 1, OPT) } }
+    dish { id = "ForagerTea",   family = "drink", level = 2, procs = { "wash", "chop", "steep" },
+      slots = { s({ "Base.Nettles", "Base.Dandelions", "Base.Violets", "Base.Thistle" }, 2), s({ "Base.MintHerb", "Base.Honey" }, 1, OPT) } }
+    dish { id = "BerryTea",     family = "drink", level = 2, procs = { "wash", "mash", "steep" },
+      slots = { s({ "Base.Strewberrie" }, 1), s({ "Base.Teabag2", "Base.MintHerb" }, 1), s({ "Base.Sugar", "Base.Honey" }, 1, OPT) } }
+end
 
 -- quick lookups
 K.DISH_BY_ID = {}

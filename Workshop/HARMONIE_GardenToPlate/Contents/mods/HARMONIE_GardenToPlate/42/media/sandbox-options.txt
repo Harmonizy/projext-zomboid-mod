@@ -3,7 +3,7 @@ VERSION = 1,
 option HARMONIE_GardenToPlate.DecayPerDay
 {
     type = double,
-    default = 5.0,
+    default = 2.0,
     min = 0.0,
     max = 20.0,
     page = HARMONIE_GardenToPlate,
