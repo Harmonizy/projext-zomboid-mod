@@ -304,7 +304,8 @@ end
 -- ------------------------------------------------------------- requests
 function C.send(panel, id)
     local doctor, patient = parties(panel)
-    if not doctor or not patient then return end
+    if not doctor or not patient then HMLog("DiagnoseUI", "diagnose %s: no doctor/patient", tostring(id)); return end
+    HMLog("DiagnoseUI", "%s tries diagnosis %s on %s", HMLogName(doctor), tostring(id), HMLogName(patient))
     local args = { id = id }
     C.lastPanel = panel
     if isClient and isClient() then
@@ -323,12 +324,14 @@ function C.onServerCommand(module, command, args)
         local p = getPlayer and getPlayer()
         local md = p and p:getModData()
         if md then md[D.KEY] = args.data or {} end
+        HMLog("DiagnoseUI", "my diagnoses synced from the server")
         return
     end
     if command ~= "Result" then return end
+    HMLog("DiagnoseUI", "diagnosis %s: %s%s", tostring(args.id), args.ok and "confirmed" or "denied", args.reason and (" (" .. tostring(args.reason) .. ")") or "")
     local panel = C.lastPanel
     local st = panel and panel.dxState
-    if not st then return end
+    if not st then HMLog("DiagnoseUI", "result arrived but the window is gone"); return end
     local name = diseaseName(args.id)
     if panel.hmDxResult and panel.hmDxResult.setResult then
         panel.hmDxResult:setResult(args.ok, args.reason, name)

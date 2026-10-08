@@ -38,6 +38,7 @@ end
 
 function P.toggle(panel)
     panel.hmPinned = not panel.hmPinned
+    HMLog("Pin", "%s pinned: %s", tostring(panel.Type or panel.title or "window"), tostring(panel.hmPinned))
     panel.hmLeaveAt = nil
     refreshButton(panel)
     if panel.hmPinned and panel.hmCollapsed then P.expand(panel) end
@@ -137,7 +138,9 @@ local HEALTH = {
 }
 
 local function installHealth()
-    if not EHR_HealthPanelUI or EHR_HealthPanelUI.hmPinInstalled then return end
+    if not EHR_HealthPanelUI then HMLog("Pin", "EHR_HealthPanelUI missing -- no pin on the medical window"); return end
+    if EHR_HealthPanelUI.hmPinInstalled then return end
+    HMLog("Pin", "pin added to the medical window")
     EHR_HealthPanelUI.hmPinInstalled = true
     local origPre = EHR_HealthPanelUI.prerender
     function EHR_HealthPanelUI:prerender()
@@ -184,7 +187,9 @@ local MONITOR = {
 }
 
 local function installMonitor()
-    if not EHR_MedicalMonitorUI or EHR_MedicalMonitorUI.hmPinInstalled then return end
+    if not EHR_MedicalMonitorUI then HMLog("Pin", "EHR_MedicalMonitorUI missing -- no pin on the monitor"); return end
+    if EHR_MedicalMonitorUI.hmPinInstalled then return end
+    HMLog("Pin", "pin added to the medical monitor")
     EHR_MedicalMonitorUI.hmPinInstalled = true
     local origPre = EHR_MedicalMonitorUI.prerender
     function EHR_MedicalMonitorUI:prerender()

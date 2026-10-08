@@ -205,6 +205,7 @@ function W.setVolume(v)
     -- steps of 25%: the sounds exist as files at 25..200% (TWASound.LEVELS),
     -- and Options > Mods' slider moves in the same steps
     v = math.max(0, math.min(2, math.floor(v * 4 + 0.5) / 4))
+    if v ~= W.lastLoggedVolume then W.lastLoggedVolume = v; TWALog("Workbench", "volume %d%%%s", math.floor(v * 100 + 0.5), v <= 0 and " (muted)" or "") end
     local O = TWAOptions
     if O and O.applyVolume then O.applyVolume(v > 0 and v or (TWASound.volume or 1)) end
     if v > 0 then TWASound.volume = v end
@@ -449,12 +450,13 @@ function W.ensurePrefs()
         end
     end)
     pcall(function() reader:close() end)
+    TWALog("Workbench", "prefs loaded: scale %s, text step %s, pinned %s", tostring(TWACraftUI.userScale), tostring(TWAFont.userStep), tostring(W.pinned))
 end
 
 function W.savePrefs()
     if not getFileWriter then return end
     local ok, writer = pcall(getFileWriter, W.PREFS_FILE, true, false)
-    if not ok or not writer then return end
+    if not ok or not writer then TWALog("Workbench", "could not write %s: %s", tostring(W.PREFS_FILE), tostring(writer)); return end
     pcall(function()
         if TWACraftUI.userScale then writer:write("scale=" .. string.format("%.3f", TWACraftUI.userScale) .. "\n") end
         writer:write("text=" .. tostring(TWAFont.userStep or 0) .. "\n")
@@ -484,7 +486,7 @@ function TWACraftWindow:changeTextSize(d) return W.stepText(d) end
 function W.relayout()
     local win = TWACraftUI.window
     if not win then return true end
-    if win:isBusy() then win:flashLocked("IGUI_TWA_BusyCantResize") return false end
+    if win:isBusy() then TWALog("Workbench", "relayout refused: busy"); win:flashLocked("IGUI_TWA_BusyCantResize") return false end
     TWACraftUI.rebuild()
     if TWASettingsUI and TWASettingsUI.instance then TWASettingsUI.instance:bringToTop() end
     return true
@@ -498,6 +500,7 @@ function W.stepText(d)
     local win = TWACraftUI.window
     if win and win:isBusy() then win:flashLocked("IGUI_TWA_BusyCantResize") return false end
     TWAFont.userStep = math.max(-4, math.min(4, (TWAFont.userStep or 0) + d))
+    TWALog("Workbench", "text step %d", TWAFont.userStep)
     W.savePrefs()
     return W.relayout()
 end
@@ -507,6 +510,7 @@ end
 W.FOLD_DELAY_MS = 350
 function TWACraftWindow:togglePin()
     W.pinned = not W.pinned
+    TWALog("Workbench", "pinned: %s", tostring(W.pinned))
     self.wbLeaveAt = nil
     if W.pinned then self:wbExpand() end
     self:refreshHeaderButtons()
@@ -601,7 +605,8 @@ function TWACraftWindow:resizeEnd()
     local s = self.wbPreview
     self.wbPreview = nil
     if not s or math.abs(s - self.width / 1000) < 0.01 then return end
-    if self:isBusy() then self:flashLocked("IGUI_TWA_BusyCantResize") return end
+    if self:isBusy() then TWALog("Workbench", "resize refused: busy"); self:flashLocked("IGUI_TWA_BusyCantResize") return end
+    TWALog("Workbench", "resized to scale %.2f", s)
     TWACraftUI.userScale = s
     W.savePrefs()
     TWACraftUI.rebuild()
@@ -689,7 +694,8 @@ function W.settingsRows()
 end
 
 function W.openSettings()
-    if not TWASettingsUI then return end
+    if not TWASettingsUI then TWALog("Workbench", "settings window missing (TWASettingsUI not loaded)"); return end
+    TWALog("Workbench", "settings opened")
     TWASettingsUI.open(getText("IGUI_TWA_Set_Title"), W.settingsRows)
 end
 
@@ -829,3 +835,6 @@ function TWACraftWindow:onMouseUpOutside(x, y)
     self.draggingVolume = false
     ISPanel.onMouseUpOutside(self, x, y)
 end
+
+-- console.txt: tab changes ("[HARMONIE_TWA][Workbench]")
+if TWALogMethods then TWALogMethods(TWACraftWindow, "Workbench", { "setTab" }) end

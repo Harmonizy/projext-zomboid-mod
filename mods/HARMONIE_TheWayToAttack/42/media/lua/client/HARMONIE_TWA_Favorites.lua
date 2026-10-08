@@ -25,12 +25,15 @@ function F.load()
         end
     end)
     pcall(function() reader:close() end)
+    local n = 0
+    for _ in pairs(F.set) do n = n + 1 end
+    TWALog("Favorites", "loaded %d favourite recipes", n)
 end
 
 function F.save()
     if not getFileWriter then return end
     local ok, writer = pcall(getFileWriter, F.FILE, true, false)
-    if not ok or not writer then return end
+    if not ok or not writer then TWALog("Favorites", "could not write %s: %s", F.FILE, tostring(writer)); return end
     pcall(function()
         for id in pairs(F.set or {}) do writer:write(id .. "\n") end
     end)
@@ -46,6 +49,7 @@ function F.toggle(id)
     if not id then return false end
     if not F.set then F.load() end
     F.set[id] = (not F.set[id]) and true or nil
+    TWALog("Favorites", "%s %s", tostring(id), F.set[id] and "added" or "removed")
     F.save()
     return F.set[id] == true
 end

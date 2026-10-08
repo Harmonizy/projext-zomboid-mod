@@ -141,3 +141,5 @@ function TWA_PerformProcedureAction:new(character, procId, quality)
     o.stopOnRun = true
     return o
 end
+
+if TWALogAction then TWALogAction(TWA_PerformProcedureAction, "PerformProcedure") end

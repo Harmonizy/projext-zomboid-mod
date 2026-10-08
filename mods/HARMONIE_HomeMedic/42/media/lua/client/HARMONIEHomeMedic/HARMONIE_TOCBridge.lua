@@ -124,12 +124,14 @@ end
 
 function T.installStatuses()
     if T.statusesInstalled or not EHR_HealthPanelUI or not EHR_HealthPanelUI.getBodyPartStatuses then return end
-    if not T.available() then return end
+    if not T.available() then HMLogOnce("tocoff", "TOC", "The Only Cure not available -- no limb statuses"); return end
     T.statusesInstalled = true
+    HMLog("TOC", "limb statuses added to the medical window")
     local original = EHR_HealthPanelUI.getBodyPartStatuses
     function EHR_HealthPanelUI:getBodyPartStatuses(bodyPart)
         local statuses = original(self, bodyPart)
         local ok, rows = pcall(T.limbStatuses, self.player, bodyPart, EHR_HealthPanelUI.Colors)
+        if not ok then HMLogOnce("tocst:" .. tostring(rows), "TOC", "limb status FAILED: %s", tostring(rows)) end
         if ok and rows and #rows > 0 then
             -- TOC rows first (highest priority), then EHR's own
             for i = #rows, 1, -1 do table.insert(statuses, 1, rows[i]) end
@@ -142,6 +144,7 @@ function T.install()
     if T.installed or not EHR_HealthPanelUI or not EHR_HealthPanelUI.openRemoteBodyPartContextMenu then return end
     if not T.available() then return end
     T.installed = true
+    HMLog("TOC", "TOC options added to the remote body-part menu")
     local original = EHR_HealthPanelUI.openRemoteBodyPartContextMenu
     function EHR_HealthPanelUI:openRemoteBodyPartContextMenu(bodyPart, x, y, bodyPartType)
         local shown = original(self, bodyPart, x, y, bodyPartType)
@@ -201,7 +204,7 @@ local function logFields(panel)
     T.loggedFields = true
     local keys = {}
     for k, v in pairs(panel.bps[1]) do keys[#keys + 1] = tostring(k) .. ":" .. type(v) end
-    print("[HARMONIE HomeMedic] body-part entry fields: " .. table.concat(keys, ", "))
+    HMLog("TOC", "body-part entry fields: %s", table.concat(keys, ", "))
 end
 
 function T.drawMissingLimbs(panel)

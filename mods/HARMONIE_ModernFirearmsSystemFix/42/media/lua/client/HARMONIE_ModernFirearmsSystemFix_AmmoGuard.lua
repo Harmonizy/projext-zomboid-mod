@@ -41,9 +41,22 @@
     fully explains the reported symptom with no mod bug involved.
 ]]--
 
+-- console.txt: "[HARMONIE_MFSFix][AmmoGuard][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_MFSFix][AmmoGuard][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
+
 local function installGuard()
     if not ChangeMagzine then
-        print("HARMONIE ModernFirearmsSystem Fix: global ChangeMagzine not found -- is ModernFirearmsSystem installed and enabled?")
+        log("global ChangeMagzine not found -- is ModernFirearmsSystem installed and enabled? (guard NOT installed)")
         return
     end
 
@@ -52,13 +65,15 @@ local function installGuard()
         if Tag == "ReFresh" and playerObj then
             local actionQueue = ISTimedActionQueue.getTimedActionQueue(playerObj)
             if actionQueue and actionQueue.queue and #actionQueue.queue > 0 then
+                log("ReFresh magazine swap deferred: player is mid-action (%d queued)", #actionQueue.queue)
                 return -- player is mid-action; defer the resync to the next safe OnEquipPrimary
             end
         end
+        if Tag == "ReFresh" then log("ReFresh magazine swap allowed (type %s)", tostring(MagazineType)) end
         return original_ChangeMagzine(playerObj, MainGun, MagazineType, Tag, Need)
     end
 
-    print("HARMONIE ModernFirearmsSystem Fix: ChangeMagzine mid-action guard installed.")
+    log("ChangeMagzine mid-action guard installed")
 end
 
 Events.OnGameStart.Add(installGuard)

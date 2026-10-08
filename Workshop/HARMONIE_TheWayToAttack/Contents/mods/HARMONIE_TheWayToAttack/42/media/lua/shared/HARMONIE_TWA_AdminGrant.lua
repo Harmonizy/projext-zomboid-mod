@@ -176,9 +176,11 @@ end
 function A.setSkills(player, levels)
     for name, lvl in pairs(levels or {}) do
         local perk = Perks and Perks[name]
+        if not perk then TWALog("Admin", "skill %s does not exist in this game", tostring(name)) end
         if perk and player:getPerkLevel(perk) < lvl then
-            pcall(function() player:getXp():setXPToLevel(perk, lvl) end)
-            pcall(function() player:setPerkLevelDebug(perk, lvl) end)
+            TWALogErr("Admin", "setXPToLevel " .. tostring(name), pcall(function() player:getXp():setXPToLevel(perk, lvl) end))
+            TWALogErr("Admin", "setPerkLevelDebug " .. tostring(name), pcall(function() player:setPerkLevelDebug(perk, lvl) end))
+            TWALog("Admin", "%s: %s set to level %s (now %s)", TWALogName(player), tostring(name), tostring(lvl), tostring(player:getPerkLevel(perk)))
         end
     end
 end
@@ -186,11 +188,17 @@ end
 -- the work, where the authority is (server in MP, here in SP)
 function A.grant(player, recipeId, what)
     local recipe = S.getRecipeById(recipeId)
-    if not player or not recipe or not A.isAllowed(player) then return false end
+    if not player or not recipe or not A.isAllowed(player) then
+        TWALog("Admin", "grant %s for %s REFUSED: %s", tostring(what), TWALogName(player),
+            not recipe and ("unknown recipe " .. tostring(recipeId)) or "not staff / not allowed")
+        return false
+    end
+    TWALog("Admin", "grant %s for %s: recipe %s", tostring(what), TWALogName(player), tostring(recipeId))
     TWASources.forget(player)
     if what == "items" then
         local inv = player:getInventory()
         for _, e in ipairs(A.missingItems(player, recipe)) do
+            TWALog("Admin", "  giving %d x %s", e.qty, tostring(e.type))
             for _ = 1, e.qty do
                 local it = inv:AddItem(e.type)
                 if it and isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, it) end
@@ -207,6 +215,7 @@ end
 
 function A.request(player, recipeId, what)
     if isClient() then
+        TWALog("Admin", "asking the server to grant %s for %s", tostring(what), tostring(recipeId))
         sendClientCommand(player, A.NET, "adminGrant", { recipeId = recipeId, what = what })
     else
         A.grant(player, recipeId, what)
@@ -216,7 +225,7 @@ end
 if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
         if module ~= A.NET or command ~= "adminGrant" or not player or type(args) ~= "table" then return end
-        if args.what ~= "items" and args.what ~= "skills" then return end
+        if args.what ~= "items" and args.what ~= "skills" then TWALog("Admin", "%s sent adminGrant with bad 'what' %s", TWALogName(player), tostring(args.what)); return end
         A.grant(player, args.recipeId, args.what)
     end)
 end
@@ -224,6 +233,7 @@ if Events and Events.OnServerCommand then
     Events.OnServerCommand.Add(function(module, command, args)
         if module ~= A.NET or command ~= "adminSkills" or type(args) ~= "table" then return end
         local p = getPlayer and getPlayer()
+        TWALog("Admin", "skill levels from the server")
         if p then A.setSkills(p, args.levels) end
     end)
 end

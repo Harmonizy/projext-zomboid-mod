@@ -34,6 +34,19 @@
     wrap it.
 ]]--
 
+-- console.txt: "[HARMONIE_SVU3][PartWear][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_SVU3][PartWear][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
+
 local function getMultiplier()
     if SandboxVars.HARMONIE_SVU3PartWear and SandboxVars.HARMONIE_SVU3PartWear.ProtectionDamageMultiplier then
         return SandboxVars.HARMONIE_SVU3PartWear.ProtectionDamageMultiplier
@@ -45,7 +58,7 @@ local wrapped = false
 local function wrapInstallComplete()
     if wrapped then return end
     if not (ATATuning2 and ATATuning2.InstallComplete and ATATuning2.InstallComplete.Tuning) then
-        print("HARMONIE SVU3 Part Wear: ATATuning2.InstallComplete.Tuning not found -- is Standardized Vehicle Upgrades 3 (Core) installed and enabled?")
+        log("ATATuning2.InstallComplete.Tuning not found -- is Standardized Vehicle Upgrades 3 (Core) installed and enabled?")
         return
     end
 
@@ -55,22 +68,22 @@ local function wrapInstallComplete()
         original_InstallComplete_Tuning(vehicle, part)
 
         local data = part:getModData()
-        if not (data.tuning2 and data.tuning2.protectionHealthDelta) then return end
+        if not (data.tuning2 and data.tuning2.protectionHealthDelta) then
+            log("%s installed: no protection value, nothing to scale", tostring(part:getId()))
+            return
+        end
 
         local multiplier = getMultiplier()
-        if multiplier == 1.0 then return end
+        if multiplier == 1.0 then log("%s installed: multiplier x1.0, protection left as is", tostring(part:getId())); return end
 
         local newDelta = data.tuning2.protectionHealthDelta * multiplier
         data.tuning2.protectionHealthDelta = newDelta
         vehicle:transmitPartModData(part)
 
-        print(string.format(
-            "HARMONIE SVU3 Part Wear: %s protection damage scaled to %.1f (x%.1f multiplier).",
-            part:getId(), newDelta, multiplier
-        ))
+        log("%s protection damage scaled to %.1f (x%.1f multiplier)", tostring(part:getId()), newDelta, multiplier)
     end
 
-    print("HARMONIE SVU3 Part Wear: wrapped ATATuning2.InstallComplete.Tuning successfully.")
+    log("wrapped ATATuning2.InstallComplete.Tuning (multiplier now x%.2f)", getMultiplier())
 end
 
 -- 2026-10-02 (MP audit): a dedicated server never fires OnGameStart, so

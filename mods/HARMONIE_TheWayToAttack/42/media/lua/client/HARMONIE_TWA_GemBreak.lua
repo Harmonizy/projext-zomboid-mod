@@ -27,6 +27,7 @@ local WAIT_MS = 15000
 if Events and Events.OnServerCommand then
     Events.OnServerCommand.Add(function(module, command, args)
         if module ~= "HARMONIE_TWA" or command ~= "gemRefine" or not args or not args.token then return end
+        TWALog("Reveal", "gem refine result from the server: %s %s", tostring(args.type), args.broken and "BROKE" or "ok")
         TWACraftState.REFINE_RESULTS[args.token] = args
     end)
 end
@@ -52,6 +53,7 @@ function TWAGemBreak.watch(player, token)
         local res = TWACraftState.REFINE_RESULTS[token]
         if res or getTimestampMs() - started > WAIT_MS then
             Events.OnTick.Remove(tick)
+            if not res then TWALog("Reveal", "no gem refine result arrived within %d ms", WAIT_MS) end
             if res then
                 TWACraftState.REFINE_RESULTS[token] = nil
                 TWAGemBreak.show(player, res)

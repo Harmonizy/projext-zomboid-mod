@@ -200,7 +200,8 @@ W.findById = findById
 
 --- Client entry point: edit `item` (in `player`'s inventory).
 function W.request(player, item, values, reset)
-    if not W.isAllowed(player) then return end
+    if not W.isAllowed(player) then TWALog("Debug", "weapon edit by %s REFUSED: not allowed", TWALogName(player)); return end
+    TWALog("Debug", "weapon edit of %s by %s%s", TWALogType(item), TWALogName(player), reset and " (reset)" or "")
     if isClient() then
         sendClientCommand(player, MODULE, "debugWeapon", { id = item:getID(), values = values, reset = reset and true or false })
     else
@@ -211,9 +212,10 @@ end
 if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
         if module ~= MODULE or command ~= "debugWeapon" or not player or not args then return end
-        if not W.isAllowed(player) then return end
+        if not W.isAllowed(player) then TWALog("Debug", "weapon edit from %s REJECTED: not staff / option off", TWALogName(player)); return end
         local item = findById(player, args.id)
-        if not item then return end
+        if not item then TWALog("Debug", "weapon edit from %s: item id %s not found", TWALogName(player), tostring(args.id)); return end
+        TWALog("Debug", "weapon edit from %s applied to %s%s", TWALogName(player), TWALogType(item), args.reset and " (reset)" or "")
         W.apply(item, args.values or {}, args.reset)
         -- Tell the owner's client to make its copy match.
         if sendServerCommand then
@@ -227,6 +229,7 @@ if Events and Events.OnServerCommand then
         if module ~= MODULE or command ~= "debugWeapon" or not args then return end
         local player = getPlayer and getPlayer()
         local item = findById(player, args.id)
+        TWALog("Debug", "weapon edit confirmed by the server for item id %s%s", tostring(args.id), item and "" or " (not in this inventory!)")
         if item then W.apply(item, args.values or {}, args.reset) end
     end)
 end

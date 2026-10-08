@@ -264,6 +264,19 @@ local HARMONIE_ModernFirearmsSystemFix_Items = {
     ["uzi_cat_Drum"] = true,
 }
 
+-- console.txt: "[HARMONIE_MFSFix][DropRate][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_MFSFix][DropRate][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
+
 local function getMultiplier()
     if SandboxVars.HARMONIE_ModernFirearmsSystemFix and SandboxVars.HARMONIE_ModernFirearmsSystemFix.DropRateMultiplier then
         return SandboxVars.HARMONIE_ModernFirearmsSystemFix.DropRateMultiplier
@@ -276,12 +289,12 @@ end
 local done = setmetatable({}, { __mode = "k" })
 local function scaleDropRates()
     if not ProceduralDistributions or not ProceduralDistributions.list then
-        print("HARMONIE ModernFirearmsSystem Fix: ProceduralDistributions.list not found -- is ModernFirearmsSystem installed and enabled?")
+        log("ProceduralDistributions.list not found -- is ModernFirearmsSystem installed and enabled?")
         return
     end
 
     local multiplier = getMultiplier()
-    if multiplier == 1.0 then return end
+    if multiplier == 1.0 then logOnce("x1", "drop rate multiplier is x1.00 -- nothing scaled"); return end
 
     local scaledCount = 0
     for _, containerData in pairs(ProceduralDistributions.list) do
@@ -304,7 +317,7 @@ local function scaleDropRates()
         end
     end
 
-    print(string.format("HARMONIE ModernFirearmsSystem Fix: scaled %d loot entries by x%.2f.", scaledCount, multiplier))
+    log("scaled %d loot entries by x%.2f (entries already scaled are skipped)", scaledCount, multiplier)
 end
 
 -- 2026-10-02 (MP audit): OnGameStart was the wrong place: it is a CLIENT

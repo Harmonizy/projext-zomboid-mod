@@ -141,6 +141,7 @@ function TWAWeaponDebugWindow:close()
 end
 
 function TWAWeaponDebugWindow.open(player, item)
+    TWALog("Debug", "weapon debug window for %s", TWALogType(item))
     if TWAWeaponDebugWindow.instance then TWAWeaponDebugWindow.instance:close() end
     local w = TWAWeaponDebugWindow:new(player, item)
     w:initialise()

@@ -31,6 +31,9 @@ require "HARMONIE_TWA_Sources"
 TWACraftState = TWACraftState or {}
 local S = TWACraftState
 
+local function log(...) TWALog("Craft", ...) end
+local function logOnce(key, ...) TWALogOnce("Craft:" .. key, "Craft", ...) end
+
 S.WORDS = { "Miss", "Bad", "Good", "Excellent" }
 S.SCORE = { Miss = 0, Bad = 1, Good = 2, Excellent = 3 }
 S.LEGACY_WORD = "Good"
@@ -82,7 +85,9 @@ function S.getRecipeById(id)
         for _, r in ipairs(TWARecipeData.List) do
             recipeByIdCache[r.id] = r
         end
+        log("recipe index built: %d recipes", #TWARecipeData.List)
     end
+    if not recipeByIdCache[id] then logOnce("norecipe:" .. tostring(id), "unknown recipe id %s", tostring(id)) end
     return recipeByIdCache[id]
 end
 
@@ -281,7 +286,10 @@ function S.rollGemstone(recipe, rand, word)
         for _, t in ipairs(slot) do if itemExists(t) then have[#have + 1] = t end end
         if #have > 0 then slots[#slots + 1] = have end
     end
-    if #slots == 0 then return recipe and recipe.result end
+    if #slots == 0 then
+        log("gem roll (%s, %d/%d): no 'bad' items exist in this game -- giving %s", tostring(word), roll, good, tostring(recipe and recipe.result))
+        return recipe and recipe.result
+    end
     local slot = slots[rand(#slots) + 1]
     return slot[rand(#slot) + 1]
 end
@@ -378,8 +386,12 @@ function S.rollGrade(word)
     local cumulative = 0
     for i, chance in ipairs(odds) do
         cumulative = cumulative + chance
-        if roll < cumulative then return pool[i] end
+        if roll < cumulative then
+            log("grade roll for %s: %d of %d -> %s", tostring(word), roll, total, tostring(pool[i]))
+            return pool[i]
+        end
     end
+    log("grade roll for %s: %d of %d -> %s (last)", tostring(word), roll, total, tostring(pool[#pool]))
     return pool[#pool]
 end
 
@@ -581,6 +593,10 @@ function S.beginActive(character, recipeId, map, baseSnap, base2Snap)
     local m = {}
     for k, v in pairs(map or {}) do if S.isWord(v) then m[k] = v end end
     activeStore()[activeKey(character)] = { recipeId = recipeId, map = m, base = baseSnap, base2 = base2Snap }
+    local n = 0
+    for _ in pairs(m) do n = n + 1 end
+    log("craft started for %s: %s (base %s, base2 %s, %d steps already done)", TWALogName(character), tostring(recipeId),
+        tostring(baseSnap and baseSnap.type), tostring(base2Snap and base2Snap.type), n)
 end
 
 -- The progress a base item carries as a bookmark for `recipeId` (resuming),
@@ -595,6 +611,7 @@ function S.bookmarkMap(item, recipeId)
 end
 
 function S.clearActive(character)
+    if activeStore()[activeKey(character)] then log("craft ended for %s", TWALogName(character)) end
     activeStore()[activeKey(character)] = nil
     local md = character:getModData()
     if md then md.TWA_ActiveCraft = nil end
@@ -607,8 +624,13 @@ function S.recordActive(character, procId, word)
     local recipe = act and S.getRecipeById(act.recipeId)
     if not recipe or not S.isWord(word) then return end
     for _, pid in ipairs(recipe.procedures) do
-        if pid == procId then act.map[procId] = word return end
+        if pid == procId then
+            act.map[procId] = word
+            log("%s: step %s scored %s", tostring(act.recipeId), tostring(procId), tostring(word))
+            return
+        end
     end
+    log("%s: step %s is not part of this recipe -- score %s ignored", tostring(act.recipeId), tostring(procId), tostring(word))
 end
 
 local function addToInventory(character, snap, fallbackType)
@@ -647,15 +669,21 @@ end
 -- `recipeId` must match the active craft. Returns true when it paid out.
 function S.giveBack(character, kind, recipeId)
     local act = S.getActive(character)
-    if not act or act.recipeId ~= recipeId then return false end
+    if not act or act.recipeId ~= recipeId then
+        log("give back (%s) for %s REFUSED: active craft is %s, asked for %s", tostring(kind), TWALogName(character),
+            tostring(act and act.recipeId), tostring(recipeId))
+        return false
+    end
     local recipe = S.getRecipeById(act.recipeId)
     S.clearActive(character)
-    if not recipe then return false end
+    if not recipe then log("give back: recipe %s missing, nothing returned", tostring(act.recipeId)); return false end
+    log("give back (%s) for %s: %s", tostring(kind), TWALogName(character), tostring(recipe.id))
     if kind == "incomplete" then
         local inv = character:getInventory()
         -- Round 19: a gem-refining recipe keeps the gem's own type (its
         -- `result` is only a stand-in picture) -- the same gem, unfinished.
         local it = (recipe.keepType and act.base) and addToInventory(character, act.base, recipe.result) or inv:AddItem(recipe.result)
+        if not it then log("could NOT add the unfinished %s to the inventory", tostring(recipe.result)) end
         if it then
             S.writeBookmark(it, recipe.id, act.map)
             local md = it:getModData()
@@ -685,6 +713,7 @@ S.NET_MODULE = "HARMONIE_TWA"
 
 function S.requestGiveBack(player, kind, recipeId)
     if isClient() then
+        log("asking the server to give back (%s) %s", tostring(kind), tostring(recipeId))
         sendClientCommand(player, S.NET_MODULE, "giveBack", { kind = kind, recipeId = recipeId })
     else
         S.giveBack(player, kind, recipeId)
@@ -696,6 +725,7 @@ end
 -- restores the craft instead (see TWACraftUI.open).
 function S.requestReturnStale(player)
     if isClient() then
+        log("asking the server to return a stale craft")
         sendClientCommand(player, S.NET_MODULE, "returnStale", {})
     end
 end
@@ -705,9 +735,13 @@ if Events and Events.OnClientCommand then
         if module ~= S.NET_MODULE or not player then return end
         args = args or {}
         if command == "giveBack" and (args.kind == "incomplete" or args.kind == "cancel") then
+            log("%s asked to give back (%s) %s", TWALogName(player), tostring(args.kind), tostring(args.recipeId))
             S.giveBack(player, args.kind, args.recipeId)
+        elseif command == "giveBack" then
+            log("%s sent giveBack with a bad kind %s -- ignored", TWALogName(player), tostring(args.kind))
         elseif command == "returnStale" then
             local act = S.getActive(player)
+            log("%s asked to return a stale craft: %s", TWALogName(player), act and tostring(act.recipeId) or "none active")
             if act then S.giveBack(player, "incomplete", act.recipeId) end
         end
     end)
@@ -737,6 +771,7 @@ S.REFINE_RESULTS = S.REFINE_RESULTS or {}
 function S.reportRefine(character, token, broken, fullType, state)
     if not token or token == "" then return end
     local res = { token = token, broken = broken and true or false, type = fullType, state = state }
+    log("gem refine for %s: %s, %s (%s)", TWALogName(character), tostring(fullType), broken and "BROKE" or "ok", tostring(state))
     if isServer() and sendServerCommand then
         sendServerCommand(character, "HARMONIE_TWA", "gemRefine", res)
     else

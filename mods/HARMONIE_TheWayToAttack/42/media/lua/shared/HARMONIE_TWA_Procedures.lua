@@ -370,7 +370,7 @@ local function nearbyForgeTier(player, logIfBelow)
         local now = getTimestampMs and getTimestampMs() or 0
         if now - lastForgeScanLog > 10000 then
             lastForgeScanLog = now
-            print("[TWA forge scan] need tier " .. logIfBelow .. ", found " .. best .. "; nearby sprites: " .. table.concat(seen, ", "))
+            TWALog("Forge", "forge scan: need tier %s, found %s; nearby sprites: %s", tostring(logIfBelow), tostring(best), table.concat(seen, ", "))
         end
     end
     return best
@@ -1316,4 +1316,10 @@ function TWAProcedures.AwardXP(proc, player)
             player:getXp():AddXP(perk, xp)
         end
     end
+end
+
+if TWALog then
+    local n = 0
+    for _ in pairs(TWAProcedures.List or {}) do n = n + 1 end
+    TWALog("Data", "%d procedures loaded", n)
 end

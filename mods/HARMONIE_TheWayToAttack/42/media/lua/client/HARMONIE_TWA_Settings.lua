@@ -73,7 +73,16 @@ U.THEME = {
     text = { 0.97, 0.94, 0.86 }, textDim = { 0.72, 0.66, 0.54 },
 }
 
+-- console.txt: what the player changed here, and any setter that failed
+local function rowName(r) return tostring(r and (r.id or r.key or r.label or r.text) or "?") end
+local function logSet(r, what, ok, err)
+    if not TWALog then return end
+    if ok then TWALog("Settings", "%s: %s", rowName(r), tostring(what))
+    else TWALog("Settings", "%s: %s FAILED: %s", rowName(r), tostring(what), tostring(err)) end
+end
+
 function U.open(title, buildRows, theme)
+    if TWALog then TWALog("Settings", "open %s", tostring(title)) end
     if U.instance then
         local same = U.instance.title == title
         U.instance:close()
@@ -327,7 +336,10 @@ function U:onMouseDown(x, y)
     local bs = it.h - 8
     local function play() if getSoundManager then getSoundManager():playUISound("UISelectListItem") end end
     if r.kind == "tick" then
-        if r.set then pcall(r.set, not (value(r.get, false) == true)) end
+        if r.set then
+            local nv = not (value(r.get, false) == true)
+            logSet(r, "set " .. tostring(nv), pcall(r.set, nv))
+        end
         play()
     elseif r.kind == "slider" and x >= cx then
         local b = r._bar or { x = cx, w = cw - 60 }
@@ -337,19 +349,19 @@ function U:onMouseDown(x, y)
         local d = (x < cx + bs + 4) and -1 or ((x > cx + cw - bs - 4) and 1 or 0)
         if d == 0 then d = 1 end
         if r.kind == "step" then
-            pcall(d < 0 and r.minus or r.plus)
+            logSet(r, d < 0 and "minus" or "plus", pcall(d < 0 and r.minus or r.plus))
         else
             local n = #(r.values or {})
             if n > 0 then
                 local i = value(r.get, 0)
                 if i < 1 then i = d > 0 and 0 or n + 1 end
                 i = ((i - 1 + d) % n) + 1
-                pcall(r.set, i)
+                logSet(r, "choice " .. tostring(r.values[i]), pcall(r.set, i))
             end
         end
         play()
     elseif r.kind == "button" and x >= cx then
-        if r.run then pcall(r.run) end
+        if r.run then logSet(r, "pressed", pcall(r.run)) end
         play()
     end
     return true
@@ -360,7 +372,8 @@ function U:slideTo(mx)
     if not s then return end
     local bw = s.w
     local frac = math.max(0, math.min(1, (mx - s.x) / math.max(1, bw)))
-    pcall(s.row.set, sliderValue(s.row, frac))
+    local ok, err = pcall(s.row.set, sliderValue(s.row, frac))
+    if not ok then logSet(s.row, "slider", ok, err) end
 end
 
 function U:onMouseMove(dx, dy)
@@ -378,7 +391,10 @@ function U:onMouseMove(dx, dy)
     return false
 end
 function U:onMouseMoveOutside(dx, dy) return self:onMouseMove(dx, dy) end
-function U:onMouseUp() self.dragging = false; self.sliding = nil return true end
+function U:onMouseUp()
+    if self.sliding and TWALog then TWALog("Settings", "%s: slider set to %s", rowName(self.sliding.row), tostring(value(self.sliding.row.get, "?"))) end
+    self.dragging = false; self.sliding = nil return true
+end
 function U:onMouseUpOutside() self.dragging = false; self.sliding = nil return true end
 
 function U:onMouseWheel(del)

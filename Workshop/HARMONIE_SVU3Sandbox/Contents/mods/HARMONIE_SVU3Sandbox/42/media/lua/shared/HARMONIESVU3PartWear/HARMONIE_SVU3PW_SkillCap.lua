@@ -54,6 +54,19 @@
 
 HARMONIE_SVU3SkillCap = HARMONIE_SVU3SkillCap or {}
 local C = HARMONIE_SVU3SkillCap
+-- console.txt: "[HARMONIE_SVU3][Tiers][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_SVU3][Tiers][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
+C.log, C.logOnce = log, logOnce
 C.TIERS = 3
 C.DEFAULT_CEILING = { { 4, 2 }, { 6, 4 }, { 8, 6 } }
 C.DEFAULT_REF = { 8, 6 } -- SVU3 3's hardest upgrade (the plow), if none read
@@ -236,6 +249,9 @@ function C.parseOverrides(s)
     for entry in tostring(s or ""):gmatch("[^;,]+") do
         local name, t = entry:match("^%s*([%w_%.%-%*]+)%s*[=:]%s*(%d+)%s*$")
         t = tonumber(t)
+        if not (name and t and t >= 1 and t <= C.TIERS) then
+            logOnce("badOverride:" .. entry, "VehicleTierOverrides: ignored entry %q (want Name=1..%d, or Prefix*=1..%d)", entry, C.TIERS, C.TIERS)
+        end
         if name and t and t >= 1 and t <= C.TIERS then
             if name:sub(-1) == "*" then
                 prefix[#prefix + 1] = { name:sub(1, -2), t }
@@ -342,13 +358,13 @@ local function report(names, tiers, read, manual, refMain, refSecond)
     local key = table.concat(lines, "\n")
     if C.lastReport ~= key then
         C.lastReport = key
-        for _, l in ipairs(lines) do print(l) end
+        for _, l in ipairs(lines) do log("%s", (l:gsub("^HARMONIE SVU3 Sandbox: ", ""))) end
     end
 end
 
 -- returns how many install levels differ from SVU3's own
 function C.applyTiers()
-    if not ATA2TuningTable then return 0 end
+    if not ATA2TuningTable then logOnce("noTable", "ATA2TuningTable not found -- is SVU3 installed? (nothing scaled)"); return 0 end
     local enabled = sv("VehicleTierScaling", true) ~= false
     local names = {}
     for name, car in pairs(ATA2TuningTable) do
@@ -391,6 +407,11 @@ function C.applyTiers()
             end
         end
     end
+    local key = string.format("%s|%d|%d", tostring(enabled), #names, changed)
+    if C.lastApplyLog ~= key then
+        C.lastApplyLog = key
+        log("tier scaling %s: %d vehicles, %d install skill levels changed from SVU3's own", enabled and "ON" or "OFF", #names, changed)
+    end
     return changed
 end
 
@@ -401,6 +422,7 @@ function C.enabled() return sv("VehicleTierScaling", true) ~= false end
 local function wrapAddNewCars()
     if C.wrapped or not ATA2Tuning_AddNewCars then return end
     C.wrapped = true
+    log("wrapped ATA2Tuning_AddNewCars (cars added later are scaled too)")
     local orig = ATA2Tuning_AddNewCars
     ATA2Tuning_AddNewCars = function(carsTable, ...)
         local r = orig(carsTable, ...)
@@ -410,6 +432,7 @@ local function wrapAddNewCars()
 end
 
 local function run()
+    if not ATA2Tuning_AddNewCars then logOnce("noAdd", "ATA2Tuning_AddNewCars not found -- later-added cars are not scaled") end
     wrapAddNewCars()
     C.applyTiers()
 end

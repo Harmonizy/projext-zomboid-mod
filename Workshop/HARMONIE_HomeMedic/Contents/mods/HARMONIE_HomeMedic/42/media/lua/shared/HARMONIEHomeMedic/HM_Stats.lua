@@ -464,6 +464,10 @@ end
 function St.Server.Snapshot(doctor, args)
     args = type(args) == "table" and args or {}
     local patient = args.patientOnline and byOnline(args.patientOnline) or doctor
+    if args.patientOnline and not byOnline(args.patientOnline) then
+        HMLogOnce("statsgone:" .. tostring(args.patientOnline), "Stats", "%s asked for stats of player id %s: not online", HMLogName(doctor), tostring(args.patientOnline))
+    end
+    HMLogOnce("stats:" .. HMLogName(doctor) .. ">" .. HMLogName(patient), "Stats", "%s is reading %s's stats (repeats not logged)", HMLogName(doctor), HMLogName(patient))
     local key = tostring(call(doctor, "getOnlineID") or "sp")
     local now = getTimestampMs and getTimestampMs() or 0
     if lastAsk[key] and now - lastAsk[key] < 1500 then return end
@@ -483,7 +487,11 @@ end
 function St.Server.Collected(patient, args)
     args = type(args) == "table" and args or {}
     local doctor = byOnline(args.doctorOnline)
-    if not doctor or type(args.rows) ~= "table" then return end
+    if not doctor or type(args.rows) ~= "table" then
+        HMLogOnce("collectbad:" .. HMLogName(patient), "Stats", "%s's stats answer dropped: %s", HMLogName(patient), doctor and "no rows" or "doctor not online")
+        return
+    end
+    HMLogOnce("collected:" .. HMLogName(patient), "Stats", "%s's own client answered with %d stat rows (repeats not logged)", HMLogName(patient), #args.rows)
     sendServerCommand(doctor, St.MODULE, "Snapshot", { patientOnline = call(patient, "getOnlineID"),
         rows = args.rows, ok = true, source = "patient" })
 end
@@ -497,7 +505,8 @@ if Events and not St.registered then
         Events.OnClientCommand.Add(function(module, command, player, args)
             if module ~= St.MODULE then return end
             if command == "Snapshot" then St.Server.Snapshot(player, args)
-            elseif command == "Collected" then St.Server.Collected(player, args) end
+            elseif command == "Collected" then St.Server.Collected(player, args)
+            else HMLog("Stats", "%s sent unknown command %s", HMLogName(player), tostring(command)) end
         end)
     end
 end

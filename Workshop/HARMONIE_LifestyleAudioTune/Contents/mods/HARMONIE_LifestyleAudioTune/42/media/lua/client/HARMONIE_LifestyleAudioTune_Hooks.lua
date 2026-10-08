@@ -28,14 +28,28 @@
     which mod's Lua files execute first.
 ]]--
 
+-- console.txt: "[HARMONIE_LAT][Hooks][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_LAT][Hooks][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
+
 local function wrapInstrumentUpdate(className)
     local class = _G[className]
     if not class or not class.update then
-        print("HARMONIE Lifestyle Audio Tune: "..className..":update not found -- is Lifestyle: Hobbies installed and enabled?")
+        log("%s:update not found -- is Lifestyle: Hobbies installed and enabled? (not hooked)", className)
         return
     end
 
     local original_update = class.update
+    log("hooked %s:update", className)
     class.update = function(self, ...)
         original_update(self, ...)
         if self.gameSound and self.gameSound ~= 0 and self.soundFile then
@@ -47,13 +61,14 @@ end
 
 local function wrapInstrumentTrainingPlaySong()
     if not PlayInstrumentTraining or not PlayInstrumentTraining.playSong then
-        print("HARMONIE Lifestyle Audio Tune: PlayInstrumentTraining:playSong not found -- is Lifestyle: Hobbies installed and enabled?")
+        log("PlayInstrumentTraining:playSong not found -- is Lifestyle: Hobbies installed and enabled? (not hooked)")
         return
     end
 
     local original_playSong = PlayInstrumentTraining.playSong
     PlayInstrumentTraining.playSong = function(self, ...)
         original_playSong(self, ...)
+        log("training song started: %s", tostring(self.lastSound))
         if self.gameSound and self.gameSound ~= 0 and self.lastSound then
             local vol = HARMONIE_LifestyleAudioTune_ScaledVolume(self.lastSound, nil)
             if vol then self.character:getEmitter():setVolume(self.gameSound, vol); end
@@ -65,7 +80,7 @@ local function HARMONIE_LifestyleAudioTune_InstallHooks()
     wrapInstrumentUpdate("PlayInstrumentActionNew")
     wrapInstrumentUpdate("PlayInstrumentVocal")
     wrapInstrumentTrainingPlaySong()
-    print("HARMONIE Lifestyle Audio Tune: instrument live volume hooks installed.")
+    log("instrument live volume hooks done (live multiplier %.2f)", tonumber(HARMONIE_LifestyleAudioTune_LiveMultiplier) or -1)
 end
 
 Events.OnGameStart.Add(HARMONIE_LifestyleAudioTune_InstallHooks)

@@ -1347,11 +1347,28 @@ if HARMONIE_LifestyleAudioTune_LiveMultiplier == nil then
     HARMONIE_LifestyleAudioTune_LiveMultiplier = 1.0
 end
 
+-- console.txt: "[HARMONIE_LAT][Volume][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_LAT][Volume][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
+
 function HARMONIE_LifestyleAudioTune_ScaledVolume(soundName, fallback)
     if not soundName then return fallback end
     local base = HARMONIE_LifestyleAudioTune_OriginalVolumes[soundName]
     if not base then base = HARMONIE_LifestyleAudioTune_OriginalInstrumentVolumes[soundName]; end
-    if not base then return fallback end
-
+    if not base then
+        logOnce("unknown:" .. tostring(soundName), "no tuned volume for sound %s -- left as the game plays it", tostring(soundName))
+        return fallback
+    end
+    logOnce("first:" .. tostring(soundName), "sound %s: base %.3f x live %.2f = %.3f (first use, repeats not logged)",
+        tostring(soundName), base, HARMONIE_LifestyleAudioTune_LiveMultiplier, base * HARMONIE_LifestyleAudioTune_LiveMultiplier)
     return base * HARMONIE_LifestyleAudioTune_LiveMultiplier
 end

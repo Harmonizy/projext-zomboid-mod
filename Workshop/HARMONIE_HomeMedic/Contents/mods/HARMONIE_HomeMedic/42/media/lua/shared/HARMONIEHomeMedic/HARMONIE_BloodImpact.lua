@@ -64,6 +64,14 @@ function B.apply(player)
     local stats = player.getStats and player:getStats()
     if not stats or not stats.get or not stats.set then return end
     local cap = B.enduranceCap(B.bloodFraction(player))
+    -- console.txt on a change of the cap only (this runs every few seconds)
+    B.lastCap = B.lastCap or {}
+    local who = HMLogName and HMLogName(player) or "?"
+    local bucket = math.floor(cap * 20 + 0.5) / 20
+    if B.lastCap[who] ~= bucket then
+        B.lastCap[who] = bucket
+        if HMLog then HMLog("Blood", "%s: blood %.0f%% -> endurance capped at %.0f%%", who, (B.bloodFraction(player) or 0) * 100, bucket * 100) end
+    end
     if cap >= 1 then return end
     local current = tonumber(stats:get(CharacterStat.ENDURANCE)) or 1
     if current > cap then stats:set(CharacterStat.ENDURANCE, cap) end

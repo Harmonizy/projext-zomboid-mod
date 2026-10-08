@@ -136,3 +136,5 @@ function TWA_StartCraftAction:new(character, recipeId, baseItem, base2Item)
     o.forceProgressBar = true
     return o
 end
+
+if TWALogAction then TWALogAction(TWA_StartCraftAction, "StartCraft") end

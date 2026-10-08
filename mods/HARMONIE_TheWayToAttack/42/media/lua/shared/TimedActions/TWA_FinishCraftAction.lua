@@ -162,8 +162,7 @@ function TWA_FinishCraftAction:complete()
         if rolled then
             md.TWA_RollWord = rollWord
             md.TWA_RollChance = S.gemChance(rollWord)
-            print("[TWA] Gemstone roll: quality=" .. tostring(rollWord) .. " gemChance=" .. tostring(md.TWA_RollChance)
-                .. " -> " .. tostring(newItem:getFullType()))
+            TWALog("Craft", "gemstone roll: quality=%s gemChance=%s -> %s", tostring(rollWord), tostring(md.TWA_RollChance), TWALogType(newItem))
         end
         if not S.isMaterialRecipe(recipe) and not rolled then
             local word = S.overall(recipe, map, self.character) or S.LEGACY_WORD
@@ -205,3 +204,5 @@ function TWA_FinishCraftAction:new(character, recipeId, qualities, token)
     o.forceProgressBar = true
     return o
 end
+
+if TWALogAction then TWALogAction(TWA_FinishCraftAction, "FinishCraft") end

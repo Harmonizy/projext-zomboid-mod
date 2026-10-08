@@ -11,7 +11,7 @@
 require "ExtensiveHealth/EHR_Medication"
 
 if not EHR or not EHR.Medication or not EHR.Medication.Database then
-    print("HARMONIEHomeMedic: EHR.Medication.Database not found, skipping registration")
+    if HMLog then HMLog("Meds", "EHR.Medication.Database not found, skipping registration") else print("HARMONIEHomeMedic: EHR.Medication.Database not found, skipping registration") end
     return
 end
 
@@ -53,4 +53,4 @@ if EHR.Medication.DosingSchedules then
     EHR.Medication.DosingSchedules["HARMONIEHomeMedic.WillowBarkAntitoxinBooster"] = { doseInterval = 24, dosesRequired = 3 }
 end
 
-print("HARMONIEHomeMedic: registered 4 items with EHR.Medication.Database")
+if HMLog then HMLog("Meds", "registered 4 items with EHR.Medication.Database") else print("HARMONIEHomeMedic: registered 4 items with EHR.Medication.Database") end

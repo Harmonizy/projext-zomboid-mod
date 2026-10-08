@@ -56,6 +56,7 @@ function F.check()
     if open == F.last then return end
     F.last = open
     local ehrOpen = visible(EHR.UI.HealthPanelInstance)
+    HMLog("Follow", "character window %s (medical window %s)", open and "opened" or "closed", ehrOpen and "open" or "closed")
     if open and not ehrOpen and EHR.UI.ShowHealthPanel then
         EHR.UI.ShowHealthPanel(player)
     elseif not open and ehrOpen and EHR.UI.HideHealthPanelOnly then

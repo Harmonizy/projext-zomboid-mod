@@ -115,7 +115,8 @@ end
 function TWAPickerWindow:pick(row)
     local owner, onPick = self.owner, self.onPick
     self:close()
-    if owner and not owner:getIsVisible() then return end
+    TWALog("Picker", "%s: picked %s", tostring(self.title), tostring(row and (row.text or row.value)))
+    if owner and not owner:getIsVisible() then TWALog("Picker", "owner window closed -- pick ignored"); return end
     if onPick and row then onPick(row.value) end
 end
 
@@ -131,7 +132,8 @@ end
 
 function P.open(title, rows, onPick, owner)
     P.close()
-    if not rows or #rows == 0 then return nil end
+    if not rows or #rows == 0 then TWALog("Picker", "%s: nothing to pick from -- not opened", tostring(title)); return nil end
+    TWALog("Picker", "%s: %d choices", tostring(title), #rows)
     local rowH = 44 + 2 * TWAFont.grow(0)
     local titleH = 20
     local h = titleH + 6 + rowH * math.min(#rows, P.MAX_ROWS) + 4 + 24 + 16

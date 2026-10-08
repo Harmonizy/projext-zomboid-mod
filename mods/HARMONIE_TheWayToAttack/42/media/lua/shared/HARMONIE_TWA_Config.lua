@@ -40,3 +40,24 @@ TWAConfig.TICKS_PER_SECOND = 50
 function TWAConfig.secondsToTicks(sec)
     return math.max(1, math.floor(sec * TWAConfig.TICKS_PER_SECOND + 0.5))
 end
+
+-- console.txt: every sandbox value this mod reads, once a world is up, so a
+-- bug report shows the server's real settings ("[HARMONIE_TWA][Config]")
+function TWAConfig.logAll()
+    local sv = SandboxVars and SandboxVars.HARMONIE_TheWayToAttack
+    if not sv then TWALog("Config", "SandboxVars.HARMONIE_TheWayToAttack missing -- using defaults"); return end
+    local keys = {}
+    for k in pairs(TWAConfig.DEFAULTS or {}) do keys[#keys + 1] = k end
+    table.sort(keys)
+    local parts, missing = {}, {}
+    for _, k in ipairs(keys) do
+        if sv[k] == nil then missing[#missing + 1] = k end
+        parts[#parts + 1] = k .. "=" .. tostring(TWAConfig.get(k))
+    end
+    TWALog("Config", "sandbox: %s", table.concat(parts, ", "))
+    if #missing > 0 then TWALog("Config", "not in sandbox, default used: %s", table.concat(missing, ", ")) end
+end
+if Events then
+    if Events.OnGameStart then Events.OnGameStart.Add(TWAConfig.logAll) end
+    if Events.OnServerStarted then Events.OnServerStarted.Add(TWAConfig.logAll) end
+end

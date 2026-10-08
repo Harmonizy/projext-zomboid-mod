@@ -38,7 +38,8 @@ local BLOWS = { 700, 1200, 1650, 2050, 2400, 2700, 2950, 3170, 3360 }
 local WINDUP_AT, FINAL_AT, GIVE_UP_AT = 3500, 4300, 9000
 
 function TWAGradeReveal.open(player, recipe, token)
-    if TWAMinigame and TWAMinigame.instance then return end
+    if TWAMinigame and TWAMinigame.instance then TWALog("Reveal", "grade reveal skipped: a minigame window is open"); return end
+    TWALog("Reveal", "grade reveal for %s", tostring(recipe and recipe.id))
     local ui = TWAGradeReveal:openFor(player, nil, recipe, nil, nil)
     ui.token = token
     return ui
@@ -77,6 +78,7 @@ function TWAGradeReveal:lookForItem()
         local md = it:getModData()
         self.grade = md.TWA_Grade
         self.qualityWord = md.TWA_Quality
+        TWALog("Reveal", "finished item found: %s grade %s quality %s", TWALogType(it), tostring(self.grade), tostring(self.qualityWord))
     end
 end
 

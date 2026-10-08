@@ -609,6 +609,7 @@ function SV.Diagnose(doctor, args)
     local patient = findPatient(doctor, args)
     local base = { id = id, patientOnline = args.patientOnline, patientNum = args.patientNum }
     local function deny(reason)
+        HMLog("Diagnose", "%s diagnosing %s for %s: DENIED (%s)", HMLogName(doctor), HMLogName(patient), tostring(id), tostring(reason))
         base.ok = false
         base.reason = reason
         reply(doctor, "Result", base)
@@ -619,6 +620,7 @@ function SV.Diagnose(doctor, args)
     if not D.isActive(D.getter(patient, nil), id, patient, nil) then return deny("Wrong") end
     local data = D.store(patient, true)
     data[id] = hours()
+    HMLog("Diagnose", "%s diagnosed %s with %s", HMLogName(doctor), HMLogName(patient), tostring(id))
     base.ok = true
     base.data = data
     SV.push(patient)
@@ -627,7 +629,8 @@ end
 
 local function onClientCommand(module, command, player, args)
     if module ~= D.MODULE then return end
-    if command == "Diagnose" then SV.Diagnose(player, args) end
+    if command == "Diagnose" then SV.Diagnose(player, args)
+    else HMLog("Diagnose", "%s sent unknown command %s", HMLogName(player), tostring(command)) end
 end
 
 local function pruneAll()
@@ -637,12 +640,12 @@ local function pruneAll()
     if online and online:size() > 0 then
         for i = 0, online:size() - 1 do
             local p = online:get(i)
-            if p and D.prune(p) then SV.push(p) end
+            if p and D.prune(p) then HMLog("Diagnose", "%s: healed illnesses' diagnoses dropped", HMLogName(p)); SV.push(p) end
         end
     elseif getSpecificPlayer then
         for n = 0, 3 do
             local p = getSpecificPlayer(n)
-            if p then D.prune(p) end
+            if p and D.prune(p) then HMLog("Diagnose", "%s: healed illnesses' diagnoses dropped", HMLogName(p)) end
         end
     end
 end

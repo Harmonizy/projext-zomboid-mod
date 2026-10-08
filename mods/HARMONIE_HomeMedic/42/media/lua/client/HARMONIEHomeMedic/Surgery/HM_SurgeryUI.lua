@@ -343,7 +343,7 @@ end
 
 function Prep:onStart()
     self:reevaluate(true)
-    if not self.eval.canStart then return end
+    if not self.eval.canStart then HMLog("SurgeryUI", "start %s refused: not ready (missing supplies/conditions)", tostring(self.sid)); return end
     self.waiting = true
     self.status = S.T("Preparing", "Preparing...")
     C.prep = self
@@ -442,6 +442,8 @@ function Op:nextStep()
     self.stepIndex = self.stepIndex + 1
     if self.stepIndex > #self.steps then self:finish(false); return end
     local proc = S.Procedures[self.steps[self.stepIndex]]
+    if not proc then HMLog("SurgeryUI", "step %s has no procedure data!", tostring(self.steps[self.stepIndex])) end
+    HMLog("SurgeryUI", "step %d/%d: %s (game %s)", self.stepIndex, #self.steps, tostring(self.steps[self.stepIndex]), tostring(proc and proc.game))
     local p = { variant = proc.variant, tier = S.TIERS[proc.tier].order, sid = self.sid }
     for k, v in pairs(self.params) do p[k] = v end
     self.game = G.new(proc.game, p)
@@ -481,6 +483,7 @@ function Op:finish(aborted)
     self.abortBtn:setTitle(S.T("Close", "Close"))
     self.abortBtn:setEnable(false)
     local args = { permit = self.info.permit, scores = self.scores, aborted = aborted == true }
+    HMLog("SurgeryUI", "%s %s (%d step scores)", aborted and "aborting" or "finishing", tostring(self.sid), #self.scores)
     send(aborted and "Abort" or "Finish", args)
 end
 
@@ -503,6 +506,7 @@ function Op:update()
     self.last = t
     -- no answer from the server: let the player close the window anyway
     if self.waiting and self.waitSince and t - self.waitSince > 6000 then
+        HMLog("SurgeryUI", "no surgery result from the server after 6 s -- the window may be closed")
         self.waiting = false
         self.abortBtn:setEnable(true)
     end
@@ -515,6 +519,7 @@ function Op:update()
             if self.game.done then
                 local sc = self.game:score()
                 self.scores[self.stepIndex] = sc
+                HMLog("SurgeryUI", "step %d (%s) scored %.2f", self.stepIndex, tostring(self.steps[self.stepIndex]), tonumber(sc) or -1)
                 self.pause = 900
                 G.sfx(sc >= 0.45 and "Good" or "Bad")
             end
@@ -685,13 +690,19 @@ function HM_SurgeryAction:new(doctor, patient, info)
     return o
 end
 function HM_SurgeryAction:isValid()
-    return self.patient ~= nil and S.distance(self.character, self.patient) <= S.MAX_DISTANCE + 0.5
+    local ok = self.patient ~= nil and S.distance(self.character, self.patient) <= S.MAX_DISTANCE + 0.5
+    if not ok and not self.hmInvalidLogged then
+        self.hmInvalidLogged = true
+        HMLog("SurgeryUI", "surgery action no longer valid: patient %s", self.patient and "too far away" or "gone")
+    end
+    return ok
 end
 function HM_SurgeryAction:waitToStart()
     if self.patient ~= self.character then self.character:faceThisObject(self.patient) end
     return self.character:shouldBeTurning()
 end
 function HM_SurgeryAction:start()
+    HMLog("SurgeryUI", "operating window opens: %s on %s", tostring(self.info and self.info.sid), HMLogName(self.patient))
     pcall(function()
         self:setActionAnim(CharacterActionAnims and CharacterActionAnims.Bandage or "Loot")
         self:setAnimVariable("BandageType", "UpperBody")
@@ -708,7 +719,7 @@ function HM_SurgeryAction:update()
     if self.ui and (self.ui.sent or not self.ui:isVisible()) then self:forceComplete() end
 end
 function HM_SurgeryAction:stop()
-    if self.ui and not self.ui.sent then self.ui:finish(true) end
+    if self.ui and not self.ui.sent then HMLog("SurgeryUI", "surgery action stopped before the end -- aborting"); self.ui:finish(true) end
     ISBaseTimedAction.stop(self)
 end
 function HM_SurgeryAction:perform()
@@ -717,6 +728,7 @@ end
 
 -- ============================================================= requests
 function C.request(doctor, patient, partName, sid)
+    HMLog("SurgeryUI", "asking to begin %s on %s's %s", tostring(sid), HMLogName(patient), tostring(partName))
     C.doctor = doctor
     C.pending = { patient = patient, sid = sid, part = partName }
     local args = { sid = sid, part = partName }
@@ -731,6 +743,7 @@ end
 function C.onServerCommand(module, command, args)
     if module ~= MODULE then return end
     args = args or {}
+    HMLog("SurgeryUI", "server: %s%s", tostring(command), args.reason and (" (" .. tostring(args.reason) .. ")") or (args.grade and (" " .. tostring(args.grade)) or ""))
     if command == "Denied" then
         local text = S.T("Denied_" .. tostring(args.reason), S.T("Denied_NotReady", "Not ready."))
         if C.prep then C.prep.waiting = false; C.prep.status = text; C.prep:reevaluate(true) end
@@ -738,12 +751,13 @@ function C.onServerCommand(module, command, args)
         if d and d.setHaloNote then d:setHaloNote(text, 255, 90, 90, 250) end
     elseif command == "Begin" then
         local p = C.pending
-        if not p then return end
+        if not p then HMLog("SurgeryUI", "Begin arrived but nothing is pending -- ignored"); return end
         if C.prep then C.prep:close() end
         S.Sources.forget()
         ISTimedActionQueue.add(HM_SurgeryAction:new(C.doctor or getPlayer(), p.patient, args))
     elseif command == "Result" then
-        if C.op and C.op.info and C.op.info.permit == args.permit then C.op:showResult(args) end
+        if C.op and C.op.info and C.op.info.permit == args.permit then C.op:showResult(args)
+        else HMLog("SurgeryUI", "Result for permit %s but no matching window open", tostring(args.permit)) end
         S.Sources.forget()
     end
 end
