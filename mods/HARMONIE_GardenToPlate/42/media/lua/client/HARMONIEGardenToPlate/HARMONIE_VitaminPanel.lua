@@ -477,7 +477,10 @@ function HARMONIE_VitaminPanel:onMouseDown(x, y)
     local item = row and self.items[row]
     if item and item.item == GUIDE_BUTTON_KEY then
         getSoundManager():playUISound("UISelectListItem")
-        if GTPGuide then GTPGuide.toggle(self:getPlayer()) end
+        if GTPGuide then
+            if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Panel", "guide button clicked in the character window") end
+            GTPGuide.toggle(self:getPlayer())
+        elseif HARMONIE_GTP.Log then HARMONIE_GTP.Log("Panel", "guide button clicked but GTPGuide is not loaded!") end
         return true
     end
     return ISScrollingListBox.onMouseDown(self, x, y)

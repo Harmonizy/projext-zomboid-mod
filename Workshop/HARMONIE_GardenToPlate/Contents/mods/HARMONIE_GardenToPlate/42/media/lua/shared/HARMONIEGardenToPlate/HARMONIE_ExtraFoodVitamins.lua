@@ -15,6 +15,12 @@
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 
 local DB = HARMONIE_GTP.FoodVitaminDB
+local function log(tag, fmt, ...)
+    if HARMONIE_GTP.Log then return HARMONIE_GTP.Log(tag, fmt, ...) end
+    local ok, msg = pcall(string.format, fmt, ...)
+    print("[HARMONIE_GTP][" .. tag .. "] " .. (ok and msg or tostring(fmt)))
+end
+local dried = 0
 local C_KEPT = 0.4
 
 for _, fr in ipairs({ "Apple", "Pear", "Peach", "Mango", "Banana", "Cherry", "Grapes", "Pineapple" }) do
@@ -25,10 +31,12 @@ for _, fr in ipairs({ "Apple", "Pear", "Peach", "Mango", "Banana", "Cherry", "Gr
             p[vit] = vit == "C" and amount * C_KEPT or amount
         end
         DB["HARMONIEGardenToPlate.Dried" .. fr] = p
+        dried = dried + 1
     else
-        print("HARMONIE_GardenToPlate: WARNING no base vitamin profile for Base." .. fr .. " (dried fruit)")
+        log("Foods", "WARNING no base vitamin profile for Base.%s -- Dried%s has no vitamins", fr, fr)
     end
 end
 
 DB["HARMONIEGardenToPlate.BeanSprouts"] = { C = 13, K = 33, B = 1 }
 DB["HARMONIEGardenToPlate.FishLiverOil"] = { A = 600, D = 10, E = 1 }
+log("Foods", "extra foods: %d dried fruits, BeanSprouts, FishLiverOil added to the vitamin table", dried)

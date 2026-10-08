@@ -366,6 +366,7 @@ function HARMONIE_AdminPanel:prerender()
     -- moment after the panel opens -- show them in the untouched entries
     if not self.harmonieLoaded and HARMONIE_GTP.VitData.Peek(self.target) then
         self.harmonieLoaded = true
+        if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Admin", "admin panel: target's vitamins ready, entries refreshed") end
         for _, entry in ipairs(self.harmonieEntries or {}) do
             if entry.harmonieGetValue and not entry.harmonieDirty then
                 entry:setText(entry.harmonieIsInt and tostring(entry.harmonieGetValue())

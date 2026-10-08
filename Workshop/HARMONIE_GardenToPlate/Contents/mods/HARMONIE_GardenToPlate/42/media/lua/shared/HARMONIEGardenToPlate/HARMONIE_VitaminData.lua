@@ -86,6 +86,13 @@ local VitData = HARMONIE_GTP.VitData
 ]]--
 VitData.NET = "HARMONIE_GTP"
 
+local function log(...) if HARMONIE_GTP.Log then HARMONIE_GTP.Log("VitData", ...) end end
+local function logOnce(key, ...) if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("VitData:" .. key, "VitData", ...) end end
+local function nameOf(p)
+    local ok, n = pcall(function() return p:getUsername() end)
+    return ok and n and tostring(n) or "?"
+end
+
 local function plainCopy(store)
     local out = {}
     for _, vit in ipairs(HARMONIE_GTP.Vitamins or {}) do
@@ -125,6 +132,7 @@ local function isRemote(character)
     if not (isClient and isClient()) or not character then return false end
     local ok, loc = pcall(function() return character:isLocalPlayer() end)
     if ok and loc ~= nil then return not loc end
+    logOnce("noIsLocal", "isLocalPlayer() unavailable (%s) -- comparing with this machine's players instead", tostring(loc))
     if getPlayer and getPlayer() == character then return false end
     for i = 0, 3 do
         local p = getSpecificPlayer and getSpecificPlayer(i)
@@ -145,6 +153,7 @@ function VitData.RequestRemote(character)
     if not id or not me or not sendClientCommand then return end
     local t = nowMs()
     if asked[id] and t - asked[id] < ASK_EVERY_MS then return end
+    if not VitData.Remote[id] then log("asking the server for player id %s's vitamins (not here yet)", tostring(id)) end
     asked[id] = t
     sendClientCommand(me, VitData.NET, "get", { target = id })
 end
@@ -182,12 +191,17 @@ local function sync(character)
         -- their real store is here, never the stand-in defaults
         local id = onlineId(character)
         store = id and VitData.Remote[id]
-        if type(store) ~= "table" or placeholder[store] then return end
+        if type(store) ~= "table" or placeholder[store] then
+            log("NOT syncing player id %s: their real vitamins have not arrived yet (edit dropped so it cannot overwrite them)", tostring(id))
+            return
+        end
         args.target = id
+        log("admin edit: sending player id %s's vitamins to the server", tostring(id))
     else
         local md = character and character:getModData()
         store = md and md.HARMONIE_Vitamins
         if type(store) ~= "table" then return end
+        logOnce("ownSync:" .. nameOf(character), "first vitamin sync this session for %s (later ones are not logged)", nameOf(character))
         -- sent AS this character (split screen player 2 included), so the
         -- server writes it to them without any staff check
         me = character
@@ -208,10 +222,12 @@ local function ensureStore(character)
         end
         local tmp = defaults()
         placeholder[tmp] = true
+        logOnce("placeholder:" .. tostring(onlineId(character)), "player id %s: showing defaults until the server sends their vitamins", tostring(onlineId(character)))
         return tmp
     end
     local modData = character:getModData()
     if not modData.HARMONIE_Vitamins then
+        log("new vitamin store for %s (start value %s)", nameOf(character), tostring(HARMONIE_GTP.Config.startValue))
         modData.HARMONIE_Vitamins = defaults()
         sync(character)
     end
@@ -437,6 +453,8 @@ if Events and Events.OnClientCommand then
                 local p = online:get(i)
                 if p and p:getOnlineID() == want then
                     local st = p:getModData().HARMONIE_Vitamins
+                    logOnce("get:" .. nameOf(player) .. ">" .. tostring(want), "%s asked for %s's vitamins: %s (repeats not logged)",
+                        nameOf(player), nameOf(p), type(st) == "table" and "sent" or "none on the server yet")
                     if sendServerCommand then
                         sendServerCommand(player, VitData.NET, "data",
                             { id = want, data = type(st) == "table" and plainCopy(st) or nil })
@@ -444,6 +462,7 @@ if Events and Events.OnClientCommand then
                     return
                 end
             end
+            log("%s asked for player id %s: not online", nameOf(player), tostring(want))
             return
         end
         if command ~= "sync" or type(args.data) ~= "table" then return end
@@ -453,16 +472,26 @@ if Events and Events.OnClientCommand then
             -- "user", not "None", so the old check let anyone edit others
             local ok, lvl = pcall(function() return player:getAccessLevel() end)
             local STAFF = { admin = true, moderator = true, overseer = true, gm = true }
-            if not ok or not lvl or not STAFF[string.lower(tostring(lvl))] then return end
+            if not ok or not lvl or not STAFF[string.lower(tostring(lvl))] then
+                log("REJECTED: %s (access %s) tried to edit player id %s's vitamins", nameOf(player), tostring(lvl), tostring(args.target))
+                return
+            end
             target = nil
             local online = getOnlinePlayers and getOnlinePlayers()
             for i = 0, (online and online:size() or 0) - 1 do
                 local p = online:get(i)
                 if p and p:getOnlineID() == tonumber(args.target) then target = p end
             end
-            if not target then return end
+            if not target then
+                log("admin edit by %s: player id %s not online", nameOf(player), tostring(args.target))
+                return
+            end
+            log("admin edit by %s applied to %s", nameOf(player), nameOf(target))
         end
         local data = plainCopy(args.data)
+        if target == player then
+            logOnce("srvSync:" .. nameOf(player), "receiving %s's vitamins (first this session, later ones not logged)", nameOf(player))
+        end
         target:getModData().HARMONIE_Vitamins = data
         if target ~= player and sendServerCommand then
             sendServerCommand(target, VitData.NET, "set", { data = data, id = target:getOnlineID() })
@@ -477,7 +506,12 @@ if Events and Events.OnServerCommand then
         if command == "data" then
             -- another player's vitamins, asked for by VitData.RequestRemote
             local id = tonumber(args.id)
-            if id and type(args.data) == "table" then VitData.Remote[id] = plainCopy(args.data) end
+            if id and type(args.data) == "table" then
+                if not VitData.Remote[id] then log("player id %s's vitamins arrived from the server", tostring(id)) end
+                VitData.Remote[id] = plainCopy(args.data)
+            else
+                logOnce("nodata:" .. tostring(id), "server has no vitamins for player id %s yet", tostring(id))
+            end
             return
         end
         if command ~= "set" or type(args.data) ~= "table" then return end
@@ -488,6 +522,11 @@ if Events and Events.OnServerCommand then
             local q = want and getSpecificPlayer and getSpecificPlayer(i)
             if q and onlineId(q) == want then p = q end
         end
-        if p then p:getModData().HARMONIE_Vitamins = plainCopy(args.data) end
+        if p then
+            p:getModData().HARMONIE_Vitamins = plainCopy(args.data)
+            log("an admin changed %s's vitamins (from the server)", nameOf(p))
+        else
+            log("an admin edit arrived but no local player matches id %s", tostring(args.id))
+        end
     end)
 end

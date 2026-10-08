@@ -78,6 +78,7 @@ local function onKeyPressed(key)
         local target = findNearestOtherPlayer(playerObj) or playerObj
         HARMONIE_NutritionUI.Open(target, playerObj)
     elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE) then
+        if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Keys", "open-guide key (%s) pressed", tostring(key)) end
         GTPGuide.toggle(playerObj)
     elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL) then
         if isAdmin() or getDebug() then

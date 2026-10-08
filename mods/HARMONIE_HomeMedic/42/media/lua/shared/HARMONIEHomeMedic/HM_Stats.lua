@@ -204,6 +204,8 @@ function St.gtp(player)
         -- GTP 0.11.1+: also another player's vitamins in MP (from the server)
         local ok, st = pcall(G.VitData.Peek, player)
         store = ok and st or nil
+        if not ok and G.LogOnce then G.LogOnce("HM_Stats:peekfail", "HomeMedic", "Home Medic stats: VitData.Peek FAILED: %s", tostring(st)) end
+        if G.LogOnce then G.LogOnce("HM_Stats:peek", "HomeMedic", "Home Medic stats read vitamins through VitData.Peek (MP-safe)") end
     else
         local md = call(player, "getModData")
         store = md and md.HARMONIE_Vitamins

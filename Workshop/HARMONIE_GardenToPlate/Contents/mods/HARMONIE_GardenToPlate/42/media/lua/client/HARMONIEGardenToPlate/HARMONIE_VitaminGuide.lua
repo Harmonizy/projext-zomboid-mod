@@ -55,6 +55,11 @@ require "HARMONIEGardenToPlate/HARMONIE_SunVitaminD"
 GTPGuide = GTPGuide or {}
 local H = GTPGuide
 
+-- console.txt: "[HARMONIE_GTP][Guide]" lines (see HARMONIE_VitaminConfig.lua)
+local function log(...) if HARMONIE_GTP and HARMONIE_GTP.Log then HARMONIE_GTP.Log("Guide", ...) end end
+local function logOnce(key, ...) if HARMONIE_GTP and HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("Guide:" .. key, "Guide", ...) end end
+H.log, H.logOnce = log, logOnce
+
 H.HEADER_H = 40
 H.TAB_H = 58
 H.CARD_T = 26
@@ -289,12 +294,13 @@ function H.ensurePrefs()
         end
     end)
     pcall(function() reader:close() end)
+    log("prefs loaded: size %sx%s, text step %s, pinned %s", tostring(H.prefW), tostring(H.prefH), tostring(H.textStep), tostring(H.pinned))
 end
 
 function H.savePrefs()
     if not getFileWriter then return end
     local ok, writer = pcall(getFileWriter, H.PREFS_FILE, true, false)
-    if not ok or not writer then return end
+    if not ok or not writer then log("could not write %s: %s", tostring(H.PREFS_FILE), tostring(writer)); return end
     pcall(function()
         if H.prefW then writer:write("w=" .. tostring(math.floor(H.prefW)) .. "\n") end
         if H.prefH then writer:write("h=" .. tostring(math.floor(H.prefH)) .. "\n") end
@@ -396,7 +402,7 @@ function Win:placeSearch(x, y, w)
     self:drawRectBorder(g.x + 6, g.y + 5, bs, bs, 1, C.accent[1], C.accent[2], C.accent[3])
     if on then self:drawRect(g.x + 9, g.y + 8, bs - 6, bs - 6, 1, C.accent[1], C.accent[2], C.accent[3]) end
     shadowText(self, growLabel, g.x + bs + 12, g.y + math.floor((h - fh(sf)) / 2), on and C.text or C.textDim, 1, sf)
-    g.action = function(win) win.growOnly = not win.growOnly; win.sortedFor = nil end
+    g.action = function(win) win.growOnly = not win.growOnly; win.sortedFor = nil; log("Can grow filter: %s", tostring(win.growOnly)) end
     self.clicks[#self.clicks + 1] = g
     return h
 end
@@ -1025,7 +1031,10 @@ function Win:renderCheck(x, y, w, h)
         if active then self:drawRect(r.x, r.y, 3, r.h, 1, C.accent[1], C.accent[2], C.accent[3]) end
         local label = p == self.player and T("IGUI_GTPG_You", playerName(p)) or playerName(p)
         shadowText(self, fit(label, cw - 16, sf), r.x + 10, r.y + 4, active and C.text or C.textDim, 1, sf)
-        r.action = function(win) win.checkTarget = p end
+        r.action = function(win)
+            if win.checkTarget ~= p then log("check target: %s (First Aid %d)", playerName(p), H.firstAid(win.player)) end
+            win.checkTarget = p
+        end
         clickable(self, r)
         cy = cy + r.h + 2
     end
@@ -1056,6 +1065,7 @@ function Win:renderCheck(x, y, w, h)
     local tx, ty, tw2, th2 = self:drawCard(rx, y, rw, h, T("IGUI_GTPG_Card_Result", playerName(target)))
     local store = H.readStore(target)
     if not store then
+        logOnce("nodata:" .. playerName(target), "check: no vitamin data for %s yet (MP: asked the server)", playerName(target))
         self:paragraphs(T("IGUI_GTPG_NoData"), tx, ty, tw2 - 8, C.textDim, sf)
         return
     end
@@ -1145,12 +1155,14 @@ function H.setKey(k)
     local o = H.option(H.KEY_ID)
     if not o then return end
     o.key = k
+    log("open-guide key set to %s (%s)", tostring(k), H.keyName and H.keyName(k) or "?")
     if o.setValue then pcall(o.setValue, o, k) end
     if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
 end
 
 function H.setFollow(v)
     local o = H.option("GuideWithAssessment")
+    log("open with the assessment window: %s%s", tostring(v), o and "" or " (option not found!)")
     if o and o.setValue then pcall(o.setValue, o, v) end
     if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
 end
@@ -1161,7 +1173,7 @@ function H.onKeyCapture(key)
     if not H.capturing then return end
     H.capturing = false
     H.quietUntil = (getTimestampMs and getTimestampMs() or 0) + 400
-    if key and key ~= 1 then H.setKey(key) end
+    if key and key ~= 1 then H.setKey(key) else log("key capture cancelled (Esc)") end
 end
 if Events and Events.OnKeyPressed then Events.OnKeyPressed.Add(H.onKeyCapture) end
 
@@ -1196,7 +1208,7 @@ function Win:renderSettings(x, y, w, h)
     local keyText = H.capturing and T("IGUI_GTPG_PressKey") or H.keyName(H.currentKey())
     shadowText(self, keyText, kx, cy + 8, H.capturing and C.warn or C.accent, 1, sf)
     kx = kx + math.max(tw(sf, keyText), 90) + 12
-    kx = kx + self:settingButton(kx, cy + 4, T("IGUI_GTPG_SetKeyChange"), function() H.capturing = true end) + 6
+    kx = kx + self:settingButton(kx, cy + 4, T("IGUI_GTPG_SetKeyChange"), function() H.capturing = true; log("waiting for a key press to set the open-guide key") end) + 6
     self:settingButton(kx, cy + 4, T("IGUI_GTPG_SetKeyClear"), function() H.capturing = false; H.setKey(0) end)
     cy = cy + rowH
     -- open with the assessment
@@ -1218,6 +1230,7 @@ function Win:renderSettings(x, y, w, h)
     -- window size
     row(T("IGUI_GTPG_SetSize"), T("IGUI_GTPG_SetSizeTip"))
     self:settingButton(valX, cy + 4, T("IGUI_GTPG_SetSizeReset"), function(win)
+        log("window size reset to %dx%d", H.DEFAULT_W, H.DEFAULT_H)
         win:setWidth(H.DEFAULT_W); win:setHeight(H.DEFAULT_H); H.prefW, H.prefH = nil, nil; H.savePrefs()
     end)
     cy = cy + rowH + 6
@@ -1366,6 +1379,7 @@ function Win:onMouseDown(x, y)
     for _, t in ipairs(self.tabBounds or {}) do
         if inside(t, x, y) then
             getSoundManager():playUISound("UISelectListItem")
+            if self.tab ~= t.id then log("tab %s -> %s", tostring(self.tab), tostring(t.id)) end
             self.tab = t.id
             self.settingsOpen = false
             H.capturing = false
@@ -1451,6 +1465,7 @@ end
 -- ----------------------------------------------------------------- pin
 function Win:togglePin()
     H.pinned = not H.pinned
+    log("pinned: %s", tostring(H.pinned))
     self.leaveAt = nil
     if H.pinned then self:expand() end
     H.savePrefs()
@@ -1492,6 +1507,7 @@ end
 -- ----------------------------------------------------------------- open / close
 function H.stepText(d)
     H.textStep = math.max(0, math.min(2, H.textStep + d))
+    log("text size step: %d", H.textStep)
     H.savePrefs()
 end
 
@@ -1513,7 +1529,8 @@ end
 function H.open(player, beside)
     H.ensurePrefs()
     player = player or getPlayer()
-    if not player then return end
+    if not player then log("open: no player, not opened"); return end
+    log("open (%s), %s", beside and "beside the assessment window" or "key/button", H.knows and (H.knows(player) and "player knows nutrition" or "player does NOT know nutrition yet (locked parts)") or "")
     local sw, sh = getCore():getScreenWidth(), getCore():getScreenHeight()
     local w = math.max(H.MIN_W, math.min(sw - 20, H.prefW or H.DEFAULT_W))
     local h = math.max(H.MIN_H, math.min(sh - 20, H.prefH or H.DEFAULT_H))
@@ -1541,6 +1558,7 @@ end
 function H.close()
     local win = H.window
     if not win then return end
+    log("close")
     win:setVisible(false)
     win:removeFromUIManager()
     win.inManager = false

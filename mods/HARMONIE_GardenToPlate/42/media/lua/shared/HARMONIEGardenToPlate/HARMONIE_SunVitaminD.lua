@@ -25,6 +25,9 @@ HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.SunD = HARMONIE_GTP.SunD or {}
 local S = HARMONIE_GTP.SunD
 
+local function log(...) if HARMONIE_GTP.Log then HARMONIE_GTP.Log("SunD", ...) end end
+local function logOnce(key, ...) if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("SunD:" .. key, "SunD", ...) end end
+
 S.FIRST_HOUR, S.LAST_HOUR = 9, 16
 S.WINTER = { [11] = true, [12] = true, [1] = true, [2] = true }
 
@@ -56,6 +59,7 @@ function S.isOutside(player)
     local ok, out = pcall(function() return player:isOutside() end)
     if ok and out ~= nil then return out == true end
     local ok2, out2 = pcall(function() return player:getCurrentSquare():isOutside() end)
+    logOnce("fallback", "player:isOutside() unavailable (%s) -- using the square: %s", tostring(out), ok2 and tostring(out2) or ("failed too: " .. tostring(out2)))
     return ok2 and out2 == true
 end
 
@@ -83,16 +87,30 @@ function S.onTenMinutes()
         local p = getSpecificPlayer(i)
         if p and not p:isDead() then
             local rec = S.today[i]
-            if not rec or rec.day ~= day then rec = { day = day, got = 0 }; S.today[i] = rec end
+            if not rec or rec.day ~= day then
+                if rec and rec.got > 0 then log("player %d got %.2f D Reserve from sunlight on day %d", i, rec.got, rec.day) end
+                rec = { day = day, got = 0 }; S.today[i] = rec
+            end
             local r = math.min(S.stepReserve(p, hour, month, isRaining), S.maxPerDay() - rec.got)
             if r > 0 then
                 rec.got = rec.got + r
                 -- VitData.Add takes the vitamin amount (mcg for D): Reserve back to amount
                 local amount = r * (HARMONIE_GTP.DailyRequirement.D or 15) * (tonumber(HARMONIE_GTP.Config.reserveGainDivisor) or 10) / 100
                 HARMONIE_GTP.VitData.Add(p, "D", amount)
+                if rec.got == r then
+                    log("player %d: first sunlight D today (hour %d, month %d, +%.3f Reserve = %.3f mcg)", i, hour, month, r, amount)
+                end
+                if rec.got >= S.maxPerDay() - 1e-9 then
+                    log("player %d: daily sunlight D cap reached (%.2f)", i, S.maxPerDay())
+                end
             end
         end
     end
 end
 
 if Events and Events.EveryTenMinutes then Events.EveryTenMinutes.Add(S.onTenMinutes) end
+if Events and Events.OnGameStart then
+    Events.OnGameStart.Add(function()
+        log("sunlight D: enabled=%s, %.2f Reserve per hour, max %.2f a day, hours %d-%d", tostring(S.enabled()), S.perHour(), S.maxPerDay(), S.FIRST_HOUR, S.LAST_HOUR)
+    end)
+end
