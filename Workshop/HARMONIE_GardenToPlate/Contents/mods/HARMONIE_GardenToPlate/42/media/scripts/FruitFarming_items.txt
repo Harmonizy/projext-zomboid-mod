@@ -1,0 +1,311 @@
+/* From "Fruit Farming (B42)" by leina (Steam Workshop 3779625821), built into
+   HARMONIE - From Garden to Plate with credit -- see 42/CREDITS.txt. Unchanged. */
+module FruitFarming
+{
+    imports
+    {
+        Base,
+    }
+
+    /* Loose fruit seeds — exact parallel of vanilla loose seeds.
+       Property set verified against vanilla 42.20.2 source:
+       media/scripts/generated/items/food.txt, item BarleySeed. */
+
+    item AppleSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Apple Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item AvocadoSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Avocado Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.05,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item BananaSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Banana Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.05,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item CherrySeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Cherry Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item GrapefruitSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Grapefruit Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item GrapesSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Grape Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item LemonSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Lemon Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item LimeSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Lime Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item MangoSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Mango Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.05,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item OliveSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Olive Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item OrangeSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Orange Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item PeachSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Peach Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item PearSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Pear Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item PineappleSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Pineapple Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.05,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    /* Rice grain chain — exact parallel of vanilla barley
+       (generated/items/food.txt: BarleySeed / BarleySheaf / BarleySheafDried). */
+
+    item RiceSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Rice Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item RiceSheaf
+    {
+        Weight = 1.0,
+        HungerChange = -5.0,
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Rice Sheaf,
+        Icon = Barley,
+        WorldStaticModel = BarleySheaf,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        DaysFresh = 7,
+        DaysTotallyRotten = 14,
+    }
+
+    item RiceSheafDried
+    {
+        Weight = 1.0,
+        HungerChange = -5.0,
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Rice Sheaf (Dried),
+        Icon = Barley,
+        StaticModel = BarleySheafDried,
+        WorldStaticModel = BarleySheafDried,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+    }
+
+    /* Coffee chain — same shape as the rice/barley chain. Uses the vanilla
+       Kentucky-coffeetree art (Item_CoffeetreePod icon + CoffeetreePod_Ground
+       model) that ships with 42.20 but no vanilla item claims.
+       No AnimalFeedType here: coffeetree pods are toxic to livestock. */
+
+    item CoffeeSeed
+    {
+        DisplayCategory = Gardening,
+        ItemType = base:food,
+        DisplayName = Coffee Seeds,
+        HungerChange = -5.0,
+        Icon = WheatGrains,
+        Weight = 0.02,
+        WorldStaticModel = WheatGrains,
+        CantEat = true,
+        AnimalFeedType = Seeds,
+        Tags = base:isseed,
+    }
+
+    item CoffeePod
+    {
+        Weight = 0.3,
+        HungerChange = -5.0,
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Coffee Pod,
+        Icon = CoffeetreePod,
+        WorldStaticModel = CoffeetreePod_Ground,
+        CantEat = true,
+        DaysFresh = 7,
+        DaysTotallyRotten = 14,
+    }
+
+    /* Dried pods must be ROASTED before they can be ground. Uses the vanilla
+       cooking mechanic (CantEat + IsCookable, as on CannedCarrots): put them in
+       an oven, campfire or grill and they become "Cooked" — that is the roast.
+       Grinding requires flags[IsCookedFoodItem], so raw pods can never become
+       coffee. Roasting is also what detoxifies real Kentucky-coffeetree seeds.
+       Window is tighter than vanilla veg (45/70) because coffee scorches. */
+
+    item CoffeePodDried
+    {
+        Weight = 0.2,
+        HungerChange = -5.0,
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Coffee Pod (Dried),
+        Icon = CoffeetreePod,
+        StaticModel = CoffeetreePod_Ground,
+        WorldStaticModel = CoffeetreePod_Ground,
+        CantEat = true,
+        IsCookable = true,
+        MinutesToCook = 45,
+        MinutesToBurn = 70,
+    }
+}

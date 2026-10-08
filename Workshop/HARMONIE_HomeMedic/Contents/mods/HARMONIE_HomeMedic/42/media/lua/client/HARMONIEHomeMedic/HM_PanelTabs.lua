@@ -84,7 +84,7 @@ local function moodleIcon(mt)
         end
         if found then break end
     end
-    if not found then print("[HARMONIE HomeMedic] no vanilla moodle icon found for " .. tostring(mt) .. " (drawn badge used)") end
+    if not found then HMLog("StatsUI", "no vanilla moodle icon found for %s (drawn badge used)", tostring(mt)) end
     moodleTex[mt] = found
     return found or nil
 end
@@ -117,6 +117,7 @@ function EHR_HealthPanelUI:hmStatsRequest()
         st.waiting = true
         st.rows = st.rows or {}
         St.Client.panels[patient:getOnlineID()] = self
+        HMLogOnce("statsreq:" .. HMLogName(patient), "StatsUI", "asking the server for %s's stats (repeats not logged)", HMLogName(patient))
         sendClientCommand(self.remoteDoctor or getPlayer(), St.MODULE, "Snapshot", { patientOnline = patient:getOnlineID() })
     else
         st.waiting = false
@@ -131,11 +132,13 @@ function St.Client.onServerCommand(module, command, args)
     if command == "Collect" then
         -- someone examines us: answer with our own view of our stats
         local me = getPlayer and getPlayer()
+        HMLogOnce("collect:" .. tostring(args.doctorOnline), "StatsUI", "a doctor (id %s) is examining me -- sending my stats (repeats not logged)", tostring(args.doctorOnline))
         if me then sendClientCommand(me, St.MODULE, "Collected", { doctorOnline = args.doctorOnline, rows = St.collect(me) }) end
     elseif command == "Snapshot" then
         local panel = St.Client.panels[tonumber(args.patientOnline) or -1]
         local st = panel and panel.hmStats
-        if not st then return end
+        if not st then HMLogOnce("statsnopanel:" .. tostring(args.patientOnline), "StatsUI", "stats for player id %s arrived but no window shows them", tostring(args.patientOnline)); return end
+        if args.ok == false then HMLogOnce("statsfail:" .. tostring(args.patientOnline), "StatsUI", "server could not read player id %s's stats", tostring(args.patientOnline)) end
         if st.source == "patient" and args.source == "server" then return end
         st.rows = type(args.rows) == "table" and args.rows or {}
         st.source = args.source
@@ -224,6 +227,7 @@ function EHR_HealthPanelUI:hmWatchGiveClick(x, y)
     local b = self.hmWatchBtn
     if not b or not inside(x, y, b.x, b.y, b.w, b.h) then return false end
     WG.lastPanel = self
+    HMLog("WatchUI", "put-watch button clicked (watch %s)", tostring(b.id))
     self.hmWatchPendingUntil = getTimestampMs() + 3000
     WG.request(self.remoteDoctor, patientOf(self), b.id)
     return true
@@ -240,7 +244,7 @@ if WG then
             panel.lastRemoteExamRefreshMs = nil
             if panel.remoteExamData then panel.remoteExamData.EHR_HasMedicalMonitorWatch = nil end
             if EHR.MPExamination and EHR.MPExamination.RequestExamData and panel.remoteDoctor and panel.remotePatient then
-                pcall(EHR.MPExamination.RequestExamData, panel.remoteDoctor, panel.remotePatient, true)
+                HMLogErr("WatchUI", "RequestExamData", pcall(EHR.MPExamination.RequestExamData, panel.remoteDoctor, panel.remotePatient, true))
             end
             local who = panel.remoteDoctor
             if who and who.Say then pcall(function() who:Say(WL("Done", "There, the watch is on.")) end) end
@@ -462,7 +466,8 @@ EHR_HealthPanelUI.ExtraTabs.meds = bookTab("hmMedBook", function() return HM_Med
 -- J key / any "open the handbook": the medical window on its handbook tab
 function EHR_MedicalJournalUI.Toggle(player)
     player = player or getSpecificPlayer(0)
-    if not player or not EHR or not EHR.UI then return end
+    if not player or not EHR or not EHR.UI then HMLog("Handbook", "toggle: EHR UI not ready"); return end
+    HMLog("Handbook", "handbook key / toggle")
     local panel = EHR.UI.HealthPanelInstance
     if panel and panel:isVisible() and panel.activeTab == "handbook" then
         if EHR.UI.HideHealthPanel then EHR.UI.HideHealthPanel() end
@@ -481,3 +486,6 @@ end
 EHR = EHR or {}
 EHR.UI = EHR.UI or {}
 EHR.UI.ToggleJournal = EHR_MedicalJournalUI.Toggle
+
+-- console.txt: the medical window's tab changes ("[HARMONIE_HM][Panel]")
+if HMLogMethods and EHR_HealthPanelUI then HMLogMethods(EHR_HealthPanelUI, "Panel", { "setActiveTab" }) end

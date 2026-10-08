@@ -67,3 +67,5 @@ function TWA_PracticeAction:new(character, procId)
     o.stopOnRun = true
     return o
 end
+
+if TWALogAction then TWALogAction(TWA_PracticeAction, "Practice") end

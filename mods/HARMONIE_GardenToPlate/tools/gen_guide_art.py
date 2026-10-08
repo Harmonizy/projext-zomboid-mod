@@ -5,12 +5,20 @@ Writes 42/media/textures/GTP_UI/:
   tab_overview / tab_vitamins / tab_foods / tab_other .png -- the four tab
       icons: the same badge layout as Home Medic's / The Way To Attack's /
       the SVU3 window's tabs (rounded plate, coloured rim), in green;
+  tab_check .png -- the Check tab (2026-10-08);
+  tab_calendar .png -- the planting calendar tab (2026-10-08);
+  tab_cook .png -- the Cooking tab (2026-10-08): a pot with steam;
+  cook_<step> .png -- the cooking steps (wash, peel, chop, mince, trim,
+      crack, grate, knead, measure, whisk, season, stir; 0.13.0: scale,
+      spread, slice, core, pound, toss, flip, steep, roll, zest, fold,
+      grind, mash);
+  icon_settings .png -- the gear (settings page, 2026-10-08);
   pin_on / pin_off .png -- the pin button;
   icon_close / icon_plus / icon_minus .png -- close, text bigger (A+),
       text smaller (A-).
 All drawn here with Pillow (4x supersampled), nothing copied.
 """
-import os
+import os, math
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -56,6 +64,36 @@ def tab_overview():
     d.line(P(s, [(64, 30), (64, 98)]), fill=PLATE, width=int(4 * s))
     d.line(P(s, [(14, 64), (40, 64), (50, 44), (62, 84), (74, 50), (82, 64), (114, 64)]), fill=WHITE, width=int(6 * s), joint="curve")
     done(img, "tab_overview")
+
+
+def tab_check():
+    """Check: a magnifying glass over a person with a small heart."""
+    img, d, s = canvas()
+    d.ellipse([28 * s, 22 * s, 56 * s, 50 * s], fill=SKY_D)
+    d.rounded_rectangle([20 * s, 52 * s, 64 * s, 100 * s], radius=14 * s, fill=SKY_D)
+    d.ellipse([56 * s, 40 * s, 100 * s, 84 * s], outline=WHITE, width=int(7 * s))
+    d.ellipse([62 * s, 46 * s, 94 * s, 78 * s], fill=(20, 60, 30, 200))
+    d.polygon(P(s, [(78, 72), (66, 60), (70, 54), (78, 59), (86, 54), (90, 60)]), fill=RED)
+    d.line(P(s, [(94, 80), (110, 100)]), fill=WHITE, width=int(10 * s))
+    done(img, "tab_check")
+
+
+def tab_calendar():
+    """Planting calendar: a calendar page with a sprout."""
+    img, d, s = canvas()
+    d.rounded_rectangle([20 * s, 26 * s, 108 * s, 104 * s], radius=8 * s, fill=WHITE)
+    d.rectangle([20 * s, 26 * s, 108 * s, 46 * s], fill=SKY_D)
+    for x in (38, 90):
+        d.rounded_rectangle([(x - 4) * s, 18 * s, (x + 4) * s, 34 * s], radius=3 * s, fill=PLATE)
+    for r in range(3):
+        for c in range(4):
+            x, y = 28 + c * 20, 52 + r * 16
+            d.rectangle([x * s, y * s, (x + 12) * s, (y + 10) * s], fill=(200, 230, 200, 255))
+    d.rectangle([68 * s, 68 * s, 80 * s, 78 * s], fill=SKY)
+    d.line(P(s, [(74, 100), (74, 84)]), fill=SKY_D, width=int(4 * s))
+    d.ellipse([60 * s, 78 * s, 74 * s, 88 * s], fill=SKY)
+    d.ellipse([74 * s, 74 * s, 90 * s, 86 * s], fill=SKY)
+    done(img, "tab_calendar")
 
 
 def tab_vitamins():
@@ -126,6 +164,19 @@ def ui_icon(name, draw, size=64):
     img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, name + ".png"))
 
 
+def g_settings(d, s):
+    """A gear: 8 teeth round a ring."""
+    cx = cy = 32 * s
+    for i in range(8):
+        a = i * math.pi / 4
+        pts = []
+        for da, r in ((-0.22, 20), (-0.16, 27), (0.16, 27), (0.22, 20)):
+            pts.append((cx + math.cos(a + da) * r * s, cy + math.sin(a + da) * r * s))
+        d.polygon(pts, fill=WHITE)
+    d.ellipse([cx - 20 * s, cy - 20 * s, cx + 20 * s, cy + 20 * s], fill=WHITE)
+    d.ellipse([cx - 8 * s, cy - 8 * s, cx + 8 * s, cy + 8 * s], fill=(0, 0, 0, 0))
+
+
 def g_close(d, s):
     w = int(7 * s)
     d.line([(16 * s, 16 * s), (48 * s, 48 * s)], fill=WHITE, width=w)
@@ -156,10 +207,218 @@ def g_minus(d, s):
     d.rectangle([40 * s, 21 * s, 60 * s, 27 * s], fill=SKY)
 
 
-for f in (tab_overview, tab_vitamins, tab_foods, tab_other):
+
+def tab_cook():
+    """Cooking: a steaming pot with a ladle."""
+    img, d, s = canvas()
+    for x in (46, 64, 82):
+        d.line(P(s, [(x, 44), (x - 6, 34), (x, 24), (x - 6, 14)]), fill=WHITE, width=int(4 * s), joint="curve")
+    d.rounded_rectangle([24 * s, 54 * s, 104 * s, 104 * s], radius=10 * s, fill=STEEL)
+    d.rectangle([18 * s, 50 * s, 110 * s, 60 * s], fill=SKY)
+    d.rectangle([10 * s, 62 * s, 24 * s, 70 * s], fill=STEEL)
+    d.rectangle([104 * s, 62 * s, 118 * s, 70 * s], fill=STEEL)
+    d.line(P(s, [(88, 30), (74, 78)]), fill=BROWN, width=int(6 * s))
+    done(img, "tab_cook")
+
+
+def step(name, draw):
+    img, d, s = canvas()
+    draw(d, s)
+    done(img, "cook_" + name, 64)
+
+
+def knife(d, s, x0=24, y0=86, x1=100, y1=40):
+    d.line(P(s, [(x0, y0), (x0 + 22, y0 - 13)]), fill=BROWN, width=int(10 * s))
+    d.polygon(P(s, [(x0 + 22, y0 - 19), (x1, y1), (x1 + 4, y1 + 6), (x0 + 24, y0 - 7)]), fill=STEEL)
+
+
+def g_wash(d, s):
+    d.ellipse([34 * s, 40 * s, 94 * s, 100 * s], fill=ORANGE)
+    for x, y in ((40, 26), (64, 18), (88, 28)):
+        d.polygon(P(s, [(x, y), (x - 6, y + 12), (x + 6, y + 12)]), fill=(110, 170, 255, 255))
+        d.ellipse([(x - 6) * s, (y + 8) * s, (x + 6) * s, (y + 20) * s], fill=(110, 170, 255, 255))
+
+
+def g_peel(d, s):
+    d.ellipse([24 * s, 34 * s, 84 * s, 94 * s], fill=(235, 220, 160, 255))
+    d.arc([20 * s, 30 * s, 88 * s, 98 * s], 200, 340, fill=BROWN, width=int(8 * s))
+    d.line(P(s, [(84, 50), (100, 70), (90, 96), (104, 110)]), fill=BROWN, width=int(6 * s), joint="curve")
+    knife(d, s, 60, 110, 112, 70)
+
+
+def g_chop(d, s):
+    d.rectangle([14 * s, 84 * s, 114 * s, 100 * s], fill=BROWN)
+    for i, x in enumerate((24, 44, 64)):
+        d.rectangle([x * s, 70 * s, (x + 14) * s, 84 * s], fill=ORANGE)
+    knife(d, s, 70, 76, 112, 30)
+
+
+def g_mince(d, s):
+    d.rectangle([14 * s, 84 * s, 114 * s, 100 * s], fill=BROWN)
+    for x in range(22, 100, 9):
+        for y in (72, 78):
+            d.rectangle([x * s, y * s, (x + 5) * s, (y + 5) * s], fill=RED)
+    d.rectangle([50 * s, 20 * s, 104 * s, 54 * s], fill=STEEL)
+    d.rectangle([30 * s, 30 * s, 52 * s, 40 * s], fill=BROWN)
+
+
+def g_trim(d, s):
+    d.ellipse([18 * s, 50 * s, 96 * s, 100 * s], fill=RED)
+    d.ellipse([24 * s, 58 * s, 60 * s, 84 * s], fill=WHITE)
+    knife(d, s, 56, 104, 116, 54)
+
+
+def g_crack(d, s):
+    d.ellipse([36 * s, 22 * s, 92 * s, 92 * s], fill=WHITE)
+    d.line(P(s, [(40, 58), (52, 50), (60, 62), (70, 48), (80, 60), (90, 54)]), fill=DARK, width=int(4 * s))
+    d.ellipse([46 * s, 94 * s, 82 * s, 114 * s], fill=YELLOW)
+
+
+def g_grate(d, s):
+    d.polygon(P(s, [(40, 18), (88, 18), (100, 108), (28, 108)]), fill=STEEL)
+    for y in range(32, 100, 12):
+        for x in range(46, 84, 12):
+            d.rectangle([x * s, y * s, (x + 6) * s, (y + 3) * s], fill=DARK)
+    d.rectangle([56 * s, 6 * s, 72 * s, 18 * s], fill=BROWN)
+
+
+def g_knead(d, s):
+    d.ellipse([20 * s, 58 * s, 108 * s, 108 * s], fill=(240, 220, 170, 255))
+    d.rounded_rectangle([14 * s, 34 * s, 114 * s, 50 * s], radius=6 * s, fill=BROWN)
+
+
+def g_measure(d, s):
+    d.polygon(P(s, [(30, 30), (98, 30), (90, 108), (38, 108)]), fill=(200, 230, 255, 150), outline=WHITE)
+    d.polygon(P(s, [(34, 64), (94, 64), (90, 108), (38, 108)]), fill=(250, 240, 220, 255))
+    for y in (46, 64, 82):
+        d.line(P(s, [(34, y), (50, y)]), fill=SKY, width=int(3 * s))
+
+
+def g_whisk(d, s):
+    d.rectangle([58 * s, 70 * s, 70 * s, 116 * s], fill=BROWN)
+    for w in (10, 20, 30):
+        d.ellipse([(64 - w) * s, 12 * s, (64 + w) * s, 78 * s], outline=STEEL, width=int(4 * s))
+
+
+def g_season(d, s):
+    d.rounded_rectangle([40 * s, 16 * s, 88 * s, 76 * s], radius=10 * s, fill=WHITE)
+    d.rectangle([40 * s, 16 * s, 88 * s, 30 * s], fill=STEEL)
+    for x, y in ((50, 88), (64, 96), (78, 86), (58, 106), (72, 112)):
+        d.ellipse([(x - 3) * s, (y - 3) * s, (x + 3) * s, (y + 3) * s], fill=WHITE)
+
+
+def g_stir(d, s):
+    d.ellipse([16 * s, 50 * s, 112 * s, 110 * s], fill=STEEL)
+    d.ellipse([24 * s, 56 * s, 104 * s, 98 * s], fill=ORANGE)
+    d.arc([36 * s, 62 * s, 92 * s, 92 * s], 30, 300, fill=WHITE, width=int(4 * s))
+    d.line(P(s, [(96, 10), (66, 80)]), fill=BROWN, width=int(7 * s))
+
+
+# 0.13.0: the new steps
+def g_scale(d, s):
+    d.polygon(P(s, [(14, 64), (40, 40), (92, 46), (112, 64), (92, 82), (40, 88)]), fill=(150, 180, 200, 255))
+    d.polygon(P(s, [(112, 64), (124, 48), (124, 80)]), fill=(150, 180, 200, 255))
+    for x in range(40, 96, 10):
+        d.arc([x * s, 52 * s, (x + 12) * s, 70 * s], 270, 90, fill=WHITE, width=int(2 * s))
+    d.ellipse([24 * s, 56 * s, 32 * s, 64 * s], fill=DARK)
+
+
+def g_spread(d, s):
+    d.rounded_rectangle([18 * s, 40 * s, 100 * s, 112 * s], radius=14 * s, fill=(236, 196, 128, 255), outline=BROWN, width=int(4 * s))
+    d.ellipse([30 * s, 56 * s, 86 * s, 92 * s], fill=YELLOW)
+    d.line(P(s, [(70, 70), (118, 20)]), fill=STEEL, width=int(8 * s))
+
+
+def g_slice(d, s):
+    d.rectangle([14 * s, 84 * s, 114 * s, 100 * s], fill=BROWN)
+    for x in range(22, 70, 9):
+        d.rectangle([x * s, 60 * s, (x + 5) * s, 84 * s], fill=RED)
+    knife(d, s, 72, 80, 114, 32)
+
+
+def g_core(d, s):
+    d.ellipse([22 * s, 34 * s, 92 * s, 104 * s], fill=RED)
+    d.ellipse([46 * s, 56 * s, 68 * s, 82 * s], fill=(250, 240, 200, 255))
+    d.ellipse([53 * s, 64 * s, 61 * s, 74 * s], fill=BROWN)
+    knife(d, s, 64, 112, 118, 66)
+
+
+def g_pound(d, s):
+    d.ellipse([18 * s, 74 * s, 100 * s, 106 * s], fill=RED)
+    d.rounded_rectangle([20 * s, 22 * s, 108 * s, 42 * s], radius=10 * s, fill=BROWN)
+    for x in (34, 64, 94):
+        d.line(P(s, [(x, 50), (x, 64)]), fill=WHITE, width=int(3 * s))
+
+
+def g_toss(d, s):
+    d.ellipse([12 * s, 70 * s, 92 * s, 106 * s], fill=STEEL)
+    d.rectangle([88 * s, 84 * s, 120 * s, 92 * s], fill=DARK)
+    for x, y, c in ((34, 40, ORANGE), (54, 28, (90, 180, 70, 255)), (72, 44, RED)):
+        d.ellipse([(x - 7) * s, (y - 7) * s, (x + 7) * s, (y + 7) * s], fill=c)
+    d.arc([24 * s, 20 * s, 84 * s, 80 * s], 200, 340, fill=WHITE, width=int(3 * s))
+
+
+def g_flip(d, s):
+    d.ellipse([16 * s, 76 * s, 96 * s, 108 * s], fill=STEEL)
+    d.ellipse([28 * s, 30 * s, 84 * s, 54 * s], fill=(236, 186, 100, 255))
+    d.line(P(s, [(56, 64), (112, 112)]), fill=BROWN, width=int(6 * s))
+    d.rectangle([40 * s, 58 * s, 70 * s, 66 * s], fill=STEEL)
+
+
+def g_steep(d, s):
+    d.rounded_rectangle([26 * s, 46 * s, 90 * s, 112 * s], radius=10 * s, fill=RED)
+    d.ellipse([28 * s, 40 * s, 88 * s, 56 * s], fill=(150, 90, 40, 255))
+    d.arc([82 * s, 60 * s, 112 * s, 96 * s], 270, 90, fill=RED, width=int(7 * s))
+    d.line(P(s, [(58, 46), (66, 14)]), fill=WHITE, width=int(2 * s))
+    d.rectangle([60 * s, 6 * s, 76 * s, 18 * s], fill=YELLOW)
+
+
+def g_roll(d, s):
+    d.ellipse([12 * s, 70 * s, 116 * s, 108 * s], fill=(240, 220, 170, 255))
+    d.rounded_rectangle([22 * s, 44 * s, 106 * s, 62 * s], radius=8 * s, fill=BROWN)
+    d.rectangle([6 * s, 49 * s, 22 * s, 57 * s], fill=BROWN)
+    d.rectangle([106 * s, 49 * s, 122 * s, 57 * s], fill=BROWN)
+
+
+def g_zest(d, s):
+    d.ellipse([20 * s, 52 * s, 76 * s, 108 * s], fill=YELLOW)
+    d.polygon(P(s, [(70, 14), (108, 14), (114, 104), (64, 104)]), fill=STEEL)
+    for y in range(26, 96, 10):
+        d.line(P(s, [(74, y), (104, y)]), fill=DARK, width=int(2 * s))
+    for x, y in ((40, 40), (50, 30), (60, 42)):
+        d.ellipse([(x - 3) * s, (y - 3) * s, (x + 3) * s, (y + 3) * s], fill=YELLOW)
+
+
+def g_fold(d, s):
+    d.ellipse([12 * s, 56 * s, 116 * s, 112 * s], fill=WHITE)
+    d.ellipse([22 * s, 62 * s, 106 * s, 98 * s], fill=(246, 226, 180, 255))
+    d.arc([34 * s, 66 * s, 94 * s, 94 * s], 180, 360, fill=BROWN, width=int(3 * s))
+    d.polygon(P(s, [(60, 70), (84, 20), (98, 24), (74, 74)]), fill=(220, 80, 70, 255))
+
+
+def g_grind(d, s):
+    d.polygon(P(s, [(18, 64), (110, 64), (96, 110), (32, 110)]), fill=(160, 156, 148, 255))
+    d.ellipse([18 * s, 56 * s, 110 * s, 72 * s], fill=(110, 140, 70, 255))
+    d.line(P(s, [(56, 66), (96, 16)]), fill=(200, 196, 188, 255), width=int(12 * s))
+
+
+def g_mash(d, s):
+    d.ellipse([14 * s, 60 * s, 114 * s, 112 * s], fill=WHITE)
+    d.ellipse([24 * s, 66 * s, 104 * s, 100 * s], fill=(240, 220, 150, 255))
+    d.line(P(s, [(64, 72), (64, 16)]), fill=BROWN, width=int(7 * s))
+    for x in (48, 58, 70, 80):
+        d.line(P(s, [(x, 72), (x, 56)]), fill=STEEL, width=int(4 * s))
+    d.line(P(s, [(46, 56), (82, 56)]), fill=STEEL, width=int(4 * s))
+
+for f in (tab_overview, tab_check, tab_calendar, tab_vitamins, tab_foods, tab_other, tab_cook):
     f()
 pin_icon(True)
 pin_icon(False)
-for n, g in (("icon_close", g_close), ("icon_plus", g_plus), ("icon_minus", g_minus)):
+for n, g in (("icon_settings", g_settings), ("icon_close", g_close), ("icon_plus", g_plus), ("icon_minus", g_minus)):
     ui_icon(n, g)
+for n, g in (("wash", g_wash), ("peel", g_peel), ("chop", g_chop), ("mince", g_mince), ("trim", g_trim), ("crack", g_crack),
+             ("grate", g_grate), ("knead", g_knead), ("measure", g_measure), ("whisk", g_whisk), ("season", g_season), ("stir", g_stir),
+             ("scale", g_scale), ("spread", g_spread), ("slice", g_slice), ("core", g_core), ("pound", g_pound), ("toss", g_toss),
+             ("flip", g_flip), ("steep", g_steep), ("roll", g_roll), ("zest", g_zest), ("fold", g_fold), ("grind", g_grind), ("mash", g_mash)):
+    step(n, g)
 print("ok")

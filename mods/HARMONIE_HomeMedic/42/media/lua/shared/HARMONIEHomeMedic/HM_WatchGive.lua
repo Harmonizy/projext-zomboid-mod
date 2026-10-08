@@ -143,6 +143,7 @@ function W.serve(doctor, args)
         patient = getSpecificPlayer and getSpecificPlayer(tonumber(args.patientNum) or 0)
     end
     local ok, reason = W.give(doctor, patient, args.itemID)
+    HMLog("Watch", "%s putting a watch (item %s) on %s: %s (%s)", HMLogName(doctor), tostring(args.itemID), HMLogName(patient), ok and "done" or "REFUSED", tostring(reason))
     local res = { ok = ok, reason = reason }
     if isServer and isServer() then
         if sendServerCommand then sendServerCommand(doctor, W.MODULE, "Result", res) end
@@ -155,6 +156,7 @@ end
 -- client: ask for it (doctor = this client's player)
 function W.request(doctor, patient, itemID)
     if not doctor or not patient then return end
+    HMLog("Watch", "asking to put watch %s on %s", tostring(itemID), HMLogName(patient))
     if isClient and isClient() then
         sendClientCommand(doctor, W.MODULE, "Give", { patientOnline = call(patient, "getOnlineID"), itemID = itemID })
     else
@@ -171,7 +173,10 @@ if Events and not W.registered then
     end
     if Events.OnServerCommand then
         Events.OnServerCommand.Add(function(module, command, args)
-            if module == W.MODULE and command == "Result" and W.onResult then W.onResult(args or {}) end
+            if module == W.MODULE and command == "Result" then
+                HMLog("Watch", "server answer: %s (%s)", (args and args.ok) and "done" or "refused", tostring(args and args.reason))
+                if W.onResult then W.onResult(args or {}) end
+            end
         end)
     end
 end

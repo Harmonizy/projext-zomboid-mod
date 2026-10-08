@@ -238,9 +238,12 @@ end
 -- Set gem `gemId` into socket `key`; returns true when done.
 function G.doInsert(player, weapon, key, gemId)
     key = tostring(key)
-    if not G.canUse(weapon) or not G.validKey(weapon, key) then return false end
+    if not G.canUse(weapon) or not G.validKey(weapon, key) then
+        TWALog("Socket", "insert REFUSED: weapon %s cannot take a gem in socket %s", TWALogType(weapon), key)
+        return false
+    end
     local gem = findGem(player, gemId)
-    if not gem then return false end
+    if not gem then TWALog("Socket", "insert REFUSED: gem id %s not found on %s", tostring(gemId), TWALogName(player)); return false end
     local md = weapon:getModData()
     md.TWA_Gems = md.TWA_Gems or {}
     local oldType, oldState = G.gemIn(weapon, key)
@@ -254,15 +257,18 @@ function G.doInsert(player, weapon, key, gemId)
         if oldType then G.giveGem(player, oldType, oldState) end
     end
     applyKeepingCondition(weapon)
+    TWALog("Socket", "%s put %s (%s) into socket %s of %s%s", TWALogName(player), tostring(gemType), tostring(gemState), key,
+        TWALogType(weapon), oldType and (" (replaced " .. tostring(oldType) .. ")") or "")
     return true
 end
 
 -- Empty the special socket; the gem goes back into the inventory.
 function G.doRemove(player, weapon)
-    if not G.canUse(weapon) or not G.hasSpecial(weapon) then return false end
+    if not G.canUse(weapon) or not G.hasSpecial(weapon) then TWALog("Socket", "remove REFUSED: no special socket on %s", TWALogType(weapon)); return false end
     local md = weapon:getModData()
     local old, st = G.gemIn(weapon, "sp")
-    if not old then return false end
+    if not old then TWALog("Socket", "remove REFUSED: special socket already empty"); return false end
+    TWALog("Socket", "%s took %s (%s) out of %s", TWALogName(player), tostring(old), tostring(st), TWALogType(weapon))
     md.TWA_Gems.sp, md.TWA_Gems.spState = nil, nil
     G.giveGem(player, old, st)
     applyKeepingCondition(weapon)
@@ -272,6 +278,7 @@ end
 function G.giveGem(player, fullType, state)
     local inv = player:getInventory()
     local it = inv:AddItem(fullType)
+    if not it then TWALog("Socket", "could NOT give gem %s back (unknown item?)", tostring(fullType)) end
     if it then
         if state then it:getModData().TWA_GemState = state end
         if isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, it) end
@@ -284,6 +291,7 @@ end
 function G.requestInsert(player, weapon, key, gemItem)
     if not weapon or not gemItem then return end
     if isClient() then
+        TWALog("Socket", "asking the server: insert %s into socket %s", TWALogType(gemItem), tostring(key))
         sendClientCommand(player, MODULE, "gemSocket", { op = "insert", id = weapon:getID(), key = tostring(key), gem = gemItem:getID() })
     else
         G.doInsert(player, weapon, key, gemItem:getID())
@@ -293,6 +301,7 @@ end
 function G.requestRemove(player, weapon)
     if not weapon then return end
     if isClient() then
+        TWALog("Socket", "asking the server: remove the special gem")
         sendClientCommand(player, MODULE, "gemSocket", { op = "remove", id = weapon:getID() })
     else
         G.doRemove(player, weapon)
@@ -310,10 +319,11 @@ if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
         if module ~= MODULE or command ~= "gemSocket" or not player or not args then return end
         local weapon = findWeapon(player, args.id)
-        if not weapon then return end
+        if not weapon then TWALog("Socket", "%s: weapon id %s not found -- %s ignored", TWALogName(player), tostring(args.id), tostring(args.op)); return end
         local ok
         if args.op == "insert" then ok = G.doInsert(player, weapon, args.key, args.gem)
         elseif args.op == "remove" then ok = G.doRemove(player, weapon) end
+        if not ok then TWALog("Socket", "%s: %s on weapon id %s did nothing", TWALogName(player), tostring(args.op), tostring(args.id)) end
         if ok and sendServerCommand then
             sendServerCommand(player, MODULE, "gemSocketSync", { id = args.id, gems = copy(weapon:getModData().TWA_Gems) })
         end
@@ -325,7 +335,8 @@ if Events and Events.OnServerCommand then
         if module ~= MODULE or command ~= "gemSocketSync" or not args then return end
         local player = getPlayer and getPlayer()
         local weapon = findWeapon(player, args.id)
-        if not weapon then return end
+        if not weapon then TWALog("Socket", "socket sync for weapon id %s: not in this inventory", tostring(args.id)); return end
+        TWALog("Socket", "socket sync from the server for weapon id %s", tostring(args.id))
         weapon:getModData().TWA_Gems = copy(args.gems)
         G.applyDamage(weapon)
         if G.onSync then G.onSync(weapon) end

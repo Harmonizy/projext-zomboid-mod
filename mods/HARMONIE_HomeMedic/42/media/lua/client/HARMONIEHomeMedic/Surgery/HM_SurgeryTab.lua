@@ -90,9 +90,10 @@ end
 local function select(panel, sid, partKey)
     local st = panel.hmSurg
     local info = scan(panel)[sid]
-    if not info or #info.parts == 0 then return false end
+    if not info or #info.parts == 0 then HMLog("SurgeryTab", "%s: no body part needs it now", tostring(sid)); return false end
     local chosen = info.parts[1]
     for _, p in ipairs(info.parts) do if p.key == partKey then chosen = p end end
+    HMLog("SurgeryTab", "selected %s on %s", tostring(sid), tostring(chosen.key))
     dropPrep(panel)
     local doctor, patient, exam = parties(panel)
     local b, listW = bounds(panel)

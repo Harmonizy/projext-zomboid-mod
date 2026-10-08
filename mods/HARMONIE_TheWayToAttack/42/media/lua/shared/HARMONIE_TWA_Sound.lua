@@ -34,7 +34,11 @@ function TWASound.play(name, switch)
     end
     if best ~= 100 then name = name .. "_v" .. best end
     local sm = getSoundManager and getSoundManager()
-    if sm and sm.playUISound then sm:playUISound(name) end
+    if sm and sm.playUISound then
+        local ok, err = pcall(sm.playUISound, sm, name)
+        if not ok then TWALogOnce("snd:" .. name, "Sound", "could not play %s: %s", name, tostring(err)) end
+    end
+    TWALogOnce("sndfirst:" .. name, "Sound", "first play of %s (repeats not logged)", name)
 end
 
 --- Call every frame/tick while the work goes on: plays `name` again as soon

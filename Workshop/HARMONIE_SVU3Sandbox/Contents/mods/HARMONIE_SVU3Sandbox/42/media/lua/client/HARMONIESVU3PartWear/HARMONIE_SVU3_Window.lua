@@ -28,6 +28,18 @@ require "ISUI/ISPanel"
 
 HSVU = HSVU or {}
 local H = HSVU
+-- console.txt: "[HARMONIE_SVU3][Window][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_SVU3][Window][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
 
 H.HEADER_H = 40
 H.TAB_H = 58
@@ -327,12 +339,13 @@ function H.ensurePrefs()
         end
     end)
     pcall(function() reader:close() end)
+    log("prefs loaded: size %sx%s, text step %s, pinned %s", tostring(H.prefW), tostring(H.prefH), tostring(H.textStep), tostring(H.pinned))
 end
 
 function H.savePrefs()
     if not getFileWriter then return end
     local ok, writer = pcall(getFileWriter, H.PREFS_FILE, true, false)
-    if not ok or not writer then return end
+    if not ok or not writer then log("could not write %s: %s", tostring(H.PREFS_FILE), tostring(writer)); return end
     pcall(function()
         if H.prefW then writer:write("w=" .. tostring(math.floor(H.prefW)) .. "\n") end
         if H.prefH then writer:write("h=" .. tostring(math.floor(H.prefH)) .. "\n") end
@@ -363,6 +376,7 @@ function Win:new(x, y, w, h, player)
 end
 
 function Win:setVehicle(vehicle)
+    if vehicle ~= self.vehicle then log("vehicle: %s", vehicle and tostring(H.scriptName(vehicle)) or "none") end
     self.vehicle = vehicle
     self.scroll = {}
     self:refreshData()
@@ -374,6 +388,9 @@ function Win:refreshData()
     self.rows = self.vehicle and H.upgradeRows(self.vehicle, self.player) or {}
     self.tiers = H.tierInfo(self.carName)
     self.tierLists = H.tierLists()
+    if self.vehicle and #self.rows == 0 then
+        logOnce("norows:" .. tostring(self.carName), "%s: no SVU3 upgrade rows found for this car", tostring(self.carName))
+    end
 end
 
 function Win:contentTop() return H.HEADER_H + H.TAB_H + 6 end
@@ -500,6 +517,7 @@ end
 
 function Win:render()
     if not self.collapsed then
+        self.scrollBox = {}
         local now = getTimestampMs and getTimestampMs() or 0
         if not self.dataAt or now - self.dataAt > 2000 then self:refreshData() end
         local x, y = 8, self:contentTop()
@@ -547,12 +565,17 @@ end
 -- scrolled content: draws f(yOffset) clipped to the box, remembers how far it can scroll
 function Win:scrolled(key, x, y, w, h, f)
     local off = self.scroll[key] or 0
+    -- registered before drawing (hover checks inside f use it); the list
+    -- holds only this frame's areas -- render() empties it -- so the mouse
+    -- wheel never lands on an area of another tab / vitamin / search that
+    -- happens to sit at the same spot (2026-10-08 bug report: "บางอัน
+    -- scroll ไม่ได้")
+    self.scrollBox = self.scrollBox or {}
+    self.scrollBox[key] = { x = x, y = y, w = w, h = h }
     self:setStencilRect(x, y, w, h)
     local used = f(y - off)
     self:clearStencilRect()
     self.maxScroll[key] = math.max(0, (used or 0) - h)
-    self.scrollBox = self.scrollBox or {}
-    self.scrollBox[key] = { x = x, y = y, w = w, h = h }
     if off > self.maxScroll[key] then self.scroll[key] = self.maxScroll[key] end
     if self.maxScroll[key] > 0 then
         local C = H.C
@@ -850,6 +873,7 @@ function Win:onMouseDown(x, y)
     for _, t in ipairs(self.tabBounds or {}) do
         if inside(t, x, y) then
             getSoundManager():playUISound("UISelectListItem")
+            if self.tab ~= t.id then log("tab %s -> %s", tostring(self.tab), tostring(t.id)) end
             self.tab = t.id
             self:refreshData()
             return true
@@ -860,6 +884,7 @@ function Win:onMouseDown(x, y)
             if inside(c, x, y) then
                 getSoundManager():playUISound("UISelectListItem")
                 self.filter = c.id
+                log("upgrade filter: %s", tostring(c.id))
                 self.scroll.upgrades = 0
                 return true
             end
@@ -941,6 +966,7 @@ end
 -- leaves it and unfolds when the mouse comes back (Home Medic's pin)
 function Win:togglePin()
     H.pinned = not H.pinned
+    log("pinned: %s", tostring(H.pinned))
     self.leaveAt = nil
     if H.pinned then self:expand() end
     H.savePrefs()
@@ -982,6 +1008,7 @@ end
 -- ----------------------------------------------------------------- open / close
 function H.stepText(d)
     H.textStep = math.max(0, math.min(2, H.textStep + d))
+    log("text size step: %d", H.textStep)
     H.savePrefs()
 end
 
@@ -1000,7 +1027,8 @@ end
 function H.open(player, vehicle, beside)
     H.ensurePrefs()
     player = player or getPlayer()
-    if not player then return end
+    if not player then log("open: no player, not opened"); return end
+    log("open (%s), vehicle %s", beside and "with tsarslib's tuning window" or "key", vehicle and tostring(H.scriptName(vehicle)) or "none")
     local sw, sh = getCore():getScreenWidth(), getCore():getScreenHeight()
     local w = math.max(H.MIN_W, math.min(sw - 20, H.prefW or H.DEFAULT_W))
     local h = math.max(H.MIN_H, math.min(sh - 20, H.prefH or H.DEFAULT_H))
@@ -1029,6 +1057,7 @@ end
 function H.close()
     local win = H.window
     if not win then return end
+    log("close")
     win:setVisible(false)
     win:removeFromUIManager()
     win.inManager = false
@@ -1059,7 +1088,8 @@ function H.tick()
     H.n = (H.n or 0) + 1
     if H.n % H.CHECK_EVERY ~= 0 then return end
     local player = getPlayer()
-    if not player or not getPlayerTuningUI then return end
+    if not player then return end
+    if not getPlayerTuningUI then logOnce("noTsars", "getPlayerTuningUI missing (tsarslib not loaded?) -- the window will not follow the tuning window"); return end
     local ui = getPlayerTuningUI(player:getPlayerNum())
     local showing = ui and ui.getIsVisible and ui:getIsVisible() and ui.vehicle
     if showing then
@@ -1098,17 +1128,20 @@ if PZAPI and PZAPI.ModOptions and not H.options then
         end
         if PZAPI.ModOptions.load then PZAPI.ModOptions:load() end
     end)
-    if not ok then H.options = nil end
+    if not ok then H.options = nil; log("mod options could NOT be made -- follow option and key unavailable") else log("mod options made (key bind %s)", H.optKey and "yes" or "no") end
 end
 
 function H.onKey(key)
     local o = H.optKey
     if not key or key == 0 or not o or not o.getValue then return end
     local ok, bound = pcall(o.getValue, o)
-    if ok and bound and bound ~= 0 and bound == key then H.toggle(getPlayer()) end
+    if ok and bound and bound ~= 0 and bound == key then log("window key (%s) pressed", tostring(key)); H.toggle(getPlayer()) end
 end
 
 if Events then
-    if Events.OnTick then Events.OnTick.Add(function() pcall(H.tick) end) end
+    if Events.OnTick then Events.OnTick.Add(function()
+        local ok, err = pcall(H.tick)
+        if not ok then logOnce("tick:" .. tostring(err), "tuning-window link FAILED: %s", tostring(err)) end
+    end) end
     if Events.OnKeyPressed then Events.OnKeyPressed.Add(H.onKey) end
 end

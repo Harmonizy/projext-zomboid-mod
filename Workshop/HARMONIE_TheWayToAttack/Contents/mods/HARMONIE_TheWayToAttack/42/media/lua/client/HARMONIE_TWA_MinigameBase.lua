@@ -108,6 +108,7 @@ function TWAMinigameBase:openFor(player, procId, recipe, onResult, variant)
     ui:bringToTop()
     ui:onStart()
     ui.timeLimit = ui.timeLimit * TWAConfig.num("TimeLimit", 0.05)
+    TWALog("Minigame", "%s started (variant %s, time limit %.1f)", tostring(procId), tostring(variant), tonumber(ui.timeLimit) or -1)
     -- A procedure can ask for its OWN picture as the cursor instead of the
     -- tool found (round 14: the bone spike showed the knife -- "เป็นรูปดาบ").
     if ui.proc and ui.proc.cursorIcon then
@@ -481,7 +482,7 @@ function TWAMinigameBase:teardown()
 end
 
 function TWAMinigameBase:crash(err)
-    print("[HARMONIE_TheWayToAttack] minigame error (" .. tostring(err) .. "), scoring Excellent")
+    TWALog("Minigame", "%s error (%s), scoring Excellent", tostring(self.procId), tostring(err))
     self.word = TWACraftState.FALLBACK_WORD
     self:deliver()
 end

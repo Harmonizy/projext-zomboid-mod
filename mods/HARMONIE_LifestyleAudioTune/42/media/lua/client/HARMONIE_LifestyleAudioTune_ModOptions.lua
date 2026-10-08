@@ -43,6 +43,18 @@
 ]]--
 
 local LIVE_CATEGORIES = {"DJ", "Oldies", "SFX"}
+-- console.txt: "[HARMONIE_LAT][Options][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_LAT][Options][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
 
 local function getStartingVolume()
     local sounds = GameSounds.getSoundsInCategory("DJ")
@@ -56,8 +68,10 @@ end
 local function applyVolume(volume)
     HARMONIE_LifestyleAudioTune_LiveMultiplier = volume
 
+    local counts = {}
     for _, category in ipairs(LIVE_CATEGORIES) do
         local sounds = GameSounds.getSoundsInCategory(category)
+        counts[#counts + 1] = category .. "=" .. (sounds and sounds:size() or 0)
         if sounds then
             for i = 1, sounds:size() do
                 local sound = sounds:get(i - 1)
@@ -67,6 +81,7 @@ local function applyVolume(volume)
     end
 
     GameSounds.saveINI()
+    return table.concat(counts, ", ")
 end
 
 local function Init()
@@ -82,7 +97,11 @@ local function Init()
         startingVolume, getText("UI_options_HARMONIE_LAT_volume_tooltip"))
 
     volumeSlider.onChange = function(_, value) applyVolume(value) end
-    volumeSlider.onChangeApply = function(_, value) applyVolume(value) end
+    volumeSlider.onChangeApply = function(_, value)
+        -- logged on Apply only (onChange fires for every slider step)
+        log("volume applied: %.2f (sounds per category: %s)", value, applyVolume(value))
+    end
+    log("options page made, starting volume %.2f", startingVolume)
 end
 
 Init()

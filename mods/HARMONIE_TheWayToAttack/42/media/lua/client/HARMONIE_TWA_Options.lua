@@ -18,6 +18,7 @@ function O.applyVolume(v)
 end
 
 function O.setMuted(on)
+    TWALog("Options", "sound muted: %s", tostring(on and true or false))
     TWASound.muted = on and true or false
     if O.mute and O.mute.setValue then O.mute:setValue(TWASound.muted) end
     if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then PZAPI.ModOptions:save() end
@@ -40,11 +41,12 @@ end
 
 function O.set(id, v)
     local o = O[id]
-    if not o then return end
-    if o.setValue then pcall(o.setValue, o, v) end
+    if not o then TWALog("Options", "set %s: no such option", tostring(id)); return end
+    TWALog("Options", "set %s = %s", tostring(id), tostring(v))
+    if o.setValue then TWALogErr("Options", "setValue " .. tostring(id), pcall(o.setValue, o, v)) end
     -- a combo box keeps its choice in .selected (1-based), like getValue()
     if type(v) == "number" and type(o.selected) == "number" then o.selected = v end
-    if o.onChangeApply then pcall(o.onChangeApply, o, v) end
+    if o.onChangeApply then TWALogErr("Options", "onChangeApply " .. tostring(id), pcall(o.onChangeApply, o, v)) end
     if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
 end
 
@@ -53,11 +55,11 @@ if PZAPI and PZAPI.ModOptions and not O.options then
     O.volume = O.options:addSlider("soundVolume", getText("UI_options_HARMONIE_TWA_volume"), 0, 2, 0.25, 1,
         getText("UI_options_HARMONIE_TWA_volume_tooltip"))
     O.volume.onChange = function(_, value) O.applyVolume(value) end
-    O.volume.onChangeApply = function(_, value) O.applyVolume(value) end
+    O.volume.onChangeApply = function(_, value) TWALog("Options", "volume applied: %s", tostring(value)); O.applyVolume(value) end
     O.mute = O.options:addTickBox("soundMuted", getText("UI_options_HARMONIE_TWA_mute"), false,
         getText("UI_options_HARMONIE_TWA_mute_tooltip"))
     O.mute.onChange = function(_, value) TWASound.muted = value and true or false end
-    O.mute.onChangeApply = function(_, value) TWASound.muted = value and true or false end
+    O.mute.onChangeApply = function(_, value) TWALog("Options", "mute applied: %s", tostring(value)); TWASound.muted = value and true or false end
     -- 2026-10-03: zombie health bars / HP numbers / damage numbers and how
     -- they look (HARMONIE_TWA_ZombieHP reads these itself)
     local function T(k) return getText("UI_options_HARMONIE_TWA_" .. k) end

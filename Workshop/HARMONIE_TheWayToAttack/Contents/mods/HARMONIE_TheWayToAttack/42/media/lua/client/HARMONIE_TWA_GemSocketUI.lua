@@ -117,6 +117,7 @@ end
 -- Window ---------------------------------------------------------------------
 
 function TWAGemSocketUI.open(player, weapon)
+    TWALog("SocketUI", "open for %s", TWALogType(weapon))
     if TWAGemSocketUI.instance then TWAGemSocketUI.instance:close() end
     local lay = TWAGemSocketUI.layout(1000, 680, false)
     local x = (getCore():getScreenWidth() - lay.W) / 2
@@ -166,6 +167,7 @@ end
 -- a different weapon: forget the socket / gem picked for the old one
 function TWAGemSocketUI:setWeapon(weapon)
     if weapon == self.weapon then return end
+    TWALog("SocketUI", "weapon: %s", TWALogType(weapon))
     self.weapon = weapon
     self.selKey, self.pick = nil, nil
     self.gemCache, self.nextCheck, self.pickRow = nil, nil, 0
@@ -344,7 +346,8 @@ function TWAGemSocketUI:onConfirm()
         for _, g in ipairs(self:ownedGems()) do
             if g.type == self.pick.type and g.state == self.pick.state then gem = g.item break end
         end
-        if not gem then return end
+        if not gem then TWALog("SocketUI", "confirm: picked gem %s (%s) no longer owned", tostring(self.pick.type), tostring(self.pick.state)); return end
+        TWALog("SocketUI", "confirm insert %s (%s) into %s", tostring(self.pick.type), tostring(self.pick.state), tostring(self.selKey))
         G.requestInsert(self.player, self.weapon, self.selKey, gem)
         self.gemCache = nil
         local sx, sy = self:selectedSocketXY()
@@ -354,6 +357,7 @@ function TWAGemSocketUI:onConfirm()
         TWASound.play("TWA_Shimmer", "MinigameSounds")
         self.pick = nil
     elseif op == "remove" then
+        TWALog("SocketUI", "confirm remove the special gem")
         G.requestRemove(self.player, self.weapon)
         self.gemCache = nil
         TWASound.play("TWA_Tick", "MinigameSounds")
@@ -405,7 +409,7 @@ function TWAGemSocketUI:prerender()
     -- the buttons. Everything is drawn here, before the children.
     local ok, err = pcall(self.drawAll, self)
     if not ok then
-        print("[HARMONIE_TheWayToAttack] gem socket window error: " .. tostring(err))
+        TWALogOnce("socketui:" .. tostring(err), "Socket", "gem socket window error: %s", tostring(err))
         if self.embedded then self:setWeapon(nil) else self:close() end
     end
 end

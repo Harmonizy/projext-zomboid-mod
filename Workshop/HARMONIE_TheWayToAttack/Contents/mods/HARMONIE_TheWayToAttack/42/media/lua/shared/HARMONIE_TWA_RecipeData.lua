@@ -942,3 +942,9 @@ TWARecipeData.GemRoll = {
         TWA_Jade = { 0.25, 0.6, 0.35 },
     },
 }
+
+if TWALog then
+    local n = 0
+    for _ in pairs(TWARecipeData.Stats or {}) do n = n + 1 end
+    TWALog("Data", "%d recipes, %d stat entries loaded", #TWARecipeData.List, n)
+end

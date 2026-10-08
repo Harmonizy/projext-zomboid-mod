@@ -1645,10 +1645,12 @@ function TWACraftWindow:onPracticePageClicked()
 end
 
 function TWACraftWindow:onFilterClick(button)
+    TWALog("CraftUI", "category filter: %s", tostring(button.internal))
     self.recipeList:setFilter(button.internal)
 end
 
 function TWACraftWindow:onTierFilterClick(button)
+    TWALog("CraftUI", "tier filter: %s", tostring(button.internal))
     self.recipeList:setTierFilter(button.internal)
 end
 
@@ -1929,7 +1931,7 @@ function TWACraftWindow:canStartCenterAction()
 end
 
 function TWACraftWindow:startCenterAction(kind)
-    if not self:canStartCenterAction() then return end
+    if not self:canStartCenterAction() then TWALog("CraftUI", "%s button: another action is running -- ignored", tostring(kind)); return end
     local window = self
     local onEnd = function()
         if window.activeCenterKind == kind then
@@ -1946,7 +1948,10 @@ function TWACraftWindow:startCenterAction(kind)
     local action
     if kind == "start" then
         local ok, baseItem, base2Item = self:pickItems()
-        if not ok or self.active then return end
+        if not ok or self.active then
+            TWALog("CraftUI", "start %s refused: %s", tostring(recipe and recipe.id), self.active and "a craft is already active" or "base item(s) not found")
+            return
+        end
         -- A bookmarked base item brings its saved words along (the server
         -- reads the same bookmark off its own copy in complete()).
         local map = S.bookmarkMap(baseItem, recipe.id)
@@ -1958,15 +1963,15 @@ function TWACraftWindow:startCenterAction(kind)
             window.resumeItem = nil
         end
     elseif kind == "cancel" then
-        if not self:isActiveRecipe() then return end
+        if not self:isActiveRecipe() then TWALog("CraftUI", "cancel refused: this recipe is not the active craft"); return end
         action = TWA_CancelCraftAction:new(self.player, recipe.id)
         action.onComplete = function() window:endActive() end
     elseif kind == "incomplete" then
-        if not self:canGoIncomplete() then return end
+        if not self:canGoIncomplete() then TWALog("CraftUI", "incomplete refused: nothing to keep yet"); return end
         action = TWA_IncompleteCraftAction:new(self.player, recipe.id)
         action.onComplete = function() window:endActive() end
     elseif kind == "finish" then
-        if not self:allProceduresDone() then return end
+        if not self:allProceduresDone() then TWALog("CraftUI", "finish refused: not every step is done"); return end
         -- Round 12: a token to find the new item by, and the grade-reveal
         -- window (hammer on the anvil until the grade shows) once it's done.
         local token = tostring(getTimestampMs()) .. "_" .. tostring(ZombRand(1000000))
@@ -1986,6 +1991,7 @@ function TWACraftWindow:startCenterAction(kind)
         return
     end
     action.onEnd = onEnd
+    TWALog("CraftUI", "%s queued for %s", tostring(kind), tostring(recipe and recipe.id))
     self.activeCenterKind = kind
     self.activeCenterAction = action
     ISTimedActionQueue.add(action)
@@ -2076,8 +2082,8 @@ end
 -- permanently blocks starting another one.
 function TWACraftWindow:tryPerformProcedure(procId, proc)
     -- Only on the started craft (request 2026-09-28, one craft at a time).
-    if not self:isActiveRecipe() then return end
-    if self.activeProcId or self.activeCenterAction then return end
+    if not self:isActiveRecipe() then TWALog("CraftUI", "step %s refused: no active craft for this recipe", tostring(procId)); return end
+    if self.activeProcId or self.activeCenterAction then TWALog("CraftUI", "step %s refused: something is already running", tostring(procId)); return end
     local needed = false
     for _, pid in ipairs(self.selectedRecipe.procedures) do
         if pid == procId then needed = true break end
@@ -2089,8 +2095,8 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
     -- result replaces the old one, a Miss included.
     local doneTable = self:currentDone()
     local qualityTable = self:currentQuality()
-    if not needed then return end
-    if not TWAProcedures.CheckEligibility(proc, self.player) then return end
+    if not needed then TWALog("CraftUI", "step %s refused: not part of %s", tostring(procId), tostring(self.selectedRecipe.id)); return end
+    if not TWAProcedures.CheckEligibility(proc, self.player) then TWALog("CraftUI", "step %s refused: tools/materials/skills/light missing", tostring(procId)); return end
 
     -- Request 2026-09-28 (procedure minigame): the procedure is played as a
     -- minigame FIRST (HARMONIE_TWA_Minigame.lua), and its result word then
@@ -2104,6 +2110,7 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
         -- dropped, the light gone): re-check, or the action would never
         -- start and the one-at-a-time lock would never clear.
         if not TWAProcedures.CheckEligibility(proc, window.player) then
+            TWALog("CraftUI", "step %s dropped after the minigame: requirements no longer met", tostring(procId))
             window.activeProcId = nil
             return
         end
@@ -3026,7 +3033,8 @@ end
 -- to it in place rather than silently no-op'ing like the old version did.
 function TWACraftUI.open(player, searchText, resumeItem)
     player = player or getPlayer()
-    if not player then return end
+    if not player then TWALog("CraftUI", "open: no player"); return end
+    TWALog("CraftUI", "open (search %s, resume %s)", tostring(searchText), TWALogType(resumeItem))
     if TWACraftUI.window and TWACraftUI.window:getIsVisible() then
         local win = TWACraftUI.window
         if win.wbExpand then win:wbExpand() end
@@ -3067,6 +3075,9 @@ function TWACraftUI.open(player, searchText, resumeItem)
             if word ~= "Miss" then m.done[procId] = true end
         end
         win.active = m
+        TWALog("CraftUI", "picked up the craft still started from before: %s", tostring(act.recipeId))
+    elseif act then
+        TWALog("CraftUI", "a saved craft names unknown recipe %s -- dropped", tostring(act.recipeId))
     elseif isClient() then
         S.requestReturnStale(player)
     end
@@ -3093,9 +3104,11 @@ function TWACraftUI.close()
     local win = TWACraftUI.window
     if not win then return end
     if win.activeProcId or win.activeCenterAction then
+        TWALog("CraftUI", "close refused: a step or action is running")
         win:flashLocked("IGUI_TWA_BusyCantClose")
         return
     end
+    TWALog("CraftUI", "close%s", win.active and (" -- active craft " .. tostring(win.active.recipeId) .. " handed back as incomplete") or "")
     if win.active then
         TWACraftState.requestGiveBack(win.player, "incomplete", win.active.recipeId)
     end
@@ -3114,6 +3127,7 @@ local CARRY = { "active", "selectedRecipe", "selectedProcId", "resumeItem", "bas
 function TWACraftUI.rebuild()
     local old = TWACraftUI.window
     if not old then return end
+    TWALog("CraftUI", "rebuild at layout scale %.2f", tonumber(TWACraftUI.layoutScale()) or -1)
     applyLayout(TWACraftUI.layoutScale())
     local win = TWACraftWindow:new(old.x, old.y, old.player)
     for _, f in ipairs(CARRY) do win[f] = old[f] end
@@ -3146,6 +3160,7 @@ end
 
 -- R70: right-click a weapon > "Modify weapon (gems)" -> tab 4 for that weapon
 function TWACraftUI.openModify(player, weapon)
+    TWALog("CraftUI", "open the modify tab for %s", TWALogType(weapon))
     TWACraftUI.open(player)
     local win = TWACraftUI.window
     if not win then return end
@@ -3160,4 +3175,13 @@ function TWACraftUI.toggle()
     else
         TWACraftUI.open()
     end
+end
+
+-- console.txt: each button / page / filter the player uses ("[HARMONIE_TWA][CraftUI]")
+if TWALogMethods then
+    TWALogMethods(TWACraftWindow, "CraftUI", { "setPage", "openRecipe", "onBackClicked", "onPracticePageClicked",
+        "selectRecipe", "onContinueClicked", "startCenterAction", "onAbortCenterAction", "onSearchClearClicked",
+        "onSearchByProcedure", "onSearchButtonClicked", "onProcedureCellClicked", "onConfirmProcedure",
+        "onPracticeProcedure", "onCancelProcedure", "onAdminItems", "onAdminSkills", "resumeFromItem",
+        "openBaseChooser" })
 end

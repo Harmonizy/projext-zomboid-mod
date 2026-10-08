@@ -50,6 +50,7 @@ function R.dueList(player)
     local M = EHR and EHR.Medication
     if not (M and M.GetAllDoseStatuses) then return {} end
     local ok, list = pcall(M.GetAllDoseStatuses, player)
+    if not ok then HMLogOnce("dosefail:" .. tostring(list), "Dose", "EHR GetAllDoseStatuses FAILED: %s", tostring(list)) end
     local out = {}
     for _, st in ipairs(ok and type(list) == "table" and list or {}) do
         if R.isDue(st) then out[#out + 1] = st end
@@ -99,6 +100,7 @@ local W, H = 400, 214
 
 function R.show(player, status)
     local num = call(player, "getPlayerNum") or 0
+    HMLog("Dose", "reminder: %s dose due (%s)", tostring(status and status.medKey), tostring(status and status.medicationName))
     if R.open[num] then R.open[num]:close() end
     local sw = getCore and getCore():getScreenWidth() or 1280
     local o = ISPanel.new(R, math.floor((sw - W) / 2), 90 + num * 24, W, H)
@@ -145,8 +147,8 @@ local function remember(self, untilHour)
     st[self.status.medKey] = { dose = tonumber(self.status.doseCount) or 0, untilHour = untilHour }
 end
 
-function R:onOk() remember(self, nil); self:close() end
-function R:onLater() remember(self, hours() + R.SNOOZE_HOURS); self:close() end
+function R:onOk() HMLog("Dose", "reminder OK for %s", tostring(self.status.medKey)); remember(self, nil); self:close() end
+function R:onLater() HMLog("Dose", "reminder snoozed %s h for %s", tostring(R.SNOOZE_HOURS), tostring(self.status.medKey)); remember(self, hours() + R.SNOOZE_HOURS); self:close() end
 
 function R:close()
     if R.open[self.num] == self then R.open[self.num] = nil end

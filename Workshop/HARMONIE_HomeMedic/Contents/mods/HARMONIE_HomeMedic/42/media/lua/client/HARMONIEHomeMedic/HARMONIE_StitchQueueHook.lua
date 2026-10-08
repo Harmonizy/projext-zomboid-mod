@@ -32,12 +32,15 @@ function H.swap(action)
     if not SM.ShouldIntercept(action.character, action.otherPlayer, action.item, action.bodyPart, true) then
         return action
     end
+    HMLog("Stitch", "vanilla stitch swapped for the stitching minigame (%s)", HMLogName(action.otherPlayer))
     return EHR_StitchMinigameAction:new(action.character, action.otherPlayer, action.item, action.bodyPart)
 end
 
 function H.install()
-    if H.installed or not ISTimedActionQueue or not ISTimedActionQueue.add then return end
+    if H.installed then return end
+    if not ISTimedActionQueue or not ISTimedActionQueue.add then HMLog("Stitch", "ISTimedActionQueue.add missing -- stitch hook NOT installed"); return end
     H.installed = true
+    HMLog("Stitch", "stitch hook installed")
     local add = ISTimedActionQueue.add
     ISTimedActionQueue.add = function(action, ...)
         return add(H.swap(action), ...)

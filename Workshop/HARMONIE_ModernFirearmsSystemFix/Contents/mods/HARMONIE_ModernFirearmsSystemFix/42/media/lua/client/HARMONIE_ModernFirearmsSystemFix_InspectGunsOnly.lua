@@ -16,6 +16,18 @@
 
 HARMONIE_MFSFix = HARMONIE_MFSFix or {}
 local M = HARMONIE_MFSFix
+-- console.txt: "[HARMONIE_MFSFix][Inspect][SP|client|server]" lines
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    local side = (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP")
+    print("[HARMONIE_MFSFix][Inspect][" .. side .. "] " .. (ok and msg or tostring(fmt)))
+end
+local logSeen = {}
+local function logOnce(key, fmt, ...)
+    if logSeen[key] then return end
+    logSeen[key] = true
+    log(fmt, ...)
+end
 
 M.INSPECT_WORDS = { "inspect", "ตรวจสอบอาวุธ", "检视", "检查武器" }
 
@@ -75,8 +87,10 @@ function M.dropInspect(context)
 end
 
 function M.onFillInventoryMenu(playerNum, context, items)
-    if not M.isMeleeWeapon(firstItem(items)) then return end
-    M.dropInspect(context)
+    local item = firstItem(items)
+    if not M.isMeleeWeapon(item) then return end
+    local n = M.dropInspect(context)
+    logOnce("drop:" .. tostring(call(item, "getFullType")) .. ":" .. n, "removed %d Inspect option(s) from melee weapon %s (repeats for this item not logged)", n, tostring(call(item, "getFullType")))
 end
 
 if Events and Events.OnGameStart and not M.inspectRegistered then
@@ -85,5 +99,6 @@ if Events and Events.OnGameStart and not M.inspectRegistered then
         if M.inspectAdded then return end
         M.inspectAdded = true
         Events.OnFillInventoryObjectContextMenu.Add(M.onFillInventoryMenu)
+        log("Inspect-only-guns context menu filter added")
     end)
 end

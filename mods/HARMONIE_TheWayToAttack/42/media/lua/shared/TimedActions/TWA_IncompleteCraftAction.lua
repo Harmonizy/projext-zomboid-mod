@@ -109,3 +109,5 @@ function TWA_IncompleteCraftAction:new(character, recipeId)
     o.forceProgressBar = true
     return o
 end
+
+if TWALogAction then TWALogAction(TWA_IncompleteCraftAction, "IncompleteCraft") end

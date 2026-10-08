@@ -20,7 +20,11 @@ local V = HARMONIE_HomeMedic_BloodVision
 
 local function hook(opt, fn)
     opt.onChange = function(_, value) fn(value) end
-    opt.onChangeApply = function(_, value) fn(value) end
+    -- logged on Apply only (a slider's onChange fires every step)
+    opt.onChangeApply = function(_, value)
+        HMLog("Options", "%s applied: %s", tostring(opt.id or opt.name or "?"), tostring(value))
+        fn(value)
+    end
 end
 
 if PZAPI and PZAPI.ModOptions and not O.page then
@@ -51,6 +55,8 @@ function O.readSaved()
     A.apply()
     if O.bloodVision then V.enabled = val(O.bloodVision) ~= false end
     if O.bloodVisionStrength then V.strength = tonumber(val(O.bloodVisionStrength)) or 1 end
+    HMLog("Options", "saved options: delirium volume %s muted %s, blood vision %s strength %s, page %s",
+        tostring(A.volume), tostring(A.muted), tostring(V.enabled), tostring(V.strength), O.page and "made" or "MISSING")
 end
 O.readSaved()
 if Events and Events.OnGameStart then Events.OnGameStart.Add(O.readSaved) end

@@ -192,7 +192,7 @@ function TWASources.remove(it, inv)
         return true
     end
     local c = it:getContainer() or inv
-    if not c then return false end
+    if not c then TWALog("Sources", "could not remove %s: no container", TWALogType(it)); return false end
     c:Remove(it)
     if isServer() and sendRemoveItemFromContainer then sendRemoveItemFromContainer(c, it) end
     cache = {}

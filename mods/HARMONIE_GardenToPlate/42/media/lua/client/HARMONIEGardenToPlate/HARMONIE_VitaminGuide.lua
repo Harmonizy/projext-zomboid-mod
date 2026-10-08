@@ -48,9 +48,17 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_TopFoods"
+require "HARMONIEGardenToPlate/HARMONIE_GrowableFoods"
+require "HARMONIEGardenToPlate/HARMONIE_ExtraFoodVitamins"
+require "HARMONIEGardenToPlate/HARMONIE_SunVitaminD"
 
 GTPGuide = GTPGuide or {}
 local H = GTPGuide
+
+-- console.txt: "[HARMONIE_GTP][Guide]" lines (see HARMONIE_VitaminConfig.lua)
+local function log(...) if HARMONIE_GTP and HARMONIE_GTP.Log then HARMONIE_GTP.Log("Guide", ...) end end
+local function logOnce(key, ...) if HARMONIE_GTP and HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("Guide:" .. key, "Guide", ...) end end
+H.log, H.logOnce = log, logOnce
 
 H.HEADER_H = 40
 H.TAB_H = 58
@@ -59,9 +67,11 @@ H.GRIP = 18
 H.DEFAULT_W, H.DEFAULT_H = 940, 660
 H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
-H.TABS = { "overview", "vitamins", "foods", "other" }
+H.TABS = { "overview", "check", "vitamins", "foods", "cook", "calendar", "other" }
+H.NEAR_TILES = 3 -- how close another survivor must be to check them
 H.UNITS = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
-H.OTHER = { "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
+-- 2026-10-08: "Grow" first -- Fruit Farming (B42) by leina is built in
+H.OTHER = { "Grow", "Sun", "Dried", "Sprouts", "FishOil", "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
 
 -- green (Home Medic's palette turned leaf green)
 H.C = {
@@ -196,7 +206,8 @@ function H.foods()
             if not seen[key] then
                 seen[key] = true
                 list[#list + 1] = { fullType = fullType, name = it.name, icon = it.icon, prof = prof,
-                    canned = fullType:find("HomeCanned", 1, true) ~= nil }
+                    canned = fullType:find("HomeCanned", 1, true) ~= nil,
+                    grow = HARMONIE_GTP.IsGrowable and HARMONIE_GTP.IsGrowable(fullType) or false }
             end
         end
     end
@@ -283,12 +294,13 @@ function H.ensurePrefs()
         end
     end)
     pcall(function() reader:close() end)
+    log("prefs loaded: size %sx%s, text step %s, pinned %s", tostring(H.prefW), tostring(H.prefH), tostring(H.textStep), tostring(H.pinned))
 end
 
 function H.savePrefs()
     if not getFileWriter then return end
     local ok, writer = pcall(getFileWriter, H.PREFS_FILE, true, false)
-    if not ok or not writer then return end
+    if not ok or not writer then log("could not write %s: %s", tostring(H.PREFS_FILE), tostring(writer)); return end
     pcall(function()
         if H.prefW then writer:write("w=" .. tostring(math.floor(H.prefW)) .. "\n") end
         if H.prefH then writer:write("h=" .. tostring(math.floor(H.prefH)) .. "\n") end
@@ -354,7 +366,7 @@ end
 
 -- puts the box (and its clear button) at x, y, w on this frame; returns
 -- the height used
-function Win:placeSearch(x, y, w)
+function Win:placeSearch(x, y, w, noToggle)
     local box = self.search
     if not box then return 0 end
     if self.searchFont ~= H.small() then
@@ -362,7 +374,10 @@ function Win:placeSearch(x, y, w)
         box = self.search
     end
     local h = box.height
-    local bw = w - h - 4
+    local sf = H.small()
+    local growLabel = T("IGUI_GTPG_GrowOnly")
+    local gw = tw(sf, growLabel) + 34
+    local bw = noToggle and (w - h - 4) or (w - h - 4 - gw - 6)
     if box.x ~= x or box.y ~= y or box.width ~= bw then
         box:setX(x)
         box:setY(y)
@@ -377,7 +392,32 @@ function Win:placeSearch(x, y, w)
     local icon = texture(UI_DIR .. "icon_close.png")
     if icon then self:drawTextureScaled(icon, clear.x + 3, clear.y + 3, clear.w - 6, clear.h - 6, has and 1 or 0.35, 1, 1, 1) end
     if has then self.clicks[#self.clicks + 1] = clear end
+    if noToggle then return h end
+    -- "can grow only" toggle (2026-10-08)
+    local g = { x = clear.x + clear.w + 6, y = y, w = gw, h = h }
+    local on = self.growOnly == true
+    local over = inside(g, self:getMouseX(), self:getMouseY())
+    self:drawRect(g.x, g.y, g.w, g.h, on and 0.95 or (over and 0.85 or 0.6), C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRectBorder(g.x, g.y, g.w, g.h, on and 1 or 0.6, C.border[1], C.border[2], C.border[3])
+    local bs = h - 10
+    self:drawRectBorder(g.x + 6, g.y + 5, bs, bs, 1, C.accent[1], C.accent[2], C.accent[3])
+    if on then self:drawRect(g.x + 9, g.y + 8, bs - 6, bs - 6, 1, C.accent[1], C.accent[2], C.accent[3]) end
+    shadowText(self, growLabel, g.x + bs + 12, g.y + math.floor((h - fh(sf)) / 2), on and C.text or C.textDim, 1, sf)
+    g.action = function(win) win.growOnly = not win.growOnly; win.sortedFor = nil; log("Can grow filter: %s", tostring(win.growOnly)) end
+    self.clicks[#self.clicks + 1] = g
     return h
+end
+
+-- the search text and the "can grow only" toggle
+function Win:keep(f, q)
+    if self.growOnly and not f.grow then return false end
+    return H.matches(f, q)
+end
+
+-- a food's name with its "(can grow)" mark
+local function foodLabel(f)
+    if f.grow then return f.name .. " " .. T("IGUI_GTPG_GrowMark") end
+    return f.name
 end
 
 function Win:headerButtons()
@@ -385,7 +425,7 @@ function Win:headerButtons()
     local y = math.floor((H.HEADER_H - s) / 2)
     local x = self.width - s - 8
     local b = {}
-    for _, id in ipairs({ "close", "pin", "plus", "minus" }) do
+    for _, id in ipairs({ "close", "pin", "settings", "plus", "minus" }) do
         b[#b + 1] = { id = id, x = x, y = y, w = s, h = s }
         x = x - s - 6
     end
@@ -454,7 +494,7 @@ function Win:prerender()
         local disabled = (b.id == "plus" and H.textStep >= 2) or (b.id == "minus" and H.textStep <= 0)
         if icon then self:drawTextureScaled(icon, b.x + 3, b.y + 3, b.w - 6, b.h - 6, disabled and 0.35 or 1, 1, 1, 1) end
         if over then
-            local key = ({ close = "IGUI_GTPG_Close", pin = H.pinned and "IGUI_GTPG_Unpin" or "IGUI_GTPG_Pin",
+            local key = ({ close = "IGUI_GTPG_Close", pin = H.pinned and "IGUI_GTPG_Unpin" or "IGUI_GTPG_Pin", settings = "IGUI_GTPG_Settings",
                 plus = "IGUI_GTPG_TextBigger", minus = "IGUI_GTPG_TextSmaller" })[b.id]
             self.hoverTip = { text = T(key), x = b.x - 40, y = b.y + b.h + 4 }
         end
@@ -468,7 +508,7 @@ function Win:prerender()
     self.tabBounds = {}
     local sf = H.small()
     for _, id in ipairs(H.TABS) do
-        local active = self.tab == id
+        local active = self.tab == id and not self.settingsOpen
         local ty, tH = hh + 6, th - 12
         local bg = active and C.accentDark or C.background
         local bd = active and C.accent or C.borderDim
@@ -500,11 +540,16 @@ function Win:render()
     if not self.collapsed then
         self.clicks = {}
         self.searchShown = false
+        self.scrollBox = {}
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
-        if self.tab == "overview" then self:renderOverview(x, y, w, h)
+        if self.settingsOpen then self:renderSettings(x, y, w, h)
+        elseif self.tab == "check" then self:renderCheck(x, y, w, h)
+        elseif self.tab == "calendar" then self:renderCalendar(x, y, w, h)
+        elseif self.tab == "overview" then self:renderOverview(x, y, w, h)
         elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
         elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
+        elseif self.tab == "cook" and self.renderCook then self:renderCook(x, y, w, h)
         else self:renderOther(x, y, w, h) end
         if self.search and self.search:getIsVisible() ~= self.searchShown then self.search:setVisible(self.searchShown) end
         local C = H.C
@@ -539,12 +584,17 @@ end
 -- scrolled content: draws f(yOffset) clipped to the box, remembers how far it can scroll
 function Win:scrolled(key, x, y, w, h, f)
     local off = self.scroll[key] or 0
+    -- registered before drawing (hover checks inside f use it); the list
+    -- holds only this frame's areas -- render() empties it -- so the mouse
+    -- wheel never lands on an area of another tab / vitamin / search that
+    -- happens to sit at the same spot (2026-10-08 bug report: "บางอัน
+    -- scroll ไม่ได้")
+    self.scrollBox = self.scrollBox or {}
+    self.scrollBox[key] = { x = x, y = y, w = w, h = h }
     self:setStencilRect(x, y, w, h)
     local used = f(y - off)
     self:clearStencilRect()
     self.maxScroll[key] = math.max(0, (used or 0) - h)
-    self.scrollBox = self.scrollBox or {}
-    self.scrollBox[key] = { x = x, y = y, w = w, h = h }
     if off > self.maxScroll[key] then self.scroll[key] = self.maxScroll[key] end
     if self.maxScroll[key] > 0 then
         local C = H.C
@@ -567,6 +617,10 @@ function Win:paragraphs(text, x, y, w, col, font)
 end
 
 local function clickable(self, r) self.clicks[#self.clicks + 1] = r end
+
+-- the drawing helpers, for the tabs kept in their own files (Cooking)
+H.util = { T = T, shadowText = shadowText, fit = fit, wrap = wrap, inside = inside, clickable = clickable,
+    lineH = lineH, fh = fh, tw = tw, texture = texture, UI_DIR = UI_DIR }
 
 -- ----------------------------------------------------------------- tab 1
 function Win:renderOverview(x, y, w, h)
@@ -663,7 +717,7 @@ function Win:renderVitamins(x, y, w, h)
     local q = self:query()
     local all = knows and H.foodsWith(v) or H.foodsWithByName(v)
     local list = {}
-    for _, f in ipairs(all) do if H.matches(f, q) then list[#list + 1] = f end end
+    for _, f in ipairs(all) do if self:keep(f, q) then list[#list + 1] = f end end
     local fy = y + topH + 8
     local titleKey = knows and "IGUI_GTPG_Card_Sources" or "IGUI_GTPG_Card_SourcesLocked"
     local fx, fy2, fw, fh2 = self:drawCard(rx, fy, rw, h - topH - 8, T(titleKey, H.vitName(v), tostring(#list)))
@@ -691,7 +745,7 @@ function Win:renderVitamins(x, y, w, h)
             local gain = "+" .. H.fmt1(H.reserveOf(v, f.prof[v]))
             local right = knows and gain or ""
             if knows then shadowText(self, right, ix + colW - tw(sf, right) - 4, yy + 1, C.accent, 1, sf) end
-            shadowText(self, fit(f.name, ix + colW - tw(sf, right) - 14 - tx, sf), tx, yy + 1, f.canned and C.warn or C.text, 1, sf)
+            shadowText(self, fit(foodLabel(f), ix + colW - tw(sf, right) - 14 - tx, sf), tx, yy + 1, f.canned and C.warn or C.text, 1, sf)
             if knows then self:drawBar(tx, yy + lh + 2, colW - (tx - ix) - 8, 4, f.prof[v] / top, C.accent) end
             local r = { x = ix, y = yy, w = colW, h = itemH }
             if knows and inside(r, mx, my) and inside(self.scrollBox and self.scrollBox["src" .. v .. "|" .. q], mx, my) then
@@ -751,12 +805,12 @@ function Win:renderFoods(x, y, w, h)
     -- sorted / filtered copy: with the knowledge a vitamin column sorts
     -- richest first; without it, it keeps only the foods with that vitamin, A-Z
     local key = self.sortKey
-    local sig = key .. "|" .. q .. "|" .. tostring(knows)
+    local sig = key .. "|" .. q .. "|" .. tostring(knows) .. "|" .. tostring(self.growOnly)
     if self.sortedFor ~= sig then
         self.sortedFor = sig
         self.sorted = {}
         for _, f in ipairs(foods) do
-            if H.matches(f, q) and (key == "name" or knows or (f.prof[key] or 0) > 0) then
+            if self:keep(f, q) and (key == "name" or knows or (f.prof[key] or 0) > 0) then
                 self.sorted[#self.sorted + 1] = f
             end
         end
@@ -785,7 +839,7 @@ function Win:renderFoods(x, y, w, h)
         for i, f in ipairs(self.sorted) do
             if i % 2 == 0 then self:drawRect(cx, yy, cw - 8, rowH, 0.35, 0.05, 0.16, 0.07) end
             if f.icon then self:drawTextureScaled(f.icon, cx + 2, yy + 1, rowH - 2, rowH - 2, 1, 1, 1, 1) end
-            shadowText(self, fit(f.name, nameW - rowH - 10, sf), cx + rowH + 6, yy + math.floor((rowH - fh(sf)) / 2), f.canned and C.warn or C.text, 1, sf)
+            shadowText(self, fit(foodLabel(f), nameW - rowH - 10, sf), cx + rowH + 6, yy + math.floor((rowH - fh(sf)) / 2), f.canned and C.warn or C.text, 1, sf)
             for j, v in ipairs(HARMONIE_GTP.Vitamins) do
                 local amt = f.prof[v]
                 if amt and amt > 0 then
@@ -812,6 +866,11 @@ end
 -- each section: an item picture, a title, wrapped text, and (for recipes)
 -- a row of the ingredients' pictures
 local OTHER_ITEMS = {
+    Grow = { "Base.Apple" },
+    Sun = { "Base.Hat_StrawHat" },
+    Dried = { "HARMONIEGardenToPlate.DriedApple" },
+    Sprouts = { "HARMONIEGardenToPlate.BeanSprouts" },
+    FishOil = { "HARMONIEGardenToPlate.FishLiverOil" },
     Pills = { "Base.PillsVitamins" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Salt" },
     Cooking = { "Base.PotOfStew", "Base.Pot" },
@@ -820,6 +879,10 @@ local OTHER_ITEMS = {
     Tips = { "Base.Salmon", "Base.Egg", "Base.Orange", "Base.Spinach" },
 }
 local RECIPE_ROWS = {
+    Dried = { "Base.Apple", "Base.Pear", "Base.Peach", "Base.Mango", "Base.Banana", "Base.Cherry", "Base.Grapes", "Base.Pineapple" },
+    Sprouts = { "Base.EmptyJar", "Base.DriedLentils", "Base.SoybeansSeed", "HARMONIEGardenToPlate.SproutingJar", "HARMONIEGardenToPlate.BeanSproutsJar", "HARMONIEGardenToPlate.BeanSprouts" },
+    FishOil = { "Base.Pot", "Base.EmptyJar", "Base.FishGuts", "Base.FishGuts", "Base.FishFillet", "HARMONIEGardenToPlate.FishLiverOil" },
+    Grow = { "Base.KitchenKnife", "Base.Apple", "FruitFarming.AppleSeed", "Base.HandShovel", "Base.WateredCan" },
     Pills = { "Base.MortarPestle", "Base.EmptyJar", "Base.Carrots", "Base.Egg", "Base.Tomato", "Base.Salmon", "Base.Peanuts", "Base.Broccoli", "Base.Salt" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Salt" },
 }
@@ -838,14 +901,32 @@ function Win:renderOther(x, y, w, h)
             local tx = cx + isz + 10
             shadowText(self, T("IGUI_GTPG_Other_" .. key .. "_Title"), tx, yy, C.accent, 1, mf)
             local ty = yy + lineH(mf) + 2
-            ty = ty + self:paragraphs(T("IGUI_GTPG_Other_" .. key .. "_Body"), tx, ty, cw - (tx - cx) - 12, C.text, sf)
+            local body
+            if key == "Sun" and HARMONIE_GTP.SunD then
+                -- the live sandbox numbers
+                body = T("IGUI_GTPG_Other_Sun_Body", H.fmt1(HARMONIE_GTP.SunD.perHour()), H.fmt1(HARMONIE_GTP.SunD.maxPerDay()))
+            else
+                body = T("IGUI_GTPG_Other_" .. key .. "_Body")
+            end
+            ty = ty + self:paragraphs(body, tx, ty, cw - (tx - cx) - 12, C.text, sf)
             local row = RECIPE_ROWS[key]
             if row then
                 ty = ty + 4
                 local ix = tx
                 local s = math.max(28, lh + 10)
-                for _, ft in ipairs(row) do
-                    local it = H.item(ft)
+                local list = row
+                if key == "Grow" then
+                    list = {}
+                    for _, ft in ipairs(row) do list[#list + 1] = ft end
+                    list[#list + 1] = "|"
+                    for _, c in ipairs(HARMONIE_GTP.FruitFarmingCrops or {}) do list[#list + 1] = c.food end
+                end
+                for _, ft in ipairs(list) do
+                    local it = ft ~= "|" and H.item(ft)
+                    if ft == "|" or ix + s > cx + cw - 10 then
+                        ix = tx
+                        ty = ty + s + 4
+                    end
                     if it and it.icon then
                         self:drawRect(ix, ty, s, s, 0.6, 0.04, 0.14, 0.06)
                         self:drawTextureScaled(it.icon, ix + 2, ty + 2, s - 4, s - 4, 1, 1, 1, 1)
@@ -865,6 +946,418 @@ function Win:renderOther(x, y, w, h)
     end)
 end
 
+-- ----------------------------------------------------------------- tab 2: check
+-- Request 2026-10-08 ("อยากให้มีแท็บสำหรับตรวจสอบและดูโภชนาการคนอื่นด้วย
+-- การดูตัวเองและคนอื่นสามารถดูได้แต่ดูได้จำกัด และรายละเอียดมากขึ้นเมื่อเลเวล
+-- ถึงขั้น"): yourself or a survivor within H.NEAR_TILES tiles. What you see
+-- grows with the viewer's First Aid (Perks.Doctor):
+--   yourself  0: band + banked pause days   3: + Reserve number and bar
+--             5: + deficiency active / days in deficiency
+--   others    0: only how they look (well / unwell)   3: band per vitamin
+--             5 (assessmentRequiredFirstAid): Reserve, pause days, deficiency
+-- Another player's vitamins are READ ONLY (VitData.Peek: their ModData,
+-- or in MP the copy the server sends; never VitData.Get).
+H.CHECK_SELF = { 3, 5 }
+function H.checkOther() return { 3, tonumber(cfg().assessmentRequiredFirstAid) or 5 } end
+
+function H.firstAid(player)
+    local ok, v = pcall(function() return player:getPerkLevel(Perks.Doctor) end)
+    return ok and (tonumber(v) or 0) or 0
+end
+
+function H.readStore(target)
+    -- 0.11.1: in MP another player's store is asked from the server
+    local VD = HARMONIE_GTP.VitData
+    if VD and VD.Peek then return VD.Peek(target) end
+    local ok, md = pcall(function() return target:getModData() end)
+    local st = ok and md and md.HARMONIE_Vitamins
+    return type(st) == "table" and st or nil
+end
+
+local function playerName(p)
+    local ok, n = pcall(function() return p:getDisplayName() end)
+    if ok and n and n ~= "" then return n end
+    local ok2, u = pcall(function() return p:getUsername() end)
+    return ok2 and u or "?"
+end
+
+local function tiles(a, b)
+    local ok, d = pcall(function() return math.abs(a:getX() - b:getX()) + math.abs(a:getY() - b:getY()) end)
+    return ok and d or 999
+end
+
+-- yourself first, then everyone close enough (split screen and online)
+function H.nearby(player)
+    local out, seen = { player }, { [player] = true }
+    local function add(p)
+        if not p or seen[p] then return end
+        local okD, dead = pcall(function() return p:isDead() end)
+        if okD and dead then return end
+        if tiles(player, p) <= H.NEAR_TILES then
+            seen[p] = true
+            out[#out + 1] = p
+        end
+    end
+    local ok, list = pcall(function() return IsoPlayer.getPlayers() end)
+    if ok and list then for i = 0, list:size() - 1 do add(list:get(i)) end end
+    if isClient and isClient() and getOnlinePlayers then
+        local ok2, online = pcall(getOnlinePlayers)
+        if ok2 and online then for i = 0, online:size() - 1 do add(online:get(i)) end end
+    end
+    return out
+end
+
+function Win:checkTargets()
+    local now = getTimestampMs and getTimestampMs() or 0
+    if not self.targetsAt or now - self.targetsAt > 1000 or not self.targets then
+        self.targetsAt = now
+        self.targets = self.player and H.nearby(self.player) or {}
+    end
+    local found = false
+    for _, p in ipairs(self.targets) do if p == self.checkTarget then found = true end end
+    if not found then self.checkTarget = self.player end
+    return self.targets
+end
+
+function Win:renderCheck(x, y, w, h)
+    local C = H.C
+    local sf, mf = H.small(), H.medium()
+    local lh = lineH(sf)
+    local mx, my = self:getMouseX(), self:getMouseY()
+    local leftW = math.min(300, math.floor(w * 0.32))
+    local targets = self:checkTargets()
+    local listH = math.min(math.floor(h * 0.45), H.CARD_T + 18 + math.max(3, #targets) * (lh + 12) + lh * 2)
+    -- who
+    local cx, cy, cw = self:drawCard(x, y, leftW, listH, T("IGUI_GTPG_Card_Who"))
+    for _, p in ipairs(targets) do
+        local r = { x = cx, y = cy, w = cw, h = lh + 8 }
+        if r.y + r.h > y + listH - lh - 8 then break end
+        local active = p == self.checkTarget
+        if active or inside(r, mx, my) then self:drawRect(r.x, r.y, r.w, r.h, active and 0.9 or 0.5, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
+        if active then self:drawRect(r.x, r.y, 3, r.h, 1, C.accent[1], C.accent[2], C.accent[3]) end
+        local label = p == self.player and T("IGUI_GTPG_You", playerName(p)) or playerName(p)
+        shadowText(self, fit(label, cw - 16, sf), r.x + 10, r.y + 4, active and C.text or C.textDim, 1, sf)
+        r.action = function(win)
+            if win.checkTarget ~= p then log("check target: %s (First Aid %d)", playerName(p), H.firstAid(win.player)) end
+            win.checkTarget = p
+        end
+        clickable(self, r)
+        cy = cy + r.h + 2
+    end
+    self:paragraphs(T("IGUI_GTPG_WhoHint", tostring(H.NEAR_TILES)), cx, y + listH - lh * 2 - 4, cw - 4, C.textDim, sf)
+    -- what your First Aid lets you see
+    local fa = H.firstAid(self.player)
+    local target = self.checkTarget or self.player
+    local isSelf = target == self.player
+    local levels = isSelf and H.CHECK_SELF or H.checkOther()
+    local ly = y + listH + 8
+    local lx, ly2, lw = self:drawCard(x, ly, leftW, h - listH - 8, T("IGUI_GTPG_Card_Detail", tostring(fa)))
+    local who = isSelf and "Self" or "Other"
+    local steps = { { 0, T("IGUI_GTPG_Detail" .. who .. "0") }, { levels[1], T("IGUI_GTPG_Detail" .. who .. "1") }, { levels[2], T("IGUI_GTPG_Detail" .. who .. "2") } }
+    self:scrolled("detail" .. who, lx, ly2, lw, y + h - 6 - ly2, function(yy)
+        local start = yy
+        for _, st in ipairs(steps) do
+            local have = fa >= st[1]
+            local head = T("IGUI_GTPG_DetailLevel", tostring(st[1])) .. (have and ("  " .. T("IGUI_GTPG_Unlocked")) or "")
+            shadowText(self, head, lx, yy, have and C.good or C.textDim, 1, sf)
+            yy = yy + lh
+            yy = yy + self:paragraphs(st[2], lx + 10, yy, lw - 18, have and C.text or C.textDim, sf) + 6
+        end
+        return yy - start
+    end)
+    -- the result
+    local rx = x + leftW + 8
+    local rw = w - leftW - 8
+    local tx, ty, tw2, th2 = self:drawCard(rx, y, rw, h, T("IGUI_GTPG_Card_Result", playerName(target)))
+    local store = H.readStore(target)
+    if not store then
+        logOnce("nodata:" .. playerName(target), "check: no vitamin data for %s yet (MP: asked the server)", playerName(target))
+        self:paragraphs(T("IGUI_GTPG_NoData"), tx, ty, tw2 - 8, C.textDim, sf)
+        return
+    end
+    local c = cfg()
+    local function bandOfValue(v) return HARMONIE_GTP.GetBand(tonumber(v) or 0) end
+    if not isSelf and fa < levels[1] then
+        -- only how they look
+        local unwell = false
+        for _, v in ipairs(HARMONIE_GTP.Vitamins) do
+            local e = store[v]
+            if type(e) == "table" and e.afflicted and (tonumber(e.pauseDays) or 0) < 1 then unwell = true end
+        end
+        shadowText(self, T(unwell and "IGUI_GTPG_LooksUnwell" or "IGUI_GTPG_LooksWell"), tx, ty, unwell and C.warn or C.good, 1, mf)
+        self:paragraphs(T("IGUI_GTPG_LooksHint", tostring(levels[1])), tx, ty + lineH(mf) + 6, tw2 - 8, C.textDim, sf)
+        return
+    end
+    local showNum = fa >= levels[isSelf and 1 or 2]
+    local showMore = fa >= levels[2]
+    local rowH = lh * (showMore and 3 or 2) + 14
+    self:scrolled("result", tx, ty, tw2, th2, function(yy)
+        local start = yy
+        for _, v in ipairs(HARMONIE_GTP.Vitamins) do
+            local e = store[v]
+            if type(e) == "table" then
+                local value = tonumber(e.value) or 0
+                local band = bandOfValue(value)
+                local col = C[BAND_COL[band]]
+                self:drawRect(tx, yy, tw2 - 8, rowH - 4, 0.45, 0.03, 0.12, 0.05)
+                self:drawRect(tx, yy, 3, rowH - 4, 1, col[1], col[2], col[3])
+                local icon = H.vitIcon(v)
+                local isz = math.min(rowH - 12, 36)
+                if icon then self:drawTextureScaled(icon, tx + 8, yy + 4, isz, isz, 1, 1, 1, 1) end
+                local nx = tx + isz + 16
+                shadowText(self, H.vitName(v), nx, yy + 4, C.text, 1, sf)
+                local bt = T(BAND_KEY[band])
+                shadowText(self, bt, tx + tw2 - 16 - tw(sf, bt), yy + 4, col, 1, sf)
+                local line2 = {}
+                if isSelf or showMore then
+                    local pd = math.floor(tonumber(e.pauseDays) or 0)
+                    line2[#line2 + 1] = T("IGUI_GTPG_PauseDays", tostring(pd))
+                end
+                if showNum then
+                    line2[#line2 + 1] = T("IGUI_GTPG_ReserveOf", tostring(math.floor(value + 0.5)), tostring(c.maxValue))
+                    self:drawBar(nx, yy + lh * 2 + 6, tw2 - (nx - tx) - 20, 5, value / (tonumber(c.maxValue) or 100), col)
+                end
+                if #line2 > 0 then shadowText(self, fit(table.concat(line2, "   "), tw2 - (nx - tx) - 16, sf), nx, yy + 4 + lh, C.textDim, 1, sf) end
+                if showMore then
+                    local s
+                    if e.afflicted then
+                        s = T((tonumber(e.pauseDays) or 0) >= 1 and "IGUI_GTPG_DeficiencyQuiet" or "IGUI_GTPG_DeficiencyActive",
+                            tostring(math.floor(tonumber(e.afflictedDays) or 0)), tostring(c.sufficientThreshold))
+                    else
+                        s = T("IGUI_GTPG_NoDeficiency")
+                    end
+                    shadowText(self, fit(s, tw2 - (nx - tx) - 16, sf), nx, yy + 12 + lh * 2, e.afflicted and C.bad or C.textDim, 1, sf)
+                end
+                local r = { x = tx, y = yy, w = tw2 - 8, h = rowH - 4 }
+                if inside(r, mx, my) and inside(self.scrollBox and self.scrollBox.result, mx, my) then
+                    self.hoverTip = { text = T("IGUI_GTPG_Vit_" .. v .. "_Effect"), x = nx, y = yy + rowH }
+                end
+                yy = yy + rowH
+            end
+        end
+        return yy - start
+    end)
+end
+
+-- ----------------------------------------------------------------- settings
+-- 2026-10-08 ("มีให้ตั้งค่าได้ในบนแท็บ"): the gear in the header opens this
+-- page (the tabs stay; clicking one goes back). The same options as
+-- Options > Mods, plus this window's own text size / pin / size.
+H.KEY_ID = "OpenVitaminGuideKey"
+
+function H.keyName(k)
+    if not k or k == 0 then return T("IGUI_GTPG_KeyNone") end
+    local ok, n = pcall(getKeyName, k)
+    if ok and n and n ~= "" then return n end
+    return tostring(k)
+end
+
+function H.currentKey()
+    local K = HARMONIE_GTP.Keybinds
+    return K and K.GetKey and K.GetKey(H.KEY_ID) or 0
+end
+
+function H.setKey(k)
+    local o = H.option(H.KEY_ID)
+    if not o then return end
+    o.key = k
+    log("open-guide key set to %s (%s)", tostring(k), H.keyName and H.keyName(k) or "?")
+    if o.setValue then pcall(o.setValue, o, k) end
+    if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
+end
+
+function H.setFollow(v)
+    local o = H.option("GuideWithAssessment")
+    log("open with the assessment window: %s%s", tostring(v), o and "" or " (option not found!)")
+    if o and o.setValue then pcall(o.setValue, o, v) end
+    if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
+end
+
+-- the next key pressed becomes the guide's key (Esc cancels); the hotkeys
+-- stay quiet meanwhile and for a moment after (H.typing)
+function H.onKeyCapture(key)
+    if not H.capturing then return end
+    H.capturing = false
+    H.quietUntil = (getTimestampMs and getTimestampMs() or 0) + 400
+    if key and key ~= 1 then H.setKey(key) else log("key capture cancelled (Esc)") end
+end
+if Events and Events.OnKeyPressed then Events.OnKeyPressed.Add(H.onKeyCapture) end
+
+function Win:settingButton(x, y, label, action, wide)
+    local C = H.C
+    local sf = H.small()
+    local bw = wide or (tw(sf, label) + 24)
+    local bh = lineH(sf) + 8
+    local r = { x = x, y = y, w = bw, h = bh, action = action }
+    local over = inside(r, self:getMouseX(), self:getMouseY())
+    self:drawRect(x, y, bw, bh, over and 0.95 or 0.8, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRectBorder(x, y, bw, bh, 1, C.border[1], C.border[2], C.border[3])
+    shadowText(self, label, x + math.floor((bw - tw(sf, label)) / 2), y + 4, C.text, 1, sf)
+    self.clicks[#self.clicks + 1] = r
+    return bw
+end
+
+function Win:renderSettings(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPG_Settings"), texture(UI_DIR .. "icon_settings.png"))
+    local rowH = lh * 2 + 14
+    local valX = cx + math.floor(cw * 0.55)
+    local function row(label, tip)
+        shadowText(self, fit(label, valX - cx - 12, sf), cx, cy + 4, C.text, 1, sf)
+        if tip then shadowText(self, fit(tip, valX - cx - 12, sf), cx, cy + 4 + lh, C.textDim, 1, sf) end
+    end
+    -- key
+    row(T("IGUI_GTPG_KeybindGuide"), T("IGUI_GTPG_SetKeyTip"))
+    local kx = valX
+    local keyText = H.capturing and T("IGUI_GTPG_PressKey") or H.keyName(H.currentKey())
+    shadowText(self, keyText, kx, cy + 8, H.capturing and C.warn or C.accent, 1, sf)
+    kx = kx + math.max(tw(sf, keyText), 90) + 12
+    kx = kx + self:settingButton(kx, cy + 4, T("IGUI_GTPG_SetKeyChange"), function() H.capturing = true; log("waiting for a key press to set the open-guide key") end) + 6
+    self:settingButton(kx, cy + 4, T("IGUI_GTPG_SetKeyClear"), function() H.capturing = false; H.setKey(0) end)
+    cy = cy + rowH
+    -- open with the assessment
+    row(T("IGUI_GTPG_OptFollow"), T("IGUI_GTPG_OptFollow_tt"))
+    local follow = H.followEnabled()
+    self:settingButton(valX, cy + 4, follow and T("IGUI_GTPG_On") or T("IGUI_GTPG_Off"), function() H.setFollow(not H.followEnabled()) end, 90)
+    cy = cy + rowH
+    -- text size
+    row(T("IGUI_GTPG_SetText"), nil)
+    local tx = valX + self:settingButton(valX, cy + 4, "A-", function() H.stepText(-1) end, 44) + 8
+    local sizeName = T("IGUI_GTPG_TextSize" .. tostring(H.textStep + 1))
+    shadowText(self, sizeName, tx, cy + 8, C.accent, 1, sf)
+    self:settingButton(tx + math.max(80, tw(sf, sizeName) + 12), cy + 4, "A+", function() H.stepText(1) end, 44)
+    cy = cy + rowH
+    -- pin
+    row(T("IGUI_GTPG_SetPin"), T("IGUI_GTPG_Unpin"))
+    self:settingButton(valX, cy + 4, H.pinned and T("IGUI_GTPG_On") or T("IGUI_GTPG_Off"), function(win) win:togglePin() end, 90)
+    cy = cy + rowH
+    -- window size
+    row(T("IGUI_GTPG_SetSize"), T("IGUI_GTPG_SetSizeTip"))
+    self:settingButton(valX, cy + 4, T("IGUI_GTPG_SetSizeReset"), function(win)
+        log("window size reset to %dx%d", H.DEFAULT_W, H.DEFAULT_H)
+        win:setWidth(H.DEFAULT_W); win:setHeight(H.DEFAULT_H); H.prefW, H.prefH = nil, nil; H.savePrefs()
+    end)
+    cy = cy + rowH + 6
+    self:paragraphs(T("IGUI_GTPG_SetNote"), cx, cy, cw - 8, C.textDim, sf)
+end
+
+-- ----------------------------------------------------------------- calendar tab
+-- 2026-10-08 (from the suggestions list: "ปฏิทินฤดูปลูก"): a crop x month
+-- grid -- best month to sow, other sowing months, risky, bad (frost / too
+-- cold), the rest neutral -- with this month marked. Read from the live
+-- farming config (farming_vegetableconf.props: sowMonth / bestMonth /
+-- riskMonth / badMonth) when it is loaded -- single player and the host --
+-- else the Fruit Farming crops' months kept in HARMONIE_GrowableFoods.lua
+-- (a multiplayer client does not load server/ files).
+local function set(list)
+    local s = {}
+    for _, m in ipairs(list or {}) do s[tonumber(m) or m] = true end
+    return s
+end
+
+local function cropName(key)
+    local k = "Farming_" .. key
+    local s = T(k)
+    if s ~= k then return s end
+    return (tostring(key):gsub("^FF", ""))
+end
+
+function H.calendarRows()
+    if H.calCache then return H.calCache end
+    local rows = {}
+    local conf = farming_vegetableconf and type(farming_vegetableconf.props) == "table" and farming_vegetableconf.props
+    if conf then
+        for key, p in pairs(conf) do
+            if type(p) == "table" and type(p.sowMonth) == "table" and #p.sowMonth > 0 then
+                local icon = p.icon and getTexture(p.icon) or nil
+                if not icon and p.vegetableName then local it = H.item(p.vegetableName); icon = it and it.icon end
+                rows[#rows + 1] = { key = key, name = cropName(key), icon = icon, food = p.vegetableName,
+                    sow = set(p.sowMonth), best = set(p.bestMonth), risk = set(p.riskMonth), bad = set(p.badMonth) }
+            end
+        end
+        H.calFromConf = true
+    else
+        for _, c in ipairs(HARMONIE_GTP.FruitFarmingCrops or {}) do
+            if c.sow then
+                local it = H.item(c.food)
+                rows[#rows + 1] = { key = c.crop, name = cropName(c.crop), icon = it and it.icon, food = c.food,
+                    sow = set(c.sow), best = set(c.best), risk = set(c.risk), bad = set(c.bad) }
+            end
+        end
+        H.calFromConf = false
+    end
+    table.sort(rows, function(a, b) return a.name < b.name end)
+    H.calCache = rows
+    return rows
+end
+
+function Win:renderCalendar(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local rows = H.calendarRows()
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPG_Card_Calendar", tostring(#rows)))
+    -- legend
+    local lx = cx
+    for _, l in ipairs({ { "best", C.good, 1 }, { "sow", C.good, 0.45 }, { "risk", C.warn, 0.7 }, { "bad", C.bad, 0.45 } }) do
+        self:drawRect(lx, cy + 3, lh - 4, lh - 4, l[3], l[2][1], l[2][2], l[2][3])
+        local label = T("IGUI_GTPG_Cal_" .. l[1])
+        shadowText(self, label, lx + lh, cy + 1, C.text, 1, sf)
+        lx = lx + lh + tw(sf, label) + 16
+    end
+    cy = cy + lh + 6
+    if not H.calFromConf then
+        cy = cy + self:paragraphs(T("IGUI_GTPG_CalOnlyFF"), cx, cy, cw - 8, C.textDim, sf) + 4
+    end
+    local nameW = math.min(240, math.floor(cw * 0.3))
+    local colW = math.floor((cw - 8 - nameW) / 12)
+    local gt = getGameTime and getGameTime()
+    local nowMonth = gt and (gt:getMonth() + 1) or 0
+    local hh = lh + 6
+    for m = 1, 12 do
+        local mx0 = cx + nameW + (m - 1) * colW
+        if m == nowMonth then self:drawRect(mx0, cy, colW - 2, hh, 0.9, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
+        local s = T("IGUI_GTPG_Month" .. m)
+        shadowText(self, s, mx0 + math.floor((colW - tw(sf, s)) / 2), cy + 3, m == nowMonth and C.accent or C.textDim, 1, sf)
+    end
+    shadowText(self, T("IGUI_GTPG_Cal_Crop"), cx + 4, cy + 3, C.textDim, 1, sf)
+    cy = cy + hh + 2
+    local rowH = math.max(24, lh + 6)
+    local mx, my = self:getMouseX(), self:getMouseY()
+    self:scrolled("calendar", cx, cy, cw, y + h - 6 - cy, function(yy)
+        local start = yy
+        for i, r in ipairs(rows) do
+            if i % 2 == 0 then self:drawRect(cx, yy, cw - 8, rowH, 0.3, 0.05, 0.16, 0.07) end
+            if r.icon then self:drawTextureScaled(r.icon, cx + 2, yy + 1, rowH - 2, rowH - 2, 1, 1, 1, 1) end
+            shadowText(self, fit(r.name, nameW - rowH - 10, sf), cx + rowH + 6, yy + math.floor((rowH - fh(sf)) / 2), C.text, 1, sf)
+            for m = 1, 12 do
+                local bx = cx + nameW + (m - 1) * colW
+                local col, a
+                if r.best[m] then col, a = C.good, 1
+                elseif r.sow[m] then col, a = C.good, 0.45
+                elseif r.risk[m] then col, a = C.warn, 0.7
+                elseif r.bad[m] then col, a = C.bad, 0.45 end
+                if col then self:drawRect(bx + 1, yy + 3, colW - 4, rowH - 6, a, col[1], col[2], col[3]) end
+                if m == nowMonth then self:drawRectBorder(bx, yy, colW - 2, rowH, 0.6, C.accent[1], C.accent[2], C.accent[3]) end
+            end
+            local rr = { x = cx, y = yy, w = cw - 8, h = rowH }
+            if inside(rr, mx, my) and inside(self.scrollBox and self.scrollBox.calendar, mx, my) and r.food then
+                local f = nil
+                for _, ff in ipairs(H.foods()) do if ff.fullType == r.food then f = ff end end
+                if f then
+                    local parts = {}
+                    for _, v in ipairs(HARMONIE_GTP.Vitamins) do if (f.prof[v] or 0) > 0 then parts[#parts + 1] = v end end
+                    if #parts > 0 then self.hoverTip = { text = T("IGUI_GTPG_CalVitamins", r.name, table.concat(parts, ", ")), x = cx + 40, y = yy + rowH } end
+                end
+            end
+            yy = yy + rowH
+        end
+        return yy - start
+    end)
+end
+
 -- ----------------------------------------------------------------- mouse
 function Win:onMouseDown(x, y)
     if y < H.HEADER_H then
@@ -873,6 +1366,7 @@ function Win:onMouseDown(x, y)
                 getSoundManager():playUISound("UISelectListItem")
                 if b.id == "close" then H.close()
                 elseif b.id == "pin" then self:togglePin()
+                elseif b.id == "settings" then self.settingsOpen = not self.settingsOpen; H.capturing = false
                 elseif b.id == "plus" then H.stepText(1)
                 elseif b.id == "minus" then H.stepText(-1) end
                 return true
@@ -891,14 +1385,19 @@ function Win:onMouseDown(x, y)
     for _, t in ipairs(self.tabBounds or {}) do
         if inside(t, x, y) then
             getSoundManager():playUISound("UISelectListItem")
+            if self.tab ~= t.id then log("tab %s -> %s", tostring(self.tab), tostring(t.id)) end
             self.tab = t.id
+            self.settingsOpen = false
+            H.capturing = false
             return true
         end
     end
     for _, r in ipairs(self.clicks or {}) do
         if inside(r, x, y) then
             getSoundManager():playUISound("UISelectListItem")
-            if r.clear then
+            if r.action then
+                r.action(self)
+            elseif r.clear then
                 if self.search then self.search:setText("") end
             elseif r.vit then
                 self.vit = r.vit
@@ -972,6 +1471,7 @@ end
 -- ----------------------------------------------------------------- pin
 function Win:togglePin()
     H.pinned = not H.pinned
+    log("pinned: %s", tostring(H.pinned))
     self.leaveAt = nil
     if H.pinned then self:expand() end
     H.savePrefs()
@@ -1013,6 +1513,7 @@ end
 -- ----------------------------------------------------------------- open / close
 function H.stepText(d)
     H.textStep = math.max(0, math.min(2, H.textStep + d))
+    log("text size step: %d", H.textStep)
     H.savePrefs()
 end
 
@@ -1034,7 +1535,8 @@ end
 function H.open(player, beside)
     H.ensurePrefs()
     player = player or getPlayer()
-    if not player then return end
+    if not player then log("open: no player, not opened"); return end
+    log("open (%s), %s", beside and "beside the assessment window" or "key/button", H.knows and (H.knows(player) and "player knows nutrition" or "player does NOT know nutrition yet (locked parts)") or "")
     local sw, sh = getCore():getScreenWidth(), getCore():getScreenHeight()
     local w = math.max(H.MIN_W, math.min(sw - 20, H.prefW or H.DEFAULT_W))
     local h = math.max(H.MIN_H, math.min(sh - 20, H.prefH or H.DEFAULT_H))
@@ -1062,6 +1564,7 @@ end
 function H.close()
     local win = H.window
     if not win then return end
+    log("close")
     win:setVisible(false)
     win:removeFromUIManager()
     win.inManager = false
@@ -1069,6 +1572,8 @@ end
 
 -- true while the player types in the search box (hotkeys stay quiet)
 function H.typing()
+    if H.capturing then return true end
+    if H.quietUntil and (getTimestampMs and getTimestampMs() or 0) < H.quietUntil then return true end
     local box = H.isOpen() and H.window.search
     if not box or not box:getIsVisible() then return false end
     local ok, f = pcall(function() return box:isFocused() end)

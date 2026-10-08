@@ -80,7 +80,8 @@ local function entryFor(fullType)
 end
 
 function TWAGemReveal.open(player, recipe, token)
-    if TWAMinigame and TWAMinigame.instance then return end
+    if TWAMinigame and TWAMinigame.instance then TWALog("Reveal", "gem reveal skipped: a minigame window is open"); return end
+    TWALog("Reveal", "gem reveal for %s", tostring(recipe and recipe.id))
     local ui = TWAGemReveal:openFor(player, nil, recipe, nil, nil)
     ui.token = token
     return ui
@@ -163,6 +164,7 @@ function TWAGemReveal:lookForItem()
     if it then
         self.found = it
         self.result = self:entry(it:getFullType())
+        TWALog("Reveal", "rolled gem found: %s", TWALogType(it))
     end
 end
 

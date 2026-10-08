@@ -57,3 +57,59 @@ option HARMONIE_GardenToPlate.SymptomReminderHours
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_SymptomReminderHours,
 }
+
+option HARMONIE_GardenToPlate.SunVitaminD
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SunVitaminD,
+}
+
+option HARMONIE_GardenToPlate.SunVitaminDPerHour
+{
+    type = double,
+    default = 0.5,
+    min = 0.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SunVitaminDPerHour,
+}
+
+option HARMONIE_GardenToPlate.SunVitaminDMaxPerDay
+{
+    type = double,
+    default = 3.0,
+    min = 0.0,
+    max = 20.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SunVitaminDMaxPerDay,
+}
+
+option HARMONIE_GardenToPlate.CookMinigames
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookMinigames,
+}
+
+option HARMONIE_GardenToPlate.CookQualityEffect
+{
+    type = double,
+    default = 1.0,
+    min = 0.0,
+    max = 3.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookQualityEffect,
+}
+
+option HARMONIE_GardenToPlate.CookXPMultiplier
+{
+    type = double,
+    default = 1.0,
+    min = 0.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookXPMultiplier,
+}

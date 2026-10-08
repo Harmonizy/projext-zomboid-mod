@@ -46,6 +46,7 @@ function S.send(zed, amount, crit)
     if not (isClient and isClient()) or not TWAConfig.on("ShareDamageNumbers") or not TWAConfig.on("DamageNumbers") then return end
     local me = getSpecificPlayer and getSpecificPlayer(0)
     if not me or not zed then return end
+    TWALogOnce("dmgsend", "Damage", "sharing my damage numbers with nearby players (first hit; later ones not logged)")
     sendClientCommand(me, S.NET, S.CMD, {
         id = call(zed, "getOnlineID"),
         x = call(zed, "getX"), y = call(zed, "getY"), z = call(zed, "getZ"),
@@ -69,11 +70,21 @@ function S.relay(sender, args)
     if not TWAConfig.on("ShareDamageNumbers") or not TWAConfig.on("DamageNumbers") then return 0 end
     if not sender or call(sender, "isDead") or type(args) ~= "table" then return 0 end
     local a, x, y, z = finite(args.a), finite(args.x), finite(args.y), finite(args.z)
-    if not (a and x and y and z) or a <= 0 or a > S.MAX_AMOUNT then return 0 end
+    local who = TWALogName(sender)
+    if not (a and x and y and z) or a <= 0 or a > S.MAX_AMOUNT then
+        TWALogOnce("dmgbad:" .. who, "Damage", "dropped a damage number from %s: bad amount/position (a=%s) -- repeats not logged", who, tostring(args.a))
+        return 0
+    end
     local px, py, pz = finite(call(sender, "getX")), finite(call(sender, "getY")), finite(call(sender, "getZ"))
     if not (px and py and pz) then return 0 end
-    if math.abs(z - pz) > 1 or (x - px) ^ 2 + (y - py) ^ 2 > S.REACH * S.REACH then return 0 end
-    if not allowed(sender) then return 0 end
+    if math.abs(z - pz) > 1 or (x - px) ^ 2 + (y - py) ^ 2 > S.REACH * S.REACH then
+        TWALogOnce("dmgfar:" .. who, "Damage", "dropped a damage number from %s: too far from them -- repeats not logged", who)
+        return 0
+    end
+    if not allowed(sender) then
+        TWALogOnce("dmgrate:" .. who, "Damage", "dropped damage numbers from %s: over %d a second -- repeats not logged", who, S.RATE_PER_SEC)
+        return 0
+    end
     local out = { id = tonumber(args.id), x = x, y = y, z = z, a = a, c = args.c == true }
     local range = TWAConfig.num("DamageNumberRange", 1)
     local online = getOnlinePlayers and getOnlinePlayers()
@@ -88,6 +99,7 @@ function S.relay(sender, args)
             end
         end
     end
+    TWALogOnce("dmgrelay:" .. who, "Damage", "relaying %s's damage numbers (first one went to %d players)", who, sent)
     return sent
 end
 

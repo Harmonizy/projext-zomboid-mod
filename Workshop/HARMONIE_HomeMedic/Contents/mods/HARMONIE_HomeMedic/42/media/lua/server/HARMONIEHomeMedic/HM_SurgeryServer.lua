@@ -111,7 +111,10 @@ end
 -- ------------------------------------------------------------ begin
 function SV.Begin(doctor, args)
     if not doctor or type(args) ~= "table" then return end
-    local deny = function(reason) SV.reply(doctor, "Denied", { reason = reason }) end
+    local deny = function(reason)
+        HMLog("Surgery", "%s: surgery %s on %s DENIED (%s)", HMLogName(doctor), tostring(args and args.sid), tostring(args and args.part), tostring(reason))
+        SV.reply(doctor, "Denied", { reason = reason })
+    end
     if SandboxVars and SandboxVars.HomeMedic and SandboxVars.HomeMedic.SurgeryEnabled == false then return deny("Disabled") end
     local sid = tostring(args.sid or "")
     local s = S.Surgeries[sid]
@@ -157,6 +160,8 @@ function SV.Begin(doctor, args)
     -- the instruments only set the starting quality (S.quality), the games
     -- play the same with any of them (request 2026-10-02)
     local d = S.difficulty(doctor, patient, permit.anesthesia, 1)
+    HMLog("Surgery", "%s begins %s on %s's %s (skill %s, start quality %s, anesthesia %s)", HMLogName(doctor), tostring(sid), HMLogName(patient),
+        tostring(args.part), tostring(d.skill), tostring(permit.toolQ), tostring(permit.anesthesia))
     SV.reply(doctor, "Begin", { permit = permit.id, sid = sid, part = args.part,
         skill = d.skill, shake = d.shake, tool = d.tool, startQ = permit.toolQ })
 end
@@ -223,13 +228,19 @@ function SV.Finish(doctor, args)
     if not doctor or type(args) ~= "table" then return end
     local key = keyOf(doctor)
     local permit = SV.permits[key]
-    if not permit or permit.id ~= args.permit then return end
+    if not permit or permit.id ~= args.permit then
+        HMLog("Surgery", "%s: finish IGNORED -- no matching permit (have %s, got %s)", HMLogName(doctor), tostring(permit and permit.id), tostring(args.permit))
+        return
+    end
     SV.permits[key] = nil
-    if nowMs() - permit.started > S.PERMIT_MS then return end
+    if nowMs() - permit.started > S.PERMIT_MS then HMLog("Surgery", "%s: finish IGNORED -- permit expired", HMLogName(doctor)); return end
     local s = S.Surgeries[permit.sid]
     local patient = permit.patient
     local part = S.partByName(patient, permit.part)
-    if not s or not part or call(patient, "isDead") then return end
+    if not s or not part or call(patient, "isDead") then
+        HMLog("Surgery", "%s: finish IGNORED -- %s", HMLogName(doctor), not s and "unknown surgery" or (not part and "body part gone" or "patient dead"))
+        return
+    end
 
     -- scores: clamp, and a step finished impossibly fast counts as failed
     local scores = {}
@@ -239,6 +250,7 @@ function SV.Finish(doctor, args)
         scores[n] = tooFast and 0 or clamp01(args.scores and args.scores[n])
     end
     local aborted = args.aborted == true
+    if tooFast then HMLog("Surgery", "%s: steps finished impossibly fast -- all scored 0", HMLogName(doctor)) end
     local q = S.quality(permit.sid, scores, permit.toolQ)
     if aborted then q = math.min(q, S.SUCCESS - 0.01) end
     local function stepScore(pid)
@@ -380,15 +392,17 @@ function SV.Finish(doctor, args)
     end
 
     -- 6. sync
-    if syncBodyPart then pcall(syncBodyPart, part, 0xFFFFFFFFFFF) end
+    if syncBodyPart then HMLogErr("Surgery", "syncBodyPart", pcall(syncBodyPart, part, 0xFFFFFFFFFFF)) end
     local bd = call(patient, "getBodyDamage")
-    if bd and bd.DamageUpdate then pcall(bd.DamageUpdate, bd) end
-    if EHR and EHR.SafeTransmitModData then pcall(EHR.SafeTransmitModData, patient) end
+    if bd and bd.DamageUpdate then HMLogErr("Surgery", "DamageUpdate", pcall(bd.DamageUpdate, bd)) end
+    if EHR and EHR.SafeTransmitModData then HMLogErr("Surgery", "SafeTransmitModData", pcall(EHR.SafeTransmitModData, patient)) end
 
     local grade = aborted and "Aborted" or (q >= S.EXCELLENT and "Excellent" or (q >= S.SUCCESS and "Success" or "Failed"))
     if EHR and EHR.Locale and EHR.Locale.Say then
         pcall(EHR.Locale.Say, patient, S.T("Say_" .. grade, ""))
     end
+    HMLog("Surgery", "%s finished %s on %s: %s (quality %.2f, %d changes, amputated %s)", HMLogName(doctor), tostring(permit.sid), HMLogName(patient),
+        grade, tonumber(q) or -1, #changes, tostring(amputated))
     SV.reply(doctor, "Result", { permit = permit.id, sid = permit.sid, quality = q, grade = grade,
         changes = changes, blood = blood, pain = pain, infected = infected, aspirated = aspirated, transfusion = transfusion, xp = xp, scores = scores })
 end
@@ -404,7 +418,8 @@ local function onClientCommand(module, command, player, args)
     if module ~= SV.MODULE then return end
     if command == "Begin" then SV.Begin(player, args)
     elseif command == "Finish" then SV.Finish(player, args)
-    elseif command == "Abort" then SV.Abort(player, args) end
+    elseif command == "Abort" then HMLog("Surgery", "%s closed the surgery window -- aborted", HMLogName(player)); SV.Abort(player, args)
+    else HMLog("Surgery", "%s sent unknown command %s", HMLogName(player), tostring(command)) end
 end
 
 if Events and Events.OnClientCommand and not SV.registered then

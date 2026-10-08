@@ -85,6 +85,35 @@
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 
+--[[
+    console.txt log (0.11.2). Every line starts with "[HARMONIE_GTP][tag]"
+    and the side it ran on (SP / client / server), so a bug report's
+    console.txt shows what this mod did and where. Search console.txt for
+    "[HARMONIE_GTP]". Log(tag, fmt, ...) always prints; LogOnce(key, ...)
+    prints the first time for that key only (for things that repeat every
+    tick, so the log shows they happen without flooding it).
+]]--
+local function side()
+    if isServer and isServer() then return "server" end
+    if isClient and isClient() then return "client" end
+    return "SP"
+end
+function HARMONIE_GTP.Log(tag, fmt, ...)
+    local ok, msg = pcall(string.format, tostring(fmt), ...)
+    if not ok then
+        local parts = { tostring(fmt) }
+        for _, v in ipairs({ ... }) do parts[#parts + 1] = tostring(v) end
+        msg = table.concat(parts, " ")
+    end
+    print("[HARMONIE_GTP][" .. tostring(tag) .. "][" .. side() .. "] " .. msg)
+end
+HARMONIE_GTP.LogSeen = HARMONIE_GTP.LogSeen or {}
+function HARMONIE_GTP.LogOnce(key, tag, fmt, ...)
+    if HARMONIE_GTP.LogSeen[key] then return end
+    HARMONIE_GTP.LogSeen[key] = true
+    HARMONIE_GTP.Log(tag, fmt, ...)
+end
+
 HARMONIE_GTP.Vitamins = {"A", "B", "C", "D", "E", "K"}
 
 -- Approximate adult daily requirements. Units match the food database

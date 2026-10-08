@@ -1,0 +1,14 @@
+HARMONIE - From Garden to Plate -- credits
+
+Fruit Farming (B42) by leina
+  Steam Workshop 3779625821, version 0.3.0
+  Built into this mod with credit (request 2026-10-08): everything under
+    42/media/texturepacks/ff_*.pack, 42/media/ff_*.tiles, 42/media/tileGeometry.txt
+    42/media/lua/server/Farming/FF_farmingConf.lua, FF_farmingSprites.lua
+    42/media/scripts/FruitFarming_items.txt, scripts/recipes/FruitFarming_recipes.txt
+    the FruitFarming keys in Translate/EN, and Translate/FR, KO, TR
+  kept unchanged, with the same module name (FruitFarming), item names and
+  sprite names, so a world that already grows Fruit Farming crops keeps them
+  when it switches to this mod. mod.info marks FruitFarming incompatible:
+  the two must not run together (the same tile ids would load twice).
+  Thai texts for its crops, seeds and recipes are in the Thai translation mod.

@@ -129,7 +129,8 @@ function HARMONIE_NutritionUI:close()
     if HARMONIE_NutritionUI.instance == self then
         HARMONIE_NutritionUI.instance = nil
     end
-    pcall(GTPGuide.onAssessmentClosed)
+    local ok, err = pcall(GTPGuide.onAssessmentClosed)
+    if not ok and HARMONIE_GTP.Log then HARMONIE_GTP.Log("Assess", "guide close with the assessment FAILED: %s", tostring(err)) end
 end
 
 --[[
@@ -151,6 +152,12 @@ function HARMONIE_NutritionUI.Open(target, assessor)
     window:initialise()
     window:addToUIManager()
     HARMONIE_NutritionUI.instance = window
-    pcall(GTPGuide.onAssessmentOpened, window)
+    if HARMONIE_GTP.Log then
+        local okN, tn = pcall(function() return target:getUsername() end)
+        HARMONIE_GTP.Log("Assess", "assessment opened on %s (remote: %s)", okN and tostring(tn) or "?",
+            tostring(HARMONIE_GTP.VitData.IsRemote and HARMONIE_GTP.VitData.IsRemote(target)))
+    end
+    local ok, err = pcall(GTPGuide.onAssessmentOpened, window)
+    if not ok and HARMONIE_GTP.Log then HARMONIE_GTP.Log("Assess", "guide open with the assessment FAILED: %s", tostring(err)) end
     return window
 end

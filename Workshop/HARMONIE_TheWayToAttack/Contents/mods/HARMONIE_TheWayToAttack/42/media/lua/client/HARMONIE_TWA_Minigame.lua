@@ -161,12 +161,20 @@ TWAMinigame.GAME_FOR = {
 --- show the item being made.
 function TWAMinigame.play(player, procId, onResult, recipe)
     if not TWAMinigame.enabled() then
+        TWALog("Minigame", "%s: minigames off -- scored %s", tostring(procId), tostring(TWACraftState.FALLBACK_WORD))
         onResult(TWACraftState.FALLBACK_WORD)
         return true
     end
-    if TWAMinigame.busy() then return false end
+    if TWAMinigame.busy() then TWALog("Minigame", "%s: another minigame is open -- not started", tostring(procId)); return false end
     local spec = TWAMinigame.GAME_FOR[procId]
     local cls = spec and _G[spec[1]]
+    if spec and not cls then TWALog("Minigame", "%s: game class %s missing -- using the basic game", tostring(procId), tostring(spec[1])) end
+    TWALog("Minigame", "%s: opening %s%s", tostring(procId), spec and tostring(spec[1]) or "basic game", spec and spec[2] and (" (" .. tostring(spec[2]) .. ")") or "")
+    local realResult = onResult
+    onResult = function(word)
+        TWALog("Minigame", "%s: result %s", tostring(procId), tostring(word))
+        return realResult(word)
+    end
     local ok, err
     if cls and cls.openFor then
         ok, err = pcall(cls.openFor, cls, player, procId, recipe, onResult, spec[2])
@@ -174,7 +182,7 @@ function TWAMinigame.play(player, procId, onResult, recipe)
         ok, err = pcall(TWAMinigame.open, player, procId, onResult)
     end
     if not ok then
-        print("[HARMONIE_TheWayToAttack] minigame failed to open (" .. tostring(err) .. "), scoring Excellent")
+        TWALog("Minigame", "%s failed to open (%s), scoring Excellent", tostring(procId), tostring(err))
         local ui = TWAMinigame.instance
         if ui then
             ui.onResult = nil
@@ -284,7 +292,7 @@ end
 -- Any runtime error: never leave a panel holding the mouse -- close it and
 -- score Excellent (request 2026-09-28).
 function TWAMinigame:crash(err)
-    print("[HARMONIE_TheWayToAttack] minigame error (" .. tostring(err) .. "), scoring Excellent")
+    TWALog("Minigame", "minigame error (%s), scoring Excellent", tostring(err))
     self.word = TWACraftState.FALLBACK_WORD
     self:deliver()
 end

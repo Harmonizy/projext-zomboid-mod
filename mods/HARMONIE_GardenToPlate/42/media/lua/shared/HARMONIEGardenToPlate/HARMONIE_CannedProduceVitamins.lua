@@ -57,6 +57,8 @@ local PRODUCE = {
     "Edamame", "MixedVegetables",
     "Orange", "Grapefruit", "Apple", "Pear", "Banana", "Grapes", "Mango",
     "Peach", "Pineapple", "Watermelon", "Cherry", "DriedApricots",
+    -- 2026-10-08: Fruit Farming grows them
+    "Lemon", "Lime",
 }
 
 for _, name in ipairs(PRODUCE) do

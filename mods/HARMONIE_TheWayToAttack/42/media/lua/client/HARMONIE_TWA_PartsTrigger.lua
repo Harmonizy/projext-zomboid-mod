@@ -24,7 +24,10 @@ Events.OnKeyPressed.Add(function(key)
     if not player then return end
     local weapon = player:getPrimaryHandItem()
     if weapon and TWAPartSystem.IsMeleeWeapon(weapon) then
+        TWALog("Trigger", "parts window key: %s", TWALogType(weapon))
         TWAPartsUI.toggle()
+    else
+        TWALog("Trigger", "parts window key: no melee weapon in hand -- not opened")
     end
 end)
 

@@ -20,6 +20,7 @@ local oldRemovePerform   = ISRemoveWeaponUpgrade.perform
 function ISUpgradeWeapon:isValid()
     if self.weapon and self.part and TWAPartSystem.IsMeleeWeapon(self.weapon) then
         if self.weapon:getWeaponPart(self.part:getPartType()) then
+            if not self.__twaLogged then self.__twaLogged = true; TWALog("Parts", "attach %s refused: that slot is taken", TWALogType(self.part)) end
             return false
         end
         local inv = self.character:getInventory()
@@ -30,15 +31,20 @@ function ISUpgradeWeapon:isValid()
         for _, m in ipairs({ "getItemWithIDRecursiv", "getItemById", "getItemWithID" }) do
             if id and inv[m] then
                 local ok, found = pcall(inv[m], inv, id)
-                if ok and found then self.part = found return true end
+                if ok and found then
+                    TWALog("Parts", "attach: part %s found again by id (MP copy)", tostring(id))
+                    self.part = found return true
+                end
             end
         end
+        if not self.__twaLogged then self.__twaLogged = true; TWALog("Parts", "attach %s refused: part not in the inventory", TWALogType(self.part)) end
         return false
     end
     return oldUpgradeIsValid(self)
 end
 
 function ISUpgradeWeapon:perform()
+    TWALog("Parts", "attached %s to %s", TWALogType(self.part), TWALogType(self.weapon))
     oldUpgradePerform(self)
     if TWAPartsUI and TWAPartsUI.refresh then
         TWAPartsUI.refresh()
@@ -46,6 +52,7 @@ function ISUpgradeWeapon:perform()
 end
 
 function ISRemoveWeaponUpgrade:perform()
+    TWALog("Parts", "removed a part from %s", TWALogType(self.weapon))
     oldRemovePerform(self)
     if TWAPartsUI and TWAPartsUI.refresh then
         TWAPartsUI.refresh()

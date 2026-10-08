@@ -86,6 +86,7 @@ function V.onVanillaOpened(player)
     V.track(V.find(player:getPlayerNum()))
     local win = TWACraftUI.window
     if win and win:getIsVisible() then return end
+    TWALog("VanillaLink", "vanilla crafting window opened -> opening ours")
     TWACraftUI.open(player)
 end
 
@@ -93,7 +94,7 @@ function V.onVanillaClosed()
     V.tracked = nil
     if not V.enabled() then return end
     local win = TWACraftUI.window
-    if win and win:getIsVisible() then TWACraftUI.close() end
+    if win and win:getIsVisible() then TWALog("VanillaLink", "vanilla crafting window closed -> closing ours"); TWACraftUI.close() end
 end
 
 -- every few ticks: the tracked window went away without passing through
@@ -111,7 +112,7 @@ function V.tick()
     if w then
         V.track(w)
         local win = TWACraftUI.window
-        if not (win and win:getIsVisible()) then TWACraftUI.open(player) end
+        if not (win and win:getIsVisible()) then TWALog("VanillaLink", "found an open vanilla crafting window -> opening ours"); TWACraftUI.open(player) end
     end
 end
 
@@ -134,11 +135,15 @@ function V.install()
         local origOpen = E.OpenHandcraftWindow
         E.OpenHandcraftWindow = function(player, ...)
             local r = origOpen(player, ...)
-            pcall(V.onVanillaOpened, type(player) == "userdata" and player or nil)
+            TWALogErr("VanillaLink", "onVanillaOpened", pcall(V.onVanillaOpened, type(player) == "userdata" and player or nil))
             return r
         end
     end
-    if Events and Events.OnTick then Events.OnTick.Add(function() pcall(V.tick) end) end
+    TWALog("VanillaLink", "installed (ISHandcraftWindow %s, ISEntityUI.OpenHandcraftWindow %s)", cls and "found" or "MISSING", E and E.OpenHandcraftWindow and "found" or "MISSING")
+    if Events and Events.OnTick then Events.OnTick.Add(function()
+        local ok, err = pcall(V.tick)
+        if not ok then TWALogOnce("vlink:" .. tostring(err), "VanillaLink", "tick FAILED: %s", tostring(err)) end
+    end) end
 end
 
 if Events and Events.OnGameStart then Events.OnGameStart.Add(V.install) end

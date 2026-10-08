@@ -199,8 +199,17 @@ end
 function St.gtp(player)
     local G = HARMONIE_GTP
     if not (G and G.Vitamins) then return nil end
-    local md = call(player, "getModData")
-    local store = md and md.HARMONIE_Vitamins
+    local store
+    if G.VitData and G.VitData.Peek then
+        -- GTP 0.11.1+: also another player's vitamins in MP (from the server)
+        local ok, st = pcall(G.VitData.Peek, player)
+        store = ok and st or nil
+        if not ok and G.LogOnce then G.LogOnce("HM_Stats:peekfail", "HomeMedic", "Home Medic stats: VitData.Peek FAILED: %s", tostring(st)) end
+        if G.LogOnce then G.LogOnce("HM_Stats:peek", "HomeMedic", "Home Medic stats read vitamins through VitData.Peek (MP-safe)") end
+    else
+        local md = call(player, "getModData")
+        store = md and md.HARMONIE_Vitamins
+    end
     if type(store) ~= "table" then return nil end
     local cfg = G.Config or {}
     local out = {}
@@ -455,6 +464,10 @@ end
 function St.Server.Snapshot(doctor, args)
     args = type(args) == "table" and args or {}
     local patient = args.patientOnline and byOnline(args.patientOnline) or doctor
+    if args.patientOnline and not byOnline(args.patientOnline) then
+        HMLogOnce("statsgone:" .. tostring(args.patientOnline), "Stats", "%s asked for stats of player id %s: not online", HMLogName(doctor), tostring(args.patientOnline))
+    end
+    HMLogOnce("stats:" .. HMLogName(doctor) .. ">" .. HMLogName(patient), "Stats", "%s is reading %s's stats (repeats not logged)", HMLogName(doctor), HMLogName(patient))
     local key = tostring(call(doctor, "getOnlineID") or "sp")
     local now = getTimestampMs and getTimestampMs() or 0
     if lastAsk[key] and now - lastAsk[key] < 1500 then return end
@@ -474,7 +487,11 @@ end
 function St.Server.Collected(patient, args)
     args = type(args) == "table" and args or {}
     local doctor = byOnline(args.doctorOnline)
-    if not doctor or type(args.rows) ~= "table" then return end
+    if not doctor or type(args.rows) ~= "table" then
+        HMLogOnce("collectbad:" .. HMLogName(patient), "Stats", "%s's stats answer dropped: %s", HMLogName(patient), doctor and "no rows" or "doctor not online")
+        return
+    end
+    HMLogOnce("collected:" .. HMLogName(patient), "Stats", "%s's own client answered with %d stat rows (repeats not logged)", HMLogName(patient), #args.rows)
     sendServerCommand(doctor, St.MODULE, "Snapshot", { patientOnline = call(patient, "getOnlineID"),
         rows = args.rows, ok = true, source = "patient" })
 end
@@ -488,7 +505,8 @@ if Events and not St.registered then
         Events.OnClientCommand.Add(function(module, command, player, args)
             if module ~= St.MODULE then return end
             if command == "Snapshot" then St.Server.Snapshot(player, args)
-            elseif command == "Collected" then St.Server.Collected(player, args) end
+            elseif command == "Collected" then St.Server.Collected(player, args)
+            else HMLog("Stats", "%s sent unknown command %s", HMLogName(player), tostring(command)) end
         end)
     end
 end

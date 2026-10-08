@@ -210,7 +210,7 @@ function Z.logHit(c, dealt)
     end
     local cond = tostring(call(w, "getCondition") or "?") .. "/" .. tostring(call(w, "getConditionMax") or "?")
     local after = c.before - dealt
-    print(string.format("[TWA hit] %s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)%s  crit=%s  skill %s=%s  targets=%d  zombieDown=%s  endurance=%s  condition=%s  zombieHP %.3f->%.3f",
+    TWALog("Hit", "%s", string.format("%s  listed %.3f-%.3f  dealt %.3f (%.0f%% of min)%s  crit=%s  skill %s=%s  targets=%d  zombieDown=%s  endurance=%s  condition=%s  zombieHP %.3f->%.3f",
         tostring(call(w, "getFullType") or "?"), minD, maxD, dealt, minD > 0 and dealt / minD * 100 or 0,
         after <= 0.0001 and " [killed: the hit may have been bigger]" or "",
         tostring(c.crit), skill, level, c.targets or 1, tostring(c.down), endurance, cond, c.before, after))

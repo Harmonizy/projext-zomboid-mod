@@ -39,6 +39,7 @@ Events.OnKeyPressed.Add(function(key)
     if not wanted or key ~= wanted then return end
     local player = getPlayer()
     if not player then return end
+    TWALog("Trigger", "craft window key (%s) pressed", tostring(key))
     TWACraftUI.toggle()
 end)
 
@@ -77,10 +78,12 @@ Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
     -- the plain craft option never resumes.
     if resumeItem then
         context:addOption(getText("IGUI_TWA_ContextMenu_ContinueCraft"), player, function()
+            TWALog("Trigger", "right-click Continue craft on %s", TWALogType(resumeItem))
             TWACraftUI.open(player, searchName, resumeItem)
         end)
     end
     context:addOption(getText("IGUI_TWA_ContextMenu_OpenCraftUI"), player, function()
+        TWALog("Trigger", "right-click Open craft on %s (search %s)", TWALogType(target), tostring(searchName))
         TWACraftUI.open(player, searchName)
     end)
 end)
@@ -95,6 +98,7 @@ Events.OnFillWorldObjectContextMenu.Add(function(playerNum, context, worldobject
     local player = getSpecificPlayer(playerNum)
     if not player then return end
     context:addOption(getText("IGUI_TWA_ContextMenu_OpenCraftUI"), player, function()
+        TWALog("Trigger", "world right-click Open craft")
         TWACraftUI.open(player)
     end)
 end)

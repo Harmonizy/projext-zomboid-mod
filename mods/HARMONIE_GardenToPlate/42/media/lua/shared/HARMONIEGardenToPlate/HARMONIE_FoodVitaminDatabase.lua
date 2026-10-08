@@ -143,6 +143,9 @@ addGroup({"Pasta", "Macaroni", "Ramen"}, {B = 1})
 addGroup({"DriedLentils", "DriedSplitPeas", "Blackbeans", "DriedBlackBeans", "DriedChickpeas", "DriedKidneyBeans", "DriedWhiteBeans", "BeanBowl", "OpenBeans", "RefriedBeans", "Soybeans"}, {B = 3, E = 1.5})
 addGroup({"Tofu", "TofuFried"}, {B = 2, E = 1})
 addGroup({"Peanuts", "PeanutButter", "Acorn"}, {E = 2.5, B = 2})
+-- 2026-10-08: ginger root, a crop since Fruit Farming (B42) is built in
+-- (see 42/CREDITS.txt) -- a little vitamin C and B6, nudged to ~1 Reserve
+addGroup({"GingerRoot"}, {C = 9, B = 1})
 addGroup({"OilOlive"}, {E = 8})
 addGroup({"OilVegetable"}, {E = 4})
 
@@ -185,7 +188,7 @@ end
 ]]--
 function HARMONIE_GTP.LogMissingProfile(item, context)
     local ok, fullType = pcall(function() return item:getFullType() end)
-    print(string.format("[HARMONIE] %s: no vitamin profile for %s -- either deliberately untracked (candy, herbs, seeds, etc), or a real DB gap worth adding to HARMONIE_FoodVitaminDatabase.lua",
+    print(string.format("[HARMONIE] %s: no vitamin profile for %s -- either deliberately untracked (candy, sugar, salt, tea, coffee, etc), or a real gap worth adding to tools/gen_more_vitamins.py",
         tostring(context), tostring(ok and fullType or "?")))
 end
 
@@ -298,7 +301,10 @@ end
     drinks (Milk), which don't have a rot curve to read in the first
     place.
 
-    KNOWN LIMITATION: for a crafted evolved-recipe result (a pot of stew,
+    (0.13.0: no longer true -- HARMONIE_RecipeVitamins.lua now counts the
+    hunger of EVERY ingredient and of the base, tracked or not, so the
+    note below is history.)
+    KNOWN LIMITATION (until 0.12): for a crafted evolved-recipe result (a pot of stew,
     not a HARMONIE canned jar -- those get their own hunger forced to
     match exactly, see the ISCraftAction override in
     HARMONIE_RecipeVitamins.lua), this reads the WHOLE pot's real total

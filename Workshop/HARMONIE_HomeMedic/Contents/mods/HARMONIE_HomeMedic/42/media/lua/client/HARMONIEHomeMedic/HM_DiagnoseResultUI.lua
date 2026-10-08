@@ -31,6 +31,7 @@ local W, H = 460, 300
 -- panel: the medical window; id: the illness picked; tags: the signs ticked
 function R.open(panel, id, tags)
     if panel.hmDxResult then panel.hmDxResult:close() end
+    HMLog("DiagnoseUI", "result window for %s", tostring(id))
     local x = math.floor((panel.width - W) / 2)
     local y = math.floor((panel.height - H) / 2)
     local o = ISPanel.new(R, x, y, W, H)

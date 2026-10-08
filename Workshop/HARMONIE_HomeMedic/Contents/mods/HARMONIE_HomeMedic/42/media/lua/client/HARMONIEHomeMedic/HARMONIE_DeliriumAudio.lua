@@ -49,7 +49,7 @@ function A.levelFor(volume)
 end
 
 function A.apply()
-    if not (EHR and EHR.Delirium) then return end
+    if not (EHR and EHR.Delirium) then HMLogOnce("nodelirium", "Delirium", "EHR.Delirium missing -- delirium sound volume not applied"); return end
     local base = originalSounds()
     local level = (not A.muted) and A.levelFor(A.volume) or nil
     local list = {}
@@ -59,6 +59,10 @@ function A.apply()
         end
     end
     EHR.Delirium.Sounds = list
+    if A.lastLogged ~= tostring(level) then
+        A.lastLogged = tostring(level)
+        HMLog("Delirium", "delirium sounds: %s (%d files)", level and (tostring(level) .. "%") or "muted", #list)
+    end
 end
 
 function A.setVolume(v)
