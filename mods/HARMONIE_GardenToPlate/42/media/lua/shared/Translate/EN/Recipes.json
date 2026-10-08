@@ -49,6 +49,8 @@
     "HARMONIE_DryFruitCherry": "Dry Cherries",
     "HARMONIE_DryFruitGrapes": "Dry Grapes",
     "HARMONIE_DryFruitPineapple": "Dry Pineapple",
-    "HARMONIE_SproutBeans": "Sprout Beans in a Jar",
-    "HARMONIE_RenderFishLiverOil": "Render Fish Liver Oil"
+    "HARMONIE_SproutBeans": "Soak Dried Beans to Sprout",
+    "HARMONIE_RenderFishLiverOil": "Render Fish Liver Oil",
+    "HARMONIE_SproutBeansSeeds": "Soak Dried Seeds to Sprout",
+    "HARMONIE_EmptySproutJar": "Take the Bean Sprouts out of the Jar"
 }

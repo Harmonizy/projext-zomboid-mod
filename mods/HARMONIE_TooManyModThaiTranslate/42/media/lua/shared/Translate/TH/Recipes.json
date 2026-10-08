@@ -102,7 +102,6 @@
     "Sailboats_Mechanics": "ช่างเครื่องเรือใบ",
     "StrainRenderedTallow": "กรองไขมันสัตว์ที่หลอมแล้ว",
     "Swimming": "เทคนิคการว่ายน้ำที่ดีที่สุด",
-
     "AmmoReloadingKit145": "บรรจุกระสุน .145",
     "AmmoReloadingKit44": "บรรจุกระสุน .44 แม็กนั่ม",
     "AmmoReloadingKit45": "บรรจุกระสุน .45 ACP",
@@ -165,6 +164,8 @@
     "HARMONIE_DryFruitCherry": "ตากเชอร์รี",
     "HARMONIE_DryFruitGrapes": "ตากองุ่น",
     "HARMONIE_DryFruitPineapple": "ตากสับปะรด",
-    "HARMONIE_SproutBeans": "เพาะถั่วงอกในโหล",
-    "HARMONIE_RenderFishLiverOil": "เคี่ยวน้ำมันตับปลา"
+    "HARMONIE_SproutBeans": "แช่ถั่วแห้งเพื่อเพาะถั่วงอก",
+    "HARMONIE_RenderFishLiverOil": "เคี่ยวน้ำมันตับปลา",
+    "HARMONIE_SproutBeansSeeds": "แช่เมล็ดแห้งเพื่อเพาะถั่วงอก",
+    "HARMONIE_EmptySproutJar": "เอาถั่วงอกออกจากโหล"
 }

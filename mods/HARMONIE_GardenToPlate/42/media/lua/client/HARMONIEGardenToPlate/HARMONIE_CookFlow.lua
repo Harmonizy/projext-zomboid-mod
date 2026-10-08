@@ -65,6 +65,12 @@ local function ingredientIcon(plan)
     end
     return nil
 end
+local function spiceIcon(plan)
+    for _, a in ipairs(plan.adds or {}) do
+        if a.spice then return call(a.item, "getTexture") end
+    end
+    return nil
+end
 
 function F.nextStep()
     local r = F.run
@@ -94,21 +100,30 @@ function F.nextStep()
             log("step %s missed -- play it again", pid)
             return
         end
-        F.queueStep(pid, word, pp)
+        F.queueStep(pid, word, pp, plan)
     end
     local Gm = HARMONIE_GTP.CookGames
     if K.minigamesOn() and Gm and Gm.play then
+        local cur = K.cursorItem(plan, pp)
+        log("step %s: minigame with %s (%s), difficulty %.2f", pid, cur and K.typeOf(cur) or "bare hands",
+            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.difficulty(r.player, pp))
         local ok = Gm.play(r.player, pid, { difficulty = K.difficulty(r.player, pp), icon = ingredientIcon(plan),
-            tool = pp.tools[1] and pp.tools[1].item and call(pp.tools[1].item, "getTexture") }, onWord)
+            spice = spiceIcon(plan), base = plan.base and call(plan.base, "getTexture"),
+            tool = pp.tools[1] and pp.tools[1].item and call(pp.tools[1].item, "getTexture"),
+            cursor = K.cursorTexture(plan, pp), bare = pp.tools[1] and pp.tools[1].grade == "bare",
+            toolIsGrater = not (pp.tools[1] and pp.tools[1].group == "grater" and pp.tools[1].grade ~= "best"),
+            family = r.dish.family }, onWord)
         if not ok then r.phase = "paused"; log("step %s: minigame busy", pid) end
     else
         onWord("Good")
     end
 end
 
-function F.queueStep(pid, word, pp)
+function F.queueStep(pid, word, pp, plan)
     local r = F.run
-    local tool = pp.tools[1] and pp.tools[1].item or nil
+    -- in the hands during the action: the tool, else the food or seasoning
+    -- being worked (the same thing the minigame showed at the mouse)
+    local tool = pp.tools[1] and pp.tools[1].item or (plan and K.cursorItem(plan, pp)) or nil
     local action = HARMONIE_GTP_CookStepAction:new(r.player, pid, word, tool)
     action.onEnd = function(done, w)
         if F.run ~= r then return end
@@ -198,13 +213,15 @@ end
 local function stillUsable(r, item)
     if not item or not call(item, "getContainer") then return false end
     if K.isFood(item) and not K.isSpice(item) and K.hunger(item) <= 0 then return false end
+    if K.isPoison(item) then return false end
+    if K.needsCooking(r.dish.family, K.typeOf(item)) and not K.isCooked(item) then return false end
     return K.allowed(r.recipe, item) ~= false
 end
 
 -- another item for the same slot when the planned one was used up
 local function another(r, entry)
     local scan = K.scan(r.player, true)
-    for _, t in ipairs(K.slotTypes(r.dish.slots[entry.slot])) do
+    for _, t in ipairs((K.slotTypesAt(scan, r.dish.slots[entry.slot]))) do
         for _, it in ipairs(scan.byType[t] or {}) do
             if stillUsable(r, it) and not K.isRotten(it) then return it end
         end
@@ -257,9 +274,7 @@ end
 function F.finish(r)
     local dish = F.currentBase(r)
     local q = K.qualityOf(r.words)
-    local xp = 0
-    for _, pid in ipairs(r.dish.procs) do xp = xp + (K.PROCS[pid].xp or 1) end
-    xp = xp * (0.5 + q)
+    local xp = K.dishXp(r.dish, q)
     r.phase = "done"
     r.quality = q
     r.resultId = dish and call(dish, "getID")

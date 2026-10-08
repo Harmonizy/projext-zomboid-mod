@@ -9,7 +9,9 @@ Writes 42/media/textures/GTP_UI/:
   tab_calendar .png -- the planting calendar tab (2026-10-08);
   tab_cook .png -- the Cooking tab (2026-10-08): a pot with steam;
   cook_<step> .png -- the cooking steps (wash, peel, chop, mince, trim,
-      crack, grate, knead, measure, whisk, season, stir);
+      crack, grate, knead, measure, whisk, season, stir; 0.13.0: scale,
+      spread, slice, core, pound, toss, flip, steep, roll, zest, fold,
+      grind, mash);
   icon_settings .png -- the gear (settings page, 2026-10-08);
   pin_on / pin_off .png -- the pin button;
   icon_close / icon_plus / icon_minus .png -- close, text bigger (A+),
@@ -311,6 +313,103 @@ def g_stir(d, s):
     d.arc([36 * s, 62 * s, 92 * s, 92 * s], 30, 300, fill=WHITE, width=int(4 * s))
     d.line(P(s, [(96, 10), (66, 80)]), fill=BROWN, width=int(7 * s))
 
+
+# 0.13.0: the new steps
+def g_scale(d, s):
+    d.polygon(P(s, [(14, 64), (40, 40), (92, 46), (112, 64), (92, 82), (40, 88)]), fill=(150, 180, 200, 255))
+    d.polygon(P(s, [(112, 64), (124, 48), (124, 80)]), fill=(150, 180, 200, 255))
+    for x in range(40, 96, 10):
+        d.arc([x * s, 52 * s, (x + 12) * s, 70 * s], 270, 90, fill=WHITE, width=int(2 * s))
+    d.ellipse([24 * s, 56 * s, 32 * s, 64 * s], fill=DARK)
+
+
+def g_spread(d, s):
+    d.rounded_rectangle([18 * s, 40 * s, 100 * s, 112 * s], radius=14 * s, fill=(236, 196, 128, 255), outline=BROWN, width=int(4 * s))
+    d.ellipse([30 * s, 56 * s, 86 * s, 92 * s], fill=YELLOW)
+    d.line(P(s, [(70, 70), (118, 20)]), fill=STEEL, width=int(8 * s))
+
+
+def g_slice(d, s):
+    d.rectangle([14 * s, 84 * s, 114 * s, 100 * s], fill=BROWN)
+    for x in range(22, 70, 9):
+        d.rectangle([x * s, 60 * s, (x + 5) * s, 84 * s], fill=RED)
+    knife(d, s, 72, 80, 114, 32)
+
+
+def g_core(d, s):
+    d.ellipse([22 * s, 34 * s, 92 * s, 104 * s], fill=RED)
+    d.ellipse([46 * s, 56 * s, 68 * s, 82 * s], fill=(250, 240, 200, 255))
+    d.ellipse([53 * s, 64 * s, 61 * s, 74 * s], fill=BROWN)
+    knife(d, s, 64, 112, 118, 66)
+
+
+def g_pound(d, s):
+    d.ellipse([18 * s, 74 * s, 100 * s, 106 * s], fill=RED)
+    d.rounded_rectangle([20 * s, 22 * s, 108 * s, 42 * s], radius=10 * s, fill=BROWN)
+    for x in (34, 64, 94):
+        d.line(P(s, [(x, 50), (x, 64)]), fill=WHITE, width=int(3 * s))
+
+
+def g_toss(d, s):
+    d.ellipse([12 * s, 70 * s, 92 * s, 106 * s], fill=STEEL)
+    d.rectangle([88 * s, 84 * s, 120 * s, 92 * s], fill=DARK)
+    for x, y, c in ((34, 40, ORANGE), (54, 28, (90, 180, 70, 255)), (72, 44, RED)):
+        d.ellipse([(x - 7) * s, (y - 7) * s, (x + 7) * s, (y + 7) * s], fill=c)
+    d.arc([24 * s, 20 * s, 84 * s, 80 * s], 200, 340, fill=WHITE, width=int(3 * s))
+
+
+def g_flip(d, s):
+    d.ellipse([16 * s, 76 * s, 96 * s, 108 * s], fill=STEEL)
+    d.ellipse([28 * s, 30 * s, 84 * s, 54 * s], fill=(236, 186, 100, 255))
+    d.line(P(s, [(56, 64), (112, 112)]), fill=BROWN, width=int(6 * s))
+    d.rectangle([40 * s, 58 * s, 70 * s, 66 * s], fill=STEEL)
+
+
+def g_steep(d, s):
+    d.rounded_rectangle([26 * s, 46 * s, 90 * s, 112 * s], radius=10 * s, fill=RED)
+    d.ellipse([28 * s, 40 * s, 88 * s, 56 * s], fill=(150, 90, 40, 255))
+    d.arc([82 * s, 60 * s, 112 * s, 96 * s], 270, 90, fill=RED, width=int(7 * s))
+    d.line(P(s, [(58, 46), (66, 14)]), fill=WHITE, width=int(2 * s))
+    d.rectangle([60 * s, 6 * s, 76 * s, 18 * s], fill=YELLOW)
+
+
+def g_roll(d, s):
+    d.ellipse([12 * s, 70 * s, 116 * s, 108 * s], fill=(240, 220, 170, 255))
+    d.rounded_rectangle([22 * s, 44 * s, 106 * s, 62 * s], radius=8 * s, fill=BROWN)
+    d.rectangle([6 * s, 49 * s, 22 * s, 57 * s], fill=BROWN)
+    d.rectangle([106 * s, 49 * s, 122 * s, 57 * s], fill=BROWN)
+
+
+def g_zest(d, s):
+    d.ellipse([20 * s, 52 * s, 76 * s, 108 * s], fill=YELLOW)
+    d.polygon(P(s, [(70, 14), (108, 14), (114, 104), (64, 104)]), fill=STEEL)
+    for y in range(26, 96, 10):
+        d.line(P(s, [(74, y), (104, y)]), fill=DARK, width=int(2 * s))
+    for x, y in ((40, 40), (50, 30), (60, 42)):
+        d.ellipse([(x - 3) * s, (y - 3) * s, (x + 3) * s, (y + 3) * s], fill=YELLOW)
+
+
+def g_fold(d, s):
+    d.ellipse([12 * s, 56 * s, 116 * s, 112 * s], fill=WHITE)
+    d.ellipse([22 * s, 62 * s, 106 * s, 98 * s], fill=(246, 226, 180, 255))
+    d.arc([34 * s, 66 * s, 94 * s, 94 * s], 180, 360, fill=BROWN, width=int(3 * s))
+    d.polygon(P(s, [(60, 70), (84, 20), (98, 24), (74, 74)]), fill=(220, 80, 70, 255))
+
+
+def g_grind(d, s):
+    d.polygon(P(s, [(18, 64), (110, 64), (96, 110), (32, 110)]), fill=(160, 156, 148, 255))
+    d.ellipse([18 * s, 56 * s, 110 * s, 72 * s], fill=(110, 140, 70, 255))
+    d.line(P(s, [(56, 66), (96, 16)]), fill=(200, 196, 188, 255), width=int(12 * s))
+
+
+def g_mash(d, s):
+    d.ellipse([14 * s, 60 * s, 114 * s, 112 * s], fill=WHITE)
+    d.ellipse([24 * s, 66 * s, 104 * s, 100 * s], fill=(240, 220, 150, 255))
+    d.line(P(s, [(64, 72), (64, 16)]), fill=BROWN, width=int(7 * s))
+    for x in (48, 58, 70, 80):
+        d.line(P(s, [(x, 72), (x, 56)]), fill=STEEL, width=int(4 * s))
+    d.line(P(s, [(46, 56), (82, 56)]), fill=STEEL, width=int(4 * s))
+
 for f in (tab_overview, tab_check, tab_calendar, tab_vitamins, tab_foods, tab_other, tab_cook):
     f()
 pin_icon(True)
@@ -318,6 +417,8 @@ pin_icon(False)
 for n, g in (("icon_settings", g_settings), ("icon_close", g_close), ("icon_plus", g_plus), ("icon_minus", g_minus)):
     ui_icon(n, g)
 for n, g in (("wash", g_wash), ("peel", g_peel), ("chop", g_chop), ("mince", g_mince), ("trim", g_trim), ("crack", g_crack),
-             ("grate", g_grate), ("knead", g_knead), ("measure", g_measure), ("whisk", g_whisk), ("season", g_season), ("stir", g_stir)):
+             ("grate", g_grate), ("knead", g_knead), ("measure", g_measure), ("whisk", g_whisk), ("season", g_season), ("stir", g_stir),
+             ("scale", g_scale), ("spread", g_spread), ("slice", g_slice), ("core", g_core), ("pound", g_pound), ("toss", g_toss),
+             ("flip", g_flip), ("steep", g_steep), ("roll", g_roll), ("zest", g_zest), ("fold", g_fold), ("grind", g_grind), ("mash", g_mash)):
     step(n, g)
 print("ok")

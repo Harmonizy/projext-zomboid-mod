@@ -121,7 +121,36 @@ def fish_oil():
     save(img, "FishLiverOil")
 
 
+def jar(d, fill_top, water):
+    # a glass jar (own drawing): body, a lighter rim, the water line
+    d.rounded_rectangle(B(7, 7, 25, 30), radius=4 * K, fill=(205, 225, 235, 110), outline=OUTL, width=K)
+    if water:
+        d.rounded_rectangle(B(8, fill_top, 24, 29), radius=3 * K, fill=water)
+    d.rectangle(B(9, 4, 23, 8), fill=(185, 195, 205, 255), outline=OUTL, width=K)
+    d.line(B(10, 10, 10, 26), fill=(255, 255, 255, 150), width=K)
+
+
+def sprouting_jar():
+    img, d = canvas()
+    jar(d, 14, (110, 160, 200, 170))
+    for i, (x, y) in enumerate([(11, 23), (15, 25), (19, 23), (13, 20), (18, 20), (16, 22), (21, 26), (11, 27)]):
+        d.ellipse(B(x - 2, y - 1.5, x + 2, y + 1.5), fill=(200, 160, 90, 255) if i % 2 else (150, 90, 60, 255), outline=OUTL, width=K // 2)
+    save(img, "SproutingJar")
+
+
+def sprouts_jar():
+    img, d = canvas()
+    jar(d, 26, (110, 160, 200, 120))
+    for i in range(7):
+        x = 10 + i * 2
+        y = 10 + (i % 3) * 2
+        d.line(B(x, y + 2, x + (1 if i % 2 else -1), y + 9, x, 28), fill=(245, 245, 225, 255), width=K, joint="curve")
+        d.ellipse(B(x - 2, y, x + 2, y + 3), fill=(235, 215, 90, 255), outline=OUTL, width=K // 2)
+        d.ellipse(B(x - 1.5, y - 1, x + 1.5, y + 1.5), fill=(120, 200, 80, 255))
+    save(img, "BeanSproutsJar")
+
+
 for f in (dried_apple, dried_pear, dried_peach, dried_mango, banana_chips, dried_cherry, raisins,
-          dried_pineapple, bean_sprouts, fish_oil):
+          dried_pineapple, bean_sprouts, fish_oil, sprouting_jar, sprouts_jar):
     f()
 print("ok")

@@ -111,7 +111,10 @@ function K.inTemplate(famId, fullType)
     local fam = K.FAMILIES[famId]
     local list = fam and vanilla().templates[fam.template]
     if not list then return nil end
-    return list[fullType] ~= nil
+    if list[fullType] ~= nil then return true end
+    -- a modded food is not in vanilla's table: only the recipe object knows
+    if tostring(fullType):sub(1, 5) ~= "Base." then return nil end
+    return false
 end
 
 -- vanilla "|Cooked": the item only goes in once it is cooked
@@ -265,7 +268,7 @@ function K.scan(player, force)
     if c and not force and nowMs() - c.at < K.SCAN_EVERY_MS then return c end
     local containers = K.containers(player)
     local inv = call(player, "getInventory")
-    local s = { at = nowMs(), containers = containers, byType = {}, families = {}, count = 0, recipesSeen = {} }
+    local s = { at = nowMs(), containers = containers, byType = {}, byFood = {}, tagged = {}, families = {}, count = 0, recipesSeen = {} }
     eachItem(containers, function(it, cont)
         s.count = s.count + 1
         if s.count > K.MAX_SCAN then return false end
@@ -273,6 +276,15 @@ function K.scan(player, force)
         local list = s.byType[t]
         if not list then list = {}; s.byType[t] = list end
         list[#list + 1] = it
+        -- food kinds (vanilla FoodType) for the slots that take any of a kind
+        if #list == 1 and isFood(it) then
+            local ft = call(it, "getFoodType")
+            if ft and ft ~= "" then
+                ft = tostring(ft)
+                s.byFood[ft] = s.byFood[ft] or {}
+                s.byFood[ft][#s.byFood[ft] + 1] = t
+            end
+        end
         -- which evolved recipes can this item be the base of?
         if RecipeManager and RecipeManager.getEvolvedRecipe then
             local ok, recipes = pcall(RecipeManager.getEvolvedRecipe, it, player, containers, false)
@@ -318,24 +330,43 @@ local function hasTag(it, tag)
     return false
 end
 
--- the best item of a tool group at hand -> item, isFallback
+-- every item at hand with a vanilla tag (worked out once per scan)
+local function tagged(scan, tag)
+    local list = scan.tagged[tag]
+    if list then return list end
+    list = {}
+    for _, items in pairs(scan.byType) do
+        if hasTag(items[1], tag) then
+            for _, it in ipairs(items) do list[#list + 1] = it end
+        end
+    end
+    scan.tagged[tag] = list
+    return list
+end
+
+local function usable(it) return it and call(it, "isBroken") ~= true end
+
+-- the best item of a tool group at hand -> item, grade ("best" / "ok" /
+-- "makeshift"), or nil, "bare" when hands will do, or nil
 function K.findTool(scan, group)
     local def = K.TOOLS[group]
     if not def or not scan then return nil end
-    local fb = {}
-    for _, t in ipairs(def.fallback or {}) do fb[t] = true end
-    for _, t in ipairs(def.types or {}) do
-        for _, it in ipairs(scan.byType[t] or {}) do
-            if call(it, "isBroken") ~= true then return it, fb[t] == true end
-        end
-    end
-    for _, tag in ipairs(def.tags or {}) do
-        for _, list in pairs(scan.byType) do
-            for _, it in ipairs(list) do
-                if call(it, "isBroken") ~= true and hasTag(it, tag) then return it, false end
+    for _, grade in ipairs(K.TOOL_GRADES) do
+        local set = def[grade]
+        if set then
+            for _, t in ipairs(set.types or {}) do
+                for _, it in ipairs(scan.byType[t] or {}) do
+                    if usable(it) then return it, grade end
+                end
+            end
+            for _, tag in ipairs(set.tags or {}) do
+                for _, it in ipairs(tagged(scan, tag)) do
+                    if usable(it) then return it, grade end
+                end
             end
         end
     end
+    if def.bare then return nil, "bare" end
     return nil
 end
 
@@ -344,6 +375,30 @@ local function slotTypes(slot)
     return type(slot.group) == "table" and slot.group or (K.GROUPS[slot.group] or {})
 end
 K.slotTypes = slotTypes
+
+-- the slot's own foods, then any other food of its kinds that is at hand
+function K.slotTypesAt(scan, slot)
+    local out, seen = {}, {}
+    for _, t in ipairs(slotTypes(slot)) do
+        if not seen[t] then seen[t] = true; out[#out + 1] = t end
+    end
+    local extra = {}
+    for _, cat in ipairs(slot.cats or {}) do
+        for _, ft in ipairs(K.CATS[cat] or {}) do
+            for _, t in ipairs(scan and scan.byFood[ft] or {}) do
+                if not seen[t] and not K.NEVER[t] then seen[t] = true; extra[#extra + 1] = t end
+            end
+        end
+    end
+    table.sort(extra)
+    for _, t in ipairs(extra) do out[#out + 1] = t end
+    return out, #extra
+end
+
+function K.isPoison(item)
+    if call(item, "isPoison") == true then return true end
+    return (tonumber(call(item, "getPoisonPower")) or 0) > 0
+end
 
 -- One dish against what is at hand. Never changes anything.
 function K.plan(player, dish, scan)
@@ -366,23 +421,32 @@ function K.plan(player, dish, scan)
     local nonSpice = 0
     for si, slot in ipairs(dish.slots) do
         local sp = { slot = slot, need = slot.adds or 1, have = 0, items = {}, refused = {}, uncooked = {}, missingTypes = {} }
-        for _, t in ipairs(slotTypes(slot)) do
+        local own = {}
+        for _, t in ipairs(slotTypes(slot)) do own[t] = true end
+        local types
+        types, sp.extraKinds = K.slotTypesAt(scan, slot)
+        for _, t in ipairs(types) do
             local list = scan and scan.byType[t] or nil
             local cookFirst = K.needsCooking(dish.family, t)
             if not list or #list == 0 then
-                sp.missingTypes[#sp.missingTypes + 1] = t
+                if own[t] then sp.missingTypes[#sp.missingTypes + 1] = t end
+            elseif not own[t] and K.inTemplate(dish.family, t) == false and not recipe then
+                -- another food of the kind that vanilla's table refuses: not
+                -- worth a "refused" line, it was never asked for
             else
                 for _, it in ipairs(list) do
                     -- the recipe object when there is one, else vanilla's script table
                     local ok = K.allowed(recipe, it)
                     if ok == nil then ok = K.inTemplate(dish.family, t) end
-                    if ok == false then
+                    if ok == false and not own[t] then
+                        -- a food of the kind the recipe does not take: skipped quietly
+                    elseif ok == false then
                         if not sp.refused[t] then logOnce("refused:" .. dish.id .. ":" .. t, "%s: vanilla refuses %s (%s)", dish.id, t, recipe and "recipe" or "script table") end
                         sp.refused[t] = true
                     elseif cookFirst and not K.isCooked(it) then
                         if not sp.uncooked[t] then logOnce("uncooked:" .. dish.id .. ":" .. t, "%s: %s must be cooked first (vanilla |Cooked)", dish.id, t) end
                         sp.uncooked[t] = true
-                    elseif not K.isRotten(it) and (not isFood(it) or K.hunger(it) > 0 or K.isSpice(it)) then
+                    elseif not K.isRotten(it) and not K.isPoison(it) and (not isFood(it) or K.hunger(it) > 0 or K.isSpice(it)) then
                         sp.items[#sp.items + 1] = it
                     end
                 end
@@ -431,9 +495,9 @@ function K.plan(player, dish, scan)
         local pp = { id = pid, proc = proc, ok = true, tools = {}, help = {} }
         if level < (proc.level or 0) then pp.ok = false; pp.levelLow = true end
         for _, g in ipairs(proc.tools or {}) do
-            local it, fb = K.findTool(scan, g)
-            pp.tools[#pp.tools + 1] = { group = g, item = it, fallback = fb }
-            if not it then pp.ok = false; pp.missingTool = true end
+            local it, grade = K.findTool(scan, g)
+            pp.tools[#pp.tools + 1] = { group = g, item = it, grade = grade, fallback = grade == "makeshift" or grade == "bare" }
+            if not it and grade ~= "bare" then pp.ok = false; pp.missingTool = true end
         end
         for _, g in ipairs(proc.help or {}) do
             local it = K.findTool(scan, g)
@@ -450,9 +514,32 @@ end
 function K.difficulty(player, pp)
     local lvl = K.level(player)
     local d = 0.75 - lvl * 0.06
-    for _, t in ipairs(pp.tools or {}) do if t.fallback then d = d + 0.15 end end
+    -- a good tool keeps it as it is, an ok one a little harder, a makeshift
+    -- one or bare hands clearly harder
+    for _, t in ipairs(pp.tools or {}) do d = d + (K.GRADE_COST[t.grade] or 0) end
     for _, h in ipairs(pp.help or {}) do if h.item then d = d - 0.1 end end
     return math.max(0.05, math.min(1, d))
+end
+K.GRADE_COST = { best = 0, ok = 0.06, makeshift = 0.15, bare = 0.2 }
+
+-- what the minigame draws at the mouse: the real item in use
+local function firstAdd(plan, spice)
+    for _, a in ipairs(plan and plan.adds or {}) do
+        if (a.spice == true) == spice then return a.item end
+    end
+    return nil
+end
+function K.cursorItem(plan, pp)
+    local c = pp and pp.proc and pp.proc.cursor
+    if c == "tool" then return pp.tools[1] and pp.tools[1].item or nil end
+    if c == "ingredient" then return firstAdd(plan, false) end
+    if c == "spice" then return firstAdd(plan, true) or firstAdd(plan, false) end
+    if c == "base" then return plan and plan.base end
+    return nil
+end
+function K.cursorTexture(plan, pp)
+    local it = K.cursorItem(plan, pp)
+    return it and call(it, "getTexture") or nil
 end
 
 -- -------------------------------------------------------------- quality
@@ -533,8 +620,24 @@ end
 K.findInInventory = findInInventory
 
 -- the authority side: SP directly, server for an MP client
+-- the Cooking XP of a dish at a quality (worked out where it is given)
+function K.dishXp(dish, q)
+    local xp = 0
+    for _, pid in ipairs(dish and dish.procs or {}) do xp = xp + ((K.PROCS[pid] or {}).xp or 1) end
+    return xp * (0.5 + (q or 0.66))
+end
+
 function K.serveQuality(player, args)
     args = type(args) == "table" and args or {}
+    local dish = K.DISH_BY_ID[tostring(args.dish)]
+    if not dish then
+        log("quality from %s for unknown dish %s -- rejected", tostring(call(player, "getUsername")), tostring(args.dish))
+        return nil
+    end
+    if K.level(player) < (dish.level or 0) then
+        log("quality from %s for %s rejected: Cooking %d, the dish needs %d", tostring(call(player, "getUsername")), dish.id, K.level(player), dish.level or 0)
+        return nil
+    end
     local item = findInInventory(player, tonumber(args.id))
     local q = math.max(0, math.min(1, tonumber(args.q) or 0))
     if not item then
@@ -543,7 +646,8 @@ function K.serveQuality(player, args)
     end
     local done, du, db = K.applyQuality(item, q, args.dish)
     if done then
-        K.giveXp(player, tonumber(args.xp) or 0)
+        -- never the client's number: the dish's own steps decide
+        K.giveXp(player, K.dishXp(dish, q))
         if isServer and isServer() then
             if sendItemStats then pcall(sendItemStats, item) end
             if syncItemModData then pcall(function() syncItemModData(player, item) end) end

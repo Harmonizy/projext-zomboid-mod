@@ -188,7 +188,7 @@ end
 ]]--
 function HARMONIE_GTP.LogMissingProfile(item, context)
     local ok, fullType = pcall(function() return item:getFullType() end)
-    print(string.format("[HARMONIE] %s: no vitamin profile for %s -- either deliberately untracked (candy, herbs, seeds, etc), or a real DB gap worth adding to HARMONIE_FoodVitaminDatabase.lua",
+    print(string.format("[HARMONIE] %s: no vitamin profile for %s -- either deliberately untracked (candy, sugar, salt, tea, coffee, etc), or a real gap worth adding to tools/gen_more_vitamins.py",
         tostring(context), tostring(ok and fullType or "?")))
 end
 
@@ -301,7 +301,10 @@ end
     drinks (Milk), which don't have a rot curve to read in the first
     place.
 
-    KNOWN LIMITATION: for a crafted evolved-recipe result (a pot of stew,
+    (0.13.0: no longer true -- HARMONIE_RecipeVitamins.lua now counts the
+    hunger of EVERY ingredient and of the base, tracked or not, so the
+    note below is history.)
+    KNOWN LIMITATION (until 0.12): for a crafted evolved-recipe result (a pot of stew,
     not a HARMONIE canned jar -- those get their own hunger forced to
     match exactly, see the ISCraftAction override in
     HARMONIE_RecipeVitamins.lua), this reads the WHOLE pot's real total

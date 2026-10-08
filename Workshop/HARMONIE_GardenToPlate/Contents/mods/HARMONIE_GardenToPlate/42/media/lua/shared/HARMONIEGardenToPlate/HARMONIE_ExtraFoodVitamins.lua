@@ -8,6 +8,9 @@
                     light destroys most of it; A, B, E, K mostly stay.
       BeanSprouts   per sprout: C 13 mg, K 33 mcg, B 1 mg (mung / soy sprouts
                     are a classic winter vitamin C source)
+      BeanSproutsJar  4 sprouts' worth (the jar empties into 4 BeanSprouts)
+      SproutingJar  soaking dried beans: the B of the beans, no C yet
+                    (vitamin C only appears as the beans sprout)
       FishLiverOil  one jar: A 600 mcg, D 10 mcg, E 1 mg -- a strong A and D
                     source for anyone who fishes
 ]]--
@@ -38,5 +41,7 @@ for _, fr in ipairs({ "Apple", "Pear", "Peach", "Mango", "Banana", "Cherry", "Gr
 end
 
 DB["HARMONIEGardenToPlate.BeanSprouts"] = { C = 13, K = 33, B = 1 }
+DB["HARMONIEGardenToPlate.BeanSproutsJar"] = { C = 52, K = 132, B = 4 }
+DB["HARMONIEGardenToPlate.SproutingJar"] = { B = 2 }
 DB["HARMONIEGardenToPlate.FishLiverOil"] = { A = 600, D = 10, E = 1 }
-log("Foods", "extra foods: %d dried fruits, BeanSprouts, FishLiverOil added to the vitamin table", dried)
+log("Foods", "extra foods: %d dried fruits, BeanSprouts, BeanSproutsJar, SproutingJar, FishLiverOil added to the vitamin table", dried)

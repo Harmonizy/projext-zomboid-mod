@@ -24,7 +24,7 @@ local T, shadowText, fit, inside, clickable, lineH, fh, tw, texture =
     U.T, U.shadowText, U.fit, U.inside, U.clickable, U.lineH, U.fh, U.tw, U.texture
 local log = function(...) K.log(...) end
 
-H.COOK_FILTERS = { "all", "ready" }
+H.COOK_FILTERS = { "all", "known", "ready" }
 
 local function dishName(d) return T("IGUI_GTPC_Dish_" .. d.id) end
 local function procName(pid) return T("IGUI_GTPC_Proc_" .. pid) end
@@ -44,7 +44,8 @@ local function famIcon(d)
     return fam and itemIcon(fam.icon) or nil
 end
 
--- a slot's label: up to three of its foods by name
+-- a slot's label: up to three of its foods by name, and the kinds it also
+-- takes ("or any vegetable")
 local function slotLabel(slot)
     local names, seen = {}, {}
     for _, t in ipairs(K.slotTypes(slot)) do
@@ -53,7 +54,22 @@ local function slotLabel(slot)
         if #names >= 3 then break end
     end
     local more = #K.slotTypes(slot) > #names and " ..." or ""
-    return table.concat(names, " / ") .. more
+    local label = table.concat(names, " / ") .. more
+    if slot.cats and #slot.cats > 0 then
+        local kinds = {}
+        for _, c in ipairs(slot.cats) do kinds[#kinds + 1] = T("IGUI_GTPC_Kind_" .. c) end
+        label = label .. " " .. T("IGUI_GTPC_OrAny", table.concat(kinds, " / "))
+    end
+    return label
+end
+
+local function locked(d, p) return p ~= nil and p.level < (d.level or 0) end
+
+-- a small padlock (drawn, no texture needed)
+local function padlock(self, x, y, s, col)
+    self:drawRectBorder(x + s * 0.25, y, s * 0.5, s * 0.5, 1, col[1], col[2], col[3])
+    self:drawRect(x, y + s * 0.42, s, s * 0.58, 1, col[1], col[2], col[3])
+    self:drawRect(x + s * 0.45, y + s * 0.6, s * 0.1, s * 0.22, 1, 0, 0, 0)
 end
 
 -- plans are worked out at most every 1.5 s (the scan's own pace)
@@ -103,20 +119,26 @@ function Win:renderCook(x, y, w, h)
         for _, d in ipairs(K.DISHES) do
             local p = plans[d.id]
             local name = dishName(d)
-            local show = (q == "" or name:lower():find(q, 1, true)) and ((self.cookFilter or "all") ~= "ready" or (p and p.ready))
+            local f = self.cookFilter or "all"
+            local show = (q == "" or name:lower():find(q, 1, true)) and (f ~= "ready" or (p and p.ready)) and (f ~= "known" or not locked(d, p))
             if show then
                 local r = { x = cx, y = yy, w = cw - 8, h = rowH }
                 local sel = self.cookSel == d.id
                 if sel or inside(r, mx, my) then self:drawRect(r.x, r.y, r.w, r.h, sel and 0.9 or 0.5, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
                 if sel then self:drawRect(r.x, r.y, 3, r.h, 1, C.accent[1], C.accent[2], C.accent[3]) end
+                local lock = locked(d, p)
                 local icon = famIcon(d)
-                if icon then self:drawTextureScaled(icon, r.x + 6, r.y + 3, rowH - 6, rowH - 6, 1, 1, 1, 1) end
+                if icon then self:drawTextureScaled(icon, r.x + 6, r.y + 3, rowH - 6, rowH - 6, lock and 0.35 or 1, 1, 1, 1) end
                 local tx = r.x + rowH + 6
-                shadowText(self, fit(name, r.w - (tx - r.x) - 24, sf), tx, r.y + 3, C.text, 1, sf)
-                local sub = T("IGUI_GTPC_Family_" .. d.family) .. "  -  " .. T("IGUI_GTPC_LevelShort", tostring(d.level or 0))
-                shadowText(self, fit(sub, r.w - (tx - r.x) - 24, sf), tx, r.y + 3 + lh, C.textDim, 1, sf)
-                local col = (p and p.ready) and C.good or (p and p.level < (d.level or 0) and C.bad or C.warn)
-                self:drawRect(r.x + r.w - 14, r.y + math.floor(rowH / 2) - 4, 8, 8, 1, col[1], col[2], col[3])
+                shadowText(self, fit(name, r.w - (tx - r.x) - 24, sf), tx, r.y + 3, lock and C.textDim or C.text, 1, sf)
+                local sub = T("IGUI_GTPC_Family_" .. d.family) .. "  -  " .. (lock and T("IGUI_GTPC_UnlocksAt", tostring(d.level or 0)) or T("IGUI_GTPC_LevelShort", tostring(d.level or 0)))
+                shadowText(self, fit(sub, r.w - (tx - r.x) - 24, sf), tx, r.y + 3 + lh, lock and C.bad or C.textDim, 1, sf)
+                if lock then
+                    padlock(self, r.x + r.w - 18, r.y + math.floor(rowH / 2) - 6, 12, C.bad)
+                else
+                    local col = (p and p.ready) and C.good or C.warn
+                    self:drawRect(r.x + r.w - 14, r.y + math.floor(rowH / 2) - 4, 8, 8, 1, col[1], col[2], col[3])
+                end
                 r.action = function(win)
                     if win.cookSel ~= d.id then log("cooking: chose %s", d.id) end
                     win.cookSel = d.id
@@ -175,6 +197,12 @@ function Win:renderCookDish(x, y, w, h, d, p)
     self:scrolled("cookDetail", tx, ty, tw2, btnY - ty - 6, function(yy)
         local start = yy
         yy = yy + self:paragraphs(T("IGUI_GTPC_DishDesc_" .. d.id), tx, yy, tw2 - 10, C.textDim, sf) + 6
+        if locked(d, p) then
+            -- the recipe itself is learnt with the skill
+            padlock(self, tx, yy + 2, 14, C.bad)
+            yy = yy + self:paragraphs(T("IGUI_GTPC_Locked", tostring(d.level or 0), tostring(p.level)), tx + 22, yy, tw2 - 32, C.bad, sf) + 6
+            return yy - start
+        end
         -- base and level
         local lvl = p and p.level or 0
         status(self, T("IGUI_GTPC_NeedLevel", tostring(d.level or 0), tostring(lvl)), tx, yy, lvl >= (d.level or 0), sf); yy = yy + lh
@@ -241,7 +269,10 @@ function Win:renderCookDish(x, y, w, h, d, p)
             if (pp.proc.level or 0) > 0 then parts[#parts + 1] = T("IGUI_GTPC_LevelShort", tostring(pp.proc.level)) end
             for _, t in ipairs(pp.tools) do
                 if t.item then
-                    parts[#parts + 1] = K.call(t.item, "getDisplayName") .. (t.fallback and (" " .. T("IGUI_GTPC_Makeshift")) or "")
+                    local grade = (t.grade == "ok" or t.grade == "makeshift") and (" " .. T("IGUI_GTPC_Grade_" .. t.grade)) or ""
+                    parts[#parts + 1] = tostring(K.call(t.item, "getDisplayName")) .. grade
+                elseif t.grade == "bare" then
+                    parts[#parts + 1] = T("IGUI_GTPC_Grade_bare")
                 else
                     parts[#parts + 1] = T("IGUI_GTPC_NoTool", T("IGUI_GTPC_Tool_" .. t.group))
                 end
@@ -368,3 +399,22 @@ end
 if K.onQualityDone == nil then
     K.onQualityDone = function(args) log("cooking tab: server confirmed dish id %s", tostring(args and args.id)) end
 end
+
+-- new recipes when the Cooking level goes up (client, once per level)
+if Events and Events.LevelPerk then
+    Events.LevelPerk.Add(function(chr, perk, level, increased)
+        if not increased or perk ~= Perks.Cooking then return end
+        if getPlayer and chr ~= getPlayer() then return end
+        local n, names = 0, {}
+        for _, d in ipairs(K.DISHES) do
+            if (d.level or 0) == level then n = n + 1; if #names < 3 then names[#names + 1] = T("IGUI_GTPC_Dish_" .. d.id) end end
+        end
+        log("Cooking level %d: %d new cooking-tab recipes (%s)", level, n, table.concat(names, ", "))
+        if n > 0 and HaloTextHelper then
+            local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
+            local ok = fn and pcall(fn, chr, T("IGUI_GTPC_NewRecipes", tostring(n)))
+            if not ok then log("could not show the new-recipes halo text") end
+        end
+    end)
+end
+

@@ -867,7 +867,7 @@ end
 -- a row of the ingredients' pictures
 local OTHER_ITEMS = {
     Grow = { "Base.Apple" },
-    Sun = { "Base.Hat_Sun" },
+    Sun = { "Base.Hat_StrawHat" },
     Dried = { "HARMONIEGardenToPlate.DriedApple" },
     Sprouts = { "HARMONIEGardenToPlate.BeanSprouts" },
     FishOil = { "HARMONIEGardenToPlate.FishLiverOil" },
@@ -880,8 +880,8 @@ local OTHER_ITEMS = {
 }
 local RECIPE_ROWS = {
     Dried = { "Base.Apple", "Base.Pear", "Base.Peach", "Base.Mango", "Base.Banana", "Base.Cherry", "Base.Grapes", "Base.Pineapple" },
-    Sprouts = { "Base.EmptyJar", "Base.Soybeans", "Base.DriedLentils", "Base.DriedChickpeas", "HARMONIEGardenToPlate.BeanSprouts" },
-    FishOil = { "Base.Pot", "Base.EmptyJar", "Base.FishFillet", "Base.FishFillet", "Base.FishFillet", "HARMONIEGardenToPlate.FishLiverOil" },
+    Sprouts = { "Base.EmptyJar", "Base.DriedLentils", "Base.SoybeansSeed", "HARMONIEGardenToPlate.SproutingJar", "HARMONIEGardenToPlate.BeanSproutsJar", "HARMONIEGardenToPlate.BeanSprouts" },
+    FishOil = { "Base.Pot", "Base.EmptyJar", "Base.FishGuts", "Base.FishGuts", "Base.FishFillet", "HARMONIEGardenToPlate.FishLiverOil" },
     Grow = { "Base.KitchenKnife", "Base.Apple", "FruitFarming.AppleSeed", "Base.HandShovel", "Base.WateredCan" },
     Pills = { "Base.MortarPestle", "Base.EmptyJar", "Base.Carrots", "Base.Egg", "Base.Tomato", "Base.Salmon", "Base.Peanuts", "Base.Broccoli", "Base.Salt" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Salt" },
