@@ -526,5 +526,11 @@
     "Sandbox_HARMONIE_Tier3SecondSkill": "ระดับ 3 (รถใหญ่): สกิลรอง",
     "Sandbox_HARMONIE_Tier3SecondSkill_tooltip": "เลเวลสูงสุดของสกิลอื่นๆ ของอัปเกรด (ส่วนใหญ่คือช่างยนต์) สำหรับรถระดับ 3 ค่าเริ่มต้น 6",
     "Sandbox_HARMONIE_VehicleTierOverrides": "กำหนดระดับรถเอง",
-    "Sandbox_HARMONIE_VehicleTierOverrides_tooltip": "ใส่รถให้อยู่ระดับที่ต้องการเอง ด้วยชื่อ vehicle script: ชื่อ=ระดับ คั่นด้วย ; (เช่น Van*=2; StepVan=3) ใส่ * ท้ายชื่อ = ทุกคันที่ชื่อขึ้นต้นแบบนั้น (Van* = Van, VanAmbulance, Van_Glass...) ชื่อเต็มมีผลก่อนชื่อที่มี * ดูรายชื่อรถได้ใน console.txt ใส่ none = ไม่กำหนดเอง"
+    "Sandbox_HARMONIE_VehicleTierOverrides_tooltip": "ใส่รถให้อยู่ระดับที่ต้องการเอง ด้วยชื่อ vehicle script: ชื่อ=ระดับ คั่นด้วย ; (เช่น Van*=2; StepVan=3) ใส่ * ท้ายชื่อ = ทุกคันที่ชื่อขึ้นต้นแบบนั้น (Van* = Van, VanAmbulance, Van_Glass...) ชื่อเต็มมีผลก่อนชื่อที่มี * ดูรายชื่อรถได้ใน console.txt ใส่ none = ไม่กำหนดเอง",
+    "Sandbox_HARMONIE_SunVitaminD": "วิตามิน D จากแสงแดด",
+    "Sandbox_HARMONIE_SunVitaminD_tooltip": "อยู่กลางแจ้งตอนกลางวัน (9:00 ถึง 16:59 ฝนไม่ตก) จะค่อยๆ ได้ค่าสำรองวิตามิน D เหมือนผิวที่โดนแดด หน้าหนาวได้ครึ่งเดียว",
+    "Sandbox_HARMONIE_SunVitaminDPerHour": "วิตามิน D จากแดดต่อชั่วโมง",
+    "Sandbox_HARMONIE_SunVitaminDPerHour_tooltip": "ค่าสำรองวิตามิน D ที่ได้ต่อชั่วโมงในเกม เมื่ออยู่กลางแจ้งตอนกลางวัน",
+    "Sandbox_HARMONIE_SunVitaminDMaxPerDay": "วิตามิน D จากแดดต่อวัน (สูงสุด)",
+    "Sandbox_HARMONIE_SunVitaminDMaxPerDay_tooltip": "ค่าสำรองวิตามิน D สูงสุดที่แดดให้ได้ใน 1 วัน ค่าเริ่มต้น 3 น้อยกว่าที่ลดต่อวัน จึงยังต้องกินอาหารด้วย"
 }

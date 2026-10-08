@@ -156,5 +156,15 @@
     "FF_ThreshRice": "นวดข้าว",
     "FF_PackRice": "ใส่ข้าวลงถุง",
     "FF_DryCoffee": "ตากกาแฟ",
-    "FF_GrindCoffee": "บดกาแฟ"
+    "FF_GrindCoffee": "บดกาแฟ",
+    "HARMONIE_DryFruitApple": "ตากแอปเปิล",
+    "HARMONIE_DryFruitPear": "ตากแพร์",
+    "HARMONIE_DryFruitPeach": "ตากพีช",
+    "HARMONIE_DryFruitMango": "ตากมะม่วง",
+    "HARMONIE_DryFruitBanana": "ตากกล้วย",
+    "HARMONIE_DryFruitCherry": "ตากเชอร์รี",
+    "HARMONIE_DryFruitGrapes": "ตากองุ่น",
+    "HARMONIE_DryFruitPineapple": "ตากสับปะรด",
+    "HARMONIE_SproutBeans": "เพาะถั่วงอกในโหล",
+    "HARMONIE_RenderFishLiverOil": "เคี่ยวน้ำมันตับปลา"
 }

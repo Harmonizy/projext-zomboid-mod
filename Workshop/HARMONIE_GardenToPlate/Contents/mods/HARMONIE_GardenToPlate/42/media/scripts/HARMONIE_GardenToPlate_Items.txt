@@ -1677,4 +1677,92 @@ module HARMONIEGardenToPlate
         Tooltip = Tooltip_HARMONIE_HomeCannedVegFruitOpen,
     }
 
+    /* 2026-10-08: lemon and lime (Fruit Farming grows them) */
+    item HomeCannedLemon
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Home-Canned Lemon,
+        Weight = 0.5,
+        Icon = CannedUnlabeled,
+        CannedFood = true,
+        CantEat = true,
+        Packaged = true,
+        StaticModel = MysteryCan,
+        WorldStaticModel = MysteryCan,
+        Tags = base:hasmetal,
+        Tooltip = Tooltip_HARMONIE_HomeCannedVegFruit,
+        OpeningRecipe = OpenHomeCannedProduce,
+    }
+
+
+    item HomeCannedLemonOpen
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Home-Canned Lemon (Open),
+        Weight = 0.5,
+        Icon = CannedUnlabeled_Open,
+        CannedFood = true,
+        EatType = Candrink,
+        FoodType = Fruits,
+        Packaged = true,
+        ReplaceOnUse = Base.TinCanEmpty,
+        DaysFresh = 2,
+        DaysTotallyRotten = 4,
+        HungerChange = -20.0,
+        ThirstChange = -4.0,
+        Calories = 10.5,
+        Carbohydrates = 28.0,
+        Lipids = 0.0,
+        Proteins = 0.0,
+        StaticModel = CanOpen,
+        WorldStaticModel = CanOpen,
+        Tags = base:hasmetal;base:hideuncooked,
+        Tooltip = Tooltip_HARMONIE_HomeCannedVegFruitOpen,
+    }
+
+    item HomeCannedLime
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Home-Canned Lime,
+        Weight = 0.5,
+        Icon = CannedUnlabeled,
+        CannedFood = true,
+        CantEat = true,
+        Packaged = true,
+        StaticModel = MysteryCan,
+        WorldStaticModel = MysteryCan,
+        Tags = base:hasmetal,
+        Tooltip = Tooltip_HARMONIE_HomeCannedVegFruit,
+        OpeningRecipe = OpenHomeCannedProduce,
+    }
+
+
+    item HomeCannedLimeOpen
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Home-Canned Lime (Open),
+        Weight = 0.5,
+        Icon = CannedUnlabeled_Open,
+        CannedFood = true,
+        EatType = Candrink,
+        FoodType = Fruits,
+        Packaged = true,
+        ReplaceOnUse = Base.TinCanEmpty,
+        DaysFresh = 2,
+        DaysTotallyRotten = 4,
+        HungerChange = -20.0,
+        ThirstChange = -4.0,
+        Calories = 10.5,
+        Carbohydrates = 28.0,
+        Lipids = 0.0,
+        Proteins = 0.0,
+        StaticModel = CanOpen,
+        WorldStaticModel = CanOpen,
+        Tags = base:hasmetal;base:hideuncooked,
+        Tooltip = Tooltip_HARMONIE_HomeCannedVegFruitOpen,
+    }
 }

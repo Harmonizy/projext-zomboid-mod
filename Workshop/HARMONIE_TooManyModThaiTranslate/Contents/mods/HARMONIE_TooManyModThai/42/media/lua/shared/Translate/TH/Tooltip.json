@@ -1154,5 +1154,8 @@
     "Tooltip_weapon_ModifyWeapon": "ชิ้นส่วนที่ติดตั้ง",
     "Tooltip_item_Weight": "น้ำหนัก",
     "Tooltip_SE-5Grip": "ด้ามจับ<br>เวลาเล็ง -1<br>แรงถีบ -2",
-    "Tooltip_ASh-12_Grip": "ด้ามจับ<br>เวลาเล็ง -5<br>แรงถีบ -2"
+    "Tooltip_ASh-12_Grip": "ด้ามจับ<br>เวลาเล็ง -5<br>แรงถีบ -2",
+    "Tooltip_HARMONIE_DriedFruit": "ตากบนราวตาก เก็บได้หลายเดือน วิตามินส่วนใหญ่ยังอยู่ แต่วิตามิน C หายไปเกินครึ่งตอนตาก",
+    "Tooltip_HARMONIE_BeanSprouts": "เพาะจากถั่วแห้งในโหล ได้วิตามิน C และ K สดๆ ทุกฤดู ควรกินภายในไม่กี่วัน",
+    "Tooltip_HARMONIE_FishLiverOil": "เคี่ยวจากปลา มีวิตามิน A และ D สูง หนึ่งโหลเก็บได้หลายสัปดาห์"
 }

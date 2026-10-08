@@ -49,6 +49,8 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_TopFoods"
 require "HARMONIEGardenToPlate/HARMONIE_GrowableFoods"
+require "HARMONIEGardenToPlate/HARMONIE_ExtraFoodVitamins"
+require "HARMONIEGardenToPlate/HARMONIE_SunVitaminD"
 
 GTPGuide = GTPGuide or {}
 local H = GTPGuide
@@ -60,11 +62,11 @@ H.GRIP = 18
 H.DEFAULT_W, H.DEFAULT_H = 940, 660
 H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
-H.TABS = { "overview", "check", "vitamins", "foods", "other" }
+H.TABS = { "overview", "check", "vitamins", "foods", "calendar", "other" }
 H.NEAR_TILES = 3 -- how close another survivor must be to check them
 H.UNITS = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
 -- 2026-10-08: "Grow" first -- Fruit Farming (B42) by leina is built in
-H.OTHER = { "Grow", "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
+H.OTHER = { "Grow", "Sun", "Dried", "Sprouts", "FishOil", "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
 
 -- green (Home Medic's palette turned leaf green)
 H.C = {
@@ -536,6 +538,7 @@ function Win:render()
         local w, h = self.width - 16, self.height - y - 8
         if self.settingsOpen then self:renderSettings(x, y, w, h)
         elseif self.tab == "check" then self:renderCheck(x, y, w, h)
+        elseif self.tab == "calendar" then self:renderCalendar(x, y, w, h)
         elseif self.tab == "overview" then self:renderOverview(x, y, w, h)
         elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
         elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
@@ -852,6 +855,10 @@ end
 -- a row of the ingredients' pictures
 local OTHER_ITEMS = {
     Grow = { "Base.Apple" },
+    Sun = { "Base.Hat_Sun" },
+    Dried = { "HARMONIEGardenToPlate.DriedApple" },
+    Sprouts = { "HARMONIEGardenToPlate.BeanSprouts" },
+    FishOil = { "HARMONIEGardenToPlate.FishLiverOil" },
     Pills = { "Base.PillsVitamins" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Salt" },
     Cooking = { "Base.PotOfStew", "Base.Pot" },
@@ -860,6 +867,9 @@ local OTHER_ITEMS = {
     Tips = { "Base.Salmon", "Base.Egg", "Base.Orange", "Base.Spinach" },
 }
 local RECIPE_ROWS = {
+    Dried = { "Base.Apple", "Base.Pear", "Base.Peach", "Base.Mango", "Base.Banana", "Base.Cherry", "Base.Grapes", "Base.Pineapple" },
+    Sprouts = { "Base.EmptyJar", "Base.Soybeans", "Base.DriedLentils", "Base.DriedChickpeas", "HARMONIEGardenToPlate.BeanSprouts" },
+    FishOil = { "Base.Pot", "Base.EmptyJar", "Base.FishFillet", "Base.FishFillet", "Base.FishFillet", "HARMONIEGardenToPlate.FishLiverOil" },
     Grow = { "Base.KitchenKnife", "Base.Apple", "FruitFarming.AppleSeed", "Base.HandShovel", "Base.WateredCan" },
     Pills = { "Base.MortarPestle", "Base.EmptyJar", "Base.Carrots", "Base.Egg", "Base.Tomato", "Base.Salmon", "Base.Peanuts", "Base.Broccoli", "Base.Salt" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Salt" },
@@ -879,7 +889,14 @@ function Win:renderOther(x, y, w, h)
             local tx = cx + isz + 10
             shadowText(self, T("IGUI_GTPG_Other_" .. key .. "_Title"), tx, yy, C.accent, 1, mf)
             local ty = yy + lineH(mf) + 2
-            ty = ty + self:paragraphs(T("IGUI_GTPG_Other_" .. key .. "_Body"), tx, ty, cw - (tx - cx) - 12, C.text, sf)
+            local body
+            if key == "Sun" and HARMONIE_GTP.SunD then
+                -- the live sandbox numbers
+                body = T("IGUI_GTPG_Other_Sun_Body", H.fmt1(HARMONIE_GTP.SunD.perHour()), H.fmt1(HARMONIE_GTP.SunD.maxPerDay()))
+            else
+                body = T("IGUI_GTPG_Other_" .. key .. "_Body")
+            end
+            ty = ty + self:paragraphs(body, tx, ty, cw - (tx - cx) - 12, C.text, sf)
             local row = RECIPE_ROWS[key]
             if row then
                 ty = ty + 4
@@ -1202,6 +1219,121 @@ function Win:renderSettings(x, y, w, h)
     end)
     cy = cy + rowH + 6
     self:paragraphs(T("IGUI_GTPG_SetNote"), cx, cy, cw - 8, C.textDim, sf)
+end
+
+-- ----------------------------------------------------------------- calendar tab
+-- 2026-10-08 (from the suggestions list: "ปฏิทินฤดูปลูก"): a crop x month
+-- grid -- best month to sow, other sowing months, risky, bad (frost / too
+-- cold), the rest neutral -- with this month marked. Read from the live
+-- farming config (farming_vegetableconf.props: sowMonth / bestMonth /
+-- riskMonth / badMonth) when it is loaded -- single player and the host --
+-- else the Fruit Farming crops' months kept in HARMONIE_GrowableFoods.lua
+-- (a multiplayer client does not load server/ files).
+local function set(list)
+    local s = {}
+    for _, m in ipairs(list or {}) do s[tonumber(m) or m] = true end
+    return s
+end
+
+local function cropName(key)
+    local k = "Farming_" .. key
+    local s = T(k)
+    if s ~= k then return s end
+    return (tostring(key):gsub("^FF", ""))
+end
+
+function H.calendarRows()
+    if H.calCache then return H.calCache end
+    local rows = {}
+    local conf = farming_vegetableconf and type(farming_vegetableconf.props) == "table" and farming_vegetableconf.props
+    if conf then
+        for key, p in pairs(conf) do
+            if type(p) == "table" and type(p.sowMonth) == "table" and #p.sowMonth > 0 then
+                local icon = p.icon and getTexture(p.icon) or nil
+                if not icon and p.vegetableName then local it = H.item(p.vegetableName); icon = it and it.icon end
+                rows[#rows + 1] = { key = key, name = cropName(key), icon = icon, food = p.vegetableName,
+                    sow = set(p.sowMonth), best = set(p.bestMonth), risk = set(p.riskMonth), bad = set(p.badMonth) }
+            end
+        end
+        H.calFromConf = true
+    else
+        for _, c in ipairs(HARMONIE_GTP.FruitFarmingCrops or {}) do
+            if c.sow then
+                local it = H.item(c.food)
+                rows[#rows + 1] = { key = c.crop, name = cropName(c.crop), icon = it and it.icon, food = c.food,
+                    sow = set(c.sow), best = set(c.best), risk = set(c.risk), bad = set(c.bad) }
+            end
+        end
+        H.calFromConf = false
+    end
+    table.sort(rows, function(a, b) return a.name < b.name end)
+    H.calCache = rows
+    return rows
+end
+
+function Win:renderCalendar(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local rows = H.calendarRows()
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPG_Card_Calendar", tostring(#rows)))
+    -- legend
+    local lx = cx
+    for _, l in ipairs({ { "best", C.good, 1 }, { "sow", C.good, 0.45 }, { "risk", C.warn, 0.7 }, { "bad", C.bad, 0.45 } }) do
+        self:drawRect(lx, cy + 3, lh - 4, lh - 4, l[3], l[2][1], l[2][2], l[2][3])
+        local label = T("IGUI_GTPG_Cal_" .. l[1])
+        shadowText(self, label, lx + lh, cy + 1, C.text, 1, sf)
+        lx = lx + lh + tw(sf, label) + 16
+    end
+    cy = cy + lh + 6
+    if not H.calFromConf then
+        cy = cy + self:paragraphs(T("IGUI_GTPG_CalOnlyFF"), cx, cy, cw - 8, C.textDim, sf) + 4
+    end
+    local nameW = math.min(240, math.floor(cw * 0.3))
+    local colW = math.floor((cw - 8 - nameW) / 12)
+    local gt = getGameTime and getGameTime()
+    local nowMonth = gt and (gt:getMonth() + 1) or 0
+    local hh = lh + 6
+    for m = 1, 12 do
+        local mx0 = cx + nameW + (m - 1) * colW
+        if m == nowMonth then self:drawRect(mx0, cy, colW - 2, hh, 0.9, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
+        local s = T("IGUI_GTPG_Month" .. m)
+        shadowText(self, s, mx0 + math.floor((colW - tw(sf, s)) / 2), cy + 3, m == nowMonth and C.accent or C.textDim, 1, sf)
+    end
+    shadowText(self, T("IGUI_GTPG_Cal_Crop"), cx + 4, cy + 3, C.textDim, 1, sf)
+    cy = cy + hh + 2
+    local rowH = math.max(24, lh + 6)
+    local mx, my = self:getMouseX(), self:getMouseY()
+    self:scrolled("calendar", cx, cy, cw, y + h - 6 - cy, function(yy)
+        local start = yy
+        for i, r in ipairs(rows) do
+            if i % 2 == 0 then self:drawRect(cx, yy, cw - 8, rowH, 0.3, 0.05, 0.16, 0.07) end
+            if r.icon then self:drawTextureScaled(r.icon, cx + 2, yy + 1, rowH - 2, rowH - 2, 1, 1, 1, 1) end
+            shadowText(self, fit(r.name, nameW - rowH - 10, sf), cx + rowH + 6, yy + math.floor((rowH - fh(sf)) / 2), C.text, 1, sf)
+            for m = 1, 12 do
+                local bx = cx + nameW + (m - 1) * colW
+                local col, a
+                if r.best[m] then col, a = C.good, 1
+                elseif r.sow[m] then col, a = C.good, 0.45
+                elseif r.risk[m] then col, a = C.warn, 0.7
+                elseif r.bad[m] then col, a = C.bad, 0.45 end
+                if col then self:drawRect(bx + 1, yy + 3, colW - 4, rowH - 6, a, col[1], col[2], col[3]) end
+                if m == nowMonth then self:drawRectBorder(bx, yy, colW - 2, rowH, 0.6, C.accent[1], C.accent[2], C.accent[3]) end
+            end
+            local rr = { x = cx, y = yy, w = cw - 8, h = rowH }
+            if inside(rr, mx, my) and inside(self.scrollBox and self.scrollBox.calendar, mx, my) and r.food then
+                local f = nil
+                for _, ff in ipairs(H.foods()) do if ff.fullType == r.food then f = ff end end
+                if f then
+                    local parts = {}
+                    for _, v in ipairs(HARMONIE_GTP.Vitamins) do if (f.prof[v] or 0) > 0 then parts[#parts + 1] = v end end
+                    if #parts > 0 then self.hoverTip = { text = T("IGUI_GTPG_CalVitamins", r.name, table.concat(parts, ", ")), x = cx + 40, y = yy + rowH } end
+                end
+            end
+            yy = yy + rowH
+        end
+        return yy - start
+    end)
 end
 
 -- ----------------------------------------------------------------- mouse

@@ -6,6 +6,7 @@ Writes 42/media/textures/GTP_UI/:
       icons: the same badge layout as Home Medic's / The Way To Attack's /
       the SVU3 window's tabs (rounded plate, coloured rim), in green;
   tab_check .png -- the Check tab (2026-10-08);
+  tab_calendar .png -- the planting calendar tab (2026-10-08);
   icon_settings .png -- the gear (settings page, 2026-10-08);
   pin_on / pin_off .png -- the pin button;
   icon_close / icon_plus / icon_minus .png -- close, text bigger (A+),
@@ -70,6 +71,24 @@ def tab_check():
     d.polygon(P(s, [(78, 72), (66, 60), (70, 54), (78, 59), (86, 54), (90, 60)]), fill=RED)
     d.line(P(s, [(94, 80), (110, 100)]), fill=WHITE, width=int(10 * s))
     done(img, "tab_check")
+
+
+def tab_calendar():
+    """Planting calendar: a calendar page with a sprout."""
+    img, d, s = canvas()
+    d.rounded_rectangle([20 * s, 26 * s, 108 * s, 104 * s], radius=8 * s, fill=WHITE)
+    d.rectangle([20 * s, 26 * s, 108 * s, 46 * s], fill=SKY_D)
+    for x in (38, 90):
+        d.rounded_rectangle([(x - 4) * s, 18 * s, (x + 4) * s, 34 * s], radius=3 * s, fill=PLATE)
+    for r in range(3):
+        for c in range(4):
+            x, y = 28 + c * 20, 52 + r * 16
+            d.rectangle([x * s, y * s, (x + 12) * s, (y + 10) * s], fill=(200, 230, 200, 255))
+    d.rectangle([68 * s, 68 * s, 80 * s, 78 * s], fill=SKY)
+    d.line(P(s, [(74, 100), (74, 84)]), fill=SKY_D, width=int(4 * s))
+    d.ellipse([60 * s, 78 * s, 74 * s, 88 * s], fill=SKY)
+    d.ellipse([74 * s, 74 * s, 90 * s, 86 * s], fill=SKY)
+    done(img, "tab_calendar")
 
 
 def tab_vitamins():
@@ -183,7 +202,7 @@ def g_minus(d, s):
     d.rectangle([40 * s, 21 * s, 60 * s, 27 * s], fill=SKY)
 
 
-for f in (tab_overview, tab_check, tab_vitamins, tab_foods, tab_other):
+for f in (tab_overview, tab_check, tab_calendar, tab_vitamins, tab_foods, tab_other):
     f()
 pin_icon(True)
 pin_icon(False)

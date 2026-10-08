@@ -16,25 +16,28 @@
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 
--- Fruit Farming crop -> harvest, seed, and how its seeds are got
+-- Fruit Farming crop -> harvest, seed, and its months (sow / best / risk /
+-- bad, copied from FF_farmingConf.lua -- the planting calendar uses them
+-- where the live farming config is not loaded)
 HARMONIE_GTP.FruitFarmingCrops = {
-    { crop = "FFApple", food = "Base.Apple", seed = "FruitFarming.AppleSeed", tree = true },
-    { crop = "FFAvocado", food = "Base.Avocado", seed = "FruitFarming.AvocadoSeed", tree = true },
-    { crop = "FFBanana", food = "Base.Banana", seed = "FruitFarming.BananaSeed", tree = true },
-    { crop = "FFCherry", food = "Base.Cherry", seed = "FruitFarming.CherrySeed", tree = true },
-    { crop = "FFGrapefruit", food = "Base.Grapefruit", seed = "FruitFarming.GrapefruitSeed", tree = true },
-    { crop = "FFGrapes", food = "Base.Grapes", seed = "FruitFarming.GrapesSeed", tree = true },
-    { crop = "FFLemon", food = "Base.Lemon", seed = "FruitFarming.LemonSeed", tree = true },
-    { crop = "FFLime", food = "Base.Lime", seed = "FruitFarming.LimeSeed", tree = true },
-    { crop = "FFMango", food = "Base.Mango", seed = "FruitFarming.MangoSeed", tree = true },
-    { crop = "FFOlive", food = "Base.Olives", seed = "FruitFarming.OliveSeed", tree = true },
-    { crop = "FFOrange", food = "Base.Orange", seed = "FruitFarming.OrangeSeed", tree = true },
-    { crop = "FFPeach", food = "Base.Peach", seed = "FruitFarming.PeachSeed", tree = true },
-    { crop = "FFPear", food = "Base.Pear", seed = "FruitFarming.PearSeed", tree = true },
-    { crop = "FFPineapple", food = "Base.Pineapple", seed = "FruitFarming.PineappleSeed", tree = true },
-    { crop = "FFRice", food = "Base.Rice", seed = "FruitFarming.RiceSeed" },
-    { crop = "FFGinger", food = "Base.GingerRoot", seed = "Base.GingerRoot" },
-    { crop = "FFPeanuts", food = "Base.Peanuts", seed = "Base.Peanuts" },
+    { crop = "FFApple", food = "Base.Apple", seed = "FruitFarming.AppleSeed", tree = true, sow = {3,4,5}, best = {4}, risk = {5}, bad = {11,12,1,2} },
+    { crop = "FFAvocado", food = "Base.Avocado", seed = "FruitFarming.AvocadoSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFBanana", food = "Base.Banana", seed = "FruitFarming.BananaSeed", tree = true, sow = {5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFCherry", food = "Base.Cherry", seed = "FruitFarming.CherrySeed", tree = true, sow = {3,4}, best = {3}, risk = {4}, bad = {10,11,12,1,2} },
+    { crop = "FFGrapefruit", food = "Base.Grapefruit", seed = "FruitFarming.GrapefruitSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFGrapes", food = "Base.Grapes", seed = "FruitFarming.GrapesSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {11,12,1,2,3} },
+    { crop = "FFLemon", food = "Base.Lemon", seed = "FruitFarming.LemonSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFLime", food = "Base.Lime", seed = "FruitFarming.LimeSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFMango", food = "Base.Mango", seed = "FruitFarming.MangoSeed", tree = true, sow = {5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFOlive", food = "Base.Olives", seed = "FruitFarming.OliveSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {11,12,1,2} },
+    { crop = "FFOrange", food = "Base.Orange", seed = "FruitFarming.OrangeSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFPeach", food = "Base.Peach", seed = "FruitFarming.PeachSeed", tree = true, sow = {3,4,5}, best = {4}, risk = {5}, bad = {11,12,1,2} },
+    { crop = "FFPear", food = "Base.Pear", seed = "FruitFarming.PearSeed", tree = true, sow = {3,4,5}, best = {4}, risk = {5}, bad = {11,12,1,2} },
+    { crop = "FFPineapple", food = "Base.Pineapple", seed = "FruitFarming.PineappleSeed", tree = true, sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFCoffee", food = "FruitFarming.CoffeePod", seed = "FruitFarming.CoffeeSeed", tree = true, sow = {3,4,5}, best = {4}, risk = {5}, bad = {11,12,1,2} },
+    { crop = "FFRice", food = "Base.Rice", seed = "FruitFarming.RiceSeed", sow = {5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFGinger", food = "Base.GingerRoot", seed = "Base.GingerRoot", sow = {5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2,3} },
+    { crop = "FFPeanuts", food = "Base.Peanuts", seed = "Base.Peanuts", sow = {4,5,6}, best = {5}, risk = {6}, bad = {10,11,12,1,2} },
 }
 
 -- vanilla Build 42 crops whose harvest is a tracked food

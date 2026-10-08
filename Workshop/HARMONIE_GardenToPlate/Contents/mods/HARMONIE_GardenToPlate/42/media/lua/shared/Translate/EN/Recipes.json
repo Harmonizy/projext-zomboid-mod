@@ -40,5 +40,15 @@
     "FF_GrindCoffee": "Grind Coffee",
     "fruitfarming:coffee growing season": "Coffee Growing Season",
     "fruitfarming:ginger growing season": "Ginger Growing Season",
-    "fruitfarming:peanuts growing season": "Peanut Growing Season"
+    "fruitfarming:peanuts growing season": "Peanut Growing Season",
+    "HARMONIE_DryFruitApple": "Dry Apples",
+    "HARMONIE_DryFruitPear": "Dry Pears",
+    "HARMONIE_DryFruitPeach": "Dry Peaches",
+    "HARMONIE_DryFruitMango": "Dry Mangoes",
+    "HARMONIE_DryFruitBanana": "Dry Bananas",
+    "HARMONIE_DryFruitCherry": "Dry Cherries",
+    "HARMONIE_DryFruitGrapes": "Dry Grapes",
+    "HARMONIE_DryFruitPineapple": "Dry Pineapple",
+    "HARMONIE_SproutBeans": "Sprout Beans in a Jar",
+    "HARMONIE_RenderFishLiverOil": "Render Fish Liver Oil"
 }

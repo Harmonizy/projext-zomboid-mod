@@ -1,0 +1,372 @@
+/*
+    HARMONIE - From Garden to Plate: foods that keep vitamins through the
+    winter (2026-10-08, from the suggestions list).
+      Dried<Fruit>   one fresh fruit dried on a drying rack (the same rack
+                     recipe shape as Fruit Farming's rice / coffee, Tags =
+                     DryingRackGrain) -- keeps for months; vitamin C partly
+                     lost in drying (HARMONIE_ExtraFoodVitamins.lua)
+      BeanSprouts    dried beans sprouted in a jar -- vitamin C and K from a
+                     pantry, any season
+      FishLiverOil   rendered from fish in a pot -- a lot of vitamin A and D
+    Icons are this mod's own (tools/gen_food_icons.py).
+*/
+module HARMONIEGardenToPlate
+{
+    imports
+    {
+        Base,
+    }
+
+    item DriedApple
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Dried Apple Rings,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedApple,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitApple
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Apple] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedApple,
+        }
+    }
+
+    item DriedPear
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Dried Pear,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedPear,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitPear
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Pear] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedPear,
+        }
+    }
+
+    item DriedPeach
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Dried Peach,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedPeach,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitPeach
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Peach] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedPeach,
+        }
+    }
+
+    item DriedMango
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Dried Mango,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedMango,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitMango
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Mango] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedMango,
+        }
+    }
+
+    item DriedBanana
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Banana Chips,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedBanana,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitBanana
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Banana] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedBanana,
+        }
+    }
+
+    item DriedCherry
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Dried Cherries,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedCherry,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitCherry
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Cherry] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedCherry,
+        }
+    }
+
+    item DriedGrapes
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Raisins,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedGrapes,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitGrapes
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Grapes] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedGrapes,
+        }
+    }
+
+    item DriedPineapple
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Dried Pineapple,
+        Weight = 0.05,
+        Icon = HARMONIE_DriedPineapple,
+        FoodType = Fruits,
+        DaysFresh = 120,
+        DaysTotallyRotten = 240,
+        HungerChange = -8.0,
+        ThirstChange = 2.0,
+        Calories = 90.0,
+        Carbohydrates = 22.0,
+        Lipids = 0.2,
+        Proteins = 0.8,
+        Tooltip = Tooltip_HARMONIE_DriedFruit,
+    }
+
+    craftRecipe HARMONIE_DryFruitPineapple
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Cooking,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [Base.Pineapple] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] HARMONIEGardenToPlate.DriedPineapple,
+        }
+    }
+
+    item BeanSprouts
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Bean Sprouts,
+        Weight = 0.1,
+        Icon = HARMONIE_BeanSprouts,
+        FoodType = Vegetables,
+        DaysFresh = 2,
+        DaysTotallyRotten = 4,
+        HungerChange = -6.0,
+        ThirstChange = -2.0,
+        Calories = 30.0,
+        Carbohydrates = 6.0,
+        Lipids = 0.2,
+        Proteins = 3.0,
+        Tooltip = Tooltip_HARMONIE_BeanSprouts,
+    }
+
+    craftRecipe HARMONIE_SproutBeans
+    {
+        timedAction = Making,
+        time = 600,
+        Tags = AnySurfaceCraft;Cooking,
+        category = Cooking,
+        inputs
+        {
+            item 1 [Base.EmptyJar] mode:keep,
+            item 1 [Base.Soybeans;Base.DriedLentils;Base.DriedChickpeas;Base.DriedSplitPeas;Base.DriedBlackBeans;Base.DriedKidneyBeans;Base.DriedWhiteBeans] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 HARMONIEGardenToPlate.BeanSprouts,
+        }
+    }
+
+    item FishLiverOil
+    {
+        DisplayCategory = Food,
+        ItemType = base:food,
+        DisplayName = Fish Liver Oil,
+        Weight = 0.3,
+        Icon = HARMONIE_FishLiverOil,
+        FoodType = Fish,
+        DaysFresh = 30,
+        DaysTotallyRotten = 60,
+        HungerChange = -2.0,
+        Calories = 120.0,
+        Carbohydrates = 0.0,
+        Lipids = 13.0,
+        Proteins = 0.0,
+        ReplaceOnUse = Base.EmptyJar,
+        Tooltip = Tooltip_HARMONIE_FishLiverOil,
+    }
+
+    craftRecipe HARMONIE_RenderFishLiverOil
+    {
+        timedAction = Making,
+        time = 400,
+        Tags = AnySurfaceCraft;Cooking,
+        category = Cooking,
+        inputs
+        {
+            item 1 [Base.Pot;Base.Saucepan] mode:keep,
+            item 1 [Base.EmptyJar] flags[ItemCount] mode:destroy,
+            item 3 [Base.FishFillet;Base.Salmon] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 HARMONIEGardenToPlate.FishLiverOil,
+        }
+    }
+}

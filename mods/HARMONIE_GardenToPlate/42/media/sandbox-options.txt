@@ -57,3 +57,31 @@ option HARMONIE_GardenToPlate.SymptomReminderHours
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_SymptomReminderHours,
 }
+
+option HARMONIE_GardenToPlate.SunVitaminD
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SunVitaminD,
+}
+
+option HARMONIE_GardenToPlate.SunVitaminDPerHour
+{
+    type = double,
+    default = 0.5,
+    min = 0.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SunVitaminDPerHour,
+}
+
+option HARMONIE_GardenToPlate.SunVitaminDMaxPerDay
+{
+    type = double,
+    default = 3.0,
+    min = 0.0,
+    max = 20.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_SunVitaminDMaxPerDay,
+}
