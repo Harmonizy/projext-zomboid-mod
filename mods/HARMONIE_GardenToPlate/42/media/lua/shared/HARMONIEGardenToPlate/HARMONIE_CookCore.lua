@@ -24,6 +24,7 @@
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_CookData"
+require "HARMONIEGardenToPlate/HARMONIE_CookVanilla"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.Cook = HARMONIE_GTP.Cook or {}
@@ -99,6 +100,52 @@ function K.familyOf(recipe)
         for _, r in ipairs(def.results) do if result == norm(r) then return fam end end
     end
     return nil
+end
+
+-- vanilla's script tables (HARMONIE_CookVanilla.lua, from evolvedrecipes.txt
+-- and every item's EvolvedRecipe key), for when no recipe object is at hand
+local function vanilla() return K.VANILLA or { templates = {}, cooked = {}, recipes = {} } end
+
+-- does the item list this family's template at all? (nil when unknown)
+function K.inTemplate(famId, fullType)
+    local fam = K.FAMILIES[famId]
+    local list = fam and vanilla().templates[fam.template]
+    if not list then return nil end
+    return list[fullType] ~= nil
+end
+
+-- vanilla "|Cooked": the item only goes in once it is cooked
+function K.needsCooking(famId, fullType)
+    local fam = K.FAMILIES[famId]
+    local list = fam and vanilla().cooked[fam.template]
+    return list ~= nil and list[fullType] == true
+end
+
+-- the vanilla recipes of a family (from its names) -> list of rows
+function K.vanillaRecipes(famId)
+    local fam = K.FAMILIES[famId]
+    local out = {}
+    if not fam then return out end
+    local rec = vanilla().recipes
+    for _, n in ipairs(fam.names) do
+        if rec[n] then out[#out + 1] = rec[n] end
+    end
+    return out
+end
+
+-- what a family starts from: the fresh bases (a pot, bread slices, ...),
+-- or, for a dish vanilla starts with a craft (omelette, pizza, hotdog),
+-- that started dish item -> { types = {...}, water = bool, max = n }
+function K.baseNeed(famId)
+    local fresh, started, seen = {}, {}, {}
+    local water, max = false, nil
+    for _, r in ipairs(K.vanillaRecipes(famId)) do
+        local list = (r.base ~= r.result) and fresh or started
+        if not seen[r.base] then seen[r.base] = true; list[#list + 1] = r.base end
+        if r.water and r.base ~= r.result then water = true end
+        if (r.max or 0) > 0 then max = math.max(max or 0, r.max) end
+    end
+    return { types = #fresh > 0 and fresh or started, water = water, max = max }
 end
 
 function K.maxItems(recipe)
@@ -310,6 +357,7 @@ function K.plan(player, dish, scan)
     if level < (dish.level or 0) then no("level") end
     if not recipe then no("base") end
     local maxItems = recipe and K.maxItems(recipe) or nil
+    if not maxItems then maxItems = K.baseNeed(dish.family).max end
     p.maxItems = maxItems
     local used = {}            -- item -> additions already planned from it
     -- the preview follows each item down as vanilla uses it: hunger left,
@@ -317,16 +365,23 @@ function K.plan(player, dish, scan)
     local simLeft, simShare = {}, {}
     local nonSpice = 0
     for si, slot in ipairs(dish.slots) do
-        local sp = { slot = slot, need = slot.adds or 1, have = 0, items = {}, refused = {}, missingTypes = {} }
+        local sp = { slot = slot, need = slot.adds or 1, have = 0, items = {}, refused = {}, uncooked = {}, missingTypes = {} }
         for _, t in ipairs(slotTypes(slot)) do
             local list = scan and scan.byType[t] or nil
+            local cookFirst = K.needsCooking(dish.family, t)
             if not list or #list == 0 then
                 sp.missingTypes[#sp.missingTypes + 1] = t
             else
                 for _, it in ipairs(list) do
+                    -- the recipe object when there is one, else vanilla's script table
                     local ok = K.allowed(recipe, it)
+                    if ok == nil then ok = K.inTemplate(dish.family, t) end
                     if ok == false then
+                        if not sp.refused[t] then logOnce("refused:" .. dish.id .. ":" .. t, "%s: vanilla refuses %s (%s)", dish.id, t, recipe and "recipe" or "script table") end
                         sp.refused[t] = true
+                    elseif cookFirst and not K.isCooked(it) then
+                        if not sp.uncooked[t] then logOnce("uncooked:" .. dish.id .. ":" .. t, "%s: %s must be cooked first (vanilla |Cooked)", dish.id, t) end
+                        sp.uncooked[t] = true
                     elseif not K.isRotten(it) and (not isFood(it) or K.hunger(it) > 0 or K.isSpice(it)) then
                         sp.items[#sp.items + 1] = it
                     end

@@ -182,7 +182,18 @@ function Win:renderCookDish(x, y, w, h, d, p)
             local what = K.typeOf(p.base)
             status(self, T(p.fam.partial and "IGUI_GTPC_BaseStarted" or "IGUI_GTPC_BaseFound", itemName(what)), tx, yy, true, sf)
         else
-            status(self, T("IGUI_GTPC_BaseNeed", T("IGUI_GTPC_Base_" .. (K.FAMILIES[d.family].base or "Pot"))), tx, yy, false, sf)
+            -- vanilla's own bases for this dish (evolvedrecipes.txt)
+            local need = K.baseNeed(d.family)
+            local names, seen = {}, {}
+            for _, t in ipairs(need.types) do
+                local n = itemName(t)
+                if not seen[n] then seen[n] = true; names[#names + 1] = n end
+            end
+            local what = #names > 0 and table.concat(names, " / ") or "?"
+            if need.water then what = T("IGUI_GTPC_WithWater", what) end
+            -- like status(), but the text may wrap (several bases)
+            self:drawRect(tx, yy + math.floor(lh / 2) - 3, 6, 6, 1, C.bad[1], C.bad[2], C.bad[3])
+            yy = yy + math.max(lh, self:paragraphs(T("IGUI_GTPC_BaseNeed", what), tx + 12, yy, tw2 - 22, C.bad, sf)) - lh
         end
         yy = yy + lh + 6
         -- ingredients
@@ -211,6 +222,12 @@ function Win:renderCookDish(x, y, w, h, d, p)
             if #refused > 0 then
                 table.sort(refused)
                 yy = yy + self:paragraphs(T("IGUI_GTPC_Refused", table.concat(refused, ", ")), tx + lh + 10, yy, tw2 - lh - 20, C.warn, sf) + 2
+            end
+            local raw = {}
+            for t in pairs(sp.uncooked) do raw[#raw + 1] = itemName(t) end
+            if #raw > 0 then
+                table.sort(raw)
+                yy = yy + self:paragraphs(T("IGUI_GTPC_CookFirst", table.concat(raw, ", ")), tx + lh + 10, yy, tw2 - lh - 20, C.warn, sf) + 2
             end
         end
         if p and p.trimmed then yy = yy + self:paragraphs(T("IGUI_GTPC_Trimmed", tostring(p.maxItems or "?")), tx, yy, tw2 - 10, C.warn, sf) + 2 end

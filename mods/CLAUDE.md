@@ -23,3 +23,13 @@
 - Log: load or setup results (counts), every network message that is
   rejected or dropped, fallbacks taken (a missing API, a pcall failure),
   user actions in our windows, and first-time / daily summaries.
+
+## Vanilla B42 reference (look things up, don't guess)
+- `mods/_VanillaReference_B42/` -- lookup lists made from the game's own
+  scripts: `items_index.txt` (every item type + English name),
+  `food_index.txt` (nutrition, EvolvedRecipe), `evolvedrecipes_index.txt`,
+  `evolvedrecipe_ingredients.txt` (what may go into each recipe, `|Cooked`),
+  `craftrecipes_index.txt`, `tags_index.txt`. Read its README.txt.
+- Check every vanilla item type, tag or recipe name there before using it.
+- `raw/` (the vanilla files themselves) is gitignored on purpose: the repo
+  is public. Rebuild with `build_index.py` after a game update.
