@@ -1,3 +1,23 @@
 {
-    "Base.PillsVitamins": "Multivitamin Pills"
+    "Base.PillsVitamins": "Multivitamin Pills",
+    "FruitFarming.AppleSeed": "Apple Seeds",
+    "FruitFarming.AvocadoSeed": "Avocado Seeds",
+    "FruitFarming.BananaSeed": "Banana Seeds",
+    "FruitFarming.CherrySeed": "Cherry Seeds",
+    "FruitFarming.GrapefruitSeed": "Grapefruit Seeds",
+    "FruitFarming.GrapesSeed": "Grape Seeds",
+    "FruitFarming.LemonSeed": "Lemon Seeds",
+    "FruitFarming.LimeSeed": "Lime Seeds",
+    "FruitFarming.MangoSeed": "Mango Seeds",
+    "FruitFarming.OrangeSeed": "Orange Seeds",
+    "FruitFarming.PeachSeed": "Peach Seeds",
+    "FruitFarming.PearSeed": "Pear Seeds",
+    "FruitFarming.PineappleSeed": "Pineapple Seeds",
+    "FruitFarming.RiceSeed": "Rice Seeds",
+    "FruitFarming.RiceSheaf": "Rice Sheaf",
+    "FruitFarming.RiceSheafDried": "Rice Sheaf (Dried)",
+    "FruitFarming.OliveSeed": "Olive Seeds",
+    "FruitFarming.CoffeeSeed": "Coffee Seeds",
+    "FruitFarming.CoffeePod": "Coffee Pod",
+    "FruitFarming.CoffeePodDried": "Coffee Pod (Dried)"
 }

@@ -1,0 +1,6430 @@
+tileGeometry
+{
+    VERSION = 2,
+
+    tileset
+    {
+        name = ff_apple_01,
+        
+        /* ff_apple_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_apple_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_pear_01,
+        
+        /* ff_pear_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pear_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_peach_01,
+        
+        /* ff_peach_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peach_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_cherry_01,
+        
+        /* ff_cherry_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_cherry_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_orange_01,
+        
+        /* ff_orange_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_orange_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_lemon_01,
+        
+        /* ff_lemon_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lemon_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_lime_01,
+        
+        /* ff_lime_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_lime_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_grapefruit_01,
+        
+        /* ff_grapefruit_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grapefruit_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_avocado_01,
+        
+        /* ff_avocado_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_avocado_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_mango_01,
+        
+        /* ff_mango_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_mango_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_olive_01,
+        
+        /* ff_olive_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_olive_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_coffee_01,
+        
+        /* ff_coffee_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_coffee_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_peanut_01,
+        
+        /* ff_peanut_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_peanut_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_rice_01,
+        
+        /* ff_rice_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_rice_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_banana_01,
+        
+        /* ff_banana_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_banana_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_pineapple_01,
+        
+        /* ff_pineapple_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_pineapple_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_grape_01,
+        
+        /* ff_grape_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_grape_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+
+    tileset
+    {
+        name = ff_ginger_01,
+        
+        /* ff_ginger_01_0 */
+        tile
+        {
+            xy = 0x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_1 */
+        tile
+        {
+            xy = 1x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_2 */
+        tile
+        {
+            xy = 2x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_3 */
+        tile
+        {
+            xy = 3x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_4 */
+        tile
+        {
+            xy = 4x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_5 */
+        tile
+        {
+            xy = 5x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_6 */
+        tile
+        {
+            xy = 6x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_7 */
+        tile
+        {
+            xy = 7x0,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_8 */
+        tile
+        {
+            xy = 0x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_9 */
+        tile
+        {
+            xy = 1x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_10 */
+        tile
+        {
+            xy = 2x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_11 */
+        tile
+        {
+            xy = 3x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_12 */
+        tile
+        {
+            xy = 4x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_13 */
+        tile
+        {
+            xy = 5x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_14 */
+        tile
+        {
+            xy = 6x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_15 */
+        tile
+        {
+            xy = 7x1,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_16 */
+        tile
+        {
+            xy = 0x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_17 */
+        tile
+        {
+            xy = 1x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_18 */
+        tile
+        {
+            xy = 2x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_19 */
+        tile
+        {
+            xy = 3x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_20 */
+        tile
+        {
+            xy = 4x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_21 */
+        tile
+        {
+            xy = 5x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_22 */
+        tile
+        {
+            xy = 6x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_23 */
+        tile
+        {
+            xy = 7x2,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_24 */
+        tile
+        {
+            xy = 0x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_25 */
+        tile
+        {
+            xy = 1x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_26 */
+        tile
+        {
+            xy = 2x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_27 */
+        tile
+        {
+            xy = 3x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_28 */
+        tile
+        {
+            xy = 4x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_29 */
+        tile
+        {
+            xy = 5x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_30 */
+        tile
+        {
+            xy = 6x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+        
+        /* ff_ginger_01_31 */
+        tile
+        {
+            xy = 7x3,
+            
+            properties
+            {
+                Translucent = true,
+            }
+        }
+    }
+}

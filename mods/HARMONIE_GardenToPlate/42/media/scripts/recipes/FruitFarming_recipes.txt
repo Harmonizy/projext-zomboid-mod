@@ -1,0 +1,376 @@
+/* From "Fruit Farming (B42)" by leina (Steam Workshop 3779625821), built into
+   HARMONIE - From Garden to Plate with credit -- see 42/CREDITS.txt. Unchanged. */
+module FruitFarming
+{
+    imports
+    {
+        Base,
+    }
+
+    /* Extract seeds from vanilla fruits so seeds are obtainable from normal loot.
+       Structure mirrors vanilla 42.20.2 CollectSeeds / CollectSunflowerSeeds
+       (media/scripts/generated/recipes/recipes_farming.txt): tweezers-or-knife
+       tool kept, fruit destroyed, rotten fruit allowed. */
+
+    craftRecipe FF_ExtractAppleSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Apple] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 FruitFarming.AppleSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractAvocadoPit
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Avocado] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 FruitFarming.AvocadoSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractBananaSucker
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Banana] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 FruitFarming.BananaSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractCherryPits
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Cherry] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 2 FruitFarming.CherrySeed,
+        }
+    }
+
+    craftRecipe FF_ExtractGrapefruitSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Grapefruit] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 FruitFarming.GrapefruitSeed,
+        }
+    }
+
+    craftRecipe FF_TakeGrapeCutting
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Grapes] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 2 FruitFarming.GrapesSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractLemonSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Lemon] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 FruitFarming.LemonSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractLimeSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Lime] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 FruitFarming.LimeSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractMangoPit
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Mango] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 FruitFarming.MangoSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractOliveSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Olives] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 2 FruitFarming.OliveSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractOrangeSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Orange] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 FruitFarming.OrangeSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractPeachPit
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Peach] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 FruitFarming.PeachSeed,
+        }
+    }
+
+    craftRecipe FF_ExtractPearSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Pear] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 3 FruitFarming.PearSeed,
+        }
+    }
+
+    craftRecipe FF_CutPineappleCrown
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Pineapple] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 FruitFarming.PineappleSeed,
+        }
+    }
+
+    /* Rice grain chain. Dry/Thresh mirror vanilla DryWheat / ThreshGrain
+       (generated/recipes/recipes_farming.txt); drying uses the vanilla drying
+       rack via Tags = DryingRackGrain. Seed bootstrap mirrors CollectSeeds.
+       FF_PackRice is the one intentional non-vanilla addition: 12 x -5 hunger
+       seeds -> one -60 hunger Base.Rice bag, so farmed rice is cookable. */
+
+    craftRecipe FF_CollectRiceSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.Rice] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 12 FruitFarming.RiceSeed,
+        }
+    }
+
+    craftRecipe FF_DryRice
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Farming,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [FruitFarming.RiceSheaf] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] FruitFarming.RiceSheafDried,
+        }
+    }
+
+    craftRecipe FF_ThreshRice
+    {
+        timedAction = Threshing,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 [FruitFarming.RiceSheafDried] mode:destroy flags[Prop1],
+        }
+        outputs
+        {
+            item 1 FruitFarming.RiceSeed,
+        }
+    }
+
+    craftRecipe FF_PackRice
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 12 [FruitFarming.RiceSeed] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 1 Base.Rice,
+        }
+    }
+
+    /* Coffee chain. Seed bootstrap mirrors CollectSeeds; drying mirrors
+       DryWheat; grinding mirrors GrindFlour (stone quern, 12:1, time 300).
+       Output Base.Coffee2 feeds the vanilla coffee machine unchanged. */
+
+    craftRecipe FF_CollectCoffeeSeeds
+    {
+        timedAction = Making,
+        time = 50,
+        Tags = InHandCraft;Farming,
+        category = Farming,
+        inputs
+        {
+            item 1 tags[base:tweezers;base:dullknife;base:sharpknife] mode:keep flags[MayDegradeLight;Prop1;IsNotDull],
+            item 1 [Base.ChocolateCoveredCoffeeBeans] flags[AllowRottenItem;ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item 2 FruitFarming.CoffeeSeed,
+        }
+    }
+
+    craftRecipe FF_DryCoffee
+    {
+        time = 172800,
+        Tags = DryingRackGrain,
+        category = Farming,
+        overlayStyle = Wheat,
+        inputs
+        {
+            item variable[1:20] [FruitFarming.CoffeePod] flags[ItemCount] mode:destroy,
+        }
+        outputs
+        {
+            item variable[1:20] FruitFarming.CoffeePodDried,
+        }
+    }
+
+    craftRecipe FF_GrindCoffee
+    {
+        time = 300,
+        timedAction = UseStoneQuern,
+        Tags = Stone_Quern,
+        category = Farming,
+        inputs
+        {
+            item 12 [FruitFarming.CoffeePodDried] flags[IsCookedFoodItem;ItemCount],
+        }
+        outputs
+        {
+            item 1 Base.Coffee2,
+        }
+    }
+}

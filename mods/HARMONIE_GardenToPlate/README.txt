@@ -334,3 +334,17 @@ HARMONIE_PillsHook.lua
    ตัวละครใหม่ได้ moodle ชุดใหม่จาก MoodleFramework (ค่าเริ่มต้น: Good ตั้งแต่ 0.6) แต่เราจำไว้ว่า "ตั้งค่าแล้ว"
    ตามหมายเลขผู้เล่น เลยไม่ได้ตั้งเกณฑ์ของเราให้ชุดใหม่ -> วิตามินเต็มขึ้น moodle "ดี" ระดับ 4 ที่ไม่มีข้อความ
    แก้: จำตาม moodle แต่ละตัว และตั้งเกณฑ์ใหม่ทันทีตอนสร้างตัวละคร (OnCreatePlayer)
+
+ปลูกผลไม้ (รวม Fruit Farming (B42) ของ leina, Workshop 3779625821 -- ดู 42/CREDITS.txt)
+------------------------------------------------------------------------------------------
+  - รวมไฟล์ทั้งหมดของ Fruit Farming 0.3.0 ไว้แบบไม่แก้ (texturepacks, .tiles, tileGeometry.txt,
+    lua/server/Farming/FF_*.lua, scripts/FruitFarming_*.txt, คำแปล EN/FR/KO/TR) ชื่อ module
+    (FruitFarming), ชื่อไอเทม และชื่อ sprite เหมือนเดิม โลกที่เคยปลูกด้วย Fruit Farming จึงใช้ต่อได้
+  - mod.info: pack= / tiledef= 2100-2117 ของ Fruit Farming และ incompatible=FruitFarming
+    (ห้ามเปิดคู่กัน tile id จะซ้ำ)
+  - ปลูกได้: ผลไม้ 14 อย่าง ข้าว กาแฟ ขิง ถั่วลิสง -- ผลไม้ทุกอย่างมีวิตามินในฐานข้อมูลอยู่แล้ว
+    เพิ่ม Base.GingerRoot {C = 9, B = 1}
+  - HARMONIE_GrowableFoods.lua: รายการอาหารที่ปลูกได้ (Fruit Farming + พืชของเกม + ค่าจาก
+    farming_vegetableconf ถ้าโหลดอยู่) ใช้ในคู่มือ: เครื่องหมาย (ปลูกได้), ปุ่ม "ปลูกได้" ข้างช่องค้นหา,
+    และหัวข้อ "ปลูกผลไม้เอง" แรกสุดในแท็บยาและเคล็ดลับ
+  - คำแปลไทยของพืช เมล็ด และสูตร อยู่ใน HARMONIE_TooManyModThaiTranslate

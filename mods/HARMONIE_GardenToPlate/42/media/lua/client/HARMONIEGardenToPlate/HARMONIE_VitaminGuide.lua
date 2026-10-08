@@ -48,6 +48,7 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_TopFoods"
+require "HARMONIEGardenToPlate/HARMONIE_GrowableFoods"
 
 GTPGuide = GTPGuide or {}
 local H = GTPGuide
@@ -62,7 +63,8 @@ H.FOLD_DELAY_MS = 350
 H.TABS = { "overview", "check", "vitamins", "foods", "other" }
 H.NEAR_TILES = 3 -- how close another survivor must be to check them
 H.UNITS = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
-H.OTHER = { "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
+-- 2026-10-08: "Grow" first -- Fruit Farming (B42) by leina is built in
+H.OTHER = { "Grow", "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
 
 -- green (Home Medic's palette turned leaf green)
 H.C = {
@@ -197,7 +199,8 @@ function H.foods()
             if not seen[key] then
                 seen[key] = true
                 list[#list + 1] = { fullType = fullType, name = it.name, icon = it.icon, prof = prof,
-                    canned = fullType:find("HomeCanned", 1, true) ~= nil }
+                    canned = fullType:find("HomeCanned", 1, true) ~= nil,
+                    grow = HARMONIE_GTP.IsGrowable and HARMONIE_GTP.IsGrowable(fullType) or false }
             end
         end
     end
@@ -363,7 +366,10 @@ function Win:placeSearch(x, y, w)
         box = self.search
     end
     local h = box.height
-    local bw = w - h - 4
+    local sf = H.small()
+    local growLabel = T("IGUI_GTPG_GrowOnly")
+    local gw = tw(sf, growLabel) + 34
+    local bw = w - h - 4 - gw - 6
     if box.x ~= x or box.y ~= y or box.width ~= bw then
         box:setX(x)
         box:setY(y)
@@ -378,7 +384,31 @@ function Win:placeSearch(x, y, w)
     local icon = texture(UI_DIR .. "icon_close.png")
     if icon then self:drawTextureScaled(icon, clear.x + 3, clear.y + 3, clear.w - 6, clear.h - 6, has and 1 or 0.35, 1, 1, 1) end
     if has then self.clicks[#self.clicks + 1] = clear end
+    -- "can grow only" toggle (2026-10-08)
+    local g = { x = clear.x + clear.w + 6, y = y, w = gw, h = h }
+    local on = self.growOnly == true
+    local over = inside(g, self:getMouseX(), self:getMouseY())
+    self:drawRect(g.x, g.y, g.w, g.h, on and 0.95 or (over and 0.85 or 0.6), C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRectBorder(g.x, g.y, g.w, g.h, on and 1 or 0.6, C.border[1], C.border[2], C.border[3])
+    local bs = h - 10
+    self:drawRectBorder(g.x + 6, g.y + 5, bs, bs, 1, C.accent[1], C.accent[2], C.accent[3])
+    if on then self:drawRect(g.x + 9, g.y + 8, bs - 6, bs - 6, 1, C.accent[1], C.accent[2], C.accent[3]) end
+    shadowText(self, growLabel, g.x + bs + 12, g.y + math.floor((h - fh(sf)) / 2), on and C.text or C.textDim, 1, sf)
+    g.action = function(win) win.growOnly = not win.growOnly; win.sortedFor = nil end
+    self.clicks[#self.clicks + 1] = g
     return h
+end
+
+-- the search text and the "can grow only" toggle
+function Win:keep(f, q)
+    if self.growOnly and not f.grow then return false end
+    return H.matches(f, q)
+end
+
+-- a food's name with its "(can grow)" mark
+local function foodLabel(f)
+    if f.grow then return f.name .. " " .. T("IGUI_GTPG_GrowMark") end
+    return f.name
 end
 
 function Win:headerButtons()
@@ -672,7 +702,7 @@ function Win:renderVitamins(x, y, w, h)
     local q = self:query()
     local all = knows and H.foodsWith(v) or H.foodsWithByName(v)
     local list = {}
-    for _, f in ipairs(all) do if H.matches(f, q) then list[#list + 1] = f end end
+    for _, f in ipairs(all) do if self:keep(f, q) then list[#list + 1] = f end end
     local fy = y + topH + 8
     local titleKey = knows and "IGUI_GTPG_Card_Sources" or "IGUI_GTPG_Card_SourcesLocked"
     local fx, fy2, fw, fh2 = self:drawCard(rx, fy, rw, h - topH - 8, T(titleKey, H.vitName(v), tostring(#list)))
@@ -700,7 +730,7 @@ function Win:renderVitamins(x, y, w, h)
             local gain = "+" .. H.fmt1(H.reserveOf(v, f.prof[v]))
             local right = knows and gain or ""
             if knows then shadowText(self, right, ix + colW - tw(sf, right) - 4, yy + 1, C.accent, 1, sf) end
-            shadowText(self, fit(f.name, ix + colW - tw(sf, right) - 14 - tx, sf), tx, yy + 1, f.canned and C.warn or C.text, 1, sf)
+            shadowText(self, fit(foodLabel(f), ix + colW - tw(sf, right) - 14 - tx, sf), tx, yy + 1, f.canned and C.warn or C.text, 1, sf)
             if knows then self:drawBar(tx, yy + lh + 2, colW - (tx - ix) - 8, 4, f.prof[v] / top, C.accent) end
             local r = { x = ix, y = yy, w = colW, h = itemH }
             if knows and inside(r, mx, my) and inside(self.scrollBox and self.scrollBox["src" .. v .. "|" .. q], mx, my) then
@@ -760,12 +790,12 @@ function Win:renderFoods(x, y, w, h)
     -- sorted / filtered copy: with the knowledge a vitamin column sorts
     -- richest first; without it, it keeps only the foods with that vitamin, A-Z
     local key = self.sortKey
-    local sig = key .. "|" .. q .. "|" .. tostring(knows)
+    local sig = key .. "|" .. q .. "|" .. tostring(knows) .. "|" .. tostring(self.growOnly)
     if self.sortedFor ~= sig then
         self.sortedFor = sig
         self.sorted = {}
         for _, f in ipairs(foods) do
-            if H.matches(f, q) and (key == "name" or knows or (f.prof[key] or 0) > 0) then
+            if self:keep(f, q) and (key == "name" or knows or (f.prof[key] or 0) > 0) then
                 self.sorted[#self.sorted + 1] = f
             end
         end
@@ -794,7 +824,7 @@ function Win:renderFoods(x, y, w, h)
         for i, f in ipairs(self.sorted) do
             if i % 2 == 0 then self:drawRect(cx, yy, cw - 8, rowH, 0.35, 0.05, 0.16, 0.07) end
             if f.icon then self:drawTextureScaled(f.icon, cx + 2, yy + 1, rowH - 2, rowH - 2, 1, 1, 1, 1) end
-            shadowText(self, fit(f.name, nameW - rowH - 10, sf), cx + rowH + 6, yy + math.floor((rowH - fh(sf)) / 2), f.canned and C.warn or C.text, 1, sf)
+            shadowText(self, fit(foodLabel(f), nameW - rowH - 10, sf), cx + rowH + 6, yy + math.floor((rowH - fh(sf)) / 2), f.canned and C.warn or C.text, 1, sf)
             for j, v in ipairs(HARMONIE_GTP.Vitamins) do
                 local amt = f.prof[v]
                 if amt and amt > 0 then
@@ -821,6 +851,7 @@ end
 -- each section: an item picture, a title, wrapped text, and (for recipes)
 -- a row of the ingredients' pictures
 local OTHER_ITEMS = {
+    Grow = { "Base.Apple" },
     Pills = { "Base.PillsVitamins" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Salt" },
     Cooking = { "Base.PotOfStew", "Base.Pot" },
@@ -829,6 +860,7 @@ local OTHER_ITEMS = {
     Tips = { "Base.Salmon", "Base.Egg", "Base.Orange", "Base.Spinach" },
 }
 local RECIPE_ROWS = {
+    Grow = { "Base.KitchenKnife", "Base.Apple", "FruitFarming.AppleSeed", "Base.HandShovel", "Base.WateredCan" },
     Pills = { "Base.MortarPestle", "Base.EmptyJar", "Base.Carrots", "Base.Egg", "Base.Tomato", "Base.Salmon", "Base.Peanuts", "Base.Broccoli", "Base.Salt" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Carrots", "Base.Salt" },
 }
@@ -853,8 +885,19 @@ function Win:renderOther(x, y, w, h)
                 ty = ty + 4
                 local ix = tx
                 local s = math.max(28, lh + 10)
-                for _, ft in ipairs(row) do
-                    local it = H.item(ft)
+                local list = row
+                if key == "Grow" then
+                    list = {}
+                    for _, ft in ipairs(row) do list[#list + 1] = ft end
+                    list[#list + 1] = "|"
+                    for _, c in ipairs(HARMONIE_GTP.FruitFarmingCrops or {}) do list[#list + 1] = c.food end
+                end
+                for _, ft in ipairs(list) do
+                    local it = ft ~= "|" and H.item(ft)
+                    if ft == "|" or ix + s > cx + cw - 10 then
+                        ix = tx
+                        ty = ty + s + 4
+                    end
                     if it and it.icon then
                         self:drawRect(ix, ty, s, s, 0.6, 0.04, 0.14, 0.06)
                         self:drawTextureScaled(it.icon, ix + 2, ty + 2, s - 4, s - 4, 1, 1, 1, 1)
