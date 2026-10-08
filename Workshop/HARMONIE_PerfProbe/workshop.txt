@@ -1,4 +1,5 @@
 version=1
+id=3814622190
 title=HARMONIE - Perf Probe (diagnostic)
 description=Diagnostic only. Turn it on for a few minutes to find what makes a game lag, then turn it off.
 description=
