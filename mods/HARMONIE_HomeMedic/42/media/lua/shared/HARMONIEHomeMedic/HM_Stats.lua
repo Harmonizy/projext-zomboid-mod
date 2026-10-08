@@ -199,8 +199,15 @@ end
 function St.gtp(player)
     local G = HARMONIE_GTP
     if not (G and G.Vitamins) then return nil end
-    local md = call(player, "getModData")
-    local store = md and md.HARMONIE_Vitamins
+    local store
+    if G.VitData and G.VitData.Peek then
+        -- GTP 0.11.1+: also another player's vitamins in MP (from the server)
+        local ok, st = pcall(G.VitData.Peek, player)
+        store = ok and st or nil
+    else
+        local md = call(player, "getModData")
+        store = md and md.HARMONIE_Vitamins
+    end
     if type(store) ~= "table" then return nil end
     local cfg = G.Config or {}
     local out = {}

@@ -943,8 +943,8 @@ end
 --             5: + deficiency active / days in deficiency
 --   others    0: only how they look (well / unwell)   3: band per vitamin
 --             5 (assessmentRequiredFirstAid): Reserve, pause days, deficiency
--- Another player's vitamins are READ ONLY, straight from their ModData
--- (never VitData.Get, which would create and send a store for them).
+-- Another player's vitamins are READ ONLY (VitData.Peek: their ModData,
+-- or in MP the copy the server sends; never VitData.Get).
 H.CHECK_SELF = { 3, 5 }
 function H.checkOther() return { 3, tonumber(cfg().assessmentRequiredFirstAid) or 5 } end
 
@@ -954,6 +954,9 @@ function H.firstAid(player)
 end
 
 function H.readStore(target)
+    -- 0.11.1: in MP another player's store is asked from the server
+    local VD = HARMONIE_GTP.VitData
+    if VD and VD.Peek then return VD.Peek(target) end
     local ok, md = pcall(function() return target:getModData() end)
     local st = ok and md and md.HARMONIE_Vitamins
     return type(st) == "table" and st or nil

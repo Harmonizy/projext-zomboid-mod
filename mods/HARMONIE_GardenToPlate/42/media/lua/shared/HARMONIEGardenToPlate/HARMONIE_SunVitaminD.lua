@@ -51,11 +51,18 @@ local function raining()
     return false
 end
 
+-- outdoors: the player's own check, or the square's when that is missing
+function S.isOutside(player)
+    local ok, out = pcall(function() return player:isOutside() end)
+    if ok and out ~= nil then return out == true end
+    local ok2, out2 = pcall(function() return player:getCurrentSquare():isOutside() end)
+    return ok2 and out2 == true
+end
+
 -- Reserve this 10-minute step is worth for `player` right now (0 = none)
 function S.stepReserve(player, hour, month, isRaining)
     if not S.enabled() or not player then return 0 end
-    local okO, outside = pcall(function() return player:isOutside() end)
-    if not (okO and outside) then return 0 end
+    if not S.isOutside(player) then return 0 end
     if hour < S.FIRST_HOUR or hour > S.LAST_HOUR then return 0 end
     if isRaining then return 0 end
     local r = S.perHour() / 6

@@ -362,6 +362,18 @@ end
 function HARMONIE_AdminPanel:prerender()
     ISCollapsableWindow.prerender(self)
 
+    -- 0.11.1: in MP another player's real values arrive from the server a
+    -- moment after the panel opens -- show them in the untouched entries
+    if not self.harmonieLoaded and HARMONIE_GTP.VitData.Peek(self.target) then
+        self.harmonieLoaded = true
+        for _, entry in ipairs(self.harmonieEntries or {}) do
+            if entry.harmonieGetValue and not entry.harmonieDirty then
+                entry:setText(entry.harmonieIsInt and tostring(entry.harmonieGetValue())
+                    or string.format("%.2f", entry.harmonieGetValue()))
+            end
+        end
+    end
+
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         local statusLabel = self.harmonieStatusLabels[vit]
         if statusLabel then

@@ -7,10 +7,12 @@
     No list names are guessed: at OnPreDistributionMerge every procedural
     loot list is scanned, and each list that already holds a vanilla seed
     (an item whose type ends in "Seed" or "BagSeed2" -- loose seeds and seed
-    packets; not "Seeds", the snacks) also gets the fruit seeds, each at a fifth of the
-    strongest vanilla seed weight in that list (one fruit seed picked from
-    14, so fruit seeds stay a find rather than a flood). console.txt lists
-    the lists it touched.
+    packets; not "Seeds", the snacks) also gets the fruit seeds, each at
+    1/15 of the strongest vanilla seed weight in that list. Every entry of
+    a list rolls on its own, so the 15 fruit seeds together turn up about
+    as often as that one vanilla seed (0.11.1: was a fifth each, which
+    added up to three times the vanilla seed -- a flood, not a find).
+    console.txt lists the lists it touched.
 ]]--
 
 HARMONIE_GTP = HARMONIE_GTP or {}
@@ -21,7 +23,7 @@ local FRUIT_SEEDS = {
     "FruitFarming.MangoSeed", "FruitFarming.OliveSeed", "FruitFarming.OrangeSeed", "FruitFarming.PeachSeed",
     "FruitFarming.PearSeed", "FruitFarming.PineappleSeed", "FruitFarming.CoffeeSeed",
 }
-HARMONIE_GTP.FruitSeedLootShare = 0.2
+HARMONIE_GTP.FruitSeedLootShare = 1 / #FRUIT_SEEDS
 
 local function isVanillaSeed(name)
     if type(name) ~= "string" or name:find("FruitFarming.", 1, true) then return false end

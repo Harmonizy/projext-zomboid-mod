@@ -100,34 +100,119 @@ local function plainCopy(store)
 end
 VitData.plainCopy = plainCopy
 
+--[[
+    0.11.1 (MP bug): another player's vitamins live on THEIR client and the
+    server -- this client's copy of their ModData never has them. Reading
+    them with VitData.Get used to create a fresh default store here, and for
+    an admin the sync below then sent those defaults to the server: opening
+    the old assessment or the admin panel on someone wiped their real
+    vitamins. Now another (remote) player's store comes from the server on
+    request ("get" -> "data"), is cached in VitData.Remote by online id, and
+    is never synced until a real copy has arrived.
+]]--
+VitData.Remote = {}
+local placeholder = setmetatable({}, { __mode = "k" })
+local asked = {}
+local ASK_EVERY_MS = 3000
+
+local function onlineId(character)
+    local ok, id = pcall(function() return character:getOnlineID() end)
+    return ok and id ~= nil and tonumber(id) or nil
+end
+
+-- true on a MP client for anyone who is not one of this machine's players
+local function isRemote(character)
+    if not (isClient and isClient()) or not character then return false end
+    local ok, loc = pcall(function() return character:isLocalPlayer() end)
+    if ok and loc ~= nil then return not loc end
+    if getPlayer and getPlayer() == character then return false end
+    for i = 0, 3 do
+        local p = getSpecificPlayer and getSpecificPlayer(i)
+        if p and p == character then return false end
+    end
+    return true
+end
+VitData.IsRemote = isRemote
+
+local function nowMs()
+    return getTimestampMs and getTimestampMs() or (os.time() * 1000)
+end
+
+-- ask the server for a remote player's store (at most every few seconds)
+function VitData.RequestRemote(character)
+    local id = onlineId(character)
+    local me = getPlayer and getPlayer()
+    if not id or not me or not sendClientCommand then return end
+    local t = nowMs()
+    if asked[id] and t - asked[id] < ASK_EVERY_MS then return end
+    asked[id] = t
+    sendClientCommand(me, VitData.NET, "get", { target = id })
+end
+
+-- read only: the character's store, or nil when there is none yet (a
+-- remote one is requested and shows up a moment later)
+function VitData.Peek(character)
+    if not character then return nil end
+    if isRemote(character) then
+        VitData.RequestRemote(character)
+        local id = onlineId(character)
+        return id and VitData.Remote[id] or nil
+    end
+    local ok, md = pcall(function() return character:getModData() end)
+    local st = ok and md and md.HARMONIE_Vitamins
+    return type(st) == "table" and st or nil
+end
+
+local function defaults()
+    local out = {}
+    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+        out[vit] = { value = HARMONIE_GTP.Config.startValue, pauseDays = 0, afflicted = false,
+            afflictedDays = 0, traitGranted = false }
+    end
+    return out
+end
+
 local function sync(character)
     if not (isClient() and sendClientCommand) then return end
-    local md = character and character:getModData()
-    if not md or type(md.HARMONIE_Vitamins) ~= "table" then return end
     local me = getPlayer and getPlayer() or character
-    local args = { data = plainCopy(md.HARMONIE_Vitamins) }
-    if character ~= me then
-        -- an admin editing another player (HARMONIE_AdminPanel)
-        local ok, id = pcall(function() return character:getOnlineID() end)
-        if not ok or id == nil then return end
+    local store
+    local args = {}
+    if isRemote(character) then
+        -- an admin editing another player (HARMONIE_AdminPanel): only once
+        -- their real store is here, never the stand-in defaults
+        local id = onlineId(character)
+        store = id and VitData.Remote[id]
+        if type(store) ~= "table" or placeholder[store] then return end
         args.target = id
+    else
+        local md = character and character:getModData()
+        store = md and md.HARMONIE_Vitamins
+        if type(store) ~= "table" then return end
+        -- sent AS this character (split screen player 2 included), so the
+        -- server writes it to them without any staff check
+        me = character
     end
+    args.data = plainCopy(store)
     sendClientCommand(me, VitData.NET, "sync", args)
 end
 
 local function ensureStore(character)
+    if isRemote(character) then
+        local st = VitData.Peek(character)
+        if type(st) == "table" then
+            -- fill any vitamin the server copy lacks, without syncing
+            for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+                if type(st[vit]) ~= "table" then st[vit] = defaults()[vit] end
+            end
+            return st
+        end
+        local tmp = defaults()
+        placeholder[tmp] = true
+        return tmp
+    end
     local modData = character:getModData()
     if not modData.HARMONIE_Vitamins then
-        modData.HARMONIE_Vitamins = {}
-        for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-            modData.HARMONIE_Vitamins[vit] = {
-                value = HARMONIE_GTP.Config.startValue,
-                pauseDays = 0,
-                afflicted = false,
-                afflictedDays = 0,
-                traitGranted = false,
-            }
-        end
+        modData.HARMONIE_Vitamins = defaults()
         sync(character)
     end
     return modData.HARMONIE_Vitamins
@@ -342,8 +427,26 @@ end
 -- server: a client's vitamins (or an admin's edit of another player's)
 if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
-        if module ~= VitData.NET or command ~= "sync" or not player or type(args) ~= "table"
-                or type(args.data) ~= "table" then return end
+        if module ~= VitData.NET or not player or type(args) ~= "table" then return end
+        if command == "get" then
+            -- someone's assessment / check / admin panel wants a player's
+            -- vitamins: read only, sent back to the asker alone
+            local want = tonumber(args.target)
+            local online = getOnlinePlayers and getOnlinePlayers()
+            for i = 0, (online and online:size() or 0) - 1 do
+                local p = online:get(i)
+                if p and p:getOnlineID() == want then
+                    local st = p:getModData().HARMONIE_Vitamins
+                    if sendServerCommand then
+                        sendServerCommand(player, VitData.NET, "data",
+                            { id = want, data = type(st) == "table" and plainCopy(st) or nil })
+                    end
+                    return
+                end
+            end
+            return
+        end
+        if command ~= "sync" or type(args.data) ~= "table" then return end
         local target = player
         if args.target ~= nil then
             -- 0.7.7: staff roles only -- in B42 an ordinary player is
@@ -362,7 +465,7 @@ if Events and Events.OnClientCommand then
         local data = plainCopy(args.data)
         target:getModData().HARMONIE_Vitamins = data
         if target ~= player and sendServerCommand then
-            sendServerCommand(target, VitData.NET, "set", { data = data })
+            sendServerCommand(target, VitData.NET, "set", { data = data, id = target:getOnlineID() })
         end
     end)
 end
@@ -370,8 +473,21 @@ end
 -- client: an admin changed this player's vitamins
 if Events and Events.OnServerCommand then
     Events.OnServerCommand.Add(function(module, command, args)
-        if module ~= VitData.NET or command ~= "set" or type(args) ~= "table" or type(args.data) ~= "table" then return end
+        if module ~= VitData.NET or type(args) ~= "table" then return end
+        if command == "data" then
+            -- another player's vitamins, asked for by VitData.RequestRemote
+            local id = tonumber(args.id)
+            if id and type(args.data) == "table" then VitData.Remote[id] = plainCopy(args.data) end
+            return
+        end
+        if command ~= "set" or type(args.data) ~= "table" then return end
+        -- the edited player may be split screen player 2: match the id
         local p = getPlayer and getPlayer()
+        local want = tonumber(args.id)
+        for i = 0, 3 do
+            local q = want and getSpecificPlayer and getSpecificPlayer(i)
+            if q and onlineId(q) == want then p = q end
+        end
         if p then p:getModData().HARMONIE_Vitamins = plainCopy(args.data) end
     end)
 end
