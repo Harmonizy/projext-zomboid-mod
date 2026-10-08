@@ -506,7 +506,6 @@
     "Sandbox_Yoga_StrengthMultiplier_option3": "สูง",
     "Sandbox_Yoga_StrengthMultiplier_option4": "สูงมาก",
     "Sandbox_Yoga_StrengthMultiplier_tooltip": "ควบคุมความรุนแรงของผลโยคะ ค่ายิ่งสูงยิ่งเพิ่มประสิทธิภาพของประโยชน์ที่ได้รับ",
-
     "Sandbox_HARMONIE_ModernFirearmsSystemFix": "HARMONIE: แก้ไข ModernFirearmsSystem",
     "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier": "ตัวคูณอัตราดรอปปืน/กระสุน",
     "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier_tooltip": "คูณความถี่ที่ปืนและกระสุนราว 230 ชิ้นของ ModernFirearmsSystem จะปรากฏใน loot เพิ่มเติมจากค่าน้ำหนักที่ตั้งตายตัวของ mod เอง (mod ต้นฉบับไม่มีตัวปรับอัตรา มีแค่สวิตช์เปิด-ปิดรายกระบอก) 1.0 = อัตราเดิมของ mod ไม่เปลี่ยนแปลง 0 = ไม่ดรอปเลย (เหมือนปิดสวิตช์ทุกกระบอก) ไม่มีผลกับ loot ของ vanilla หรืออุปกรณ์เสริม/part ของ mod นี้",
@@ -532,5 +531,11 @@
     "Sandbox_HARMONIE_SunVitaminDPerHour": "วิตามิน D จากแดดต่อชั่วโมง",
     "Sandbox_HARMONIE_SunVitaminDPerHour_tooltip": "ค่าสำรองวิตามิน D ที่ได้ต่อชั่วโมงในเกม เมื่ออยู่กลางแจ้งตอนกลางวัน",
     "Sandbox_HARMONIE_SunVitaminDMaxPerDay": "วิตามิน D จากแดดต่อวัน (สูงสุด)",
-    "Sandbox_HARMONIE_SunVitaminDMaxPerDay_tooltip": "ค่าสำรองวิตามิน D สูงสุดที่แดดให้ได้ใน 1 วัน ค่าเริ่มต้น 3 น้อยกว่าที่ลดต่อวัน จึงยังต้องกินอาหารด้วย"
+    "Sandbox_HARMONIE_SunVitaminDMaxPerDay_tooltip": "ค่าสำรองวิตามิน D สูงสุดที่แดดให้ได้ใน 1 วัน ค่าเริ่มต้น 3 น้อยกว่าที่ลดต่อวัน จึงยังต้องกินอาหารด้วย",
+    "Sandbox_HARMONIE_CookMinigames": "แท็บทำอาหาร: มินิเกมเตรียมวัตถุดิบ",
+    "Sandbox_HARMONIE_CookMinigames_tooltip": "แต่ละขั้นตอนเตรียมวัตถุดิบในแท็บทำอาหารเป็นมินิเกมสั้นๆ ปิด: ทุกขั้นนับเป็น ดี",
+    "Sandbox_HARMONIE_CookQualityEffect": "แท็บทำอาหาร: ผลของคุณภาพการเตรียม",
+    "Sandbox_HARMONIE_CookQualityEffect_tooltip": "คุณภาพการเตรียมเปลี่ยนความเบื่อและความไม่สบายใจของอาหารมากแค่ไหน (ยอดเยี่ยม -10, ดี -4, พอใช้ +5) - คูณด้วยค่านี้ 0 = ปิด",
+    "Sandbox_HARMONIE_CookXPMultiplier": "แท็บทำอาหาร: ตัวคูณ XP ทำอาหาร",
+    "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "XP ทำอาหารจากขั้นตอนการเตรียมในแท็บทำอาหาร คูณด้วยค่านี้"
 }

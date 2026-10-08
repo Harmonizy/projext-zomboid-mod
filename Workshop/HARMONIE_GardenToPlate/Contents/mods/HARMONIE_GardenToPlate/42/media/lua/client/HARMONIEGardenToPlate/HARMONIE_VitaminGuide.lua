@@ -67,7 +67,7 @@ H.GRIP = 18
 H.DEFAULT_W, H.DEFAULT_H = 940, 660
 H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
-H.TABS = { "overview", "check", "vitamins", "foods", "calendar", "other" }
+H.TABS = { "overview", "check", "vitamins", "foods", "cook", "calendar", "other" }
 H.NEAR_TILES = 3 -- how close another survivor must be to check them
 H.UNITS = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
 -- 2026-10-08: "Grow" first -- Fruit Farming (B42) by leina is built in
@@ -366,7 +366,7 @@ end
 
 -- puts the box (and its clear button) at x, y, w on this frame; returns
 -- the height used
-function Win:placeSearch(x, y, w)
+function Win:placeSearch(x, y, w, noToggle)
     local box = self.search
     if not box then return 0 end
     if self.searchFont ~= H.small() then
@@ -377,7 +377,7 @@ function Win:placeSearch(x, y, w)
     local sf = H.small()
     local growLabel = T("IGUI_GTPG_GrowOnly")
     local gw = tw(sf, growLabel) + 34
-    local bw = w - h - 4 - gw - 6
+    local bw = noToggle and (w - h - 4) or (w - h - 4 - gw - 6)
     if box.x ~= x or box.y ~= y or box.width ~= bw then
         box:setX(x)
         box:setY(y)
@@ -392,6 +392,7 @@ function Win:placeSearch(x, y, w)
     local icon = texture(UI_DIR .. "icon_close.png")
     if icon then self:drawTextureScaled(icon, clear.x + 3, clear.y + 3, clear.w - 6, clear.h - 6, has and 1 or 0.35, 1, 1, 1) end
     if has then self.clicks[#self.clicks + 1] = clear end
+    if noToggle then return h end
     -- "can grow only" toggle (2026-10-08)
     local g = { x = clear.x + clear.w + 6, y = y, w = gw, h = h }
     local on = self.growOnly == true
@@ -548,6 +549,7 @@ function Win:render()
         elseif self.tab == "overview" then self:renderOverview(x, y, w, h)
         elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
         elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
+        elseif self.tab == "cook" and self.renderCook then self:renderCook(x, y, w, h)
         else self:renderOther(x, y, w, h) end
         if self.search and self.search:getIsVisible() ~= self.searchShown then self.search:setVisible(self.searchShown) end
         local C = H.C
@@ -615,6 +617,10 @@ function Win:paragraphs(text, x, y, w, col, font)
 end
 
 local function clickable(self, r) self.clicks[#self.clicks + 1] = r end
+
+-- the drawing helpers, for the tabs kept in their own files (Cooking)
+H.util = { T = T, shadowText = shadowText, fit = fit, wrap = wrap, inside = inside, clickable = clickable,
+    lineH = lineH, fh = fh, tw = tw, texture = texture, UI_DIR = UI_DIR }
 
 -- ----------------------------------------------------------------- tab 1
 function Win:renderOverview(x, y, w, h)

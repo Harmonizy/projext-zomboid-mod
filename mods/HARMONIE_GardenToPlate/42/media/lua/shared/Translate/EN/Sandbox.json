@@ -17,5 +17,11 @@
     "Sandbox_HARMONIE_SunVitaminDPerHour": "Sunlight vitamin D per hour",
     "Sandbox_HARMONIE_SunVitaminDPerHour_tooltip": "Vitamin D Reserve gained per game hour outside in daylight.",
     "Sandbox_HARMONIE_SunVitaminDMaxPerDay": "Sunlight vitamin D per day (max)",
-    "Sandbox_HARMONIE_SunVitaminDMaxPerDay_tooltip": "The most vitamin D Reserve sunlight can give in one game day. The default 3 is under the daily decay, so food is still needed."
+    "Sandbox_HARMONIE_SunVitaminDMaxPerDay_tooltip": "The most vitamin D Reserve sunlight can give in one game day. The default 3 is under the daily decay, so food is still needed.",
+    "Sandbox_HARMONIE_CookMinigames": "Cooking tab: preparation minigames",
+    "Sandbox_HARMONIE_CookMinigames_tooltip": "Each preparation step of a Cooking-tab dish is a short minigame. Off: every step counts as Good.",
+    "Sandbox_HARMONIE_CookQualityEffect": "Cooking tab: quality effect",
+    "Sandbox_HARMONIE_CookQualityEffect_tooltip": "How much the preparation quality changes the dish's boredom and unhappiness (Excellent -10 each, Good -4, Poor +5) - times this. 0 turns it off.",
+    "Sandbox_HARMONIE_CookXPMultiplier": "Cooking tab: Cooking XP multiplier",
+    "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "Cooking XP from the preparation steps of a Cooking-tab dish, times this."
 }
