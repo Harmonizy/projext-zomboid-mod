@@ -500,6 +500,7 @@ end
 
 function Win:render()
     if not self.collapsed then
+        self.scrollBox = {}
         local now = getTimestampMs and getTimestampMs() or 0
         if not self.dataAt or now - self.dataAt > 2000 then self:refreshData() end
         local x, y = 8, self:contentTop()
@@ -547,12 +548,17 @@ end
 -- scrolled content: draws f(yOffset) clipped to the box, remembers how far it can scroll
 function Win:scrolled(key, x, y, w, h, f)
     local off = self.scroll[key] or 0
+    -- registered before drawing (hover checks inside f use it); the list
+    -- holds only this frame's areas -- render() empties it -- so the mouse
+    -- wheel never lands on an area of another tab / vitamin / search that
+    -- happens to sit at the same spot (2026-10-08 bug report: "บางอัน
+    -- scroll ไม่ได้")
+    self.scrollBox = self.scrollBox or {}
+    self.scrollBox[key] = { x = x, y = y, w = w, h = h }
     self:setStencilRect(x, y, w, h)
     local used = f(y - off)
     self:clearStencilRect()
     self.maxScroll[key] = math.max(0, (used or 0) - h)
-    self.scrollBox = self.scrollBox or {}
-    self.scrollBox[key] = { x = x, y = y, w = w, h = h }
     if off > self.maxScroll[key] then self.scroll[key] = self.maxScroll[key] end
     if self.maxScroll[key] > 0 then
         local C = H.C
