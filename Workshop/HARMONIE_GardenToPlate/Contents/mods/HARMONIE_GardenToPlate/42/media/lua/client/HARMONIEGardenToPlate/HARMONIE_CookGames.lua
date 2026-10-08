@@ -29,11 +29,13 @@
 
 require "ISUI/ISPanel"
 require "HARMONIEGardenToPlate/HARMONIE_CookCore"
+require "HARMONIEGardenToPlate/HARMONIE_CookFX"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.CookGames = HARMONIE_GTP.CookGames or {}
 local G = HARMONIE_GTP.CookGames
 local K = HARMONIE_GTP.Cook
+local FX = HARMONIE_GTP.CookFX
 local log = K.log
 
 local W, H = 600, 470
@@ -94,6 +96,7 @@ function G.play(player, pid, opts, onWord)
     o.moveWithMouse = false
     o.q = 1
     o.flashes = {}
+    o.fxNext = {}
     o.started = now()
     o.last = o.started
     local ok, err = pcall(function()
@@ -112,6 +115,7 @@ function G.play(player, pid, opts, onWord)
         return true
     end
     G.instance = o
+    o:speak("Tip_" .. pid, C.text, true)
     log("minigame %s (%s/%s) started, difficulty %.2f, cursor %s", pid, o.kind, o.variant, o.d,
         o.opts.cursor and "item" or (o.opts.bare and "bare hand" or tostring(proc.cursor)))
     return true
@@ -231,8 +235,22 @@ function P:newWatch()
 end
 
 -- ------------------------------------------------------------------ helpers
-function P:flash(text, col)
-    self.flashes[#self.flashes + 1] = { text = text, col = col or C.text, at = now(), x = self:getMouseX(), y = self:getMouseY() - 20 }
+-- 0.13.1: what used to float up as a word at the mouse is now said by the
+-- cook in the speech bubble (owner: "เปลี่ยนเป็นบทพูดในกล่องข้อความเด้งขึ้นมา")
+function P:flash(key, col)
+    self:speak("Ev_" .. key, col)
+end
+
+-- a line in the bubble. A new one waits until the last has been up a
+-- moment, unless it matters more (force: the start tip, the end word)
+function P:speak(key, col, force)
+    local t = now()
+    local b = self.bubble
+    if b and not force and t - b.at < 750 then return end
+    local text = FX.line(key)
+    if not text then return end
+    self.bubble = { text = text, col = col or C.text, at = t, key = key }
+    log("minigame %s says [%s]: %s", self.pid, key, text)
 end
 
 -- every = false: each slip costs (a click); else at most once per 0.6 s
@@ -243,12 +261,10 @@ function P:spend(amount, key, every)
     if every ~= false and self.lastSpend[key] and t - self.lastSpend[key] < 600 then return end
     self.lastSpend[key] = t
     self.q = clamp(self.q - amount, 0, 1)
-    self:flash(T("IGUI_GTPC_Flash_" .. key), C.bad)
+    self:flash(key, C.bad)
+    FX.play("Slip")
 end
 
-local function sfx(name)
-    if getSoundManager then pcall(function() getSoundManager():playUISound(name) end) end
-end
 
 function P:wordFor(q)
     if q >= 0.85 then return "Excellent" elseif q >= 0.6 then return "Good" elseif q >= 0.3 then return "Bad" end
@@ -261,6 +277,11 @@ function P:finish(word, cancelled)
     self.done = true
     self.result = cancelled and nil or word
     self.endAt = now()
+    if word and not cancelled then
+        local col = ({ Excellent = C.good, Good = C.accent, Bad = C.warn, Miss = C.bad })[word]
+        self:speak("End_" .. word, col, true)
+        FX.play(word)
+    end
     log("minigame %s ended: %s (quality %.2f)", self.pid, cancelled and "cancelled" or tostring(word), self.q)
     if cancelled then self:deliver() end
 end
@@ -307,6 +328,8 @@ function P:tick()
             if self.beat > self.beats then return self:complete() end
         end
     elseif k == "lane" then
+        if held and self.variant == "roll" and self.lastLaneY and math.abs(my - self.lastLaneY) > 1 then FX.keep(self, "Roll") end
+        self.lastLaneY = my
         if held then
             local L = self.lane
             if self.variant ~= "roll" and (mx < L.x - 6 or mx > L.x + L.w + 6) then self:spend(0.1, "Knuckle") end
@@ -314,7 +337,7 @@ function P:tick()
             elseif not self.phaseDown and my < L.y + 18 then
                 self.phaseDown = true
                 self.strokes = self.strokes + 1
-                sfx("UISelectListItem")
+                FX.play(self.variant == "roll" and "Thump" or "Scrape")
                 if self.strokes >= self.need then return self:complete() end
             end
         end
@@ -327,8 +350,8 @@ function P:tick()
                         self:spend(0.08, "Deep")
                     else
                         s.dirt = math.max(0, s.dirt - moved / 160)
+                        if moved > 0.5 then FX.keep(self, ({ wash = "Scrub", scale = "Scrape", peel = "Scrape", spread = "Spread" })[self.variant] or "Scrub") end
                         if s.dirt <= 0 then
-                            sfx("UISelectListItem")
                             if self.variant == "peel" then self.nextSpot = self.nextSpot + 1 end
                         end
                     end
@@ -356,6 +379,9 @@ function P:tick()
             self.av = self.av * 0.9
         end
         self.swirl = self.swirl + self.av * dt / 1000
+        if held and self.av > self.band[1] * 0.5 then
+            FX.keep(self, ({ stir = "Stir", fold = "Stir", whisk = "Whisk", grind = "Grind" })[self.variant] or "Stir")
+        end
         if self.av >= self.band[1] and self.av <= self.band[2] then
             self.progress = self.progress + dt / self.needMs
             if self.progress >= 1 then return self:complete() end
@@ -364,15 +390,17 @@ function P:tick()
         end
     elseif k == "fill" then
         if self.pouring then
+            FX.keep(self, "Pour")
             self.vel = self.vel + dt / 1000 * (self.variant == "measure" and 1.2 or 0.8) * (0.8 + 0.4 * self.d)
             self.level = self.level + self.vel * dt / 1000
             if self.level >= 1 then self:releasePour() end
         end
     elseif k == "watch" then
+        FX.keep(self, self.variant == "flip" and "Sizzle" or "Bubble")
         self.level = self.level + self.rate * dt / 1000
         if self.level >= 1.08 then
             self.scores[#self.scores + 1] = 0
-            self:flash(T(self.variant == "flip" and "IGUI_GTPC_Flash_Burnt" or "IGUI_GTPC_Flash_Bitter"), C.bad)
+            self:flash((self.variant == "flip" and "Burnt" or "Bitter"), C.bad)
             self:nextWatch()
         end
     end
@@ -386,7 +414,7 @@ function P:timeout()
         for _, t in ipairs(self.targets) do if t.hit then hit = hit + 1 end end
         if hit >= #self.targets then return self:complete() end
     end
-    self:flash(T("IGUI_GTPC_Flash_Time"), C.bad)
+    self:flash(("Time"), C.bad)
     self:finish("Miss")
 end
 
@@ -407,7 +435,6 @@ function P:complete()
     end
     self.q = clamp(q, 0, 1)
     local word = self:wordFor(self.q)
-    sfx(word == "Miss" and "UIMenuBack" or "UISelectListItem")
     self:finish(word)
 end
 
@@ -429,8 +456,8 @@ function P:onMouseDown(x, y)
         local s = clamp(1 - off / (0.22 * self:tol()), 0, 1)
         self.scores[#self.scores + 1] = s
         self.hop = 1
-        self:flash(T(s > 0.7 and "IGUI_GTPC_Flash_Nice" or (s > 0.2 and "IGUI_GTPC_Flash_Ok" or "IGUI_GTPC_Flash_Late")), s > 0.7 and C.good or (s > 0.2 and C.warn or C.bad))
-        sfx("UISelectListItem")
+        self:flash((s > 0.7 and "Nice" or (s > 0.2 and "Ok" or "Late")), s > 0.7 and C.good or (s > 0.2 and C.warn or C.bad))
+        FX.play(({ knead = "Thump", pound = "Thump", crack = "Crack", toss = "Toss" })[self.variant] or "Thump")
     elseif k == "timing" then
         local best, bd
         for _, t in ipairs(self.targets) do
@@ -442,8 +469,8 @@ function P:onMouseDown(x, y)
         if best and bd <= self.tolW then
             best.hit = true
             best.score = clamp(1 - bd / self.tolW * 0.6, 0, 1)
-            self:flash(T(best.score > 0.8 and "IGUI_GTPC_Flash_Nice" or "IGUI_GTPC_Flash_Ok"), best.score > 0.8 and C.good or C.warn)
-            sfx("UISelectListItem")
+            self:flash((best.score > 0.8 and "Nice" or "Ok"), best.score > 0.8 and C.good or C.warn)
+            FX.play((self.variant == "slice" or self.variant == "core" or self.variant == "trim") and "Slice" or "Chop")
             local all = true
             for _, t in ipairs(self.targets) do if not t.hit then all = false end end
             if all then self:complete() end
@@ -457,7 +484,7 @@ function P:onMouseDown(x, y)
         end
         if hit then
             hit.left = hit.left - 1
-            sfx("UISelectListItem")
+            FX.play("Squish")
             local left = 0
             for _, l in ipairs(self.lumps) do left = left + l.left end
             if left == 0 then return self:complete() end
@@ -478,16 +505,16 @@ function P:stopWatch()
     if self.level >= b[1] and self.level <= b[2] then
         local c = (b[1] + b[2]) / 2
         s = clamp(1 - math.abs(self.level - c) / (b[2] - b[1]) * 0.8, 0, 1)
-        self:flash(T(s > 0.75 and "IGUI_GTPC_Flash_Nice" or "IGUI_GTPC_Flash_Ok"), s > 0.75 and C.good or C.warn)
+        self:flash((s > 0.75 and "Nice" or "Ok"), s > 0.75 and C.good or C.warn)
     elseif self.level > b[2] then
         s = clamp(0.5 - (self.level - b[2]) * 3, 0, 0.5)
-        self:flash(T(self.variant == "flip" and "IGUI_GTPC_Flash_Dark" or "IGUI_GTPC_Flash_Strong"), C.warn)
+        self:flash((self.variant == "flip" and "Dark" or "Strong"), C.warn)
     else
         s = clamp(0.5 - (b[1] - self.level) * 3, 0, 0.5)
-        self:flash(T(self.variant == "flip" and "IGUI_GTPC_Flash_Pale" or "IGUI_GTPC_Flash_Weak"), C.warn)
+        self:flash((self.variant == "flip" and "Pale" or "Weak"), C.warn)
     end
     self.scores[#self.scores + 1] = s
-    sfx("UISelectListItem")
+    if self.variant == "flip" then FX.play("Toss") end
     self:nextWatch()
 end
 
@@ -505,16 +532,15 @@ function P:releasePour()
     if self.level >= b[1] and self.level <= b[2] then
         local c = (b[1] + b[2]) / 2
         s = clamp(1 - math.abs(self.level - c) / (b[2] - b[1]) * 0.8, 0, 1)
-        self:flash(T(s > 0.75 and "IGUI_GTPC_Flash_Nice" or "IGUI_GTPC_Flash_Ok"), s > 0.75 and C.good or C.warn)
+        self:flash((s > 0.75 and "Nice" or "Ok"), s > 0.75 and C.good or C.warn)
     elseif self.level > b[2] then
         s = 0
-        self:flash(T("IGUI_GTPC_Flash_Over"), C.bad)
+        self:flash(("Over"), C.bad)
     else
         s = clamp(0.5 - (b[1] - self.level) * 3, 0, 0.5)
-        self:flash(T("IGUI_GTPC_Flash_Under"), C.warn)
+        self:flash(("Under"), C.warn)
     end
     self.scores[#self.scores + 1] = s
-    sfx("UISelectListItem")
     if self.round >= self.rounds then return self:complete() end
     self.round = self.round + 1
     self:newBand()
@@ -590,13 +616,72 @@ function P:drawHeld(mx, my, size)
     end
 end
 
+-- words / UTF-8 characters that fit `maxW` per line (Thai has no spaces
+-- between words, so a too-long piece is cut between characters)
+local function wrap(text, f, maxW)
+    local tm = getTextManager()
+    local function w(x) return tm:MeasureStringX(f, x) end
+    local lines, cur = {}, ""
+    for word in tostring(text):gmatch("%S+") do
+        local try = cur == "" and word or (cur .. " " .. word)
+        if w(try) <= maxW then
+            cur = try
+        else
+            if cur ~= "" then lines[#lines + 1] = cur; cur = "" end
+            if w(word) <= maxW then
+                cur = word
+            else
+                for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+                    if w(cur .. ch) > maxW and cur ~= "" then lines[#lines + 1] = cur; cur = ch else cur = cur .. ch end
+                end
+            end
+        end
+    end
+    if cur ~= "" then lines[#lines + 1] = cur end
+    return lines
+end
+G.wrap = wrap
+
+-- the cook (left of the header) and what they are saying, popping up
+function P:drawBubble()
+    local chef = art("chef")
+    if chef then self:drawTextureScaled(chef, 10, 36, 42, 42, 1, 1, 1, 1) end
+    local b = self.bubble
+    if not b then return end
+    local f = UIFont.Small
+    local lh = getTextManager():getFontHeight(f)
+    local bx, by = 62, 38
+    local bw = W - 14 - bx
+    if b.lines == nil or b.lineW ~= bw then b.lines, b.lineW = wrap(b.text, f, bw - 18), bw end
+    local n = math.max(1, math.min(3, #b.lines))
+    local bh = n * lh + 10
+    local age = now() - b.at
+    local pop = math.min(1, age / 140)
+    local k = 0.82 + 0.18 * pop + (pop < 1 and 0 or 0)
+    -- grows out of the cook's mouth (the left end)
+    local w, h = bw * k, bh * k
+    local y = by + (bh - h) / 2
+    self:drawRect(bx + 3, y + 3, w, h, 0.35 * pop, 0, 0, 0)
+    self:drawRect(bx, y, w, h, 0.97 * pop, 0.98, 0.97, 0.92)
+    local col = b.col or C.text
+    self:drawRectBorder(bx, y, w, h, pop, col[1] * 0.8, col[2] * 0.8, col[3] * 0.8)
+    for i = 0, 5 do -- the tail towards the cook
+        self:drawRect(bx - 6 + i, y + h / 2 - 3 + i * 0.5, 1, 6 - i, 0.97 * pop, 0.98, 0.97, 0.92)
+    end
+    if pop < 0.6 then return end
+    for i = 1, n do
+        local line = b.lines[i]
+        if i == 3 and #b.lines > 3 then line = line .. " ..." end
+        self:drawText(line, bx + 9, y + 5 + (i - 1) * lh, 0.12, 0.10, 0.08, 1, f)
+    end
+end
+
 function P:prerender()
     pcall(function() self:tick() end)
     self:drawRect(0, 0, W, H, 0.97, C.bg[1], C.bg[2], C.bg[3])
     self:drawRectBorder(0, 0, W, H, 1, C.border[1], C.border[2], C.border[3])
     self:drawRect(1, 1, W - 2, 34, 0.95, 0.03, 0.12, 0.05)
     self:text(T("IGUI_GTPC_Proc_" .. self.pid), 14, 8, C.accent, UIFont.Medium)
-    self:text(T("IGUI_GTPC_Hint_" .. self.pid), 14, 44, C.dim, UIFont.Small)
     local counter = art("counter")
     if counter then
         self:drawTextureScaled(counter, PX, PY, PW, PH, 1, 1, 1, 1)
@@ -634,14 +719,8 @@ function P:render()
     self:drawRect(r.x, r.y, r.w, r.h, 0.9, 0.16, 0.05, 0.04)
     self:drawRectBorder(r.x, r.y, r.w, r.h, 1, C.bad[1], C.bad[2], C.bad[3])
     self:text(T("IGUI_GTPC_Game_Cancel"), r.x + r.w / 2, r.y + 7, C.text, UIFont.Small, true)
-    -- flashes
-    local tn = now()
-    for i = #self.flashes, 1, -1 do
-        local f = self.flashes[i]
-        local age = tn - f.at
-        if age > 900 then table.remove(self.flashes, i)
-        else self:text(f.text, f.x, f.y - age / 30, f.col, UIFont.Small, true) end
-    end
+    -- the cook's speech bubble (on top of everything)
+    self:drawBubble()
     -- the word
     if self.done and self.result then
         local col = ({ Excellent = C.good, Good = C.accent, Bad = C.warn, Miss = C.bad })[self.result] or C.text

@@ -14,6 +14,7 @@
 require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
 require "HARMONIEGardenToPlate/HARMONIE_CookFlow"
 require "HARMONIEGardenToPlate/HARMONIE_CookGames"
+require "HARMONIEGardenToPlate/HARMONIE_CookFX"
 
 local H = GTPGuide
 local Win = GTPGuideWindow
@@ -111,6 +112,13 @@ function Win:renderCook(x, y, w, h)
         chipX = chipX + r.w + 6
     end
     cy = cy + lh + 12
+    -- the dish buff on this character now (an Excellent dish eaten)
+    local buff = K.myBuffNow and K.myBuffNow(self.player)
+    if buff then
+        local line = T("IGUI_GTPC_BuffNow", T("IGUI_GTPC_Buff_" .. tostring(buff.kind)), string.format("%.1f", buff.hoursLeft))
+        shadowText(self, fit(line, cw - 8, sf), cx, cy - 4, C.good, 1, sf)
+        cy = cy + lh + 4
+    end
     local q = self:query()
     local rowH = math.max(36, lh * 2 + 6)
     local boxTop, boxBottom = cy, y + h - 8
@@ -197,6 +205,11 @@ function Win:renderCookDish(x, y, w, h, d, p)
     self:scrolled("cookDetail", tx, ty, tw2, btnY - ty - 6, function(yy)
         local start = yy
         yy = yy + self:paragraphs(T("IGUI_GTPC_DishDesc_" .. d.id), tx, yy, tw2 - 10, C.textDim, sf) + 6
+        if K.buffOfDish and K.buffOfDish(d.id) and K.buffsOn() then
+            local kind = K.buffOfDish(d.id)
+            yy = yy + self:paragraphs(T("IGUI_GTPC_BuffIfExcellent", T("IGUI_GTPC_Buff_" .. kind), T("IGUI_GTPC_BuffDesc_" .. kind),
+                string.format("%.0f", K.buffHours(p and p.level or 0))), tx, yy, tw2 - 10, C.accent, sf) + 6
+        end
         if locked(d, p) then
             -- the recipe itself is learnt with the skill
             padlock(self, tx, yy + 2, 14, C.bad)
@@ -379,6 +392,12 @@ function Win:renderCookRun(x, y, w, h, run)
             end
             local cooked = K.call(item, "isCooked") == true
             local cookable = K.call(item, "isIsCookable") == true or K.call(item, "isCookable") == true
+            if K.wordOf(q) == "Excellent" and K.buffOfDish and K.buffOfDish(d.id) and K.buffsOn() then
+                local kind = K.buffOfDish(d.id)
+                local line = T("IGUI_GTPC_BuffWillGive", T("IGUI_GTPC_Buff_" .. kind), string.format("%.0f", K.buffHours(K.level(self.player))),
+                    T("IGUI_GTPC_BuffDesc_" .. kind))
+                yy = yy + self:paragraphs(line, tx, yy, tw2 - 10, C.good, sf) + 4
+            end
             local key = cooked and "IGUI_GTPC_Cooked" or (cookable and "IGUI_GTPC_CookIt" or "IGUI_GTPC_ReadyToEat")
             yy = yy + self:paragraphs(T(key), tx, yy, tw2 - 10, cooked and C.good or C.warn, sf) + 6
         end
@@ -410,6 +429,7 @@ if Events and Events.LevelPerk then
             if (d.level or 0) == level then n = n + 1; if #names < 3 then names[#names + 1] = T("IGUI_GTPC_Dish_" .. d.id) end end
         end
         log("Cooking level %d: %d new cooking-tab recipes (%s)", level, n, table.concat(names, ", "))
+        if n > 0 and HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(chr, "Unlock") end
         if n > 0 and HaloTextHelper then
             local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
             local ok = fn and pcall(fn, chr, T("IGUI_GTPC_NewRecipes", tostring(n)))

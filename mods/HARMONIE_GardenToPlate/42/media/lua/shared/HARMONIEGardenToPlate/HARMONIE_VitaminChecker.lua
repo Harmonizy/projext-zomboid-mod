@@ -85,6 +85,28 @@ local function getScratchBlockIndex()
     return math.floor(getGameTime():getWorldAgeHours())
 end
 
+--[[
+    0.13.1 (owner: "การลด endurance ของวิตามินเด้งขึ้นลง มันปรับไปจุดที่ควรเป็น แล้วก็
+    เด้งกลับมาจุดปัจจุบันก่อนลด ใน MP"): the effects that set a character
+    stat (Endurance, Stress, Unhappiness, Intoxication, Stiffness, overall
+    health) run where the stat really lives -- in single player on this
+    machine, in multiplayer on the server, every 10 s for every online
+    player, from the vitamins the client already sends there
+    (VitData "sync"). The client in MP no longer touches them.
+]]--
+local STAT_EFFECTS = { "MaintainDrunkFloor", "MaintainStressFloor", "MaintainMuscleStrain",
+    "MaintainUnhappinessFloor", "MaintainKHealthCap", "MaintainEnduranceCap" }
+
+local function applyStatEffects(character)
+    for _, fn in ipairs(STAT_EFFECTS) do
+        local ok, err = pcall(HARMONIE_GTP.VitEffects[fn], character)
+        if not ok and HARMONIE_GTP.LogOnce then
+            HARMONIE_GTP.LogOnce("statfx:" .. fn, "Checker", "%s FAILED: %s", fn, tostring(err))
+        end
+    end
+end
+HARMONIE_GTP.ApplyVitaminStatEffects = applyStatEffects
+
 local function checkCharacter(character, symptomBlock, scratchBlock)
     HARMONIE_GTP.VitEffects.MigrateAwayFromRealTraits(character)
 
@@ -103,13 +125,12 @@ local function checkCharacter(character, symptomBlock, scratchBlock)
         HARMONIE_GTP.VitEffects.LogEffectStateChange(character, vit)
     end
 
-    HARMONIE_GTP.VitEffects.MaintainDrunkFloor(character)
-    HARMONIE_GTP.VitEffects.MaintainStressFloor(character)
     HARMONIE_GTP.VitEffects.MaybeTriggerScratch(character, scratchBlock)
-    HARMONIE_GTP.VitEffects.MaintainMuscleStrain(character)
-    HARMONIE_GTP.VitEffects.MaintainUnhappinessFloor(character)
-    HARMONIE_GTP.VitEffects.MaintainKHealthCap(character)
-    HARMONIE_GTP.VitEffects.MaintainEnduranceCap(character)
+    -- the stat floors / caps: here in single player only. In multiplayer the
+    -- server owns these stats and runs them itself (serverTick below) -- set
+    -- here, they were put back by the server's next sync, so Endurance
+    -- jumped down to the cap and back up again over and over.
+    if not (isClient and isClient()) then applyStatEffects(character) end
 
     HARMONIE_GTP.VitEffects.MaybeSaySymptomReminder(character, symptomBlock)
 end
@@ -132,3 +153,33 @@ local function onCheckerTick()
 end
 
 Events.OnTick.Add(onCheckerTick)
+
+-- multiplayer server: the stat effects for every online player
+local lastServerMs = 0
+local serverPlayersLogged = {}
+local function serverTick()
+    local now = getTimestampMs and getTimestampMs() or 0
+    if now - lastServerMs < CHECK_INTERVAL_MS then return end
+    lastServerMs = now
+    HARMONIE_GTP.RefreshFromSandbox()
+    local online = getOnlinePlayers and getOnlinePlayers()
+    for i = 0, (online and online:size() or 0) - 1 do
+        local p = online:get(i)
+        if p and not p:isDead() then
+            local md = p:getModData()
+            -- nothing until that player's client has sent its vitamins
+            if type(md.HARMONIE_Vitamins) == "table" then
+                applyStatEffects(p)
+                local name = tostring(p:getUsername())
+                if not serverPlayersLogged[name] then
+                    serverPlayersLogged[name] = true
+                    if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Checker", "server now keeps %s's vitamin stat effects (Endurance cap etc.)", name) end
+                end
+            end
+        end
+    end
+end
+if isServer and isServer() then
+    Events.OnTick.Add(serverTick)
+    if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Checker", "multiplayer server: vitamin stat effects run here every %d s", CHECK_INTERVAL_MS / 1000) end
+end

@@ -17,6 +17,7 @@
 
 require "HARMONIEGardenToPlate/HARMONIE_CookCore"
 require "TimedActions/HARMONIE_GTP_CookActions"
+require "HARMONIEGardenToPlate/HARMONIE_CookFX"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.CookFlow = HARMONIE_GTP.CookFlow or {}
@@ -171,6 +172,7 @@ function F.startAdding()
     if not plan.ready then
         r.phase = "failed"
         r.failReason = plan.reasons[1]
+        if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(r.player, "Failed") end
         log("%s: cannot add the ingredients any more (%s)", r.dish.id, table.concat(plan.reasons, ", "))
         return
     end
@@ -237,6 +239,7 @@ function F.addNext(character, r)
         r.waits = r.waits + 1
         if r.waits > F.MAX_WAITS then
             r.phase = "failed"; r.failReason = "base"
+            if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(r.player, "Failed") end
             log("%s: the dish item never showed up after addition %d -- stopped", r.dish.id, r.addIdx)
             return
         end
@@ -280,6 +283,9 @@ function F.finish(r)
     r.resultId = dish and call(dish, "getID")
     log("%s finished: %s id %s, quality %.2f (%s), calories %s, hunger %s", r.dish.id, K.typeOf(dish), tostring(r.resultId), q, K.wordOf(q),
         tostring(call(dish, "getCalories")), tostring(call(dish, "getHungerChange")))
+    -- the cook says how it went (over their head, in the world)
+    local FX = HARMONIE_GTP.CookFX
+    if FX then FX.say(r.player, K.wordOf(q) == "Excellent" and "DoneExcellent" or "Done") end
     if not dish then return end
     local args = { id = r.resultId, q = q, dish = r.dish.id, xp = xp }
     if isClient and isClient() then

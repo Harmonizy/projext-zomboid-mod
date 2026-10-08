@@ -569,7 +569,7 @@ end
 
 -- change the dish (the authority's copy, or the client's own copy after
 -- the server answered). Marks it so it is never done twice.
-function K.applyQuality(item, q, dishId)
+function K.applyQuality(item, q, dishId, cook)
     if not item then return false end
     local md = call(item, "getModData")
     if md and md.HARMONIE_CookQuality then
@@ -587,6 +587,9 @@ function K.applyQuality(item, q, dishId)
     if md then
         md.HARMONIE_CookQuality = K.wordOf(q)
         md.HARMONIE_CookDish = dishId
+        -- 0.13.1: the cook's level when it was made decides how long an
+        -- Excellent dish's buff lasts (HARMONIE_CookBuffs.lua)
+        if cook then md.HARMONIE_CookLevel = K.level(cook) end
     end
     log("dish %s (%s): quality %.2f %s -> unhappy %+.0f, boredom %+.0f", tostring(dishId), K.typeOf(item), q, K.wordOf(q), du, db)
     return true, du, db
@@ -644,7 +647,7 @@ function K.serveQuality(player, args)
         log("quality for %s: dish id %s not in their inventory -- nothing changed", tostring(call(player, "getUsername")), tostring(args.id))
         return nil
     end
-    local done, du, db = K.applyQuality(item, q, args.dish)
+    local done, du, db = K.applyQuality(item, q, args.dish, player)
     if done then
         -- never the client's number: the dish's own steps decide
         K.giveXp(player, K.dishXp(dish, q))
@@ -654,7 +657,7 @@ function K.serveQuality(player, args)
             if sendServerCommand then
                 -- the final values, so the client's copy is SET to them
                 -- (never added twice, whatever already synced)
-                sendServerCommand(player, K.NET, "qualityDone", { id = args.id, q = q, dish = args.dish, du = du, db = db,
+                sendServerCommand(player, K.NET, "qualityDone", { id = args.id, q = q, dish = args.dish, du = du, db = db, level = K.level(player),
                     unhappy = tonumber(call(item, "getUnhappyChange")), boredom = tonumber(call(item, "getBoredomChange")) })
             end
         end
@@ -684,6 +687,7 @@ if Events and Events.OnServerCommand then
                 if md then
                     md.HARMONIE_CookQuality = K.wordOf(tonumber(args.q) or 0.66)
                     md.HARMONIE_CookDish = args.dish
+                    md.HARMONIE_CookLevel = tonumber(args.level)
                 end
             else
                 log("dish id %s not found on this client -- it will show the server's values once synced", tostring(args.id))

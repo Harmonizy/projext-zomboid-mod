@@ -289,12 +289,14 @@ function H.ensurePrefs()
             if k == "w" then H.prefW = tonumber(v)
             elseif k == "h" then H.prefH = tonumber(v)
             elseif k == "text" then H.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
-            elseif k == "pinned" then H.pinned = v ~= "0" end
+            elseif k == "pinned" then H.pinned = v ~= "0"
+            elseif k == "sound" then H.soundPct = math.max(0, math.min(150, math.floor(tonumber(v) or 100))) end
             line = reader:readLine()
         end
     end)
     pcall(function() reader:close() end)
-    log("prefs loaded: size %sx%s, text step %s, pinned %s", tostring(H.prefW), tostring(H.prefH), tostring(H.textStep), tostring(H.pinned))
+    log("prefs loaded: size %sx%s, text step %s, pinned %s, cooking sounds %s%%", tostring(H.prefW), tostring(H.prefH), tostring(H.textStep), tostring(H.pinned), tostring(H.soundPct or 100))
+    if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.volume = H.soundPct or 100 end
 end
 
 function H.savePrefs()
@@ -306,6 +308,7 @@ function H.savePrefs()
         if H.prefH then writer:write("h=" .. tostring(math.floor(H.prefH)) .. "\n") end
         writer:write("text=" .. tostring(H.textStep) .. "\n")
         writer:write("pinned=" .. (H.pinned and "1" or "0") .. "\n")
+        writer:write("sound=" .. tostring(H.soundPct or 100) .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -1228,6 +1231,19 @@ function Win:renderSettings(x, y, w, h)
     local sizeName = T("IGUI_GTPG_TextSize" .. tostring(H.textStep + 1))
     shadowText(self, sizeName, tx, cy + 8, C.accent, 1, sf)
     self:settingButton(tx + math.max(80, tw(sf, sizeName) + 12), cy + 4, "A+", function() H.stepText(1) end, 44)
+    cy = cy + rowH
+    -- cooking sounds (0.13.1): 0 .. 150 percent in steps of 25
+    row(T("IGUI_GTPG_SetSound"), T("IGUI_GTPG_SetSoundTip"))
+    local function setSound(d)
+        H.soundPct = math.max(0, math.min(150, (H.soundPct or 100) + d))
+        if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.volume = H.soundPct; HARMONIE_GTP.CookFX.play("Good") end
+        H.savePrefs()
+        log("cooking sounds volume: %d%%", H.soundPct)
+    end
+    local sx = valX + self:settingButton(valX, cy + 4, "-", function() setSound(-25) end, 36) + 8
+    local vol = (H.soundPct or 100) == 0 and T("IGUI_GTPG_Off") or (tostring(H.soundPct or 100) .. "%")
+    shadowText(self, vol, sx, cy + 8, C.accent, 1, sf)
+    self:settingButton(sx + math.max(60, tw(sf, vol) + 12), cy + 4, "+", function() setSound(25) end, 36)
     cy = cy + rowH
     -- pin
     row(T("IGUI_GTPG_SetPin"), T("IGUI_GTPG_Unpin"))
