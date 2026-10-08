@@ -5,12 +5,14 @@ Writes 42/media/textures/GTP_UI/:
   tab_overview / tab_vitamins / tab_foods / tab_other .png -- the four tab
       icons: the same badge layout as Home Medic's / The Way To Attack's /
       the SVU3 window's tabs (rounded plate, coloured rim), in green;
+  tab_check .png -- the Check tab (2026-10-08);
+  icon_settings .png -- the gear (settings page, 2026-10-08);
   pin_on / pin_off .png -- the pin button;
   icon_close / icon_plus / icon_minus .png -- close, text bigger (A+),
       text smaller (A-).
 All drawn here with Pillow (4x supersampled), nothing copied.
 """
-import os
+import os, math
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -56,6 +58,18 @@ def tab_overview():
     d.line(P(s, [(64, 30), (64, 98)]), fill=PLATE, width=int(4 * s))
     d.line(P(s, [(14, 64), (40, 64), (50, 44), (62, 84), (74, 50), (82, 64), (114, 64)]), fill=WHITE, width=int(6 * s), joint="curve")
     done(img, "tab_overview")
+
+
+def tab_check():
+    """Check: a magnifying glass over a person with a small heart."""
+    img, d, s = canvas()
+    d.ellipse([28 * s, 22 * s, 56 * s, 50 * s], fill=SKY_D)
+    d.rounded_rectangle([20 * s, 52 * s, 64 * s, 100 * s], radius=14 * s, fill=SKY_D)
+    d.ellipse([56 * s, 40 * s, 100 * s, 84 * s], outline=WHITE, width=int(7 * s))
+    d.ellipse([62 * s, 46 * s, 94 * s, 78 * s], fill=(20, 60, 30, 200))
+    d.polygon(P(s, [(78, 72), (66, 60), (70, 54), (78, 59), (86, 54), (90, 60)]), fill=RED)
+    d.line(P(s, [(94, 80), (110, 100)]), fill=WHITE, width=int(10 * s))
+    done(img, "tab_check")
 
 
 def tab_vitamins():
@@ -126,6 +140,19 @@ def ui_icon(name, draw, size=64):
     img.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, name + ".png"))
 
 
+def g_settings(d, s):
+    """A gear: 8 teeth round a ring."""
+    cx = cy = 32 * s
+    for i in range(8):
+        a = i * math.pi / 4
+        pts = []
+        for da, r in ((-0.22, 20), (-0.16, 27), (0.16, 27), (0.22, 20)):
+            pts.append((cx + math.cos(a + da) * r * s, cy + math.sin(a + da) * r * s))
+        d.polygon(pts, fill=WHITE)
+    d.ellipse([cx - 20 * s, cy - 20 * s, cx + 20 * s, cy + 20 * s], fill=WHITE)
+    d.ellipse([cx - 8 * s, cy - 8 * s, cx + 8 * s, cy + 8 * s], fill=(0, 0, 0, 0))
+
+
 def g_close(d, s):
     w = int(7 * s)
     d.line([(16 * s, 16 * s), (48 * s, 48 * s)], fill=WHITE, width=w)
@@ -156,10 +183,10 @@ def g_minus(d, s):
     d.rectangle([40 * s, 21 * s, 60 * s, 27 * s], fill=SKY)
 
 
-for f in (tab_overview, tab_vitamins, tab_foods, tab_other):
+for f in (tab_overview, tab_check, tab_vitamins, tab_foods, tab_other):
     f()
 pin_icon(True)
 pin_icon(False)
-for n, g in (("icon_close", g_close), ("icon_plus", g_plus), ("icon_minus", g_minus)):
+for n, g in (("icon_settings", g_settings), ("icon_close", g_close), ("icon_plus", g_plus), ("icon_minus", g_minus)):
     ui_icon(n, g)
 print("ok")

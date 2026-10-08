@@ -31,14 +31,16 @@ local MOD_NAME = "HARMONIE: Garden to Plate"
 HARMONIE_GTP.Keybinds.IDs = {
     ASSESS_NUTRITION = "AssessNutritionKey",
     OPEN_ADMIN_PANEL = "OpenAdminPanel",
-    -- 2026-10-05: the vitamin guide window (HARMONIE_VitaminGuide.lua)
-    OPEN_GUIDE = "OpenVitaminGuide",
+    -- the vitamin guide window (HARMONIE_VitaminGuide.lua). 2026-10-08
+    -- ("keybind ไว้ที่ตัว n"): N by default, renamed id so a saved "none"
+    -- from the first build does not stick
+    OPEN_GUIDE = "OpenVitaminGuideKey",
 }
 
 local DEFAULT_KEYS = {
     [HARMONIE_GTP.Keybinds.IDs.ASSESS_NUTRITION] = 0, -- none: the player picks one
     [HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL] = 53, -- Keyboard.KEY_SLASH ("/")
-    [HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE] = 0, -- none: the player picks one
+    [HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE] = 49, -- Keyboard.KEY_N
 }
 
 HARMONIE_GTP.Keybinds.initialized = false
@@ -95,7 +97,7 @@ function HARMONIE_GTP.Keybinds.Initialize()
         HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE,
         "IGUI_GTPG_KeybindGuide", "Open Vitamin Guide",
         DEFAULT_KEYS[HARMONIE_GTP.Keybinds.IDs.OPEN_GUIDE],
-        "IGUI_GTPG_KeybindGuide_tt", "Opens / closes the vitamin guide window. No key by default: pick one here."
+        "IGUI_GTPG_KeybindGuide_tt", "Opens / closes the vitamin guide window. N by default."
     )
     -- the guide opens / closes with the Nutritional Assessment window
     local mo = HARMONIE_GTP.Keybinds.modOptions

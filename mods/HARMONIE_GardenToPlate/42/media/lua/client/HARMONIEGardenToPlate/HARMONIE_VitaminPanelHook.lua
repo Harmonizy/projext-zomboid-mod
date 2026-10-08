@@ -31,6 +31,7 @@
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminPanel"
+require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
 
 local originalCreateChildren = ISCharacterInfoWindow.createChildren
 

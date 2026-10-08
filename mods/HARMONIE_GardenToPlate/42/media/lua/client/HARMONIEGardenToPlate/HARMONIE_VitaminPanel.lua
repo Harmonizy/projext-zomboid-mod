@@ -177,6 +177,12 @@ if not NUTRITIONIST_TRAIT_OK then NUTRITIONIST_TRAIT = nil end
 -- 6 real vitamin rows in :initialise() -- never a real vitamin letter, so
 -- refreshLayout/doDrawItem can tell it apart with a simple equality check.
 local FOOD_INDEX_KEY = "foodindex"
+-- 2026-10-08 ("มีปุ่มให้กดผ่านเปิดหน้าต่าง ui ผ่านแท็บที่อยู่ในหน้าต่างตัวละคร
+-- ของ vanilla"): the first row is a button that opens the vitamin guide
+-- window (HARMONIE_VitaminGuide.lua) -- a list row rather than a child
+-- widget, so it scrolls with the tab like everything else
+local GUIDE_BUTTON_KEY = "guidebutton"
+local GUIDE_BUTTON_H = 30
 local SECTION_ICON_SIZE = 18
 
 function HARMONIE_VitaminPanel:getPlayer()
@@ -375,7 +381,9 @@ function HARMONIE_VitaminPanel:refreshLayout()
 
     local totalHeight = 0
     for _, item in ipairs(self.items) do
-        if item.item == FOOD_INDEX_KEY then
+        if item.item == GUIDE_BUTTON_KEY then
+            item.height = GUIDE_BUTTON_H + ROW_GAP
+        elseif item.item == FOOD_INDEX_KEY then
             local data = self:buildFoodIndexData(canSeeFoodIndex)
             item.data = data
             if data.visible then
@@ -447,7 +455,38 @@ function HARMONIE_VitaminPanel:doDrawFoodIndex(y, item)
     return y + item.height
 end
 
+function HARMONIE_VitaminPanel:doDrawGuideButton(y, item)
+    local w = self:getWidth() - PADDING * 2
+    local over = self:isMouseOver() and self:getMouseY() >= y and self:getMouseY() < y + GUIDE_BUTTON_H
+    self:drawRect(PADDING, y + 4, w, GUIDE_BUTTON_H - 4, over and 0.95 or 0.8, 0.06, 0.24, 0.10)
+    self:drawRectBorder(PADDING, y + 4, w, GUIDE_BUTTON_H - 4, 1, 0.32, 0.76, 0.40)
+    local icon = getTexture("media/textures/GTP_UI/tab_vitamins.png")
+    local x = PADDING + 8
+    if icon then
+        self:drawTextureScaled(icon, x, y + 7, GUIDE_BUTTON_H - 10, GUIDE_BUTTON_H - 10, 1, 1, 1, 1)
+        x = x + GUIDE_BUTTON_H - 4
+    end
+    local fh = getTextManager():getFontHeight(UIFont.Small)
+    self:drawText(getText("IGUI_GTPG_OpenGuideFull"), x, y + 4 + math.floor((GUIDE_BUTTON_H - 4 - fh) / 2), 0.94, 1, 0.94, 1, UIFont.Small)
+    return y + item.height
+end
+
+-- a click on the button row opens / closes the guide
+function HARMONIE_VitaminPanel:onMouseDown(x, y)
+    local row = self.rowAt and self:rowAt(x, y)
+    local item = row and self.items[row]
+    if item and item.item == GUIDE_BUTTON_KEY then
+        getSoundManager():playUISound("UISelectListItem")
+        if GTPGuide then GTPGuide.toggle(self:getPlayer()) end
+        return true
+    end
+    return ISScrollingListBox.onMouseDown(self, x, y)
+end
+
 function HARMONIE_VitaminPanel:doDrawItem(y, item, _alt)
+    if item.item == GUIDE_BUTTON_KEY then
+        return self:doDrawGuideButton(y, item)
+    end
     if item.item == FOOD_INDEX_KEY then
         return self:doDrawFoodIndex(y, item)
     end
@@ -597,6 +636,7 @@ end
 function HARMONIE_VitaminPanel:initialise()
     ISScrollingListBox.initialise(self)
     self:clear()
+    self:addItem(GUIDE_BUTTON_KEY, GUIDE_BUTTON_KEY)
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         self:addItem(vit, vit)
     end
