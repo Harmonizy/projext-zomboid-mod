@@ -236,8 +236,12 @@ function HARMONIE_AdminPanel:createChildren()
 
     local y = self:titleBarHeight() + PAD
 
-    local header = ISLabel:new(PAD, y, ROW_H, getText("IGUI_HARMONIE_AdminVitaminsHeader", self.target:getDisplayName()), 1, 1, 1, 1, UIFont.Small, true)
+    -- 0.13.4: another player's vitamins come from the server a moment later
+    local waiting = HARMONIE_GTP.VitData.IsRemote(self.target) and not HARMONIE_GTP.VitData.Peek(self.target)
+    local header = ISLabel:new(PAD, y, ROW_H, getText(waiting and "IGUI_HARMONIE_AdminWaiting" or "IGUI_HARMONIE_AdminVitaminsHeader",
+        self.target:getDisplayName()), 1, 1, 1, 1, UIFont.Small, true)
     header:initialise()
+    self.harmonieHeader = header
     self:addChild(header)
     y = y + ROW_H
 
@@ -326,6 +330,12 @@ end
     caused the stomping bug in the first place.
 ]]--
 function HARMONIE_AdminPanel:onSaveClick()
+    -- 0.13.4: another player's real values must be here first -- until then
+    -- the boxes hold stand-ins, and saving them would be dropped anyway
+    if HARMONIE_GTP.VitData.IsRemote(self.target) and not self.harmonieLoaded then
+        if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Admin", "Save pressed before the player's vitamins arrived -- nothing sent") end
+        return
+    end
     for _, entry in ipairs(self.harmonieEntries) do
         if entry.harmonieDirty then
             local value = validateEntry(entry)
@@ -366,6 +376,9 @@ function HARMONIE_AdminPanel:prerender()
     -- moment after the panel opens -- show them in the untouched entries
     if not self.harmonieLoaded and HARMONIE_GTP.VitData.Peek(self.target) then
         self.harmonieLoaded = true
+        if self.harmonieHeader then
+            self.harmonieHeader:setName(getText("IGUI_HARMONIE_AdminVitaminsHeader", self.target:getDisplayName()))
+        end
         if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Admin", "admin panel: target's vitamins ready, entries refreshed") end
         for _, entry in ipairs(self.harmonieEntries or {}) do
             if entry.harmonieGetValue and not entry.harmonieDirty then
@@ -422,8 +435,10 @@ end
 -- stacking a second one on top.
 function HARMONIE_AdminPanel.Open(target)
     if HARMONIE_AdminPanel.instance then
+        local same = HARMONIE_AdminPanel.instance.target == target
         HARMONIE_AdminPanel.instance:close()
-        return nil
+        -- 0.13.4: the same player again closes it; another player opens theirs
+        if same then return nil end
     end
 
     local screenW, screenH = getCore():getScreenWidth(), getCore():getScreenHeight()
@@ -431,5 +446,10 @@ function HARMONIE_AdminPanel.Open(target)
     window:initialise()
     window:addToUIManager()
     HARMONIE_AdminPanel.instance = window
+    if HARMONIE_GTP.Log then
+        local okN, n = pcall(function() return target:getUsername() end)
+        HARMONIE_GTP.Log("Admin", "vitamin admin panel opened for %s (%s)", okN and tostring(n) or "?",
+            HARMONIE_GTP.VitData.IsRemote(target) and "another player: values come from the server" or "this machine's player")
+    end
     return window
 end

@@ -2359,5 +2359,8 @@
     "IGUI_GTPC_StepLevelOk": "แนะนำทักษะทำอาหาร %1 (คุณ: %2)",
     "IGUI_GTPC_StepLevelLow": "แนะนำทักษะทำอาหาร %1 (คุณ: %2): ยากขึ้นสำหรับคุณ",
     "IGUI_GTPC_Why_heat": "บางขั้นตอนต้องมีเตา ไฟ หรือเตาย่างอยู่ใกล้ๆ",
-    "IGUI_GTPC_OpenFromAppliance": "ทำอาหาร (Garden to Plate)"
+    "IGUI_GTPC_OpenFromAppliance": "ทำอาหาร (Garden to Plate)",
+    "IGUI_HARMONIE_AdminEditOther": "ตั้งค่าวิตามินของ %1 (แอดมิน)",
+    "IGUI_HARMONIE_AdminEditOtherDesc": "เปิดหน้าปรับแต่งวิตามินของผู้เล่นคนนี้ เห็นเฉพาะทีมงาน (แอดมิน ผู้ดูแล overseer GM) และเซิร์ฟเวอร์ตรวจสิทธิ์อีกครั้งทุกครั้งที่กดบันทึก",
+    "IGUI_HARMONIE_AdminWaiting": "กำลังรอข้อมูลวิตามินของ %1 จากเซิร์ฟเวอร์..."
 }

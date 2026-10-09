@@ -229,3 +229,20 @@ function HARMONIE_GTP.VitaminViewLevels()
     local c = HARMONIE_GTP.Config
     return tonumber(c.viewNumbersFirstAid) or 2, tonumber(c.assessmentRequiredFirstAid) or 5
 end
+
+-- 0.13.4: who may edit someone else's vitamins -- ONE check, used by the
+-- right-click menu / hotkey (client) and by the server that applies the
+-- edit (HARMONIE_VitaminData.lua). B42 roles: an ordinary player is
+-- "user"/"None"; staff is admin / moderator / overseer / gm. Single player:
+-- isAdmin() or -debug, as before.
+HARMONIE_GTP.STAFF_LEVELS = { admin = true, moderator = true, overseer = true, gm = true }
+function HARMONIE_GTP.IsStaff(player)
+    local mp = (isClient and isClient()) or (isServer and isServer())
+    if not mp then
+        return ((isAdmin and isAdmin()) or (getDebug and getDebug())) and true or false, "singleplayer"
+    end
+    if not player then return false, "no player" end
+    local ok, lvl = pcall(function() return player:getAccessLevel() end)
+    if not ok or lvl == nil then return false, "unknown" end
+    return HARMONIE_GTP.STAFF_LEVELS[string.lower(tostring(lvl))] == true, tostring(lvl)
+end

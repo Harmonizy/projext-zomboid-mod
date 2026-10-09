@@ -855,5 +855,8 @@
     "IGUI_GTPC_StepLevelOk": "Suggested Cooking %1 (you: %2).",
     "IGUI_GTPC_StepLevelLow": "Suggested Cooking %1 (you: %2): harder for you.",
     "IGUI_GTPC_Why_heat": "A step needs a stove, fire or grill nearby.",
-    "IGUI_GTPC_OpenFromAppliance": "Cooking (Garden to Plate)"
+    "IGUI_GTPC_OpenFromAppliance": "Cooking (Garden to Plate)",
+    "IGUI_HARMONIE_AdminEditOther": "Set %1's vitamins (admin)",
+    "IGUI_HARMONIE_AdminEditOtherDesc": "Opens the vitamin admin panel for this player. Only staff (admin, moderator, overseer, GM) see this, and the server checks again on every save.",
+    "IGUI_HARMONIE_AdminWaiting": "Waiting for %1's vitamins from the server..."
 }
