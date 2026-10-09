@@ -1,3 +1,0 @@
--- 已停用：原先“把子弹和弹匣放进自动装弹机(背包)里自动装填”的功能已取消。
--- 现在的自动装填改为人物装填弹匣时每次装 5 发，
--- 见 shared/TimedActions/AutoReloadMagazineAction.lua。

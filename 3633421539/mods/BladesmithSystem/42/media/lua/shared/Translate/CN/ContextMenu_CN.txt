@@ -1,7 +1,0 @@
-ContextMenu_CN = {
-    ContextMenu_DrainSoul = "吸取灵魂",
-    ContextMenu_DrainSoulAll = "吸取所有灵魂",
-    ContextMenu_DrainSoulOne = "吸取灵魂",
-    ContextMenu_NoFrostmourne = "吸取灵魂（需要霜之哀伤）",
-ContextMenu_OpenShopUI = "打开幻想工坊购买界面",
-}

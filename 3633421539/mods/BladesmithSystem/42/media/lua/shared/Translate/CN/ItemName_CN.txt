@@ -1,9 +1,0 @@
-items_cn = {
-
-ItemName_Base.Soul_gem="灵魂碎片",
-ItemName_Base.Maggots="灵魂碎片",
-ItemName_Base.Maggots2="灵魂碎片",
-ItemName_base.Maggotszombie="灵魂碎片",
-
-
-}

@@ -1,8 +1,0 @@
-{
-    "ContextMenu_Remove_Battery_To_Laser": "レーザーから電池を取り外す",
-    "ContextMenu_ADD_Battery_To_Laser": "レーザーに電池を追加する",
-    "ContextMenu_Remove_Battery_To_Light": "ライトから電池を取り外す",
-    "ContextMenu_ADD_Battery_To_Light": "ライトに電池を追加する",
-    "ContextMenu_AirDropMarker": "空中投下マーカーを使用",
-    "ContextMenu_AirDrop": "空中投下を開く"
-}
