@@ -68,7 +68,7 @@
     Per-vitamin mapping (user's own real-world reasoning behind each,
     given verbatim). UPDATED 2026-09-22, per a further explicit request
     reassigning A/B/K -- see each entry below for what changed and why:
-      A -> CharacterStat.INTOXICATION floor 30 (0-100 scale, drives
+      A -> (until 0.13.1; now NIGHT BLINDNESS, see HARMONIE_VitaminANightBlind.lua) CharacterStat.INTOXICATION floor 30 (0-100 scale, drives
            vanilla's real "Drunk" moodle -- confirmed by decompiling
            Moodle.class: that moodle reads getStats():get(INTOXICATION)
            alone). "มันให้อาการตาพร่า" -- reused purely for Intoxication's
@@ -168,7 +168,8 @@ local DoctorSymptomLineKeys = {
 
 local function sayRandomSymptom(character, vit)
     if not character.Say then return end
-    local isDoctor = character:getPerkLevel(Perks.Doctor) > HARMONIE_GTP.Config.assessmentRequiredFirstAid
+    -- 0.13.2: the same rule as every vitamin window (HARMONIE_GTP.VitaminView)
+    local isDoctor = HARMONIE_GTP.VitaminView(character) == "full"
     local pool = isDoctor and DoctorSymptomLineKeys or SymptomLineKeys
     local keys = pool[vit]
     if not keys then return end
@@ -242,24 +243,23 @@ function VitEffects.MigrateAwayFromRealTraits(character)
 end
 
 -- ---------------------------------------------------------------------
--- A: CharacterStat.INTOXICATION floor 30 (0-100 scale). Reused purely for
--- Intoxication's real blurred-vision side effect -- deliberately NOT
--- CharacterStat.STRESS anymore (moved to B below), and deliberately no
--- drunk-themed text anywhere; see the header comment above for the full
--- reasoning.
+-- A (0.13.2, owner: "วิตามิน A ไม่อยากให้ผลเสียเป็นภาพเบลอ ... ลดดาเมจ ตีไม่โดน
+-- มองใกล้ขึ้น หรืออะไรก็ได้"): NIGHT BLINDNESS -- the real first sign of
+-- vitamin A deficiency. No more forced blurred vision (the old Intoxication
+-- floor 30, which also showed vanilla's Drunk moodle). Instead the hits land
+-- badly: a share of the damage a zombie takes from this character is given
+-- back to it on the next tick -- 30 percent by day, 50 percent at night
+-- (20:00-05:59), when poor eyes see least. Done in
+-- HARMONIE_VitaminANightBlind.lua, on the side that owns zombie health.
+-- This function stays (it is in the checker's list) but sets nothing now.
 -- ---------------------------------------------------------------------
-local INTOXICATION_FLOOR = 30
-
 function VitEffects.MaintainDrunkFloor(character)
-    if not HARMONIE_GTP.Config.effectsEnabled then return end
-    if not isActive(character, "A") then return end
-
-    local stats = character:getStats()
-    local current = stats:get(CharacterStat.INTOXICATION)
-    if current < INTOXICATION_FLOOR then
-        stats:set(CharacterStat.INTOXICATION, INTOXICATION_FLOOR)
+    if HARMONIE_GTP.LogOnce then
+        HARMONIE_GTP.LogOnce("vitA:nightblind", "Effects", "vitamin A: night blindness (weaker hits) replaces the old blurred-vision floor")
     end
 end
+
+function VitEffects.IsActive(character, vit) return isActive(character, vit) end
 
 -- ---------------------------------------------------------------------
 -- B: CharacterStat.STRESS floor 0.30 (0-1 scale). The exact mechanism A
@@ -473,7 +473,7 @@ end
 -- used only by LogEffectStateChange below, purely for the console
 -- message text.
 local EffectDescription = {
-    A = "CharacterStat.INTOXICATION floor 30 (blurred vision -- weaker hits/harder ranged aim)",
+    A = "night blindness: 30% of hit damage taken back (50% at night)",
     B = "CharacterStat.STRESS floor 0.30 (tingling/headaches/fatigue -> stress)",
     C = "random Head scratch, 1 game hour / 5% chance (nosebleed/bleeding gums)",
     D = "per-body-part Stiffness floor 20, all body parts (muscle strain)",

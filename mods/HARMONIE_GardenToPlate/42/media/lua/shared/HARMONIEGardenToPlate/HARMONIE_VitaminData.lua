@@ -470,9 +470,9 @@ if Events and Events.OnClientCommand then
         if args.target ~= nil then
             -- 0.7.7: staff roles only -- in B42 an ordinary player is
             -- "user", not "None", so the old check let anyone edit others
-            local ok, lvl = pcall(function() return player:getAccessLevel() end)
-            local STAFF = { admin = true, moderator = true, overseer = true, gm = true }
-            if not ok or not lvl or not STAFF[string.lower(tostring(lvl))] then
+            -- (0.13.4: the same HARMONIE_GTP.IsStaff the right-click menu uses)
+            local staff, lvl = HARMONIE_GTP.IsStaff(player)
+            if not staff then
                 log("REJECTED: %s (access %s) tried to edit player id %s's vitamins", nameOf(player), tostring(lvl), tostring(args.target))
                 return
             end

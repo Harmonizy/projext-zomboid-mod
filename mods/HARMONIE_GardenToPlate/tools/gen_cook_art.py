@@ -218,6 +218,22 @@ def hand():
     save(img, "hand")
 
 
-for f in (counter, board, basin, pot, bowl, mortar, pan, mug, grater, jug, toast, dough, hand):
+def chef():
+    """the cook's face beside the speech bubble: round face, chef's hat"""
+    w = h = 96
+    img, d = canvas(w, h)
+    skin, line = (240, 196, 158, 255), (110, 70, 44, 255)
+    d.ellipse(P(18, 34, 78, 92), fill=skin, outline=line, width=2 * S)            # face
+    d.ellipse(P(30, 56, 38, 64), fill=(50, 34, 24, 255)); d.ellipse(P(58, 56, 66, 64), fill=(50, 34, 24, 255))
+    d.arc(P(36, 64, 60, 82), 20, 160, fill=line, width=2 * S)                     # smile
+    d.ellipse(P(24, 64, 34, 72), fill=(250, 160, 140, 140)); d.ellipse(P(62, 64, 72, 72), fill=(250, 160, 140, 140))
+    d.rectangle(P(22, 30, 74, 42), fill=(250, 250, 250, 255), outline=(170, 170, 170, 255), width=S)   # hat band
+    for x, y, r in ((30, 18, 14), (48, 12, 16), (66, 18, 14)):                     # hat puffs
+        d.ellipse(P(x - r, y - r + 8, x + r, y + r + 8), fill=(255, 255, 255, 255), outline=(170, 170, 170, 255), width=S)
+    d.rectangle(P(23, 26, 73, 36), fill=(255, 255, 255, 255))
+    save(img, "chef")
+
+
+for f in (counter, board, basin, pot, bowl, mortar, pan, mug, grater, jug, toast, dough, hand, chef):
     f()
 print("ok")

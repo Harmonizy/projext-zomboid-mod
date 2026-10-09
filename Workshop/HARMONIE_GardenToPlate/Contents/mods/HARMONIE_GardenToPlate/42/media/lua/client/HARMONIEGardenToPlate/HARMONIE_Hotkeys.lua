@@ -25,6 +25,12 @@ HARMONIE_GTP = HARMONIE_GTP or {}
 
 local NEARBY_TILE_RANGE = 3
 
+-- a name for the log that can never throw
+local function safeName(p)
+    local ok, n = pcall(function() return p:getUsername() end)
+    return ok and n and tostring(n) or "?"
+end
+
 --[[
     Picks who the action should apply to: the closest other player within
     NEARBY_TILE_RANGE tiles if one exists, otherwise the acting player
@@ -81,9 +87,12 @@ local function onKeyPressed(key)
         if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Keys", "open-guide key (%s) pressed", tostring(key)) end
         GTPGuide.toggle(playerObj)
     elseif key == HARMONIE_GTP.Keybinds.GetKey(HARMONIE_GTP.Keybinds.IDs.OPEN_ADMIN_PANEL) then
-        if isAdmin() or getDebug() then
+        local staff, lvl = HARMONIE_GTP.IsStaff(playerObj)
+        if staff or (getDebug and getDebug()) then
             local target = findNearestOtherPlayer(playerObj) or playerObj
             HARMONIE_AdminPanel.Open(target)
+        else
+            HARMONIE_GTP.LogOnce("adminkey:" .. tostring(lvl), "Admin", "vitamin admin key pressed by a non-staff player (access %s) -- ignored", tostring(lvl))
         end
     end
 end
@@ -153,12 +162,33 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
         -- description only appears once the assessor can actually read the
         -- result -- otherwise it explains why not, same idea as EHR's
         -- "Too Far Away" vs normal description switch on its Examine Health option
-        if playerObj:getPerkLevel(Perks.Doctor) < HARMONIE_GTP.Config.assessmentRequiredFirstAid then
-            tooltip.description = getText("IGUI_HARMONIE_AssessmentLocked", HARMONIE_GTP.Config.assessmentRequiredFirstAid)
-        else
-            tooltip.description = getText("IGUI_HARMONIE_AssessOtherDesc")
-        end
+        -- 0.13.2: never locked; it says how much this assessor will see
+        -- (the one rule every vitamin window uses, HARMONIE_GTP.VitaminView)
+        local view = HARMONIE_GTP.VitaminView(playerObj)
+        local n2, n5 = HARMONIE_GTP.VitaminViewLevels()
+        if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("assessview:" .. view, "Assess", "assess option offered; the assessor will see: %s", view) end
+        tooltip.description = getText("IGUI_HARMONIE_AssessOtherDesc") .. " <LINE> " ..
+            getText("IGUI_HARMONIE_AssessView_" .. view, n2, n5)
         option.toolTip = tooltip
+
+        -- 0.13.4 (owner: "คลิกขวาที่ผู้เล่นคนอื่นเพื่อตั้งค่าวิตามินให้ได้ แต่ต้องเป็น
+        -- แอดมินเท่านั้น"): staff get the vitamin admin panel for this player.
+        -- Only shown to staff; the server checks the role again on every edit.
+        local staff, lvl = HARMONIE_GTP.IsStaff(playerObj)
+        if staff then
+            local name = target:getDisplayName()
+            local adminText = getText("IGUI_HARMONIE_AdminEditOther", name)
+            local adminOpt = context:addOption(adminText, target, function(t)
+                HARMONIE_GTP.Log("Admin", "%s (access %s) opened the vitamin admin panel for %s (right-click)",
+                    safeName(playerObj), tostring(lvl), safeName(t))
+                HARMONIE_AdminPanel.Open(t)
+            end)
+            local tip = ISWorldObjectContextMenu.addToolTip()
+            tip:setName(adminText)
+            tip.description = getText("IGUI_HARMONIE_AdminEditOtherDesc")
+            adminOpt.toolTip = tip
+            HARMONIE_GTP.LogOnce("adminopt", "Admin", "vitamin admin option offered on other players (access %s)", tostring(lvl))
+        end
     end
 end
 

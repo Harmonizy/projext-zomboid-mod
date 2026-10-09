@@ -23,5 +23,9 @@
     "Sandbox_HARMONIE_CookQualityEffect": "Cooking tab: quality effect",
     "Sandbox_HARMONIE_CookQualityEffect_tooltip": "How much the preparation quality changes the dish's boredom and unhappiness (Excellent -10 each, Good -4, Poor +5) - times this. 0 turns it off.",
     "Sandbox_HARMONIE_CookXPMultiplier": "Cooking tab: Cooking XP multiplier",
-    "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "Cooking XP from the preparation steps of a Cooking-tab dish, times this."
+    "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "Cooking XP from the preparation steps of a Cooking-tab dish, times this.",
+    "Sandbox_HARMONIE_CookBuffs": "Cooking tab: buffs from Excellent dishes",
+    "Sandbox_HARMONIE_CookBuffs_tooltip": "A dish prepared Excellent gives a buff when eaten (hearty, energized, comfort, calm or fresh, by kind of dish). It lasts (2 + the cook's Cooking level) game hours.",
+    "Sandbox_HARMONIE_CookBuffHours": "Cooking tab: buff duration multiplier",
+    "Sandbox_HARMONIE_CookBuffHours_tooltip": "How long dish buffs last, times this."
 }

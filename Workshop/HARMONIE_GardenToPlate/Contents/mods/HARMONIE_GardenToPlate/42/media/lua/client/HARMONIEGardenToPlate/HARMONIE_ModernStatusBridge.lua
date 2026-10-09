@@ -58,9 +58,21 @@ for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         return o
     end
 
+    -- 0.13.2: the one rule of every vitamin window (HARMONIE_GTP.VitaminView):
+    -- below First Aid 2 the bar shows only the state -- a fixed height per
+    -- band -- not the real Reserve
     indicatorClass.getValue = function(self)
         if not self.player or self.player:isDead() then return 0 end
-        return HARMONIE_GTP.VitData.Get(self.player, vit) / HARMONIE_GTP.Config.maxValue
+        local value = HARMONIE_GTP.VitData.Get(self.player, vit)
+        local view = HARMONIE_GTP.VitaminView and HARMONIE_GTP.VitaminView(self.player) or "numbers"
+        if HARMONIE_GTP.LogOnce then
+            HARMONIE_GTP.LogOnce("msview:" .. vit .. ":" .. view, "ModernStatus", "vitamin %s HUD bar shows %s (First Aid rule)", vit, view == "name" and "only its state" or "the real Reserve")
+        end
+        if view == "name" then
+            local band = HARMONIE_GTP.GetBand(value)
+            return (band == "critical" and 0.1) or (band == "low" and 0.35) or 1
+        end
+        return value / HARMONIE_GTP.Config.maxValue
     end
 
     _G[className] = indicatorClass

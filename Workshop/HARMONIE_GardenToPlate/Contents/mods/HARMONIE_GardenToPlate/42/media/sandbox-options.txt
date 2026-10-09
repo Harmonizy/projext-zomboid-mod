@@ -3,7 +3,7 @@ VERSION = 1,
 option HARMONIE_GardenToPlate.DecayPerDay
 {
     type = double,
-    default = 5.0,
+    default = 2.0,
     min = 0.0,
     max = 20.0,
     page = HARMONIE_GardenToPlate,
@@ -112,4 +112,22 @@ option HARMONIE_GardenToPlate.CookXPMultiplier
     max = 5.0,
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_CookXPMultiplier,
+}
+
+option HARMONIE_GardenToPlate.CookBuffs
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffs,
+}
+
+option HARMONIE_GardenToPlate.CookBuffHours
+{
+    type = double,
+    default = 1.0,
+    min = 0.1,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffHours,
 }

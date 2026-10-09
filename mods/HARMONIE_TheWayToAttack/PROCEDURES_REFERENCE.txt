@@ -13,6 +13,16 @@ older versions are not tracked here any more (see git history if ever
 needed).
 
 ==============================================================================
+2026-10-08 (TWA 0.72.1) SKILL LEVELS LOWERED AGAIN ("กรรมวิธีทำอาวุธที่ ต้องการ
+ระดับ skill blacksmith กับ glassmaking 4/6/8 เปลี่ยนเป็น 3/4/5")
+==============================================================================
+  Blacksmith:  ForgeFold 3, ForgeComplex 4, ForgeVacuum 5 (were 4/6/8)
+  Glassmaking: GemPolishing 3, GemFineCutting 4, GemQualityControl 5
+               (were 4/6/8)
+Times unchanged. Whole chain now: Blacksmith 5 at most, gem chain
+Glassmaking 5.
+
+==============================================================================
 2026-10-05 (TWA 0.71.0, R74/R75) SKILL LEVELS LOWERED -- the numbers in the
 per-procedure list below are the OLD ones for these; the code is the truth
 ==============================================================================

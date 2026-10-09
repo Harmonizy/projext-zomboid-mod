@@ -1,13 +1,12 @@
 {
     "Moodles_VitaminA_Bad_lvl1": "Vitamin A: Low",
-    "Moodles_VitaminA_Bad_desc_lvl1": "Your Vitamin A reserve is running low. Keep it dropping and your vision will start blurring, weakening your hits and ranged aim.",
+    "Moodles_VitaminA_Bad_desc_lvl1": "Your Vitamin A reserve is running low. Keep it dropping and night blindness sets in: your hits get weaker, worst after dark.",
     "Moodles_VitaminA_Bad_lvl2": "Vitamin A: Low",
-    "Moodles_VitaminA_Bad_desc_lvl2": "Your Vitamin A reserve is running low. Keep it dropping and your vision will start blurring, weakening your hits and ranged aim.",
+    "Moodles_VitaminA_Bad_desc_lvl2": "Your Vitamin A reserve is running low. Keep it dropping and night blindness sets in: your hits get weaker, worst after dark.",
     "Moodles_VitaminA_Bad_lvl3": "Vitamin A: Critical",
-    "Moodles_VitaminA_Bad_desc_lvl3": "Your vision is blurring from Vitamin A deficiency -- weaker hits and harder ranged aim. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_VitaminA_Bad_desc_lvl3": "Night blindness from Vitamin A deficiency -- your hits lose 30% of their damage, 50% at night. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminA_Bad_lvl4": "Vitamin A: Critical",
-    "Moodles_VitaminA_Bad_desc_lvl4": "Your vision is blurring from Vitamin A deficiency -- weaker hits and harder ranged aim. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
-
+    "Moodles_VitaminA_Bad_desc_lvl4": "Night blindness from Vitamin A deficiency -- your hits lose 30% of their damage, 50% at night. Eat Vitamin A-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminB_Bad_lvl1": "Vitamin B: Low",
     "Moodles_VitaminB_Bad_desc_lvl1": "Your Vitamin B reserve is running low. Keep it dropping and you'll start getting frequent tingling/numbness and headaches, growing more stressed.",
     "Moodles_VitaminB_Bad_lvl2": "Vitamin B: Low",
@@ -16,7 +15,6 @@
     "Moodles_VitaminB_Bad_desc_lvl3": "Frequent tingling/numbness, headaches from anemia, and mild fatigue are keeping you persistently stressed from Vitamin B deficiency (Stress no lower than 30 percent). Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminB_Bad_lvl4": "Vitamin B: Critical",
     "Moodles_VitaminB_Bad_desc_lvl4": "Frequent tingling/numbness, headaches from anemia, and mild fatigue are keeping you persistently stressed from Vitamin B deficiency (Stress no lower than 30 percent). Eat Vitamin B-rich food until your reserve reaches Sufficient to clear it.",
-
     "Moodles_VitaminC_Bad_lvl1": "Vitamin C: Low",
     "Moodles_VitaminC_Bad_desc_lvl1": "Your Vitamin C reserve is running low. Keep it dropping and you'll start getting spontaneous nosebleeds or bleeding gums.",
     "Moodles_VitaminC_Bad_lvl2": "Vitamin C: Low",
@@ -25,7 +23,6 @@
     "Moodles_VitaminC_Bad_desc_lvl3": "You're getting occasional spontaneous nosebleeds/bleeding gums from Vitamin C deficiency (unexplained head wound). Eat Vitamin C-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminC_Bad_lvl4": "Vitamin C: Critical",
     "Moodles_VitaminC_Bad_desc_lvl4": "You're getting occasional spontaneous nosebleeds/bleeding gums from Vitamin C deficiency (unexplained head wound). Eat Vitamin C-rich food until your reserve reaches Sufficient to clear it.",
-
     "Moodles_VitaminD_Bad_lvl1": "Vitamin D: Low",
     "Moodles_VitaminD_Bad_desc_lvl1": "Your Vitamin D reserve is running low. Keep it dropping and your muscles will start to ache and stiffen all over.",
     "Moodles_VitaminD_Bad_lvl2": "Vitamin D: Low",
@@ -34,7 +31,6 @@
     "Moodles_VitaminD_Bad_desc_lvl3": "Your muscles ache and stiffen all over from Vitamin D deficiency (Stiffness no lower than 20 percent, all body parts). Eat Vitamin D-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminD_Bad_lvl4": "Vitamin D: Critical",
     "Moodles_VitaminD_Bad_desc_lvl4": "Your muscles ache and stiffen all over from Vitamin D deficiency (Stiffness no lower than 20 percent, all body parts). Eat Vitamin D-rich food until your reserve reaches Sufficient to clear it.",
-
     "Moodles_VitaminE_Bad_lvl1": "Vitamin E: Low",
     "Moodles_VitaminE_Bad_desc_lvl1": "Your Vitamin E reserve is running low. Keep it dropping and you'll grow persistently unhappy, slowing down moving and handling items.",
     "Moodles_VitaminE_Bad_lvl2": "Vitamin E: Low",
@@ -43,7 +39,6 @@
     "Moodles_VitaminE_Bad_desc_lvl3": "You're persistently unhappy from Vitamin E deficiency (Unhappiness no lower than 30 percent) -- moving and handling items is slower. Eat Vitamin E-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminE_Bad_lvl4": "Vitamin E: Critical",
     "Moodles_VitaminE_Bad_desc_lvl4": "You're persistently unhappy from Vitamin E deficiency (Unhappiness no lower than 30 percent) -- moving and handling items is slower. Eat Vitamin E-rich food until your reserve reaches Sufficient to clear it.",
-
     "Moodles_VitaminK_Bad_lvl1": "Vitamin K: Low",
     "Moodles_VitaminK_Bad_desc_lvl1": "Your Vitamin K reserve is running low. Keep it dropping and you'll feel generally run down, healing and recovery slowing.",
     "Moodles_VitaminK_Bad_lvl2": "Vitamin K: Low",

@@ -47,7 +47,7 @@
     symptom mapped to the closest PZ mechanic that's actually confirmed
     settable from Lua -- see HARMONIE_VitaminEffects.lua's header for the
     exact API calls and the full user-provided reasoning behind each):
-      A -> CharacterStat.INTOXICATION floor 30 (blurred vision -- weaker
+      A -> (until 0.13.1; now night blindness: weaker hits) CharacterStat.INTOXICATION floor 30 (blurred vision -- weaker
            hits and harder ranged aim; deliberately no drunk-themed text
            anywhere, reused purely for the real vision-blur side effect)
       B -> CharacterStat.STRESS floor 0.30 (frequent tingling/numbness,
@@ -143,13 +143,20 @@ HARMONIE_GTP.Config = {
     sufficientThreshold = 50,
 
     -- Reserve lost per in-game day once a vitamin's banked pause days run out
-    decayPerDay = 5,
+    decayPerDay = 2,
     -- Reserve gained = (percent of daily requirement eaten) / reserveGainDivisor
     reserveGainDivisor = 10,
     -- Reserve points needed to bank 1 pause day (10 Reserve = 1 pause day)
     reservePerPauseDay = 10,
 
-    -- First Aid perk level required to interpret the manual assessment UI
+    -- 0.13.2 (owner: "เงื่อนไขการเห็นวิตามินทั้งตัวเองและคนอื่นอยากให้ทุกหน้าต่าง
+    -- ที่เห็นค่าวิตามินใช้เงื่อนไขเหมือนกัน"): what any window shows of a
+    -- character's vitamins -- yourself or someone else, the same rule --
+    -- grows with the viewer's First Aid (HARMONIE_GTP.VitaminView):
+    --   below viewNumbersFirstAid   each vitamin's state name (Critical / Low / Sufficient)
+    --   viewNumbersFirstAid (2)     + the Reserve number
+    --   assessmentRequiredFirstAid (5) + pause days and everything else
+    viewNumbersFirstAid = 2,
     assessmentRequiredFirstAid = 5,
 
     -- master switch for critical-band penalties (every VitEffects.Maintain*/
@@ -200,4 +207,42 @@ function HARMONIE_GTP.GetBand(value)
         return "low"
     end
     return "sufficient"
+end
+
+-- the viewer's First Aid level (B42's internal id is Perks.Doctor)
+function HARMONIE_GTP.FirstAidOf(player)
+    if not player then return 0 end
+    local ok, v = pcall(function() return player:getPerkLevel(Perks.Doctor) end)
+    return ok and (tonumber(v) or 0) or 0
+end
+
+-- How much of a character's vitamins `viewer` may see, in every window
+-- (see viewNumbersFirstAid above): "name", "numbers" or "full".
+function HARMONIE_GTP.VitaminView(viewer)
+    local fa = HARMONIE_GTP.FirstAidOf(viewer)
+    local c = HARMONIE_GTP.Config
+    if fa >= (tonumber(c.assessmentRequiredFirstAid) or 5) then return "full", fa end
+    if fa >= (tonumber(c.viewNumbersFirstAid) or 2) then return "numbers", fa end
+    return "name", fa
+end
+function HARMONIE_GTP.VitaminViewLevels()
+    local c = HARMONIE_GTP.Config
+    return tonumber(c.viewNumbersFirstAid) or 2, tonumber(c.assessmentRequiredFirstAid) or 5
+end
+
+-- 0.13.4: who may edit someone else's vitamins -- ONE check, used by the
+-- right-click menu / hotkey (client) and by the server that applies the
+-- edit (HARMONIE_VitaminData.lua). B42 roles: an ordinary player is
+-- "user"/"None"; staff is admin / moderator / overseer / gm. Single player:
+-- isAdmin() or -debug, as before.
+HARMONIE_GTP.STAFF_LEVELS = { admin = true, moderator = true, overseer = true, gm = true }
+function HARMONIE_GTP.IsStaff(player)
+    local mp = (isClient and isClient()) or (isServer and isServer())
+    if not mp then
+        return ((isAdmin and isAdmin()) or (getDebug and getDebug())) and true or false, "singleplayer"
+    end
+    if not player then return false, "no player" end
+    local ok, lvl = pcall(function() return player:getAccessLevel() end)
+    if not ok or lvl == nil then return false, "unknown" end
+    return HARMONIE_GTP.STAFF_LEVELS[string.lower(tostring(lvl))] == true, tostring(lvl)
 end

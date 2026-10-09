@@ -184,7 +184,7 @@ local function modernStatusRows(player, out)
                 v = tonumber(v)
                 local label = names[className]
                 local t = getText and getText(label)
-                out[#out + 1] = { g = "mods", t = (t and t ~= label) and t or className, v = v,
+                out[#out + 1] = { g = "mods", t = (t and t ~= label) and t or className, v = v, cls = className,
                     f = clamp01(v), s = tostring(round(clamp01(v) * 100)) .. "%" }
             end
         end
@@ -275,6 +275,25 @@ local function vitaminRows(player, out)
                 s = tostring(math.floor(e.pauseDays or 0)), tip = gtpText("IGUI_HARMONIE_PauseDaysTooltip", "") }
         end
     end
+end
+
+-- From Garden to Plate 0.13.2 ("เงื่อนไขการเห็นวิตามินทั้งตัวเองและคนอื่นอยากให้
+-- ทุกหน้าต่างที่เห็นค่าวิตามินใช้เงื่อนไขเหมือนกัน"): what of a character's
+-- vitamins `viewer` may see follows GTP's one rule (HARMONIE_GTP.VitaminView,
+-- by the viewer's First Aid): the state of each vitamin always, the numbers
+-- from First Aid 2, pause days / penalty / deficiency signs from 5. The rows
+-- are collected without knowing who looks (the server may build them), so
+-- the window drops what its viewer may not see.
+function St.vitaminRowShown(row, viewer)
+    local G = HARMONIE_GTP
+    if type(row) ~= "table" or not (G and G.VitaminView) then return true end
+    local gtpMod = row.g == "mods" and type(row.cls) == "string" and row.cls:find("^HARMONIE_Vitamin") ~= nil
+    if not (row.g == "vitamins" or gtpMod or (row.g == "signs" and row.vit)) then return true end
+    local view = G.VitaminView(viewer)
+    if view == "full" then return true end
+    if gtpMod then return view == "numbers" end
+    if row.g == "vitamins" and (row.vit or row.k == "UI_HomeMedic_Stat_VitNeed") then return true end
+    return false
 end
 
 -- ------------------------------------------------------------- vitals (pulse, signs)

@@ -537,5 +537,9 @@
     "Sandbox_HARMONIE_CookQualityEffect": "แท็บทำอาหาร: ผลของคุณภาพการเตรียม",
     "Sandbox_HARMONIE_CookQualityEffect_tooltip": "คุณภาพการเตรียมเปลี่ยนความเบื่อและความไม่สบายใจของอาหารมากแค่ไหน (ยอดเยี่ยม -10, ดี -4, พอใช้ +5) - คูณด้วยค่านี้ 0 = ปิด",
     "Sandbox_HARMONIE_CookXPMultiplier": "แท็บทำอาหาร: ตัวคูณ XP ทำอาหาร",
-    "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "XP ทำอาหารจากขั้นตอนการเตรียมในแท็บทำอาหาร คูณด้วยค่านี้"
+    "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "XP ทำอาหารจากขั้นตอนการเตรียมในแท็บทำอาหาร คูณด้วยค่านี้",
+    "Sandbox_HARMONIE_CookBuffs": "แท็บทำอาหาร: บัฟจากอาหารระดับยอดเยี่ยม",
+    "Sandbox_HARMONIE_CookBuffs_tooltip": "อาหารที่เตรียมได้ระดับยอดเยี่ยมจะให้บัฟตอนกิน (อิ่มเอม กระปรี้กระเปร่า อุ่นใจ ผ่อนคลาย หรือสดชื่น ตามประเภทอาหาร) อยู่ได้ (2 + เลเวลทำอาหารของคนทำ) ชั่วโมงในเกม",
+    "Sandbox_HARMONIE_CookBuffHours": "แท็บทำอาหาร: ตัวคูณระยะเวลาบัฟ",
+    "Sandbox_HARMONIE_CookBuffHours_tooltip": "ระยะเวลาบัฟจากอาหาร คูณด้วยค่านี้"
 }
