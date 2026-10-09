@@ -192,4 +192,4 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
     end
 end
 
-Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
+Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(onFillWorldObjectContextMenu, "GTP"))

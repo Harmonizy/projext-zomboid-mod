@@ -46,3 +46,16 @@
   on the server (`isClient()` = remote client).
 - A PR that is merged is finished: check its state before pushing more.
 
+
+## HARMONIE Hub (shared by our mods)
+- Master copy: `mods/_HarmonieHub/` -- edit there, then
+  `bash mods/_HarmonieHub/install.sh` (copies it into GTP, TWA, HomeMedic,
+  SVU3, Modern Firearms and MFS `tools/ours`). The copies must stay
+  identical: the game loads one copy of a path.
+- Register every right-click handler of ours through it:
+  `Events.OnFill...ContextMenu.Add((HARMONIE_Ours or function(f) return f end)(handler, "TAG"))`
+  -- its options get the H icon and stay together (tag `"debug"` = last).
+- Admin / -debug only things go in the HARMONIE debug right-click
+  (`Hub.onDebugMenu`); a new window of ours gets a card in `Hub.CARDS`
+  (with `need` when it needs a target first), a new sandbox page a line in
+  `Hub.NAMESPACES`.

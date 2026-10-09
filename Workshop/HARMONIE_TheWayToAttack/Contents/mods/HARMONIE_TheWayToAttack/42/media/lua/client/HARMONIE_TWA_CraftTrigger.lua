@@ -55,7 +55,7 @@ end)
 -- to one representative real InventoryItem per selected stack/type, which is
 -- all that's needed here since a right-click only ever needs to classify
 -- ONE item (the one the menu was opened on).
-Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, items)
     local player = getSpecificPlayer(playerNum)
     if not player then return end
 
@@ -86,7 +86,7 @@ Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
         TWALog("Trigger", "right-click Open craft on %s (search %s)", TWALogType(target), tostring(searchName))
         TWACraftUI.open(player, searchName)
     end)
-end)
+end, "TWA"))
 
 -- Request 2026-09-27: right-clicking the ground/a workbench/any other world
 -- object should also offer to open the crafting UI, always blank (no auto-
@@ -94,11 +94,11 @@ end)
 -- request explicitly separates this case from the inventory one above). Not
 -- gated on `worldobjects` at all -- same "always available" philosophy this
 -- trigger already uses for the hotkey and the inventory option.
-Events.OnFillWorldObjectContextMenu.Add(function(playerNum, context, worldobjects, test)
+Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, worldobjects, test)
     local player = getSpecificPlayer(playerNum)
     if not player then return end
     context:addOption(getText("IGUI_TWA_ContextMenu_OpenCraftUI"), player, function()
         TWALog("Trigger", "world right-click Open craft")
         TWACraftUI.open(player)
     end)
-end)
+end, "TWA"))

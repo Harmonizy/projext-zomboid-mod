@@ -443,6 +443,6 @@ end
 
 if not EHR.KnoxCureMenu._registered then
     EHR.KnoxCureMenu._registered = true
-    Events.OnFillInventoryObjectContextMenu.Add(EHR.KnoxCureMenu.OnFillInventoryObjectContextMenu)
+    Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.KnoxCureMenu.OnFillInventoryObjectContextMenu, "HM"))
     EHR.Log("KnoxCureMenu: Context menu hooks registered")
 end

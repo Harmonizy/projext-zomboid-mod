@@ -677,7 +677,7 @@ if Events and not EHR.WoundHook._eventsRegistered then
     Events.OnGameStart.Add(EHR.WoundHook.OnGameStart)
 
     -- Context menu hook for IV antibiotics
-    Events.OnFillInventoryObjectContextMenu.Add(EHR.WoundHook.OnFillInventoryObjectContextMenu)
+    Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.WoundHook.OnFillInventoryObjectContextMenu, "HM"))
 
     EHR.Log("WoundHook module loaded")
     WoundHookDisinfectDebug("module loaded")

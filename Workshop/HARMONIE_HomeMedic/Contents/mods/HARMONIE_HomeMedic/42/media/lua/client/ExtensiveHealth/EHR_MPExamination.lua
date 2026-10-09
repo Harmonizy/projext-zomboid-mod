@@ -1092,7 +1092,7 @@ end
 -- Register events
 if Events and not EHR.MPExamination._eventsRegistered then
     EHR.MPExamination._eventsRegistered = true
-    Events.OnFillWorldObjectContextMenu.Add(EHR.MPExamination.OnFillWorldObjectContextMenu)
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.MPExamination.OnFillWorldObjectContextMenu, "HM"))
     Events.OnTick.Add(OnTick)
     Events.OnPlayerDeath.Add(OnPlayerDeath)
     Events.OnGameStart.Add(OnGameStart)

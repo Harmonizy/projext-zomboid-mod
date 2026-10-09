@@ -79,4 +79,4 @@ local function SendItem(_player, _context, _items)
     end
 end
 
-Events.OnFillInventoryObjectContextMenu.Add(SendItem)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(SendItem, "MFS"))

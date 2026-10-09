@@ -199,7 +199,7 @@ local function AddInventoryAmputationMenu(playerNum, context, items)
 end
 
 
-Events.OnFillInventoryObjectContextMenu.Add(AddInventoryAmputationMenu)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(AddInventoryAmputationMenu, "HM"))
 
 -------------------------------------
 

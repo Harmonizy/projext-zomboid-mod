@@ -650,7 +650,7 @@ end
 
 if not EHR.HerbalSearch._registered then
     EHR.HerbalSearch._registered = true
-    Events.OnFillWorldObjectContextMenu.Add(EHR.HerbalSearch.OnFillWorldObjectContextMenu)
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.HerbalSearch.OnFillWorldObjectContextMenu, "HM"))
     if Events.OnServerCommand then Events.OnServerCommand.Add(EHR.HerbalSearch.OnServerCommand) end
     if EHR and EHR.Log then EHR.Log("HerbalSearch: context menu registered") end
 end

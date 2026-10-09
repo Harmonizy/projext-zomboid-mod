@@ -66,6 +66,19 @@ PATCHES = [
      """    -- HARMONIE: air drops are not part of this mod"""),
 ]
 
+# HARMONIE Hub (2026-10-09): the original's right-click handlers are
+# registered through HARMONIE_Ours, so their options get the H icon and stay
+# together with our other mods' options (shared/000_HARMONIE_HubBoot.lua)
+HUB_WRAP = "(HARMONIE_Ours or function(f) return f end)"
+for _rel, _fn in [
+        ("lua/server/FixWeapon.lua", "createInventoryMenuEntry"),
+        ("lua/client/PartAbility/LaserAndLight/BatterySet.lua", "SendItem"),
+        ("lua/client/UI/risky_inspect_set.lua", "riskyUI.createInventoryMenuEntry"),
+        ("lua/client/FixWeapon.lua", "addRepairOption"),
+        ("lua/client/IOInput.lua", "createInventoryMenuEntry")]:
+    PATCHES.append((_rel, "Events.OnFillInventoryObjectContextMenu.Add(%s)" % _fn,
+                    'Events.OnFillInventoryObjectContextMenu.Add(%s(%s, "MFS"))' % (HUB_WRAP, _fn)))
+
 
 def excluded(rel):
     rel = rel.replace(os.sep, "/")

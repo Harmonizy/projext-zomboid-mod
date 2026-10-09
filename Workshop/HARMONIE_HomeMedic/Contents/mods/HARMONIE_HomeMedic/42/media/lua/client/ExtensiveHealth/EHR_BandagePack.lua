@@ -676,7 +676,7 @@ end
 if Events and not EHR.BandagePack.EventsRegistered then
     EHR.BandagePack.HookApplyBandage()
     Events.OnGameStart.Add(EHR.BandagePack.HookApplyBandage)
-    Events.OnFillInventoryObjectContextMenu.Add(EHR.BandagePack.OnFillInventoryObjectContextMenu)
+    Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.BandagePack.OnFillInventoryObjectContextMenu, "HM"))
     EHR.BandagePack.EventsRegistered = true
     EHR.Log("BandagePack module loaded")
 end

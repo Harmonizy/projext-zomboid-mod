@@ -373,6 +373,6 @@ EHR.MedicationAction.Enabled = true
 -- Override the UseMedication call to not consume item (we do it in perform)
 -- Actually no - UseMedication already handles consumption
 
-Events.OnFillInventoryObjectContextMenu.Add(OnMedicationContextMenuEnhanced)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(OnMedicationContextMenuEnhanced, "HM"))
 
 EHR.Log("Medication Action module loaded - timed actions enabled")

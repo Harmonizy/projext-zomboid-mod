@@ -7201,7 +7201,7 @@ local function OnMedicationContextMenu(player, context, items)
     end
 end
 
-Events.OnFillInventoryObjectContextMenu.Add(OnMedicationContextMenu)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(OnMedicationContextMenu, "HM"))
 
 -- ============================================
 -- HOOK INTO MAIN UPDATE LOOP

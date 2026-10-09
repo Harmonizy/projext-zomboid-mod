@@ -383,5 +383,5 @@ end
 
 if Events and Events.OnFillWorldObjectContextMenu and not EHR.WashHands._registered then
     EHR.WashHands._registered = true
-    Events.OnFillWorldObjectContextMenu.Add(EHR.WashHands.OnFillWorldObjectContextMenu)
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.WashHands.OnFillWorldObjectContextMenu, "HM"))
 end

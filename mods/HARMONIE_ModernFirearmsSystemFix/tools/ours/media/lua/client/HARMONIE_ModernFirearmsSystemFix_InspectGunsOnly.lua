@@ -98,7 +98,7 @@ if Events and Events.OnGameStart and not M.inspectRegistered then
     Events.OnGameStart.Add(function()
         if M.inspectAdded then return end
         M.inspectAdded = true
-        Events.OnFillInventoryObjectContextMenu.Add(M.onFillInventoryMenu)
+        Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(M.onFillInventoryMenu, "MFS"))
         log("Inspect-only-guns context menu filter added")
     end)
 end

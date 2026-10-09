@@ -130,4 +130,4 @@ local function addRepairOption(playerIndex, context, items)
     end
 end
 
-Events.OnFillInventoryObjectContextMenu.Add(addRepairOption)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(addRepairOption, "MFS"))

@@ -335,7 +335,7 @@ function T.installProsthesis()
     end
     -- the item's own "Wear" goes: prostheses are fitted from the body menu
     if Events and Events.OnFillInventoryObjectContextMenu then
-        Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+        Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, items)
             local _, _, _, Prost = tocModules()
             if not Prost or not context then return end
             local all, any = true, false
@@ -352,7 +352,7 @@ function T.installProsthesis()
                 local o = context:addOption(text("UI_HomeMedic_Prost_Hint", "Fit it from the body menu (right-click the stump)"), nil, nil)
                 o.notAvailable = true
             end
-        end)
+        end, "HM"))
     end
 end
 

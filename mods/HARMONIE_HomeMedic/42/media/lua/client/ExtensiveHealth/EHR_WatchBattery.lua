@@ -438,7 +438,7 @@ local function resetWatchUIIntegration()
 end
 
 if Events and not Client.EventsRegistered then
-    Events.OnFillInventoryObjectContextMenu.Add(Client.OnFillInventoryObjectContextMenu)
+    Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(Client.OnFillInventoryObjectContextMenu, "HM"))
     Events.OnPreUIDraw.Add(Client.UpdateVanillaClockVisibility)
     Events.EveryTenMinutes.Add(drainSinglePlayerWatches)
     Events.OnServerCommand.Add(Client.OnServerCommand)
