@@ -1,0 +1,131 @@
+-- local tankboomsfx = {0, 8}
+-- local tick = 3
+-- -- 僵尸，僵尸减少血量，攻击类型，最大X，最大Y
+-- local function ReuceReachableSquaresZombieHP(zombie, HP, type, x1, y1)
+--     if not zombie then
+--         return
+--     end
+--     local cx = zombie:getX()
+--     local cy = zombie:getY()
+--     local cz = zombie:getZ()
+--     local dx, dy = 0, 0
+--     local currentSq = zombie:getCurrentSquare()
+--     currentSq:playSound("30mmBoom");
+--     if type == "Shock" then
+--         IsoFireManager.StartSmoke(getCell(), currentSq, true, 100, 500);
+--     end
+--     for dy = 0 - x1, x1 do
+--         for dx = 0 - y1, y1 do
+--             local square = getCell():getGridSquare(cx + dx, cy + dy, cz)
+--             if square ~= currentSq and currentSq and currentSq:isBlockedTo(square) then
+--                 square = nil -- 不读取被隔开的区块
+--             end
+--             if square then
+--                 local Zombies = square:getMovingObjects()
+--                 for i = 0, Zombies:size() - 1 do
+--                     local Zombie = Zombies:get(i)
+--                     if instanceof(zombie, "IsoZombie") then
+--                         local distance = math.sqrt((dx * dx) + (dy * dy))
+--                         if Zombie then
+--                             if type == "fire" then
+--                                 Zombie:SetOnFire()
+--                             end
+--                             if type == "Shock" then
+--                                 Zombie:Wander()
+--                                 Zombie:setTarget(nil)
+--                             end
+--                             local scaledDamage = HP * math.abs((math.max(x1, y1) - distance / math.max(x1, y1)))
+--                             local newHealth = Zombie:getHealth() - scaledDamage
+--                             if newHealth < 0 then
+--                                 newHealth = 0
+--                                 Zombie:Kill(getPlayer())
+--                             end
+--                             Zombie:setHealth(newHealth)
+--                         end
+--                     end
+--                 end
+--             end
+--         end
+--     end
+-- end
+-- local function UpdateM1A2BoomSFX()
+--     if tankboomsfx[1] == 0 then
+--         return
+--     end
+--     if tick > 0 then
+--         tick = tick - 1
+--         return
+--     end
+--     tick = 3
+--     if tankboomsfx[2] ~= 12 then
+--         tankboomsfx[1]:removeAllWorldObjects()
+--         local Script = ScriptManager.instance:getItem("Base.theTigerSFX")
+--         Script:DoParam("Icon = tankboom" .. tostring(tankboomsfx[2]))
+--         tankboomsfx[1]:AddWorldInventoryItem("Base.theTigerSFX", 0.5, 0.5, 0)
+--         tankboomsfx[2] = tankboomsfx[2] + 1
+--     else
+--         tankboomsfx[1]:removeAllWorldObjects()
+--         tankboomsfx[1] = 0
+--         tankboomsfx[2] = 8
+--     end
+-- end
+-- Events.OnPlayerUpdate.Add(UpdateM1A2BoomSFX)
+-- local function WeaponHitZombie(playerObj, zombie, MainGun)
+--     if MainGun and MainGun:IsWeapon() and MainGun:isRanged() then
+--         if HasWeaponAttackType(MainGun) then
+--             local AttackType = HasWeaponAttackType(MainGun)
+--             if AttackType == "NormalBullet" then
+--                 zombie:setHealth(zombie:getHealth() - (MainGun:getMinDamage() / 4))
+--             end
+--             if AttackType == "DragonBreathBullet" then
+--                 zombie:SetOnFire()
+--             end
+--             if AttackType == "ShockBullet" then
+--                 ReuceReachableSquaresZombieHP(zombie, 0.1, "Shock", 2, 2)
+--             end
+--             if AttackType == "GrenadeAmmo" then
+--                 ReuceReachableSquaresZombieHP(zombie, 0.7, nil, 1, 1)
+--             end
+--         end
+--         if MainGun:getType() == "XM109_cat" then
+--             ReuceReachableSquaresZombieHP(zombie, 2, nil, 4, 4)
+--             if tankboomsfx[1] == 0 then
+--                 tankboomsfx[1] = zombie:getCurrentSquare()
+--                 tankboomsfx[2] = 8
+--                 playerObj:playSound("Explosion1")
+--             end
+--         end
+--         if MainGun:getType() == "QLU_11" then
+--             ReuceReachableSquaresZombieHP(zombie, 2, nil, 4, 4)
+--             if tankboomsfx[1] == 0 then
+--                 tankboomsfx[1] = zombie:getCurrentSquare()
+--                 tankboomsfx[2] = 8
+--                 playerObj:playSound("Explosion1")
+--             end
+--         end
+--         if MainGun:getAmmoType() == "firebolt" then
+--             zombie:SetOnFire()
+--         end
+--     end
+-- end
+-- Events.OnWeaponHitCharacter.Add(WeaponHitZombie)
+-- local OldISReloadWeaponAction = ISReloadWeaponAction.perform
+-- function ISReloadWeaponAction:perform()
+--     OldISReloadWeaponAction(self)
+--     if self.gun:getType() == "M14_Albedo" then
+--         if ZombRand(20) == 0 then
+--             if (self.character:getBodyDamage():getBodyPart(BodyPartType.Hand_R):isBurnt() == false) then
+--                 local BP = self.character:getBodyDamage():getBodyPart(BodyPartType.Hand_R);
+--                 local heal = true
+--                 if BP:IsInfected() then
+--                     heal = false
+--                 end
+--                 BP:SetBitten(true);
+--                 if heal then
+--                     BP:SetInfected(false)
+--                 end
+--                 self.character:playSound("shit")
+--             end
+--         end
+--     end
+-- end

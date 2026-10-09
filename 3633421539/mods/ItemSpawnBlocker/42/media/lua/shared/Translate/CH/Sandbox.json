@@ -1,0 +1,13 @@
+{
+    "Sandbox_ItemSpawnBlocker": "物品刷新屏蔽器",
+    "Sandbox_ItemSpawnBlocker_Enabled": "啟用屏蔽",
+    "Sandbox_ItemSpawnBlocker_Enabled_tooltip": "總開關。關閉時不會屏蔽任何物品。",
+    "Sandbox_ItemSpawnBlocker_BlockList": "屏蔽物品清單",
+    "Sandbox_ItemSpawnBlocker_BlockList_tooltip": "要從新生成戰利品中移除的物品，用分號或逗號分隔。每項按內部物品ID做不區分大小寫的部分比對（如 Base.Axe、HuntingKnife、gun、ammo）。",
+    "Sandbox_ItemSpawnBlocker_FilterContainers": "同時清理已填充容器",
+    "Sandbox_ItemSpawnBlocker_FilterContainers_tooltip": "同時從世界生成後才填充的容器（殭屍屍體等）中移除屏蔽物品。伺服器端生效；無需要可保持關閉。",
+    "Sandbox_ItemSpawnBlocker_BlockRecipes": "屏蔽製作配方",
+    "Sandbox_ItemSpawnBlocker_BlockRecipes_tooltip": "配方屏蔽總開關。關閉時不會屏蔽任何製作配方。",
+    "Sandbox_ItemSpawnBlocker_RecipeBlockList": "屏蔽配方清單",
+    "Sandbox_ItemSpawnBlocker_RecipeBlockList_tooltip": "要屏蔽的製作配方，用分號或逗號分隔。每項按配方名、類別或產物物品ID做不區分大小寫的部分比對。例如：Forge（全部鍛造）、Blacksmithing（鍛造類別）、DisassembleFirearms（拆解槍械）、SheetMetal、Base.Axe。"
+}

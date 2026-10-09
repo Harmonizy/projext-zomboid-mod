@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>机械盾</m_MaleModel>
+	<m_FemaleModel>机械盾</m_FemaleModel>
+	<m_GUID>机械盾</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>盾贴图</textureChoices>
+
+</clothingItem>

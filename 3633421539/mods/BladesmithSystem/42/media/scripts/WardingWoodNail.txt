@@ -1,0 +1,62 @@
+module Base
+{
+
+
+    item WardingWoodNail
+    {
+        DisplayCategory = ToolWeapon,
+        ItemType = base:weapon,
+        Weight = 1.0,
+        Icon = WardingWoodNail,
+        Icons = WardingWoodNail,
+        AttachmentType = Hammer,
+        BaseSpeed = 1.4,
+        BreakSound = ClubHammerBreak,
+        CanBarricade = true,
+        Categories = base:smallblunt,
+        ConditionLowerChanceOneIn = 215,
+        ConditionMax = 110,
+        CritDmgMultiplier = 2.0,
+        CriticalChance = 20.0,
+        DoorDamage = 9,
+        DoorHitSound = ClubHammerHit,
+        DropSound = ClubHammerDrop,
+        HitFloorSound = ClubHammerHit,
+        HitSound = ClubHammerHit,
+        IdleAnim = Idle_Weapon2,
+        KnockBackOnNoDeath = true,
+        KnockdownMod = 0.0,
+        MaxDamage = 1.0,
+        MaxHitcount = 1,
+        MaxRange = 3.0,
+        MetalValue = 25.0,
+        MinAngle = 0.65,
+        MinDamage = 0.5,
+        MinRange = 0.11,
+        MinimumSwingtime = 3.0,
+        PushBackMod = 0.5,
+        RunAnim = Run_Weapon2,
+        SplatBloodOnNoDeath = true,
+        SplatNumber = 1,
+        SubCategory = Swinging,
+        SwingAmountBeforeImpact = 0.02,
+        SwingAnim = Bat,
+        SwingSound = ClubHammerSwing,
+        Swingtime = 3.0,
+        Tooltip = Tooltip_no_nails,
+        TreeDamage = 0,
+        WeaponLength = 0.23,
+        WeaponSprite = WardingWoodNail,
+        Tags = base:clubhammer;base:hastoolhead;base:killanimal;base:repairwithglue;base:repairwithtape;base:hasmetal,
+        HeadCondition = 10,
+        OnBreak = OnBreak.ClubHammer,
+        HeadConditionLowerChanceMultiplier = 2.0,
+        Researchablerecipes = Forge_Sledgehammer_Head;MakeStoneMaulHead;Forge_Clawhammer_Head;Forge_Ball_Peen_Hammer_Head;Forge_Club_Hammer_Head;Forge_Smithing_Hammer_Head,
+    }
+
+	model WardingWoodNail
+	{
+		mesh = 驱邪木钉,
+		texture = 驱邪木钉,
+	}
+}

@@ -1,0 +1,117 @@
+module Base
+{
+model FemaleBody
+	{
+		mesh = Skinned/FemaleBody,
+
+
+		attachment Avalon_cat
+		{
+			offset = 0.117 0.114 0.157,
+			rotate = -180.0000 45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+
+
+	}
+
+	model MaleBody
+	{
+		mesh = Skinned/MaleBody,
+
+		attachment Avalon_cat
+		{
+			offset = 0.117 0.114 0.157,
+			rotate = -180.0000 45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+				 }
+item Avalon_cat
+    {
+		DisplayCategory = Clothing,
+		Weight	=	0.2,
+		ItemType = base:clothing,
+		DisplayName	=	阿瓦隆Avalon,
+		Icon	=	阿瓦隆,
+		BodyLocation = cat:Avalon_cat,
+		ClothingItem = Avalon_cat,
+		AttachmentsProvided = Avalon_cat,
+    }
+
+item Excalibur_cat
+	{
+		
+		
+		HeadCondition = 100,
+		HeadConditionLowerChanceMultiplier = 1.5,
+		TorchDot = 0.86,
+	    DisplayCategory 		= Weapon,
+	    EnduranceMod				     = 0.4,
+		MaxRange 		= 1.7,
+		WeaponSprite 		= Excalibur_cat,
+		MinAngle 		= 0.7,
+		ItemType             = base:weapon,
+		SwingSound 		= KatanaSwing,
+		HitFloorSound 		= KatanaHit,
+		ImpactSound 		= KatanaHit,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		RunAnim	=	Run_Weapon2,
+		MinimumSwingTime 		= 4,
+		KnockBackOnNoDeath 		= TRUE,
+		RequiresEquippedBothHands 		= TRUE,
+		SwingAmountBeforeImpact 		= 0.02,
+		Categories 		= LongBlade,
+		ConditionLowerChanceOneIn 		= 50,
+		Weight 		= 2,
+		SplatNumber 		= 2,
+		PushBackMod 		= 0.3,
+		SubCategory 		= Swinging,
+		ConditionMax 		= 20,
+		MaxHitCount 		= 4,
+		DoorDamage 		= 100,
+		SwingAnim 		= badaozhan,
+		DisplayName 		= 由此_展现誓约胜利之剑Excalibur,
+		MinRange 		= 0.11,
+		SwingTime 		= 4,
+		KnockdownMod 		= 3,
+		IdleAnim	=	Idle_Weapon2,
+		SplatBloodOnNoDeath 		= TRUE,
+		Icon 		= Excalibur_cat,
+		TreeDamage 		= 30,
+		CriticalChance 		= 100,
+		CritDmgMultiplier 		= 15,
+		MinDamage 		= 2,
+		MaxDamage 		= 4,
+		BaseSpeed 		= 20,
+		WeaponLength 		= 0.3,
+		TwoHandWeapon						= TRUE,
+		DamageCategory 		= Slash,
+		DamageMakeHole 		= TRUE,
+		AttachmentType 		= Avalon_cat,
+		Tags = base:cutplant;base:repairwithtape;base:repairwithglue;base:ignorezombiedensity;base:hasmetal;base:fullblade,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		HitFloorSound 		= KatanaHit,
+		BreakSound 		= KatanaBreak,
+		SwingSound 		= KatanaSwing,
+		ShellFallSound = SawnOffDoubleBarrelShotgunCartridgeFall,
+		EquipSound = 拔刀1,
+		UnequipSound = 收刀,
+		InsertAmmoSound = SawnOffDoubleBarrelShotgunInsertAmmo,
+		EjectAmmoSound = SawnOffDoubleBarrelShotgunEjectAmmo,
+		InsertAmmoStartSound = SawnOffDoubleBarrelShotgunInsertAmmoStart,
+		InsertAmmoStopSound = SawnOffDoubleBarrelShotgunInsertAmmoStop,
+		EjectAmmoStartSound = SawnOffDoubleBarrelShotgunEjectAmmoStart,
+		EjectAmmoStopSound = SawnOffDoubleBarrelShotgunEjectAmmoStop,
+    }
+
+	model Excalibur_cat
+	{
+		mesh = Excalibur_cat,
+	    texture = Excalibur_cat,
+	}
+
+
+
+}

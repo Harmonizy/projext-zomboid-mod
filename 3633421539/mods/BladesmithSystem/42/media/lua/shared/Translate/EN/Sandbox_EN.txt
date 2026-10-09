@@ -1,0 +1,6 @@
+Sandbox_CN = {
+    Sandbox_Disposalofcorp_zombie_meat = "[Disposal of corpse]Whether to keep zombie meat",
+	Sandbox_Disposalofcorpzombie_intestines = "[Disposal of corpse]Whether to keep zombie intestines",
+	Sandbox_Disposalofcorpendurance = "[Disposal of corpse]Whether to consume endurance",
+	Sandbox_Disposalofcorpkeepitems = "[Disposal of corpse]Whether to keep items on zombies",
+}

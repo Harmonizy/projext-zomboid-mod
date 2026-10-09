@@ -1,0 +1,13 @@
+{
+    "Sandbox_ItemSpawnBlocker": "Item Spawn Blocker",
+    "Sandbox_ItemSpawnBlocker_Enabled": "Enable Blocker",
+    "Sandbox_ItemSpawnBlocker_Enabled_tooltip": "Master switch. When off, no items are blocked.",
+    "Sandbox_ItemSpawnBlocker_BlockList": "Blocked Items",
+    "Sandbox_ItemSpawnBlocker_BlockList_tooltip": "Items to remove from newly generated loot, separated by ';' or ','. Each entry is matched case-insensitively and partially against the internal item ID (e.g. Base.Axe, HuntingKnife, gun, ammo).",
+    "Sandbox_ItemSpawnBlocker_FilterContainers": "Strip Filled Containers",
+    "Sandbox_ItemSpawnBlocker_FilterContainers_tooltip": "Also remove blocked items from containers filled after world generation (zombie corpses, etc.). Server-side; leave off unless needed.",
+    "Sandbox_ItemSpawnBlocker_BlockRecipes": "Block Crafting Recipes",
+    "Sandbox_ItemSpawnBlocker_BlockRecipes_tooltip": "Master switch for recipe blocking. When off, no crafting recipes are blocked.",
+    "Sandbox_ItemSpawnBlocker_RecipeBlockList": "Blocked Recipes",
+    "Sandbox_ItemSpawnBlocker_RecipeBlockList_tooltip": "Crafting recipes to remove, separated by ';' or ','. Each entry matches, case-insensitively and partially, against the recipe name, its category, or the result item ID. Examples: Forge (all forging), Blacksmithing, DisassembleFirearms, SheetMetal, Base.Axe."
+}

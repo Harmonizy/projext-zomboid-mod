@@ -1,0 +1,117 @@
+module Base
+{
+
+model FemaleBody
+	{
+		mesh = Skinned/FemaleBody,
+
+
+		attachment HaliasturIndusCrossbladeScabbard
+		{
+			offset = 0.07 -0.21 -0.09,
+			rotate = 0.0000 90.0000 0.0000,
+			bone = Bip01_Pelvis,
+		}
+
+
+	}
+
+	model MaleBody
+	{
+		mesh = Skinned/MaleBody,
+
+
+		attachment HaliasturIndusCrossbladeScabbard
+		{
+			offset = 0.07 -0.21 -0.09,
+			rotate = 0.0000 0.0000 0.0000,
+			bone = Bip01_Pelvis,
+		}
+	}
+
+item HaliasturIndusCrossbladeScabbard
+    {
+		DisplayCategory = Clothing,
+		Weight	=	0.2,
+		ItemType = base:clothing,
+		DisplayName	=	栗鸢横刀鞘HaliasturIndusCrossbladeScabbard,
+		Icon	=	雁翎刀鞘,
+		BodyLocation = cat:HaliasturIndusCrossbladeScabbard,
+		ClothingItem = HaliasturIndusCrossbladeScabbard,
+		AttachmentsProvided = HaliasturIndusCrossbladeScabbard,
+    }
+
+
+
+item HaliasturIndusCrossblade
+
+
+	{
+		
+		TorchDot = 0.86,
+	    DisplayCategory 		= Weapon,
+	    EnduranceMod				     = 0.4,
+		MaxRange 		= 1.6,
+		WeaponSprite 		= HaliasturIndusCrossblade,
+		MinAngle 		= 0.7,
+		ItemType             = base:weapon,
+		SwingSound 		= KatanaSwing,
+		HitFloorSound 		= KatanaHit,
+		ImpactSound 		= KatanaHit,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		RunAnim	=	Run_Weapon2,
+		MinimumSwingTime 		= 4,
+		KnockBackOnNoDeath 		= TRUE,
+		SwingAmountBeforeImpact 		= 0.02,
+		Categories 		= LongBlade,
+		ConditionLowerChanceOneIn 		= 50,
+		Weight 		= 2,
+		SplatNumber 		= 2,
+		PushBackMod 		= 0.3,
+		SubCategory 		= Swinging,
+		ConditionMax 		= 20,
+		MaxHitCount 		= 3,
+		DoorDamage 		= 100,
+		SwingAnim 		= badaozhan,
+		DisplayName 		= 栗鸢横刀HaliasturIndusCrossblade,
+		MinRange 		= 0.01,
+		SwingTime 		= 4,
+		KnockdownMod 		= 3,
+		SplatBloodOnNoDeath 		= TRUE,
+		Icon 		= 战术唐横刀,
+		TreeDamage 		= 30,
+		CriticalChance 		= 20,
+		CritDmgMultiplier 		= 15,
+		MinDamage 		= 3,
+		MaxDamage 		= 4,
+		BaseSpeed 		= 1.5,
+		WeaponLength 		= 0.3,
+
+		DamageCategory 		= Slash,
+		DamageMakeHole 		= TRUE,
+		AttachmentType = HaliasturIndusCrossbladeScabbard,
+		Tags = base:cutplant;base:repairwithtape;base:repairwithglue;base:ignorezombiedensity;base:hasmetal;base:fullblade,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		HitFloorSound 		= KatanaHit,
+		BreakSound 		= KatanaBreak,
+		SwingSound 		= KatanaSwing,
+		ShellFallSound = SawnOffDoubleBarrelShotgunCartridgeFall,
+		
+		InsertAmmoSound = SawnOffDoubleBarrelShotgunInsertAmmo,
+		EjectAmmoSound = SawnOffDoubleBarrelShotgunEjectAmmo,
+		InsertAmmoStartSound = SawnOffDoubleBarrelShotgunInsertAmmoStart,
+		InsertAmmoStopSound = SawnOffDoubleBarrelShotgunInsertAmmoStop,
+		EjectAmmoStartSound = SawnOffDoubleBarrelShotgunEjectAmmoStart,
+		EjectAmmoStopSound = SawnOffDoubleBarrelShotgunEjectAmmoStop,
+		
+    }
+
+	model HaliasturIndusCrossblade
+	{
+		mesh = HaliasturIndusCrossblade,
+	    texture = HaliasturIndusCrossblade,
+	}
+ 
+}

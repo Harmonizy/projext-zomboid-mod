@@ -1,0 +1,107 @@
+module Base
+{
+	model FemaleBody
+	{
+		mesh = Skinned/FemaleBody,
+
+		attachment MurasamaBladeScabbard
+		{
+			offset = 0.117 0.114 0.157,
+			rotate = -180.0000 45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+	}
+
+	model MaleBody
+	{
+		mesh = Skinned/MaleBody,
+
+		attachment MurasamaBladeScabbard
+		{
+			offset = 0.117 0.114 0.157,
+			rotate = -180.0000 45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+	}
+
+	item MurasamaBladeScabbard
+	{
+		DisplayCategory = Accessory,
+		Weight	=	0.2,
+		ItemType = base:clothing,
+		DisplayName	=	村雨剑鞘MurasamaBladeScabbard,
+		Icon	=	ck1m,
+		BodyLocation = cat:MurasamaBladeScabbard,
+		ClothingItem = MurasamaBladeScabbard,
+		AttachmentsProvided = MurasamaBladeScabbard,
+	}
+
+	item MurasamaBlade
+	{
+		HeadCondition = 100,
+		HeadConditionLowerChanceMultiplier = 1.5,
+		
+		Tooltip = Tooltip_( 'Lets dance!' ),
+		TorchDot = 0.86,
+		DisplayCategory 		= Weapon,
+		EnduranceMod				     = 0.4,
+		MaxRange 		= 1.7,
+		WeaponSprite 		= MurasamaBlade,
+		MinAngle 		= 0.7,
+		ItemType             = base:weapon,
+		SwingSound 		= KatanaSwing,
+		HitFloorSound 		= KatanaHit,
+		ImpactSound 		= KatanaHit,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		RunAnim	=	Run_Weapon2,
+		MinimumSwingTime 		= 4,
+		KnockBackOnNoDeath 		= TRUE,
+		SwingAmountBeforeImpact 		= 0.02,
+		Categories 		= LongBlade,
+		ConditionLowerChanceOneIn 		= 50,
+		Weight 		= 2,
+		SplatNumber 		= 2,
+		PushBackMod 		= 0.3,
+		SubCategory 		= Swinging,
+		ConditionMax 		= 20,
+		MaxHitCount 		= 3,
+		DoorDamage 		= 100,
+		SwingAnim 		= badaozhan,
+		DisplayName 		= 高频村雨MurasamaBlade,
+		MinRange 		= 0.01,
+		SwingTime 		= 4,
+		KnockdownMod 		= 3,
+		SplatBloodOnNoDeath 		= TRUE,
+		Icon 		=MurasamaBlade,
+		TreeDamage 		= 30,
+		CriticalChance 		= 20,
+		CritDmgMultiplier 		= 15,
+		MinDamage 		= 2,
+		MaxDamage 		= 4,
+		BaseSpeed 		= 20,
+		WeaponLength 		= 0.3,
+		TwoHandWeapon						= TRUE,
+		DamageCategory 		= Slash,
+		DamageMakeHole 		= TRUE,
+		AttachmentType 		= MurasamaBladeScabbard,
+		Tags = base:cutplant;base:repairwithtape;base:repairwithglue;base:ignorezombiedensity;base:hasmetal;base:fullblade,
+		BreakSound 		= KatanaBreak,
+		ShellFallSound = SawnOffDoubleBarrelShotgunCartridgeFall,
+		EquipSound = ,
+		UnequipSound = ,
+		InsertAmmoSound = SawnOffDoubleBarrelShotgunInsertAmmo,
+		EjectAmmoSound = SawnOffDoubleBarrelShotgunEjectAmmo,
+		InsertAmmoStartSound = SawnOffDoubleBarrelShotgunInsertAmmoStart,
+		InsertAmmoStopSound = SawnOffDoubleBarrelShotgunInsertAmmoStop,
+		EjectAmmoStartSound = SawnOffDoubleBarrelShotgunEjectAmmoStart,
+		EjectAmmoStopSound = SawnOffDoubleBarrelShotgunEjectAmmoStop,
+		
+	}
+
+	model MurasamaBlade
+	{
+		mesh = catKatana_cat,
+		texture = catKatana,
+	}
+}

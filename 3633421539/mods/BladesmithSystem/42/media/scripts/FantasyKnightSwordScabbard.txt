@@ -1,0 +1,165 @@
+module Base
+{	
+
+	model FemaleBody
+	{
+		mesh = Skinned/FemaleBody,
+
+
+		attachment FantasyKnightSwordScabbard
+		{
+			offset = 0.057 0.114 0.012,
+			rotate = 0.0000 -45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+
+
+	}
+
+	model MaleBody
+	{
+		mesh = Skinned/MaleBody,
+
+
+		attachment FantasyKnightSwordScabbard
+		{
+			offset = 0.057 0.114 0.012,
+			rotate = 0.0000 -45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+	}
+	
+	item FantasyKnightSwordScabbard
+	{
+		DisplayCategory = Accessory,
+		Weight	=	0.2,
+		ItemType = base:clothing,
+		DisplayName	=	幻想骑士剑剑鞘FantasyKnightSwordScabbard,
+		Icon	=	幻想骑士剑剑鞘,
+		BodyLocation = cat:FantasyKnightSwordScabbard,
+		ClothingItem = FantasyKnightSwordScabbard,
+		AttachmentsProvided = FantasyKnightSwordScabbard,
+	}
+
+	item FantasyKnightSword
+	{
+		
+		HeadCondition = 100,
+		HeadConditionLowerChanceMultiplier = 1.5,
+		DisplayName = 幻想骑士剑FantasyKnightSword,
+		DisplayCategory = Weapon,
+		ItemType             = base:weapon,
+		Weight = 2,
+		Icon = FantasyKnightSword,
+		AttachmentType = FantasyKnightSwordScabbard,
+		BaseSpeed = 1,
+		BreakSound = KatanaBreak,
+		Categories = LongBlade,
+		ConditionLowerChanceOneIn = 10000,
+		ConditionMax = 100,
+		CritDmgMultiplier = 6,
+		/* CritDmgMultiplier = 10,*/ /*commented out conflicting values */
+		CriticalChance = 35,
+		/*CriticalChance = 30,*/
+		DamageCategory = Slash,
+		DamageMakeHole = TRUE,
+		DoorDamage = 8,
+		DoorHitSound = KatanaHit,
+		DropSound = KatanaDrop,
+		HitAngleMod = -30,
+		HitFloorSound = KatanaHit,
+		HitSound = KatanaHit,
+		ImpactSound = KatanaHit,
+		KnockBackOnNoDeath = TRUE,
+		KnockdownMod = 0,
+		MaxDamage = 3.5,
+		MaxHitCount = 3,
+		MaxRange = 1.4,
+		MinAngle = 0.8,
+		MinDamage = 8,
+		MinRange = 0.01,
+		MinimumSwingTime = 3,
+		PushBackMod = 0.5,
+		RunAnim = Run_Weapon2,
+		SubCategory = Swinging,
+		SwingAmountBeforeImpact = 0.02,
+		SwingAnim = Bat,
+		SwingSound = KatanaSwing,
+		SwingTime = 3,
+		Tags = IgnoreZombieDensity;HasMetal;FullBlade,
+		TreeDamage = 1,
+
+		WeaponLength = 0.4,
+		WeaponSprite = FantasyKnightSword,
+
+		
+
+	}
+	
+	model FantasyKnightSword
+	{
+		mesh = 幻想骑士剑,
+	    texture = 幻想骑士剑,
+	}
+
+
+	item FantasyKnightSwordD
+	{
+		DisplayName = 幻想骑士长剑FantasyKnightSwordD,
+		DisplayCategory = MaterialWeapon,
+		ItemType             = base:weapon,
+		/*Weight = 3,*/
+		Weight = 2,
+		/*Icon = Pickaxe_Handle,*/
+		Icon = 幻想骑士长剑,
+		AttachmentType = Shovel,
+		BaseSpeed = 2,
+		BreakSound = PickAxeHandleBreak,
+		Categories = Improvised;Blunt,
+		ConditionLowerChanceOneIn = 10000,
+		ConditionMax = 100,
+		CritDmgMultiplier = 2,
+		CriticalChance = 25,
+		DoorDamage = 5,
+		DoorHitSound = PickAxeHandleHit,
+		DropSound = PickAxeHandleDrop,
+		HitFloorSound = PickAxeHandleHit,
+		HitSound = PickAxeHandleHit,
+		IdleAnim = Idle_Weapon2,
+		KnockBackOnNoDeath = FALSE,
+		KnockdownMod = 2,
+		MaxDamage = 4,
+		MaxHitCount = 3,
+		MaxRange = 1.7,
+		MinAngle = 0.65,
+		MinDamage = 0.5,
+		MinRange = 0.01,
+		MinimumSwingTime = 4,
+		PushBackMod = 0.3,
+		RunAnim = Run_Weapon2,
+		SplatBloodOnNoDeath = FALSE,
+		SplatNumber = 1,
+		SubCategory = Swinging,
+		SwingAmountBeforeImpact = 0.02,
+		SwingAnim = Bat,
+		SwingSound = PickAxeHandleSwing,
+		SwingTime = 4,
+		
+		TreeDamage = 0,
+		TwoHandWeapon = TRUE,
+		/*WeaponSprite = PickAxeHandle,*/
+		WeaponSprite = FantasyKnightSwordD,
+		OnBreak = OnBreak.LongHandle,
+		ResearchableRecipes = CanReinforceLongWeapon;MakeRakeHeadWeapon,
+		
+	}
+
+
+	model FantasyKnightSwordD
+	{
+		mesh = 幻想骑士长剑,
+	    texture = 幻想骑士长剑,
+	}
+
+
+}

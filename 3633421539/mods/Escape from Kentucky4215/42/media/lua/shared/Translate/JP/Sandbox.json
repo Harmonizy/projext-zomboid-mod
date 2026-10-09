@@ -1,0 +1,14 @@
+{
+    "Sandbox_ADWWF": "現代の銃器",
+    "Sandbox_EFK": "ケンタッキーからの脱出",
+    "Sandbox_LaserAndGunLightUseBattery": "レーザーとライトが電池を使用",
+    "Sandbox_LaserAndGunLightUseBattery_tooltip": "レーザーと武器ライトに電池を使用",
+    "Sandbox_IOcontainer": "IOコンテナ設定",
+    "Sandbox_AirDropDefault": "空中投下アイテム設定",
+    "Sandbox_AirDropDefaultNum": "空中投下アイテム数",
+    "Sandbox_AirdropWithBGM": "空中投下中に戦闘音楽を有効化",
+    "Sandbox_AirdropVolume": "空中投下音楽の音量",
+    "Sandbox_ShieldCondition": "シールド耐久度損失効率",
+    "Sandbox_EFKARB_EnableZombieDrops": "ゾンビドロップを有効化",
+    "Sandbox_EFKARB_EnableCustomSpawnTargets": "カスタムスポーン対象を有効化"
+}

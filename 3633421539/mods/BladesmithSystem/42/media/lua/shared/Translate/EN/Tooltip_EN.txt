@@ -1,0 +1,4 @@
+Tooltip_EN= {
+    Tooltip_Zombie_intestines = "塞的满满的，谁知道僵尸吃了什么好东西。",
+}
+

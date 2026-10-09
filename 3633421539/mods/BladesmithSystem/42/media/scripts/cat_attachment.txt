@@ -1,0 +1,46 @@
+module Base
+{
+	model FemaleBody
+	{
+		mesh = Skinned/FemaleBody,
+
+
+		attachment catBelt_Left
+		{
+			offset = 0.027 0.114 -0.037,
+			rotate = -180.0000 45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+
+		attachment catBelt_Right
+		{
+			offset = 0.027 -0.114 -0.037,
+			rotate = -180.0000 0.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+
+	}
+
+	model MaleBody
+	{
+		mesh = Skinned/MaleBody,
+
+		attachment catBelt_Right
+		{
+			offset = 0 0.114 -0.067,
+			rotate = -180.0000 0.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+
+		attachment catBelt_Left
+		{
+			offset = 0 -0.114 -0.067,
+			rotate = 0.0000 0.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+
+
+
+
+	}
+}

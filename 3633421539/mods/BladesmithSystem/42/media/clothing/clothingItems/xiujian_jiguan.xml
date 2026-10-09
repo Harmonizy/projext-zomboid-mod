@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>袖剑机关</m_MaleModel>
+	<m_FemaleModel>袖剑机关</m_FemaleModel>
+	<m_GUID>xiujian_jiguan</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>贴图/袖剑</textureChoices>
+
+</clothingItem>

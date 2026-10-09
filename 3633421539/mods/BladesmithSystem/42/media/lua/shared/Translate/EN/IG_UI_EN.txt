@@ -1,0 +1,32 @@
+IGUI_EN = {
+IGUI-HSGF42.ui="Fantasy Workshop Vending Machine",
+IGUI_jdjyitemname="Product Name: ",
+IGUI_jdjyiprice="Unit price: ",
+IGUI_jdjycount="Inventory: ",
+IGUI_infinite="infinite",
+IGUI_intro_jdjy="Good value for money, fair to all. ",
+IGUI_yue-wu="Please insert your credit card! ",
+IGUI_yue="Balance: ",
+IGUI_SUY="Purchase",
+IGUI_dell="for sale",
+The total price is: ",
+IGUI_sthifouchushou="Is it for sale? ",
+IGUI_insertmoney="Drag the credit card into it",
+IGUI_jdjylabell_Sell="Acquisition Foundation",
+IGUI_jdjylabell_Suy_clotte="Sell - Clothes",
+IGUI_jdjylabell_Suy_car="For Sale - Vehicle",
+IGUI_jdjylabell_Sell-book="Acquisition Book",
+IGUI_jdjylabell_Suy_tool="Sell - Tools",
+IGUI_jdjylabell_Suy_ceaponrange="Sell - Remote",
+IGUI_ jdjylabel | Buy | Weapon="Sell - melee",
+IGUI_jdjylabell_Suy_Vehiclemain="For Sale - Auto Repair",
+IGUI_jdjylabell_Sell_maccessory="Acquisition - Accessories",
+IGUI_jdjylabell_Suy_Seed="Sell - Seed",
+IGUI_jdjylabell_Suy_Smmo="Sell - Ammunition",
+IGUI_ jdjylabel | Buy | Book="Sell - Book",
+IGUI_jdjylabele_Sell_animalpart="Acquisition - Animal",
+IGUI_Spaceid="Space ID:",
+
+
+
+}

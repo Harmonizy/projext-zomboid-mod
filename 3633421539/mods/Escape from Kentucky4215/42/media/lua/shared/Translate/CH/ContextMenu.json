@@ -1,0 +1,8 @@
+{
+    "ContextMenu_Remove_Battery_To_Laser": "從雷射移除電池",
+    "ContextMenu_ADD_Battery_To_Laser": "向雷射加入電池",
+    "ContextMenu_Remove_Battery_To_Light": "從燈光移除電池",
+    "ContextMenu_ADD_Battery_To_Light": "向燈光加入電池",
+    "ContextMenu_AirDropMarker": "使用空投標記",
+    "ContextMenu_AirDrop": "開啟空投"
+}

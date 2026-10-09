@@ -1,0 +1,77 @@
+module Base
+{
+
+
+item chainsaw_fen
+	{
+		
+		TorchDot = 0.86,
+	    DisplayCategory 		= Weapon,
+	    EnduranceMod				     = 0.4,
+		MaxRange 		= 1.7,
+		WeaponSprite 		= chainsaw_fen,
+		MinAngle 		= 0.7,
+		ItemType             = base:weapon,
+		SwingSound 		= KatanaSwing,
+		HitFloorSound 		= KatanaHit,
+		ImpactSound 		= KatanaHit,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		RunAnim	=	Run_Weapon2,
+		MinimumSwingTime 		= 4,
+		KnockBackOnNoDeath 		= TRUE,
+		SwingAmountBeforeImpact 		= 0.02,
+		Categories 		= LongBlade,
+		ConditionLowerChanceOneIn 		= 200,
+		Weight 		= 2,
+		IdleAnim	=	Idle_Weapon2,
+		SplatNumber 		= 2,
+		PushBackMod 		= 0.3,
+		SubCategory 		= Swinging,
+		ConditionMax 		= 20,
+		MaxHitCount 		= 3,
+		DoorDamage 		= 100,
+		SwingAnim 		= badaozhan,
+		DisplayName 		= chainsaw_fen,
+		MinRange 		= 0.01,
+		SwingTime 		= 4,
+		KnockdownMod 		= 3,
+		SplatBloodOnNoDeath 		= TRUE,
+		Icon 		=MurasamaBlade,
+		TreeDamage 		= 30,
+		CriticalChance 		= 20,
+		CritDmgMultiplier 		= 15,
+		MinDamage 		= 4,
+		MaxDamage 		= 7,
+		BaseSpeed 		= 20,
+		WeaponLength 		= 0.3,
+		TwoHandWeapon						= TRUE,
+		DamageCategory 		= Slash,
+		DamageMakeHole 		= TRUE,
+		AttachmentType 		= BigBlade,
+		Tags = base:cutplant;base:repairwithtape;base:repairwithglue;base:ignorezombiedensity;base:hasmetal;base:fullblade,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		HitFloorSound 		= KatanaHit,
+		BreakSound 		= KatanaBreak,
+		SwingSound 		= KatanaSwing,
+		ShellFallSound = SawnOffDoubleBarrelShotgunCartridgeFall,
+		EquipSound = ,
+		UnequipSound = ,
+		InsertAmmoSound = SawnOffDoubleBarrelShotgunInsertAmmo,
+		EjectAmmoSound = SawnOffDoubleBarrelShotgunEjectAmmo,
+		InsertAmmoStartSound = SawnOffDoubleBarrelShotgunInsertAmmoStart,
+		InsertAmmoStopSound = SawnOffDoubleBarrelShotgunInsertAmmoStop,
+		EjectAmmoStartSound = SawnOffDoubleBarrelShotgunEjectAmmoStart,
+		EjectAmmoStopSound = SawnOffDoubleBarrelShotgunEjectAmmoStop,
+    }
+
+	model chainsaw_fen
+	{
+		mesh = 甜心电锯,
+	    texture = 甜心电锯,
+	}
+
+
+
+}

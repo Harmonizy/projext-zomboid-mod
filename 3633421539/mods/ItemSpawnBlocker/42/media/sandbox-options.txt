@@ -1,0 +1,41 @@
+VERSION = 1,
+
+option ItemSpawnBlocker.Enabled
+{
+    type = boolean,
+    default = false,
+    page = ItemSpawnBlocker,
+    translation = ItemSpawnBlocker_Enabled,
+}
+
+option ItemSpawnBlocker.BlockList
+{
+    type = string,
+    default = ,
+    page = ItemSpawnBlocker,
+    translation = ItemSpawnBlocker_BlockList,
+}
+
+option ItemSpawnBlocker.FilterContainers
+{
+    type = boolean,
+    default = false,
+    page = ItemSpawnBlocker,
+    translation = ItemSpawnBlocker_FilterContainers,
+}
+
+option ItemSpawnBlocker.BlockRecipes
+{
+    type = boolean,
+    default = false,
+    page = ItemSpawnBlocker,
+    translation = ItemSpawnBlocker_BlockRecipes,
+}
+
+option ItemSpawnBlocker.RecipeBlockList
+{
+    type = string,
+    default = ,
+    page = ItemSpawnBlocker,
+    translation = ItemSpawnBlocker_RecipeBlockList,
+}

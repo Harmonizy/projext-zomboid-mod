@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>战术唐横刀鞘</m_MaleModel>
+	<m_FemaleModel>战术唐横刀鞘</m_FemaleModel>
+	<m_GUID>TacticalTangCrossbladeScabbard</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>战术唐横刀</textureChoices>
+
+</clothingItem>

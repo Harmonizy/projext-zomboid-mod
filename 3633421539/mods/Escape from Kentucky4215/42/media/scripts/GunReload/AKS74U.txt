@@ -1,0 +1,149 @@
+module Base
+{
+    sound AW_AKS74U_Reload_Start
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_empty_raise.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.30,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_empty_rattle.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_raise.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.26,
+        }
+    }
+    
+    sound AW_AKS74U_Reload_MagOut
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_empty_magout.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.30,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_magout.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_magout.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.26,
+        }
+    }
+    
+    sound AW_AKS74U_Reload_MagHit
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_empty_maghit.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.30,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_maghit.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_maghit.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.26,
+        }
+    }
+    
+    sound AW_AKS74U_Reload_MagIn
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_empty_magin.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.30,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_magin.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_magin.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.26,
+        }
+    }
+    
+    sound AW_AKS74U_Reload_Charge
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_fast_empty_bolt.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.30,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AKS74U/p04_ar_akilo105_reload_empty_boltpull.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+    }
+}

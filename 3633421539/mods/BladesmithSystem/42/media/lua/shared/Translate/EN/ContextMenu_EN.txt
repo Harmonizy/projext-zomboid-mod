@@ -1,0 +1,6 @@
+ContextMenu_EN = {
+    ContextMenu_dessectcorpse = "Dessect corpse",
+    ContextMenu_dessectall = "Dessect All",
+    ContextMenu_dessectone = "Dessect One",
+    ContextMenu_nodessectcorpse = "Dessect(Need Knifes)",
+}

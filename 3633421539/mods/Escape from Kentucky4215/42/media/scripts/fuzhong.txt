@@ -1,0 +1,19 @@
+module Base
+{
+  
+ 
+  item bag_fuzhong
+  {
+    CantEat = true,
+    DisplayCategory = Material,
+    HungerChange = -1,
+    Icon = bag_fuzhong,
+    IsCookable = False,
+        DisplayName = 战术核芯负重包MK1,
+    ItemType = base:food,
+    OnCreate = ItemCodeOnCreate.fuzhong,
+    Weight = 1,
+  }
+  
+ 
+}

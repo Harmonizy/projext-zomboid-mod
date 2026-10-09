@@ -1,0 +1,26 @@
+module Base
+{
+
+
+item cat_AutoReload
+    {
+        WeightReduction	=	20,
+        Weight	=	0.1,
+        ItemType = base:container,
+        Capacity	=	3,
+        DisplayName	=	自动装弹机构,
+        Icon	=	cat_AutoReload,
+        MetalValue = 15,
+        ClothingItem = cat_AutoReload,
+        CanBeEquipped = base:left_middlefinger,
+        BloodLocation = Bag,
+	ClothingItemExtra = cat_AutoReload,
+        OpenSound   =   OpenBag,
+        CloseSound   =   CloseBag,
+	PutInSound   =   PutItemInBag,
+        WorldStaticModel = GunCase_Ground,
+       BodyLocation = base:left_middlefinger,
+    }
+
+
+}

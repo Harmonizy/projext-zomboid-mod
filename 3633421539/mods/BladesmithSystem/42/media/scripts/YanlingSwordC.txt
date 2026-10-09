@@ -1,0 +1,31 @@
+module Base
+{
+
+craftRecipe 雁翎刀YanlingSword
+    {
+		time = 1000,
+		SkillRequired = Blacksmith:7,
+		timedAction = MakingHammer_Surface,
+		xpAward = Blacksmith:70,
+		Tags = PrimitiveForge,
+		category = 刀匠系统BladesmithSystem,
+		inputs
+		{
+		    item 20 tags[Charcoal],
+		    item 2 tags[BarStock],
+		    item 1 tags[BarStockHalf],
+		    item 5 [Base.GoldScrap],
+		    item 5 [Base.SilverScrap],
+		    item 1 [Base.Handle],
+		    item 1 tags[Hammer] mode:keep flags[Prop1;MayDegradeLight],
+		    item 1 tags[Tongs] mode:keep flags[Prop2;MayDegradeLight],
+		    item 1 tags[Whetstone;File] mode:keep flags[MayDegradeLight],
+		    item 3 [Base.RippedSheets;Base.DenimStrips;Base.LeatherStrips] mode:destroy,
+		}
+		outputs
+		{
+		    item 1 Base.YanlingSword,
+		    item 1 Base.YanlingSwordScabbard,
+		}
+    }
+}

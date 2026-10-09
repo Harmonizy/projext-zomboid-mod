@@ -1,0 +1,236 @@
+module Gunpart{
+            imports
+        	{
+        		Base,
+        	}
+        	item Harris_Open
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = Harris_Open,
+                Icon = Harris_Open,
+                Weight = 0.1,
+                WeightModifier = 0.1,
+                AimingTimeModifier = -10,
+                RecoilDelayModifier = -1,
+                HitChanceModifier = 0,
+                MinRangeModifier = 0,                MountOn = M500_cat;Typhoon_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;QBZ191_cat;QBZ191_cat;QBZ192_cat;QBZ192_cat;QBU191_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;AA12_cat;M14_cat;M14_Albedo;M14_Albedo;HK416_cat;HK416D_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;URG_S_cat;URG_S_cat;M4A1S_cat;M4A1S_cat;SG553_cat;SG553_cat;SAI_GRY_cat;SAI_GRY_cat;KS1_KAC_cat;KS1_KAC_cat;MTL30_cat;M4Mk18_cat;M4Mk18_cat;MK18_cat;MCX_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;KrissVector_cat;KrissVector_cat;AR03_Brynhild_cat;AX50_cat;AX50_cat;AssaultRifle_60;AssaultRifle_100;M82_cat;M82_cat;M82_cat;SnipeX_T_Rex_cat;XM109_cat;AWM_cat;SVD_cat;GM6_cat;QLU_11;XM109_cat;HuntingRifle;MK12_cat;MK12_cat;FAL_cat;QBU203_cat;Christine45_cat;AX50_cat;AX50_cat;ar_10_cat;ar_10_cat;R301_cat;Thoridal;Beowulf1_cat;shaluzhiren;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;mg338_cat;FN_Evolys_cat;QJS201_cat;VSSM_cat;VSSM_cat;HoneyBadger_cat;HoneyBadger_cat;AMB17_cat;AMB17_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AEK971_cat;AEK971_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;Type81_cat;Type81_cat;Groza_cat;Groza_cat;M1887_cat;M870_cat;TTI_Benelli_M4_cat;outlaw_cat;crossbow_cat;AN94_cat;AN94_cat;BAR_cat;RSC_cat,
+                PartType = Stool,
+                Tooltip = Tooltip_Harris_Open,
+                WorldStaticModel = Harris_Open,
+            }
+            model Harris_Open
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/Harris_Open,
+        	    texture = GunTexture/Harris_Open,
+            }
+        	item Flamethrower
+
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = Flamethrower,
+                Icon = Flamethrower,
+                Weight = 0.1,
+                WeightModifier = 0.1,
+                HitChanceModifier = 0,
+                MinRangeModifier = 0,                MountOn = M500_cat;Typhoon_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;QBZ191_cat;QBZ191_cat;QBZ192_cat;QBZ192_cat;QBU191_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;AA12_cat;M14_cat;M14_Albedo;M14_Albedo;HK416_cat;HK416D_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;URG_S_cat;URG_S_cat;M4A1S_cat;M4A1S_cat;SG553_cat;SG553_cat;SAI_GRY_cat;SAI_GRY_cat;KS1_KAC_cat;KS1_KAC_cat;MTL30_cat;M4Mk18_cat;M4Mk18_cat;MK18_cat;MCX_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;KrissVector_cat;KrissVector_cat;AR03_Brynhild_cat;AX50_cat;AX50_cat;AssaultRifle_60;AssaultRifle_100;M82_cat;M82_cat;M82_cat;SnipeX_T_Rex_cat;XM109_cat;AWM_cat;SVD_cat;GM6_cat;QLU_11;XM109_cat;HuntingRifle;MK12_cat;MK12_cat;FAL_cat;QBU203_cat;Christine45_cat;AX50_cat;AX50_cat;ar_10_cat;ar_10_cat;R301_cat;Thoridal;Beowulf1_cat;shaluzhiren;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;mg338_cat;FN_Evolys_cat;QJS201_cat;VSSM_cat;VSSM_cat;HoneyBadger_cat;HoneyBadger_cat;AMB17_cat;AMB17_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AEK971_cat;AEK971_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;Type81_cat;Type81_cat;Groza_cat;Groza_cat;M1887_cat;M870_cat;TTI_Benelli_M4_cat;outlaw_cat;crossbow_cat;AN94_cat;AN94_cat;BAR_cat;RSC_cat,
+                PartType = Stool,
+                Tooltip = Flamethrower,
+                WorldStaticModel = Flamethrower,
+            }
+            model Flamethrower
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/Flamethrower,
+        	    texture = GunTexture/Flamethrower,
+            }
+        	item Harris_Open1
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = 重型脚架,
+                Icon = Harris_Open,
+                Weight = 0.1,
+                WeightModifier = 1,
+                AimingTimeModifier = -10,
+                RecoilDelayModifier = 1,
+                HitChanceModifier = 0,
+                MinRangeModifier = 0,                MountOn = Typhoon_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;QBZ191_cat;QBZ191_cat;QBZ192_cat;QBZ192_cat;QBU191_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;AA12_cat;M14_cat;M14_Albedo;M14_Albedo;HK416_cat;HK416D_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;URG_S_cat;URG_S_cat;M4A1S_cat;M4A1S_cat;SG553_cat;SG553_cat;SAI_GRY_cat;SAI_GRY_cat;KS1_KAC_cat;KS1_KAC_cat;MTL30_cat;M4Mk18_cat;M4Mk18_cat;MK18_cat;MCX_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;KrissVector_cat;KrissVector_cat;AR03_Brynhild_cat;AX50_cat;AX50_cat;AssaultRifle_60;AssaultRifle_100;M82_cat;M82_cat;M82_cat;SnipeX_T_Rex_cat;XM109_cat;AWM_cat;SVD_cat;GM6_cat;QLU_11;XM109_cat;HuntingRifle;MK12_cat;MK12_cat;FAL_cat;QBU203_cat;Christine45_cat;AX50_cat;AX50_cat;ar_10_cat;ar_10_cat;R301_cat;Thoridal;Beowulf1_cat;shaluzhiren;M91_cat;MG338_cat;LWMMG_cat;REAPR_cat;mg338_cat;FN_Evolys_cat;QJS201_cat;VSSM_cat;VSSM_cat;HoneyBadger_cat;HoneyBadger_cat;AMB17_cat;AMB17_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AEK971_cat;AEK971_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;Type81_cat;Type81_cat;Groza_cat;Groza_cat;M1887_cat;M870_cat;TTI_Benelli_M4_cat;outlaw_cat;crossbow_cat;AN94_cat;AN94_cat;BAR_cat;RSC_cat,
+                PartType = Stool,
+                Tooltip = Tooltip_Harris_Open,
+                WorldStaticModel = Harris_Open1,
+            }
+            model Harris_Open1
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/Harris_Open1,
+        	    texture = GunTexture/HuntingRifle,
+            }
+              item M203_cat
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = M203_cat,
+                Icon = M203_cat,
+                Weight = 0.2,
+                MountOn = Christine45_cat;HK416_cat;HK416D_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;KS1_KAC_cat;KS1_KAC_cat;M4A1S_cat;M4A1S_cat;M4Mk18_cat;M4Mk18_cat;MCX_cat;MCX_cat;MK12_cat;MK12_cat;SG553_cat;SG553_cat;URG_S_cat,
+                PartType = Stool,
+                WorldStaticModel = M203_cat,
+        		        Tooltip = Tooltip_GunP,
+            }
+            model M203_cat
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/M203_cat,
+        	    texture = GunTexture/M203_cat,
+            } 
+  item GP25_cat
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = GP25_cat,
+                Icon = GP25_cat,
+                Weight = 0.2,
+                MountOn = AEK971_cat;AEK971_cat;AN94_cat;AN94_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;Type81_cat;Type81_cat;mk47_cat;mk47_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;VSSM_cat,
+                PartType = Stool,
+                WorldStaticModel = GP25_cat,
+        		        Tooltip = Tooltip_GunP,
+            }
+            model GP25_cat
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/GP25_cat,
+        	    texture = GunTexture/GP25_cat,
+            }  
+  item M28_cat
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = M28_cat,
+                Icon = M28_cat,
+                Weight = 0.2,
+                MountOn = AssaultRifle;M16D_cat,
+                PartType = Stool,
+                WorldStaticModel = M28_cat,
+        		        Tooltip = Tooltip_GunP,
+            }
+            model M28_cat
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/M28_cat,
+        	    texture = GunTexture/M28_cat,
+            }
+       item bayonet_cat
+           {
+               ItemType = base:weaponpart,
+               DisplayName = bayonet_cat,
+               Icon = bayonet_cat,
+               Weight = 0.2,
+               MountOn = 98k_cat;lee_enfield_cat;56S_cat;Mosin-Nagant_cat;Mosin-NagantA_cat;LebelM1886_cat;SVD_cat;m1903_cat;M1Garand_cat;AssaultRifle2;Berthier_cat;RSC_cat,
+               PartType = Stool,
+               WorldStaticModel = bayonet_cat,
+                       Tooltip = Tooltip_GunB,
+           } 
+            model bayonet_cat
+            {
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/bayonet_cat,
+                texture = GunTexture/bayonet_cat,
+        		attachment world
+        		{
+        			offset = 0.0000 0.0000 0.0000,
+        			rotate = 90.0000 0.0000 0.0000,
+        		}
+            }
+           item bayonet1_cat
+           {
+               ItemType = base:weaponpart,
+               DisplayName = M9军用刺刀bayonet,
+               Icon = bayonet1_cat,
+               Weight = 0.2,
+               MountOn = Typhoon_cat;HK416_cat;HK416D_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;URG_S_cat;URG_S_cat;M4A1S_cat;M4A1S_cat;SG553_cat;SG553_cat;SAI_GRY_cat;SAI_GRY_cat;KS1_KAC_cat;KS1_KAC_cat;MTL30_cat;M4Mk18_cat;M4Mk18_cat;MK18_cat;MCX_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;Thoridal;Beowulf1_cat;shaluzhiren;KrissVector_cat;KrissVector_cat;MK12_cat;MK12_cat;FAL_cat;QBU203_cat;Christine45_cat;ScarH_cat;ScarH_cat;AEK971_cat;AEK971_cat;AN94_cat;AN94_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;Type81_cat;Type81_cat;mk47_cat;mk47_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;VSSM_cat,
+               PartType = Stool,
+               WorldStaticModel = bayonet1_cat,
+                       Tooltip = Tooltip_GunB,
+           } 
+            model bayonet1_cat
+            {
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/bayonet1_cat,
+                texture = GunTexture/bayonet1_cat,
+        		attachment world
+        		{
+        			offset = 0.0000 0.0000 0.0000,
+        			rotate = 90.0000 0.0000 0.0000,
+        		}
+            }
+           item bayonet2_cat
+           {
+               ItemType = base:weaponpart,
+               DisplayName = 9X1军用刺刀bayonet,
+               Icon = bayonet2_cat,
+               Weight = 0.2,
+               MountOn = AEK971_cat;AEK971_cat;AN94_cat;AN94_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;Type81_cat;Type81_cat;mk47_cat;mk47_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;VSSM_cat,
+               PartType = Stool,
+               WorldStaticModel = bayonet2_cat,
+                       Tooltip = Tooltip_GunB,
+           } 
+            model bayonet2_cat
+            {
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 下挂/bayonet2_cat,
+                texture = GunTexture/bayonet2_cat,
+        		attachment world
+        		{
+        			offset = 0.0000 0.0000 0.0000,
+        			rotate = 90.0000 0.0000 0.0000,
+        		}
+            }
+        }

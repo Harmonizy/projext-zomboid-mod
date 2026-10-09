@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>Avalon_cat</m_MaleModel>
+	<m_FemaleModel>Avalon_cat</m_FemaleModel>
+	<m_GUID>Avalon_cat</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>Avalon_cat</textureChoices>
+
+</clothingItem>

@@ -1,0 +1,113 @@
+module Base
+{
+	model FemaleBody
+	{
+		mesh = Skinned/FemaleBody,
+
+		attachment LightsaberBelt
+		{
+			offset = 0.157 0.114 0.117,
+			rotate = 0.0000 -45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+	}
+
+	model MaleBody
+	{
+		mesh = Skinned/MaleBody,
+
+		attachment LightsaberBelt
+		{
+			offset = 0.157 0.144 0.117,
+			rotate = 0.0000 -45.0000 90.0000,
+			bone = Bip01_Pelvis,
+		}
+	}
+
+	item LightsaberBelt
+	{
+		DisplayCategory = Clothing,
+		Weight	=	0.2,
+		ItemType = base:clothing,
+		DisplayName	=	光剑腰带,
+		Icon	=	光剑,
+		BodyLocation = cat:LightsaberBelt,
+		ClothingItem = LightsaberBelt,
+		AttachmentsProvided = LightsaberBelt,
+	}
+
+	item lightsaber
+	{
+		TorchDot = 0.86,
+	    DisplayCategory 		= Weapon,
+	    EnduranceMod				     = 0.4,
+		MaxRange 		= 1.6,
+		WeaponSprite 		= lightsaber,
+		MinAngle 		= 0.7,
+		ItemType             = base:weapon,
+		SwingSound 		= 光剑,
+		HitFloorSound 		= KatanaHit,
+		ImpactSound 		= 光剑出,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		RunAnim	=	Run_Weapon2,
+		MinimumSwingTime 		= 4,
+		KnockBackOnNoDeath 		= TRUE,
+		SwingAmountBeforeImpact 		= 0.02,
+		Categories 		= LongBlade,
+		ConditionLowerChanceOneIn 		= 50,
+		Weight 		= 2,
+		SplatNumber 		= 2,
+		PushBackMod 		= 0.3,
+		SubCategory 		= Swinging,
+		ConditionMax 		= 20,
+		MaxHitCount 		= 4,
+		DoorDamage 		= 100,
+		SwingAnim 		= badaozhan,
+		DisplayName 		= 光剑lightsaber,
+		MinRange 		= 0.01,
+		SwingTime 		= 4,
+		KnockdownMod 		= 3,
+		SplatBloodOnNoDeath 		= TRUE,
+		Icon 		= 战术唐横刀,
+		TreeDamage 		= 30,
+		CriticalChance 		= 20,
+		CritDmgMultiplier 		= 15,
+		MinDamage 		= 3,
+		MaxDamage 		= 4,
+		BaseSpeed 		= 1.5,
+		WeaponLength 		= 0.3,
+
+		DamageCategory 		= Slash,
+		DamageMakeHole 		= TRUE,
+		AttachmentType = LightsaberBelt,
+		EquipSound = 光剑出,
+		Tags = base:cutplant;base:repairwithtape;base:repairwithglue;base:ignorezombiedensity;base:hasmetal;base:fullblade,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		HitFloorSound 		= KatanaHit,
+		BreakSound 		= KatanaBreak,
+		ShellFallSound = SawnOffDoubleBarrelShotgunCartridgeFall,
+
+		InsertAmmoSound = SawnOffDoubleBarrelShotgunInsertAmmo,
+		EjectAmmoSound = SawnOffDoubleBarrelShotgunEjectAmmo,
+		InsertAmmoStartSound = SawnOffDoubleBarrelShotgunInsertAmmoStart,
+		InsertAmmoStopSound = SawnOffDoubleBarrelShotgunInsertAmmoStop,
+		EjectAmmoStartSound = SawnOffDoubleBarrelShotgunEjectAmmoStart,
+		EjectAmmoStopSound = SawnOffDoubleBarrelShotgunEjectAmmoStop,
+	}
+
+	model lightsaber
+	{
+		mesh = 光剑,
+		texture = 光剑,
+		shader = basicEffect_AddRed,
+	}
+
+	model lightsaberSheathed
+	{
+		mesh = 光剑收,
+		texture = 光剑,
+		shader = basicEffect_AddRed,
+	}
+}

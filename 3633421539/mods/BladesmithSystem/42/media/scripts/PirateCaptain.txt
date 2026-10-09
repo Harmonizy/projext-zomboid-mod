@@ -1,0 +1,78 @@
+module Base
+{
+
+
+
+
+item PirateCaptain
+	{
+		HeadCondition = 100,
+		HeadConditionLowerChanceMultiplier = 1.5,
+		
+		TorchDot = 0.86,
+	    DisplayCategory 		= Weapon,
+	    EnduranceMod				     = 0.4,
+		MaxRange 		= 1.6,
+		WeaponSprite 		= PirateCaptain,
+		MinAngle 		= 0.7,
+		ItemType             = base:weapon,
+		SwingSound 		= KatanaSwing,
+		HitFloorSound 		= KatanaHit,
+		ImpactSound 		= KatanaHit,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		RunAnim	=	Run_Weapon2,
+		MinimumSwingTime 		= 4,
+		KnockBackOnNoDeath 		= TRUE,
+		SwingAmountBeforeImpact 		= 0.02,
+		Categories 		= LongBlade,
+		ConditionLowerChanceOneIn 		= 50,
+		Weight 		= 2,
+		SplatNumber 		= 2,
+		PushBackMod 		= 0.3,
+		SubCategory 		= Swinging,
+		ConditionMax 		= 20,
+		MaxHitCount 		= 3,
+		DoorDamage 		= 100,
+		SwingAnim 		= badaozhan,
+		DisplayName 		= 海盗船长PirateCaptain,
+		MinRange 		= 0.01,
+		SwingTime 		= 4,
+		KnockdownMod 		= 3,
+		SplatBloodOnNoDeath 		= TRUE,
+		Icon 		= 海盗船长,
+		TreeDamage 		= 30,
+		CriticalChance 		= 20,
+		CritDmgMultiplier 		= 15,
+		MinDamage 		= 3,
+		MaxDamage 		= 4,
+		BaseSpeed 		= 1.5,
+		WeaponLength 		= 0.3,
+
+		DamageCategory 		= Slash,
+		DamageMakeHole 		= TRUE,
+		AttachmentType = Shovel,
+		Tags = base:cutplant;base:repairwithtape;base:repairwithglue;base:ignorezombiedensity;base:hasmetal;base:fullblade,
+		DoorHitSound 		= KatanaHit,
+		HitSound 		= KatanaHit,
+		HitFloorSound 		= KatanaHit,
+		BreakSound 		= KatanaBreak,
+		SwingSound 		= KatanaSwing,
+		ShellFallSound = SawnOffDoubleBarrelShotgunCartridgeFall,
+		
+		InsertAmmoSound = SawnOffDoubleBarrelShotgunInsertAmmo,
+		EjectAmmoSound = SawnOffDoubleBarrelShotgunEjectAmmo,
+		InsertAmmoStartSound = SawnOffDoubleBarrelShotgunInsertAmmoStart,
+		InsertAmmoStopSound = SawnOffDoubleBarrelShotgunInsertAmmoStop,
+		EjectAmmoStartSound = SawnOffDoubleBarrelShotgunEjectAmmoStart,
+		EjectAmmoStopSound = SawnOffDoubleBarrelShotgunEjectAmmoStop,
+		
+    }
+
+	model PirateCaptain
+	{
+		mesh = 海盗船长,
+	    texture = 海盗船长,
+	}
+ 
+}

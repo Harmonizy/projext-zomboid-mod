@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<animNode x_extends="aim_default.xml">
+	<m_Name>aim_rifle_TacticalPosture</m_Name>
+	<m_AnimName>LVX_AimRifle_TacticalPosture</m_AnimName>
+	<m_IKAimingRightArm>true</m_IKAimingRightArm>
+	<m_Priority>4</m_Priority>
+	<m_IKAimingLeftArm>true</m_IKAimingLeftArm>
+	<m_Conditions x_name="16ad0327-a598-4ab3-84c5-e8a31d62d328">
+		<m_Name>Weapon</m_Name>
+		<m_Type>STRING</m_Type>
+		<m_Value>firearm</m_Value>
+	</m_Conditions>
+	<m_Conditions>
+		<m_Name>TacticalPosture</m_Name>
+		<m_Type>STRING</m_Type>
+		<m_BoolValue>Ready</m_BoolValue>
+	</m_Conditions>
+	<m_Transitions>
+		<m_Target>IdleRifle</m_Target>
+		<m_AnimName>Bob_AimToIdle_Rifle</m_AnimName>
+	</m_Transitions>
+	<m_Transitions>
+		<m_Target>sneakIdleRifle</m_Target>
+		<m_AnimName>Bob_AimToIdle_Rifle</m_AnimName>
+	</m_Transitions>
+	<m_Transitions>
+		<m_Target>sneakIdleLowRifle</m_Target>
+		<m_AnimName>Bob_AimToIdle_Rifle</m_AnimName>
+	</m_Transitions>
+</animNode>

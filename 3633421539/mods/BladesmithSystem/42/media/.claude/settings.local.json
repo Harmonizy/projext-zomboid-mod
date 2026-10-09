@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\Administrator\\\\Zomboid\\\\Workshop\\\\逃肯42 3.0\\\\Contents\\\\mods\\\\BladesmithSystem\\\\42\\\\media\\\\clothing\\\\clothingItems\" -File | ForEach-Object { $_.Name })"
+    ]
+  }
+}
