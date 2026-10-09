@@ -1,0 +1,14 @@
+{
+    "Sandbox_ADWWF": "Nowoczesna broń palna",
+    "Sandbox_EFK": "Escape from Kentucky",
+    "Sandbox_LaserAndGunLightUseBattery": "Lasery i latarki używają baterii",
+    "Sandbox_LaserAndGunLightUseBattery_tooltip": "Używaj baterii do laserów i latarek broni",
+    "Sandbox_IOcontainer": "Ustawienia kontenera IO",
+    "Sandbox_AirDropDefault": "Ustawienia przedmiotów ze zrzutu",
+    "Sandbox_AirDropDefaultNum": "Liczba przedmiotów ze zrzutu",
+    "Sandbox_AirdropWithBGM": "Włącz muzykę bojową podczas zrzutu",
+    "Sandbox_AirdropVolume": "Głośność muzyki zrzutu",
+    "Sandbox_ShieldCondition": "Efektywność utraty wytrzymałości tarczy",
+    "Sandbox_EFKARB_EnableZombieDrops": "Włącz zrzuty zombie",
+    "Sandbox_EFKARB_EnableCustomSpawnTargets": "Włącz niestandardowe cele spawnu"
+}

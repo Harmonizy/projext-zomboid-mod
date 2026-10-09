@@ -1,0 +1,11 @@
+VERSION = 1,
+
+option HARMONIE_ModernFirearmsSystemFix.DropRateMultiplier
+{
+    type = double,
+    default = 1.0,
+    min = 0.0,
+    max = 5.0,
+    page = HARMONIE_ModernFirearmsSystemFix,
+    translation = HARMONIE_ModernFirearmsSystemFixDropRateMultiplier,
+}

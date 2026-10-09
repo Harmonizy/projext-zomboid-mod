@@ -1,0 +1,83 @@
+module Base
+
+{
+    
+    sound AW_RPG7_Fire_Core
+    {
+        maxInstancesPerEmitter = 4,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_shot_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.15,
+            volume = 0.98,
+        }
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_shot_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.15,
+            volume = 0.98,
+        }
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_shot_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.15,
+            volume = 0.98,
+        }
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_shot_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.15,
+            volume = 0.98,
+        }
+    }
+    
+    sound AW_RPG7_Fire_Mech
+    {
+        maxInstancesPerEmitter = 6,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_mech_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_mech_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_mech_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/RPG7/weap_iw9_golf25_fire_plr_mech_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+    }
+    
+}

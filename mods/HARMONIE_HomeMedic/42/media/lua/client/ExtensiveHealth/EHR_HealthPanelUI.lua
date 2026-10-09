@@ -61,14 +61,14 @@ EHR_HealthPanelUI.REMOTE_EXAM_MAX_DISTANCE = 3.0
 
 EHR_HealthPanelUI.Colors = {
     -- HARMONIE: blue theme (HM_Theme); red stays for danger / blood
-    accent = { r = 0.32, g = 0.7, b = 1.0, a = 1.0 },
-    accentDark = { r = 0.05, g = 0.16, b = 0.32, a = 1.0 },
-    background = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
-    panelSoft = { r = 0.07, g = 0.105, b = 0.15, a = 0.72 },
-    header = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
-    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
-    borderDim = { r = 0.11, g = 0.24, b = 0.42, a = 1.0 },
+    accent = { r = 0.3, g = 0.84, b = 1.0, a = 1.0 },
+    accentDark = { r = 0.03, g = 0.24, b = 0.34, a = 1.0 },
+    background = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    panel = { r = 0.025, g = 0.085, b = 0.115, a = 0.94 },
+    panelSoft = { r = 0.05, g = 0.14, b = 0.18, a = 0.72 },
+    header = { r = 0.02, g = 0.075, b = 0.1, a = 0.98 },
+    border = { r = 0.22, g = 0.72, b = 0.95, a = 1.0 },
+    borderDim = { r = 0.1, g = 0.34, b = 0.46, a = 1.0 },
     text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
     textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
     green = { r = 0.22, g = 0.88, b = 0.30, a = 1.0 },
@@ -76,7 +76,7 @@ EHR_HealthPanelUI.Colors = {
     yellow = { r = 0.95, g = 0.74, b = 0.18, a = 1.0 },
     orange = { r = 1.0, g = 0.36, b = 0.12, a = 1.0 },
     red = { r = 0.86, g = 0.05, b = 0.045, a = 1.0 },
-    redDark = { r = 0.05, g = 0.16, b = 0.32, a = 1.0 },
+    redDark = { r = 0.03, g = 0.24, b = 0.34, a = 1.0 },
     purple = { r = 0.58, g = 0.20, b = 0.72, a = 1.0 },
     body = { r = 0.30, g = 0.33, b = 0.31, a = 0.55 },
     bodyHot = { r = 0.64, g = 0.18, b = 0.12, a = 0.82 },
@@ -946,7 +946,7 @@ function EHR_HealthPanelUI:createChildren()
     self.closeButton = ISButton:new(self.width - 30, 6, 24, 22, "X", self, EHR_HealthPanelUI.onClose)
     self.closeButton:initialise()
     self.closeButton:instantiate()
-    self.closeButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
+    self.closeButton.borderColor = { r = 0.24, g = 0.74, b = 0.96, a = 1 }
     -- HARMONIE R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์"): header buttons are symbols
     local closeIcon = getTexture and getTexture("media/textures/HARMONIE_HomeMedic/icon_close.png") or nil
     if closeIcon then
@@ -962,8 +962,8 @@ function EHR_HealthPanelUI:createChildren()
     end)
     self.hmSettingsBtn:initialise()
     self.hmSettingsBtn:instantiate()
-    self.hmSettingsBtn.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
-    self.hmSettingsBtn.backgroundColor = { r = 0.03, g = 0.06, b = 0.10, a = 0.85 }
+    self.hmSettingsBtn.borderColor = { r = 0.24, g = 0.74, b = 0.96, a = 1 }
+    self.hmSettingsBtn.backgroundColor = { r = 0.02, g = 0.075, b = 0.1, a = 0.85 }
     self.hmSettingsBtn.backgroundColorMouseOver = { r = 0.08, g = 0.20, b = 0.36, a = 0.95 }
     local gearIcon = getTexture and getTexture("media/textures/HARMONIE_HomeMedic/icon_settings.png") or nil
     if gearIcon then
@@ -978,7 +978,7 @@ function EHR_HealthPanelUI:createChildren()
     self.expandButton = ISButton:new(self.width - 90, 6, 24, 22, "-", self, EHR_HealthPanelUI.onToggleRight)
     self.expandButton:initialise()
     self.expandButton:instantiate()
-    self.expandButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
+    self.expandButton.borderColor = { r = 0.24, g = 0.74, b = 0.96, a = 1 }
     self:addChild(self.expandButton)
 
     self.antibodiesButton = ISButton:new(self.width - 90, 6, 24, 22, "", self, EHR_HealthPanelUI.onOpenAntibodiesPanel)
@@ -987,9 +987,9 @@ function EHR_HealthPanelUI:createChildren()
     self.antibodiesButton.toString = function()
         return "EHR_AntibodiesButton"
     end
-    self.antibodiesButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
-    self.antibodiesButton.backgroundColor = { r = 0.03, g = 0.07, b = 0.12, a = 0.72 }
-    self.antibodiesButton.backgroundColorMouseOver = { r = 0.08, g = 0.22, b = 0.40, a = 0.95 }
+    self.antibodiesButton.borderColor = { r = 0.24, g = 0.74, b = 0.96, a = 1 }
+    self.antibodiesButton.backgroundColor = { r = 0.02, g = 0.09, b = 0.12, a = 0.72 }
+    self.antibodiesButton.backgroundColorMouseOver = { r = 0.06, g = 0.28, b = 0.38, a = 0.95 }
     self.antibodiesButton:setTooltip(safeText("UI_EHR_AntibodiesPanel", "Antibodies panel"))
     local antibodiesIcon = getTexture and getTexture("media/textures/Item_AntibodyCompTest.png") or nil
     if antibodiesIcon then
@@ -1006,9 +1006,9 @@ function EHR_HealthPanelUI:createChildren()
         self, EHR_HealthPanelUI.onOpenMedicationAdminister)
     self.administerMedicationButton:initialise()
     self.administerMedicationButton:instantiate()
-    self.administerMedicationButton.borderColor = { r = 0.30, g = 0.60, b = 0.95, a = 1 }
-    self.administerMedicationButton.backgroundColor = { r = 0.03, g = 0.07, b = 0.12, a = 0.88 }
-    self.administerMedicationButton.backgroundColorMouseOver = { r = 0.08, g = 0.22, b = 0.40, a = 0.95 }
+    self.administerMedicationButton.borderColor = { r = 0.24, g = 0.74, b = 0.96, a = 1 }
+    self.administerMedicationButton.backgroundColor = { r = 0.02, g = 0.09, b = 0.12, a = 0.88 }
+    self.administerMedicationButton.backgroundColorMouseOver = { r = 0.06, g = 0.28, b = 0.38, a = 0.95 }
     self.administerMedicationButton:setTooltip(safeText(
         "UI_EHR_MPMedication_ButtonTooltip",
         "Administer a medication from your inventory to this patient."

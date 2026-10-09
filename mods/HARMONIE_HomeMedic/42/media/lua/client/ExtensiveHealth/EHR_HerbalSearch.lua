@@ -14,8 +14,8 @@ EHR.HerbalSearch = EHR.HerbalSearch or {}
 local COOLDOWN_HOURS = 48
 
 local C = {
-    bg = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
+    bg = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    panel = { r = 0.025, g = 0.085, b = 0.115, a = 0.94 },
     green = { r = 0.20, g = 0.90, b = 0.30, a = 1.0 },
     greenDim = { r = 0.08, g = 0.35, b = 0.12, a = 1.0 },
     red = { r = 0.86, g = 0.055, b = 0.045, a = 1.0 },

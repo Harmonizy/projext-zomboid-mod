@@ -1,4 +1,0 @@
-name=Item Spawn Blocker
-namezh=物品刷新屏蔽器
-id=ItemSpawnBlocker
-description=A standalone sandbox mod that lets you block specific items from spawning and block specific crafting recipes (vanilla or mod, including forging). Server-authoritative (works in singleplayer and multiplayer).

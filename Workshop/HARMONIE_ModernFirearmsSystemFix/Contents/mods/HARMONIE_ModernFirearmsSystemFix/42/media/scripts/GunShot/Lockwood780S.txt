@@ -1,0 +1,60 @@
+module Base
+
+{
+    
+    sound AW_LOCKWOOD780S_Fire_Mech
+    {
+        maxInstancesPerEmitter = 6,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/Lockwood780S/weap_romeo870_fire_plr_mech_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Lockwood780S/weap_romeo870_fire_plr_mech_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Lockwood780S/weap_romeo870_fire_plr_mech_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Lockwood780S/weap_romeo870_fire_plr_mech_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Lockwood780S/weap_romeo870_fire_plr_mech_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Lockwood780S/weap_romeo870_fire_plr_mech_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.55,
+        }
+    }
+    
+}

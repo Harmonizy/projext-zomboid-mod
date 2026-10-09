@@ -26,10 +26,10 @@ local FONT = UIFont.Small
 local FONT_M = UIFont.Medium
 
 local COL = {
-    bg = { 0.020, 0.032, 0.050 }, panel = { 0.040, 0.062, 0.090 }, border = { 0.22, 0.50, 0.85 },  -- HM_Theme blue
+    bg = { 0.012, 0.05, 0.068 }, panel = { 0.025, 0.085, 0.115 }, border = { 0.22, 0.72, 0.95 },  -- HM_Theme blue
     text = { 0.90, 0.93, 0.97 }, dim = { 0.60, 0.67, 0.74 },
     ok = { 0.35, 0.85, 0.45 }, warn = { 0.95, 0.75, 0.25 }, fail = { 0.95, 0.30, 0.28 }, info = { 0.45, 0.70, 1.0 },
-    accent = { 0.32, 0.70, 1.00 },
+    accent = { 0.3, 0.84, 1.0 },
 }
 local STATE_MARK = { ok = "+", warn = "!", fail = "x", info = "i" }
 

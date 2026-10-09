@@ -1,0 +1,13 @@
+{
+    "UI_optionscreen_binding_KeySetting_AWCWF": "Ustawienia klawiszy Escape From Kentucky",
+    "UI_optionscreen_binding_LauchGrenadelauncherat": "Wystrzel podlufowe urządzenie",
+    "UI_optionscreen_binding_OpenWindownCat": "Otwórz konsolę broni",
+    "UI_optionscreen_binding_GunLineDown": "Zmień pozycję taktyczną",
+    "UI_optionscreen_binding_SwtichLightSet": "Przełącz tryb światła",
+    "UI_GunpartTooltip_ModOptions_Title": "Gunpart Tooltip",
+    "UI_GunpartTooltip_ModOptions_Display": "Display Options",
+    "UI_GunpartTooltip_EnableCompact": "Enable Compact Tooltip",
+    "UI_GunpartTooltip_EnableCompact_tooltip": "Use compact custom tooltip for weapon parts with many mount points",
+    "UI_GunpartTooltip_ShowMountList": "Show Weapon Compatibility",
+    "UI_GunpartTooltip_ShowMountList_tooltip": "Display weapon compatibility list in gunpart tooltips"
+}

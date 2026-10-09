@@ -37,8 +37,8 @@ function R.open(panel, id, tags)
     local o = ISPanel.new(R, x, y, W, H)
     o.panel, o.id, o.tags, o.started = panel, id, tags or {}, nowMs()
     o.buttons = {}
-    o.backgroundColor = { r = 0.02, g = 0.035, b = 0.06, a = 0.97 }
-    o.borderColor = { r = 0.32, g = 0.7, b = 1.0, a = 1 }
+    o.backgroundColor = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 }
+    o.borderColor = { r = 0.3, g = 0.84, b = 1.0, a = 1 }
     o.moveWithMouse = false
     o:initialise()
     o:instantiate()
@@ -68,8 +68,8 @@ function R:addButton(label, fn, enabled, tip)
     local b = ISButton:new(0, 0, tw(label) + 28, bh, label, self, function() fn(self) end)
     b:initialise()
     b:instantiate()
-    b.borderColor = { r = 0.32, g = 0.7, b = 1.0, a = 1 }
-    b.backgroundColor = { r = 0.05, g = 0.16, b = 0.32, a = 0.9 }
+    b.borderColor = { r = 0.3, g = 0.84, b = 1.0, a = 1 }
+    b.backgroundColor = { r = 0.03, g = 0.24, b = 0.34, a = 0.9 }
     b.backgroundColorMouseOver = { r = 0.10, g = 0.28, b = 0.50, a = 1 }
     if enabled == false then b:setEnable(false) end
     if tip and b.setTooltip then b:setTooltip(tip) end
@@ -149,9 +149,9 @@ function R:prerender()
     local name = diseaseName(self.id)
     -- heading
     self:drawRect(0, 0, w, 34, 0.95, 0.03, 0.052, 0.08)
-    self:drawRect(10, 33, w - 20, 1, 0.8, 0.22, 0.5, 0.85)
+    self:drawRect(10, 33, w - 20, 1, 0.8, 0.22, 0.72, 0.95)
     local title = self.revealed and L("ResultTitle", "DIAGNOSIS") or L("CheckingTitle", "DIAGNOSING...")
-    self:drawText(title, 12, math.floor((34 - fh(FONT_M)) / 2), 0.32, 0.7, 1.0, 1, FONT_M)
+    self:drawText(title, 12, math.floor((34 - fh(FONT_M)) / 2), 0.3, 0.84, 1.0, 1, FONT_M)
     local sub = HM_Surgery and HM_Surgery.fitText(name, w - 40 - tw(title, FONT_M), function(s) return tw(s, FONT) end) or name
     self:drawText(sub, w - 12 - tw(sub), math.floor((34 - fh()) / 2), 0.6, 0.67, 0.74, 1, FONT)
 
@@ -170,7 +170,7 @@ function R:prerender()
             local active = t >= per * (i - 1) and not lit
             local a = lit and 0.9 or (active and 0.6 + 0.3 * math.sin(t / 60) or 0.3)
             self:drawRect(cx, y, cw, fh() + 8, a * 0.5, 0.05, 0.16, 0.32)
-            self:drawRectBorder(cx, y, cw, fh() + 8, a, 0.32, 0.7, 1.0)
+            self:drawRectBorder(cx, y, cw, fh() + 8, a, 0.3, 0.84, 1.0)
             self:drawText(label, cx + 9, y + 4, 0.9, 0.93, 0.97, lit and 1 or 0.55, FONT)
             cx = cx + cw + 8
         end

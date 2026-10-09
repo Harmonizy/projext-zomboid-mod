@@ -1,0 +1,41 @@
+require "Items/ProceduralDistributions"
+require "Items/ItemPicker"
+
+-- Weight matched to upstream's 2026-09-07 loot rebalance. Their 40 mm recipe
+-- magazine Base.AmmoGrenade sits at 0.1; our magazine tracks it.
+table.insert(ProceduralDistributions.list["GunStoreShelf"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["GunStoreShelf"].items, 0.1);
+table.insert(ProceduralDistributions.list["PlankStashGun"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["PlankStashGun"].items, 0.1);
+table.insert(ProceduralDistributions.list["FirearmWeapons"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["FirearmWeapons"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmyStorageGuns"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["ArmyStorageGuns"].items, 0.1);
+table.insert(ProceduralDistributions.list["GunStoreCounter"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["GunStoreCounter"].items, 0.1);
+table.insert(ProceduralDistributions.list["PoliceStorageGuns"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["PoliceStorageGuns"].items, 0.1);
+table.insert(ProceduralDistributions.list["PawnShopGunsSpecial"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["PawnShopGunsSpecial"].items, 0.1);
+table.insert(ProceduralDistributions.list["GunStoreDisplayCase"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["GunStoreDisplayCase"].items, 0.1);
+table.insert(ProceduralDistributions.list["GarageFirearms"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["GarageFirearms"].items, 0.1);
+table.insert(ProceduralDistributions.list["DrugLabGuns"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["DrugLabGuns"].items, 0.1);
+table.insert(ProceduralDistributions.list["GunStoreAmmunition"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["GunStoreAmmunition"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmyStorageAmmunition"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["ArmyStorageAmmunition"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmySurplusCases"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["ArmySurplusCases"].items, 0.1);
+table.insert(ProceduralDistributions.list["LockerArmyBedroom"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["LockerArmyBedroom"].items, 0.1);
+table.insert(ProceduralDistributions.list["LockerArmyBedroomHome"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["LockerArmyBedroomHome"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmySurplusAmmoBoxes"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["ArmySurplusAmmoBoxes"].items, 0.1);
+table.insert(ProceduralDistributions.list["PoliceStorageAmmunition"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["PoliceStorageAmmunition"].items, 0.1);
+table.insert(ProceduralDistributions.list["PrisonArmoryShotguns"].items, "Base.GrenadeAmmoClip");
+table.insert(ProceduralDistributions.list["PrisonArmoryShotguns"].items, 0.1);

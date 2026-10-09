@@ -33,3 +33,16 @@
 - Check every vanilla item type, tag or recipe name there before using it.
 - `raw/` (the vanilla files themselves) is gitignored on purpose: the repo
   is public. Rebuild with `build_index.py` after a game update.
+
+## Known traps (each one already broke the real game once)
+- `item:hasTag("base:x")` with a STRING: B42 wants an `ItemTag` object. It
+  throws, and the game writes the exception to console.txt even inside
+  pcall -- every frame if it is in a render path (GTP 0.13.4, 1618 times).
+  Look item types up instead (GTP `HARMONIE_CookTagItems.lua`, generated
+  from `tags_index.txt`), or use `ItemTag[...]` / `ItemTag.get(ResourceLocation.of(...))`.
+- `getText(key, ...)` with fewer arguments than the text's `%N` ("Missing
+  arguments"). No bare `%` in translations.
+- Never `transmitModData()` from a client; MP stats and zombie health live
+  on the server (`isClient()` = remote client).
+- A PR that is merged is finished: check its state before pushing more.
+

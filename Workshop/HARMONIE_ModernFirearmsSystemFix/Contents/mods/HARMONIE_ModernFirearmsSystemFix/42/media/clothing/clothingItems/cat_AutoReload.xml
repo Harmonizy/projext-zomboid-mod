@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<clothingItem>
+	<m_MaleModel>cat_AutoReload</m_MaleModel>
+	<m_FemaleModel>cat_AutoReload</m_FemaleModel>
+	<m_GUID>cat_AutoReload</m_GUID>
+	<m_Static>false</m_Static>
+	<m_AllowRandomTint>false</m_AllowRandomTint>
+	<m_AttachBone></m_AttachBone>
+	<textureChoices>cat_AutoReload</textureChoices>
+	
+
+</clothingItem>

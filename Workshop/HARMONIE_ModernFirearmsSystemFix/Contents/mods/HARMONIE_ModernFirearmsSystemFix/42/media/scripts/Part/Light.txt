@@ -1,0 +1,130 @@
+module Gunpart{
+            imports
+        	{
+        		Base,
+        	}
+        	item ArmytekPredator_Bottom
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = ArmytekPredator_Bottom,
+                Icon = ArmytekPredator_Bottom,
+                Weight = 0.2,
+                WeightModifier = 0.1,
+                MountOn = AssaultRifle;M16D_cat;AssaultRifle;Typhoon_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;DP12_cat;M14_cat;M14_Albedo;M14_Albedo;HK416_cat;HK416D_cat;minigun_cat;minigun_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;URG_S_cat;URG_S_cat;M4A1S_cat;M4A1S_cat;SG553_cat;SG553_cat;HK51_cat;HK51_cat;SAI_GRY_cat;SAI_GRY_cat;interceptor_cat;KS1_KAC_cat;KS1_KAC_cat;MTL30_cat;M4Mk18_cat;M4Mk18_cat;MK18_cat;MCX_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;Thoridal;Beowulf1_cat;shaluzhiren;QBZ191_cat;QBZ191_cat;QBZ192_cat;QBZ192_cat;QBU191_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;AA12_cat;UMP45_cat;UMP45_cat;mp5_cat;mp5_cat;AN94_cat;AN94_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AEK971_cat;AEK971_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;SRM3_cat;SRM3_cat;Type81_cat;Type81_cat;ScarH_cat;ScarH_cat;ARX200_cat;ARX200_cat;AssaultRifle_60;AssaultRifle_100;M82_cat;M82_cat;M82_cat;SnipeX_T_Rex_cat;XM109_cat;M200_cat;AWM_cat;SVD_cat;GM6_cat;QLU_11;XM109_cat;HuntingRifle;P90_cat;MK12_cat;MK12_cat;FAL_cat;QBU203_cat;Christine45_cat;AX50_cat;AX50_cat;Striker12_cat;ar_10_cat;ar_10_cat;R301_cat;KrissVector_cat;KrissVector_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;mg338_cat;M240_cat;FN_Evolys_cat;QJS201_cat;VSSM_cat;VSSM_cat;HoneyBadger_cat;HoneyBadger_cat;AMB17_cat;AMB17_cat;Groza_cat;Groza_cat;M1887_cat;M870_cat;TTI_Benelli_M4_cat;4guanpen_cat;UTS15_cat;outlaw_cat;BAR_cat;RSC_cat,
+                PartType = Light,
+                LightDistance = 15,
+                LightStrength = 1.3,
+                TorchCone = true,
+                TorchDot = 0.66,
+Tags = base:flashlight,
+                WorldStaticModel = ArmytekPredator_Bottom,
+        		
+            }
+            model ArmytekPredator_Bottom
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 战术手电/ArmytekPredator_Bottom,
+        	    texture = GunTexture/PEQ_cat,
+            }	item ArmytekPredator_Bottom1
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = ArmytekPredator_Bottom1,
+                Icon = ArmytekPredator_Bottom,
+                Weight = 0.2,
+                WeightModifier = 0.1,
+                MountOn = AssaultRifle;M16D_cat;AssaultRifle;Typhoon_cat;Saiga12_cat;AKS74U_cat;CycloneAK_cat;AKS74U_cat;origin12_cat;DP12_cat;M14_cat;M14_Albedo;M14_Albedo;HK416_cat;HK416D_cat;minigun_cat;minigun_cat;MG3_cat;HK416_cat;AS_VAL_MOD4_cat;AS_VAL_MOD4_cat;AS_VAL_cat;AS_VAL_cat;AS_VAL_MOD4_cat;NoveskeN4_cat;NoveskeN4_cat;URG_S_cat;URG_S_cat;M4A1S_cat;M4A1S_cat;SG553_cat;SG553_cat;HK51_cat;HK51_cat;SAI_GRY_cat;SAI_GRY_cat;interceptor_cat;KS1_KAC_cat;KS1_KAC_cat;MTL30_cat;M4Mk18_cat;M4Mk18_cat;MK18_cat;MCX_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;Thoridal;Beowulf1_cat;shaluzhiren;QBZ191_cat;QBZ191_cat;QBZ192_cat;QBZ192_cat;QBU191_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;AA12_cat;UMP45_cat;UMP45_cat;mp5_cat;mp5_cat;AN94_cat;AN94_cat;AK103_cat;AK103_cat;RPK16_cat;RPK16_cat;AEK971_cat;AEK971_cat;AK12_cat;M7_cat;M7_cat;AK12_cat;SRM3_cat;SRM3_cat;Type81_cat;Type81_cat;ScarH_cat;ScarH_cat;ARX200_cat;ARX200_cat;AssaultRifle_60;AssaultRifle_100;M82_cat;M82_cat;M82_cat;SnipeX_T_Rex_cat;XM109_cat;M200_cat;AWM_cat;SVD_cat;GM6_cat;QLU_11;XM109_cat;HuntingRifle;P90_cat;MK12_cat;MK12_cat;FAL_cat;QBU203_cat;Christine45_cat;AX50_cat;AX50_cat;Striker12_cat;ar_10_cat;ar_10_cat;R301_cat;KrissVector_cat;KrissVector_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;mg338_cat;M240_cat;FN_Evolys_cat;QJS201_cat;VSSM_cat;VSSM_cat;HoneyBadger_cat;HoneyBadger_cat;AMB17_cat;AMB17_cat;Groza_cat;Groza_cat;M1887_cat;M870_cat;TTI_Benelli_M4_cat;4guanpen_cat;UTS15_cat;outlaw_cat;BAR_cat;RSC_cat,
+                PartType = Light,
+                LightDistance = 15,
+                LightStrength = 1.3,
+                TorchCone = true,
+                TorchDot = 0.66,
+Tags = base:flashlight,
+                WorldStaticModel = ArmytekPredator_Bottom1,
+        		
+            }
+            model ArmytekPredator_Bottom1
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 战术手电/ArmytekPredator_Bottom1,
+        	    texture = GunTexture/ArmytekPredator_Bottom1,
+            }item ArmytekPredator_Bottom2
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = 手枪战术灯,
+                Icon = ArmytekPredator_Bottom,
+                Weight = 0.2,
+                WeightModifier = 0.1,
+                MountOn = G18_cat;G18_cat;G17_cat;G17_cat;Pistol;Pistol;Pistol;FN57_cat;FN57_cat;Requiem_cat;SIGP226_cat;SIGP226_cat;M9A4_cat;M9A4_cat;G19_cat;G19_cat;QSZ_92G;G34_cat;G34_cat;Taurus_cat;SW629_cat;SW629_cat;MP7_cat;MP7_cat;BerettaM93R_cat;BerettaM93R_cat;Anaconda_cat;Pistol3;Pistol1;Pistol2;Pistol2;M500_cat;Taran2011_cat;Taran2011_cat;usp45_cat;usp45_cat;uzi_cat;uzi_cat;revolver_cat2;C96_cat,
+                PartType = Light,
+                LightDistance = 15,
+                LightStrength = 1.3,
+                TorchCone = true,
+                TorchDot = 0.66,
+Tags = base:flashlight,
+                WorldStaticModel = ArmytekPredator_Bottom2,
+        		
+            }
+            model ArmytekPredator_Bottom2
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 战术手电/ArmytekPredator_Bottom2,
+        	    texture = GunTexture/ArmytekPredator_Bottom2,
+            }
+        model ArmytekPredator_Bottom2_1
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 战术手电/ArmytekPredator_Bottom2_1,
+        	    texture = GunTexture/ArmytekPredator_Bottom2,
+            }
+        item ArmytekPredator_Bottom3
+            {
+                DisplayCategory = WeaponPart,
+                Tags = base:optics,
+                ItemType = base:weaponpart,                DisplayName = 手枪战术灯,
+                Icon = ArmytekPredator_Bottom3,
+                Weight = 0.2,
+                WeightModifier = 0.1,
+                MountOn = G18_cat;G18_cat;G17_cat;G17_cat;FN57_cat;FN57_cat;Requiem_cat;SIGP226_cat;SIGP226_cat;Pistol;Pistol;Pistol;M9A4_cat;M9A4_cat;G19_cat;G19_cat;QSZ_92G;G34_cat;G34_cat;Taurus_cat;SW629_cat;SW629_cat;MP7_cat;MP7_cat;BerettaM93R_cat;BerettaM93R_cat;Anaconda_cat;Pistol3;Pistol1;Pistol2;Pistol2;M500_cat;Taran2011_cat;Taran2011_cat;usp45_cat;usp45_cat;uzi_cat;uzi_cat;revolver_cat2;C96_cat,
+                PartType = Light,
+                LightDistance = 15,
+                LightStrength = 1.3,
+                TorchCone = true,
+                TorchDot = 0.66,
+Tags = base:flashlight,
+                WorldStaticModel = ArmytekPredator_Bottom3,
+        		
+            }
+            model ArmytekPredator_Bottom3
+        	{
+        		cullface = None,
+        attachment world
+        {
+            offset = 0.02 0.13 0.0,
+            rotate = 180.0 0.0 180.0,
+        }
+        		mesh = 战术手电/ArmytekPredator_Bottom3,
+        	    texture = GunTexture/ArmytekPredator_Bottom3,
+            }}

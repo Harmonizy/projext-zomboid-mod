@@ -1,0 +1,24 @@
+HARMONIE - Modern Firearms -- credits
+=====================================
+
+This mod is based on "Modern Firearms System" (Steam Workshop item
+3633421539, mod id ModernFirearmsSystem), whose author is no longer
+developing it. Its guns, ammunition, magazines, weapon parts and
+attachments, 3D models, textures, animations, sounds, item scripts and its
+3D inspect / modification interface are the original author's work, used
+and redistributed here WITH THE ORIGINAL AUTHOR'S PERMISSION (obtained by
+HARMONIE, 2026-10-09). All credit for that work goes to its author.
+
+Taken over (gun-related parts only): guns, ammo, magazines, parts and
+attachments, the inspect / 3D view, reload / eject / fire systems,
+grenades and launchers, the flamethrower, shields -- with their models,
+textures, animations and sounds, and the original's translations.
+Left out: the air drops and the radio trade.
+
+HARMONIE's own additions: the gun / ammo drop-rate sandbox multiplier,
+the ammo-not-depleting guard, Inspect only on firearms, English (and
+Thai) texts the original never shipped, and the HARMONIE window work.
+
+Do not load this mod together with the original Modern Firearms System:
+both define the same items (on purpose, so guns in existing saves keep
+working).

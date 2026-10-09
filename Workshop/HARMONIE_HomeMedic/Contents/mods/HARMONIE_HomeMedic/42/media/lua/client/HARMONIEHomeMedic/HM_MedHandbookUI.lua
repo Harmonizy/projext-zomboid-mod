@@ -35,10 +35,10 @@ end
 
 local C = { -- same palette as the disease handbook (HM_Theme blue)
     text = { r = 0.9, g = 0.93, b = 0.97 }, textDim = { r = 0.6, g = 0.67, b = 0.74 },
-    accent = { r = 0.32, g = 0.7, b = 1.0 }, green = { r = 0.18, g = 0.92, b = 0.32 },
-    blue = { r = 0.35, g = 0.75, b = 1.0 }, border = { r = 0.22, g = 0.5, b = 0.85 },
-    borderDim = { r = 0.11, g = 0.24, b = 0.42 }, panel = { r = 0.04, g = 0.062, b = 0.09 },
-    sel = { r = 0.05, g = 0.16, b = 0.32 }, yellow = { r = 1.0, g = 0.78, b = 0.12 }, red = { r = 0.95, g = 0.3, b = 0.25 },
+    accent = { r = 0.3, g = 0.84, b = 1.0 }, green = { r = 0.18, g = 0.92, b = 0.32 },
+    blue = { r = 0.35, g = 0.75, b = 1.0 }, border = { r = 0.22, g = 0.72, b = 0.95 },
+    borderDim = { r = 0.1, g = 0.34, b = 0.46 }, panel = { r = 0.025, g = 0.085, b = 0.115 },
+    sel = { r = 0.03, g = 0.24, b = 0.34 }, yellow = { r = 1.0, g = 0.78, b = 0.12 }, red = { r = 0.95, g = 0.3, b = 0.25 },
 }
 
 function M:new(x, y, w, h, player, embedded)

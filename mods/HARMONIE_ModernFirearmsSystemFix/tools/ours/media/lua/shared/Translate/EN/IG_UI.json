@@ -1,0 +1,14 @@
+{
+    "IGUI_WeaponUI_DamageMax": "Max damage",
+    "IGUI_WeaponUI_HitChance": "Hit chance",
+    "IGUI_WeaponUI_DamageMin": "Min damage",
+    "IGUI_ItemCat_R_SCOPE": "Weapon attachment - Right sight",
+    "IGUI_ItemCat_L_SCOPE": "Weapon attachment - Left sight",
+    "IGUI_AWCWF_DEBUG_ALL_ATTACHMENTS": "Debug: All Attachments",
+    "IGUI_AWCWF_QUICK_PANEL_TITLE": "Quick Actions",
+    "IGUI_AWCWF_SLOT_SCOPE": "Scope",
+    "IGUI_AWCWF_SLOT_BARREL": "Barrel",
+    "IGUI_AWCWF_SLOT_TAC": "Tactical",
+    "IGUI_AWCWF_SLOT_STOCK": "Stock",
+    "IGUI_IGUI_L_Scope": "Functional Sight"
+}
