@@ -96,4 +96,4 @@ local function AddStoveContextMenu(playerNum, context, worldObjects, test)
 
 end
 
-Events.OnFillWorldObjectContextMenu.Add(AddStoveContextMenu)
+Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(AddStoveContextMenu, "HM"))

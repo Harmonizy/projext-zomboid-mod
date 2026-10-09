@@ -70,7 +70,7 @@ local function AddAdminTocOptions(playerNum, context, worldobjects)
 
     
 end
-Events.OnFillWorldObjectContextMenu.Add(AddAdminTocOptions)
+Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(AddAdminTocOptions, "debug"))
 
 
 --* Override to cheats to fix stuff

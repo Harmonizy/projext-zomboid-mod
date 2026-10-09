@@ -70,14 +70,13 @@ local function onWorldMenu(playerNum, context, worldobjects, test)
     end
     if not kind then return end
     K.logOnce("ctx:" .. tostring(kind), "right-click menu on a %s offers the Cooking tab (repeats not logged)", tostring(kind))
-    local option = context:addOption(getText("IGUI_GTPC_OpenFromAppliance"), player, function(p)
+    -- 0.13.6: no pot icon any more -- HARMONIE_Ours (below) gives it the H
+    context:addOption(getText("IGUI_GTPC_OpenFromAppliance"), player, function(p)
         log("opened the Cooking tab from a %s (right-click)", tostring(kind))
         GTPGuide.open(p, nil, "cook")
     end)
-    local tex = getTexture and getTexture("media/textures/GTP_UI/tab_cook.png")
-    if option and tex then option.iconTexture = tex end
 end
 
 if Events and Events.OnFillWorldObjectContextMenu then
-    Events.OnFillWorldObjectContextMenu.Add(onWorldMenu)
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(onWorldMenu, "GTP"))
 end

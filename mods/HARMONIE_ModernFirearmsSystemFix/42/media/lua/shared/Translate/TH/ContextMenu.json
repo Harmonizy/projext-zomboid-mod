@@ -533,5 +533,11 @@
     "ContextMenu_PumpFuelAmount": "ปริมาณเชื้อเพลิงที่เหลืออยู่",
     "ContextMenu_TooComplicated": "ระดับทักษะต่ำเกินกว่าจะอ่านได้",
     "ContextMenu_Illiterate": "คุณไม่รู้หนังสือ",
-    "ContextMenu_AmmoType": "ประเภทกระสุน"
+    "ContextMenu_AmmoType": "ประเภทกระสุน",
+    "ContextMenu_Remove_Battery_To_Laser": "ถอดแบตเตอรี่ออกจากเลเซอร์",
+    "ContextMenu_ADD_Battery_To_Laser": "ใส่แบตเตอรี่ให้เลเซอร์",
+    "ContextMenu_Remove_Battery_To_Light": "ถอดแบตเตอรี่ออกจากไฟฉายติดปืน",
+    "ContextMenu_ADD_Battery_To_Light": "ใส่แบตเตอรี่ให้ไฟฉายติดปืน",
+    "ContextMenu_AirDropMarker": "ใช้เครื่องหมายแอร์ดรอป",
+    "ContextMenu_AirDrop": "เปิดกล่องแอร์ดรอป"
 }

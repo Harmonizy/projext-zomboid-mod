@@ -28,22 +28,15 @@
     self:setWidthAndParentWidth() growth trick itself, every prerender frame
     while visible, exactly like vanilla's Skills tab does -- so the starting
     width here only matters for the very first frame.
+
+    0.13.6: OFF. The owner asked for one HARMONIE tab in the character
+    window instead of this Vitamins tab ("เพิ่มแท็บในค่าสถานะตัวละคร vanilla
+    แทนช่อง วิตามิน"): client/HARMONIE_Hub.lua adds it, and its Garden to
+    Plate card opens the guide (vitamins included). The vitamin panel itself
+    stays (the hotkey window). Kept as a file so an old copy of it on the
+    Workshop is replaced by this one.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminPanel"
-require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
 
-local originalCreateChildren = ISCharacterInfoWindow.createChildren
-
-ISCharacterInfoWindow.createChildren = function(self, ...)
-    originalCreateChildren(self, ...)
-
-    if not self.panel then return end
-
-    local width = self.panel:getWidth()
-    local height = self.height - 8
-
-    self.vitaminView = HARMONIE_VitaminPanel:new(0, 8, width, height, self.playerNum)
-    self.vitaminView:initialise()
-    self.panel:addView(getText("IGUI_HARMONIE_VitaminTabTitle"), self.vitaminView)
-end
+print("[HARMONIE_GTP][Vitamins] character-window Vitamins tab is off -- the HARMONIE tab (HARMONIE_Hub.lua) replaces it")

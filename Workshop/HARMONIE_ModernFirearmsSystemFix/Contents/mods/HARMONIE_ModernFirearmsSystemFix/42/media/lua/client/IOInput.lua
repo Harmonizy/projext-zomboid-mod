@@ -185,4 +185,4 @@ local function createInventoryMenuEntry(_player, _context, _items)
     end
 end
 
-Events.OnFillInventoryObjectContextMenu.Add(createInventoryMenuEntry)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(createInventoryMenuEntry, "MFS"))

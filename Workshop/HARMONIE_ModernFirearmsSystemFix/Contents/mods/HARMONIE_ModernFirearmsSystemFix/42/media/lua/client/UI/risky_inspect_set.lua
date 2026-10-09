@@ -30,7 +30,7 @@ riskyUI.createInventoryMenuEntry = function(_player, _context, _items)
         _context:addSubMenu(option, inspectSubMenu)
     end
 end
-Events.OnFillInventoryObjectContextMenu.Add(riskyUI.createInventoryMenuEntry)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(riskyUI.createInventoryMenuEntry, "MFS"))
 riskyUI.onAttack = function(_character, _weapon)
     if riskyInspectWindow ~= nil and riskyInspectWindow:getIsVisible() then
         riskyInspectWindow:close()

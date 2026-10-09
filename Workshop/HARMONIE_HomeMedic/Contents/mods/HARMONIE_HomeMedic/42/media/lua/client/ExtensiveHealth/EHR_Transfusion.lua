@@ -1306,7 +1306,7 @@ end
 -- REGISTER EVENTS
 -- ============================================
 
-Events.OnFillInventoryObjectContextMenu.Add(EHR.Transfusion.OnFillInventoryContextMenu)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.Transfusion.OnFillInventoryContextMenu, "HM"))
 Events.OnTick.Add(EHR.Transfusion.OnTickFreezing)
 
 EHR.Log("Transfusion module loaded (with freezing system)")

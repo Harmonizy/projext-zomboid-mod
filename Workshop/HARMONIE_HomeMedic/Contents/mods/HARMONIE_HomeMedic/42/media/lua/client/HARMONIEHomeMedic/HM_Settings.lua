@@ -492,5 +492,5 @@ function HMSettingsUI.homeMedicRows()
 end
 
 function HMSettingsUI.openHomeMedic()
-    HMSettingsUI.open(text("UI_HomeMedic_Set_Title", "Settings - Home Medic"), HMSettingsUI.homeMedicRows)
+    HMSettingsUI.open(text("UI_HomeMedic_Set_Title", "Settings - How to Survive"), HMSettingsUI.homeMedicRows)
 end

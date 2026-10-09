@@ -1,0 +1,7 @@
+{
+    "UI_options_HARMONIE_LAT_title": "HARMONIE: ปรับเสียง Lifestyle",
+    "UI_options_HARMONIE_LAT_section": "ระดับเสียง",
+    "UI_options_HARMONIE_LAT_desc": "ปรับระดับเสียงแบบสดสำหรับเสียง DJ Booth, เสียงตอน Jukebox ทำงานเฉยๆ/เสียงติ๊ง, เครื่องดนตรี และเสียง SFX อุปกรณ์ต่างๆ ของ Lifestyle: Hobbies มีผลทันทีไม่ต้องรีสตาร์ท ไม่มีผลกับเพลงจริงที่เล่นจาก Jukebox (ใช้เมนู Jukebox Volume ที่คลิกขวาของ Lifestyle เองแทน) หรือระยะที่ได้ยิน ซึ่งค่าคงที่ ต้องแก้ไฟล์สคริปต์เสียงของ mod นี้โดยตรงเท่านั้นถึงจะเปลี่ยนได้",
+    "UI_options_HARMONIE_LAT_volume": "ตัวคูณระดับเสียง",
+    "UI_options_HARMONIE_LAT_volume_tooltip": "1.0 = ค่าเริ่มต้นที่ลดไปแล้วครึ่งหนึ่งของ mod นี้ 0 = เงียบ 2 = ดังเป็นสองเท่าของค่าเริ่มต้น (ยังคงครึ่งเดียวของต้นฉบับ Lifestyle)"
+}

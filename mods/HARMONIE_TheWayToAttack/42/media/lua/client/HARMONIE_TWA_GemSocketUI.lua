@@ -742,7 +742,7 @@ end
 -- Right-click menu -------------------------------------------------------------
 
 if Events and Events.OnFillInventoryObjectContextMenu then
-    Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+    Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, items)
         local player = getSpecificPlayer(playerNum)
         if not player then return end
         local item = items and items[1]
@@ -754,5 +754,5 @@ if Events and Events.OnFillInventoryObjectContextMenu then
         context:addOption(getText("IGUI_TWA_Socket_Menu"), player, function(p, it)
             if TWACraftUI and TWACraftUI.openModify then TWACraftUI.openModify(p, it) else TWAGemSocketUI.open(p, it) end
         end, item)
-    end)
+    end, "TWA"))
 end

@@ -1,8 +1,8 @@
-name=HARMONIE - SVU3 Sandbox
+name=HARMONIE - Car for Crash
 id=HARMONIE_SVU3Sandbox
 description=Adds a sandbox multiplier for how much condition Standardized Vehicle Upgrades 3's own protection/armor add-on parts (bullbars, window/door/trunk armor, wheel chains) lose each time they absorb damage for the vehicle part they protect. SVU3 ships fixed per-tier values with no overall multiplier -- this adds one, so those parts can be made to break down faster (or slower) than SVU3's own defaults. Also sets the skill levels an upgrade needs to install by the vehicle's tier: cars are ranked by weight, front/rear strength, seats and trunk size into 3 tiers (main + other skill at most 4+2 / 6+4 / 8+6 by default, SVU3's hardest upgrade lands exactly on them), and admins can put named cars in a tier by hand. Adds a Vehicle Upgrades window (opens beside the Modifications window): the car's tier and stats, installed upgrades with condition, every upgrade with the skills it needs against yours, time, materials and tools, all cars by tier, and a guide. Requires tsarslib, Standardized Vehicle Upgrades 3 (Core) and Standardized Vehicle Upgrades 3 (Vanilla).
 poster=poster.png
 icon=icon.png
-modversion=0.5.2
+modversion=0.6.0
 versionMin=42.0.0
 require=tsarslib,StandardizedVehicleUpgrades3Core,StandardizedVehicleUpgrades3V

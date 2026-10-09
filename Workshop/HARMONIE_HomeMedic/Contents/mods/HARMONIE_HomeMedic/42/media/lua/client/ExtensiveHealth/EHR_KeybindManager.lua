@@ -5,7 +5,7 @@
     Handles registration and management of EHR custom keybinds.
     Uses PZAPI.ModOptions for Options menu integration (B42+).
 
-    Keybinds appear in: Options → Mods → HARMONIE - Home Medic
+    Keybinds appear in: Options → Mods → HARMONIE - How to Survive
 
     v1.0.0
 ]]--
@@ -23,7 +23,7 @@ EHR.Keybinds = {}
 -- HARMONIE: the id stays (saved keybinds keep working); the page is Home
 -- Medic's one Options -> Mods page (HARMONIE_ModOptions.lua adds its options here).
 local MOD_OPTIONS_ID = "ExtensiveHealthRework"
-local MOD_NAME = "HARMONIE - Home Medic"
+local MOD_NAME = "HARMONIE - How to Survive"
 if getText then
     local title = getText("UI_options_HARMONIE_HomeMedic_title")
     if title and title ~= "UI_options_HARMONIE_HomeMedic_title" then MOD_NAME = title end

@@ -365,7 +365,6 @@ media/lua/shared/Translate/CH/UI.json
 media/lua/shared/Translate/CN/ContextMenu.json
 media/lua/shared/Translate/CN/IG_UI.json
 media/lua/shared/Translate/CN/ItemName.json
-media/lua/shared/Translate/CN/Mod.json
 media/lua/shared/Translate/CN/Recipes.json
 media/lua/shared/Translate/CN/Sandbox.json
 media/lua/shared/Translate/CN/Tooltip.json
@@ -504,13 +503,6 @@ media/lua/shared/Translate/RU/Recipes.json
 media/lua/shared/Translate/RU/Sandbox.json
 media/lua/shared/Translate/RU/Tooltip.json
 media/lua/shared/Translate/RU/UI.json
-media/lua/shared/Translate/TH/ContextMenu.json
-media/lua/shared/Translate/TH/IG_UI.json
-media/lua/shared/Translate/TH/ItemName.json
-media/lua/shared/Translate/TH/Recipes.json
-media/lua/shared/Translate/TH/Sandbox.json
-media/lua/shared/Translate/TH/Tooltip.json
-media/lua/shared/Translate/TH/UI.json
 media/lua/shared/Translate/TR/ContextMenu.json
 media/lua/shared/Translate/TR/IG_UI.json
 media/lua/shared/Translate/TR/ItemName.json

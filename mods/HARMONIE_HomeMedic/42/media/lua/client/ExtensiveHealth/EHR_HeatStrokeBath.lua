@@ -432,6 +432,6 @@ end
 
 if not EHR.HeatStrokeBath._registered then
     EHR.HeatStrokeBath._registered = true
-    Events.OnFillWorldObjectContextMenu.Add(EHR.HeatStrokeBath.OnFillWorldObjectContextMenu)
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.HeatStrokeBath.OnFillWorldObjectContextMenu, "HM"))
     EHR.Log("HeatStrokeBath: Cold bath treatment context menu registered")
 end

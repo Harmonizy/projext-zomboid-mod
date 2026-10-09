@@ -38,7 +38,7 @@ end)
 local CONTEXT_MENU_ENABLED = false
 
 -- B42 passes playerNum (integer) as the first argument, not the player object.
-Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, items)
     if not CONTEXT_MENU_ENABLED then return end
     local player = getSpecificPlayer(playerNum)
     if not player then return end
@@ -47,4 +47,4 @@ Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
     context:addOption(getText("IGUI_TWA_ContextMenu_ModifyWeapon"), weapon, function()
         TWAPartsUI.open(player)
     end)
-end)
+end, "TWA"))

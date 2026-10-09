@@ -11,6 +11,8 @@ description=Also wires up 4 JoJo's Bizarre Adventure openings (Sono Chi no Sadam
 description=
 description=Requires Lifestyle: Hobbies to be enabled, and must load after it (enforced automatically via require=).
 description=
+description=English and Thai built in.
+description=
 description=Mod ID: HARMONIE_LifestyleAudioTune
 tags=Build 42;Audio
 visibility=public

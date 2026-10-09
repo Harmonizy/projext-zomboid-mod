@@ -1,9 +1,9 @@
-name=HARMONIE - Modern Firearms
+name=HARMONIE - Mercenary Is Life
 id=HARMONIE_ModernFirearmsSystemFix
 description=Standalone guns, ammo, magazines, parts and their 3D inspect view, based on Modern Firearms System (Workshop 3633421539) and used with the original author's permission -- it no longer needs that mod and must NOT be loaded together with it (same item IDs, so guns in existing saves keep working). Includes grenades / launchers, the flamethrower and shields; air drops and the radio trade are left out. Plus HARMONIE's own fixes: a gun / ammo drop-rate sandbox multiplier, an ammo-not-depleting guard, Inspect only on firearms, and English texts the original never shipped. Full credits: CREDITS.txt.
 poster=poster.png
 icon=icon.png
 author=HARMONIE (based on Modern Firearms System, with permission)
 incompatible=\ModernFirearmsSystem,\BetterCarPhysics,\P4TidyUpMeister,\gunworks framewrok
-modversion=0.3.0
+modversion=0.5.0
 versionMin=42.0.0

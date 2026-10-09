@@ -17,7 +17,7 @@
     "ContextMenu_PutTourniquetArmRight": "Put tourniquet on right arm",
     "ContextMenu_PutTourniquetLegR": "Put tourniquet on right leg",
     "ContextMenu_CleanWound": "Clean Wound",
-    "ContextMenu_Admin_TOC": "Home Medic: Amputation",
+    "ContextMenu_Admin_TOC": "How to Survive: Amputation",
     "ContextMenu_Admin_ResetTOC": "Reset Amputations",
     "ContextMenu_Admin_ForceAmputation": "Force Amputation"
 }

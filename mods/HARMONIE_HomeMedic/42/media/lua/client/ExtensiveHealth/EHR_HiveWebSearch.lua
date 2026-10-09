@@ -683,7 +683,7 @@ end
 
 if not EHR.HiveWebSearch._registered then
     EHR.HiveWebSearch._registered = true
-    Events.OnFillWorldObjectContextMenu.Add(EHR.HiveWebSearch.OnFillWorldObjectContextMenu)
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(EHR.HiveWebSearch.OnFillWorldObjectContextMenu, "HM"))
     if Events.OnServerCommand then Events.OnServerCommand.Add(EHR.HiveWebSearch.OnServerCommand) end
     if EHR and EHR.Log then EHR.Log("HiveWebSearch: context menu registered") end
 end

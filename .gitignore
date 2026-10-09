@@ -17,3 +17,4 @@ mods/default.txt
 
 # third-party mods kept locally only as a reference (other authors; never redistribute -- public repo)
 /3633421539/
+__pycache__/

@@ -150,11 +150,11 @@ function TWAWeaponDebugWindow.open(player, item)
     TWAWeaponDebugWindow.instance = w
 end
 
-Events.OnFillInventoryObjectContextMenu.Add(function(playerNum, context, items)
+Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, items)
     local player = getSpecificPlayer(playerNum)
     if not player or not W.isAllowed(player) then return end
     local item = items and items[1]
     if item and type(item) == "table" and item.items then item = item.items[1] end
     if not item or not instanceof(item, "HandWeapon") then return end
     context:addOption(getText("IGUI_TWA_Debug_Menu"), player, TWAWeaponDebugWindow.open, item)
-end)
+end, "debug"))

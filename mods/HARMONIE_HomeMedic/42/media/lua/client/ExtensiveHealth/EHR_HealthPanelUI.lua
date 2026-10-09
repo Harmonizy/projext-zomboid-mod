@@ -972,7 +972,7 @@ function EHR_HealthPanelUI:createChildren()
     else
         self.hmSettingsBtn:setTitle("S")
     end
-    self.hmSettingsBtn:setTooltip(safeText("UI_HomeMedic_Set_Title", "Settings - Home Medic"))
+    self.hmSettingsBtn:setTooltip(safeText("UI_HomeMedic_Set_Title", "Settings - How to Survive"))
     self:addChild(self.hmSettingsBtn)
 
     self.expandButton = ISButton:new(self.width - 90, 6, 24, 22, "-", self, EHR_HealthPanelUI.onToggleRight)

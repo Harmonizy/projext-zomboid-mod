@@ -1,9 +1,9 @@
 version=1
 id=3798961608
 title=HARMONIE - Too Many Mod Thai Translate (แปลไทย)
-description=A single, always-on Thai translation pack covering every mod HARMONIE has made or patched so far.
+description=A single, always-on Thai translation pack for other people's mods that HARMONIE players use.
 description=
-description=Covers: "Lifestyle: Hobbies" (by Angry, Workshop ID 3403870858), "ModernFirearmsSystem" (Workshop ID 3633421539), Standardized Vehicle Upgrades 3 (Vanilla + Core) with tsarslib, Extensive Health Rework Evolved with The Only Cure, "Auto All" (Workshop ID 3777237134), "Auto All BETA" (Workshop ID 3781941980) and "[B42.20 FIX] More Description For Traits" (Workshop ID 3760271637) -- plus HARMONIE's own From Garden to Plate, SVU3 Sandbox, Lifestyle Audio Tune and ModernFirearmsSystem Fix. (HARMONIE - Home Medic now has its Thai built in.)
+description=Covers: "Lifestyle: Hobbies" (by Angry, Workshop ID 3403870858), Standardized Vehicle Upgrades 3 (Vanilla + Core) with tsarslib, "Auto All" (Workshop ID 3777237134), "Auto All BETA" (Workshop ID 3781941980) and "[B42.20 FIX] More Description For Traits" (Workshop ID 3760271637). HARMONIE's own mods (From Garden to Plate, The Way To Attack, How to Survive, Car for Crash, Mercenary Is Life, Lifestyle Audio Tune) carry their own Thai built in and do not need this pack.
 description=
 description=Pure translation only -- never changes gameplay logic. Ships with NO require= dependency on any of the mods above, so it's safe to just leave enabled all the time: each section of text only ever shows once its matching mod is also enabled, and sits harmlessly unused otherwise.
 description=

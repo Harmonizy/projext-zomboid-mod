@@ -1,5 +1,5 @@
 {
-    "UI_optionscreen_binding_KeySetting_AWCWF": "Modern Firearm System Key Settings",
+    "UI_optionscreen_binding_KeySetting_AWCWF": "Mercenary Is Life Key Settings",
     "UI_optionscreen_binding_LauchGrenadelauncherat": "Launch Attached Device",
     "UI_optionscreen_binding_ToggleGrenadeLauncherMode": "Toggle Grenade Launcher Mode",
     "UI_optionscreen_binding_OpenWindownCat": "Open Weapon Console",
@@ -12,7 +12,7 @@
     "UI_GunpartTooltip_EnableCompact_tooltip": "Use compact custom tooltip for weapon parts with many mount points",
     "UI_GunpartTooltip_ShowMountList": "Show Weapon Compatibility",
     "UI_GunpartTooltip_ShowMountList_tooltip": "Display weapon compatibility list in gunpart tooltips",
-    "UI_options_AWCWF_title": "Modern Firearms System",
+    "UI_options_AWCWF_title": "HARMONIE - Mercenary Is Life",
     "UI_options_AWCWF_section_general": "General",
     "UI_options_AWCWF_desc_general": "Configure general behavior of the weapon system.",
     "UI_options_AWCWF_section_weapon_sounds": "Weapon Sound Settings",
