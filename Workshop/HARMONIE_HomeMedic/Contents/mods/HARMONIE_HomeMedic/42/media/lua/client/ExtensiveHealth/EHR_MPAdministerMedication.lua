@@ -31,10 +31,10 @@ local HEADER_H = 42
 local FOOTER_H = 82
 
 local Colors = {
-    background = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
-    panelAlt = { r = 0.07, g = 0.105, b = 0.15, a = 0.72 },
-    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
+    background = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    panel = { r = 0.025, g = 0.085, b = 0.115, a = 0.94 },
+    panelAlt = { r = 0.05, g = 0.14, b = 0.18, a = 0.72 },
+    border = { r = 0.22, g = 0.72, b = 0.95, a = 1.0 },
     text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
     textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
     green = { r = 0.22, g = 0.88, b = 0.30, a = 1.0 },

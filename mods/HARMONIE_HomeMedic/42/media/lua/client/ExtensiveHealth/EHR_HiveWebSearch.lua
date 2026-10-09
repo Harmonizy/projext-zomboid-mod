@@ -12,8 +12,8 @@ EHR = EHR or {}
 EHR.HiveWebSearch = EHR.HiveWebSearch or {}
 
 local C = {
-    bg = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
+    bg = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    panel = { r = 0.025, g = 0.085, b = 0.115, a = 0.94 },
     trunk = { r = 0.24, g = 0.13, b = 0.055, a = 1.0 },
     trunkDark = { r = 0.11, g = 0.055, b = 0.025, a = 1.0 },
     red = { r = 0.88, g = 0.055, b = 0.04, a = 1.0 },

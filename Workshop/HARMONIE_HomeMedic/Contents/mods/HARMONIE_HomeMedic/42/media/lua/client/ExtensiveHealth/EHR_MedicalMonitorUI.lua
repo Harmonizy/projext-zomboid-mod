@@ -145,9 +145,9 @@ EHR_MedicalMonitorUI = ISPanel:derive("EHR_MedicalMonitorUI")
 
 -- Colors
 EHR_MedicalMonitorUI.Colors = {
-    background = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
-    headerBg = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
+    background = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    border = { r = 0.22, g = 0.72, b = 0.95, a = 1.0 },
+    headerBg = { r = 0.02, g = 0.075, b = 0.1, a = 0.98 },
     text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
     textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
 
@@ -173,8 +173,8 @@ EHR_MedicalMonitorUI.Colors = {
     severity5 = {r=1, g=0.1, b=0.1, a=1},
 
     -- Section colors
-    sectionBg = { r = 0.04, g = 0.062, b = 0.09, a = 0.8 },
-    sectionBorder = { r = 0.11, g = 0.24, b = 0.42, a = 1.0 },
+    sectionBg = { r = 0.025, g = 0.085, b = 0.115, a = 0.8 },
+    sectionBorder = { r = 0.1, g = 0.34, b = 0.46, a = 1.0 },
 
     -- Interaction colors
     interactionSafe = {r=0.3, g=0.7, b=0.3, a=1},

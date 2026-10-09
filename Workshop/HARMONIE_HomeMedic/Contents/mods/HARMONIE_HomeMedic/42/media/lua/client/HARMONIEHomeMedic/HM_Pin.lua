@@ -58,7 +58,7 @@ function P.ensure(panel, cfg)
     -- same look as the window's other header buttons, so it is easy to spot
     local th = HM_Theme
     b.borderColor = th and th.button.border or { r = 0.35, g = 0.62, b = 0.95, a = 1 }
-    b.backgroundColor = th and th.button.bg or { r = 0.03, g = 0.06, b = 0.10, a = 0.85 }
+    b.backgroundColor = th and th.button.bg or { r = 0.02, g = 0.075, b = 0.1, a = 0.85 }
     b.backgroundColorMouseOver = th and th.button.over or { r = 0.08, g = 0.20, b = 0.36, a = 0.95 }
     b.forcedWidthImage = w - 6
     b.forcedHeightImage = h - 6

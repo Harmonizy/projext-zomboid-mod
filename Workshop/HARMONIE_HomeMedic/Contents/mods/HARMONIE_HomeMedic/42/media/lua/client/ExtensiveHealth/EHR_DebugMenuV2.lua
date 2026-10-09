@@ -54,10 +54,10 @@ EHR.DebugV2.Tabs = {
 
 -- Color scheme (matches Medical Monitor)
 EHR.DebugV2.Colors = {
-    background = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
-    headerBg = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
-    tabBg = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
+    background = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    border = { r = 0.22, g = 0.72, b = 0.95, a = 1.0 },
+    headerBg = { r = 0.02, g = 0.075, b = 0.1, a = 0.98 },
+    tabBg = { r = 0.025, g = 0.085, b = 0.115, a = 0.94 },
     tabActive = { r = 0.08, g = 0.24, b = 0.44, a = 1 },
     tabHover = { r = 0.06, g = 0.16, b = 0.3, a = 1 },
     text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
@@ -66,7 +66,7 @@ EHR.DebugV2.Colors = {
     warning = {r=0.9, g=0.7, b=0.2, a=1},
     danger = {r=0.9, g=0.3, b=0.1, a=1},
     critical = {r=1, g=0.1, b=0.1, a=1},
-    buttonBg = { r = 0.06, g = 0.12, b = 0.2, a = 1 },
+    buttonBg = { r = 0.05, g = 0.18, b = 0.24, a = 1 },
     buttonHover = { r = 0.1, g = 0.24, b = 0.42, a = 1 },
 }
 

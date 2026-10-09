@@ -838,7 +838,7 @@
     "IGUI_GTPC_Show": "Show",
     "IGUI_GTPC_Kinds": "Kind of dish",
     "IGUI_GTPC_AllKinds": "All kinds",
-    "IGUI_GTPC_BrowseHint": "Every recipe is open at any Cooking level (you: %1). Below a dish's suggested level its steps are harder; a higher level makes them easier, saves ingredients and makes an Excellent dish's buff last longer.",
+    "IGUI_GTPC_BrowseHint": "Every recipe is listed. One above your Cooking level (you: %1) stays locked until you reach it. A step below its suggested level is harder; a higher level makes steps easier, saves ingredients and makes an Excellent dish's buff last longer.",
     "IGUI_GTPC_Card_Recipes": "Recipes (%1 of %2)",
     "IGUI_GTPC_Suggested": "suggested Lv %1",
     "IGUI_GTPC_CanMake": "Can make now",
@@ -858,5 +858,6 @@
     "IGUI_GTPC_OpenFromAppliance": "Cooking (Garden to Plate)",
     "IGUI_HARMONIE_AdminEditOther": "Set %1's vitamins (admin)",
     "IGUI_HARMONIE_AdminEditOtherDesc": "Opens the vitamin admin panel for this player. Only staff (admin, moderator, overseer, GM) see this, and the server checks again on every save.",
-    "IGUI_HARMONIE_AdminWaiting": "Waiting for %1's vitamins from the server..."
+    "IGUI_HARMONIE_AdminWaiting": "Waiting for %1's vitamins from the server...",
+    "IGUI_GTPC_LockedShort": "Locked: Cooking %1 (you: %2)"
 }

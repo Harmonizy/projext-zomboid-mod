@@ -107,8 +107,8 @@ function R.show(player, status)
     o.player, o.num, o.status = player, num, status
     o.name = itemName(status.medKey, status.medicationName)
     o.icon = itemIcon(status.medKey)
-    o.backgroundColor = { r = 0.02, g = 0.035, b = 0.06, a = 0.96 }
-    o.borderColor = { r = 0.32, g = 0.7, b = 1.0, a = 1 }
+    o.backgroundColor = { r = 0.012, g = 0.05, b = 0.068, a = 0.96 }
+    o.borderColor = { r = 0.3, g = 0.84, b = 1.0, a = 1 }
     o.moveWithMouse = true
     o:initialise()
     o:instantiate()
@@ -127,8 +127,8 @@ function R:createChildren()
         local b = ISButton:new(0, self.height - bh - 12, tw(label) + 30, bh, label, self, fn)
         b:initialise()
         b:instantiate()
-        b.borderColor = { r = 0.32, g = 0.7, b = 1.0, a = 1 }
-        b.backgroundColor = { r = 0.05, g = 0.16, b = 0.32, a = 0.9 }
+        b.borderColor = { r = 0.3, g = 0.84, b = 1.0, a = 1 }
+        b.backgroundColor = { r = 0.03, g = 0.24, b = 0.34, a = 0.9 }
         b.backgroundColorMouseOver = { r = 0.10, g = 0.28, b = 0.50, a = 1 }
         self:addChild(b)
         self.buttons[#self.buttons + 1] = b
@@ -161,14 +161,14 @@ function R:prerender()
     local w = self.width
     local st = self.status
     self:drawRect(0, 0, w, 32, 0.95, 0.03, 0.052, 0.08)
-    self:drawRect(10, 31, w - 20, 1, 0.8, 0.22, 0.5, 0.85)
-    self:drawText(L("Title", "TIME FOR THE NEXT DOSE"), 12, math.floor((32 - fh(FONT_M)) / 2), 0.32, 0.7, 1.0, 1, FONT_M)
+    self:drawRect(10, 31, w - 20, 1, 0.8, 0.22, 0.72, 0.95)
+    self:drawText(L("Title", "TIME FOR THE NEXT DOSE"), 12, math.floor((32 - fh(FONT_M)) / 2), 0.3, 0.84, 1.0, 1, FONT_M)
 
     local x, y = 14, 44
     if self.icon then
         self:drawTextureScaled(self.icon, x, y, 48, 48, 1, 1, 1, 1)
     else
-        self:drawRectBorder(x, y, 48, 48, 0.6, 0.11, 0.24, 0.42)
+        self:drawRectBorder(x, y, 48, 48, 0.6, 0.1, 0.34, 0.46)
     end
     local tx = x + 60
     local maxW = w - tx - 12

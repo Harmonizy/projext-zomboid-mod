@@ -25,6 +25,7 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
 require "HARMONIEGardenToPlate/HARMONIE_CookData"
 require "HARMONIEGardenToPlate/HARMONIE_CookVanilla"
+require "HARMONIEGardenToPlate/HARMONIE_CookTagItems"
 
 HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.Cook = HARMONIE_GTP.Cook or {}
@@ -395,21 +396,22 @@ function K.findHeat(player)
 end
 function K.forget(player) if player then scanCache[player] = nil else scanCache = setmetatable({}, { __mode = "k" }) end end
 
-local function hasTag(it, tag)
-    local ok, v = pcall(function() return it:hasTag(tag) end)
-    if ok and v then return true end
-    return false
-end
-
--- every item at hand with a vanilla tag (worked out once per scan)
+-- every item at hand with a vanilla tag (worked out once per scan).
+-- 0.13.5: by the item TYPES that carry the tag (HARMONIE_CookTagItems.lua,
+-- generated from vanilla's scripts) -- never item:hasTag("base:x"): in
+-- B42 hasTag takes an ItemTag object, a string throws, and the game logs
+-- that exception even inside pcall, every frame (console.txt 2026-10-09).
 local function tagged(scan, tag)
     local list = scan.tagged[tag]
     if list then return list end
     list = {}
-    for _, items in pairs(scan.byType) do
-        if hasTag(items[1], tag) then
-            for _, it in ipairs(items) do list[#list + 1] = it end
-        end
+    local types = K.TAG_ITEMS and K.TAG_ITEMS[tag]
+    if not types then
+        logOnce("notag:" .. tostring(tag), "tag %s has no item list (HARMONIE_CookTagItems.lua) -- that tool kind is matched by type only", tostring(tag))
+        types = {}
+    end
+    for _, t in ipairs(types) do
+        for _, it in ipairs(scan.byType[t] or {}) do list[#list + 1] = it end
     end
     scan.tagged[tag] = list
     return list
@@ -480,9 +482,13 @@ function K.plan(player, dish, scan)
     local p = { dish = dish, level = level, fam = fam, recipe = recipe, base = fam and fam.base, slots = {}, procs = {},
         adds = {}, ready = true, reasons = {}, preview = { cal = 0, carb = 0, fat = 0, prot = 0, hunger = 0, vit = {} } }
     local function no(reason) p.ready = false; p.reasons[#p.reasons + 1] = reason end
-    -- 0.13.2 (owner: "มีสูตรอาหารที่ไม่ต้องการเลเวล ให้เห็นทุกสูตร"): no recipe
-    -- or step is locked by the Cooking level any more; dish.level and
-    -- proc.level are only a suggested level (K.difficulty: harder below it)
+    -- 0.13.5 (owner: "สูตรอาหารสามารถเห็นได้ทั้งหมดก็จริง แต่ถ้ายังไม่ถึงเลเวลให้
+    -- ล็อคไว้"): every recipe is SHOWN, but one above the cook's level is
+    -- locked until then (dish.level). A step's own level stays a suggestion
+    -- (K.difficulty: harder below it) -- 16 dishes have a step above their
+    -- own level, and locking those would make an unlocked dish unmakeable.
+    p.locked = level < (dish.level or 0)
+    if p.locked then no("level") end
     if not recipe then no("base") end
     local maxItems = recipe and K.maxItems(recipe) or nil
     if not maxItems then maxItems = K.baseNeed(dish.family).max end
@@ -717,6 +723,11 @@ function K.serveQuality(player, args)
     local dish = K.DISH_BY_ID[tostring(args.dish)]
     if not dish then
         log("quality from %s for unknown dish %s -- rejected", tostring(call(player, "getUsername")), tostring(args.dish))
+        return nil
+    end
+    -- 0.13.5: a locked recipe again (the server's own copy of the level)
+    if K.level(player) < (dish.level or 0) then
+        log("quality from %s for %s rejected: Cooking %d, the recipe unlocks at %d", tostring(call(player, "getUsername")), dish.id, K.level(player), dish.level or 0)
         return nil
     end
     -- 0.13.2: the hot steps (toss / flip / steep) were checked for a heat

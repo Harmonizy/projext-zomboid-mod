@@ -47,21 +47,21 @@ end
 
 local Colors = {
     -- HARMONIE: blue theme (HM_Theme); red stays for danger
-    accent = { r = 0.32, g = 0.7, b = 1.0, a = 1.0 },
-    bg = { r = 0.02, g = 0.032, b = 0.05, a = 0.97 },
-    panel = { r = 0.04, g = 0.062, b = 0.09, a = 0.94 },
-    panelSoft = { r = 0.07, g = 0.105, b = 0.15, a = 0.72 },
-    header = { r = 0.03, g = 0.052, b = 0.08, a = 0.98 },
+    accent = { r = 0.3, g = 0.84, b = 1.0, a = 1.0 },
+    bg = { r = 0.012, g = 0.05, b = 0.068, a = 0.97 },
+    panel = { r = 0.025, g = 0.085, b = 0.115, a = 0.94 },
+    panelSoft = { r = 0.05, g = 0.14, b = 0.18, a = 0.72 },
+    header = { r = 0.02, g = 0.075, b = 0.1, a = 0.98 },
     red = { r = 0.95, g = 0.08, b = 0.07, a = 1.0 },
-    redDark = { r = 0.05, g = 0.16, b = 0.32, a = 1.0 },
+    redDark = { r = 0.03, g = 0.24, b = 0.34, a = 1.0 },
     orange = { r = 1.0, g = 0.38, b = 0.12, a = 1.0 },
     green = { r = 0.18, g = 0.92, b = 0.32, a = 1.0 },
     cyan = { r = 0.22, g = 0.82, b = 1.0, a = 1.0 },
     yellow = { r = 1.0, g = 0.78, b = 0.12, a = 1.0 },
     text = { r = 0.9, g = 0.93, b = 0.97, a = 1.0 },
     textDim = { r = 0.6, g = 0.67, b = 0.74, a = 1.0 },
-    border = { r = 0.22, g = 0.5, b = 0.85, a = 1.0 },
-    borderDim = { r = 0.11, g = 0.24, b = 0.42, a = 1.0 },
+    border = { r = 0.22, g = 0.72, b = 0.95, a = 1.0 },
+    borderDim = { r = 0.1, g = 0.34, b = 0.46, a = 1.0 },
 }
 
 local DiseaseIcons = {
@@ -436,8 +436,8 @@ function EHR_MedicalJournalUI:createChildren()
     self.closeBtn:initialise()
     self.closeBtn:instantiate()
     self.closeBtn.borderColor = Colors.border
-    self.closeBtn.backgroundColor = { r = 0.03, g = 0.07, b = 0.12, a = 0.9 }
-    self.closeBtn.backgroundColorMouseOver = { r = 0.08, g = 0.22, b = 0.40, a = 0.95 }
+    self.closeBtn.backgroundColor = { r = 0.02, g = 0.09, b = 0.12, a = 0.9 }
+    self.closeBtn.backgroundColorMouseOver = { r = 0.06, g = 0.28, b = 0.38, a = 0.95 }
     self.closeBtn:setAnchorRight(true)
     self:addChild(self.closeBtn)
     end
