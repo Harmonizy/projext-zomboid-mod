@@ -354,6 +354,26 @@ function EHR.DiseaseFlyers.GetFirstAidLevel(player)
     return 0
 end
 
+-- HARMONIE (owner, 2026-10-09: "ปรับระดับการรู้สูตรโรคให้จากทุกโรค 8 เป็น 4 ระดับ ตาม
+-- เลเวล 2/4/6/8"): without its flyer, an illness is known from the First Aid
+-- level of its group -- common ones early, rare / complex ones at 8. Knox
+-- stays flyer-only. Ids not listed keep the caller's level (8).
+EHR.DiseaseFlyers.Config.KNOWLEDGE_LEVEL = {
+    -- 2: everyday illnesses and injuries
+    common_cold = 2, flu = 2, food_poisoning = 2, gastroenteritis = 2, hypothermia = 2,
+    heat_exhaustion = 2, insomnia = 2, delirium = 2, concussion = 2, wound_infection = 2,
+    -- 4: serious but common
+    heat_stroke = 4, dysentery = 4, pneumonia = 4, cellulitis = 4, corpse_sickness = 4, blood_types = 4,
+    -- 6: infections and poisonings that need a trained eye
+    tetanus = 6, sepsis = 6, toxin_poisoning = 6, trichinosis = 6, hyperkeratotic_scabies = 6, tuberculosis = 6,
+    -- 8: the rare and the complicated
+    cadaveric_aspergillosis = 8, ahtr = 8,
+}
+function EHR.DiseaseFlyers.KnowledgeLevel(knowledgeId)
+    local id = normalizeDiseaseId(knowledgeId)
+    return EHR.DiseaseFlyers.Config.KNOWLEDGE_LEVEL[id]
+end
+
 function EHR.DiseaseFlyers.HasMedicalKnowledge(player, knowledgeId, requiredFirstAidLevel)
     if not player or not knowledgeId then return false end
 
@@ -366,7 +386,7 @@ function EHR.DiseaseFlyers.HasMedicalKnowledge(player, knowledgeId, requiredFirs
         return false
     end
 
-    local requiredLevel = requiredFirstAidLevel or 8
+    local requiredLevel = EHR.DiseaseFlyers.Config.KNOWLEDGE_LEVEL[normalized] or requiredFirstAidLevel or 8
     return EHR.DiseaseFlyers.GetFirstAidLevel(player) >= requiredLevel
 end
 

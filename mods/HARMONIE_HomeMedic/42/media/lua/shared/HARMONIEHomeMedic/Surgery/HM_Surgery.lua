@@ -734,7 +734,7 @@ function S.handbookText(id)
         lines[#lines + 1] = S.T("Hb_Treat", "Success starts treatment: it clears in about %1 hours (%2 if excellent).", treat, math.floor(treat * S.EXCELLENT_TREAT + 0.5))
     end
     if S.SURGICAL[id] then
-        lines[#lines + 1] = S.T("Hb_Required", "From stage %1 surgery is needed: a finished medicine course only holds it there (Awaiting surgery).", S.SURGICAL[id])
+        lines[#lines + 1] = S.T("Hb_Required", "Surgery is needed: its medicine only holds it (Awaiting surgery); the operation starts the treatment.")
     elseif not cure then
         lines[#lines + 1] = S.T("Hb_Optional", "Optional: medicine alone can still cure it.")
     end

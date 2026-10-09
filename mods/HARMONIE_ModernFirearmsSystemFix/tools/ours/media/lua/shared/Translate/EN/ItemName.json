@@ -57,5 +57,9 @@
     "Base.ArmorShieldBody": "Body Shield",
     "Base.RenderPartItem": "Useless Test Weapon",
     "Base.AmmoGrenade": "Grenade Round Reloading Schematic",
-    "Gunpart.Clip_M16D_cat": "M16D Magazine (decoration part)"
+    "Gunpart.Clip_M16D_cat": "M16D Magazine (decoration part)",
+    "Base.MFS_M203": "M203 Grenade Launcher Mode",
+    "Gunpart.MFS_M203": "M203 Grenade Launcher (New)",
+    "Base.MFS_GP25": "GP25 Grenade Launcher Mode",
+    "Gunpart.MFS_GP25": "GP25 Grenade Launcher (New)"
 }

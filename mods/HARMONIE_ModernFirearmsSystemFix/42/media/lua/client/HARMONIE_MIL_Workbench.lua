@@ -49,6 +49,10 @@ W.TABS = {
     { id = "ammo", icon = "tab_ammo", key = "IGUI_MIL_Tab_ammo", tip = "IGUI_MIL_Tab_ammo_Tip" },
     { id = "guide", icon = "tab_guide", key = "IGUI_MIL_Tab_guide", tip = "IGUI_MIL_Tab_guide_Tip" },
 }
+-- tabs that need a gun in the main hand (owner, 2026-10-09: "ทุกหน้าต่างสามารถ
+-- เปิดได้ แต่แท็บไหนในแต่ละหน้าต่างที่ต้องการคลิกขวา ก็ให้ล็อกแค่แท็บนั้น"): without
+-- one the window still opens, on the guide, with these tabs locked
+W.NEEDS_GUN = { inspect = true, stats = true, parts = true, ammo = true }
 -- red theme (How to Survive's palette turned red); the frame, tab row,
 -- cards, pin and text size are the same as Car for Crash's and How to
 -- Survive's windows
@@ -56,7 +60,7 @@ W.C = {
     accent = { 0.92, 0.24, 0.20 }, accentDark = { 0.26, 0.04, 0.04 },
     background = { 0.035, 0.012, 0.014, 0.97 }, panel = { 0.075, 0.025, 0.028, 0.94 },
     header = { 0.07, 0.018, 0.02, 0.98 }, border = { 0.82, 0.22, 0.20 }, borderDim = { 0.40, 0.10, 0.10 },
-    text = { 0.97, 0.92, 0.91 }, textDim = { 0.74, 0.62, 0.61 }, good = { 0.45, 0.92, 0.45 }, bad = { 1.0, 0.42, 0.38 },
+    text = { 0.97, 0.92, 0.91 }, textDim = { 0.74, 0.62, 0.61 }, good = { 0.45, 0.92, 0.45 }, bad = { 1.0, 0.42, 0.38 }, warn = { 1.0, 0.80, 0.32 },
     row = { 0.11, 0.035, 0.04 }, rowAlt = { 0.085, 0.028, 0.032 },
     card = { 0.10, 0.03, 0.035, 0.93 }, tabRow = { 0.05, 0.012, 0.016 },
 }
@@ -351,7 +355,7 @@ function W:new(player, weapon)
     o.moveWithMouse = true
     o.backgroundColor = { r = 0, g = 0, b = 0, a = 0 }
     o.borderColor = { r = 0, g = 0, b = 0, a = 0 }
-    o.tab = "inspect"
+    o.tab = weapon and "inspect" or "guide"
     o.scroll = 0
     o.guidePage = 1
     o.buttons = {}
@@ -361,9 +365,11 @@ end
 
 function W:createChildren()
     ISPanel.createChildren(self)
-    -- 1: the original panel, inside the content frame
-    local Pane = W.paneClass()
-    if Pane then
+    -- 1: the original panel, inside the content frame (needs a gun)
+    local Pane = self.weapon and W.paneClass() or nil
+    if not self.weapon then
+        log("opened without a gun: the gun tabs are locked")
+    elseif Pane then
         local ok, pane = pcall(function() return Pane:new(4, W.contentTop(), 0, 0) end)
         if ok and pane then
             pane.workbench = self
@@ -382,8 +388,16 @@ function W:createChildren()
     end
 end
 
+function W:locked(id) return W.NEEDS_GUN[id] == true and self.weapon == nil end
+
 function W:setTab(id)
     if self.tab == id then return end
+    if self:locked(id) then
+        log("tab %s is locked: no gun in the main hand", tostring(id))
+        pcall(function() getSoundManager():playUISound("UIDeactivate") end)
+        self.lockFlashAt = getTimestampMs and getTimestampMs() or 0
+        return
+    end
     log("tab %s -> %s", tostring(self.tab), tostring(id))
     self.tab = id
     self.scroll = 0
@@ -417,6 +431,17 @@ function W:update()
     ISPanel.update(self)
     if self.closing then return end
     local held = call(self.player, "getPrimaryHandItem")
+    if self.weapon == nil then
+        -- opened without a gun: when one is taken in hand, reopen with it
+        local Fix = MFSInspectFix
+        if held and Fix and Fix.getInspectableWeapon and Fix.getInspectableWeapon(self.player) then
+            log("a gun was taken in hand -- reopening with it")
+            local p = self.player
+            self:close()
+            W.open(p)
+        end
+        return
+    end
     if held ~= self.weapon then
         log("the gun left the hand -- closing")
         self:close()
@@ -563,7 +588,7 @@ function W:prerender()
         self:drawTextureScaled(logo, ix, math.floor((hh - 28) / 2), 28, 28, 1, 1, 1, 1)
         ix = ix + 34
     end
-    local title = T("IGUI_MIL_Title") .. " - " .. itemName(self.weapon)
+    local title = self.weapon and (T("IGUI_MIL_Title") .. " - " .. itemName(self.weapon)) or T("IGUI_MIL_Title")
     shadowText(self, fit(title, self.width - ix - 150, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
     -- header buttons
     local mx, my = self:getMouseX(), self:getMouseY()
@@ -599,10 +624,11 @@ function W:prerender()
     local sf = W.small()
     for _, t in ipairs(W.TABS) do
         local active = self.tab == t.id
+        local locked = self:locked(t.id)
         local ty, tH = hh + 6, th - 12
         local bg = active and C.accentDark or C.background
         local bd = active and C.accent or C.borderDim
-        self:drawRect(x, ty, tabW, tH, active and 0.98 or 0.82, bg[1], bg[2], bg[3])
+        self:drawRect(x, ty, tabW, tH, active and 0.98 or (locked and 0.45 or 0.82), bg[1], bg[2], bg[3])
         self:drawRectBorder(x, ty, tabW, tH, active and 0.95 or 0.62, bd[1], bd[2], bd[3])
         if active then
             self:drawRect(x + 2, ty + 2, tabW - 4, tH - 4, 0.16, C.accent[1], C.accent[2], C.accent[3])
@@ -613,10 +639,16 @@ function W:prerender()
         local icon = texture(t.icon)
         local total = size + 8 + tw(sf, label)
         local tx = x + math.floor((tabW - total) / 2)
-        if icon then self:drawTextureScaled(icon, tx, ty + math.floor((tH - size) / 2), size, size, active and 1 or 0.65, 1, 1, 1) end
-        shadowText(self, label, tx + size + 8, ty + math.floor((tH - fh(sf)) / 2), active and C.text or C.textDim, 1, sf)
+        if icon then self:drawTextureScaled(icon, tx, ty + math.floor((tH - size) / 2), size, size, active and 1 or (locked and 0.25 or 0.65), 1, 1, 1) end
+        shadowText(self, label, tx + size + 8, ty + math.floor((tH - fh(sf)) / 2), active and C.text or C.textDim, locked and 0.45 or 1, sf)
+        if locked then
+            -- a small padlock in the corner
+            local lx, ly = x + tabW - 18, ty + 6
+            self:drawRect(lx, ly + 5, 10, 8, 0.9, C.textDim[1], C.textDim[2], C.textDim[3])
+            self:drawRectBorder(lx + 2, ly, 6, 7, 0.9, C.textDim[1], C.textDim[2], C.textDim[3])
+        end
         local bounds = { x = x, y = ty, w = tabW, h = tH }
-        if inside(bounds, mx, my) then self.hoverTip = { text = T(t.tip), x = x + 30, y = ty + tH + 4 } end
+        if inside(bounds, mx, my) then self.hoverTip = { text = locked and T("IGUI_MIL_LockedTip") or T(t.tip), x = x + 30, y = ty + tH + 4 } end
         local id = t.id
         self.buttons[#self.buttons + 1] = { x = x, y = ty, w = tabW, h = tH, fn = function() self:setTab(id) end }
         x = x + tabW + gap
@@ -805,6 +837,16 @@ end
 function W:renderGuide(x, y, w, h)
     local C = W.C
     local sf, mf = W.small(), W.medium()
+    if not self.weapon then
+        -- the gun tabs are locked: say why, above the guide
+        local lines = wrap(T("IGUI_MIL_NoGun"), w - 24, sf)
+        local bh = W.CARD_T + 14 + #lines * lineH(sf)
+        local bx, by = self:drawCard(x, y, w, bh, T("IGUI_MIL_NoGunTitle"))
+        local flash = self.lockFlashAt and ((getTimestampMs and getTimestampMs() or 0) - self.lockFlashAt) < 600
+        for _, l in ipairs(lines) do shadowText(self, l, bx, by, flash and C.bad or C.warn, 1, sf); by = by + lineH(sf) end
+        y = y + bh + 10
+        h = h - bh - 10
+    end
     local listW = math.floor(w * 0.28)
     local lx, ly, lw = self:drawCard(x, y, listW, h, T("IGUI_MIL_GuideTitle"))
     local bh = lineH(sf) + 12
@@ -847,11 +889,13 @@ function W:onMouseWheel(del)
 end
 
 -- ----------------------------------------------------------------- open
-function W.open(player, expectedWeaponId)
+-- allowNoGun: the HARMONIE tab opens the window even without a gun in hand
+-- (the gun tabs are then locked); the inspect paths need the gun
+function W.open(player, expectedWeaponId, allowNoGun)
     player = player or (getPlayer and getPlayer() or nil)
     local Fix = MFSInspectFix
     local weapon = Fix and Fix.getInspectableWeapon and Fix.getInspectableWeapon(player, expectedWeaponId)
-    if not weapon then
+    if not weapon and not allowNoGun then
         log("open refused: no gun in the main hand")
         return false
     end
@@ -873,7 +917,7 @@ function W.open(player, expectedWeaponId)
         return false
     end
     W.instance = win
-    log("opened for %s", fullType(weapon))
+    log("opened for %s", weapon and fullType(weapon) or "no gun (gun tabs locked)")
     return true
 end
 
@@ -896,6 +940,61 @@ function W.install(quiet)
         return Fix.openOriginal(player, expectedWeaponId)
     end
     log("version %d installed (the inspect window opens the Mercenary Is Life workbench)", W.VERSION)
+end
+
+-- ----------------------------------------------------------------- right-click: Upgrade gun
+-- Owner, 2026-10-09: "คลิกขวาที่ปืนไม่มีขึ้น อัพเกรดปืน ที่จะพาไปหน้าต่าง". Right-click a
+-- gun (inventory or a container next to you) > Upgrade gun: the gun is taken
+-- in the main hand (moved into the inventory first when needed) and this
+-- window opens on it.
+function W.upgradeGun(player, gun)
+    if not player or not gun then return end
+    local held = call(player, "getPrimaryHandItem")
+    if held == gun then
+        log("right-click > Upgrade gun: %s (already in hand)", fullType(gun))
+        W.open(player)
+        return
+    end
+    local ok, err = pcall(function()
+        local inv = player:getInventory()
+        local src = gun:getContainer()
+        if src and src ~= inv and ISInventoryTransferAction then
+            ISTimedActionQueue.add(ISInventoryTransferAction:new(player, gun, src, inv))
+        end
+        ISTimedActionQueue.add(ISEquipWeaponAction:new(player, gun, 50, true, gun:isTwoHandWeapon()))
+        -- the original's inspect action opens the window when the gun is in hand
+        ISTimedActionQueue.add(riskyInspectAction:new(player, 1))
+    end)
+    log("right-click > Upgrade gun: %s %s", fullType(gun), ok and "-- equip queued, then the window" or ("FAILED: " .. tostring(err)))
+end
+
+function W.onInventoryMenu(playerNum, context, items)
+    local player = getSpecificPlayer and getSpecificPlayer(playerNum)
+    local Fix = MFSInspectFix
+    if not player or not context or not items or not (Fix and Fix.isInspectableWeapon) then return end
+    local guns, seen = {}, {}
+    for _, v in ipairs(items) do
+        local list = (type(v) == "table" and v.items) or { v }
+        for _, it in ipairs(list) do
+            if it and not seen[it] and Fix.isInspectableWeapon(it) then
+                seen[it] = true
+                guns[#guns + 1] = it
+            end
+        end
+    end
+    if #guns == 0 then return end
+    if #guns == 1 then
+        context:addOption(T("IGUI_MIL_UpgradeGun"), player, W.upgradeGun, guns[1])
+    else
+        local parent = context:addOption(T("IGUI_MIL_UpgradeGun"))
+        local sub = context:getNew(context)
+        context:addSubMenu(parent, sub)
+        for _, g in ipairs(guns) do sub:addOption(itemName(g), player, W.upgradeGun, g) end
+    end
+end
+if Events and Events.OnFillInventoryObjectContextMenu and not W.menuHooked then
+    W.menuHooked = true
+    Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(W.onInventoryMenu, "MFS"))
 end
 
 W.install(true)

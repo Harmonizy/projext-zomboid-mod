@@ -496,9 +496,9 @@
     "MFS_Adapt_GunLight_To_PistolLight3": "ดัดแปลง ไฟฉายติดปืน เป็น ไฟฉายปืนพก 3",
     "MFS_Adapt_GunLight_To_RifleLight": "ดัดแปลง ไฟฉายติดปืน เป็น ไฟฉายปืนไรเฟิล",
     "MFS_Adapt_GunLight_To_RifleLight1": "ดัดแปลง ไฟฉายติดปืน เป็น ไฟฉายปืนไรเฟิล 1",
-    "MFS_Adapt_AmmoStraps_To_Bandolier": "ดัดแปลง สายคาดกระสุน เป็น สายคาดกระสุน MFS",
+    "MFS_Adapt_AmmoStraps_To_Bandolier": "ดัดแปลง สายคาดกระสุน เป็น สายคาดกระสุน (Mercenary Is Life)",
     "MFS_Adapt_AmmoStraps_To_ShellCarrier": "ดัดแปลง สายคาดกระสุน เป็น ที่ใส่กระสุนลูกซอง",
-    "MFS_Adapt_RecoilPad_To_MFSRecoilPad": "ดัดแปลง แผ่นรองแรงถีบ เป็น แผ่นรองแรงถีบ MFS",
+    "MFS_Adapt_RecoilPad_To_MFSRecoilPad": "ดัดแปลง แผ่นรองแรงถีบ เป็น แผ่นรองแรงถีบ (Mercenary Is Life)",
     "MFS_Restore_G33_To_x2Scope": "แปลง กล้องขยาย G33 กลับเป็น กล้องเล็ง 2x",
     "MFS_Restore_Leupold_To_x2Scope": "แปลง กล้องขยาย Leupold กลับเป็น กล้องเล็ง 2x",
     "MFS_Restore_TA11_To_x4Scope": "แปลง กล้องเล็ง TA11 กลับเป็น กล้องเล็ง 4x",
@@ -525,9 +525,9 @@
     "MFS_Restore_PistolLight3_To_GunLight": "แปลง ไฟฉายปืนพก 3 กลับเป็น ไฟฉายติดปืน",
     "MFS_Restore_RifleLight_To_GunLight": "แปลง ไฟฉายปืนไรเฟิล กลับเป็น ไฟฉายติดปืน",
     "MFS_Restore_RifleLight1_To_GunLight": "แปลง ไฟฉายปืนไรเฟิล 1 กลับเป็น ไฟฉายติดปืน",
-    "MFS_Restore_Bandolier_To_AmmoStraps": "แปลง สายคาดกระสุน MFS กลับเป็น สายคาดกระสุน",
+    "MFS_Restore_Bandolier_To_AmmoStraps": "แปลง สายคาดกระสุน (Mercenary Is Life) กลับเป็น สายคาดกระสุน",
     "MFS_Restore_ShellCarrier_To_AmmoStraps": "แปลง ที่ใส่กระสุนลูกซอง กลับเป็น สายคาดกระสุน",
-    "MFS_Restore_MFSRecoilPad_To_RecoilPad": "แปลง แผ่นรองแรงถีบ MFS กลับเป็น แผ่นรองแรงถีบ",
+    "MFS_Restore_MFSRecoilPad_To_RecoilPad": "แปลง แผ่นรองแรงถีบ (Mercenary Is Life) กลับเป็น แผ่นรองแรงถีบ",
     "MFS_Craft_AFG_Foregrip": "ทำกริปหน้า AFG",
     "MFS_Craft_SST_Foregrip": "ทำกริปหน้า SST",
     "MFS_Craft_AR15_Stock": "ทำพานท้าย AR-15",
@@ -688,6 +688,6 @@
     "MFS_Convert_MFS_To_GP25": "แปลง GP-25 รุ่นใหม่ เป็น GP-25 รุ่นเก่า",
     "MFS_Convert_MFS_To_M203": "แปลง M203 รุ่นใหม่ เป็น M203 รุ่นเก่า",
     "ShotgunDrum": "ทำแม็กกาซีนดรัมลูกซอง",
-    "MFS_Convert_ChokeTubeFull_To_MFS": "แปลง โช้คแบบ Full เป็น โช้คแบบ Full ของ MFS",
-    "MFS_Convert_ChokeTubeImproved_To_MFS": "แปลง โช้คแบบ Improved เป็น โช้คแบบ Improved ของ MFS"
+    "MFS_Convert_ChokeTubeFull_To_MFS": "แปลง โช้คแบบ Full เป็น โช้คแบบ Full (Mercenary Is Life)",
+    "MFS_Convert_ChokeTubeImproved_To_MFS": "แปลง โช้คแบบ Improved เป็น โช้คแบบ Improved (Mercenary Is Life)"
 }

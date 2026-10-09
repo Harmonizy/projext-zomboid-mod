@@ -7,7 +7,7 @@
       clean  -- P03 Irrigation      : flush the dirt out of the wound
       necro  -- P04 Necrotic tissue : cut away only the dead (black) tissue
       gauge  -- P05 Aspiration      : hold to keep suction in the green band
-      suture -- P08 Wound closure   : place the stitches in order
+      suture -- P08 Wound closure   : interrupted stitches -- bite in, bite out across, tie at the right tension
       extract   -- P06 Extraction / P14 (clot): draw the object out without
                    touching the walls of the wound track
       dialysis  -- P11 Blood purification: keep both pumps on target
@@ -750,70 +750,203 @@ function Gauge:mouseUp() self.holding = false end
 function Gauge:score() return clamp(self.fill * (1 - self.damage), 0, 1) end
 
 -- ============================================================= suture (P08 closure)
+-- Round 2026-10-09 ("มินิเกมเย็บแผลละเอียดน้อยไป"): simple interrupted
+-- sutures, one at a time, the way they are really placed --
+--   1 bite in   : the needle goes in at the marked point on the upper edge
+--   2 bite out  : it comes out on the lower edge, straight across (the
+--                 two bites should mirror each other: same distance, same line)
+--   3 tie       : hold the mouse to draw the knot tight and let go in the
+--                 green band -- too loose leaves a gap, too tight blanches
+--                 and tears the skin edge
+-- The wound closes only where the stitches are tied; each stitch shows its
+-- two punctures, the thread across, the knot and its two tails.
 local Suture = kind("suture")
 function Suture:init()
-    self.limit = 16000 + 6000 * (self.p.skill or 0)
-    self.count = 8
-    self.tol = 8 + 10 * (self.p.skill or 0) + 4 * (self.p.tool or 1)
-    self.i, self.acc, self.placed = 1, {}, {}
+    self.limit = 22000 + 8000 * (self.p.skill or 0)
+    self.count = 6
+    self.tol = 7 + 9 * (self.p.skill or 0) + 4 * (self.p.tool or 1)
+    self.band = { 0.55 - 0.08 * (self.p.skill or 0), 0.78 + 0.06 * (self.p.skill or 0) }   -- good knot tension
+    self.i, self.phase = 1, "in"
+    self.stitches = {}           -- { inX, inY, inAcc, outX, outY, outAcc, sym, tie, tied }
+    self.tension = 0
 end
-function Suture:point(i, x, y, w, h)
-    local u = 0.14 + (i - 1) / (self.count - 1) * 0.72
-    local side = (i % 2 == 1) and -1 or 1
+-- the planned bite points of stitch i (u along the wound, 0..1 of the box)
+function Suture:plan(i, x, y, w, h)
+    local u = 0.18 + (i - 1) / (self.count - 1) * 0.64
     local sx, sy = self:sway(5)
-    return x + u * w + sx, y + h / 2 + side * h * 0.13 + sy
+    local cx = x + u * w + sx
+    local bite = h * 0.13
+    return cx, y + h / 2 - bite + sy, cx, y + h / 2 + bite + sy
 end
-function Suture:update(ms) self:tick(ms) end
+-- how open the wound is around u (1 = gaping, small near tied stitches)
+function Suture:gapAt(u, w)
+    local open = 1
+    for _, s in ipairs(self.stitches) do
+        if s.tied and s.u then
+            local d = math.abs(u - s.u)
+            local reach = 0.09
+            if d < reach then
+                local closed = (1 - d / reach) * (s.tie or 0.5)
+                open = math.min(open, 1 - closed * 0.85)
+            end
+        end
+    end
+    return open
+end
+function Suture:update(ms)
+    self:tick(ms)
+    if self.phase == "tie" and self.holding then
+        -- the knot tightens while held; it speeds up, so timing matters
+        self.tension = math.min(1.2, self.tension + ms / 1000 * (0.35 + self.tension * 0.9))
+        if self.tension > self.band[2] + 0.14 and not self.tornWarned then
+            self.tornWarned = true
+            local s = self.stitches[self.i]
+            if s then self:hurtAt(s.inX, s.inY, 0.25, true) end
+        end
+    end
+end
 function Suture:render(ui, x, y, w, h)
     self.box = { x, y, w, h }
     self:field(ui, x, y, w, h)
-    -- the incision closes as the stitches go in
-    local open = 1 - (self.i - 1) / self.count
     local sx, sy = self:sway(5)
-    strip(ui, "wound", x + w * 0.1 + sx, y + h / 2 + sy, x + w * 0.9 + sx, y + h / 2 + sy, 8 + 26 * open, 1)
+    local wx1, wx2 = x + w * 0.1 + sx, x + w * 0.9 + sx
+    local wy = y + h / 2 + sy
+    -- the incision, drawn in short pieces so it closes only where tied
+    local pieces = 28
+    for k = 0, pieces - 1 do
+        local u0, u1 = k / pieces, (k + 1) / pieces
+        local um = 0.1 + (u0 + u1) / 2 * 0.8
+        local open = self:gapAt(um, w)
+        local th = 6 + 26 * open
+        strip(ui, "wound", wx1 + (wx2 - wx1) * u0, wy, wx1 + (wx2 - wx1) * u1 + 1, wy, th, 1)
+        -- the everted, slightly swollen edges
+        line(ui, wx1 + (wx2 - wx1) * u0, wy - th / 2, wx1 + (wx2 - wx1) * u1, wy - th / 2, 2, 0.55, 0.85, 0.55, 0.55)
+        line(ui, wx1 + (wx2 - wx1) * u0, wy + th / 2, wx1 + (wx2 - wx1) * u1, wy + th / 2, 2, 0.55, 0.85, 0.55, 0.55)
+    end
+    -- the surgeon's marks for every bite (faint skin-pen dots)
     for i = 1, self.count do
-        local px, py = self:point(i, x, y, w, h)
-        if i < self.i then
-            local p = self.placed[i]
-            local qx, qy = p and p.x or px, p and p.y or py
-            if i > 1 then
-                local p0 = self.placed[i - 1]
-                local ox, oy
-                if p0 then ox, oy = p0.x, p0.y else ox, oy = self:point(i - 1, x, y, w, h) end
-                strip(ui, "thread", ox, oy, qx, qy, 5, 1)
+        local ix, iy, ox, oy = self:plan(i, x, y, w, h)
+        if i >= self.i then
+            disc(ui, ix, iy, 2.2, 0.75, 0.45, 0.22, 0.62)
+            disc(ui, ox, oy, 2.2, 0.75, 0.45, 0.22, 0.62)
+        end
+    end
+    -- the stitches already in
+    for i, s in ipairs(self.stitches) do
+        -- the two punctures
+        disc(ui, s.inX, s.inY, 3, 1, 0.35, 0.05, 0.05)
+        if s.outX then disc(ui, s.outX, s.outY, 3, 1, 0.35, 0.05, 0.05) end
+        if s.tied then
+            -- across the wound, pulled in by the knot
+            local pull = (s.tie or 0.5) * 0.35
+            local my = (s.inY + s.outY) / 2
+            local ay, by = s.inY + (my - s.inY) * pull, s.outY + (my - s.outY) * pull
+            strip(ui, "thread", s.inX, ay, s.outX, by, 4, 1)
+            -- the knot on the upper side and its two tails
+            disc(ui, s.inX, ay - 2, 3.5, 1, 0.10, 0.16, 0.38)
+            line(ui, s.inX, ay - 3, s.inX - 9, ay - 12, 1.6, 0.95, 0.12, 0.2, 0.45)
+            line(ui, s.inX, ay - 3, s.inX + 8, ay - 13, 1.6, 0.95, 0.12, 0.2, 0.45)
+            if s.tie and s.tie > 1.0 then
+                -- too tight: blanched, torn skin
+                disc(ui, s.inX, ay, 6, 0.35, 0.95, 0.9, 0.85)
             end
-            disc(ui, qx, qy, 3, 1, 0.12, 0.2, 0.45)
+        elseif s.outX then
+            -- passed but not yet tied: the loop lies loose across the gap
+            strip(ui, "thread", s.inX, s.inY, s.outX, s.outY, 3, 0.85)
         elseif i == self.i then
-            ring(ui, px, py, self.tol, 2, 0.85, 0.3, 1, 0.4)
-            disc(ui, px, py, 3, 1, 0.45, 0.20, 0.65)
-        else
-            disc(ui, px, py, 2.5, 0.8, 0.45, 0.20, 0.65)
+            -- the needle has gone in: the thread runs from the hole to it
+            if self.cx then strip(ui, "thread", s.inX, s.inY, self.cx, self.cy, 3, 0.9) end
+            disc(ui, s.inX, s.inY + 4, 2, 0.9, 0.55, 0.05, 0.05)   -- a drop of blood
+        end
+    end
+    -- the target of this step
+    if not self.done then
+        local ix, iy, ox, oy = self:plan(self.i, x, y, w, h)
+        if self.phase == "in" then
+            ring(ui, ix, iy, self.tol, 2, 0.85, 0.3, 1, 0.4)
+        elseif self.phase == "out" then
+            -- mirror of the actual entry, straight across
+            local s = self.stitches[self.i]
+            local tx = s and s.inX or ox
+            ring(ui, tx, oy, self.tol, 2, 0.85, 0.3, 1, 0.4)
+            line(ui, tx, iy + 4, tx, oy - 4, 1, 0.35, 0.3, 1, 0.4)
+        elseif self.phase == "tie" then
+            -- the tension gauge beside the stitch
+            local gx, gy, gw, gh = ix + 18, iy - 34, 14, 68
+            ui:drawRect(gx, gy, gw, gh, 0.8, 0.05, 0.05, 0.06)
+            local lo, hi = self.band[1] / 1.2, self.band[2] / 1.2
+            ui:drawRect(gx, gy + gh * (1 - hi), gw, gh * (hi - lo), 0.85, 0.2, 0.75, 0.3)
+            local f = clamp(self.tension / 1.2, 0, 1)
+            ui:drawRect(gx + 3, gy + gh * (1 - f), gw - 6, gh * f, 0.95, 0.95, 0.85, 0.3)
+            ui:drawRectBorder(gx, gy, gw, gh, 1, 0.9, 0.9, 0.9)
         end
     end
     self:lamp(ui)
     self:drawParticles(ui)
-    self:drawTool(ui, "needle")
+    self:drawTool(ui, self.phase == "tie" and "hemostat" or "needle")
 end
 function Suture:mouseMove(mx, my) self:track(mx, my) end
 function Suture:mouseDown(mx, my)
     self:track(mx, my)
     if self.done or not self.box then return end
     local x, y, w, h = unpack(self.box)
-    local px, py = self:point(self.i, x, y, w, h)
-    local d = math.sqrt((mx - px) ^ 2 + (my - py) ^ 2)
-    if d > self.tol * 2.2 then return end
-    local acc = clamp(1 - d / (self.tol * 2), 0, 1)
-    self.acc[#self.acc + 1] = acc
-    self.placed[self.i] = { x = mx, y = my }
+    local ix, iy, ox, oy = self:plan(self.i, x, y, w, h)
+    if self.phase == "in" then
+        local d = math.sqrt((mx - ix) ^ 2 + (my - iy) ^ 2)
+        if d > self.tol * 2.4 then return end
+        local u = 0.18 + (self.i - 1) / (self.count - 1) * 0.64
+        self.stitches[self.i] = { inX = mx, inY = my, inAcc = clamp(1 - d / (self.tol * 2.2), 0, 1), u = u }
+        G.sfx("Stitch")
+        if self.stitches[self.i].inAcc < 0.3 then self:hurtAt(mx, my, 0.3) end
+        self.phase = "out"
+    elseif self.phase == "out" then
+        local s = self.stitches[self.i]
+        local d = math.sqrt((mx - s.inX) ^ 2 + (my - oy) ^ 2)
+        if d > self.tol * 2.4 then return end
+        s.outX, s.outY = mx, my
+        s.outAcc = clamp(1 - d / (self.tol * 2.2), 0, 1)
+        -- symmetry: same distance from the wound line on both sides
+        local midY = y + h / 2
+        local a, b = math.abs(s.inY - midY), math.abs(s.outY - midY)
+        s.sym = clamp(1 - math.abs(a - b) / math.max(6, (a + b) / 2), 0, 1)
+        G.sfx("Stitch")
+        if s.outAcc < 0.3 then self:hurtAt(mx, my, 0.3) end
+        self.phase = "tie"
+        self.tension = 0
+        self.tornWarned = false
+    elseif self.phase == "tie" then
+        self.holding = true
+    end
+end
+function Suture:mouseUp()
+    if self.phase ~= "tie" or not self.holding then return end
+    self.holding = false
+    local s = self.stitches[self.i]
+    if not s then return end
+    local t = self.tension
+    local lo, hi = self.band[1], self.band[2]
+    local q
+    if t >= lo and t <= hi then q = 1
+    elseif t < lo then q = clamp(t / lo, 0, 1) * 0.7
+    else q = clamp(1 - (t - hi) / 0.4, 0, 1) * 0.6 end
+    s.tieQ = q
+    s.tie = t
+    s.tied = true
     G.sfx("Stitch")
-    if acc < 0.35 then self:hurtAt(mx, my, 0.4) end
     self.i = self.i + 1
+    self.phase = "in"
+    self.tension = 0
     if self.i > self.count then self.done = true end
 end
 function Suture:score()
-    local s = 0
-    for _, v in ipairs(self.acc) do s = s + v end
-    return clamp(s / self.count, 0, 1)
+    local total = 0
+    for i = 1, self.count do
+        local s = self.stitches[i]
+        if s and s.tied then
+            total = total + 0.3 * (s.inAcc or 0) + 0.25 * (s.outAcc or 0) * (0.5 + 0.5 * (s.sym or 0)) + 0.45 * (s.tieQ or 0)
+        end
+    end
+    return clamp(total / self.count, 0, 1)
 end
 
 -- ============================================================= extract (P06 foreign body / parasite, P14 clot)

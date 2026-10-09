@@ -721,7 +721,7 @@ function EHR_MedicalJournalUI:drawInfoSection(label, value, x, y, w)
 end
 
 -- HARMONIE: texts a subclass replaces
-function EHR_MedicalJournalUI:titleText() return L("UI_EHR_DiseaseHandbook_Title", "EHR DISEASE HANDBOOK") end
+function EHR_MedicalJournalUI:titleText() return L("UI_EHR_DiseaseHandbook_Title", "HOW TO SURVIVE DISEASE HANDBOOK") end
 function EHR_MedicalJournalUI:indexTitle() return L("UI_EHR_DiseaseHandbook_Index", "DISEASE INDEX") end
 function EHR_MedicalJournalUI:progressText()
     return LF("UI_EHR_DiseaseHandbook_KnownCount", "%1/%2 known", tonumber(self.knownCount) or 0, #CatalogOrder)

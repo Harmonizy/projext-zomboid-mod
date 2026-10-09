@@ -117,6 +117,29 @@ def poster(mod, c1, c2, accent, draw_emblem, title_lines, sub=None, thai=None):
     return out
 
 
+# the mod-list icon (2026-10-09, after the renames: How to Survive, Car for
+# Crash and Mercenary Is Life still had their old icons -- one even said
+# "HOME MEDIC"): the poster's background and emblem, no words, 128 px
+ICON_MODS = {"HARMONIE_HomeMedic", "HARMONIE_SVU3Sandbox", "HARMONIE_ModernFirearmsSystemFix"}
+
+
+def icon(mod, c1, c2, accent, draw_emblem):
+    img = background(c1, c2, mod)
+    emblem_disc(img, SIZE / 2, SIZE / 2, 190, accent + (255,), mix(c2, (0, 0, 0), 0.45) + (255,))
+    d = ImageDraw.Draw(img)
+    # the emblems are drawn for a 112-px disc: draw on a scaled layer
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ld = ImageDraw.Draw(layer)
+    draw_emblem(ld, SIZE / 2, SIZE / 2)
+    big = layer.resize((int(img.size[0] * 1.7), int(img.size[1] * 1.7)), Image.LANCZOS)
+    off = ((big.size[0] - img.size[0]) // 2, (big.size[1] - img.size[1]) // 2)
+    big = big.crop((off[0], off[1], off[0] + img.size[0], off[1] + img.size[1]))
+    img = Image.alpha_composite(img.convert("RGBA"), big)
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle(S(8, 8, SIZE - 8, SIZE - 8), radius=26 * K, outline=accent + (220,), width=int(10 * K))
+    return img.resize((128, 128), Image.LANCZOS)
+
+
 # ------------------------------------------------------------------ emblems
 W = (255, 255, 255, 255)
 
@@ -246,3 +269,6 @@ if __name__ == "__main__":
         img.save(os.path.join(ROOT, "mods", mod, "42", "poster.png"), optimize=True)
         img.save(os.path.join(ROOT, "Workshop", mod, "preview.png"), optimize=True)
         print("poster", mod)
+        if mod in ICON_MODS:
+            icon(mod, c1, c2, acc, em).save(os.path.join(ROOT, "mods", mod, "42", "icon.png"), optimize=True)
+            print("icon", mod)

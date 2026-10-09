@@ -10,12 +10,12 @@
         the hours are up (EHR.Medication.Update -> EHR.Disease.Cure /
         CureModuleDisease). Shows as TREATING in the medical window.
     * Awaiting surgery (hold)
-        For a disease in HM_Surgery.SURGICAL at or past its stage, a
-        finished MEDICINE course no longer cures it: the course is taken
-        off, the disease is put on hold -- its clock is frozen every game
-        minute so the stage cannot rise -- and the patient is told it needs
-        surgery. The operation's treatment then releases the hold.
-        Below that stage medicine still cures as before.
+        For a disease in HM_Surgery.SURGICAL, taking its MEDICINE no longer
+        cures it (owner, 2026-10-09): as soon as a medicine course for it
+        starts, the course is taken off and the disease is put on hold --
+        its clock is frozen every game minute so the stage cannot rise --
+        and the patient is told it needs surgery. The operation's treatment
+        then releases the hold (TREATING).
 ]]--
 
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
@@ -68,8 +68,8 @@ function R.treat(player, id, treatHours, sid)
     return true
 end
 
--- Before EHR checks its courses: a finished medicine course on a disease
--- that needs surgery becomes a hold instead of a cure.
+-- Before EHR checks its courses: a medicine course on a disease that needs
+-- surgery becomes a hold at once instead of a cure.
 function R.checkCourses(player)
     if not player or not authoritative() then return end
     local M = EHR and EHR.Medication
@@ -80,13 +80,11 @@ function R.checkCourses(player)
     local changed = false
     for id, t in pairs(med.activeTreatments) do
         if type(t) == "table" and t.source ~= S.TREATMENT_SOURCE and S.needsSurgery(player, id) then
-            local start = tonumber(t.startTime)
-            local need = M.GetTreatmentCompletionHours and M.GetTreatmentCompletionHours(player, t) or tonumber(t.cureTimeHours)
-            local done = M.IsTreatmentCourseComplete == nil or M.IsTreatmentCourseComplete(player, t)
-            if start and need and now - start >= need and done then
+            do
                 med.activeTreatments[id] = nil
                 if R.hold(player, id) then
                     changed = true
+                    if HMLog then HMLog("Surgery", "%s: medicine for %s -> awaiting surgery", HMLogName and HMLogName(player) or "?", tostring(id)) end
                     if EHR.Locale and EHR.Locale.Say then
                         pcall(EHR.Locale.Say, player, S.T("Say_Held", "The medicine held it back... but this needs surgery now."))
                     end

@@ -303,12 +303,12 @@ local function getMedicalAlert(player)
     end
 
     local title = L("UI_EHR_Moodle_MedicalAlert_Title", "Medical Alert")
-    local desc = L("UI_EHR_Moodle_MedicalAlert_Desc", "Something is wrong. Check EHR Monitor.")
+    local desc = L("UI_EHR_Moodle_MedicalAlert_Desc", "Something is wrong. Check the How to Survive monitor.")
 
     if sideEffects > 0 and diseaseCount <= 0 and woundLevel <= 0 and sepsis <= 0 then
-        desc = L("UI_EHR_Moodle_MedicalAlert_SideEffects", "Medication side effects active. Check EHR Monitor.")
+        desc = L("UI_EHR_Moodle_MedicalAlert_SideEffects", "Medication side effects active. Check the How to Survive monitor.")
     elseif diseaseCount > 1 then
-        desc = L("UI_EHR_Moodle_MedicalAlert_Multiple", "Multiple active conditions. Check EHR Monitor.")
+        desc = L("UI_EHR_Moodle_MedicalAlert_Multiple", "Multiple active conditions. Check the How to Survive monitor.")
     end
 
     return {

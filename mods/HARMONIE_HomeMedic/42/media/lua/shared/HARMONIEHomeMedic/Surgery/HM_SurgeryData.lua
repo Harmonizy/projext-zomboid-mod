@@ -8,9 +8,9 @@
     Outcome (request 2026-09-30, round 2): a successful operation puts the
     condition on TREATMENT (EHR's "treating" state: it stops getting worse
     and clears after `treat` hours -- shorter after an excellent operation).
-    Diseases listed in S.SURGICAL need surgery once they reach that stage:
-    a finished medicine course then only HOLDS them ("awaiting surgery",
-    the stage no longer rises) instead of curing them. Everything else is
+    Diseases listed in S.SURGICAL need surgery: their medicine only HOLDS
+    them ("awaiting surgery", the stage no longer rises) instead of curing
+    them, and the operation then starts the treatment. Everything else is
     still cured by medicine alone, as in EHR.
 
     Unlocks: a procedure needs First Aid at its tier; an operation may also
@@ -124,8 +124,10 @@ S.Surgeries = {
         steps = { "P01", "P04", "P03", "P02", "P08" },
         supplies = { "blade", "forceps", "suture", "dressing", "antiseptic" },
         bloodLoss = 250, pain = 55,
-        targets = { wound_infection = {}, cellulitis = { treat = 24 }, tetanus = { treat = 48 },
-                    sepsis = { treat = 36 }, hyperkeratotic_scabies = { treat = 24, anyPart = true } } },
+        -- one operation per disease (owner, 2026-10-09): cellulitis is drained,
+        -- sepsis goes to organ salvage
+        targets = { wound_infection = {}, tetanus = { treat = 48 },
+                    hyperkeratotic_scabies = { treat = 24, anyPart = true } } },
     abscess_drainage = { tier = "clinical",
         steps = { "P01", "P05", "P03", "P08" },
         supplies = { "blade", "syringe", "suture", "dressing", "antiseptic" },
@@ -188,10 +190,14 @@ S.ASPIRATION_CHANCE_SEDATED = 35
 S.SURGERY_ORDER = { "debridement", "abscess_drainage", "foreign_body", "parasite_extraction", "thoracic",
     "organ_salvage", "neurosurgery", "blood_purification", "amputation", "experimental" }
 
--- Diseases that need surgery from this stage on: medicine alone only holds them.
+-- Diseases that need surgery (owner, 2026-10-09: "โรคที่มีการผ่าตัด อยากให้การกิน
+-- ยาในการรักษาของโรคนั้นทำให้โรคเข้าสถานะ รอการผ่าตัด แล้วเมื่อผ่าตัดเสร็จค่อยเข้า
+-- สถานะ กำลังรักษา"): from stage 1 -- taking their medicine puts them on
+-- hold (AWAITING SURGERY) at once, the operation then starts TREATING.
+-- Each has exactly one operation (S.surgeriesFor).
 S.SURGICAL = {
-    cellulitis = 3, sepsis = 3, tetanus = 3, trichinosis = 3, pneumonia = 3,
-    cadaveric_aspergillosis = 3, toxin_poisoning = 3, hyperkeratotic_scabies = 3, ahtr = 3,
+    cellulitis = 1, sepsis = 1, tetanus = 1, trichinosis = 1, pneumonia = 1,
+    cadaveric_aspergillosis = 1, toxin_poisoning = 1, hyperkeratotic_scabies = 1, ahtr = 1,
 }
 
 S.SUCCESS = 0.45            -- quality needed for the operation to help
