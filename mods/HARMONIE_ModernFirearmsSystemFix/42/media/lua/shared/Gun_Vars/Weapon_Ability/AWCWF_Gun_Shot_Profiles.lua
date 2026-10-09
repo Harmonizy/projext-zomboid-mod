@@ -1,0 +1,15 @@
+-- COMPATIBILITY SHIM - safe to delete once upstream migrates its own requires.
+--
+-- Upstream renamed its AWCWF_* Lua files to EFK_* on 2026-08-30 but did not
+-- update a single require statement. Eight requires across four of its files
+-- still ask for the old AWCWF_ paths, which no longer exist in its tree. Until
+-- this session the community patch happened to satisfy three of them purely
+-- because it still shipped files under the old names.
+--
+-- The patch now overrides upstream's EFK_* files by exact path, which is
+-- deterministic instead of load-order dependent. This one-line file keeps the
+-- stale upstream requires resolving in the meantime. It holds no data and
+-- defines no behaviour.
+--
+-- Delete this file when upstream's requires point at EFK_ names.
+require "Gun_Vars/Weapon_Ability/EFK_Gun_Shot_Profiles"

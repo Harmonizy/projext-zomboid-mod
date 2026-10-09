@@ -1,0 +1,45 @@
+-- local function getMagazine(weapon)
+--     if weapon and weapon:IsWeapon() and weapon:isRanged() then
+--         local WeaponType = weapon:getType()
+--         local Loaded = weapon:isContainsClip()
+--         local Type = weapon:getMagazineType()
+--         return instanceItem(Type)
+--         -- local MagPart, MagPart2, magItem1, magItem2
+--         -- if AWCWF_MagazineTypeToPart[Type] then
+--         --     MagPart = AWCWF_MagazineTypeToPart[Type]
+--         --     magItem1 = ScriptManager.instance:getItem(MagPart)
+--         -- else
+--         --     MagPart = "Gunpart.Clip_" .. WeaponType
+--         --     magItem1 = ScriptManager.instance:getItem(MagPart)
+--         --     MagPart2 = "Base.Clip_" .. WeaponType
+--         --     magItem2 = ScriptManager.instance:getItem(MagPart2)
+--         --     -- print(MagPart, MagPart2, magItem1, magItem2)
+--         -- end
+--         -- if magItem1 or magItem2 then
+--         --     local magItem
+--         --     if magItem1 then
+--         --         magItem =
+--         --     elseif magItem2 then
+--         --         magItem = instanceItem(magItem2)
+--         --     end
+--         --     return magItem
+--         -- end
+--     end
+-- end
+-- -- local old_ISInsertMagazine_start = ISInsertMagazine.start
+-- function ISInsertMagazine:start()
+--     -- old_ISInsertMagazine_start(self)
+--     if isClient() and self.magazine then
+--         self.magazine = self.character:getInventory():getItemById(self.magazine:getID())
+--     end
+--     self:setAnimVariable("WeaponReloadType", self.gun:getWeaponReloadType())
+--     self:setAnimVariable("isLoading", true)
+--     self:setOverrideHandModels(self.gun, nil)
+--     local Magazine = getMagazine(self.gun)
+--     print(Magazine)
+--     self:setOverrideHandModels(self.gun, Magazine)
+--     self:setActionAnim(CharacterActionAnims.Reload)
+--     self.character:reportEvent("EventReloading");
+--     print("ISInsertMagazine:start")
+--     self:initVars()
+-- end

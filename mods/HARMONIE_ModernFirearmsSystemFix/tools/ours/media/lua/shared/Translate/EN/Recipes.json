@@ -1,0 +1,16 @@
+{
+    "AmmoReloadingKit145": "Reload .145 Ammo",
+    "AmmoReloadingKit44": "Reload .44 Magnum Ammo",
+    "AmmoReloadingKit45": "Reload .45 ACP Ammo",
+    "AmmoReloadingKit50": "Reload .50 BMG Ammo",
+    "AmmoReloadingKit545": "Reload 5.45×39mm Ammo",
+    "AmmoReloadingKit556": "Reload 5.56×45mm Ammo",
+    "AmmoReloadingKit58": "Reload 5.8mm Ammo",
+    "AmmoReloadingKit68": "Reload 6.8mm Ammo",
+    "AmmoReloadingKit762": "Reload 7.62×51mm Ammo",
+    "AmmoReloadingKit86": "Reload 8.6mm Ammo",
+    "AmmoReloadingKit9mm": "Reload 9mm Parabellum Ammo",
+    "AmmoReloadingKitGrenadeAmmo": "Reload Underbarrel Grenade Round",
+    "CraftingAmmoReloadingKit": "Craft Ammo Reloading Kit",
+    "OpenCartonOf145": "Open .145 Ammo Carton (10 Boxes)"
+}

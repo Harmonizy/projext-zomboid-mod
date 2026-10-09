@@ -1,0 +1,126 @@
+module Base
+{
+    sound AW_LowAmmo_Warn_Low
+    {
+        maxInstancesPerEmitter = 1,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 0.42,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 0.42,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 0.42,
+        }
+    }
+    
+    sound AW_LowAmmo_Warn_Mid
+    {
+        maxInstancesPerEmitter = 1,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 0.7,
+        }
+    }
+    
+    sound AW_LowAmmo_Warn_Critical
+    {
+        maxInstancesPerEmitter = 1,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 1.2,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 1.2,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 1.2,
+        }
+    }
+    
+    sound AW_LowAmmo_Warn_Last
+    {
+        maxInstancesPerEmitter = 1,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 2,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 2,
+        }
+        clip
+        {
+            file = media/sound/GunShot/low_ammo/wpn_low_ammo_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.05,
+            volume = 2,
+        }
+    }
+}

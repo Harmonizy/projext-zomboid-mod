@@ -1,0 +1,188 @@
+module Base
+{
+    sound AW_AK103_Reload_Start
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_mvt.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.3,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_mvt.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_xmag_fast_mvt.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.26,
+        }
+    }
+    
+    sound AW_AK103_Reload_MagOut
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_magout.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.34,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_empty_magout.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.32,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_xmag_fast_magout.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.3,
+        }
+    }
+    
+    sound AW_AK103_Reload_MagHit
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_maghits.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.32,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_xmag_fast_maghit.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.3,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_smag_fast_maghit.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+    }
+    
+    sound AW_AK103_Reload_MagIn
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_empty_magin.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.34,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_xmag_fast_magin.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.32,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_smag_fast_magin.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.3,
+        }
+    }
+    
+    sound AW_AK103_Reload_MagClick
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_magclick.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.32,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_magclick.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.3,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_smag_empty_magclick.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.28,
+        }
+    }
+    
+    sound AW_AK103_Reload_Charge
+    {
+        category = AW_Weapon_Reload,
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_fast_empty_charge.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.36,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_empty_charge.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.34,
+        }
+        clip
+        {
+            file = media/sound/GunReload/AK103/p04_ar_akilo_reload_smag_empty_charge.wav,
+            distanceMin = 2,
+            distanceMax = 35,
+            reverbFactor = 0.08,
+            volume = 0.32,
+        }
+    }
+}

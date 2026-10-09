@@ -1,5 +1,2745 @@
 VERSION = 1,
 
+
+option ModernFirearmsSystemSandboxGun._CycloneAK_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_CycloneAK_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SW629_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SW629_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._lee_enfield_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_lee_enfield_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M16D_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M16D_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._QBU203_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_QBU203_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._nagant_m1895_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_nagant_m1895_cat_Spawn,
+}
+
+
+option ModernFirearmsSystemSandboxGun._Revolver_Short_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Revolver_Short_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._DoubleBarrelShotgunSawnoff_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_DoubleBarrelShotgunSawnoff_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MFS_MTL30_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MFS_MTL30_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MEGA_AR15_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MEGA_AR15_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AssaultRifle_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AssaultRifle_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AssaultRifle2_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AssaultRifle2_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._HuntingRifle_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_HuntingRifle_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._VarmintRifle_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_VarmintRifle_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._JS14_Rifle_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_JS14_Rifle_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._JS3T_Shotgun_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_JS3T_Shotgun_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._L92_Carbine_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_L92_Carbine_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._L94_Rifle_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_L94_Rifle_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MSR7T_Rifle_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MSR7T_Rifle_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._TrapperCarbine_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_TrapperCarbine_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Pistol_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Pistol_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Pistol2_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Pistol2_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Pistol3_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Pistol3_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Revolver_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Revolver_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Revolver_Long_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Revolver_Long_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Shotgun_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Shotgun_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._ShotgunSawnoff_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_ShotgunSawnoff_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._DoubleBarrelShotgun_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_DoubleBarrelShotgun_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._56S_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_56S_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Taurus_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Taurus_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Anaconda_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Anaconda_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AWM_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AWM_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M200_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M200_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M500_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M500_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M1866_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M1866_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._ROSE_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_ROSE_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Marlin1894_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Marlin1894_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Christine45_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Christine45_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M1873_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M1873_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SRM3_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SRM3_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._UMP45_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_UMP45_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._usp45_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_usp45_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AX50_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AX50_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Thoridal_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Thoridal_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._GM6_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_GM6_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M82_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M82_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Requiem_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Requiem_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SnipeX_T_Rex_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SnipeX_T_Rex_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._XM109_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_XM109_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AEK971_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AEK971_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AK12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AK12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AKS74U_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AKS74U_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AN94_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AN94_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._HK416_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_HK416_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._KS1_KAC_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_KS1_KAC_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M4A1S_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M4A1S_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M4Mk18_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M4Mk18_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M7_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M7_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M91_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M91_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MCX_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MCX_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MK12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MK12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._NoveskeN4_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_NoveskeN4_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SAI_GRY_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SAI_GRY_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SG553_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SG553_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._QBU191_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_QBU191_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._QBZ191_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_QBZ191_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._QBZ192_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_QBZ192_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._QJY201_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_QJY201_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._QSZ_92G_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_QSZ_92G_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._98k_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_98k_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AK103_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AK103_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._ar_10_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_ar_10_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._ARX200_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_ARX200_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._BAR_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_BAR_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Berthier_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Berthier_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._C96_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_C96_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._FAL_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_FAL_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._FN_Evolys_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_FN_Evolys_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Groza_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Groza_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._HK51_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_HK51_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._LebelM1886_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_LebelM1886_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._lewis_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_lewis_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M1Garand_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M1Garand_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M14_Albedo_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M14_Albedo_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M240_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M240_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._m1903_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_m1903_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M1918_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M1918_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M1919a6_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M1919a6_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MG3_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MG3_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._mk47_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_mk47_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Mosin_Nagant_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Mosin_Nagant_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._PKM_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_PKM_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._RPK16_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_RPK16_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._RSC_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_RSC_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._ScarH_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_ScarH_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SVD_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SVD_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SVT40_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SVT40_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Type81_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Type81_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._URG_S_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_URG_S_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._HoneyBadger_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_HoneyBadger_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._LWMMG_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_LWMMG_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._mg338_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_mg338_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MK18_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MK18_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._REAPR_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_REAPR_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AMB17_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AMB17_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AS_VAL_MOD4_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AS_VAL_MOD4_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._BerettaM93R_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_BerettaM93R_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._EMP_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_EMP_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._FN57_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_FN57_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._G17_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_G17_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._G18_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_G18_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._G19_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_G19_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._G34_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_G34_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._KrissVector_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_KrissVector_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._lugerP08_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_lugerP08_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M9A4_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M9A4_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._minigun_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_minigun_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._mp5_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_mp5_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._MP7_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_MP7_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._SIGP226_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_SIGP226_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Taran2011_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Taran2011_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Thompson_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Thompson_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._uzi_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_uzi_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._VSSM_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_VSSM_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._interceptor_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_interceptor_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AA12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AA12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._BRAuto5_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_BRAuto5_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._ChiappaTripleThreat_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_ChiappaTripleThreat_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._DP12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_DP12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M870_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M870_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._M1887_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_M1887_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._origin12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_origin12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Saiga12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Saiga12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Striker12_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Striker12_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._TTI_Benelli_M4_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_TTI_Benelli_M4_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._UTS15_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_UTS15_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._Minigun_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_Minigun_cat_Spawn,
+}
+
+option ModernFirearmsSystemSandboxGun._AS_VAL_cat_Spawn
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = ModernFirearmsSystemSandboxGun_AS_VAL_cat_Spawn,
+}
+
+option MFSCommunityFixLoot.EnableMFSCivilianFirearms
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = MFSCommunityFixLoot_EnableMFSCivilianFirearms,
+}
+
+option MFSCommunityFixLoot.FilterZombieVanillaGuns
+{
+    type = boolean,
+    default = false,
+    page = ModernFirearmsSystemSandbox_Gun,
+    translation = MFSCommunityFixLoot_FilterZombieVanillaGuns,
+}
+
+option MFSCommunityFixLoot.ForceRemoveDisabledGuns
+{
+    type = boolean,
+    default = false,
+    page = MFSCommunityFixGunRates,
+    translation = MFSCommunityFixLoot_ForceRemoveDisabledGuns,
+}
+
+option MFSCommunityFixLoot.DisableVanillaWeaponParts
+{
+    type = boolean,
+    default = false,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_DisableVanillaWeaponParts,
+}
+
+option MFSCommunityFixGunRates.Gun_AssaultRifle
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AssaultRifle_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AssaultRifle2
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AssaultRifle2_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_HuntingRifle
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_HuntingRifle_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_VarmintRifle
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_VarmintRifle_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_JS14_Rifle
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_JS14_Rifle_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_JS3T_Shotgun
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_JS3T_Shotgun_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_L92_Carbine
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_L92_Carbine_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_L94_Rifle
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_L94_Rifle_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MSR7T_Rifle
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MSR7T_Rifle_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_TrapperCarbine
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_TrapperCarbine_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Pistol
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Pistol_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Pistol2
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Pistol2_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Pistol3
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Pistol3_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Revolver
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Revolver_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Revolver_Short
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Revolver_Short_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Revolver_Long
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Revolver_Long_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Shotgun
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Shotgun_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_ShotgunSawnoff
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_ShotgunSawnoff_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_DoubleBarrelShotgun
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_DoubleBarrelShotgun_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_DoubleBarrelShotgunSawnoff
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 0.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_DoubleBarrelShotgunSawnoff_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_56S_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_56S_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Taurus_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Taurus_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Anaconda_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Anaconda_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AWM_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AWM_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M200_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M200_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M500_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M500_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M1866_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M1866_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_ROSE_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_ROSE_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Marlin1894
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Marlin1894_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Christine45_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Christine45_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M1873_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M1873_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SRM3_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SRM3_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_UMP45_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_UMP45_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_usp45_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_usp45_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AX50_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AX50_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Thoridal
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Thoridal_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_GM6_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_GM6_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M82_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M82_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Requiem_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Requiem_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SnipeX_T_Rex_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SnipeX_T_Rex_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_XM109_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_XM109_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AEK971_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AEK971_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AK12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AK12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AKS74U_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AKS74U_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AN94_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AN94_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_HK416_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_HK416_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_KS1_KAC_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_KS1_KAC_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M4A1S_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M4A1S_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M4Mk18_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M4Mk18_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M7_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M7_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M91_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M91_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MCX_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MCX_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MK12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MK12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_NoveskeN4_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_NoveskeN4_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SAI_GRY_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SAI_GRY_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SG553_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SG553_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_QBU191_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_QBU191_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_QBZ191_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_QBZ191_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_QBZ192_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_QBZ192_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_QJY201_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_QJY201_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_QSZ_92G
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_QSZ_92G_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_98k_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_98k_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AK103_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AK103_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_ar_10_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_ar_10_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_ARX200_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_ARX200_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_BAR_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_BAR_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Berthier_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Berthier_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_C96_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_C96_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_FAL_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_FAL_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_FN_Evolys_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_FN_Evolys_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Groza_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Groza_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_HK51_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_HK51_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_LebelM1886_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_LebelM1886_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_lewis_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_lewis_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M1Garand_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M1Garand_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M14_Albedo
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M14_Albedo_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M240_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M240_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_m1903_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_m1903_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M1918_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M1918_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M1919a6_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M1919a6_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MG3_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MG3_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_mk47_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_mk47_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Mosin_Nagant_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Mosin_Nagant_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_PKM_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_PKM_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_RPK16_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_RPK16_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_RSC_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_RSC_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_ScarH_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_ScarH_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SVD_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SVD_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SVT40_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SVT40_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Type81_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Type81_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_URG_S_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_URG_S_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_HoneyBadger_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_HoneyBadger_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_LWMMG_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_LWMMG_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_mg338_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_mg338_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MK18_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MK18_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_REAPR_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_REAPR_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AMB17_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AMB17_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AS_VAL_MOD4_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AS_VAL_MOD4_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_BerettaM93R_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_BerettaM93R_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_EMP_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_EMP_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_FN57_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_FN57_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_G17_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_G17_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_G18_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_G18_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_G19_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_G19_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_G34_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_G34_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_KrissVector_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_KrissVector_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_lugerP08_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_lugerP08_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M9A4_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M9A4_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_minigun_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_minigun_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_mp5_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_mp5_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MP7_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MP7_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SIGP226_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SIGP226_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Taran2011_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Taran2011_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Thompson_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Thompson_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_uzi_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_uzi_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_VSSM_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_VSSM_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_interceptor_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_interceptor_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AA12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AA12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_BRAuto5_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_BRAuto5_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_ChiappaTripleThreat_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_ChiappaTripleThreat_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_DP12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_DP12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M870_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M870_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M1887_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M1887_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_origin12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_origin12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Saiga12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Saiga12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Striker12_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Striker12_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_TTI_Benelli_M4_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_TTI_Benelli_M4_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_UTS15_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_UTS15_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_Minigun_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_Minigun_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_AS_VAL_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_AS_VAL_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_CycloneAK_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_CycloneAK_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_SW629_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_SW629_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_lee_enfield_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_lee_enfield_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_M16D_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_M16D_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_QBU203_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_QBU203_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_nagant_m1895_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_nagant_m1895_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MFS_MTL30_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MFS_MTL30_cat_Spawn,
+}
+
+option MFSCommunityFixGunRates.Gun_MEGA_AR15_cat
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixGunRates,
+    translation = ModernFirearmsSystemSandboxGun_MEGA_AR15_cat_Spawn,
+}
+
+option MFSCommunityFixLoot.FirearmMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_FirearmMultiplier,
+}
+
+option MFSCommunityFixLoot.ScopeMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_ScopeMultiplier,
+}
+
+option MFSCommunityFixLoot.RightScopeMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_RightScopeMultiplier,
+}
+
+option MFSCommunityFixLoot.LeftScopeMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_LeftScopeMultiplier,
+}
+
+option MFSCommunityFixLoot.MuzzleMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_MuzzleMultiplier,
+}
+
+option MFSCommunityFixLoot.StockMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_StockMultiplier,
+}
+
+option MFSCommunityFixLoot.GripMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_GripMultiplier,
+}
+
+option MFSCommunityFixLoot.LightMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_LightMultiplier,
+}
+
+option MFSCommunityFixLoot.LaserMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_LaserMultiplier,
+}
+
+option MFSCommunityFixLoot.SlingMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_SlingMultiplier,
+}
+
+option MFSCommunityFixLoot.RecoilPadMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_RecoilPadMultiplier,
+}
+
+option MFSCommunityFixLoot.BarrelMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_BarrelMultiplier,
+}
+
+option MFSCommunityFixLoot.UnderbarrelMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 100.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_UnderbarrelMultiplier,
+}
+
+option MFSCommunityFixLoot.FunctionalMagazineMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 5.0,
+    default = 1.0,
+    page = MFSCommunityFixAttachmentLoot,
+    translation = MFSCommunityFixLoot_FunctionalMagazineMultiplier,
+}
+
+option MFSSandbox.BayonetDamage
+{
+    type = double,
+    min = 0.1,
+    max = 2,
+    default = 1.0,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSSandbox_BayonetDamage,
+}
+
+option MFSSandbox.BayonetStamina
+{
+    type = integer,
+    min = 0,
+    max = 2,
+    default = 0,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSSandbox_BayonetStamina,
+}
+
+option MFSTrade.Enabled
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSTrade_Enabled,
+}
+
+option MFSTrade.SellList
+{
+    type = string,
+    default = ,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSTrade_SellList,
+}
+
+option MFSTrade.BuyList
+{
+    type = string,
+    default = ,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSTrade_BuyList,
+}
+
+option MFSEject.Enabled
+{
+    type = boolean,
+    default = true,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSEject_Enabled,
+}
+
+option MFSSandbox.GrenadeDamage
+{
+    type = double,
+    min = 0.1,
+    max = 3,
+    default = 3,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSSandbox_GrenadeDamage,
+}
+
+option MFSSandbox.GrenadeRange
+{
+    type = integer,
+    min = 0,
+    max = 60,
+    default = 3,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSSandbox_GrenadeRange,
+}
+
+option MFSSandbox.EnableReticle
+{
+    type = boolean,
+    default = false,
+    page = ModernFirearmsSystemSandbox_Gameplay,
+    translation = MFSSandbox_EnableReticle,
+}
+
+/* ---- HARMONIE options ---- */
+
 option HARMONIE_ModernFirearmsSystemFix.DropRateMultiplier
 {
     type = double,
@@ -9,3 +2749,4 @@ option HARMONIE_ModernFirearmsSystemFix.DropRateMultiplier
     page = HARMONIE_ModernFirearmsSystemFix,
     translation = HARMONIE_ModernFirearmsSystemFixDropRateMultiplier,
 }
+

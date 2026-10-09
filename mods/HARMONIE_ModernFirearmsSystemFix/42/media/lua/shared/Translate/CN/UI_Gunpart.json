@@ -1,0 +1,6 @@
+{
+    "UI_GunpartTooltip_ModOptions_Title": "现代枪械系统配件悬浮提示",
+    "UI_GunpartTooltip_ModOptions_Display": "显示设置",
+    "UI_GunpartTooltip_EnableCompact": "启用精简悬浮提示",
+    "UI_GunpartTooltip_EnableCompact_tooltip": "为拥有多个安装点位的枪械配件使用精简自定义悬浮提示"
+}

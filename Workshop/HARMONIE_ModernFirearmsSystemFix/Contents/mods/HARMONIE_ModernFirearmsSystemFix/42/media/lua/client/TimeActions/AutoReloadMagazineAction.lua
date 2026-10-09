@@ -1,0 +1,3 @@
+-- EFK_MagazineButton 按钮已取消，其自动装填逻辑也一并移除。
+-- 现在的“自动装填”改为：人物装填弹匣时每个循环装 5 发，
+-- 见 shared/TimedActions/AutoReloadMagazineAction.lua。

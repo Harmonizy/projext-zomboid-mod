@@ -1,0 +1,52 @@
+module Base
+{
+   
+    craftRecipe AmmoReloadingKit68
+    {
+        timedAction = OpenAmmoBox,
+        time = 150,
+        category = 现代枪械系统ModernFirearmsSystem,
+        recipeGroup = AmmoReloadingKit,
+        NeedToBeLearn = true,
+        OnCreate = RecipeCodeOnCreate.onCreateAmmoReloadingKit68,
+        inputs
+        {
+            item 1 [Base.AmmoReloadingKit] mode:keep,
+            item 1 [Base.58Box;Base.Bullets50Box;Base.Bullets44Box;Base.Bullets9mmBox;Base.Bullets45Box;Base.Bullets86Box;Base.Bullets357Box;Base.Bullets145Box;Base.Bullets38Box;Base.545Box;Base.308Box;Base.3030Box;Base.556Box] mappers[ammoTypes68] flags[Prop2;AllowFavorite;InheritFavorite],
+        }
+        outputs
+        {
+            item 1 mapper:ammoTypes68,
+        }
+        itemMapper ammoTypes68
+        {            
+Base.Bullets38Box = Base.Bullets44Box,
+Base.Bullets38Box = Base.Bullets50Box,
+Base.Bullets38Box = Base.Bullets45Box,
+Base.Bullets38Box = Base.Bullets86Box,
+Base.Bullets38Box = Base.Bullets357Box,
+Base.Bullets38Box = Base.Bullets145Box,
+Base.Bullets38Box = Base.Bullets9mmBox,
+Base.Bullets38Box = Base.545Box,
+Base.Bullets38Box = Base.58Box,
+Base.Bullets38Box = Base.308Box,
+Base.Bullets38Box = Base.556Box,
+Base.Bullets38Box = Base.3030Box,
+        }
+    }
+
+item Ammo68
+    {
+        DisplayCategory = RecipeResource,
+        ItemType = base:literature,
+        Weight = 0.5,
+        Icon = Paperwork_Graph_Crumpled,
+        BoredomChange = -10,
+        StressChange = -5,
+        LearnedRecipes = AmmoReloadingKit68,
+        StaticModel = Magazine,
+        WorldStaticModel = MagazineGround,
+        Tags = base:magazine,
+        OnCreate = ItemCodeOnCreate.onCreateRecipeMagazine,
+    }
+}

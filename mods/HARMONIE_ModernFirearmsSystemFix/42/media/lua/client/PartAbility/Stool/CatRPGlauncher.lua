@@ -1,0 +1,73 @@
+-- require "Advanced_trajectory_core"
+-- local HasEnterFireModeFlag = HasEnterFireModeFlag or false
+-- local function HasRPGlauncher(playerObj)
+--     local MainGun = playerObj:getPrimaryHandItem()
+--     if not MainGun then
+--         return {false, false}
+--     end
+--     if MainGun:IsWeapon() and MainGun:isRanged() then
+--         if MainGun:getStool() and MainGun:getStool():getType() == "RPGLauncher_cat" then
+--             return {true, true}
+--         end
+--         if MainGun:getStool() and MainGun:getStool():getType() == "RPGLauncher_cat_empty" then
+--             return {true, false}
+--         end
+--     end
+--     return {false, false}
+-- end
+-- local function SetLauncherStatus(playerObj, type)
+--     local MainGun = playerObj:getPrimaryHandItem()
+--     if type == "Empty" then
+--         local MagPart = instanceItem("Gunpart.RPGLauncher_cat_empty")
+--         MainGun:setWeaponPart("Stool", MagPart)
+--     end
+-- end
+-- -- FlagNow 0 为有无武器  1 为是否装弹
+-- local function CheckRPGlauncher(playerObj)
+--     local FlagNow = HasRPGlauncher(playerObj)
+--     if FlagNow[1] and playerObj:isAiming() then
+--         local weaitem = instanceItem("Base.PipeBomb")
+--         if Advanced_trajectory.RPGAimCursor == nil then
+--             Advanced_trajectory.RPGAimCursor = ISShootGrenade:new("", "", playerObj, weaitem)
+--             getCell():setDrag(Advanced_trajectory.RPGAimCursor, 0)
+--         end
+--         HasEnterFireModeFlag = true
+--         return
+--     end
+--     if HasEnterFireModeFlag and not playerObj:isAiming() then
+--         local DragNow = getCell():getDrag(0)
+--         if DragNow and DragNow.Type == "ISShootGrenade" then
+--             getCell():setDrag(nil, 0)
+--         end
+--         Advanced_trajectory.RPGAimCursor = nil
+--         HasEnterFireModeFlag = false
+--     end
+-- end
+-- local function LaunchRPGLauncher(_key)
+--     if _key == getCore():getKey("LauchGrenadelauncherat") then
+--         local playerObj = getPlayer()
+--         local FlagNow = HasRPGlauncher(playerObj)
+--         if FlagNow[1] and playerObj:isAiming() then
+--             if FlagNow[2] then
+--                 local cell = getCell():getDrag(0)
+--                 if cell == nil then
+--                     return
+--                 end
+--                 playerObj:playSound("LauncherFire")
+--                 Advanced_trajectory.ShootRPG(playerObj)
+--                 SetLauncherStatus(playerObj, "Empty")
+--             else
+--                 local inv = playerObj:getInventory()
+--                 local AmmoCanno = inv:FindAndReturn("RPGRocket")
+--                 if AmmoCanno then
+--                     ISTimedActionQueue.add(ShootGrenadeReload:new(playerObj, 200, playerObj:getPrimaryHandItem(), "RPG"))
+--                 end
+--             end
+--         end
+--     end
+-- end
+-- local function OnGameStartCheckModinfo()
+--     Events.OnKeyPressed.Add(LaunchRPGLauncher)
+--     Events.OnPlayerUpdate.Add(CheckRPGlauncher)
+-- end
+-- Events.OnGameStart.Add(OnGameStartCheckModinfo)

@@ -1,0 +1,8 @@
+{
+    "ContextMenu_Remove_Battery_To_Laser": "Извлечь батарею из лазера",
+    "ContextMenu_ADD_Battery_To_Laser": "Вставить батарею в лазер",
+    "ContextMenu_Remove_Battery_To_Light": "Извлечь батарею из фонаря",
+    "ContextMenu_ADD_Battery_To_Light": "Вставить батарею в фонарь",
+    "ContextMenu_AirDropMarker": "Использовать маркер сброса",
+    "ContextMenu_AirDrop": "Открыть сброшенный груз"
+}

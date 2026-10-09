@@ -1,0 +1,76 @@
+require "ISHotbar"
+local FONT_HGT_SMALL = getTextManager():getFontHeight(UIFont.Small)
+function ISHotbar:render()
+    if (self.playerNum > 0) or JoypadState.players[self.playerNum + 1] then
+        self:setVisible(false);
+        -- Don't remove this from the screen, we need update() to call refresh().
+        --		self:removeFromUIManager();
+    end
+
+    self:drawRectBorderStatic(0, 0, self.width, self.height, self.borderColor.a, self.borderColor.r, self.borderColor.g,
+        self.borderColor.b);
+
+    local mouseOverSlotIndex = self:getSlotIndexAt(self:getMouseX(), self:getMouseY())
+
+    local draggedItem = nil
+    if ISMouseDrag.dragging and (mouseOverSlotIndex ~= -1) then
+        local dragging = ISInventoryPane.getActualItems(ISMouseDrag.dragging)
+        local slot = self.availableSlot[mouseOverSlotIndex]
+        for _, item in ipairs(dragging) do
+            if self:canBeAttached(slot, item) then
+                draggedItem = item
+                break
+            end
+        end
+    end
+
+    local slotX = self.margins + 1;
+
+    for i, slot in pairs(self.availableSlot) do
+        self:drawRectBorderStatic(slotX, self.margins + 1, self.slotWidth, self.slotHeight, self.borderColor.a,
+            self.borderColor.r, self.borderColor.g, self.borderColor.b);
+        self:drawText(tostring(i), slotX + 3, self.margins + 2, self.textColor.r, self.textColor.g, self.textColor.b,
+            self.textColor.a, self.font);
+        local item = self.attachedItems[i]
+        if i == mouseOverSlotIndex then
+            local r, g, b = 1, 1, 1
+            if draggedItem then
+                item = draggedItem
+            elseif ISMouseDrag.dragging then
+                r, g, b = 1, 0, 0
+            end
+            self:drawRect(slotX, self.margins + 1, self.slotWidth, self.slotHeight, 0.2, r, g, b, 1);
+            local slotName = getTextOrNull("IGUI_HotbarAttachment_" .. slot.slotType) or slot.name;
+            local textWid = getTextManager():MeasureStringX(UIFont.Small, slotName)
+            self:drawRect(slotX + (self.slotWidth - textWid) / 2 - 2, 0 - FONT_HGT_SMALL, textWid + 2 * 2,
+                FONT_HGT_SMALL, 0.6, 0.0, 0.0, 0.0)
+            self:drawText(slotName, slotX + (self.slotWidth - textWid) / 2, 0 - FONT_HGT_SMALL, self.textColor.r,
+                self.textColor.g, self.textColor.b, self.textColor.a, self.font);
+        elseif item == draggedItem then
+            item = nil
+        end
+        if item then
+            local tex = item:getTexture()
+            self:drawTextureScaledAspect(tex, slotX, (self.height - 64) / 2, 64, 64, 1, 1, 1, 1)
+
+            -- local n = math.floor(((item:getCondition() / item:getConditionMax()) * 5));
+
+            -- if(item:getCondition() > 0 and n == 0) then
+            --	n = 1;
+            -- end
+
+            -- self:drawTexture(self.qualityStars[n], slotX + self.slotWidth - 15, self.margins + 3,1,1,1,1);
+
+            if item:isEquipped() then
+                tex = self.equippedItemIcon
+                self:drawTexture(tex, slotX + self.slotWidth - tex:getWidth() - 5,
+                    self.height - self.margins - tex:getHeight() - 5, 1, 1, 1, 1);
+                -- self:drawTextureScaledAspect(tex, slotX + (32 / 2), (self.height - 32) / 2, 32, 32, 1, 1, 1, 1)
+            end
+        elseif slot.texture then
+            self:drawTexture(slot.texture, slotX + slot.texture:getWidth() / 2,
+                (self.height - slot.texture:getHeight()) / 2, 0.25, 1.0, 1.0, 1.0)
+        end
+        slotX = slotX + self.slotWidth + self.slotPad;
+    end
+end

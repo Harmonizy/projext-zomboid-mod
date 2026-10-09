@@ -1,17 +1,21 @@
 version=1
 id=3801634449
-title=HARMONIE - ModernFirearmsSystem Fix
-description=Four fixes for "ModernFirearmsSystem" (Workshop ID 3633421539).
+title=HARMONIE - Modern Firearms
+description=HARMONIE - Modern Firearms: a standalone gun mod. It does not need any other gun mod.
 description=
-description=(1) Adds a sandbox option to control how often its ~230 guns and ammo items spawn (HARMONIE: ModernFirearmsSystem Fix -> Gun/ammo drop rate multiplier) -- the base mod ships them at fixed loot weights with only per-gun on/off toggles, no overall rate control. Scale everything together from 0-5x (default 1.0 = unchanged), without touching vanilla loot or the mod's own weapon attachments/parts.
+description=Based on "Modern Firearms System" (Workshop 3633421539) and used WITH THE ORIGINAL AUTHOR'S PERMISSION. The original is no longer developed. Its guns, ammo, magazines, parts and attachments, 3D models, textures, animations, sounds and its 3D inspect view are the original author's work -- all credit to them. See CREDITS.txt in the mod.
 description=
-description=(2) Guards against a rare bug where reloading could fail to actually use up ammo, caused by a race in the base mod's own magazine-refresh code.
+description=Included: every gun, ammo type, magazine, part and attachment, the 3D inspect / modification view, the reload / eject / fire systems, grenades and launchers, the flamethrower and shields.
+description=Left out: the air drops and the radio trade.
 description=
-description=(3) Adds the missing English text for the mod's own Mod Options page (it only ever shipped in Chinese).
+description=Do NOT enable the original "Modern Firearms System" together with this mod (marked incompatible): both use the same item IDs, which is also why guns already in your saves keep working when you switch.
 description=
-description=(4) Fills in roughly 90 more English translation gaps across item names, recipes, tooltips and UI labels -- without these, players saw raw Chinese text on about 60 guns/ammo/parts and several recipes, since the game falls back to the item's literal internal name when no translation exists.
-description=
-description=Requires ModernFirearmsSystem and must load after it (enforced automatically via require=). Thai translation for these same strings lives in the separate "HARMONIE - Too Many Mod Thai Translate" pack, not bundled here.
+description=HARMONIE's own additions:
+description=(1) a sandbox gun / ammo drop-rate multiplier (0-5x, default 1.0);
+description=(2) a guard against reloading not using up ammo;
+description=(3) "Inspect" only on firearms;
+description=(4) English texts the original only had in Chinese (Thai in "HARMONIE - Too Many Mod Thai Translate").
+description=Coming next: a red HARMONIE window (tabs) for modifying guns and parts in 3D.
 description=
 description=Mod ID: HARMONIE_ModernFirearmsSystemFix
 tags=Build 42;Balance;Weapons

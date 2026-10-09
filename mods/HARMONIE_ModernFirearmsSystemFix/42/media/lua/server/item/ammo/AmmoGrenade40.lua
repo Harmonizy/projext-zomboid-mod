@@ -1,0 +1,44 @@
+require "Items/ProceduralDistributions"
+require "Items/ItemPicker"
+
+-- Recipe magazine that teaches craftRecipe GrenadeAmmo.
+-- Mirrors upstream's Base.AmmoGrenade exactly: all eighteen procedural
+-- lists at weight 0.1, so learning to make our 40 mm round costs the same
+-- search as learning to make theirs.
+
+table.insert(ProceduralDistributions.list["GunStoreShelf"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["GunStoreShelf"].items, 0.1);
+table.insert(ProceduralDistributions.list["PlankStashGun"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["PlankStashGun"].items, 0.1);
+table.insert(ProceduralDistributions.list["FirearmWeapons"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["FirearmWeapons"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmyStorageGuns"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["ArmyStorageGuns"].items, 0.1);
+table.insert(ProceduralDistributions.list["GunStoreCounter"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["GunStoreCounter"].items, 0.1);
+table.insert(ProceduralDistributions.list["PoliceStorageGuns"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["PoliceStorageGuns"].items, 0.1);
+table.insert(ProceduralDistributions.list["PawnShopGunsSpecial"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["PawnShopGunsSpecial"].items, 0.1);
+table.insert(ProceduralDistributions.list["GunStoreDisplayCase"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["GunStoreDisplayCase"].items, 0.1);
+table.insert(ProceduralDistributions.list["GarageFirearms"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["GarageFirearms"].items, 0.1);
+table.insert(ProceduralDistributions.list["DrugLabGuns"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["DrugLabGuns"].items, 0.1);
+table.insert(ProceduralDistributions.list["GunStoreAmmunition"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["GunStoreAmmunition"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmyStorageAmmunition"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["ArmyStorageAmmunition"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmySurplusCases"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["ArmySurplusCases"].items, 0.1);
+table.insert(ProceduralDistributions.list["LockerArmyBedroom"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["LockerArmyBedroom"].items, 0.1);
+table.insert(ProceduralDistributions.list["LockerArmyBedroomHome"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["LockerArmyBedroomHome"].items, 0.1);
+table.insert(ProceduralDistributions.list["ArmySurplusAmmoBoxes"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["ArmySurplusAmmoBoxes"].items, 0.1);
+table.insert(ProceduralDistributions.list["PoliceStorageAmmunition"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["PoliceStorageAmmunition"].items, 0.1);
+table.insert(ProceduralDistributions.list["PrisonArmoryShotguns"].items, "Base.AmmoGrenade40");
+table.insert(ProceduralDistributions.list["PrisonArmoryShotguns"].items, 0.1);

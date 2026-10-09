@@ -1,0 +1,32 @@
+module Base
+{
+    sound LauncherFire
+    {
+        maxInstancesPerEmitter = 4,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/LauncherFire.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.15,
+            volume = 0.98,
+        }
+    }
+
+    sound LauncherReload
+    {
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        category = AW_Weapon_Reload,
+        clip
+        {
+            file = media/sound/LauncherReload.wav,
+            distanceMin = 1,
+            distanceMax = 25,
+            reverbFactor = 0.06,
+            volume = 0.60,
+        }
+    }
+}

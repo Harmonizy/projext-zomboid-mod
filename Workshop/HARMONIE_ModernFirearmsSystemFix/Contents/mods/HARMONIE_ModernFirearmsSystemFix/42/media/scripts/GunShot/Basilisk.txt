@@ -1,0 +1,402 @@
+module Base
+
+{
+    
+    sound AW_BASILISK_Fire_Core
+    {
+        maxInstancesPerEmitter = 4,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_07.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_shot_08.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.12,
+            volume = 0.95,
+        }
+    }
+    
+    sound AW_BASILISK_Fire_Mech
+    {
+        maxInstancesPerEmitter = 6,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_07.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_plr_mech_08.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.25,
+            volume = 0.5,
+        }
+    }
+    
+    sound AW_BASILISK_Fire_Dist
+    {
+        maxInstancesPerEmitter = 3,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        master = Ambient,
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_dist_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.35,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_dist_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.35,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_dist_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.35,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_dist_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.35,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_dist_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.35,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_dist_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.35,
+            volume = 0.6,
+        }
+    }
+    
+    sound AW_BASILISK_Fire_Far
+    {
+        maxInstancesPerEmitter = 2,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        master = Ambient,
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_far_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.45,
+            volume = 0.4,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_far_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.45,
+            volume = 0.4,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_far_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.45,
+            volume = 0.4,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_far_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.45,
+            volume = 0.4,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_far_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.45,
+            volume = 0.4,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_far_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.45,
+            volume = 0.4,
+        }
+    }
+    
+    sound AW_BASILISK_Fire_Sup
+    {
+        maxInstancesPerEmitter = 4,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_07.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_sup_plr_shot_08.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.18,
+            volume = 0.7,
+        }
+    }
+    
+    sound AW_BASILISK_Fire_NPC_Med
+    {
+        maxInstancesPerEmitter = 4,
+        is3D = true,
+        category = AW_Weapon_Shot,
+        master = Ambient,
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_01.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_02.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_03.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_04.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_05.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_06.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_07.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+        clip
+        {
+            file = media/sound/GunShot/Basilisk/weap_mike2011_fire_npc_med_08.wav,
+            distanceMin = 0,
+            distanceMax = 160,
+            reverbFactor = 0.3,
+            volume = 0.6,
+        }
+    }
+    
+}

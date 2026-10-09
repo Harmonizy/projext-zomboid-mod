@@ -1,0 +1,13 @@
+{
+    "UI_optionscreen_binding_KeySetting_AWCWF": "Configurações de teclas Escape From Kentucky",
+    "UI_optionscreen_binding_LauchGrenadelauncherat": "Lançar dispositivo acoplado",
+    "UI_optionscreen_binding_OpenWindownCat": "Abrir console de armas",
+    "UI_optionscreen_binding_GunLineDown": "Mudar posição tática",
+    "UI_optionscreen_binding_SwtichLightSet": "Alternar modo de luz",
+    "UI_GunpartTooltip_ModOptions_Title": "Gunpart Tooltip",
+    "UI_GunpartTooltip_ModOptions_Display": "Display Options",
+    "UI_GunpartTooltip_EnableCompact": "Enable Compact Tooltip",
+    "UI_GunpartTooltip_EnableCompact_tooltip": "Use compact custom tooltip for weapon parts with many mount points",
+    "UI_GunpartTooltip_ShowMountList": "Show Weapon Compatibility",
+    "UI_GunpartTooltip_ShowMountList_tooltip": "Display weapon compatibility list in gunpart tooltips"
+}
