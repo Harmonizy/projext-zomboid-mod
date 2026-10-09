@@ -191,5 +191,19 @@
     "IGUI_MIL_Guide_Adapt_T": "Vanilla parts",
     "IGUI_MIL_Guide_Adapt": "Vanilla scopes, red dots, lasers, gun lights, ammo straps, recoil pads and chokes can be adapted into the parts of this mod with crafting recipes (and turned back the same way).",
     "IGUI_MIL_Guide_Tabs_T": "The tabs",
-    "IGUI_MIL_Guide_Tabs": "3D inspect: the gun and everything on it. Stats: every number, with and without parts. Parts: every slot. Ammo: what is loaded and what you carry. Guide: this page."
+    "IGUI_MIL_Guide_Tabs": "3D inspect: the gun and everything on it. Stats: every number, with and without parts. Parts: every slot. Ammo: what is loaded and what you carry. Guide: this page.",
+    "IGUI_MIL_Close": "Close",
+    "IGUI_MIL_Pin": "Pin: keep the window open",
+    "IGUI_MIL_Unpin": "Unpin: the window folds up when the mouse leaves it",
+    "IGUI_MIL_TextBigger": "Bigger text",
+    "IGUI_MIL_TextSmaller": "Smaller text",
+    "IGUI_MIL_Tab_inspect_Tip": "The gun in 3D with every part slot, the stat bars, ammunition and the repair kit",
+    "IGUI_MIL_Tab_stats_Tip": "Every number of the gun, with and without its parts",
+    "IGUI_MIL_Tab_parts_Tip": "Every part slot: what is on it, what fits from your bags and the containers around you",
+    "IGUI_MIL_Tab_ammo_Tip": "What is loaded and what ammunition and magazines you carry",
+    "IGUI_MIL_Tab_guide_Tip": "How everything in this window works",
+    "IGUI_MIL_ConditionTitle": "Condition",
+    "IGUI_MIL_StatsHowTitle": "How to read it",
+    "IGUI_MIL_PartsHowTitle": "How it works",
+    "IGUI_MIL_AmmoHowTitle": "In the 3D tab"
 }

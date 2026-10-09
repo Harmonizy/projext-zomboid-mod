@@ -38,22 +38,27 @@ require "ISUI/ISButton"
 HMLWorkbench = ISPanel:derive("HMLWorkbench")
 local W = HMLWorkbench
 W.VERSION = 1
-W.HEADER_H = 46
+W.HEADER_H = 40
+W.TAB_H = 58
+W.CARD_T = 26
 W.PANE_W, W.PANE_H = 1298, 716      -- the original inspect panel's own size
 W.TABS = {
-    { id = "inspect", icon = "tab_inspect", key = "IGUI_MIL_Tab_inspect" },
-    { id = "stats", icon = "tab_stats", key = "IGUI_MIL_Tab_stats" },
-    { id = "parts", icon = "tab_parts", key = "IGUI_MIL_Tab_parts" },
-    { id = "ammo", icon = "tab_ammo", key = "IGUI_MIL_Tab_ammo" },
-    { id = "guide", icon = "tab_guide", key = "IGUI_MIL_Tab_guide" },
+    { id = "inspect", icon = "tab_inspect", key = "IGUI_MIL_Tab_inspect", tip = "IGUI_MIL_Tab_inspect_Tip" },
+    { id = "stats", icon = "tab_stats", key = "IGUI_MIL_Tab_stats", tip = "IGUI_MIL_Tab_stats_Tip" },
+    { id = "parts", icon = "tab_parts", key = "IGUI_MIL_Tab_parts", tip = "IGUI_MIL_Tab_parts_Tip" },
+    { id = "ammo", icon = "tab_ammo", key = "IGUI_MIL_Tab_ammo", tip = "IGUI_MIL_Tab_ammo_Tip" },
+    { id = "guide", icon = "tab_guide", key = "IGUI_MIL_Tab_guide", tip = "IGUI_MIL_Tab_guide_Tip" },
 }
--- red theme (How to Survive's palette turned red)
+-- red theme (How to Survive's palette turned red); the frame, tab row,
+-- cards, pin and text size are the same as Car for Crash's and How to
+-- Survive's windows
 W.C = {
     accent = { 0.92, 0.24, 0.20 }, accentDark = { 0.26, 0.04, 0.04 },
     background = { 0.035, 0.012, 0.014, 0.97 }, panel = { 0.075, 0.025, 0.028, 0.94 },
     header = { 0.07, 0.018, 0.02, 0.98 }, border = { 0.82, 0.22, 0.20 }, borderDim = { 0.40, 0.10, 0.10 },
     text = { 0.97, 0.92, 0.91 }, textDim = { 0.74, 0.62, 0.61 }, good = { 0.45, 0.92, 0.45 }, bad = { 1.0, 0.42, 0.38 },
     row = { 0.11, 0.035, 0.04 }, rowAlt = { 0.085, 0.028, 0.032 },
+    card = { 0.10, 0.03, 0.035, 0.93 }, tabRow = { 0.05, 0.012, 0.016 },
 }
 
 -- ----------------------------------------------------------------- log
@@ -280,10 +285,62 @@ local function makeProxy(pane)
     return proxy
 end
 
+-- ----------------------------------------------------------------- prefs
+-- (this computer only: Zomboid/Lua/HARMONIE_MIL_Window.txt, like Car for
+-- Crash's and How to Survive's windows)
+W.PREFS_FILE = "HARMONIE_MIL_Window.txt"
+W.pinned = true
+W.textStep = 0
+function W.ensurePrefs()
+    if W.prefsLoaded then return end
+    W.prefsLoaded = true
+    if not getFileReader then return end
+    local ok, reader = pcall(getFileReader, W.PREFS_FILE, true)
+    if not ok or not reader then return end
+    pcall(function()
+        local line = reader:readLine()
+        while line do
+            local k, v = line:match("^%s*([%w_]+)%s*=%s*(%S+)")
+            if k == "text" then W.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
+            elseif k == "pinned" then W.pinned = v ~= "0" end
+            line = reader:readLine()
+        end
+    end)
+    pcall(function() reader:close() end)
+    log("prefs loaded: text step %s, pinned %s", tostring(W.textStep), tostring(W.pinned))
+end
+function W.savePrefs()
+    if not getFileWriter then return end
+    local ok, writer = pcall(getFileWriter, W.PREFS_FILE, true, false)
+    if not ok or not writer then log("could not write %s: %s", W.PREFS_FILE, tostring(writer)); return end
+    pcall(function()
+        writer:write("text=" .. tostring(W.textStep) .. "\n")
+        writer:write("pinned=" .. (W.pinned and "1" or "0") .. "\n")
+    end)
+    pcall(function() writer:close() end)
+end
+local FONTS = { "Small", "Medium", "Large" }
+local function fontAt(level)
+    level = math.max(1, math.min(#FONTS, level))
+    return UIFont[FONTS[level]] or UIFont.Small
+end
+function W.small() return fontAt(1 + W.textStep) end
+function W.medium() return fontAt(2 + W.textStep) end
+function W.stepText(d)
+    W.textStep = math.max(0, math.min(2, W.textStep + d))
+    log("text size step: %d", W.textStep)
+    W.savePrefs()
+end
+
 -- ----------------------------------------------------------------- window
+function W.contentTop() return W.HEADER_H + W.TAB_H + 6 end
+
 function W:new(player, weapon)
-    local w = W.PANE_W
-    local h = W.HEADER_H + W.PANE_H
+    W.ensurePrefs()
+    -- the 3D tab holds the original panel at its own fixed size, so the
+    -- window is that size plus the frame
+    local w = W.PANE_W + 8
+    local h = W.contentTop() + W.PANE_H + 4
     local x, y = 100, 100
     if MFSInspectFix and MFSInspectFix.ensurePosition then x, y = MFSInspectFix.ensurePosition(player) end
     local o = ISPanel:new(x, y, w, h)
@@ -292,20 +349,22 @@ function W:new(player, weapon)
     o.player = player
     o.weapon = weapon
     o.moveWithMouse = true
-    o.backgroundColor = { r = W.C.background[1], g = W.C.background[2], b = W.C.background[3], a = W.C.background[4] }
-    o.borderColor = { r = W.C.border[1], g = W.C.border[2], b = W.C.border[3], a = 1 }
+    o.backgroundColor = { r = 0, g = 0, b = 0, a = 0 }
+    o.borderColor = { r = 0, g = 0, b = 0, a = 0 }
     o.tab = "inspect"
     o.scroll = 0
+    o.guidePage = 1
     o.buttons = {}
+    o.fullH = h
     return o
 end
 
 function W:createChildren()
     ISPanel.createChildren(self)
-    -- 1: the original panel
+    -- 1: the original panel, inside the content frame
     local Pane = W.paneClass()
     if Pane then
-        local ok, pane = pcall(function() return Pane:new(0, W.HEADER_H, 0, 0) end)
+        local ok, pane = pcall(function() return Pane:new(4, W.contentTop(), 0, 0) end)
         if ok and pane then
             pane.workbench = self
             pane.moveWithMouse = false
@@ -314,7 +373,7 @@ function W:createChildren()
             riskyInspectWindow = makeProxy(pane)
             local okR, err = pcall(function() pane:renderInventory() end)
             if not okR then log("the 3D inspect view FAILED to build: %s", tostring(err)) end
-            pane:setX(0); pane:setY(W.HEADER_H)
+            pane:setX(4); pane:setY(W.contentTop())
         else
             log("the 3D inspect view could not be created: %s", tostring(pane))
         end
@@ -325,15 +384,15 @@ end
 
 function W:setTab(id)
     if self.tab == id then return end
+    log("tab %s -> %s", tostring(self.tab), tostring(id))
     self.tab = id
     self.scroll = 0
-    if self.pane then self.pane:setVisible(id == "inspect") end
+    if self.pane then self.pane:setVisible(id == "inspect" and not self.collapsed) end
     if id ~= "inspect" and riskyUI_slider and riskyUI_slider.instance then
         pcall(function() riskyUI_slider.instance:close() end)
         riskyUI_slider.instance = nil
     end
     pcall(function() getSoundManager():playUISound("UISelectListItem") end)
-    log("tab %s", id)
 end
 
 function W:close()
@@ -357,23 +416,77 @@ end
 function W:update()
     ISPanel.update(self)
     if self.closing then return end
-    local p = self.player
-    local held = call(p, "getPrimaryHandItem")
+    local held = call(self.player, "getPrimaryHandItem")
     if held ~= self.weapon then
         log("the gun left the hand -- closing")
         self:close()
     end
 end
 
--- ----------------------------------------------------------------- drawing
-local function txt(self, s, x, y, c, font, a)
-    self:drawText(s, x, y, c[1], c[2], c[3], a or 1, font or UIFont.Small)
+-- ----------------------------------------------------------------- pin
+-- unpinned, the window folds up to its header a moment after the mouse
+-- leaves it and unfolds when the mouse comes back (How to Survive's pin)
+W.FOLD_DELAY_MS = 350
+function W:togglePin()
+    W.pinned = not W.pinned
+    log("pinned: %s", tostring(W.pinned))
+    self.leaveAt = nil
+    if W.pinned then self:expand() end
+    W.savePrefs()
 end
+function W:collapse()
+    if self.collapsed then return end
+    -- never fold while the original's part picker or sliders are in use
+    if riskyUI_slider and riskyUI_slider.instance then return end
+    self.collapsed = true
+    self:setHeight(W.HEADER_H)
+    if self.pane then self.pane:setVisible(false) end
+end
+function W:expand()
+    if not self.collapsed then return end
+    self.collapsed = false
+    self:setHeight(self.fullH)
+    if self.pane then self.pane:setVisible(self.tab == "inspect") end
+    self.leaveAt = nil
+end
+function W:updatePin()
+    if W.pinned or self.moving then
+        if W.pinned then self:expand() end
+        self.leaveAt = nil
+        return
+    end
+    local mx, my = getMouseX(), getMouseY()
+    local x, y = self:getAbsoluteX(), self:getAbsoluteY()
+    local over = mx >= x and mx <= x + self.width and my >= y and my <= y + self.height
+    local now = getTimestampMs and getTimestampMs() or 0
+    if over then
+        self.leaveAt = nil
+        self:expand()
+    elseif not self.collapsed then
+        self.leaveAt = self.leaveAt or now
+        if now - self.leaveAt >= W.FOLD_DELAY_MS then self:collapse() end
+    end
+end
+
+-- ----------------------------------------------------------------- drawing
 local function fh(font) return getTextManager():getFontHeight(font) end
+local function lineH(font) return fh(font) + 2 end
 local function tw(font, s) return getTextManager():MeasureStringX(font, s) end
+local function inside(r, x, y) return x >= r.x and x <= r.x + r.w and y >= r.y and y <= r.y + r.h end
+local function shadowText(panel, s, x, y, c, a, font)
+    a = a or 1
+    panel:drawText(s, x + 1, y + 1, 0, 0, 0, a * 0.8, font)
+    panel:drawText(s, x, y, c[1], c[2], c[3], a, font)
+end
+local function fit(s, maxW, font)
+    s = tostring(s or "")
+    if tw(font, s) <= maxW then return s end
+    while #s > 1 and tw(font, s .. "...") > maxW do s = s:sub(1, -2) end
+    return s .. "..."
+end
 local function wrap(text, maxW, font)
     local out = {}
-    for para in tostring(text or ""):gmatch("[^\n]+") do
+    for para in (tostring(text or "") .. "\n"):gmatch("(.-)\n") do
         local line = ""
         for word in para:gmatch("%S+") do
             local try = line == "" and word or (line .. " " .. word)
@@ -384,114 +497,216 @@ local function wrap(text, maxW, font)
     return out
 end
 
+-- header buttons, right to left: close, pin, A+, A-
+function W:headerButtons()
+    local s = 26
+    local y = math.floor((W.HEADER_H - s) / 2)
+    local x = self.width - s - 8
+    local b = {}
+    for _, id in ipairs({ "close", "pin", "plus", "minus" }) do
+        b[#b + 1] = { id = id, x = x, y = y, w = s, h = s }
+        x = x - s - 6
+    end
+    return b
+end
+
+-- a card: title strip, accent corners (the same card as the other windows)
+function W:drawCard(x, y, w, h, title)
+    local C = W.C
+    self:drawRect(x, y, w, h, C.card[4], C.card[1], C.card[2], C.card[3])
+    self:drawRectBorder(x, y, w, h, 0.75, C.borderDim[1], C.borderDim[2], C.borderDim[3])
+    local th = W.CARD_T
+    self:drawRect(x + 1, y + 1, w - 2, th - 1, 0.6, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRect(x + 6, y + th - 1, w - 12, 1, 0.8, C.border[1], C.border[2], C.border[3])
+    local k = 9
+    for _, c in ipairs({ { x, y, 1, 1 }, { x + w, y, -1, 1 }, { x, y + h, 1, -1 }, { x + w, y + h, -1, -1 } }) do
+        local cx, cy, dx, dy = c[1], c[2], c[3], c[4]
+        self:drawRect(dx > 0 and cx or cx - k, dy > 0 and cy or cy - 2, k, 2, 0.95, C.accent[1], C.accent[2], C.accent[3])
+        self:drawRect(dx > 0 and cx or cx - 2, dy > 0 and cy or cy - k, 2, k, 0.95, C.accent[1], C.accent[2], C.accent[3])
+    end
+    if title and title ~= "" then
+        local font = W.small()
+        self:drawRect(x + 8, y + math.floor((th - 8) / 2), 3, 8, 1, C.accent[1], C.accent[2], C.accent[3])
+        shadowText(self, fit(title, w - 24, font), x + 16, y + math.floor((th - fh(font)) / 2), C.accent, 1, font)
+    end
+    return x + 10, y + th + 6, w - 20, h - th - 12
+end
+
 function W:button(x, y, w, h, label, fn, enabled)
     local mx, my = self:getMouseX(), self:getMouseY()
     local over = mx >= x and mx <= x + w and my >= y and my <= y + h
     enabled = enabled ~= false
-    local c = W.C
-    self:drawRect(x, y, w, h, enabled and (over and 0.95 or 0.75) or 0.3, c.accentDark[1] * (over and 1.6 or 1), c.accentDark[2], c.accentDark[3])
-    self:drawRectBorder(x, y, w, h, enabled and 1 or 0.4, c.border[1], c.border[2], c.border[3])
-    local lw = tw(UIFont.Small, label)
-    txt(self, label, x + math.floor((w - lw) / 2), y + math.floor((h - fh(UIFont.Small)) / 2), enabled and c.text or c.textDim)
+    local C = W.C
+    local font = W.small()
+    self:drawRect(x, y, w, h, enabled and (over and 0.98 or 0.85) or 0.4, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    if enabled and over then self:drawRect(x + 2, y + 2, w - 4, h - 4, 0.18, C.accent[1], C.accent[2], C.accent[3]) end
+    self:drawRectBorder(x, y, w, h, enabled and (over and 1 or 0.8) or 0.4, C.border[1], C.border[2], C.border[3])
+    label = fit(label, w - 8, font)
+    shadowText(self, label, x + math.floor((w - tw(font, label)) / 2), y + math.floor((h - fh(font)) / 2), enabled and C.text or C.textDim, 1, font)
     if enabled then self.buttons[#self.buttons + 1] = { x = x, y = y, w = w, h = h, fn = fn } end
 end
 
 function W:prerender()
-    ISPanel.prerender(self)
+    local C = W.C
+    local hh, th = W.HEADER_H, W.TAB_H
     self.buttons = {}
-    local c = W.C
-    -- header
-    self:drawRect(0, 0, self.width, W.HEADER_H, c.header[4], c.header[1], c.header[2], c.header[3])
-    self:drawRect(0, W.HEADER_H - 2, self.width, 2, 1, c.accent[1], c.accent[2], c.accent[3])
-    local em = texture("emblem")
-    if em then self:drawTextureScaled(em, 8, 7, 32, 32, 1, 1, 1, 1) end
-    txt(self, T("IGUI_MIL_Title"), 48, 6, c.accent, UIFont.Medium)
-    txt(self, itemName(self.weapon), 48, 6 + fh(UIFont.Medium), c.textDim, UIFont.Small)
-    -- tabs
-    local tx = 380
-    local mx, my = self:getMouseX(), self:getMouseY()
-    for _, t in ipairs(W.TABS) do
-        local label = T(t.key)
-        local w = 40 + tw(UIFont.Small, label) + 12
-        local active = self.tab == t.id
-        local over = mx >= tx and mx <= tx + w and my >= 4 and my <= W.HEADER_H - 4
-        self:drawRect(tx, 5, w, W.HEADER_H - 10, active and 0.95 or (over and 0.7 or 0.45),
-            active and c.accentDark[1] * 2 or c.accentDark[1], c.accentDark[2], c.accentDark[3])
-        self:drawRectBorder(tx, 5, w, W.HEADER_H - 10, active and 1 or 0.5, c.border[1], c.border[2], c.border[3])
-        local ic = texture(t.icon)
-        if ic then self:drawTextureScaled(ic, tx + 5, 9, 28, 28, 1, 1, 1, 1) end
-        txt(self, label, tx + 38, math.floor((W.HEADER_H - fh(UIFont.Small)) / 2), active and c.text or c.textDim)
-        local id = t.id
-        self.buttons[#self.buttons + 1] = { x = tx, y = 5, w = w, h = W.HEADER_H - 10, fn = function() self:setTab(id) end }
-        tx = tx + w + 6
+    self.hoverTip = nil
+    self:drawRect(0, 0, self.width, self.height, C.background[4], C.background[1], C.background[2], C.background[3])
+    self:drawRectBorder(0, 0, self.width, self.height, 1, C.border[1], C.border[2], C.border[3])
+    self:drawRect(1, 1, self.width - 2, hh - 1, C.header[4], C.header[1], C.header[2], C.header[3])
+    self:drawRect(0, hh - 1, self.width, 1, 0.8, C.border[1], C.border[2], C.border[3])
+    -- title
+    local font = W.medium()
+    local ix = 10
+    local logo = texture("emblem")
+    if logo then
+        self:drawTextureScaled(logo, ix, math.floor((hh - 28) / 2), 28, 28, 1, 1, 1, 1)
+        ix = ix + 34
     end
-    -- close
-    local cl = texture("icon_close")
-    local cx = self.width - 40
-    if cl then self:drawTextureScaled(cl, cx, 7, 32, 32, 1, 1, 1, 1) else self:button(cx, 7, 32, 32, "X", function() self:close() end) end
-    self.buttons[#self.buttons + 1] = { x = cx, y = 7, w = 32, h = 32, fn = function() self:close() end }
+    local title = T("IGUI_MIL_Title") .. " - " .. itemName(self.weapon)
+    shadowText(self, fit(title, self.width - ix - 150, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
+    -- header buttons
+    local mx, my = self:getMouseX(), self:getMouseY()
+    for _, b in ipairs(self:headerButtons()) do
+        local over = inside(b, mx, my)
+        local tint = b.id == "close" and { 0.95, 0.55, 0.45 } or C.accent
+        self:drawRect(b.x, b.y, b.w, b.h, over and 0.95 or 0.75, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+        self:drawRectBorder(b.x, b.y, b.w, b.h, over and 1 or 0.7, tint[1], tint[2], tint[3])
+        local name = b.id == "pin" and (W.pinned and "pin_on" or "pin_off") or ("icon_" .. b.id)
+        local icon = texture(name)
+        local disabled = (b.id == "plus" and W.textStep >= 2) or (b.id == "minus" and W.textStep <= 0)
+        if icon then self:drawTextureScaled(icon, b.x + 3, b.y + 3, b.w - 6, b.h - 6, disabled and 0.35 or 1, 1, 1, 1) end
+        if over then
+            local key = ({ close = "IGUI_MIL_Close", pin = W.pinned and "IGUI_MIL_Unpin" or "IGUI_MIL_Pin",
+                plus = "IGUI_MIL_TextBigger", minus = "IGUI_MIL_TextSmaller" })[b.id]
+            self.hoverTip = { text = T(key), x = b.x - 60, y = b.y + b.h + 4 }
+        end
+        local id = b.id
+        self.buttons[#self.buttons + 1] = { x = b.x, y = b.y, w = b.w, h = b.h, fn = function()
+            if id == "close" then self:close()
+            elseif id == "pin" then self:togglePin()
+            elseif id == "plus" then W.stepText(1)
+            else W.stepText(-1) end
+        end }
+    end
+    if self.collapsed then return end
+    -- the tab row
+    self:drawRect(1, hh, self.width - 2, th, 0.92, C.tabRow[1], C.tabRow[2], C.tabRow[3])
+    self:drawRect(0, hh + th - 1, self.width, 1, 0.8, C.border[1], C.border[2], C.border[3])
+    local gap = 5
+    local tabW = math.floor((self.width - 16 - gap * (#W.TABS - 1)) / #W.TABS)
+    local x = 8
+    local sf = W.small()
+    for _, t in ipairs(W.TABS) do
+        local active = self.tab == t.id
+        local ty, tH = hh + 6, th - 12
+        local bg = active and C.accentDark or C.background
+        local bd = active and C.accent or C.borderDim
+        self:drawRect(x, ty, tabW, tH, active and 0.98 or 0.82, bg[1], bg[2], bg[3])
+        self:drawRectBorder(x, ty, tabW, tH, active and 0.95 or 0.62, bd[1], bd[2], bd[3])
+        if active then
+            self:drawRect(x + 2, ty + 2, tabW - 4, tH - 4, 0.16, C.accent[1], C.accent[2], C.accent[3])
+            self:drawRect(x + 3, ty + tH - 5, tabW - 6, 2, 0.75, C.accent[1], C.accent[2], C.accent[3])
+        end
+        local size = math.min(tH - 8, 40)
+        local label = fit(T(t.key), tabW - size - 24, sf)
+        local icon = texture(t.icon)
+        local total = size + 8 + tw(sf, label)
+        local tx = x + math.floor((tabW - total) / 2)
+        if icon then self:drawTextureScaled(icon, tx, ty + math.floor((tH - size) / 2), size, size, active and 1 or 0.65, 1, 1, 1) end
+        shadowText(self, label, tx + size + 8, ty + math.floor((tH - fh(sf)) / 2), active and C.text or C.textDim, 1, sf)
+        local bounds = { x = x, y = ty, w = tabW, h = tH }
+        if inside(bounds, mx, my) then self.hoverTip = { text = T(t.tip), x = x + 30, y = ty + tH + 4 } end
+        local id = t.id
+        self.buttons[#self.buttons + 1] = { x = x, y = ty, w = tabW, h = tH, fn = function() self:setTab(id) end }
+        x = x + tabW + gap
+    end
+    local top = hh + th + 2
+    self:drawRect(4, top, self.width - 8, self.height - top - 4, C.panel[4], C.panel[1], C.panel[2], C.panel[3])
 end
 
 function W:render()
-    ISPanel.render(self)
-    if self.tab == "inspect" then
-        if not self.pane then txt(self, T("IGUI_MIL_NoInspect"), 20, W.HEADER_H + 20, W.C.bad, UIFont.Medium) end
-        return
-    end
-    local top = W.HEADER_H
-    self:drawRect(0, top, self.width, self.height - top, 0.97, W.C.panel[1], W.C.panel[2], W.C.panel[3])
-    self:setStencilRect(0, top, self.width, self.height - top)
-    local ok, err = pcall(function()
-        if self.tab == "stats" then self:renderStats(top)
-        elseif self.tab == "parts" then self:renderParts(top)
-        elseif self.tab == "ammo" then self:renderAmmo(top)
-        elseif self.tab == "guide" then self:renderGuide(top) end
-    end)
-    self:clearStencilRect()
-    if not ok then logOnce("render:" .. self.tab, "tab %s draw FAILED: %s", self.tab, tostring(err)) end
-end
-
-local function heading(self, s, x, y)
-    txt(self, s, x, y, W.C.accent, UIFont.Medium)
-    self:drawRect(x, y + fh(UIFont.Medium) + 2, 300, 2, 0.8, W.C.accent[1], W.C.accent[2], W.C.accent[3])
-    return y + fh(UIFont.Medium) + 10
-end
-
-function W:renderStats(top)
-    local c = W.C
-    local x0, y = 30, top + 16 - self.scroll
-    y = heading(self, T("IGUI_MIL_StatsTitle"), x0, y)
-    local cols = { x0, x0 + 360, x0 + 520, x0 + 680 }
-    txt(self, T("IGUI_MIL_StatName"), cols[1], y, c.textDim)
-    txt(self, T("IGUI_MIL_StatNow"), cols[2], y, c.textDim)
-    txt(self, T("IGUI_MIL_StatBase"), cols[3], y, c.textDim)
-    txt(self, T("IGUI_MIL_StatParts"), cols[4], y, c.textDim)
-    y = y + fh(UIFont.Small) + 6
-    local rowH = fh(UIFont.Small) + 10
-    for i, r in ipairs(W.statRows(self.weapon)) do
-        local bg = (i % 2 == 0) and c.row or c.rowAlt
-        self:drawRect(x0 - 6, y - 4, 860, rowH, 0.9, bg[1], bg[2], bg[3])
-        txt(self, T(r.key), cols[1], y, c.text)
-        txt(self, W.fmtNum(r.now), cols[2], y, c.text)
-        txt(self, W.fmtNum(r.base), cols[3], y, c.textDim)
-        if r.better ~= nil then
-            txt(self, (r.delta > 0 and "+" or "") .. W.fmtNum(r.delta), cols[4], y, r.better and c.good or c.bad)
+    if not self.collapsed then
+        local x, y = 8, W.contentTop()
+        local w, h = self.width - 16, self.height - y - 8
+        if self.tab == "inspect" then
+            if not self.pane then shadowText(self, T("IGUI_MIL_NoInspect"), x + 12, y + 12, W.C.bad, 1, W.medium()) end
         else
-            txt(self, "-", cols[4], y, c.textDim)
+            self:setStencilRect(x, y, w, h)
+            local ok, err = pcall(function()
+                if self.tab == "stats" then self:renderStats(x, y, w, h)
+                elseif self.tab == "parts" then self:renderParts(x, y, w, h)
+                elseif self.tab == "ammo" then self:renderAmmo(x, y, w, h)
+                else self:renderGuide(x, y, w, h) end
+            end)
+            self:clearStencilRect()
+            if not ok then logOnce("render:" .. self.tab, "tab %s draw FAILED: %s", self.tab, tostring(err)) end
         end
-        y = y + rowH
     end
-    -- condition
-    y = y + 16
+    self:drawHoverTip()
+    self:updatePin()
+end
+
+function W:drawHoverTip()
+    local t = self.hoverTip
+    if not t or not t.text or t.text == "" or t.text:find("IGUI_", 1, true) then return end
+    local C = W.C
+    local font = W.small()
+    local lines = wrap(t.text, 340, font)
+    local w = 0
+    for _, l in ipairs(lines) do w = math.max(w, tw(font, l)) end
+    w = w + 16
+    local h = #lines * lineH(font) + 10
+    local x = math.max(4, math.min(self.width - w - 4, t.x))
+    self:drawRect(x, t.y, w, h, 0.97, C.header[1], C.header[2], C.header[3])
+    self:drawRectBorder(x, t.y, w, h, 1, C.border[1], C.border[2], C.border[3])
+    for i, l in ipairs(lines) do shadowText(self, l, x + 8, t.y + 5 + (i - 1) * lineH(font), C.text, 1, font) end
+end
+
+-- ----------------------------------------------------------------- tab 2: stats
+function W:renderStats(x, y, w, h)
+    local C = W.C
+    local sf, mf = W.small(), W.medium()
+    local lh = lineH(sf) + 6
+    local rows = W.statRows(self.weapon)
+    local leftW = math.floor(w * 0.62)
+    -- the table card
+    local cardH = W.CARD_T + 18 + lh * (#rows + 1)
+    local cx, cy, cw = self:drawCard(x, y - self.scroll, leftW, cardH, T("IGUI_MIL_StatsTitle"))
+    local cols = { cx, cx + math.floor(cw * 0.46), cx + math.floor(cw * 0.64), cx + math.floor(cw * 0.82) }
+    shadowText(self, T("IGUI_MIL_StatName"), cols[1], cy, C.textDim, 1, sf)
+    shadowText(self, T("IGUI_MIL_StatNow"), cols[2], cy, C.textDim, 1, sf)
+    shadowText(self, T("IGUI_MIL_StatBase"), cols[3], cy, C.textDim, 1, sf)
+    shadowText(self, T("IGUI_MIL_StatParts"), cols[4], cy, C.textDim, 1, sf)
+    local yy = cy + lh
+    for i, r in ipairs(rows) do
+        local bg = (i % 2 == 0) and C.row or C.rowAlt
+        self:drawRect(cx - 4, yy - 3, cw + 8, lh, 0.9, bg[1], bg[2], bg[3])
+        shadowText(self, fit(T(r.key), cols[2] - cols[1] - 8, sf), cols[1], yy, C.text, 1, sf)
+        shadowText(self, W.fmtNum(r.now), cols[2], yy, C.text, 1, sf)
+        shadowText(self, W.fmtNum(r.base), cols[3], yy, C.textDim, 1, sf)
+        if r.better ~= nil then
+            shadowText(self, (r.delta > 0 and "+" or "") .. W.fmtNum(r.delta), cols[4], yy, r.better and C.good or C.bad, 1, sf)
+        else
+            shadowText(self, "-", cols[4], yy, C.textDim, 1, sf)
+        end
+        yy = yy + lh
+    end
+    -- the condition card + how to read it
+    local rx, rw = x + leftW + 10, w - leftW - 10
     local cond, cmax = num(call(self.weapon, "getCondition")) or 0, num(call(self.weapon, "getConditionMax")) or 1
-    txt(self, T("IGUI_MIL_Condition", tostring(math.floor(cond)), tostring(math.floor(cmax))), x0, y, c.text, UIFont.Medium)
-    y = y + fh(UIFont.Medium) + 6
-    self:drawRect(x0, y, 400, 14, 0.8, 0.15, 0.05, 0.05)
+    local ix, iy, iw = self:drawCard(rx, y - self.scroll, rw, W.CARD_T + 70, T("IGUI_MIL_ConditionTitle"))
+    shadowText(self, T("IGUI_MIL_Condition", tostring(math.floor(cond)), tostring(math.floor(cmax))), ix, iy, C.text, 1, mf)
     local f = math.max(0, math.min(1, cond / math.max(1, cmax)))
-    self:drawRect(x0, y, math.floor(400 * f), 14, 1, 1 - f, f, 0.15)
-    y = y + 30
-    for _, l in ipairs(wrap(T("IGUI_MIL_StatsNote"), self.width - 80, UIFont.Small)) do txt(self, l, x0, y, c.textDim); y = y + fh(UIFont.Small) + 2 end
-    self.contentH = y + self.scroll - top
+    local by = iy + lineH(mf) + 6
+    self:drawRect(ix, by, iw, 14, 0.9, 0.12, 0.03, 0.03)
+    self:drawRect(ix, by, math.floor(iw * f), 14, 1, 1 - f, f, 0.15)
+    self:drawRectBorder(ix, by, iw, 14, 0.8, C.borderDim[1], C.borderDim[2], C.borderDim[3])
+    local note = wrap(T("IGUI_MIL_StatsNote"), rw - 24, sf)
+    local ny = y - self.scroll + W.CARD_T + 80
+    local nx, nyy = self:drawCard(rx, ny, rw, W.CARD_T + 16 + #note * lineH(sf), T("IGUI_MIL_StatsHowTitle"))
+    for _, l in ipairs(note) do shadowText(self, l, nx, nyy, C.textDim, 1, sf); nyy = nyy + lineH(sf) end
+    self.contentH = math.max(cardH, ny + self.scroll - y + W.CARD_T + 16 + #note * lineH(sf))
 end
 
 function W:openPicker(slot, ax, ay)
@@ -512,85 +727,110 @@ function W:removePart(slot, part)
     self.partCache = nil
 end
 
-function W:renderParts(top)
-    local c = W.C
-    local x0, y = 30, top + 16 - self.scroll
-    y = heading(self, T("IGUI_MIL_PartsTitle"), x0, y)
-    for _, l in ipairs(wrap(T("IGUI_MIL_PartsNote"), self.width - 80, UIFont.Small)) do txt(self, l, x0, y, c.textDim); y = y + fh(UIFont.Small) + 2 end
-    y = y + 8
+-- ----------------------------------------------------------------- tab 3: parts
+function W:renderParts(x, y, w, h)
+    local C = W.C
+    local sf = W.small()
     -- the part lists scan containers: refresh twice a second, not every frame
     local now = getTimestampMs and getTimestampMs() or 0
     if not self.partCache or now - (self.partCacheAt or 0) > 500 then
         self.partCache = W.partRows(self.player, self.weapon)
         self.partCacheAt = now
     end
-    local rowH = 52
+    local note = wrap(T("IGUI_MIL_PartsNote"), w - 24, sf)
+    local top = y - self.scroll
+    local nx, ny = self:drawCard(x, top, w, W.CARD_T + 16 + #note * lineH(sf), T("IGUI_MIL_PartsHowTitle"))
+    for _, l in ipairs(note) do shadowText(self, l, nx, ny, C.textDim, 1, sf); ny = ny + lineH(sf) end
+    top = top + W.CARD_T + 26 + #note * lineH(sf)
+    -- the slots, two cards a row
+    local gap = 10
+    local cw = math.floor((w - gap) / 2)
+    local ch = W.CARD_T + 12 + math.max(44, lineH(sf) * 2 + 8)
     for i, r in ipairs(self.partCache) do
-        local bg = (i % 2 == 0) and c.row or c.rowAlt
-        self:drawRect(x0 - 6, y, self.width - 48, rowH - 4, 0.9, bg[1], bg[2], bg[3])
+        local col = (i - 1) % 2
+        local row = math.floor((i - 1) / 2)
+        local px, py = x + col * (cw + gap), top + row * (ch + gap)
         local slotKey = "IGUI_" .. r.slot
-        txt(self, T(slotKey), x0, y + 4, c.accent)
-        local tex0 = r.part and call(r.part, "getTexture")
-        if tex0 then self:drawTextureScaled(tex0, x0 + 200, y + 4, 36, 36, 1, 1, 1, 1) end
-        txt(self, r.part and itemName(r.part) or T("IGUI_MIL_Empty"), x0 + 244, y + 4, r.part and c.text or c.textDim)
-        txt(self, T("IGUI_MIL_PartsFit", tostring(r.fits)), x0 + 244, y + 10 + fh(UIFont.Small), c.textDim)
-        local bx = self.width - 300
+        local ix, iy, iw = self:drawCard(px, py, cw, ch, T(slotKey))
+        local t0 = r.part and call(r.part, "getTexture")
+        if t0 then self:drawTextureScaled(t0, ix, iy, 40, 40, 1, 1, 1, 1) end
+        local bw = 110
+        local textW = iw - 48 - bw * 2 - 16
+        shadowText(self, fit(r.part and itemName(r.part) or T("IGUI_MIL_Empty"), textW, sf), ix + 48, iy + 2, r.part and C.text or C.textDim, 1, sf)
+        shadowText(self, fit(T("IGUI_MIL_PartsFit", tostring(r.fits)), textW, sf), ix + 48, iy + 2 + lineH(sf), C.textDim, 1, sf)
         local slot, part = r.slot, r.part
-        local yy = y
-        if part then
-            self:button(bx, y + 8, 120, 28, T("IGUI_MIL_Remove"), function() self:removePart(slot, part) end)
-        end
-        self:button(bx + 130, y + 8, 120, 28, T("IGUI_MIL_Install"), function() self:openPicker(slot, bx + 130, yy + 36) end, r.fits > 0)
-        y = y + rowH
+        local bx = ix + iw - bw * 2 - 8
+        if part then self:button(bx, iy + 8, bw, 28, T("IGUI_MIL_Remove"), function() self:removePart(slot, part) end) end
+        local ax, ay = ix + iw - bw, iy + 36
+        self:button(ix + iw - bw, iy + 8, bw, 28, T("IGUI_MIL_Install"), function() self:openPicker(slot, ax, ay) end, r.fits > 0)
     end
-    self.contentH = y + self.scroll - top
+    local rows = math.ceil(#self.partCache / 2)
+    self.contentH = top + self.scroll - y + rows * (ch + gap)
 end
 
-function W:renderAmmo(top)
-    local c = W.C
-    local x0, y = 30, top + 16 - self.scroll
-    y = heading(self, T("IGUI_MIL_AmmoTitle"), x0, y)
+-- ----------------------------------------------------------------- tab 4: ammo
+function W:renderAmmo(x, y, w, h)
+    local C = W.C
+    local sf, mf = W.small(), W.medium()
     local a = W.ammoInfo(self.player, self.weapon)
-    local function line(item, label, value)
-        local t0 = item and call(item, "getTexture")
-        if t0 then self:drawTextureScaled(t0, x0, y, 40, 40, 1, 1, 1, 1) end
-        txt(self, label, x0 + 52, y + 2, c.textDim)
-        txt(self, value, x0 + 52, y + 2 + fh(UIFont.Small), c.text, UIFont.Medium)
-        y = y + 54
+    local list = { { item = a.magItem, title = T("IGUI_MIL_Loaded"), value = tostring(a.loaded) .. " / " .. tostring(a.max) } }
+    if a.ammoName then list[#list + 1] = { item = a.ammoItem, title = a.ammoName, value = T("IGUI_MIL_InBags", tostring(a.loose)) } end
+    if a.boxName then list[#list + 1] = { item = a.boxItem, title = a.boxName, value = T("IGUI_MIL_InBags", tostring(a.boxes)) } end
+    if a.magName then list[#list + 1] = { item = a.magItem, title = a.magName, value = T("IGUI_MIL_InBags", tostring(a.mags)) } end
+    local gap = 10
+    local cw = math.floor((w - gap) / 2)
+    local ch = W.CARD_T + 64
+    local top = y - self.scroll
+    for i, e in ipairs(list) do
+        local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
+        local ix, iy = self:drawCard(x + col * (cw + gap), top + row * (ch + gap), cw, ch, e.title)
+        local t0 = e.item and call(e.item, "getTexture")
+        if t0 then self:drawTextureScaled(t0, ix, iy, 44, 44, 1, 1, 1, 1) end
+        shadowText(self, e.value, ix + 56, iy + 8, C.text, 1, mf)
     end
-    line(a.magItem, T("IGUI_MIL_Loaded"), tostring(a.loaded) .. " / " .. tostring(a.max))
-    if a.ammoName then line(a.ammoItem, a.ammoName, T("IGUI_MIL_InBags", tostring(a.loose))) end
-    if a.boxName then line(a.boxItem, a.boxName, T("IGUI_MIL_InBags", tostring(a.boxes))) end
-    if a.magName then line(a.magItem, a.magName, T("IGUI_MIL_InBags", tostring(a.mags))) end
-    y = y + 8
-    for _, l in ipairs(wrap(T("IGUI_MIL_AmmoNote"), self.width - 80, UIFont.Small)) do txt(self, l, x0, y, c.textDim); y = y + fh(UIFont.Small) + 2 end
-    y = y + 10
-    self:button(x0, y, 220, 30, T("IGUI_MIL_ToInspect"), function() self:setTab("inspect") end)
-    self.contentH = y + 40 + self.scroll - top
+    top = top + math.ceil(#list / 2) * (ch + gap)
+    local note = wrap(T("IGUI_MIL_AmmoNote"), w - 24, sf)
+    local nx, ny = self:drawCard(x, top, w, W.CARD_T + 60 + #note * lineH(sf), T("IGUI_MIL_AmmoHowTitle"))
+    for _, l in ipairs(note) do shadowText(self, l, nx, ny, C.textDim, 1, sf); ny = ny + lineH(sf) end
+    self:button(nx, ny + 8, 220, 30, T("IGUI_MIL_ToInspect"), function() self:setTab("inspect") end)
+    self.contentH = top + self.scroll - y + W.CARD_T + 70 + #note * lineH(sf)
 end
 
+-- ----------------------------------------------------------------- tab 5: guide
+-- chapters on the left, the page on the right (Car for Crash's guide)
 W.GUIDE = {}
 for _, k in ipairs({ "Open", "View", "Parts", "Position", "Ammo", "Repair", "Modes", "Adapt", "Tabs" }) do
     W.GUIDE[#W.GUIDE + 1] = { title = "IGUI_MIL_Guide_" .. k .. "_T", body = "IGUI_MIL_Guide_" .. k }
 end
-function W:renderGuide(top)
-    local c = W.C
-    local x0, y = 30, top + 16 - self.scroll
-    y = heading(self, T("IGUI_MIL_GuideTitle"), x0, y)
-    local maxW = self.width - 80
-    for _, g in ipairs(W.GUIDE) do
-        txt(self, T(g.title), x0, y, c.accent, UIFont.Medium)
-        y = y + fh(UIFont.Medium) + 2
-        for _, l in ipairs(wrap(T(g.body), maxW, UIFont.Small)) do txt(self, l, x0 + 12, y, c.text); y = y + fh(UIFont.Small) + 2 end
-        y = y + 10
+function W:renderGuide(x, y, w, h)
+    local C = W.C
+    local sf, mf = W.small(), W.medium()
+    local listW = math.floor(w * 0.28)
+    local lx, ly, lw = self:drawCard(x, y, listW, h, T("IGUI_MIL_GuideTitle"))
+    local bh = lineH(sf) + 12
+    for i, g in ipairs(W.GUIDE) do
+        local by = ly + (i - 1) * (bh + 4)
+        local active = self.guidePage == i
+        local bg = active and C.accentDark or C.background
+        self:drawRect(lx, by, lw, bh, active and 0.98 or 0.8, bg[1], bg[2], bg[3])
+        self:drawRectBorder(lx, by, lw, bh, active and 0.95 or 0.55, (active and C.accent or C.borderDim)[1], (active and C.accent or C.borderDim)[2], (active and C.accent or C.borderDim)[3])
+        shadowText(self, fit(tostring(i) .. ". " .. T(g.title), lw - 12, sf), lx + 8, by + 6, active and C.text or C.textDim, 1, sf)
+        local idx = i
+        self.buttons[#self.buttons + 1] = { x = lx, y = by, w = lw, h = bh, fn = function()
+            self.guidePage = idx
+            pcall(function() getSoundManager():playUISound("UISelectListItem") end)
+        end }
     end
-    self.contentH = y + self.scroll - top
+    local g = W.GUIDE[self.guidePage] or W.GUIDE[1]
+    local px, py, pw = self:drawCard(x + listW + 10, y, w - listW - 10, h, tostring(self.guidePage) .. ". " .. T(g.title))
+    for _, l in ipairs(wrap(T(g.body), pw - 12, sf)) do shadowText(self, l, px, py, C.text, 1, sf); py = py + lineH(sf) end
+    self.contentH = 0
 end
 
 function W:onMouseDown(x, y)
     for i = #self.buttons, 1, -1 do
         local b = self.buttons[i]
-        if x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then
+        if inside(b, x, y) then
             local ok, err = pcall(b.fn)
             if not ok then log("button FAILED: %s", tostring(err)) end
             return true
@@ -600,8 +840,8 @@ function W:onMouseDown(x, y)
 end
 
 function W:onMouseWheel(del)
-    if self.tab == "inspect" then return false end
-    local maxS = math.max(0, (self.contentH or 0) - (self.height - W.HEADER_H) + 20)
+    if self.tab == "inspect" or self.collapsed then return false end
+    local maxS = math.max(0, (self.contentH or 0) - (self.height - W.contentTop() - 8))
     self.scroll = math.max(0, math.min(maxS, self.scroll + del * 40))
     return true
 end

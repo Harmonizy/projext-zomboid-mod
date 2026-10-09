@@ -76,8 +76,27 @@ def crosshair(d):
         d.line(S(a, b, c, e), fill=WHITE, width=3 * K)
 
 
+def plus(d):
+    d.line(S(18, 32, 46, 32), fill=WHITE, width=6 * K)
+    d.line(S(32, 18, 32, 46), fill=WHITE, width=6 * K)
+
+
+def minus(d):
+    d.line(S(18, 32, 46, 32), fill=WHITE, width=6 * K)
+
+
+def pin(on):
+    def f(d):
+        col = WHITE if on else (150, 110, 108, 255)
+        d.ellipse(S(22, 12, 42, 30), fill=RED if on else (110, 30, 30, 255))
+        d.polygon(S(26, 26, 38, 26, 35, 38, 29, 38), fill=col)
+        d.line(S(32, 38, 32 if on else 22, 54), fill=col, width=3 * K)
+    return f
+
+
 ICONS = {"tab_inspect": cube, "tab_stats": bars, "tab_parts": wrench, "tab_ammo": bullet,
-         "tab_guide": book, "icon_close": close, "emblem": crosshair}
+         "tab_guide": book, "icon_close": close, "emblem": crosshair,
+         "icon_plus": plus, "icon_minus": minus, "pin_on": pin(True), "pin_off": pin(False)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
