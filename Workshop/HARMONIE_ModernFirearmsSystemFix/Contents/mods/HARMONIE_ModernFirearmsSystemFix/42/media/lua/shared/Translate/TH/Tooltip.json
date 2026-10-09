@@ -17,7 +17,7 @@
     "Tooltip_food_SlightDanger_uncooked": "อาจทำให้ป่วยหรือคลื่นไส้หากกินแบบไม่สุก",
     "Tooltip_tissue_tooltip": "สวมใส่เพื่อยับยั้งเสียงไอและจาม",
     "Tooltip_item_StackWeight": "ภาระน้ำหนักรวม",
-    "Tooltip_item_Weight": "ภาระน้ำหนัก",
+    "Tooltip_item_Weight": "น้ำหนัก",
     "Tooltip_item_Equipped": "หากสวมใส่",
     "Tooltip_item_Unequipped": "หากถอดออก",
     "Tooltip_item_Temperature": "อุณหภูมิ",
@@ -390,5 +390,8 @@
     "Tooltip_weapon_ReloadTime": "เวลาเติมกระสุน",
     "Tooltip_weapon_RecoilDelay": "ความล่าช้าแรงสะท้อน",
     "Tooltip_weapon_SoundRadius": "เสียง",
-    "Tooltip_weapon_ClipSize": "ความจุแม็กกาซีน"
+    "Tooltip_weapon_ClipSize": "ความจุแม็กกาซีน",
+    "Tooltip_weapon_ModifyWeapon": "ชิ้นส่วนที่ติดตั้ง",
+    "Tooltip_SE-5Grip": "ด้ามจับ<br>เวลาเล็ง -1<br>แรงถีบ -2",
+    "Tooltip_ASh-12_Grip": "ด้ามจับ<br>เวลาเล็ง -5<br>แรงถีบ -2"
 }

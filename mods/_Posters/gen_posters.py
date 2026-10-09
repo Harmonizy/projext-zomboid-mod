@@ -231,11 +231,11 @@ def e_thai(d, cx, cy):
 
 MODS = [
     ("HARMONIE_GardenToPlate", (24, 84, 40), (10, 40, 18), (140, 230, 110), e_garden, ["From Garden", "to Plate"], "vitamins - farming - cooking", None),
-    ("HARMONIE_HomeMedic", (130, 22, 34), (52, 8, 16), (255, 120, 120), e_medic, ["Home Medic"], "diagnosis - surgery - recovery", None),
+    ("HARMONIE_HomeMedic", (130, 22, 34), (52, 8, 16), (255, 120, 120), e_medic, ["How to", "Survive"], "diagnosis - surgery - recovery", None),
     ("HARMONIE_LifestyleAudioTune", (70, 34, 140), (26, 12, 60), (200, 160, 255), e_audio, ["Lifestyle", "Audio Tune"], None, None),
-    ("HARMONIE_ModernFirearmsSystemFix", (150, 70, 20), (50, 22, 8), (255, 170, 70), e_firearm, ["Modern Firearms", "System Fix"], None, None),
+    ("HARMONIE_ModernFirearmsSystemFix", (150, 70, 20), (50, 22, 8), (255, 170, 70), e_firearm, ["Mercenary", "Is Life"], "guns - parts - inspect", None),
     ("HARMONIE_PerfProbe", (12, 110, 110), (4, 40, 46), (110, 240, 210), e_perf, ["Perf Probe"], "diagnostic", None),
-    ("HARMONIE_SVU3Sandbox", (52, 70, 96), (16, 22, 34), (255, 196, 80), e_svu, ["SVU3 Sandbox"], "vehicle upgrades", None),
+    ("HARMONIE_SVU3Sandbox", (52, 70, 96), (16, 22, 34), (255, 196, 80), e_svu, ["Car for", "Crash"], "vehicle upgrades", None),
     ("HARMONIE_TheWayToAttack", (90, 72, 30), (24, 18, 8), (240, 200, 90), e_attack, ["The Way", "To Attack"], "forging - weapons - gems", None),
     ("HARMONIE_TooManyModThaiTranslate", (30, 46, 120), (10, 14, 44), (255, 110, 120), e_thai, ["Too Many Mod", "Thai Translate"], None, "แปลไทย"),
 ]

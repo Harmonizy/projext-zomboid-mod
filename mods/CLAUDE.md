@@ -12,9 +12,9 @@
   | mod | prefix | helper |
   |---|---|---|
   | TheWayToAttack | `[HARMONIE_TWA]` | `TWALog`, `TWALogOnce`, `TWALogErr`, `TWALogName`, `TWALogType`, `TWALogAction(cls, name)` (timed actions), `TWALogMethods(cls, tag, {names})` (window buttons) — `shared/000_HARMONIE_TWA_Log.lua` |
-  | HomeMedic (own HM code) | `[HARMONIE_HM]` | `HMLog`, `HMLogOnce`, `HMLogErr`, `HMLogName`, `HMLogType`, `HMLogMethods` — `shared/HARMONIEHomeMedic/000_HM_Log.lua` (bundled EHR / TOC keep their own `[EHR` / `[TOC` prints) |
-  | SVU3Sandbox | `[HARMONIE_SVU3]` | local `log` / `logOnce` per file (`C.log` in SkillCap) |
-  | ModernFirearmsSystemFix | `[HARMONIE_MFSFix]` | local `log` / `logOnce` per file |
+  | HomeMedic = "HARMONIE - How to Survive" (own HM code) | `[HARMONIE_HM]` | `HMLog`, `HMLogOnce`, `HMLogErr`, `HMLogName`, `HMLogType`, `HMLogMethods` — `shared/HARMONIEHomeMedic/000_HM_Log.lua` (bundled EHR / TOC keep their own `[EHR` / `[TOC` prints) |
+  | SVU3Sandbox = "HARMONIE - Car for Crash" | `[HARMONIE_SVU3]` | local `log` / `logOnce` per file (`C.log` in SkillCap) |
+  | ModernFirearmsSystemFix = "HARMONIE - Mercenary Is Life" | `[HARMONIE_MFSFix]` | local `log` / `logOnce` per file |
   | LifestyleAudioTune | `[HARMONIE_LAT]` | local `log` / `logOnce` per file |
   | PerfProbe | `[PerfProbe` | the mod itself is a log |
 - A log line must never break the game: read item / player names through
@@ -59,3 +59,13 @@
   (`Hub.onDebugMenu`); a new window of ours gets a card in `Hub.CARDS`
   (with `need` when it needs a target first), a new sandbox page a line in
   `Hub.NAMESPACES`.
+
+## Names and translations
+- Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
+  Survive", HARMONIE_SVU3Sandbox = "HARMONIE - Car for Crash",
+  HARMONIE_ModernFirearmsSystemFix = "HARMONIE - Mercenary Is Life". The mod
+  IDs and folders stay as they are (saves, server configs and Workshop
+  subscriptions use the ID).
+- Each of our mods carries its own EN and TH texts. The Thai translation mod
+  (HARMONIE_TooManyModThaiTranslate) is only for other people's mods: never
+  put a key of ours there.

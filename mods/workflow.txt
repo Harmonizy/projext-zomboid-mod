@@ -52,7 +52,8 @@ TABLE OF CONTENTS (read this first, then jump to only what's relevant)
      silently broke Thai font rendering in an unrelated mod.
 4.   Safe cross-mod Lua hooking (wrap-and-call-through on global functions/table
      methods) — the technique to use whenever GameSounds categories don't apply.
-5.   Thai translation workflow — one central translation mod, append-only JSON,
+5.   Thai translation workflow — our mods carry their own Thai, the central
+     mod is for other people's mods only; append-only JSON,
      how to find CJK-leak strings that fall back to Chinese in an English game.
 6.   Windows + Git Bash + PowerShell environment traps — no Python/lua/luac, grep -P
      unicode false negatives, PowerShell New-Object/ConvertFrom-Json bugs, node -e
@@ -455,13 +456,19 @@ requirement is "adjustable live", offer to switch to ModOptions instead.
 
 5. Thai translation workflow
 ==============================
-- Thai translations for every mod HARMONIE makes/patches (both HARMONIE's own mods
-  and patches to other people's) are centralized in one place:
-  mods/HARMONIE_TooManyModThaiTranslate/42/media/lua/shared/Translate/TH/*.json —
-  never bundle separate translations with each individual mod (not even
-  HARMONIE's own). This mod deliberately has zero require= dependencies so it's
-  always safe to leave enabled (text only shows once the mod owning that key is
-  also enabled; otherwise it's silently unused).
+- *** CHANGED 2026-10-09 (owner: "อะไรที่เป็นคำแปลม็อดของเราให้ย้ายไปเก็บในม็อด
+  ตัวเองเลย ให้ toomanymodthaitranslate เป็นม็อดที่เอาไว้แปลม็อดอื่นที่ไม่ใช่ม็อดเรา"):
+  every HARMONIE mod keeps its OWN Thai in its own
+  42/media/lua/shared/Translate/TH/*.json (next to its EN). All of ours were
+  moved out of the Thai mod that day. (Mercenary Is Life / Modern Firearms:
+  its Thai goes in tools/ours/.../TH too -- import_mfs.py lays it over the
+  original's Thai on a re-import.) ***
+- mods/HARMONIE_TooManyModThaiTranslate/42/media/lua/shared/Translate/TH/*.json
+  is ONLY for other people's mods (Lifestyle: Hobbies, SVU3 + tsarslib, Auto
+  All, More Description For Traits, ...) -- never put a key of ours there. It
+  deliberately has zero require= dependencies so it's always safe to leave
+  enabled (text only shows once the mod owning that key is also enabled;
+  otherwise it's silently unused).
 - Files split by category (standard PZ translation format): ContextMenu.json,
   IG_UI.json, ItemName.json, Recipes.json, Sandbox.json, Tooltip.json, UI.json
   (add more as needed, e.g. Farming.json, Moodles.json, Moveables.json,

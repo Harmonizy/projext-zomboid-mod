@@ -335,17 +335,17 @@ end
 Hub.NAMESPACES = {
     { ns = "HARMONIE_GardenToPlate", label = "Garden to Plate" },
     { ns = "HARMONIE_TheWayToAttack", label = "The Way To Attack" },
-    { ns = "ExtensiveHealthRework", label = "Home Medic: health" },
-    { ns = "HomeMedic", label = "Home Medic" },
-    { ns = "TOC", label = "Home Medic: amputation" },
-    { ns = "MultiplierConfig", label = "Home Medic: multipliers" },
-    { ns = "HARMONIE_SVU3PartWear", label = "SVU3 vehicle upgrades" },
-    { ns = "HARMONIE_ModernFirearmsSystemFix", label = "Modern Firearms: HARMONIE" },
-    { ns = "MFSSandbox", label = "Modern Firearms" },
-    { ns = "MFSEject", label = "Modern Firearms: eject" },
-    { ns = "MFSCommunityFixLoot", label = "Modern Firearms: loot" },
-    { ns = "MFSCommunityFixGunRates", label = "Modern Firearms: gun rates" },
-    { ns = "ModernFirearmsSystemSandboxGun", label = "Modern Firearms: guns on/off" },
+    { ns = "ExtensiveHealthRework", label = "How to Survive: health" },
+    { ns = "HomeMedic", label = "How to Survive" },
+    { ns = "TOC", label = "How to Survive: amputation" },
+    { ns = "MultiplierConfig", label = "How to Survive: multipliers" },
+    { ns = "HARMONIE_SVU3PartWear", label = "Car for Crash" },
+    { ns = "HARMONIE_ModernFirearmsSystemFix", label = "Mercenary Is Life: HARMONIE" },
+    { ns = "MFSSandbox", label = "Mercenary Is Life" },
+    { ns = "MFSEject", label = "Mercenary Is Life: eject" },
+    { ns = "MFSCommunityFixLoot", label = "Mercenary Is Life: loot" },
+    { ns = "MFSCommunityFixGunRates", label = "Mercenary Is Life: gun rates" },
+    { ns = "ModernFirearmsSystemSandboxGun", label = "Mercenary Is Life: guns on/off" },
 }
 
 -- every sandbox option of ours -> { [ns] = { {name, label, type, opt} } }

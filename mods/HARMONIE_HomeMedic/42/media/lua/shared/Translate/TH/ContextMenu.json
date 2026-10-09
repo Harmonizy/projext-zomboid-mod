@@ -17,7 +17,7 @@
     "ContextMenu_PutTourniquetArmRight": "รัดสายห้ามเลือดที่แขนขวา",
     "ContextMenu_PutTourniquetLegR": "รัดสายห้ามเลือดที่ขาขวา",
     "ContextMenu_CleanWound": "ทำความสะอาดแผล",
-    "ContextMenu_Admin_TOC": "Home Medic: การตัดแขน",
+    "ContextMenu_Admin_TOC": "How to Survive: การตัดแขน",
     "ContextMenu_Admin_ResetTOC": "รีเซ็ตการตัดอวัยวะ",
     "ContextMenu_Admin_ForceAmputation": "บังคับตัดอวัยวะ"
 }

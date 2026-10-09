@@ -40,6 +40,8 @@ EXCLUDE = [
     "lua/client/UI/risky_trade_button.lua",
     "lua/shared/Trade",
     "lua/server/Trade",
+    # the original's Chinese mod-list name ("AAA_...") would show instead of ours
+    "lua/shared/Translate/CN/Mod.json",
 ]
 
 PATCHES = [
@@ -80,6 +82,10 @@ for _rel, _fn in [
                     'Events.OnFillInventoryObjectContextMenu.Add(%s(%s, "MFS"))' % (HUB_WRAP, _fn)))
 
 
+# translations merged (original + tools/ours on top) instead of copied
+MERGED_LANGS = ["EN", "TH"]
+
+
 def excluded(rel):
     rel = rel.replace(os.sep, "/")
     return any(rel == e or rel.startswith(e + "/") for e in EXCLUDE)
@@ -118,11 +124,12 @@ def main():
             if excluded(rel):
                 continue
             b = os.path.join(dst, rel)
-            if os.path.exists(b) and os.path.relpath(b, MOD).replace(os.sep, "/") not in ("media/sandbox-options.txt",) \
-                    and not rel.replace(os.sep, "/").startswith("lua/shared/Translate/EN/"):
+            merged_here = rel.replace(os.sep, "/") == "sandbox-options.txt" or \
+                any(rel.replace(os.sep, "/").startswith("lua/shared/Translate/%s/" % lang) for lang in MERGED_LANGS)
+            if os.path.exists(b) and not merged_here:
                 sys.exit("would overwrite our own file: %s" % b)
             os.makedirs(os.path.dirname(b), exist_ok=True)
-            if rel.replace(os.sep, "/") == "sandbox-options.txt" or rel.replace(os.sep, "/").startswith("lua/shared/Translate/EN/"):
+            if merged_here:
                 continue  # merged below
             shutil.copy2(a, b)
             imported.append(os.path.relpath(b, MOD).replace(os.sep, "/"))
@@ -137,19 +144,24 @@ def main():
             sys.exit("patch for %s matched %d times (expected 1)" % (rel, n))
         open(p, "w", encoding="utf-8").write(s.replace(old, new))
 
-    # 4. English texts: the original's, then ours on top
-    en_src = os.path.join(src, "lua", "shared", "Translate", "EN")
-    en_dst = os.path.join(dst, "lua", "shared", "Translate", "EN")
-    en_ours = os.path.join(OURS, "media", "lua", "shared", "Translate", "EN")
-    for f in sorted(set(os.listdir(en_src)) | set(os.listdir(en_ours) if os.path.isdir(en_ours) else [])):
-        merged = {}
-        if os.path.exists(os.path.join(en_src, f)):
-            merged.update(json.load(open(os.path.join(en_src, f), encoding="utf-8")))
-        n_orig = len(merged)
-        if os.path.exists(os.path.join(en_ours, f)):
-            merged.update(json.load(open(os.path.join(en_ours, f), encoding="utf-8")))
-        open(os.path.join(en_dst, f), "w", encoding="utf-8").write(json.dumps(merged, ensure_ascii=False, indent=4) + "\n")
-        print("EN %-18s original %4d + ours -> %4d" % (f, n_orig, len(merged)))
+    # 4. English and Thai texts: the original's, then ours on top (ours: the
+    # missing English, and HARMONIE's Thai -- it used to live in the Thai
+    # translation mod, which is now only for other people's mods)
+    for lang in MERGED_LANGS:
+        l_src = os.path.join(src, "lua", "shared", "Translate", lang)
+        l_dst = os.path.join(dst, "lua", "shared", "Translate", lang)
+        l_ours = os.path.join(OURS, "media", "lua", "shared", "Translate", lang)
+        os.makedirs(l_dst, exist_ok=True)
+        names = set(os.listdir(l_src) if os.path.isdir(l_src) else []) | set(os.listdir(l_ours) if os.path.isdir(l_ours) else [])
+        for f in sorted(names):
+            merged = {}
+            if os.path.exists(os.path.join(l_src, f)):
+                merged.update(json.load(open(os.path.join(l_src, f), encoding="utf-8")))
+            n_orig = len(merged)
+            if os.path.exists(os.path.join(l_ours, f)):
+                merged.update(json.load(open(os.path.join(l_ours, f), encoding="utf-8")))
+            open(os.path.join(l_dst, f), "w", encoding="utf-8").write(json.dumps(merged, ensure_ascii=False, indent=4) + "\n")
+            print("%s %-18s original %4d + ours -> %4d" % (lang, f, n_orig, len(merged)))
     # sandbox options: the original's, then ours
     so = open(os.path.join(src, "sandbox-options.txt"), encoding="utf-8").read().rstrip()
     ours_so = os.path.join(OURS, "media", "sandbox-options.txt")
