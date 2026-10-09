@@ -64,7 +64,11 @@ for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
     indicatorClass.getValue = function(self)
         if not self.player or self.player:isDead() then return 0 end
         local value = HARMONIE_GTP.VitData.Get(self.player, vit)
-        if HARMONIE_GTP.VitaminView and HARMONIE_GTP.VitaminView(self.player) == "name" then
+        local view = HARMONIE_GTP.VitaminView and HARMONIE_GTP.VitaminView(self.player) or "numbers"
+        if HARMONIE_GTP.LogOnce then
+            HARMONIE_GTP.LogOnce("msview:" .. vit .. ":" .. view, "ModernStatus", "vitamin %s HUD bar shows %s (First Aid rule)", vit, view == "name" and "only its state" or "the real Reserve")
+        end
+        if view == "name" then
             local band = HARMONIE_GTP.GetBand(value)
             return (band == "critical" and 0.1) or (band == "low" and 0.35) or 1
         end

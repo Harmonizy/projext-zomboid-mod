@@ -102,7 +102,7 @@ function Win:renderCook(x, y, w, h)
     local C = H.C
     if type(K.DISHES) ~= "table" or type(K.FAMILIES) ~= "table" then
         -- never throw every frame: say it once in console.txt and on screen
-        K.logOnce("nodata", "ERROR: the cooking data did not load (K.DISHES is %s) -- see the first error in console.txt", type(K.DISHES))
+        K.logOnce("nodata", "ERROR: the cooking data did not load (K.DISHES is %s) -- the last [CookData] line in console.txt shows how far it got (5/5 = done)", type(K.DISHES))
         local tx, ty, tw2 = self:drawCard(x, y, w, h, T("IGUI_GTPC_Card_Intro"))
         self:paragraphs(T("IGUI_GTPC_NoData"), tx, ty, tw2 - 8, C.bad, H.small())
         return

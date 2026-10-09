@@ -47,6 +47,18 @@ HARMONIE_GTP = HARMONIE_GTP or {}
 HARMONIE_GTP.Cook = HARMONIE_GTP.Cook or {}
 local K = HARMONIE_GTP.Cook
 
+-- 0.13.2: progress markers in console.txt while this file loads -- if the
+-- game ever stops part way (0.13.1: "Expected a table" in the tab, the
+-- dishes never arrived), the last marker printed shows where. This file
+-- loads before the logger may exist, so it falls back to print.
+local function mark(fmt, ...)
+    if HARMONIE_GTP.Log then return HARMONIE_GTP.Log("CookData", fmt, ...) end
+    local ok, line = pcall(string.format, fmt, ...)
+    print("[HARMONIE_GTP][CookData] " .. (ok and line or tostring(fmt)))
+end
+local function count(t) local n = 0; for _ in pairs(t or {}) do n = n + 1 end return n end
+mark("loading the cooking data (1/5)")
+
 -- ------------------------------------------------------------------ tools
 -- best / ok / makeshift: { types = {...}, tags = {...} } (tags are vanilla
 -- B42 item tags, checked with pcall). A makeshift tool works but makes the
@@ -126,6 +138,7 @@ K.TOOLS = {
     mitt = { best = { types = { "Base.OvenMitt" } }, optional = true },
 }
 K.TOOL_GRADES = { "best", "ok", "makeshift" }
+mark("tools: %d groups (2/5)", count(K.TOOLS))
 
 -- ------------------------------------------------------------- procedures
 -- game / variant: the minigame (HARMONIE_CookGames.lua). tools: required
@@ -170,6 +183,7 @@ K.PROCS = {
 }
 K.PROC_ORDER = { "wash", "scale", "peel", "core", "trim", "chop", "slice", "mince", "pound", "crack", "grate", "zest", "grind", "mash",
     "knead", "roll", "measure", "whisk", "fold", "season", "spread", "stir", "toss", "flip", "steep" }
+mark("steps: %d (3/5)", count(K.PROCS))
 
 -- ------------------------------------------------------------- families
 -- One vanilla evolved recipe each, by its script TEMPLATE (vanilla's
@@ -211,6 +225,8 @@ K.FAMILIES = {
         results = { "HotDrink", "HotDrinkClay", "HotDrinkTea", "HotDrinkTeaCeramic", "HotDrinkSpiffo", "HotDrinkWhite", "HotDrinkMetal",
         "HotDrinkGold", "HotDrinkCopper", "HotDrinkSilver", "HotDrinkTumbler" }, icon = "Base.HotDrink" },
 }
+
+mark("dish kinds: %d (4/5)", count(K.FAMILIES))
 
 -- -------------------------------------------------------------- groups
 -- Foods a slot prefers (best first). A slot also takes any food of its
@@ -304,7 +320,25 @@ local FRUIT, BERRY = x({ "fruit", "berry" }), x({ "berry" })
 -- 0.13.2: added one at a time -- a single 99-entry constructor broke the
 -- game's Lua compiler (K.DISHES came out nil: "Expected a table" in the tab)
 K.DISHES = {}
-local function dish(t) K.DISHES[#K.DISHES + 1] = t end
+local skipped = 0
+-- a dish is checked before it goes in: a bad entry is logged and left out,
+-- it never stops the others
+local function dish(t)
+    local why
+    if type(t) ~= "table" or type(t.id) ~= "string" then why = "no id"
+    elseif not K.FAMILIES[t.family] then why = "unknown kind " .. tostring(t.family)
+    elseif type(t.procs) ~= "table" or #t.procs == 0 then why = "no steps"
+    elseif type(t.slots) ~= "table" or #t.slots == 0 then why = "no ingredients"
+    else
+        for _, pid in ipairs(t.procs) do if not K.PROCS[pid] then why = "unknown step " .. tostring(pid) end end
+    end
+    if why then
+        skipped = skipped + 1
+        mark("dish %s left out: %s", type(t) == "table" and tostring(t.id) or "?", why)
+        return
+    end
+    K.DISHES[#K.DISHES + 1] = t
+end
 do
     -- ===== soups (vanilla Soup: a cooking pot with water, 6)
     dish { id = "VegSoup",      family = "soup", level = 0, procs = { "wash", "peel", "chop", "season", "stir" },
@@ -528,6 +562,7 @@ end
 -- quick lookups
 K.DISH_BY_ID = {}
 for _, d in ipairs(K.DISHES) do K.DISH_BY_ID[d.id] = d end
+mark("dishes: %d, %d left out -- cooking data loaded (5/5)", #K.DISHES, skipped)
 
 -- quality words from the minigames (the same words The Way To Attack uses)
 K.WORD_SCORE = { Excellent = 1.0, Good = 0.66, Bad = 0.33 }

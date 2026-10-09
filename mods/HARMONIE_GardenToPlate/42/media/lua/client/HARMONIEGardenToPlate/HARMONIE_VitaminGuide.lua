@@ -856,9 +856,14 @@ function Win:renderOther(x, y, w, h)
             shadowText(self, T("IGUI_GTPG_Other_" .. key .. "_Title"), tx, yy, C.accent, 1, mf)
             local ty = yy + lineH(mf) + 2
             local body
-            if key == "Sun" and HARMONIE_GTP.SunD then
-                -- the live sandbox numbers
-                body = T("IGUI_GTPG_Other_Sun_Body", H.fmt1(HARMONIE_GTP.SunD.perHour()), H.fmt1(HARMONIE_GTP.SunD.maxPerDay()))
+            if key == "Sun" then
+                -- the live sandbox numbers (the text always gets both, even
+                -- if the sun file did not load: no "Missing arguments")
+                local SD = HARMONIE_GTP.SunD
+                local okA, a = pcall(function() return SD.perHour() end)
+                local okB, b = pcall(function() return SD.maxPerDay() end)
+                if not (okA and okB) then logOnce("nosun", "sun vitamin D numbers unavailable -- the guide shows the defaults") end
+                body = T("IGUI_GTPG_Other_Sun_Body", H.fmt1(okA and tonumber(a) or 0.5), H.fmt1(okB and tonumber(b) or 3))
             else
                 body = T("IGUI_GTPG_Other_" .. key .. "_Body")
             end

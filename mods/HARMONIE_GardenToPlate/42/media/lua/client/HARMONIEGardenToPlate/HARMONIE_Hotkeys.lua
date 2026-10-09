@@ -157,6 +157,7 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
         -- (the one rule every vitamin window uses, HARMONIE_GTP.VitaminView)
         local view = HARMONIE_GTP.VitaminView(playerObj)
         local n2, n5 = HARMONIE_GTP.VitaminViewLevels()
+        if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("assessview:" .. view, "Assess", "assess option offered; the assessor will see: %s", view) end
         tooltip.description = getText("IGUI_HARMONIE_AssessOtherDesc") .. " <LINE> " ..
             getText("IGUI_HARMONIE_AssessView_" .. view, n2, n5)
         option.toolTip = tooltip

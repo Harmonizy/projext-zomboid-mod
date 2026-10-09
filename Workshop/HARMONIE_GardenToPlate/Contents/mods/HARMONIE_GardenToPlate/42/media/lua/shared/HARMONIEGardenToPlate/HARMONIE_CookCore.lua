@@ -319,7 +319,9 @@ function K.scan(player, force)
         K.lastRecipesLog = sig
         log("vanilla evolved recipes in reach: %s", sig)
     end
-    s.heat = K.findHeat(player)
+    local okH, heat = pcall(K.findHeat, player)
+    if not okH then logOnce("heatfail", "heat source check FAILED: %s -- hot steps count as having no heat", tostring(heat)); heat = nil end
+    s.heat = heat
     scanCache[player] = s
     return s
 end
@@ -716,6 +718,18 @@ function K.serveQuality(player, args)
     if not dish then
         log("quality from %s for unknown dish %s -- rejected", tostring(call(player, "getUsername")), tostring(args.dish))
         return nil
+    end
+    -- 0.13.2: the hot steps (toss / flip / steep) were checked for a heat
+    -- source on the client; the server looks too but only LOGS a miss --
+    -- its loaded objects may lag behind, and refusing would lose a real dish
+    local needsHeat = false
+    for _, pid in ipairs(dish.procs or {}) do if K.PROCS[pid] and K.PROCS[pid].heat then needsHeat = true end end
+    if needsHeat and isServer and isServer() then
+        local okH, heat = pcall(K.findHeat, player)
+        if okH and not heat then
+            logOnce("srvnoheat:" .. tostring(call(player, "getUsername")), "%s finished %s (hot steps) but the server sees no stove / fire within %d tiles -- accepted, logged only (repeats not logged)",
+                tostring(call(player, "getUsername")), dish.id, K.HEAT_RANGE)
+        end
     end
     local item = findInInventory(player, tonumber(args.id))
     local q = math.max(0, math.min(1, tonumber(args.q) or 0))
