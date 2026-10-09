@@ -1,0 +1,8 @@
+{
+    "ContextMenu_Remove_Battery_To_Laser": "ถอดแบตเตอรี่ออกจากเลเซอร์",
+    "ContextMenu_ADD_Battery_To_Laser": "ใส่แบตเตอรี่ให้เลเซอร์",
+    "ContextMenu_Remove_Battery_To_Light": "ถอดแบตเตอรี่ออกจากไฟฉายติดปืน",
+    "ContextMenu_ADD_Battery_To_Light": "ใส่แบตเตอรี่ให้ไฟฉายติดปืน",
+    "ContextMenu_AirDropMarker": "ใช้เครื่องหมายแอร์ดรอป",
+    "ContextMenu_AirDrop": "เปิดกล่องแอร์ดรอป"
+}
