@@ -21,5 +21,6 @@
     "UI_options_AWCWF_weapon_shot_volume": "Weapon Shot Volume",
     "UI_options_AWCWF_weapon_shot_volume_tooltip": "Batch-adjusts the volume of every gunshot sound.",
     "UI_options_AWCWF_weapon_reload_volume": "Weapon Reload Volume",
-    "UI_options_AWCWF_weapon_reload_volume_tooltip": "Batch-adjusts the volume of every reload sound."
+    "UI_options_AWCWF_weapon_reload_volume_tooltip": "Batch-adjusts the volume of every reload sound.",
+    "UI_optionscreen_binding_KeySetting_AWCWF": "Mercenary Is Life Key Settings"
 }
