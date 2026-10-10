@@ -5,10 +5,13 @@
     EHR window for another player) -> "Surgery" -> the PRE-OP window: one
     row per check with a short value; the explanation is a tooltip on hover
     (request: "คำอธิบายต่างๆปรากฏขึ้นเป็น tooltip เมื่อชี้ จะได้มีคำน้อยๆ").
-    Start -> the server re-checks and uses up the consumables -> the
-    OPERATING window plays the procedures one after another while the
-    doctor works (HM_SurgeryAction), sends the step scores, and shows the
-    server's result.
+    Start -> (below the recommended First Aid level: Start once more to
+    confirm) -> the CONSENT form for the patient with every risk (on
+    yourself / single player here, another player on their own screen,
+    HM_SurgeryConsent.lua) -> the server re-checks and uses up the
+    consumables -> the OPERATING window plays the procedures one after
+    another while the doctor works (HM_SurgeryAction), sends the step
+    scores and side effects, and shows the server's result.
 ]]--
 
 require "ISUI/ISPanel"
@@ -16,6 +19,7 @@ require "ISUI/ISButton"
 require "TimedActions/ISBaseTimedAction"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/Surgery/HM_SurgeryGames"
+require "HARMONIEHomeMedic/Surgery/HM_SurgeryConsent"
 
 local S = HM_Surgery
 local G = HM_SurgeryGames
@@ -333,7 +337,7 @@ function Prep:onMouseDown(x, y)
             else
                 self.sid = r.sid
             end
-            self.status = nil; self.scroll = 0
+            self.status = nil; self.scroll = 0; self.confirmUnder = nil
             self:reevaluate(true)
             return true
         end
@@ -344,10 +348,39 @@ end
 function Prep:onStart()
     self:reevaluate(true)
     if not self.eval.canStart then HMLog("SurgeryUI", "start %s refused: not ready (missing supplies/conditions)", tostring(self.sid)); return end
-    self.waiting = true
-    self.status = S.T("Preparing", "Preparing...")
+    -- below the recommended level: say so, and start only on a second press
+    if (self.eval.gap or 0) < 0 and not self.confirmUnder then
+        self.confirmUnder = true
+        self.status = S.T("ConfirmUnder", "Below the recommended First Aid level: this can kill the patient. Press Start again to go on.")
+        HMLog("SurgeryUI", "start %s: below the recommended level (gap %s) -- asked to confirm", tostring(self.sid), tostring(self.eval.gap))
+        return
+    end
+    self.confirmUnder = nil
     C.prep = self
-    C.request(self.doctor, self.patient, self.partName, self.sid)
+    local doctor, patient, part, sid = self.doctor, self.patient, self.partName, self.sid
+    if doctor == patient or not (isClient and isClient()) then
+        -- the patient is at this screen (yourself, or split screen): the form here
+        local risks = S.risks(doctor, patient, sid, self.eval)
+        self.status = S.T("ConsentHere", "The patient reads the risks...")
+        HMLog("SurgeryUI", "consent form for %s on %s (%d risks)", tostring(sid), HMLogName(patient), #risks)
+        C.openConsent({ sid = sid, part = part, risks = risks, self = doctor == patient,
+            doctor = doctor.getDisplayName and doctor:getDisplayName() or "?", seconds = S.CONSENT_SECONDS,
+            player = patient }, function(yes)
+                if not yes then
+                    HMLog("SurgeryUI", "%s declined %s", HMLogName(patient), tostring(sid))
+                    self.waiting = false
+                    self.status = S.T("Denied_ConsentDeclined", "The patient said no.")
+                    return
+                end
+                self.waiting = true
+                self.status = S.T("Preparing", "Preparing...")
+                C.request(doctor, patient, part, sid, true)
+            end)
+        return
+    end
+    self.waiting = true
+    self.status = S.T("AskingConsent", "Asking the patient for consent...")
+    C.request(doctor, patient, part, sid, false)
 end
 
 function Prep:close()
@@ -413,8 +446,10 @@ function Op:new(doctor, info)
     o.doctor, o.info = doctor, info
     o.sid = info.sid
     o.steps = S.Surgeries[info.sid].steps
-    o.stepIndex, o.scores = 0, {}
-    o.params = { skill = tonumber(info.skill) or 0, shake = tonumber(info.shake) or 0, tool = tonumber(info.tool) or 1 }
+    o.stepIndex, o.scores, o.effects = 0, {}, {}
+    o.params = { skill = tonumber(info.skill) or 0, shake = tonumber(info.shake) or 0,
+                 k = tonumber(info.k) or 1, under = tonumber(info.under) or 0 }
+    o.tools = type(info.tools) == "table" and info.tools or {}
     o.startQ = tonumber(info.startQ) or 1
     o.backgroundColor = { r = COL.bg[1], g = COL.bg[2], b = COL.bg[3], a = 0.97 }
     o.borderColor = { r = COL.border[1], g = COL.border[2], b = COL.border[3], a = 1 }
@@ -446,6 +481,14 @@ function Op:nextStep()
     HMLog("SurgeryUI", "step %d/%d: %s (game %s)", self.stepIndex, #self.steps, tostring(self.steps[self.stepIndex]), tostring(proc and proc.game))
     local p = { variant = proc.variant, tier = S.TIERS[proc.tier].order, sid = self.sid }
     for k, v in pairs(self.params) do p[k] = v end
+    -- this step handles like its own instrument (a knife cuts worse than a scalpel)
+    p.tool = proc.tool and tonumber(self.tools[proc.tool]) or 1
+    -- what the earlier steps left behind (a ragged incision is harder to close)
+    local prev = {}
+    for _, e in pairs(self.effects) do
+        for key, v in pairs(e) do prev[key] = math.max(prev[key] or 0, tonumber(v) or 0) end
+    end
+    p.prev = prev
     self.game = G.new(proc.game, p)
     self.pause = 0
 end
@@ -482,7 +525,7 @@ function Op:finish(aborted)
     -- (and enables it again); disabling it afterwards locked the window
     self.abortBtn:setTitle(S.T("Close", "Close"))
     self.abortBtn:setEnable(false)
-    local args = { permit = self.info.permit, scores = self.scores, aborted = aborted == true }
+    local args = { permit = self.info.permit, scores = self.scores, effects = self.effects, aborted = aborted == true }
     HMLog("SurgeryUI", "%s %s (%d step scores)", aborted and "aborting" or "finishing", tostring(self.sid), #self.scores)
     send(aborted and "Abort" or "Finish", args)
 end
@@ -519,6 +562,12 @@ function Op:update()
             if self.game.done then
                 local sc = self.game:score()
                 self.scores[self.stepIndex] = sc
+                local fx = self.game.effects and self.game:effects() or {}
+                self.effects[self.stepIndex] = fx
+                local parts = {}
+                for key, v in pairs(fx) do parts[#parts + 1] = key .. "=" .. string.format("%.2f", tonumber(v) or 0) end
+                table.sort(parts)
+                HMLog("SurgeryUI", "step %d effects: %s", self.stepIndex, #parts > 0 and table.concat(parts, " ") or "none")
                 HMLog("SurgeryUI", "step %d (%s) scored %.2f", self.stepIndex, tostring(self.steps[self.stepIndex]), tonumber(sc) or -1)
                 self.pause = 900
                 G.sfx(sc >= 0.45 and "Good" or "Bad")
@@ -628,7 +677,16 @@ function Op:drawResult(b)
     else
         line(S.T("Res_NoChange", "Nothing improved."), COL.warn)
     end
+    if r.complication then line(S.T("Res_Complication", "A serious complication happened during the operation."), COL.fail) end
+    for _, n in ipairs(r.notes or {}) do
+        local k = tostring(n.k)
+        line(S.T("Res_Note_" .. k, k, n.a or 0), (k == "Slow") and COL.warn or COL.fail)
+    end
     line(S.T("Res_Blood", "Blood lost: %1 mL", r.blood or 0), COL.dim)
+    if r.bloodAfter then
+        local ba = tonumber(r.bloodAfter) or 1
+        line(S.T("Res_BloodAfter", "Blood left: %1%", math.floor(ba * 100 + 0.5)), ba < 0.3 and COL.fail or (ba < 0.7 and COL.warn or COL.dim))
+    end
     line(S.T("Res_Pain", "Pain: +%1", r.pain or 0), COL.dim)
     if r.infected then line(S.T("Res_Infected", "Surgical-site infection: Cellulitis!"), COL.fail) end
     if r.transfusion then
@@ -654,6 +712,14 @@ end
 function Op:onMouseDown(x, y)
     if self.game and self.pause <= 0 and inBoard(self, x, y) then self.game:mouseDown(x, y); return true end
     return ISPanel.onMouseDown(self, x, y)
+end
+function Op:onRightMouseDown(x, y)
+    if self.game and self.pause <= 0 and inBoard(self, x, y) and self.game.rightDown then self.game:rightDown(x, y); return true end
+    return false
+end
+function Op:onMouseWheel(del)
+    if self.game and self.pause <= 0 and self.game.wheel then self.game:wheel(del); return true end
+    return false
 end
 function Op:onMouseUp(x, y)
     if self.game then self.game:mouseUp(x, y) end
@@ -727,11 +793,11 @@ function HM_SurgeryAction:perform()
 end
 
 -- ============================================================= requests
-function C.request(doctor, patient, partName, sid)
-    HMLog("SurgeryUI", "asking to begin %s on %s's %s", tostring(sid), HMLogName(patient), tostring(partName))
+function C.request(doctor, patient, partName, sid, consent)
+    HMLog("SurgeryUI", "asking to begin %s on %s's %s (consent here: %s)", tostring(sid), HMLogName(patient), tostring(partName), tostring(consent))
     C.doctor = doctor
     C.pending = { patient = patient, sid = sid, part = partName }
-    local args = { sid = sid, part = partName }
+    local args = { sid = sid, part = partName, consent = consent == true }
     if isClient and isClient() then
         if patient ~= doctor then args.patientOnline = patient:getOnlineID() end
     else
@@ -744,7 +810,19 @@ function C.onServerCommand(module, command, args)
     if module ~= MODULE then return end
     args = args or {}
     HMLog("SurgeryUI", "server: %s%s", tostring(command), args.reason and (" (" .. tostring(args.reason) .. ")") or (args.grade and (" " .. tostring(args.grade)) or ""))
-    if command == "Denied" then
+    if command == "AwaitConsent" then
+        if C.prep then C.prep.waiting = true; C.prep.status = S.T("AskingConsent", "Asking the patient for consent...") end
+        return
+    elseif command == "ConsentAsk" then
+        -- someone wants to operate on me: the form, then my answer to the server
+        local me = getPlayer()
+        C.openConsent({ sid = args.sid, part = args.part, risks = args.risks, doctor = args.doctor,
+            seconds = tonumber(args.seconds) or S.CONSENT_SECONDS, player = me }, function(yes)
+                HMLog("SurgeryUI", "consent to %s by %s: %s", tostring(args.sid), tostring(args.doctor), yes and "YES" or "no")
+                sendClientCommand(me, MODULE, "ConsentReply", { id = args.id, yes = yes == true })
+            end)
+        return
+    elseif command == "Denied" then
         local text = S.T("Denied_" .. tostring(args.reason), S.T("Denied_NotReady", "Not ready."))
         if C.prep then C.prep.waiting = false; C.prep.status = text; C.prep:reevaluate(true) end
         local d = C.doctor or getPlayer()

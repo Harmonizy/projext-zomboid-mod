@@ -13,8 +13,12 @@
     them, and the operation then starts the treatment. Everything else is
     still cured by medicine alone, as in EHR.
 
-    Unlocks: a procedure needs First Aid at its tier; an operation may also
-    need knowledge of one of its diseases the EHR way (flyer, or First Aid 8).
+    Skill (2026-10-10): nothing is locked by First Aid or disease knowledge
+    any more. Each tier has a RECOMMENDED First Aid level; below it (or
+    without knowing the disease) the games are much harder and the pre-op
+    list and the consent form warn that it is life-threatening, above it
+    they get easier. Only The Only Cure (amputation) and "not on yourself"
+    still block.
 ]]--
 
 HM_Surgery = HM_Surgery or {}
@@ -29,23 +33,44 @@ S.TIERS = {
 S.TIER_ORDER = { "field", "clinical", "advanced", "master" }
 
 -- Procedures: `game` + `variant` pick the minigame (HM_SurgeryGames.lua).
+-- `tier` = the RECOMMENDED First Aid level (owner, 2026-10-10: "ทุกคนสามารถ
+-- ผ่าตัดได้ทุกประเภท แต่ยากขึ้นหากไม่ถึงเกณฑ์"): nothing is locked by skill any
+-- more, below it every game is much harder (S.difficulty), above it easier.
+-- `tool` = the supply slot whose quality changes how this step handles
+-- (a kitchen knife cuts less precisely than a scalpel, a screwdriver
+-- drills worse than a drill); nil = the step uses no specific instrument.
+-- `effects` = what the step reports besides its score (S.EFFECT_KEYS),
+-- each 0..1, used by the server for the outcome.
 S.Procedures = {
-    P01 = { game = "trace",    tier = "field",    weight = 1.0 },                                      -- Incision
-    P02 = { game = "pulse",    tier = "field",    weight = 1.0 },                                      -- Hemostasis
-    P03 = { game = "clean",    tier = "clinical", weight = 1.0, knowledge = { "wound_infection", "cellulitis", "sepsis", "hyperkeratotic_scabies", "trichinosis", "toxin_poisoning" } }, -- Irrigation
-    P04 = { game = "necro",    tier = "clinical", weight = 1.5, knowledge = { "cellulitis", "sepsis", "tetanus", "wound_infection", "hyperkeratotic_scabies" } }, -- Necrectomy
-    P05 = { game = "gauge",    tier = "clinical", weight = 1.5, knowledge = { "cellulitis", "wound_infection" } }, -- Aspiration
-    P06 = { game = "extract",  tier = "clinical", weight = 1.5 },                                      -- Extraction
-    P07 = { game = "gauge",    variant = "saw",   tier = "advanced", weight = 1.5 },                   -- Bone cut
-    P08 = { game = "suture",   tier = "field",    weight = 1.0 },                                      -- Closure
-    P09 = { game = "gauge",    variant = "valve", tier = "advanced", weight = 1.0 },                   -- Drainage
-    P10 = { game = "trace",    variant = "catheter", tier = "master", weight = 1.0 },                  -- Catheterization
-    P11 = { game = "dialysis", tier = "master",   weight = 1.5 },                                      -- Blood purification
-    P12 = { game = "cells",    tier = "master",   weight = 1.5 },                                      -- Cell graft
-    P13 = { game = "gauge",    variant = "drill", tier = "master", weight = 1.5 },                     -- Craniotomy
-    P14 = { game = "extract",  variant = "clot",  tier = "master", weight = 1.5 },                     -- Hematoma evacuation
-    P15 = { game = "necro",    variant = "organ", tier = "advanced", weight = 1.5 },                   -- Organ repair
+    P01 = { game = "trace",    tier = "field",    weight = 1.0, tool = "blade" },                       -- Incision
+    P02 = { game = "pulse",    tier = "field",    weight = 1.0, tool = "forceps" },                     -- Hemostasis
+    P03 = { game = "clean",    tier = "clinical", weight = 1.0, tool = "syringe", knowledge = { "wound_infection", "cellulitis", "sepsis", "hyperkeratotic_scabies", "trichinosis", "toxin_poisoning" } }, -- Irrigation
+    P04 = { game = "necro",    tier = "clinical", weight = 1.5, tool = "blade", knowledge = { "cellulitis", "sepsis", "tetanus", "wound_infection", "hyperkeratotic_scabies" } }, -- Necrectomy
+    P05 = { game = "gauge",    tier = "clinical", weight = 1.5, tool = "syringe", knowledge = { "cellulitis", "wound_infection" } }, -- Aspiration
+    P06 = { game = "extract",  tier = "clinical", weight = 1.5, tool = "forceps" },                     -- Extraction
+    P07 = { game = "gauge",    variant = "saw",   tier = "advanced", weight = 1.5, tool = "saw" },      -- Bone cut
+    P08 = { game = "suture",   tier = "field",    weight = 1.0, tool = "suture" },                      -- Closure
+    P09 = { game = "gauge",    variant = "valve", tier = "advanced", weight = 1.0, tool = "syringe" },  -- Drainage
+    P10 = { game = "trace",    variant = "catheter", tier = "master", weight = 1.0, tool = "ivkit" },   -- Catheterization
+    P11 = { game = "dialysis", tier = "master",   weight = 1.5, tool = "fluids" },                      -- Blood purification
+    P12 = { game = "cells",    tier = "master",   weight = 1.5, tool = "genekit" },                     -- Cell graft
+    P13 = { game = "gauge",    variant = "drill", tier = "master", weight = 1.5, tool = "drill" },      -- Craniotomy
+    P14 = { game = "extract",  variant = "clot",  tier = "master", weight = 1.5, tool = "forceps" },    -- Hematoma evacuation
+    P15 = { game = "necro",    variant = "organ", tier = "advanced", weight = 1.5, tool = "blade" },    -- Organ repair
 }
+
+-- Side effects a step can report (0..1 each; HM_SurgeryGames :effects()).
+-- The server takes only these keys and clamps them.
+--   tissue   -- healthy tissue hurt (slips, wrong cuts, crushing, overpressure)
+--   bleed    -- bleeding left uncontrolled at the end of the step
+--   dirt     -- contamination left in the wound
+--   residual -- what should have come out and did not (pus, a bullet, a clot, necrosis)
+--   misplace -- the catheter is not where it should be
+--   neuro    -- injury to the brain (drill plunge, suction on healthy brain)
+--   organ    -- organ function lost (unrepaired damage, healthy tissue resected)
+--   tension  -- stitches tied too tight (skin edges blanch and may tear)
+--   gap      -- wound edges left apart between stitches
+S.EFFECT_KEYS = { "tissue", "bleed", "dirt", "residual", "misplace", "neuro", "organ", "tension", "gap" }
 
 -- Supplies: first option found wins (inventory incl. bags, floor, containers within reach).
 S.Supplies = {
@@ -80,7 +105,7 @@ S.Supplies = {
         { type = "ExtensiveHealth.GeneTherapyKit", q = 1.0 } } },
     -- transfusion slots: no longer part of any operation (request
     -- 2026-10-02: the operation itself leaves the patient low on blood, see
-    -- S.POSTOP_MAX); kept so old references still resolve
+    -- S.postOpBlood); kept so old references still resolve
     blood = { kind = "use", required = false, transfusion = "blood", options = { { match = "bloodbag", q = 1.0 } } },
     saline = { kind = "use", required = false, transfusion = "saline", options = {
         { type = "ExtensiveHealth.SalineBag", q = 1.0 }, { match = "saline", q = 1.0 } } },
@@ -91,23 +116,64 @@ S.Supplies = {
 -- type causes a transfusion reaction (AHTR), saline adds volume but dilutes.
 S.TRANSFUSE_BELOW = 0.62
 
--- Request 2026-10-02: an operation leaves the patient weak for a while --
--- blood volume ends at POSTOP_MAX at most (just inside EHR's "moderate"
--- band: tired, slower), lower when the bleeding was badly controlled, down
--- to POSTOP_MIN (EHR's "critical" band: no endurance, blackouts).
-S.POSTOP_MAX = 0.704
 -- Request 2026-10-02: proper instruments start the operation at 100%;
 -- each improvised one (supply option q < 1: a kitchen knife for a scalpel,
 -- thread for suture, a rag for a dressing...) lowers the STARTING quality,
 -- one factor per kind of supply, multiplied: 1 - (1 - q) * IMPROVISED_COST.
-S.IMPROVISED_COST = 0.3   -- a fully improvised kit starts near 50% (success needs 45%)
-S.POSTOP_MIN = 0.555
--- hemostasis (P02) / incision (P01) scores 0..1 -> the most blood left
-function S.postOpCap(hemo, incision)
-    local q = 0.65 * (tonumber(hemo) or 0.5) + 0.35 * (tonumber(incision) or 0.5)
-    q = math.max(0, math.min(1, q))
-    return S.POSTOP_MIN + (S.POSTOP_MAX - S.POSTOP_MIN) * q
+-- Round 2026-10-10: the instrument also changes how its own step handles
+-- (Procedures[].tool), so the starting penalty is halved.
+S.IMPROVISED_COST = 0.15
+
+-- Blood after the operation (owner, 2026-10-10: "penalty จากการผ่าตัดที่พลาด
+-- ทำให้ปริมาณเลือดลดลงอย่างมาก เสี่ยงตาย เกณฑ์ผ่าตัดยอดเยี่ยมให้ลดปริมาณเลือด
+-- 90% แทน และลดลงตามลำดับที่ต่ำลง"): the patient ends at most at
+--   excellent (quality >= S.EXCELLENT)  POSTOP_EXCELLENT  90%
+--   just successful (S.SUCCESS)          POSTOP_SUCCESS    72%  (EHR "moderate")
+--   a complete failure (quality 0)       POSTOP_FLOOR      20%  (EHR: under 20%
+--                                                              the heart can stop)
+-- linear in between; uncontrolled bleeding (P02 `bleed`) takes up to
+-- POSTOP_BLEED more. Someone who comes in already low ends lower still.
+S.POSTOP_EXCELLENT = 0.90
+S.POSTOP_SUCCESS = 0.72
+S.POSTOP_FLOOR = 0.20
+S.POSTOP_BLEED = 0.08
+function S.postOpBlood(q, bleed)
+    q = math.max(0, math.min(1, tonumber(q) or 0))
+    local f
+    if q >= S.EXCELLENT then
+        f = S.POSTOP_EXCELLENT
+    elseif q >= S.SUCCESS then
+        f = S.POSTOP_SUCCESS + (S.POSTOP_EXCELLENT - S.POSTOP_SUCCESS) * (q - S.SUCCESS) / (S.EXCELLENT - S.SUCCESS)
+    else
+        f = S.POSTOP_FLOOR + (S.POSTOP_SUCCESS - S.POSTOP_FLOOR) * q / S.SUCCESS
+    end
+    f = f - S.POSTOP_BLEED * math.max(0, math.min(1, tonumber(bleed) or 0))
+    return math.max(0.05, f)
 end
+
+-- A serious complication can happen to anyone (owner's design doc: "ต้องมี
+-- โอกาสล้มเหลว แม้ผู้เล่นมี Skill สูง"): % chance per operation, from the gap
+-- between the surgeon's First Aid and the recommended level (S.skillGap).
+-- It costs COMPLICATION_COST quality (an unexpected bleeder, a torn vessel).
+S.COMPLICATION_BASE = 4
+S.COMPLICATION_MIN = 1.5
+S.COMPLICATION_PER_LEVEL_BELOW = 6
+S.COMPLICATION_MAX = 35
+S.COMPLICATION_COST = 0.25
+function S.complicationChance(gap)
+    gap = tonumber(gap) or 0
+    local c
+    if gap >= 0 then c = S.COMPLICATION_BASE - 0.6 * gap
+    else c = S.COMPLICATION_BASE + S.COMPLICATION_PER_LEVEL_BELOW * (-gap) end
+    return math.max(S.COMPLICATION_MIN, math.min(S.COMPLICATION_MAX, c))
+end
+
+-- Consent (owner, 2026-10-10: "หากการกระทำไหนมีความเสี่ยง ต้องได้รับการอนุมัติ
+-- จากผู้ถูกทำเสมอ พร้อมบอกด้วยว่าเสี่ยงยังไง เพราะอะไร ขนาดไหน"): every
+-- operation waits for the patient's answer, this long at most.
+S.CONSENT_SECONDS = 60
+-- a missing disease knowledge counts as this many First Aid levels below
+S.KNOWLEDGE_GAP = 2
 
 -- Body-part groups
 local LIMBS = { "UpperArm_L", "UpperArm_R", "ForeArm_L", "ForeArm_R", "UpperLeg_L", "UpperLeg_R", "LowerLeg_L", "LowerLeg_R" }
