@@ -2840,8 +2840,8 @@
     "UI_HomeMedic_Surg_RiskWhy_skill": "Without enough practice the hands are less sure: cuts go wrong, bleeders are missed, and a failed operation can leave you dying of blood loss.",
     "UI_HomeMedic_Surg_Risk_knowledge": "The surgeon does not know this disease well: counts as %1 levels less skill.",
     "UI_HomeMedic_Surg_RiskWhy_knowledge": "Without knowing what to look for, it is easy to remove too little or the wrong thing.",
-    "UI_HomeMedic_Surg_Risk_blood": "Blood after the operation: about %1%% if excellent, %2%% if it only just succeeds, down to %3%% if it fails.",
-    "UI_HomeMedic_Surg_RiskWhy_blood": "Every operation costs blood; a messy one costs much more. Under 20%% the heart can stop.",
+    "UI_HomeMedic_Surg_Risk_blood": "Blood after the operation: %1%% if excellent (-10%%), %2%% if fair (-30%%), %3%% if it fails (-50%%).",
+    "UI_HomeMedic_Surg_RiskWhy_blood": "Every operation costs blood, the worse it goes the more (10%% per grade). Under 20%% the heart can stop.",
     "UI_HomeMedic_Surg_Risk_lowblood": "You have already lost a lot of blood (%1%% left).",
     "UI_HomeMedic_Surg_RiskWhy_lowblood": "The operation starts from a low point: even a small mistake can push you into a fatal range.",
     "UI_HomeMedic_Surg_Risk_complication": "A serious complication (a torn vessel, an unexpected bleeder): %1%% chance, it costs %2%% of the operation's quality.",
@@ -2915,5 +2915,12 @@
     "UI_HomeMedic_Surg_G_Brain": "That is brain!",
     "UI_HomeMedic_Surg_G_ModeSuture": "Suture",
     "UI_HomeMedic_Surg_G_ModeResect": "Resect",
-    "UI_HomeMedic_Surg_G_Healthy": "Healthy tissue!"
+    "UI_HomeMedic_Surg_G_Healthy": "Healthy tissue!",
+    "UI_HomeMedic_Surg_Grade_Good": "Good",
+    "UI_HomeMedic_Surg_Grade_Fair": "Fair",
+    "UI_HomeMedic_Surg_Grade_Poor": "Poor",
+    "UI_HomeMedic_Surg_Say_Good": "Sore, but it went well.",
+    "UI_HomeMedic_Surg_Say_Fair": "It hurts... I hope that worked.",
+    "UI_HomeMedic_Surg_Say_Poor": "Something is wrong... I feel worse.",
+    "UI_HomeMedic_Surg_Tip_BloodGrades": "Every operation costs blood by how well it goes: excellent -10%%, good -20%%, fair -30%%, poor -40%%, failed -50%% (of full volume). From the %1%% the patient has now: %2%% after an excellent one, %3%% after a fair one, %4%% after a failure. Under 20%% the heart can stop. Several operations in a row add up."
 }

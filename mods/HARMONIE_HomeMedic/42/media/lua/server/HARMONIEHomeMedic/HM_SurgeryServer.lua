@@ -425,11 +425,11 @@ function SV.Finish(doctor, args)
         if slow > 1.05 then notes[#notes + 1] = { k = "Slow", a = math.floor((slow - 1) * 100 + 0.5) } end
     end
 
-    -- 2. what it costs: blood (owner, 2026-10-10: excellent -> 90% at most,
-    -- lower with the quality, a failure can leave the patient dying)
+    -- 2. what it costs: blood by grade (S.GRADES: -10% excellent ... -50%
+    -- failed, of full volume), in proportion to how far it got
     local progress = #s.steps > 0 and played / #s.steps or 1
-    local blood = math.floor(s.bloodLoss * (0.6 + bleed * 0.9) * progress + 0.5)
-    if EHR and EHR.Blood and EHR.Blood.ModifyBloodVolume then pcall(EHR.Blood.ModifyBloodVolume, patient, -blood) end
+    local gradeId, lossShare = S.gradeOf(q)
+    local blood = 0
     -- the transfusion given during the operation
     local transfusion
     local B = EHR and EHR.Blood
@@ -453,23 +453,18 @@ function SV.Finish(doctor, args)
             transfusion = { kind = "saline", amount = amt }
         end
     end
-    -- the patient comes out at S.postOpBlood at most; an operation stopped
-    -- early costs in proportion to how far it got
     local bdc = patient:getModData().EHR_Blood
     local maxV = type(bdc) == "table" and tonumber(bdc.maxVolume) or nil
     local curV = type(bdc) == "table" and tonumber(bdc.currentVolume) or nil
     local bloodAfter
     if B and B.ModifyBloodVolume and maxV and curV and maxV > 0 then
-        local capV = S.postOpBlood(q, bleed) * maxV
-        local target = curV - (curV - capV) * progress
-        if curV > target then
-            pcall(B.ModifyBloodVolume, patient, target - curV)
-            blood = blood + math.floor(curV - target + 0.5)
-        end
-        local nowV = tonumber(bdc.currentVolume) or target
+        local loss = math.floor(lossShare * maxV * progress + 0.5)
+        if loss > 0 then pcall(B.ModifyBloodVolume, patient, -loss) end
+        blood = loss
+        local nowV = tonumber(bdc.currentVolume) or (curV - loss)
         bloodAfter = nowV / maxV
-        HMLog("Surgery", "%s: blood %.0f%% -> %.0f%% (quality %.2f, bleed %.2f, progress %.2f)", HMLogName(patient),
-            curV / maxV * 100, bloodAfter * 100, q, bleed, progress)
+        HMLog("Surgery", "%s: blood %.0f%% -> %.0f%% (grade %s -%d%%, progress %.2f)", HMLogName(patient),
+            curV / maxV * 100, bloodAfter * 100, tostring(gradeId), math.floor(lossShare * 100 + 0.5), progress)
     end
     -- pain: the operation, plus tissue hurt, a craniotomy that slipped, tight stitches
     local pain = s.pain * (1 - 0.8 * (permit.anesthesia or 0)) + 25 * tissue + 30 * (worst("neuro") or 0) + 10 * (worst("tension") or 0)
@@ -542,7 +537,7 @@ function SV.Finish(doctor, args)
     if bd and bd.DamageUpdate then HMLogErr("Surgery", "DamageUpdate", pcall(bd.DamageUpdate, bd)) end
     if EHR and EHR.SafeTransmitModData then HMLogErr("Surgery", "SafeTransmitModData", pcall(EHR.SafeTransmitModData, patient)) end
 
-    local grade = aborted and "Aborted" or (q >= S.EXCELLENT and "Excellent" or (q >= S.SUCCESS and "Success" or "Failed"))
+    local grade = aborted and "Aborted" or gradeId
     if EHR and EHR.Locale and EHR.Locale.Say then
         pcall(EHR.Locale.Say, patient, S.T("Say_" .. grade, ""))
     end

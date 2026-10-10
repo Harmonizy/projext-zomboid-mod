@@ -2202,7 +2202,7 @@
     "UI_HomeMedic_Surg_Denied_Locked": "ยังไม่ได้ปลดการผ่าตัดนี้",
     "UI_HomeMedic_Surg_Denied_NoPart": "ไม่พบส่วนของร่างกาย",
     "UI_HomeMedic_Surg_Denied_NotReady": "ยังไม่พร้อม: ตรวจรายการก่อนผ่าตัด",
-    "UI_HomeMedic_Surg_Grade_Excellent": "ดีเยี่ยม",
+    "UI_HomeMedic_Surg_Grade_Excellent": "ยอดเยี่ยม",
     "UI_HomeMedic_Surg_Grade_Success": "สำเร็จ",
     "UI_HomeMedic_Surg_Grade_Failed": "ล้มเหลว",
     "UI_HomeMedic_Surg_Grade_Aborted": "ยกเลิกกลางคัน",
@@ -2840,8 +2840,8 @@
     "UI_HomeMedic_Surg_RiskWhy_skill": "ถ้าฝึกมาไม่พอ มือจะไม่มั่นคง กรีดพลาด ห้ามเลือดไม่ทัน และถ้าผ่าตัดล้มเหลวอาจเสียเลือดจนเสียชีวิต",
     "UI_HomeMedic_Surg_Risk_knowledge": "ผู้ผ่าตัดยังไม่รู้จักโรคนี้ดีพอ: นับเหมือนสกิลต่ำลง %1 ระดับ",
     "UI_HomeMedic_Surg_RiskWhy_knowledge": "ถ้าไม่รู้ว่าต้องหาอะไร ก็ง่ายที่จะเอาออกน้อยเกินไปหรือเอาออกผิดส่วน",
-    "UI_HomeMedic_Surg_Risk_blood": "เลือดหลังผ่าตัด: ประมาณ %1%% ถ้ายอดเยี่ยม, %2%% ถ้าผ่านแบบเฉียดฉิว และอาจเหลือแค่ %3%% ถ้าล้มเหลว",
-    "UI_HomeMedic_Surg_RiskWhy_blood": "การผ่าตัดทุกครั้งเสียเลือด ถ้าทำได้ไม่ดีจะเสียมากขึ้นอีก ถ้าเลือดเหลือต่ำกว่า 20%% หัวใจอาจหยุดเต้น",
+    "UI_HomeMedic_Surg_Risk_blood": "เลือดหลังผ่าตัด: %1%% ถ้ายอดเยี่ยม (-10%%), %2%% ถ้าปานกลาง (-30%%), %3%% ถ้าล้มเหลว (-50%%)",
+    "UI_HomeMedic_Surg_RiskWhy_blood": "การผ่าตัดทุกครั้งเสียเลือด ยิ่งผลแย่ยิ่งเสียมาก (เพิ่มขึ้นระดับละ 10%%) ต่ำกว่า 20%% หัวใจอาจหยุดเต้น",
     "UI_HomeMedic_Surg_Risk_lowblood": "คุณเสียเลือดไปมากแล้ว (เหลือ %1%%)",
     "UI_HomeMedic_Surg_RiskWhy_lowblood": "การผ่าตัดเริ่มจากจุดที่เลือดน้อยอยู่แล้ว แม้พลาดนิดเดียวก็อาจตกไปถึงระดับที่เสียชีวิตได้",
     "UI_HomeMedic_Surg_Risk_complication": "ภาวะแทรกซ้อนร้ายแรง (เส้นเลือดฉีก เลือดออกที่ไม่คาดคิด): โอกาส %1%% และทำให้คุณภาพการผ่าตัดลดลง %2%%",
@@ -2915,5 +2915,12 @@
     "UI_HomeMedic_Surg_G_Brain": "นั่นเนื้อสมอง!",
     "UI_HomeMedic_Surg_G_ModeSuture": "เย็บ",
     "UI_HomeMedic_Surg_G_ModeResect": "ตัดออก",
-    "UI_HomeMedic_Surg_G_Healthy": "เนื้อดี!"
+    "UI_HomeMedic_Surg_G_Healthy": "เนื้อดี!",
+    "UI_HomeMedic_Surg_Grade_Good": "ดี",
+    "UI_HomeMedic_Surg_Grade_Fair": "ปานกลาง",
+    "UI_HomeMedic_Surg_Grade_Poor": "แย่",
+    "UI_HomeMedic_Surg_Say_Good": "เจ็บ แต่ผ่าตัดออกมาดี",
+    "UI_HomeMedic_Surg_Say_Fair": "เจ็บมาก... หวังว่าจะได้ผลนะ",
+    "UI_HomeMedic_Surg_Say_Poor": "มีอะไรผิดปกติ... รู้สึกแย่ลง",
+    "UI_HomeMedic_Surg_Tip_BloodGrades": "การผ่าตัดทุกครั้งเสียเลือดตามผลที่ได้: ยอดเยี่ยม -10%%, ดี -20%%, ปานกลาง -30%%, แย่ -40%%, ล้มเหลว -50%% (ของปริมาณเลือดเต็ม) จาก %1%% ที่มีตอนนี้: ยอดเยี่ยมจะเหลือ %2%%, ปานกลางเหลือ %3%%, ล้มเหลวเหลือ %4%% ต่ำกว่า 20%% หัวใจอาจหยุดเต้น ผ่าตัดหลายครั้งติดกันจะเสียเลือดสะสม"
 }

@@ -576,7 +576,7 @@ function Op:update()
     end
 end
 
-local GRADE_COL = { Excellent = COL.ok, Success = COL.ok, Failed = COL.fail, Aborted = COL.warn }
+local GRADE_COL = { Excellent = COL.ok, Good = COL.ok, Fair = COL.warn, Poor = COL.fail, Success = COL.ok, Failed = COL.fail, Aborted = COL.warn }
 
 function Op:prerender()
     ISPanel.prerender(self)

@@ -27,5 +27,7 @@
     "Sandbox_HARMONIE_CookBuffs": "Cooking tab: buffs from Excellent dishes",
     "Sandbox_HARMONIE_CookBuffs_tooltip": "A dish prepared Excellent gives a buff when eaten (hearty, energized, comfort, calm or fresh, by kind of dish). It lasts (2 + the cook's Cooking level) game hours.",
     "Sandbox_HARMONIE_CookBuffHours": "Cooking tab: buff duration multiplier",
-    "Sandbox_HARMONIE_CookBuffHours_tooltip": "How long dish buffs last, times this."
+    "Sandbox_HARMONIE_CookBuffHours_tooltip": "How long dish buffs last, times this.",
+    "Sandbox_HARMONIE_FoodVitaminMultiplier": "Vitamins from food (multiplier)",
+    "Sandbox_HARMONIE_FoodVitaminMultiplier_tooltip": "Every vitamin gained by eating is multiplied by this. 1 = the food's real amount, 5 = five times as much (default). Sunlight and vitamin pills are not affected."
 }

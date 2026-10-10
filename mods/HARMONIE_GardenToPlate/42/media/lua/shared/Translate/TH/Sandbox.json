@@ -27,5 +27,7 @@
     "Sandbox_HARMONIE_CookBuffs": "แท็บทำอาหาร: บัฟจากอาหารระดับยอดเยี่ยม",
     "Sandbox_HARMONIE_CookBuffs_tooltip": "อาหารที่เตรียมได้ระดับยอดเยี่ยมจะให้บัฟตอนกิน (อิ่มเอม กระปรี้กระเปร่า อุ่นใจ ผ่อนคลาย หรือสดชื่น ตามประเภทอาหาร) อยู่ได้ (2 + เลเวลทำอาหารของคนทำ) ชั่วโมงในเกม",
     "Sandbox_HARMONIE_CookBuffHours": "แท็บทำอาหาร: ตัวคูณระยะเวลาบัฟ",
-    "Sandbox_HARMONIE_CookBuffHours_tooltip": "ระยะเวลาบัฟจากอาหาร คูณด้วยค่านี้"
+    "Sandbox_HARMONIE_CookBuffHours_tooltip": "ระยะเวลาบัฟจากอาหาร คูณด้วยค่านี้",
+    "Sandbox_HARMONIE_FoodVitaminMultiplier": "ตัวคูณวิตามินที่ได้จากอาหาร",
+    "Sandbox_HARMONIE_FoodVitaminMultiplier_tooltip": "วิตามินทุกตัวที่ได้จากการกินจะถูกคูณด้วยค่านี้ 1 = ปริมาณจริงของอาหาร, 5 = มากขึ้น 5 เท่า (ค่าเริ่มต้น) ไม่มีผลกับแสงแดดและยาวิตามิน"
 }

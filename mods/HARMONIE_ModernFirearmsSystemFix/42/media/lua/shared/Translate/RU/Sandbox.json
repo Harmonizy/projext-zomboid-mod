@@ -8,7 +8,5 @@
     "Sandbox_AirDropDefaultNum": "Количество предметов в грузе",
     "Sandbox_AirdropWithBGM": "Включить боевую музыку при сбросе груза",
     "Sandbox_AirdropVolume": "Громкость музыки сброса",
-    "Sandbox_ShieldCondition": "Эффективность потери прочности щита",
-    "Sandbox_EFKARB_EnableZombieDrops": "Включить выпадение предметов с зомби",
-    "Sandbox_EFKARB_EnableCustomSpawnTargets": "Включить пользовательские цели спавна"
+    "Sandbox_ShieldCondition": "Эффективность потери прочности щита"
 }

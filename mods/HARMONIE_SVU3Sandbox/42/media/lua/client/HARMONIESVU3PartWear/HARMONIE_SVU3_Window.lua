@@ -25,6 +25,7 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "HARMONIE_UIKit"
 
 HSVU = HSVU or {}
 local H = HSVU
@@ -334,6 +335,7 @@ function H.ensurePrefs()
             if k == "w" then H.prefW = tonumber(v)
             elseif k == "h" then H.prefH = tonumber(v)
             elseif k == "text" then H.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
+            elseif k == "muted" then H.muted = v == "1"
             elseif k == "pinned" then H.pinned = v ~= "0" end
             line = reader:readLine()
         end
@@ -351,6 +353,7 @@ function H.savePrefs()
         if H.prefH then writer:write("h=" .. tostring(math.floor(H.prefH)) .. "\n") end
         writer:write("text=" .. tostring(H.textStep) .. "\n")
         writer:write("pinned=" .. (H.pinned and "1" or "0") .. "\n")
+        writer:write("muted=" .. (H.muted and "1" or "0") .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -384,7 +387,8 @@ function Win:setVehicle(vehicle)
     if vehicle ~= self.vehicle then log("vehicle: %s", vehicle and tostring(H.scriptName(vehicle)) or "none") end
     self.vehicle = vehicle
     self.scroll = {}
-    if self:locked(self.tab) then self.tab = "tiers"; log("no vehicle: opened on the tiers tab (vehicle tabs locked)") end
+    if self:locked(self.tab) and not self.lockedOK then self.tab = "tiers"; log("no vehicle: opened on the tiers tab (vehicle tabs locked)") end
+    self.lockedOK = true
     self:refreshData()
 end
 
@@ -401,13 +405,50 @@ end
 
 function Win:contentTop() return H.HEADER_H + H.TAB_H + 6 end
 
--- header buttons, right to left: close, pin, A+, A-
+-- this window's sounds (settings: mute)
+function H.sound(name)
+    if H.muted then return end
+    pcall(function() getSoundManager():playUISound(name) end)
+end
+
+-- the shared settings window (HARMONIE_UIKit) -- the same as every other window of ours
+function H.openSettings()
+    log("settings opened")
+    local C = H.C
+    HARMONIE_SettingsUI.open(T("IGUI_HSVU_Set_Title"), function()
+        return HARMONIE_SettingsUI.commonRows({
+            getText = function() return H.textStep end,
+            setText = function(v) H.stepText(v - H.textStep) end,
+            resetSize = function()
+                H.prefW, H.prefH = nil, nil
+                H.savePrefs()
+                local win = H.window
+                if win then
+                    win:setWidth(H.DEFAULT_W); win:setHeight(H.DEFAULT_H)
+                    local core = getCore()
+                    win:setX(math.max(0, math.floor((core:getScreenWidth() - win.width) / 2)))
+                    win:setY(math.max(0, math.floor((core:getScreenHeight() - win.height) / 2)))
+                end
+            end,
+            getPin = function() return H.pinned end,
+            setPin = function(v) if v ~= H.pinned then if H.window then H.window:togglePin() else H.pinned = v; H.savePrefs() end end end,
+            getMuted = function() return H.muted == true end,
+            setMuted = function(v) H.muted = v == true; H.savePrefs() end,
+        })
+    end, {
+        bg = C.background, header = C.header, row = C.card, rowHover = { 0.06, 0.12, 0.26 },
+        border = C.border, borderDim = C.borderDim, accent = C.accent, accentDark = C.accentDark,
+        text = C.text, textDim = C.textDim,
+    }, { textStep = H.textStep })
+end
+
+-- header buttons, right to left: close, pin, settings, A+, A- (the same order in all our windows)
 function Win:headerButtons()
     local s = 26
     local y = math.floor((H.HEADER_H - s) / 2)
     local x = self.width - s - 8
     local b = {}
-    for _, id in ipairs({ "close", "pin", "plus", "minus" }) do
+    for _, id in ipairs({ "close", "pin", "settings", "plus", "minus" }) do
         b[#b + 1] = { id = id, x = x, y = y, w = s, h = s }
         x = x - s - 6
     end
@@ -462,7 +503,7 @@ function Win:prerender()
     end
     local title = T("IGUI_HSVU_Title")
     if self.carName then title = title .. " - " .. H.carName(self.carName) end
-    shadowText(self, fit(title, self.width - ix - 150, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
+    shadowText(self, fit(title, self.width - ix - 186, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
     -- header buttons
     self.hoverTip = nil
     local mx, my = self:getMouseX(), self:getMouseY()
@@ -472,14 +513,14 @@ function Win:prerender()
         self:drawRect(b.x, b.y, b.w, b.h, over and 0.95 or 0.75, 0.04, 0.08, 0.2)
         self:drawRectBorder(b.x, b.y, b.w, b.h, over and 1 or 0.7, tint[1], tint[2], tint[3])
         local name = b.id == "pin" and (H.pinned and "pin_on" or "pin_off") or ("icon_" .. b.id)
-        local icon = texture(UI_DIR .. name .. ".png")
+        local icon = b.id == "settings" and HARMONIE_SettingsUI.gearIcon() or texture(UI_DIR .. name .. ".png")
         local disabled = (b.id == "plus" and H.textStep >= 2) or (b.id == "minus" and H.textStep <= 0)
         if icon then
             self:drawTextureScaled(icon, b.x + 3, b.y + 3, b.w - 6, b.h - 6, disabled and 0.35 or 1, 1, 1, 1)
         end
         if over then
             local key = ({ close = "IGUI_HSVU_Close", pin = H.pinned and "IGUI_HSVU_Unpin" or "IGUI_HSVU_Pin",
-                plus = "IGUI_HSVU_TextBigger", minus = "IGUI_HSVU_TextSmaller" })[b.id]
+                plus = "IGUI_HSVU_TextBigger", minus = "IGUI_HSVU_TextSmaller", settings = "IGUI_HSVU_Settings" })[b.id]
             self.hoverTip = { text = T(key), x = b.x - 40, y = b.y + b.h + 4 }
         end
     end
@@ -536,7 +577,8 @@ function Win:render()
         if not self.dataAt or now - self.dataAt > 2000 then self:refreshData() end
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
-        if self.tab == "vehicle" then self:renderVehicle(x, y, w, h)
+        if self:locked(self.tab) then self:renderLocked(x, y, w, h)
+        elseif self.tab == "vehicle" then self:renderVehicle(x, y, w, h)
         elseif self.tab == "upgrades" then self:renderUpgrades(x, y, w, h)
         elseif self.tab == "tiers" then self:renderTiers(x, y, w, h)
         else self:renderGuide(x, y, w, h) end
@@ -569,6 +611,22 @@ function Win:drawHoverTip()
     for i, l in ipairs(lines) do shadowText(self, l, x + 8, y + 5 + (i - 1) * lineH(font), C.text, 1, font) end
 end
 
+-- a locked tab: a padlock and what to do to unlock it
+function Win:renderLocked(x, y, w, h)
+    local C = H.C
+    local cx, cy = x + w / 2, y + h * 0.36
+    self:drawRectBorder(cx - 14, cy - 34, 28, 30, 1, C.textDim[1], C.textDim[2], C.textDim[3])
+    self:drawRectBorder(cx - 13, cy - 33, 26, 28, 1, C.textDim[1], C.textDim[2], C.textDim[3])
+    self:drawRect(cx - 24, cy - 8, 48, 38, 0.95, C.textDim[1], C.textDim[2], C.textDim[3])
+    self:drawRect(cx - 3, cy + 4, 6, 12, 1, 0.02, 0.04, 0.1)
+    local big = H.medium()
+    self:drawTextCentre(T("IGUI_HSVU_LockedTitle"), cx, cy + 44, C.text[1], C.text[2], C.text[3], 1, big)
+    local small = H.small()
+    for i, l in ipairs(wrap(T("IGUI_HSVU_LockedTip"), math.min(w - 40, 520), small)) do
+        self:drawTextCentre(l, cx, cy + 44 + lineH(big) + 10 + (i - 1) * lineH(small), C.textDim[1], C.textDim[2], C.textDim[3], 1, small)
+    end
+end
+
 local function noVehicle(self, x, y, w)
     local font = H.medium()
     for i, l in ipairs(wrap(T("IGUI_HSVU_NoVehicle"), w - 40, font)) do
@@ -591,12 +649,9 @@ function Win:scrolled(key, x, y, w, h, f)
     self:clearStencilRect()
     self.maxScroll[key] = math.max(0, (used or 0) - h)
     if off > self.maxScroll[key] then self.scroll[key] = self.maxScroll[key] end
-    if self.maxScroll[key] > 0 then
-        local C = H.C
-        local bh = math.max(20, math.floor(h * h / (h + self.maxScroll[key])))
-        local by = y + math.floor((h - bh) * (self.scroll[key] or 0) / self.maxScroll[key])
-        self:drawRect(x + w - 4, by, 3, bh, 0.8, C.accent[1], C.accent[2], C.accent[3])
-    end
+    -- the shared scroll bar: drag it, click the track, or the wheel
+    HARMONIE_Scroll.bar(self, key, x + w - 7, y, 6, h, self.scroll[key] or 0, self.maxScroll[key],
+        function(v) self.scroll[key] = v end, H.C.accent, H.C.borderDim)
 end
 
 -- ----------------------------------------------------------------- tab 1
@@ -866,10 +921,11 @@ function Win:onMouseDown(x, y)
     if y < H.HEADER_H then
         for _, b in ipairs(self:headerButtons()) do
             if inside(b, x, y) then
-                getSoundManager():playUISound("UISelectListItem")
+                H.sound("UISelectListItem")
                 if b.id == "close" then H.close()
                 elseif b.id == "pin" then self:togglePin()
                 elseif b.id == "plus" then H.stepText(1)
+                elseif b.id == "settings" then H.openSettings()
                 elseif b.id == "minus" then H.stepText(-1) end
                 return true
             end
@@ -885,13 +941,11 @@ function Win:onMouseDown(x, y)
         return true
     end
     for _, t in ipairs(self.tabBounds or {}) do
-        if inside(t, x, y) and self:locked(t.id) then
-            getSoundManager():playUISound("UIDeactivate")
-            log("tab %s is locked: no vehicle", tostring(t.id))
-            return true
-        end
+        -- 2026-10-11: a locked tab opens too, on a page that says how to
+        -- unlock it (Win:renderLocked)
+        if inside(t, x, y) and self:locked(t.id) then log("tab %s opened LOCKED: no vehicle", tostring(t.id)) end
         if inside(t, x, y) then
-            getSoundManager():playUISound("UISelectListItem")
+            H.sound("UISelectListItem")
             if self.tab ~= t.id then log("tab %s -> %s", tostring(self.tab), tostring(t.id)) end
             self.tab = t.id
             self:refreshData()
@@ -901,7 +955,7 @@ function Win:onMouseDown(x, y)
     if self.tab == "upgrades" then
         for _, c in ipairs(self.chips or {}) do
             if inside(c, x, y) then
-                getSoundManager():playUISound("UISelectListItem")
+                H.sound("UISelectListItem")
                 self.filter = c.id
                 log("upgrade filter: %s", tostring(c.id))
                 self.scroll.upgrades = 0
@@ -911,7 +965,7 @@ function Win:onMouseDown(x, y)
     elseif self.tab == "guide" then
         for _, b in ipairs(self.chapterBounds or {}) do
             if inside(b, x, y) then
-                getSoundManager():playUISound("UISelectListItem")
+                H.sound("UISelectListItem")
                 self.guidePage = b.i
                 return true
             end
@@ -1164,3 +1218,5 @@ if Events then
     end) end
     if Events.OnKeyPressed then Events.OnKeyPressed.Add(H.onKey) end
 end
+
+HARMONIE_Scroll.install(HSVUWindow)

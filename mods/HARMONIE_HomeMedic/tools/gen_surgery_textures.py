@@ -130,27 +130,42 @@ def _rot(pts, cx, cy, ang, s):
 
 
 def tab_surgery(size=128):
-    """Surgery: a scalpel (ridged steel handle, curved blade) over a sutured incision."""
+    """Surgery (2026-10-11, owner: "เปลี่ยน icon ผ่าตัด"): a scalpel crossed
+    with a hemostat (two finger rings, ratchet, jaws) -- the two instruments
+    of every operation."""
     import math
     img, d, s = _canvas(size)
-    # sutured incision along the bottom
-    d.line([(24 * s, 98 * s), (104 * s, 98 * s)], fill=RED, width=int(5 * s))
-    for x in range(30, 102, 12):
-        d.line([(x * s, 90 * s), ((x + 6) * s, 106 * s)], fill=CREAM, width=int(4 * s))
-    ang = -math.pi / 4          # handle lower-left, blade upper-right
-    cx, cy = 70, 48
-    k = 1.2                     # size of the scalpel
     steel = (190, 204, 222, 255)
     dark = (60, 86, 120, 255)
-    def R(pts): return _rot([(x * k, y * k) for x, y in pts], cx, cy, ang, s)
-    # handle: long rounded bar with grip ridges
-    d.polygon(R([(-42, -5), (2, -5), (6, -3.5), (6, 3.5), (2, 5), (-42, 5), (-46, 2.5), (-46, -2.5)]), fill=steel, outline=dark)
-    for gx in range(-38, -16, 5):
+    # hemostat: handle rings lower-right, jaws upper-left
+    cx, cy = 64, 64
+    ang = -3 * math.pi / 4
+    def H(pts): return _rot(pts, cx, cy, ang, s)
+    for side in (-1, 1):
+        # one arm: ring at the handle end, shank, jaw
+        d.line(H([(-34, side * 9), (-8, side * 3), (4, 0)]), fill=steel, width=int(6 * s), joint="curve")
+        d.line(H([(4, 0), (36, side * 1.5)]), fill=steel, width=int(5 * s))
+        rx, ry = H([(-42, side * 13)])[0]
+        rr = 9 * s
+        d.ellipse([rx - rr, ry - rr, rx + rr, ry + rr], outline=steel, width=int(5 * s))
+    # ratchet teeth and the box joint
+    for t in range(3):
+        d.line(H([(-24 + t * 4, -6), (-24 + t * 4, 6)]), fill=dark, width=int(2 * s))
+    jx, jy = H([(4, 0)])[0]
+    d.ellipse([jx - 5 * s, jy - 5 * s, jx + 5 * s, jy + 5 * s], fill=dark)
+    # serrated jaws
+    for t in range(5):
+        d.line(H([(14 + t * 5, -3), (14 + t * 5, 3)]), fill=dark, width=int(2 * s))
+    # scalpel crossing it: handle lower-left, blade upper-right
+    ang2 = -math.pi / 4
+    k = 1.05
+    def R(pts): return _rot([(x * k, y * k) for x, y in pts], 66, 62, ang2, s)
+    d.polygon(R([(-44, -5), (0, -5), (4, -3.5), (4, 3.5), (0, 5), (-44, 5), (-48, 2.5), (-48, -2.5)]), fill=CREAM, outline=dark)
+    for gx in range(-40, -18, 5):
         d.line(R([(gx, -4), (gx, 4)]), fill=dark, width=int(2 * s))
-    # blade: straight spine, curved cutting belly up to the point
-    belly = [(6 + t * 30, 3.5 + 7 * math.sin(math.pi * t) - 3.5 * t) for t in [j / 12 for j in range(13)]]
-    d.polygon(R([(6, -3.5), (32, -4.5), (38, -6)] + list(reversed(belly))), fill=CREAM, outline=dark)
-    d.line(R([(8, -1.5), (32, -3)]), fill=(255, 255, 255, 255), width=int(2 * s))
+    belly = [(4 + t * 32, 3.5 + 8 * math.sin(math.pi * t) - 3.5 * t) for t in [j / 12 for j in range(13)]]
+    d.polygon(R([(4, -3.5), (32, -4.5), (38, -6)] + list(reversed(belly))), fill=RED, outline=dark)
+    d.line(R([(6, -1.5), (32, -3)]), fill=(255, 255, 255, 255), width=int(2 * s))
     return _done(img, size)
 
 

@@ -34,6 +34,7 @@
 
 require "ISUI/ISPanel"
 require "ISUI/ISButton"
+require "HARMONIE_UIKit"
 
 HMLWorkbench = ISPanel:derive("HMLWorkbench")
 local W = HMLWorkbench
@@ -306,7 +307,8 @@ function W.ensurePrefs()
         while line do
             local k, v = line:match("^%s*([%w_]+)%s*=%s*(%S+)")
             if k == "text" then W.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
-            elseif k == "pinned" then W.pinned = v ~= "0" end
+            elseif k == "pinned" then W.pinned = v ~= "0"
+            elseif k == "muted" then W.muted = v == "1" end
             line = reader:readLine()
         end
     end)
@@ -320,6 +322,7 @@ function W.savePrefs()
     pcall(function()
         writer:write("text=" .. tostring(W.textStep) .. "\n")
         writer:write("pinned=" .. (W.pinned and "1" or "0") .. "\n")
+        writer:write("muted=" .. (W.muted and "1" or "0") .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -330,6 +333,43 @@ local function fontAt(level)
 end
 function W.small() return fontAt(1 + W.textStep) end
 function W.medium() return fontAt(2 + W.textStep) end
+-- this window's sounds (settings: mute)
+function W.sound(name)
+    if W.muted then return end
+    pcall(function() getSoundManager():playUISound(name) end)
+end
+
+-- the shared settings window (HARMONIE_UIKit) -- the same as every other window of ours
+function W.openSettings()
+    log("settings opened")
+    HARMONIE_SettingsUI.open(T("IGUI_MIL_Set_Title"), function()
+        return HARMONIE_SettingsUI.commonRows({
+            getText = function() return W.textStep end,
+            setText = function(v) W.stepText(v - W.textStep) end,
+            resetSize = function()
+                local win = W.instance
+                if win then
+                    local core = getCore()
+                    win:setX(math.max(0, math.floor((core:getScreenWidth() - win.width) / 2)))
+                    win:setY(math.max(0, math.floor((core:getScreenHeight() - win.height) / 2)))
+                end
+            end,
+            getPin = function() return W.pinned end,
+            setPin = function(v) if v ~= W.pinned then if W.instance then W.instance:togglePin() else W.pinned = v; W.savePrefs() end end end,
+            getMuted = function() return W.muted == true end,
+            setMuted = function(v) W.muted = v == true; W.savePrefs() end,
+        })
+    end, W.SETTINGS_THEME, { textStep = W.textStep })
+end
+-- Mercenary Is Life's red, for the settings window
+W.SETTINGS_THEME = {
+    bg = { 0.05, 0.015, 0.015, 0.97 }, header = { 0.08, 0.02, 0.02, 0.98 },
+    row = { 0.08, 0.025, 0.025 }, rowHover = { 0.18, 0.05, 0.05 },
+    border = { 0.85, 0.25, 0.22 }, borderDim = { 0.42, 0.12, 0.10 },
+    accent = { 1.0, 0.42, 0.36 }, accentDark = { 0.30, 0.06, 0.05 },
+    text = { 0.96, 0.92, 0.90 }, textDim = { 0.74, 0.62, 0.60 },
+}
+
 function W.stepText(d)
     W.textStep = math.max(0, math.min(2, W.textStep + d))
     log("text size step: %d", W.textStep)
@@ -392,21 +432,19 @@ function W:locked(id) return W.NEEDS_GUN[id] == true and self.weapon == nil end
 
 function W:setTab(id)
     if self.tab == id then return end
-    if self:locked(id) then
-        log("tab %s is locked: no gun in the main hand", tostring(id))
-        pcall(function() getSoundManager():playUISound("UIDeactivate") end)
-        self.lockFlashAt = getTimestampMs and getTimestampMs() or 0
-        return
-    end
+    -- 2026-10-11 (owner: "เปิดแท็บที่ล็อคได้แต่หน้านั้นขึ้นหน้าว่างและมีขึ้นบอกว่า
+    -- ต้องทำอะไรถึงปลดล็อคหน้านี้"): a locked tab opens, on a page that says
+    -- how to unlock it (W:renderLocked)
+    if self:locked(id) then log("tab %s opened LOCKED: no gun in the main hand", tostring(id)) end
     log("tab %s -> %s", tostring(self.tab), tostring(id))
     self.tab = id
     self.scroll = 0
-    if self.pane then self.pane:setVisible(id == "inspect" and not self.collapsed) end
+    if self.pane then self.pane:setVisible(id == "inspect" and not self.collapsed and not self:locked(id)) end
     if id ~= "inspect" and riskyUI_slider and riskyUI_slider.instance then
         pcall(function() riskyUI_slider.instance:close() end)
         riskyUI_slider.instance = nil
     end
-    pcall(function() getSoundManager():playUISound("UISelectListItem") end)
+    W.sound("UISelectListItem")
 end
 
 function W:close()
@@ -471,7 +509,7 @@ function W:expand()
     if not self.collapsed then return end
     self.collapsed = false
     self:setHeight(self.fullH)
-    if self.pane then self.pane:setVisible(self.tab == "inspect") end
+    if self.pane then self.pane:setVisible(self.tab == "inspect" and not self:locked(self.tab)) end
     self.leaveAt = nil
 end
 function W:updatePin()
@@ -522,13 +560,13 @@ local function wrap(text, maxW, font)
     return out
 end
 
--- header buttons, right to left: close, pin, A+, A-
+-- header buttons, right to left: close, pin, settings, A+, A- (the same order in all our windows)
 function W:headerButtons()
     local s = 26
     local y = math.floor((W.HEADER_H - s) / 2)
     local x = self.width - s - 8
     local b = {}
-    for _, id in ipairs({ "close", "pin", "plus", "minus" }) do
+    for _, id in ipairs({ "close", "pin", "settings", "plus", "minus" }) do
         b[#b + 1] = { id = id, x = x, y = y, w = s, h = s }
         x = x - s - 6
     end
@@ -589,7 +627,7 @@ function W:prerender()
         ix = ix + 34
     end
     local title = self.weapon and (T("IGUI_MIL_Title") .. " - " .. itemName(self.weapon)) or T("IGUI_MIL_Title")
-    shadowText(self, fit(title, self.width - ix - 150, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
+    shadowText(self, fit(title, self.width - ix - 186, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
     -- header buttons
     local mx, my = self:getMouseX(), self:getMouseY()
     for _, b in ipairs(self:headerButtons()) do
@@ -598,12 +636,12 @@ function W:prerender()
         self:drawRect(b.x, b.y, b.w, b.h, over and 0.95 or 0.75, C.accentDark[1], C.accentDark[2], C.accentDark[3])
         self:drawRectBorder(b.x, b.y, b.w, b.h, over and 1 or 0.7, tint[1], tint[2], tint[3])
         local name = b.id == "pin" and (W.pinned and "pin_on" or "pin_off") or ("icon_" .. b.id)
-        local icon = texture(name)
+        local icon = b.id == "settings" and HARMONIE_SettingsUI.gearIcon() or texture(name)
         local disabled = (b.id == "plus" and W.textStep >= 2) or (b.id == "minus" and W.textStep <= 0)
         if icon then self:drawTextureScaled(icon, b.x + 3, b.y + 3, b.w - 6, b.h - 6, disabled and 0.35 or 1, 1, 1, 1) end
         if over then
             local key = ({ close = "IGUI_MIL_Close", pin = W.pinned and "IGUI_MIL_Unpin" or "IGUI_MIL_Pin",
-                plus = "IGUI_MIL_TextBigger", minus = "IGUI_MIL_TextSmaller" })[b.id]
+                plus = "IGUI_MIL_TextBigger", minus = "IGUI_MIL_TextSmaller", settings = "IGUI_MIL_Settings" })[b.id]
             self.hoverTip = { text = T(key), x = b.x - 60, y = b.y + b.h + 4 }
         end
         local id = b.id
@@ -611,6 +649,7 @@ function W:prerender()
             if id == "close" then self:close()
             elseif id == "pin" then self:togglePin()
             elseif id == "plus" then W.stepText(1)
+            elseif id == "settings" then W.openSettings()
             else W.stepText(-1) end
         end }
     end
@@ -661,7 +700,10 @@ function W:render()
     if not self.collapsed then
         local x, y = 8, W.contentTop()
         local w, h = self.width - 16, self.height - y - 8
-        if self.tab == "inspect" then
+        if self:locked(self.tab) then
+            if self.pane and self.pane:isVisible() then self.pane:setVisible(false) end
+            self:renderLocked(x, y, w, h)
+        elseif self.tab == "inspect" then
             if not self.pane then shadowText(self, T("IGUI_MIL_NoInspect"), x + 12, y + 12, W.C.bad, 1, W.medium()) end
         else
             self:setStencilRect(x, y, w, h)
@@ -673,10 +715,32 @@ function W:render()
             end)
             self:clearStencilRect()
             if not ok then logOnce("render:" .. self.tab, "tab %s draw FAILED: %s", self.tab, tostring(err)) end
+            -- the scroll bar (drag it or use the wheel)
+            local maxS = math.max(0, (self.contentH or 0) - h)
+            if self.scroll > maxS then self.scroll = maxS end
+            HARMONIE_Scroll.bar(self, "page", x + w - 7, y, 6, h, self.scroll, maxS, function(v) self.scroll = v end, W.C.accent, W.C.borderDim)
         end
     end
     self:drawHoverTip()
     self:updatePin()
+end
+
+-- a locked tab: an empty page with a padlock and what to do to unlock it
+function W:renderLocked(x, y, w, h)
+    local C = W.C
+    local cx, cy = x + w / 2, y + h * 0.36
+    -- padlock: shackle and body
+    self:drawRectBorder(cx - 14, cy - 34, 28, 30, 1, C.textDim[1], C.textDim[2], C.textDim[3])
+    self:drawRectBorder(cx - 13, cy - 33, 26, 28, 1, C.textDim[1], C.textDim[2], C.textDim[3])
+    self:drawRect(cx - 24, cy - 8, 48, 38, 0.95, C.textDim[1], C.textDim[2], C.textDim[3])
+    self:drawRect(cx - 3, cy + 4, 6, 12, 1, C.background[1], C.background[2], C.background[3])
+    local big = W.medium()
+    local title = T("IGUI_MIL_LockedTitle")
+    self:drawTextCentre(title, cx, cy + 44, C.text[1], C.text[2], C.text[3], 1, big)
+    local lines = wrap(T("IGUI_MIL_LockedTip"), math.min(w - 40, 520), W.small())
+    for i, l in ipairs(lines) do
+        self:drawTextCentre(l, cx, cy + 44 + fh(big) + 10 + (i - 1) * lineH(W.small()), C.textDim[1], C.textDim[2], C.textDim[3], 1, W.small())
+    end
 end
 
 function W:drawHoverTip()
@@ -860,7 +924,7 @@ function W:renderGuide(x, y, w, h)
         local idx = i
         self.buttons[#self.buttons + 1] = { x = lx, y = by, w = lw, h = bh, fn = function()
             self.guidePage = idx
-            pcall(function() getSoundManager():playUISound("UISelectListItem") end)
+            W.sound("UISelectListItem")
         end }
     end
     local g = W.GUIDE[self.guidePage] or W.GUIDE[1]
@@ -999,3 +1063,5 @@ end
 
 W.install(true)
 if Events and Events.OnGameStart then Events.OnGameStart.Add(function() W.install(false) end) end
+
+HARMONIE_Scroll.install(HMLWorkbench)

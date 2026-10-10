@@ -272,6 +272,10 @@ function HARMONIE_AdminPanel:createChildren()
         function() return HARMONIE_GTP.Config.reserveGainDivisor end,
         function(v) sb.ReserveGainDivisor = v; HARMONIE_GTP.RefreshFromSandbox() end)
 
+    y = self:addNumberRow(y, "IGUI_HARMONIE_AdminFoodVitaminMultiplier", "Sandbox_HARMONIE_FoodVitaminMultiplier_tooltip", 0, 20, false,
+        function() return HARMONIE_GTP.Config.foodVitaminMultiplier end,
+        function(v) sb.FoodVitaminMultiplier = v; HARMONIE_GTP.RefreshFromSandbox() end)
+
     y = self:addNumberRow(y, "IGUI_HARMONIE_AdminCriticalThreshold", "Sandbox_HARMONIE_CriticalThreshold_tooltip", 0, 99, true,
         function() return HARMONIE_GTP.Config.criticalThreshold end,
         function(v) sb.CriticalThreshold = v; HARMONIE_GTP.RefreshFromSandbox() end)
