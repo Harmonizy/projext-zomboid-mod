@@ -20,6 +20,16 @@ option HARMONIE_GardenToPlate.ReserveGainDivisor
     translation = HARMONIE_ReserveGainDivisor,
 }
 
+option HARMONIE_GardenToPlate.FoodVitaminMultiplier
+{
+    type = double,
+    default = 5.0,
+    min = 0.0,
+    max = 20.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_FoodVitaminMultiplier,
+}
+
 option HARMONIE_GardenToPlate.CriticalThreshold
 {
     type = integer,

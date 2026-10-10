@@ -393,6 +393,13 @@ end
 
 function EHR_MedicalMonitorUI:renderScrollBar()
     local maxScroll = self:getMaxContentScroll()
+    -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+    if HARMONIE_Scroll then
+        local col = self.Colors.border
+        HARMONIE_Scroll.bar(self, "content", self.width - 8, self.CONTENT_TOP, 5, self:getContentClipHeight(), self.contentScrollY or 0, maxScroll,
+            function(v) self.contentScrollY = v; if self.clampContentScroll then self:clampContentScroll() end end, { col.r, col.g, col.b }, { 0.2, 0.35, 0.28 })
+        return
+    end
     if maxScroll <= 0 then return end
 
     local top = self.CONTENT_TOP
@@ -3031,3 +3038,7 @@ end
 Events.OnTick.Add(suppressVanillaTemperatureClient)
 
 EHR.Log("EHR_MedicalMonitorUI.lua loaded - Medical Monitor attaches to Health Panel")
+
+-- HARMONIE (2026-10-11): drag the scroll bars (HARMONIE_UIKit)
+pcall(require, "HARMONIE_UIKit")
+if HARMONIE_Scroll then HARMONIE_Scroll.install(EHR_MedicalMonitorUI) end

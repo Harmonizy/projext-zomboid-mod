@@ -844,10 +844,9 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     local cur = type(bv) == "table" and tonumber(bv.currentVolume) or nil
     local max = type(bv) == "table" and tonumber(bv.maxVolume) or nil
     local raw = (cur and max and max > 0) and (cur - (s.bloodLoss or 0)) / max or nil
-    -- every operation leaves the patient at S.postOpBlood at most (90% when
-    -- excellent, far less after a failure)
-    local after = raw and math.min(raw, S.POSTOP_EXCELLENT) or nil
-    local worth = raw ~= nil and raw < S.POSTOP_EXCELLENT
+    -- every operation costs blood by its grade (S.GRADES: -10% at best)
+    local after = (cur and max and max > 0) and math.max(0, cur / max - S.gradeLoss("Excellent")) or nil
+    local worth = false
     local must = false   -- no transfusion in surgery any more (request 2026-10-02)
     r.bloodAfter, r.mustTransfuse = after, must
     local function optionNames(slot, n)
@@ -938,12 +937,13 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     local bf = S.bloodFraction(patient)
     r.bloodNow = bf
     if bf then
-        local function at(q) return math.floor(math.min(bf, S.postOpBlood(q, 0)) * 100 + 0.5) end
-        local worst = math.min(bf, S.POSTOP_FLOOR)
-        row({ key = "blood", state = (bf >= 0.85 and gap >= 0) and "warn" or "fail",
+        local function at(id) return math.max(0, math.floor((bf - S.gradeLoss(id)) * 100 + 0.5)) end
+        local failedAt = at("Failed")
+        row({ key = "blood", state = (failedAt >= 50 and gap >= 0) and "warn" or "fail",
               label = S.T("Row_Blood", "Blood volume"),
-              value = S.T("Blood_Range", "%1% now -> %2% / %3% / %4%", math.floor(bf * 100 + 0.5), at(S.EXCELLENT), at(S.SUCCESS), math.floor(worst * 100 + 0.5)),
-              tip = S.T("Tip_BloodRange", "After the operation the patient is left at about %1% blood if it goes excellently, %2% if it only just succeeds, and down to %3% if it fails - under 20% the heart can stop. Uncontrolled bleeding takes more. The patient stays weak until the blood comes back.", at(S.EXCELLENT), at(S.SUCCESS), math.floor(worst * 100 + 0.5)) })
+              value = S.T("Blood_Range", "%1% now -> %2% / %3% / %4%", math.floor(bf * 100 + 0.5), at("Excellent"), at("Fair"), failedAt),
+              tip = S.T("Tip_BloodGrades", "Every operation costs blood by how well it goes: excellent -10%, good -20%, fair -30%, poor -40%, failed -50% (of full volume). From the %1% the patient has now: %2% after an excellent one, %3% after a fair one, %4% after a failure. Under 20% the heart can stop. Several operations in a row add up.",
+                  math.floor(bf * 100 + 0.5), at("Excellent"), at("Fair"), failedAt) })
     end
 
     -- some operations cannot be done on yourself
@@ -1043,8 +1043,9 @@ function S.risks(doctor, patient, sid, ev)
     -- blood
     local bf = ev.bloodNow or S.bloodFraction(patient)
     if bf then
-        local lv = (bf < 0.75 or gap < 0) and 4 or 3
-        add("blood", lv, pct(math.min(bf, S.postOpBlood(S.EXCELLENT, 0))), pct(math.min(bf, S.postOpBlood(S.SUCCESS, 0))), pct(math.min(bf, S.POSTOP_FLOOR)))
+        local function left(id) return math.max(0, bf - S.gradeLoss(id)) end
+        local lv = (left("Failed") < 0.35 or gap < 0) and 4 or 3
+        add("blood", lv, pct(left("Excellent")), pct(left("Fair")), pct(left("Failed")))
         if bf < 0.75 then add("lowblood", 4, pct(bf), 0, 0) end
     end
     -- a serious complication, whoever operates

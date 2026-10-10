@@ -234,8 +234,6 @@
     "Base.AccessoriesBoxGQ": "未知的手枪",
     "Base.AccessoriesBoxAJ": "未知的精确步枪",
     "Base.AccessoriesBoxZ": "军械箱",
-    "Base.NormalBullet": "猎鹿弹",
-    "Base.DragonBreathBullet": "龙息弹",
     "Base.Bullets44": ".44 马格南弹药",
     "Base.Bullets44Box": ".44 马格南盒装弹药",
     "Base.AWMClip": ".44 马格南 AWM 5 发弹匣",
@@ -647,4 +645,3 @@
     "Gunpart.Flamethrower": "下挂火焰喷射器（右键+G装填/发射，每次装填消耗5L汽油）",
     "Gunpart.MFS_ChokeTubeImproved": "改进型收束器"
 }
-

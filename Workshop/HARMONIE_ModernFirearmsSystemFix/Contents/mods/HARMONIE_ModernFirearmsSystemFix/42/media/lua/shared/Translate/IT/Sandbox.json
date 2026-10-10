@@ -8,7 +8,5 @@
     "Sandbox_AirDropDefaultNum": "Numero di oggetti di lancio",
     "Sandbox_AirdropWithBGM": "Attiva musica di combattimento durante il lancio",
     "Sandbox_AirdropVolume": "Volume musica di lancio",
-    "Sandbox_ShieldCondition": "Efficienza perdita durabilità scudo",
-    "Sandbox_EFKARB_EnableZombieDrops": "Attiva drop zombie",
-    "Sandbox_EFKARB_EnableCustomSpawnTargets": "Attiva obiettivi di spawn personalizzati"
+    "Sandbox_ShieldCondition": "Efficienza perdita durabilità scudo"
 }

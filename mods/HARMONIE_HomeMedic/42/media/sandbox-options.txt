@@ -6,7 +6,7 @@ option ExtensiveHealthRework.BloodLossMultiplier
     min = 0.5,
     max = 5.0,
     default = 2.0,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodLossMultiplier,
 }
 
@@ -16,7 +16,7 @@ option ExtensiveHealthRework.BloodThresholdHealthy
     min = 70,
     max = 100,
     default = 85,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodThresholdHealthy,
 }
 
@@ -26,7 +26,7 @@ option ExtensiveHealthRework.BloodThresholdMild
     min = 60,
     max = 95,
     default = 80,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodThresholdMild,
 }
 
@@ -36,7 +36,7 @@ option ExtensiveHealthRework.BloodThresholdModerate
     min = 50,
     max = 90,
     default = 70,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodThresholdModerate,
 }
 
@@ -44,7 +44,7 @@ option ExtensiveHealthRework.BloodRegenEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodRegenEnabled,
 }
 
@@ -54,7 +54,7 @@ option ExtensiveHealthRework.BloodRegenDelayHours
     min = 0.5,
     max = 336.0,
     default = 2.0,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodRegenDelayHours,
 }
 
@@ -64,7 +64,7 @@ option ExtensiveHealthRework.BloodRegenRatePerHour
     min = 10,
     max = 200,
     default = 50,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodRegenRatePerHour,
 }
 
@@ -74,7 +74,7 @@ option ExtensiveHealthRework.BloodRegenMinimumPercent
     min = 10,
     max = 70,
     default = 30,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BloodRegenMinimumPercent,
 }
 
@@ -82,7 +82,7 @@ option ExtensiveHealthRework.BlackoutEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BlackoutEnabled,
 }
 
@@ -92,7 +92,7 @@ option ExtensiveHealthRework.BlackoutCooldownHours
     min = 0.5,
     max = 24.0,
     default = 1.0,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BlackoutCooldownHours,
 }
 
@@ -102,7 +102,7 @@ option ExtensiveHealthRework.BlackoutChance
     min = 10,
     max = 200,
     default = 50,
-    page = EHR_Blood,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BlackoutChance,
 }
 
@@ -110,7 +110,7 @@ option ExtensiveHealthRework.DiseaseEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DiseaseEnabled,
 }
 
@@ -120,7 +120,7 @@ option ExtensiveHealthRework.DiseaseSpeed
     min = 0.1,
     max = 10.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DiseaseSpeed,
 }
 
@@ -128,7 +128,7 @@ option ExtensiveHealthRework.WoundInfectionEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_WoundInfectionEnabled,
 }
 
@@ -138,7 +138,7 @@ option ExtensiveHealthRework.WoundInfectionSpeed
     min = 0.1,
     max = 10.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_WoundInfectionSpeed,
 }
 
@@ -146,14 +146,14 @@ option ExtensiveHealthRework.CellulitisEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CellulitisEnabled,
 }
 option ExtensiveHealthRework.SepsisEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_SepsisEnabled,
 }
 
@@ -163,7 +163,7 @@ option ExtensiveHealthRework.SepsisSpeed
     min = 0.1,
     max = 10.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_SepsisSpeed,
 }
 
@@ -171,7 +171,7 @@ option ExtensiveHealthRework.TetanusEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TetanusEnabled,
 }
 
@@ -181,7 +181,7 @@ option ExtensiveHealthRework.TetanusChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TetanusChanceMultiplier,
 }
 
@@ -189,7 +189,7 @@ option ExtensiveHealthRework.FoodPoisoningEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_FoodPoisoningEnabled,
 }
 
@@ -199,7 +199,7 @@ option ExtensiveHealthRework.FoodPoisoningChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_FoodPoisoningChanceMultiplier,
 }
 
@@ -207,7 +207,7 @@ option ExtensiveHealthRework.GastroenteritisEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_GastroenteritisEnabled,
 }
 
@@ -217,7 +217,7 @@ option ExtensiveHealthRework.GastroenteritisChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_GastroenteritisChanceMultiplier,
 }
 
@@ -225,7 +225,7 @@ option ExtensiveHealthRework.TrichinosisEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TrichinosisEnabled,
 }
 
@@ -235,7 +235,7 @@ option ExtensiveHealthRework.TrichinosisChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TrichinosisChanceMultiplier,
 }
 
@@ -243,7 +243,7 @@ option ExtensiveHealthRework.ToxinPoisoningEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ToxinPoisoningEnabled,
 }
 
@@ -251,7 +251,7 @@ option ExtensiveHealthRework.HyperkeratoticScabiesEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HyperkeratoticScabiesEnabled,
 }
 
@@ -261,7 +261,7 @@ option ExtensiveHealthRework.ScabiesChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ScabiesChanceMultiplier,
 }
 
@@ -269,7 +269,7 @@ option ExtensiveHealthRework.ScabiesWinterBlock
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ScabiesWinterBlock,
 }
 
@@ -277,7 +277,7 @@ option ExtensiveHealthRework.ScabiesSnowBlock
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ScabiesSnowBlock,
 }
 
@@ -285,7 +285,7 @@ option ExtensiveHealthRework.DysenteryEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DysenteryEnabled,
 }
 
@@ -295,7 +295,7 @@ option ExtensiveHealthRework.DysenteryChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DysenteryChanceMultiplier,
 }
 
@@ -303,7 +303,7 @@ option ExtensiveHealthRework.CommonColdEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CommonColdEnabled,
 }
 
@@ -313,7 +313,7 @@ option ExtensiveHealthRework.CommonColdExposureMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CommonColdExposureMultiplier,
 }
 
@@ -323,7 +323,7 @@ option ExtensiveHealthRework.CommonColdChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CommonColdChanceMultiplier,
 }
 
@@ -331,7 +331,7 @@ option ExtensiveHealthRework.PneumoniaEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_PneumoniaEnabled,
 }
 
@@ -339,7 +339,7 @@ option ExtensiveHealthRework.HypothermiaEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HypothermiaEnabled,
 }
 
@@ -347,7 +347,7 @@ option ExtensiveHealthRework.HeatExhaustionEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExhaustionEnabled,
 }
 
@@ -355,7 +355,7 @@ option ExtensiveHealthRework.HeatStrokeEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatStrokeEnabled,
 }
 
@@ -363,7 +363,7 @@ option ExtensiveHealthRework.ConcussionEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ConcussionEnabled,
 }
 
@@ -373,7 +373,7 @@ option ExtensiveHealthRework.ConcussionFallChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ConcussionFallChanceMultiplier,
 }
 
@@ -383,7 +383,7 @@ option ExtensiveHealthRework.ConcussionVehicleChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ConcussionVehicleChanceMultiplier,
 }
 
@@ -391,7 +391,7 @@ option ExtensiveHealthRework.DeliriumEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DeliriumEnabled,
 }
 
@@ -399,14 +399,14 @@ option ExtensiveHealthRework.InsomniaEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_InsomniaEnabled,
 }
 option ExtensiveHealthRework.AHTREnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_AHTREnabled,
 }
 
@@ -414,14 +414,14 @@ option ExtensiveHealthRework.CorpseSicknessEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CorpseSicknessEnabled,
 }
 option ExtensiveHealthRework.CadavericAspergillosisEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CadavericAspergillosisEnabled,
 }
 
@@ -429,7 +429,7 @@ option ExtensiveHealthRework.PutrefactionSicknessEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_PutrefactionSicknessEnabled,
 }
 
@@ -437,7 +437,7 @@ option ExtensiveHealthRework.TuberculosisEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TuberculosisEnabled,
 }
 
@@ -447,7 +447,7 @@ option ExtensiveHealthRework.CorpseDiseaseSpeed
     min = 0.1,
     max = 10.0,
     default = 1.0,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CorpseDiseaseSpeed,
 }
 
@@ -455,7 +455,7 @@ option ExtensiveHealthRework.BodyTemperatureEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_BodyTemperatureEnabled,
 }
 
@@ -465,7 +465,7 @@ option ExtensiveHealthRework.TemperatureChangeSpeed
     min = 0.25,
     max = 4.0,
     default = 1.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TemperatureChangeSpeed,
 }
 
@@ -473,7 +473,7 @@ option ExtensiveHealthRework.PreDiseaseEffectsEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_PreDiseaseEffectsEnabled,
 }
 
@@ -483,7 +483,7 @@ option ExtensiveHealthRework.HeatExposureTemperatureThreshold
     min = 20.0,
     max = 50.0,
     default = 30.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExposureTemperatureThreshold,
 }
 
@@ -493,7 +493,7 @@ option ExtensiveHealthRework.HeatExposureStartHour
     min = 0,
     max = 23,
     default = 9,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExposureStartHour,
 }
 
@@ -503,7 +503,7 @@ option ExtensiveHealthRework.HeatExposureEndHour
     min = 0,
     max = 23,
     default = 20,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExposureEndHour,
 }
 
@@ -513,7 +513,7 @@ option ExtensiveHealthRework.HeatExposureHoursToFull
     min = 0.25,
     max = 24.0,
     default = 4.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExposureHoursToFull,
 }
 
@@ -523,7 +523,7 @@ option ExtensiveHealthRework.HeatExposureGainMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExposureGainMultiplier,
 }
 
@@ -533,7 +533,7 @@ option ExtensiveHealthRework.HeatExposureRecoveryMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatExposureRecoveryMultiplier,
 }
 
@@ -543,7 +543,7 @@ option ExtensiveHealthRework.HeatStrokeChanceMultiplier
     min = 0.0,
     max = 5.0,
     default = 1.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatStrokeChanceMultiplier,
 }
 
@@ -553,7 +553,7 @@ option ExtensiveHealthRework.HeatHeadwearExposureMultiplier
     min = 0.0,
     max = 1.0,
     default = 0.30,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HeatHeadwearExposureMultiplier,
 }
 
@@ -563,7 +563,7 @@ option ExtensiveHealthRework.HypothermiaStage1Temp
     min = 30.0,
     max = 37.0,
     default = 35.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HypothermiaStage1Temp,
 }
 
@@ -573,7 +573,7 @@ option ExtensiveHealthRework.HypothermiaStage2Temp
     min = 29.0,
     max = 36.5,
     default = 34.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HypothermiaStage2Temp,
 }
 
@@ -583,7 +583,7 @@ option ExtensiveHealthRework.HypothermiaStage3Temp
     min = 28.0,
     max = 36.0,
     default = 32.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HypothermiaStage3Temp,
 }
 
@@ -593,7 +593,7 @@ option ExtensiveHealthRework.HypothermiaStage4Temp
     min = 27.0,
     max = 35.5,
     default = 31.0,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HypothermiaStage4Temp,
 }
 
@@ -603,7 +603,7 @@ option ExtensiveHealthRework.HypothermiaClearTemp
     min = 31.0,
     max = 38.0,
     default = 35.5,
-    page = EHR_Temperature,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HypothermiaClearTemp,
 }
 
@@ -612,7 +612,7 @@ option ExtensiveHealthRework.RealisticTemperatureCompatibility
     type = enum,
     numValues = 3,
     default = 1,
-    page = EHR_Comp,
+    page = HARMONIE_HomeMedic,
     translation = EHR_RealisticTemperatureCompatibility,
 }
 
@@ -620,7 +620,7 @@ option ExtensiveHealthRework.KnoxCureItemsEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_KnoxCureItemsEnabled,
 }
 
@@ -630,7 +630,7 @@ option ExtensiveHealthRework.MedicationLootMultiplier
     min = 0.0,
     max = 2.0,
     default = 1.0,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_MedicationLootMultiplier,
 }
 
@@ -640,7 +640,7 @@ option ExtensiveHealthRework.MedicalWatchLootMultiplier
     min = 0.0,
     max = 1.0,
     default = 1.0,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_MedicalWatchLootMultiplier,
 }
 
@@ -649,7 +649,7 @@ option ExtensiveHealthRework.MedicationPackageFill
     type = enum,
     numValues = 4,
     default = 3,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_MedicationPackageFill,
 }
 
@@ -657,7 +657,7 @@ option ExtensiveHealthRework.AllowFullPharmacyPackages
 {
     type = boolean,
     default = true,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_AllowFullPharmacyPackages,
 }
 
@@ -665,7 +665,7 @@ option ExtensiveHealthRework.HouseholdPrescriptionLoot
 {
     type = boolean,
     default = true,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HouseholdPrescriptionLoot,
 }
 
@@ -673,7 +673,7 @@ option ExtensiveHealthRework.ZombieLootEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ZombieLootEnabled,
 }
 
@@ -683,7 +683,7 @@ option ExtensiveHealthRework.ZombieLootChance
     min = 0.0,
     max = 100.0,
     default = 5.0,
-    page = EHR_Loot,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ZombieLootChance,
 }
 
@@ -691,7 +691,7 @@ option ExtensiveHealthRework.HealingRequiresFed
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HealingRequiresFed,
 }
 
@@ -699,7 +699,7 @@ option ExtensiveHealthRework.HealingRequiresHydrated
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HealingRequiresHydrated,
 }
 
@@ -707,7 +707,7 @@ option ExtensiveHealthRework.HealingRequiresRested
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HealingRequiresRested,
 }
 
@@ -715,7 +715,7 @@ option ExtensiveHealthRework.HealingRequiresCalm
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HealingRequiresCalm,
 }
 
@@ -723,7 +723,7 @@ option ExtensiveHealthRework.HealingRequiresNoPain
 {
     type = boolean,
     default = false,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_HealingRequiresNoPain,
 }
 
@@ -731,7 +731,7 @@ option ExtensiveHealthRework.PainSoundsEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_PainSoundsEnabled,
 }
 
@@ -739,7 +739,7 @@ option ExtensiveHealthRework.CoughSoundsEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_CoughSoundsEnabled,
 }
 
@@ -749,7 +749,7 @@ option ExtensiveHealthRework.PainSoundCooldown
     min = 60,
     max = 900,
     default = 300,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_PainSoundCooldown,
 }
 
@@ -759,7 +759,7 @@ option ExtensiveHealthRework.ZombieAttractionRadius
     min = 10,
     max = 100,
     default = 40,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ZombieAttractionRadius,
 }
 
@@ -768,7 +768,7 @@ option ExtensiveHealthRework.DialogueFrequency
     type = enum,
     numValues = 4,
     default = 2,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DialogueFrequency,
 }
 
@@ -776,7 +776,7 @@ option ExtensiveHealthRework.FirstAidXPEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_FirstAidXPEnabled,
 }
 
@@ -786,7 +786,7 @@ option ExtensiveHealthRework.FirstAidXPMultiplier
     min = 0.0,
     max = 10.0,
     default = 1.0,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_FirstAidXPMultiplier,
 }
 
@@ -794,7 +794,7 @@ option ExtensiveHealthRework.StitchMinigameEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_StitchMinigameEnabled,
 }
 
@@ -802,7 +802,7 @@ option ExtensiveHealthRework.TheLastPrescriptionEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_TheLastPrescriptionEnabled,
 }
 
@@ -810,7 +810,7 @@ option ExtensiveHealthRework.MedicalWatchRequired
 {
     type = boolean,
     default = true,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_MedicalWatchRequired,
 }
 
@@ -818,7 +818,7 @@ option ExtensiveHealthRework.PatientZeroTraitDisabled
 {
     type = boolean,
     default = false,
-    page = EHR_Other,
+    page = HARMONIE_HomeMedic,
     translation = EHR_PatientZeroTraitDisabled,
 }
 
@@ -826,7 +826,7 @@ option ExtensiveHealthRework.ImmunitySystemEnabled
 {
     type = boolean,
     default = true,
-    page = EHR_Immunity,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ImmunitySystemEnabled,
 }
 
@@ -834,7 +834,7 @@ option ExtensiveHealthRework.ImmunityGameplayEffects
 {
     type = boolean,
     default = true,
-    page = EHR_Immunity,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ImmunityGameplayEffects,
 }
 
@@ -844,7 +844,7 @@ option ExtensiveHealthRework.ImmunityEffectStrength
     min = 0.0,
     max = 2.0,
     default = 1.0,
-    page = EHR_Immunity,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ImmunityEffectStrength,
 }
 
@@ -854,7 +854,7 @@ option ExtensiveHealthRework.ImmunityRecoveryRate
     min = 0.25,
     max = 3.0,
     default = 1.0,
-    page = EHR_Immunity,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ImmunityRecoveryRate,
 }
 
@@ -864,7 +864,7 @@ option ExtensiveHealthRework.ImmunityDeclineRate
     min = 0.25,
     max = 3.0,
     default = 1.0,
-    page = EHR_Immunity,
+    page = HARMONIE_HomeMedic,
     translation = EHR_ImmunityDeclineRate,
 }
 
@@ -872,7 +872,7 @@ option ExtensiveHealthRework.DebugMode
 {
     type = boolean,
     default = false,
-    page = EHR_Debug,
+    page = HARMONIE_HomeMedic,
     translation = EHR_DebugMode,
 }
 
@@ -882,7 +882,7 @@ option TOC.CicatrizationSpeed
     min = 1,
     max = 10,
     default = 1,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_CicatrizationSpeed,
 }
 
@@ -892,7 +892,7 @@ option TOC.WoundDirtynessMultiplier
     min = 0,
     max = 5,
     default = 1,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_WoundDirtynessMultiplier,
 }
 option TOC.SurgeonAbilityImportance
@@ -901,7 +901,7 @@ option TOC.SurgeonAbilityImportance
     min = 1,
     max = 3,
     default = 2,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_SurgeonAbilityImportance,
 }
 
@@ -911,7 +911,7 @@ option MultiplierConfig.Side_L
     min = 0.0,
     max = 1000.0,
     default = 1.0,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_XPMultiplierSide_L,
 }
 option MultiplierConfig.Side_R
@@ -920,7 +920,7 @@ option MultiplierConfig.Side_R
     min = 0.0,
     max = 1000.0,
     default = 1.0,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_XPMultiplierSide_R,
 }
 option MultiplierConfig.ProstFamiliarity
@@ -929,13 +929,13 @@ option MultiplierConfig.ProstFamiliarity
     min = 0.0,
     max = 1000.0,
     default = 1.0,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_XPMultiplierProstFamiliarity,
 option TOC.EnableZombieAmputations
 {
     type = boolean,
     default = false,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_EnableZombieAmputations,
 }
 option TOC.ZombieAmputationDamageThreshold
@@ -944,7 +944,7 @@ option TOC.ZombieAmputationDamageThreshold
     min = 0,
     max = 10,
     default = 1,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_ZombieAmputationDamageThreshold,
 }
 option TOC.ZombieAmputationDamageChance
@@ -953,7 +953,7 @@ option TOC.ZombieAmputationDamageChance
     min = 0,
     max = 100,
     default = 25,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = TOC_ZombieAmputationDamageChance,
 }
 
@@ -961,7 +961,7 @@ option HomeMedic.SurgeryEnabled
 {
     type = boolean,
     default = true,
-    page = TOC,
+    page = HARMONIE_HomeMedic,
     translation = HomeMedic_SurgeryEnabled,
 }
 
@@ -969,6 +969,6 @@ option HomeMedic.DiagnosisRequired
 {
     type = boolean,
     default = true,
-    page = EHR_Disease,
+    page = HARMONIE_HomeMedic,
     translation = HomeMedic_DiagnosisRequired,
 }

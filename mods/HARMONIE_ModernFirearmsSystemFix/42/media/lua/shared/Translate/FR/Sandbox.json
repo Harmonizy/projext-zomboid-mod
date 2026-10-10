@@ -8,7 +8,5 @@
     "Sandbox_AirDropDefaultNum": "Nombre d'objets de largage",
     "Sandbox_AirdropWithBGM": "Activer la musique de combat pendant le largage",
     "Sandbox_AirdropVolume": "Volume de la musique de largage",
-    "Sandbox_ShieldCondition": "Efficacité de perte de durabilité du bouclier",
-    "Sandbox_EFKARB_EnableZombieDrops": "Activer les butins de zombie",
-    "Sandbox_EFKARB_EnableCustomSpawnTargets": "Activer les cibles d'apparition personnalisées"
+    "Sandbox_ShieldCondition": "Efficacité de perte de durabilité du bouclier"
 }

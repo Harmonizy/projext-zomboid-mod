@@ -233,8 +233,6 @@
     "Base.AccessoriesBoxGQ": "未知的手槍",
     "Base.AccessoriesBoxAJ": "未知的精確步槍",
     "Base.AccessoriesBoxZ": "軍械箱",
-    "Base.NormalBullet": "獵鹿彈",
-    "Base.DragonBreathBullet": "龍息彈",
     "Base.Bullets44": ".44 麥格農彈藥",
     "Base.Bullets44Box": ".44 麥格農盒裝彈藥",
     "Base.AWMClip": ".44 麥格農 AWM 5 發彈匣",
@@ -645,4 +643,3 @@
     "Gunpart.MFS_ChokeTubeFull": "收束器",
     "Gunpart.MFS_ChokeTubeImproved": "改進型收束器"
 }
-

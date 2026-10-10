@@ -20,6 +20,7 @@ require "TimedActions/ISBaseTimedAction"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/Surgery/HM_SurgeryGames"
 require "HARMONIEHomeMedic/Surgery/HM_SurgeryConsent"
+pcall(require, "HARMONIE_UIKit")
 
 local S = HM_Surgery
 local G = HM_SurgeryGames
@@ -305,7 +306,11 @@ function Prep:prerender()
         end
     end
     self:clearStencilRect()
-    if self.maxScroll > 0 then
+    -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+    if HARMONIE_Scroll then
+        HARMONIE_Scroll.bar(self, "prep", self.width - 8, top, 5, self.listH, self.scroll, self.maxScroll,
+            function(v) self.scroll = v end, COL.accent)
+    elseif self.maxScroll > 0 then
         local barH = math.max(20, self.listH * self.listH / (self.listH + self.maxScroll))
         local barY = top + (self.listH - barH) * (self.scroll / self.maxScroll)
         self:drawRect(self.width - 6, barY, 3, barH, 0.8, COL.accent[1], COL.accent[2], COL.accent[3])
@@ -576,7 +581,7 @@ function Op:update()
     end
 end
 
-local GRADE_COL = { Excellent = COL.ok, Success = COL.ok, Failed = COL.fail, Aborted = COL.warn }
+local GRADE_COL = { Excellent = COL.ok, Good = COL.ok, Fair = COL.warn, Poor = COL.fail, Success = COL.ok, Failed = COL.fail, Aborted = COL.warn }
 
 function Op:prerender()
     ISPanel.prerender(self)
@@ -853,3 +858,6 @@ function C.menuFor() return false end
 function C.install() C.installed = true end
 
 if Events and Events.OnGameStart then Events.OnGameStart.Add(C.install) end
+
+-- HARMONIE (2026-10-11): drag the pre-op list's scroll bar (HARMONIE_UIKit)
+if HARMONIE_Scroll then HARMONIE_Scroll.install(HM_SurgeryPrepUI) end

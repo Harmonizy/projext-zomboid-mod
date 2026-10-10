@@ -44,6 +44,7 @@
 
 require "ISUI/ISPanel"
 require "ISUI/ISTextEntryBox"
+require "HARMONIE_UIKit"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminConfig"
 require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 require "HARMONIEGardenToPlate/HARMONIE_FoodVitaminDatabase"
@@ -600,12 +601,9 @@ function Win:scrolled(key, x, y, w, h, f)
     self:clearStencilRect()
     self.maxScroll[key] = math.max(0, (used or 0) - h)
     if off > self.maxScroll[key] then self.scroll[key] = self.maxScroll[key] end
-    if self.maxScroll[key] > 0 then
-        local C = H.C
-        local bh = math.max(20, math.floor(h * h / (h + self.maxScroll[key])))
-        local by = y + math.floor((h - bh) * (self.scroll[key] or 0) / self.maxScroll[key])
-        self:drawRect(x + w - 4, by, 3, bh, 0.8, C.accent[1], C.accent[2], C.accent[3])
-    end
+    -- the shared scroll bar: drag it, click the track, or the wheel
+    HARMONIE_Scroll.bar(self, key, x + w - 7, y, 6, h, self.scroll[key] or 0, self.maxScroll[key],
+        function(v) self.scroll[key] = v end, H.C.accent, H.C.borderDim)
 end
 
 -- wrapped paragraphs; returns the height used
@@ -1223,6 +1221,57 @@ function Win:renderSettings(x, y, w, h)
     self:paragraphs(T("IGUI_GTPG_SetNote"), cx, cy, cw - 8, C.textDim, sf)
 end
 
+-- 2026-10-11 (owner: every window the same settings window): the gear opens
+-- the HARMONIE Hub's shared settings window (HARMONIE_UIKit) with Garden to
+-- Plate's rows; the page above stays for the key capture message
+function H.openSettings()
+    log("settings opened")
+    local C = H.C
+    HARMONIE_SettingsUI.open(T("IGUI_GTPG_Set_Title"), function()
+        local rows = HARMONIE_SettingsUI.commonRows({
+            getText = function() return H.textStep end,
+            setText = function(v) H.stepText(v - H.textStep) end,
+            resetSize = function()
+                local win = H.window
+                log("window size reset to %dx%d", H.DEFAULT_W, H.DEFAULT_H)
+                H.prefW, H.prefH = nil, nil; H.savePrefs()
+                if win then
+                    win:setWidth(H.DEFAULT_W); win:setHeight(H.DEFAULT_H)
+                    local core = getCore()
+                    win:setX(math.max(0, math.floor((core:getScreenWidth() - win.width) / 2)))
+                    win:setY(math.max(0, math.floor((core:getScreenHeight() - win.height) / 2)))
+                end
+            end,
+            getPin = function() return H.pinned end,
+            setPin = function(v) if v ~= H.pinned then if H.window then H.window:togglePin() else H.pinned = v; H.savePrefs() end end end,
+            getVolume = function() return (H.soundPct or 100) / 100 end,
+            setVolume = function(v)
+                H.soundPct = math.max(0, math.min(150, math.floor(v * 100 + 0.5)))
+                if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.volume = H.soundPct end
+                H.savePrefs()
+            end,
+            maxVolume = 1.5, volumeStep = 0.25,
+        })
+        rows[#rows + 1] = { kind = "section", label = T("IGUI_GTPG_Settings") }
+        rows[#rows + 1] = { kind = "button", id = "key", label = T("IGUI_GTPG_SetKey"), tip = T("IGUI_GTPG_SetKeyChange"),
+            text = H.keyName(H.currentKey()),
+            run = function()
+                H.capturing = true
+                if H.window then H.window.settingsOpen = true end
+                log("waiting for a key press to set the open-guide key")
+            end }
+        rows[#rows + 1] = { kind = "button", id = "keyclear", label = T("IGUI_GTPG_SetKeyClear"), text = T("IGUI_GTPG_SetKeyClear"),
+            run = function() H.capturing = false; H.setKey(0) end }
+        rows[#rows + 1] = { kind = "tick", id = "follow", label = T("IGUI_GTPG_OptFollow"), tip = T("IGUI_GTPG_OptFollow_tt"),
+            get = function() return H.followEnabled() end, set = function(v) if v ~= H.followEnabled() then H.setFollow(v) end end }
+        return rows
+    end, {
+        bg = C.background, header = C.header, row = C.card, rowHover = { 0.06, 0.18, 0.08 },
+        border = C.border, borderDim = C.borderDim, accent = C.accent, accentDark = C.accentDark,
+        text = C.text, textDim = C.textDim,
+    }, { textStep = H.textStep })
+end
+
 -- ----------------------------------------------------------------- calendar tab
 -- 2026-10-08 (from the suggestions list: "ปฏิทินฤดูปลูก"): a crop x month
 -- grid -- best month to sow, other sowing months, risky, bad (frost / too
@@ -1346,7 +1395,7 @@ function Win:onMouseDown(x, y)
                 getSoundManager():playUISound("UISelectListItem")
                 if b.id == "close" then H.close()
                 elseif b.id == "pin" then self:togglePin()
-                elseif b.id == "settings" then self.settingsOpen = not self.settingsOpen; H.capturing = false
+                elseif b.id == "settings" then self.settingsOpen = false; H.capturing = false; H.openSettings()
                 elseif b.id == "plus" then H.stepText(1)
                 elseif b.id == "minus" then H.stepText(-1) end
                 return true
@@ -1601,3 +1650,5 @@ function H.followEnabled()
     end
     return true
 end
+
+HARMONIE_Scroll.install(GTPGuideWindow)

@@ -5,5 +5,5 @@ poster=poster.png
 icon=icon.png
 author=HARMONIE (based on Modern Firearms System, with permission)
 incompatible=\ModernFirearmsSystem,\BetterCarPhysics,\P4TidyUpMeister,\gunworks framewrok
-modversion=0.6.0
+modversion=0.7.0
 versionMin=42.0.0

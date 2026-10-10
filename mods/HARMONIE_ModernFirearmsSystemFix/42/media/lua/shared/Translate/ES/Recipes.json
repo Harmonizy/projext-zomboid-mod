@@ -64,15 +64,6 @@
     "MG42弹匣": "Tambor de 7.62mm (75 cartuchos)",
     "机枪556弹鼓": "Tambor de 5.56mm (100 cartuchos)",
     "长9mm弹匣": "Cargador de 9mm (30 cartuchos)",
-    "9mmDrum50": "Fabricar tambor 9mm (50 cartuchos)",
-    "5.8Drum65": "Fabricar tambor 5.8mm (65 cartuchos)",
-    "8.6Drum100": "Fabricar tambor 8.6mm (100 cartuchos)",
-    "5.56Drum50": "Fabricar tambor 5.56mm (50 cartuchos)",
-    "5.56Drum60": "Fabricar tambor 5.56mm (60 cartuchos)",
-    "5.56Drum100": "Fabricar tambor 5.56mm (100 cartuchos)",
-    "7.62Drum50": "Fabricar tambor 7.62mm (50 cartuchos)",
-    "7.62Drum60": "Fabricar tambor 7.62mm (60 cartuchos)",
-    "7.62Drum75": "Fabricar tambor 7.62mm (75 cartuchos)",
     "Creat_IObox": "Fabricar contenedor IO",
     "Place_Bullets50_in_Box": "Colocar balas .50 en caja"
 }

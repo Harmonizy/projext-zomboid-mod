@@ -5,7 +5,7 @@ Writes 42/media/textures/HARMONIE_HomeMedic/surg_dot.png (filled circle) and
 surg_ring.png (ring), white on transparent, antialiased, 128 px -- the games
 tint and scale them (HM_SurgeryGames.lua) -- and tab_*.png, the
 medical window's tab icons (one badge style: monitor, immunity, stats,
-diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button,
+diagnosis, surgery, disease handbook, medication handbook, medical guide) -- and pin_on.png / pin_off.png, the windows' pin button,
 and icon_*.png, the glyphs of the small buttons and the settings window (R71).
 """
 import os
@@ -130,27 +130,42 @@ def _rot(pts, cx, cy, ang, s):
 
 
 def tab_surgery(size=128):
-    """Surgery: a scalpel (ridged steel handle, curved blade) over a sutured incision."""
+    """Surgery (2026-10-11, owner: "เปลี่ยน icon ผ่าตัด"): a scalpel crossed
+    with a hemostat (two finger rings, ratchet, jaws) -- the two instruments
+    of every operation."""
     import math
     img, d, s = _canvas(size)
-    # sutured incision along the bottom
-    d.line([(24 * s, 98 * s), (104 * s, 98 * s)], fill=RED, width=int(5 * s))
-    for x in range(30, 102, 12):
-        d.line([(x * s, 90 * s), ((x + 6) * s, 106 * s)], fill=CREAM, width=int(4 * s))
-    ang = -math.pi / 4          # handle lower-left, blade upper-right
-    cx, cy = 70, 48
-    k = 1.2                     # size of the scalpel
     steel = (190, 204, 222, 255)
     dark = (60, 86, 120, 255)
-    def R(pts): return _rot([(x * k, y * k) for x, y in pts], cx, cy, ang, s)
-    # handle: long rounded bar with grip ridges
-    d.polygon(R([(-42, -5), (2, -5), (6, -3.5), (6, 3.5), (2, 5), (-42, 5), (-46, 2.5), (-46, -2.5)]), fill=steel, outline=dark)
-    for gx in range(-38, -16, 5):
+    # hemostat: handle rings lower-right, jaws upper-left
+    cx, cy = 64, 64
+    ang = -3 * math.pi / 4
+    def H(pts): return _rot(pts, cx, cy, ang, s)
+    for side in (-1, 1):
+        # one arm: ring at the handle end, shank, jaw
+        d.line(H([(-34, side * 9), (-8, side * 3), (4, 0)]), fill=steel, width=int(6 * s), joint="curve")
+        d.line(H([(4, 0), (36, side * 1.5)]), fill=steel, width=int(5 * s))
+        rx, ry = H([(-42, side * 13)])[0]
+        rr = 9 * s
+        d.ellipse([rx - rr, ry - rr, rx + rr, ry + rr], outline=steel, width=int(5 * s))
+    # ratchet teeth and the box joint
+    for t in range(3):
+        d.line(H([(-24 + t * 4, -6), (-24 + t * 4, 6)]), fill=dark, width=int(2 * s))
+    jx, jy = H([(4, 0)])[0]
+    d.ellipse([jx - 5 * s, jy - 5 * s, jx + 5 * s, jy + 5 * s], fill=dark)
+    # serrated jaws
+    for t in range(5):
+        d.line(H([(14 + t * 5, -3), (14 + t * 5, 3)]), fill=dark, width=int(2 * s))
+    # scalpel crossing it: handle lower-left, blade upper-right
+    ang2 = -math.pi / 4
+    k = 1.05
+    def R(pts): return _rot([(x * k, y * k) for x, y in pts], 66, 62, ang2, s)
+    d.polygon(R([(-44, -5), (0, -5), (4, -3.5), (4, 3.5), (0, 5), (-44, 5), (-48, 2.5), (-48, -2.5)]), fill=CREAM, outline=dark)
+    for gx in range(-40, -18, 5):
         d.line(R([(gx, -4), (gx, 4)]), fill=dark, width=int(2 * s))
-    # blade: straight spine, curved cutting belly up to the point
-    belly = [(6 + t * 30, 3.5 + 7 * math.sin(math.pi * t) - 3.5 * t) for t in [j / 12 for j in range(13)]]
-    d.polygon(R([(6, -3.5), (32, -4.5), (38, -6)] + list(reversed(belly))), fill=CREAM, outline=dark)
-    d.line(R([(8, -1.5), (32, -3)]), fill=(255, 255, 255, 255), width=int(2 * s))
+    belly = [(4 + t * 32, 3.5 + 8 * math.sin(math.pi * t) - 3.5 * t) for t in [j / 12 for j in range(13)]]
+    d.polygon(R([(4, -3.5), (32, -4.5), (38, -6)] + list(reversed(belly))), fill=RED, outline=dark)
+    d.line(R([(6, -1.5), (32, -3)]), fill=(255, 255, 255, 255), width=int(2 * s))
     return _done(img, size)
 
 
@@ -180,9 +195,22 @@ def tab_meds(size=128):
     return _done(img, size)
 
 
+def tab_guide(size=128):
+    """Medical guide: a clipboard with lines and a blue "i" badge."""
+    img, d, s = _canvas(size)
+    d.rounded_rectangle([30 * s, 26 * s, 92 * s, 108 * s], radius=6 * s, fill=CREAM)
+    d.rounded_rectangle([46 * s, 18 * s, 76 * s, 34 * s], radius=4 * s, fill=(150, 160, 175, 255))
+    for y in (50, 64, 78, 92):
+        d.line([(40 * s, y * s), (70 * s, y * s)], fill=(150, 140, 130, 255), width=int(4 * s))
+    d.ellipse([70 * s, 66 * s, 108 * s, 104 * s], fill=RED, outline=(12, 22, 36, 255), width=int(3 * s))
+    d.ellipse([86 * s, 72 * s, 92 * s, 78 * s], fill=(255, 255, 255, 255))
+    d.rectangle([86 * s, 82 * s, 92 * s, 98 * s], fill=(255, 255, 255, 255))
+    return _done(img, size)
+
+
 TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats,
         "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook, "tab_surgery": tab_surgery,
-        "tab_meds": tab_meds}
+        "tab_meds": tab_meds, "tab_guide": tab_guide}
 
 
 # R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์ ... เพิ่มปุ่มตั้งค่า"): glyphs of the

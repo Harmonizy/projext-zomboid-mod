@@ -146,6 +146,10 @@ HARMONIE_GTP.Config = {
     decayPerDay = 2,
     -- Reserve gained = (percent of daily requirement eaten) / reserveGainDivisor
     reserveGainDivisor = 10,
+    -- 0.13.10 (owner, 2026-10-11: "เพิ่ม sandbox setting ตัวคูณวิตามินที่ได้รับจาก
+    -- อาหาร โดย default อยู่ที่ 5.0"): every vitamin gained by EATING is
+    -- multiplied by this (sunlight and pills are not)
+    foodVitaminMultiplier = 5.0,
     -- Reserve points needed to bank 1 pause day (10 Reserve = 1 pause day)
     reservePerPauseDay = 10,
 
@@ -180,6 +184,7 @@ function HARMONIE_GTP.RefreshFromSandbox()
     local c = HARMONIE_GTP.Config
     c.decayPerDay = readSandbox("DecayPerDay", c.decayPerDay)
     c.reserveGainDivisor = readSandbox("ReserveGainDivisor", c.reserveGainDivisor)
+    c.foodVitaminMultiplier = readSandbox("FoodVitaminMultiplier", c.foodVitaminMultiplier)
     c.criticalThreshold = readSandbox("CriticalThreshold", c.criticalThreshold)
     c.sufficientThreshold = readSandbox("SufficientThreshold", c.sufficientThreshold)
     c.effectsEnabled = readSandbox("EnableCriticalEffects", c.effectsEnabled)

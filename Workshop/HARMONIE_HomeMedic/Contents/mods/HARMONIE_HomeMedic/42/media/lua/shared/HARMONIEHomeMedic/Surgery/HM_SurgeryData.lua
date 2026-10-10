@@ -105,7 +105,7 @@ S.Supplies = {
         { type = "ExtensiveHealth.GeneTherapyKit", q = 1.0 } } },
     -- transfusion slots: no longer part of any operation (request
     -- 2026-10-02: the operation itself leaves the patient low on blood, see
-    -- S.postOpBlood); kept so old references still resolve
+    -- S.GRADES); kept so old references still resolve
     blood = { kind = "use", required = false, transfusion = "blood", options = { { match = "bloodbag", q = 1.0 } } },
     saline = { kind = "use", required = false, transfusion = "saline", options = {
         { type = "ExtensiveHealth.SalineBag", q = 1.0 }, { match = "saline", q = 1.0 } } },
@@ -124,31 +124,38 @@ S.TRANSFUSE_BELOW = 0.62
 -- (Procedures[].tool), so the starting penalty is halved.
 S.IMPROVISED_COST = 0.15
 
--- Blood after the operation (owner, 2026-10-10: "penalty จากการผ่าตัดที่พลาด
--- ทำให้ปริมาณเลือดลดลงอย่างมาก เสี่ยงตาย เกณฑ์ผ่าตัดยอดเยี่ยมให้ลดปริมาณเลือด
--- 90% แทน และลดลงตามลำดับที่ต่ำลง"): the patient ends at most at
---   excellent (quality >= S.EXCELLENT)  POSTOP_EXCELLENT  90%
---   just successful (S.SUCCESS)          POSTOP_SUCCESS    72%  (EHR "moderate")
---   a complete failure (quality 0)       POSTOP_FLOOR      20%  (EHR: under 20%
---                                                              the heart can stop)
--- linear in between; uncontrolled bleeding (P02 `bleed`) takes up to
--- POSTOP_BLEED more. Someone who comes in already low ends lower still.
-S.POSTOP_EXCELLENT = 0.90
-S.POSTOP_SUCCESS = 0.72
-S.POSTOP_FLOOR = 0.20
-S.POSTOP_BLEED = 0.08
-function S.postOpBlood(q, bleed)
-    q = math.max(0, math.min(1, tonumber(q) or 0))
-    local f
-    if q >= S.EXCELLENT then
-        f = S.POSTOP_EXCELLENT
-    elseif q >= S.SUCCESS then
-        f = S.POSTOP_SUCCESS + (S.POSTOP_EXCELLENT - S.POSTOP_SUCCESS) * (q - S.SUCCESS) / (S.EXCELLENT - S.SUCCESS)
-    else
-        f = S.POSTOP_FLOOR + (S.POSTOP_SUCCESS - S.POSTOP_FLOOR) * q / S.SUCCESS
+-- Blood the operation costs (owner, 2026-10-11: "เปลี่ยนให้การผ่าตัดเป็น -10%
+-- ปริมาณเลือด ตามคุณภาพ ยอดเยี่ยม ดี ปานกลาง แย่ ล้มเหลว ลดลงทีละ10 โดย
+-- ยอดเยี่ยมคือ -10"): five grades by quality; each takes that share of FULL
+-- blood volume from what the patient has now, so operations can follow one
+-- another and every one of them costs (round 2026-10-10 capped blood at a
+-- level instead, which made a second operation free).
+--   grade       quality   blood
+--   Excellent   >= 0.80   -10%
+--   Good        >= 0.65   -20%
+--   Fair        >= 0.45   -30%   (S.SUCCESS: the operation still works)
+--   Poor        >= 0.25   -40%   (does not treat)
+--   Failed       < 0.25   -50%
+-- Stopped early: in proportion to how far it got. Under 20% blood EHR's
+-- heart can stop, so a failure on someone already weak can kill.
+S.GRADES = {
+    { id = "Excellent", from = 0.80, blood = 0.10 },
+    { id = "Good",      from = 0.65, blood = 0.20 },
+    { id = "Fair",      from = 0.45, blood = 0.30 },
+    { id = "Poor",      from = 0.25, blood = 0.40 },
+    { id = "Failed",    from = 0,    blood = 0.50 },
+}
+-- -> grade id, share of full blood lost
+function S.gradeOf(q)
+    q = tonumber(q) or 0
+    for _, g in ipairs(S.GRADES) do
+        if q >= g.from then return g.id, g.blood end
     end
-    f = f - S.POSTOP_BLEED * math.max(0, math.min(1, tonumber(bleed) or 0))
-    return math.max(0.05, f)
+    return "Failed", 0.50
+end
+function S.gradeLoss(id)
+    for _, g in ipairs(S.GRADES) do if g.id == id then return g.blood end end
+    return 0.50
 end
 
 -- A serious complication can happen to anyone (owner's design doc: "ต้องมี

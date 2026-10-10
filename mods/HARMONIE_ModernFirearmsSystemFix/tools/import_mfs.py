@@ -23,6 +23,8 @@ What it does, every time from scratch (re-runnable):
      appends our sandbox options to the original's sandbox-options.txt;
   5. writes IMPORTED.txt (every imported file) for the next run.
 """
+import glob
+import re
 import json, os, shutil, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -169,10 +171,54 @@ def main():
         body = open(ours_so, encoding="utf-8").read()
         body = body.split("\n", 1)[1] if body.startswith("VERSION") else body
         so += "\n\n/* ---- HARMONIE options ---- */\n" + body
+    # 2026-10-11 (owner: "ม็อด 1 ม็อด ต่อ 1 tab sandbox setting"): every
+    # option on this mod's one sandbox page
+    so = re.sub(r"(?m)^(\s*page\s*=\s*)[A-Za-z0-9_]+,", r"\1HARMONIE_ModernFirearmsSystemFix,", so)
     open(os.path.join(dst, "sandbox-options.txt"), "w", encoding="utf-8").write(so + "\n")
 
     open(LIST, "w", encoding="utf-8").write("\n".join(sorted(imported)) + "\n")
     print("imported %d files, %.0f MB; left out: %s" % (len(imported), size / 1e6, ", ".join(EXCLUDE)))
+    strip_vanilla_copies(dst)
+
+
+# 2026-10-11: the original ships, for ~25 languages, whole copies of the
+# GAME's own text files (ContextMenu, UI, Sandbox, IG_UI...) from an older
+# build. Loaded after vanilla they replaced the game's current texts -- a
+# stale Thai "ContextMenu_EvolvedRecipe_RecipeNameNew" broke vanilla's
+# ISAddItemInRecipe (MissingFormatArgumentException when a dish was made).
+# Keep only what is this mod's: keys in its English files, keys its own code
+# or scripts use, its item names, and anything named MFS / Gunpart.
+def strip_vanilla_copies(dst):
+    import json, re
+    T = os.path.join(dst, "lua", "shared", "Translate")
+    en = set()
+    for f in glob.glob(os.path.join(T, "EN", "*.json")):
+        en |= set(json.load(open(f, encoding="utf-8")))
+    words, items = set(), set()
+    for f in glob.glob(os.path.join(dst, "**", "*.lua"), recursive=True) + glob.glob(os.path.join(dst, "scripts", "**", "*.txt"), recursive=True):
+        if os.sep + "Translate" + os.sep in f:
+            continue
+        text = open(f, encoding="utf-8", errors="ignore").read()
+        words |= set(re.findall(r"[A-Za-z0-9_.]+", text))
+        if f.endswith(".txt"):
+            mod = re.findall(r"module\s+(\w+)", text)
+            for it in re.findall(r"^\s*item\s+(\w+)", text, re.M):
+                items.add((mod[0] if mod else "Base") + "." + it)
+    def ours(k):
+        return k in en or k in words or k in items or "MFS" in k or "Gunpart" in k or (k.startswith("ItemName_") and k[9:] in items)
+    dropped = 0
+    for lang in os.listdir(T):
+        if lang in MERGED_LANGS:
+            continue
+        for f in glob.glob(os.path.join(T, lang, "*.json")):
+            data = json.load(open(f, encoding="utf-8"))
+            keep = {k: v for k, v in data.items() if ours(k)}
+            dropped += len(data) - len(keep)
+            if not keep:
+                os.remove(f)
+            elif len(keep) != len(data):
+                open(f, "w", encoding="utf-8").write(json.dumps(keep, indent=4, ensure_ascii=False) + "\n")
+    print("left out %d copied game texts (not this mod's)" % dropped)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,5 @@
     "Sandbox_AirDropDefaultNum": "Número de objetos de lanzamiento",
     "Sandbox_AirdropWithBGM": "Activar música de combate durante el lanzamiento",
     "Sandbox_AirdropVolume": "Volumen de música de lanzamiento",
-    "Sandbox_ShieldCondition": "Eficiencia de pérdida de durabilidad del escudo",
-    "Sandbox_EFKARB_EnableZombieDrops": "Activar drops de zombis",
-    "Sandbox_EFKARB_EnableCustomSpawnTargets": "Activar objetivos de aparición personalizados"
+    "Sandbox_ShieldCondition": "Eficiencia de pérdida de durabilidad del escudo"
 }

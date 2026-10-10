@@ -19,6 +19,7 @@
 require "ISUI/ISPanel"
 require "ISUI/ISButton"
 require "HARMONIEHomeMedic/Surgery/HM_Surgery"
+pcall(require, "HARMONIE_UIKit")
 
 local S = HM_Surgery
 S.Client = S.Client or {}
@@ -150,7 +151,11 @@ function UI:prerender()
         end
     end
     self:clearStencilRect()
-    if self.maxScroll > 0 then
+    -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+    if HARMONIE_Scroll then
+        HARMONIE_Scroll.bar(self, "risks", self.width - 8, listTop, 5, listH, self.scroll, self.maxScroll,
+            function(v) self.scroll = v end, { 0.3, 0.84, 1.0 })
+    elseif self.maxScroll > 0 then
         local barH = math.max(20, listH * listH / (listH + self.maxScroll))
         local barY = listTop + (listH - barH) * (self.scroll / self.maxScroll)
         self:drawRect(self.width - 6, barY, 3, barH, 0.8, 0.3, 0.84, 1.0)
@@ -177,5 +182,7 @@ function C.openConsent(info, onAnswer)
     HMLog("SurgeryUI", "consent form opened: %s, %d risks, worst level %d", tostring(info and info.sid), #ui.risks, S.riskLevel(ui.risks))
     return ui
 end
+
+if HARMONIE_Scroll then HARMONIE_Scroll.install(HM_SurgeryConsentUI) end
 
 return UI
