@@ -64,3 +64,21 @@ function HARMONIE_Ours(fn, tag)
         return r
     end
 end
+
+-- Debug registry (2026-10-11, owner: "ทุกม็อดต้องมีดีบักให้ ดีบักเปิดให้เห็นเฉพาะคน
+-- ที่เป็นแอดมินหรือเปิด debug" / "เอา ดีบัก TOC ไปรวมใน ดีบัก HARMONIE"): any
+-- of our mods (and the bundled ones, like The Only Cure) adds its admin /
+-- -debug options to the ONE "HARMONIE debug" right-click menu instead of a
+-- menu of its own. fn(add, player, target):
+--   add(label, function(player) ... end)   -- one option
+--   target = nil for the general part, or another player the click was on
+--            (then the options go under that player's name)
+-- HARMONIE_Hub.lua draws them, admins and -debug only.
+HARMONIE_HubDebug = HARMONIE_HubDebug or {}
+function HARMONIE_RegisterDebug(id, fn)
+    if type(id) ~= "string" or type(fn) ~= "function" then return end
+    for _, e in ipairs(HARMONIE_HubDebug) do
+        if e.id == id then e.fn = fn; return end
+    end
+    HARMONIE_HubDebug[#HARMONIE_HubDebug + 1] = { id = id, fn = fn }
+end

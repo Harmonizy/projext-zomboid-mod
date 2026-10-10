@@ -24,6 +24,7 @@ What it does, every time from scratch (re-runnable):
   5. writes IMPORTED.txt (every imported file) for the next run.
 """
 import glob
+import re
 import json, os, shutil, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -170,6 +171,9 @@ def main():
         body = open(ours_so, encoding="utf-8").read()
         body = body.split("\n", 1)[1] if body.startswith("VERSION") else body
         so += "\n\n/* ---- HARMONIE options ---- */\n" + body
+    # 2026-10-11 (owner: "ม็อด 1 ม็อด ต่อ 1 tab sandbox setting"): every
+    # option on this mod's one sandbox page
+    so = re.sub(r"(?m)^(\s*page\s*=\s*)[A-Za-z0-9_]+,", r"\1HARMONIE_ModernFirearmsSystemFix,", so)
     open(os.path.join(dst, "sandbox-options.txt"), "w", encoding="utf-8").write(so + "\n")
 
     open(LIST, "w", encoding="utf-8").write("\n".join(sorted(imported)) + "\n")

@@ -488,7 +488,7 @@ function W.relayout()
     if not win then return true end
     if win:isBusy() then TWALog("Workbench", "relayout refused: busy"); win:flashLocked("IGUI_TWA_BusyCantResize") return false end
     TWACraftUI.rebuild()
-    if TWASettingsUI and TWASettingsUI.instance then TWASettingsUI.instance:bringToTop() end
+    if HARMONIE_SettingsUI and HARMONIE_SettingsUI.instance then HARMONIE_SettingsUI.instance:bringToTop() end
     return true
 end
 

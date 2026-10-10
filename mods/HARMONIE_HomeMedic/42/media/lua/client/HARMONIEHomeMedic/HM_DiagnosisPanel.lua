@@ -21,6 +21,7 @@ require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Diagnosis"
 require "HARMONIEHomeMedic/HM_Stats"
 require "HARMONIEHomeMedic/HM_DiagnoseResultUI"
+pcall(require, "HARMONIE_UIKit")
 local S = HM_Surgery
 local D = HM_Diagnosis
 D.Client = D.Client or {}
@@ -361,8 +362,15 @@ end
 -- ------------------------------------------------------------- drawing
 local function inside(mx, my, x, y, w, h) return mx >= x and mx <= x + w and my >= y and my <= y + h end
 
-local function drawScrollbar(self, x, top, viewH, contentH, scroll)
+local function drawScrollbar(self, x, top, viewH, contentH, scroll, key, set)
     local maxScroll = math.max(0, contentH - viewH)
+    if HARMONIE_Scroll and key then
+        local c = EHR_HealthPanelUI.Colors
+        -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+        HARMONIE_Scroll.bar(self, key, x - 1, top, 5, viewH, math.min(scroll, maxScroll), maxScroll, set,
+            { c.accent.r, c.accent.g, c.accent.b }, { c.borderDim.r, c.borderDim.g, c.borderDim.b })
+        return maxScroll
+    end
     if maxScroll <= 0 then return 0 end
     local c = EHR_HealthPanelUI.Colors
     local barH = math.max(24, viewH * viewH / contentH)
@@ -596,7 +604,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
     end
     local contentL = y + st.scrollL - top + 8
     self:clearStencilRect()
-    st.maxL = drawScrollbar(self, lx + leftW + 4, top, viewH, contentL, st.scrollL)
+    st.maxL = drawScrollbar(self, lx + leftW + 4, top, viewH, contentL, st.scrollL, "dxL", function(v) st.scrollL = v end)
     if st.scrollL > st.maxL then st.scrollL = st.maxL end
     self:drawRect(rx - 8, top, 1, viewH, 0.5, c.borderDim.r, c.borderDim.g, c.borderDim.b)
 
@@ -622,7 +630,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
     local contentR = drawCards(self, st, cards, rx, rw - 8, top, viewH, mx, my) + fh(FONT_M) + 8
     st.scrollR = saved
     self:clearStencilRect()
-    st.maxR = drawScrollbar(self, b.x + b.w - 7, top, viewH, contentR, st.scrollR)
+    st.maxR = drawScrollbar(self, b.x + b.w - 7, top, viewH, contentR, st.scrollR, "dxR", function(v) st.scrollR = v end)
     if st.scrollR > st.maxR then st.scrollR = st.maxR end
 end
 

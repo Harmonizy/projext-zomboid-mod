@@ -21,6 +21,7 @@ require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Stats"
 require "HARMONIEHomeMedic/HM_MedHandbookUI"
 require "HARMONIEHomeMedic/HM_WatchGive"
+pcall(require, "HARMONIE_UIKit")
 local S = HM_Surgery
 local St = HM_Stats
 
@@ -384,7 +385,11 @@ function EHR_HealthPanelUI:hmDrawStats()
     self:clearStencilRect()
     st.maxScroll = math.max(0, contentH - viewH)
     if st.scroll > st.maxScroll then st.scroll = st.maxScroll end
-    if st.maxScroll > 0 then
+    -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+    if HARMONIE_Scroll then
+        HARMONIE_Scroll.bar(self, "stats", b.x + b.w - 8, top, 5, viewH, st.scroll, st.maxScroll,
+            function(v) st.scroll = v end, { c.accent.r, c.accent.g, c.accent.b }, { c.borderDim.r, c.borderDim.g, c.borderDim.b })
+    elseif st.maxScroll > 0 then
         local barH = math.max(24, viewH * viewH / contentH)
         local barY = top + (viewH - barH) * (st.scroll / st.maxScroll)
         self:drawRect(b.x + b.w - 7, barY, 3, barH, 0.8, c.accent.r, c.accent.g, c.accent.b)

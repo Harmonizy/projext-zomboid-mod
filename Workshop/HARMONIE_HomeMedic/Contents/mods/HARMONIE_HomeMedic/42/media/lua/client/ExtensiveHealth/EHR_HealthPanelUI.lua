@@ -1281,10 +1281,12 @@ function EHR_HealthPanelUI:getTabDefinitions()
     local handbook = { id = "handbook", label = safeText("UI_EHR_Tab_Handbook", "Disease Handbook") }
     local surgery = { id = "surgery", label = safeText("UI_EHR_Tab_Surgery", "Surgery") }
     local meds = { id = "meds", label = safeText("UI_EHR_Tab_Meds", "Medication Handbook") }
+    -- HARMONIE (2026-10-11): "เพิ่มแท็บ คู่มือการแพทย์ ใน HTS" (HM_GuideTab.lua)
+    local guide = { id = "guide", label = safeText("UI_EHR_Tab_Guide", "Medical Guide") }
     if self.isRemoteHealthPanel then
         return {
             { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "Medic") },
-            stats, diagnosis, surgery, handbook, meds,
+            stats, diagnosis, surgery, handbook, meds, guide,
         }
     end
     if self.width < 560 then
@@ -1297,7 +1299,7 @@ function EHR_HealthPanelUI:getTabDefinitions()
     return {
         { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "Medic") or safeText("UI_EHR_Tab_EHR", "Medic Monitor") },
         { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
-        stats, diagnosis, surgery, handbook, meds,
+        stats, diagnosis, surgery, handbook, meds, guide,
     }
 end
 
@@ -2054,6 +2056,7 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         handbook = "media/textures/HARMONIE_HomeMedic/tab_handbook.png",
         surgery = "media/textures/HARMONIE_HomeMedic/tab_surgery.png",
         meds = "media/textures/HARMONIE_HomeMedic/tab_meds.png",
+        guide = "media/textures/HARMONIE_HomeMedic/tab_guide.png",
     }
 
     local path = paths[tabId]
@@ -4879,7 +4882,11 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
         rowY = rowY + rowH
     end
     self:clearStencilRect()
-    if maxScroll > 0 then
+    -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+    if HARMONIE_Scroll then
+        HARMONIE_Scroll.bar(self, "parts", x + w - 7, top, 6, viewH, self.hmPartScroll or 0, maxScroll,
+            function(v) self.hmPartScroll = v end, { c.accent.r, c.accent.g, c.accent.b }, { c.borderDim.r, c.borderDim.g, c.borderDim.b })
+    elseif maxScroll > 0 then
         local barH = math.max(14, viewH * viewH / contentH)
         local barY = top + (viewH - barH) * (self.hmPartScroll / maxScroll)
         self:drawRect(x + w - 5, barY, 3, barH, 0.85, c.accent.r, c.accent.g, c.accent.b)
@@ -5699,6 +5706,12 @@ function EHR_HealthPanelUI:drawScrollBar(x, y, w, h)
     if maxScroll <= 0 then return end
 
     local c = EHR_HealthPanelUI.Colors
+    -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+    if HARMONIE_Scroll then
+        HARMONIE_Scroll.bar(self, "content", x - 1, y, math.max(6, w + 1), h, self.contentScrollY or 0, maxScroll,
+            function(v) self.contentScrollY = v end, { c.accent.r, c.accent.g, c.accent.b }, { c.borderDim.r, c.borderDim.g, c.borderDim.b })
+        return
+    end
     local thumbH = math.max(32, math.floor(h * (h / math.max(h, self.contentHeight or h))))
     local thumbY = y + math.floor((self.contentScrollY / maxScroll) * (h - thumbH))
 
@@ -6370,3 +6383,6 @@ end
 
 EHR.Log("HealthPanelUI prototype loaded")
 
+-- HARMONIE (2026-10-11): drag the scroll bars (HARMONIE_UIKit)
+pcall(require, "HARMONIE_UIKit")
+if HARMONIE_Scroll then HARMONIE_Scroll.install(EHR_HealthPanelUI) end

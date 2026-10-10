@@ -228,5 +228,6 @@
     "Sandbox_HomeMedic_SurgeryEnabled": "ระบบผ่าตัด (How to Survive)",
     "Sandbox_HomeMedic_SurgeryEnabled_tooltip": "อนุญาตการผ่าตัดของ How to Survive (Debridement, Abscess Drainage ...) จากเมนูส่วนของร่างกาย",
     "Sandbox_HomeMedic_DiagnosisRequired": "ต้องวินิจฉัยก่อนรู้ชื่อโรค (How to Survive)",
-    "Sandbox_HomeMedic_DiagnosisRequired_tooltip": "ทุกโรคจะแสดงเป็น Unknown จนกว่าจะมีคนวินิจฉัยในแท็บการวินิจฉัยของหน้าต่างการแพทย์ ถ้าปิด จะแสดงชื่อโรคทันทีโดยไม่ต้องวินิจฉัย"
+    "Sandbox_HomeMedic_DiagnosisRequired_tooltip": "ทุกโรคจะแสดงเป็น Unknown จนกว่าจะมีคนวินิจฉัยในแท็บการวินิจฉัยของหน้าต่างการแพทย์ ถ้าปิด จะแสดงชื่อโรคทันทีโดยไม่ต้องวินิจฉัย",
+    "Sandbox_HARMONIE_HomeMedic": "HARMONIE - How to Survive"
 }

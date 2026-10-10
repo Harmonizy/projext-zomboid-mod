@@ -5,7 +5,7 @@ Writes 42/media/textures/HARMONIE_HomeMedic/surg_dot.png (filled circle) and
 surg_ring.png (ring), white on transparent, antialiased, 128 px -- the games
 tint and scale them (HM_SurgeryGames.lua) -- and tab_*.png, the
 medical window's tab icons (one badge style: monitor, immunity, stats,
-diagnosis, surgery, disease handbook, medication handbook) -- and pin_on.png / pin_off.png, the windows' pin button,
+diagnosis, surgery, disease handbook, medication handbook, medical guide) -- and pin_on.png / pin_off.png, the windows' pin button,
 and icon_*.png, the glyphs of the small buttons and the settings window (R71).
 """
 import os
@@ -195,9 +195,22 @@ def tab_meds(size=128):
     return _done(img, size)
 
 
+def tab_guide(size=128):
+    """Medical guide: a clipboard with lines and a blue "i" badge."""
+    img, d, s = _canvas(size)
+    d.rounded_rectangle([30 * s, 26 * s, 92 * s, 108 * s], radius=6 * s, fill=CREAM)
+    d.rounded_rectangle([46 * s, 18 * s, 76 * s, 34 * s], radius=4 * s, fill=(150, 160, 175, 255))
+    for y in (50, 64, 78, 92):
+        d.line([(40 * s, y * s), (70 * s, y * s)], fill=(150, 140, 130, 255), width=int(4 * s))
+    d.ellipse([70 * s, 66 * s, 108 * s, 104 * s], fill=RED, outline=(12, 22, 36, 255), width=int(3 * s))
+    d.ellipse([86 * s, 72 * s, 92 * s, 78 * s], fill=(255, 255, 255, 255))
+    d.rectangle([86 * s, 82 * s, 92 * s, 98 * s], fill=(255, 255, 255, 255))
+    return _done(img, size)
+
+
 TABS = {"tab_ehr": tab_ehr, "tab_immunity": tab_immunity, "tab_stats": tab_stats,
         "tab_diagnosis": tab_diagnosis, "tab_handbook": tab_handbook, "tab_surgery": tab_surgery,
-        "tab_meds": tab_meds}
+        "tab_meds": tab_meds, "tab_guide": tab_guide}
 
 
 # R71 ("เปลี่ยนจากคำในปุ่มเป็นสัญลักษณ์ ... เพิ่มปุ่มตั้งค่า"): glyphs of the

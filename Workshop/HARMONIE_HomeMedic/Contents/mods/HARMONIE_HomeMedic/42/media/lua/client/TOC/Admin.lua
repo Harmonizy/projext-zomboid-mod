@@ -70,7 +70,34 @@ local function AddAdminTocOptions(playerNum, context, worldobjects)
 
     
 end
-Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(AddAdminTocOptions, "debug"))
+-- HARMONIE (2026-10-11, owner: "เอา ดีบัก TOC ไปรวมใน ดีบัก HARMONIE"): with
+-- the HARMONIE hub the same actions sit inside the one "HARMONIE debug"
+-- menu -- under the clicked player's name, or for yourself in its general
+-- part -- instead of a separate "TOC admin" entry per player.
+local function tocDebug(add, player, target)
+    local pl = target or player
+    if not pl then return end
+    local num = pl:getOnlineID()
+    local who = target and "" or (" (" .. getText("IGUI_HUB_DebugSelf") .. ")")
+    add(getText("ContextMenu_Admin_TOC") .. ": " .. getText("ContextMenu_Admin_ResetTOC") .. who, function()
+        if isClient() then
+            sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayExecuteInitialization, { patientNum = num })
+        else
+            ClientRelayCommands.ReceiveExecuteInitialization()
+        end
+    end)
+    for i = 1, #StaticData.LIMBS_STR do
+        local limbName = StaticData.LIMBS_STR[i]
+        add(getText("ContextMenu_Admin_TOC") .. ": " .. getText("ContextMenu_Admin_ForceAmputation") .. " - " .. getText("ContextMenu_Limb_" .. limbName) .. who, function()
+            sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayForcedAmputation, { patientNum = num, limbName = limbName })
+        end)
+    end
+end
+if HARMONIE_RegisterDebug then
+    HARMONIE_RegisterDebug("TOC", tocDebug)
+else
+    Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(AddAdminTocOptions, "debug"))
+end
 
 
 --* Override to cheats to fix stuff

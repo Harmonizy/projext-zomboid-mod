@@ -5,7 +5,7 @@
     "Sandbox_HARMONIE_DecayPerDay_tooltip": "จำนวน Reserve ที่ลดลงต่อวันเกม เมื่อวันพักที่สะสมไว้ของวิตามินนั้นหมดแล้ว (ดูกลไก Reserve/Decay/Pause ของมอด)",
     "Sandbox_HARMONIE_EnableCriticalEffects": "เปิดใช้งานผลกระทบเมื่อวิกฤติ",
     "Sandbox_HARMONIE_EnableCriticalEffects_tooltip": "ปิดไว้เพื่อติดตามค่า Reserve ของวิตามินโดยไม่มีผลเสียใดๆ ต่อเกมเพลย์",
-    "Sandbox_HARMONIE_GardenToPlate": "HARMONIE: From Garden to Plate",
+    "Sandbox_HARMONIE_GardenToPlate": "HARMONIE - From Garden to Plate",
     "Sandbox_HARMONIE_ReserveGainDivisor": "ตัวหารการเพิ่ม Reserve",
     "Sandbox_HARMONIE_ReserveGainDivisor_tooltip": "Reserve ที่ได้ = (เปอร์เซ็นต์ของความต้องการรายวันที่กิน) หารด้วยค่านี้ ยิ่งค่ามากยิ่งได้ Reserve จากอาหารช้าลง",
     "Sandbox_HARMONIE_SufficientThreshold": "เกณฑ์ระดับเพียงพอ",

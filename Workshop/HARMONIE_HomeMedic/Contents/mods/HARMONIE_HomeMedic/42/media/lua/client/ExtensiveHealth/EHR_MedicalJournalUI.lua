@@ -771,7 +771,11 @@ function EHR_MedicalJournalUI:render()
         local contentH = endY - startY + 12
         self.detailMaxScroll = math.max(0, contentH - (viewH - 12))
         if (self.detailScroll or 0) > self.detailMaxScroll then self.detailScroll = self.detailMaxScroll end
-        if self.detailMaxScroll > 0 then
+        -- HARMONIE (2026-10-11): the shared scroll bar -- drag it or the wheel
+        if HARMONIE_Scroll then
+            HARMONIE_Scroll.bar(self, "detail", detailX + detailW - 8, top, 5, viewH, self.detailScroll or 0, self.detailMaxScroll,
+                function(v) self.detailScroll = v end, { Colors.accent.r, Colors.accent.g, Colors.accent.b })
+        elseif self.detailMaxScroll > 0 then
             local barH = math.max(24, viewH * viewH / (contentH + viewH))
             local barY = top + (viewH - barH) * ((self.detailScroll or 0) / self.detailMaxScroll)
             self:drawRect(detailX + detailW - 7, barY, 3, barH, 0.8, Colors.accent.r, Colors.accent.g, Colors.accent.b)
@@ -928,3 +932,7 @@ EHR.UI.ToggleJournal = EHR_MedicalJournalUI.Toggle
 if EHR and EHR.Log then
     EHR.Log("DiseaseHandbookUI module loaded")
 end
+
+-- HARMONIE (2026-10-11): drag the scroll bars (HARMONIE_UIKit)
+pcall(require, "HARMONIE_UIKit")
+if HARMONIE_Scroll then HARMONIE_Scroll.install(EHR_MedicalJournalUI) end

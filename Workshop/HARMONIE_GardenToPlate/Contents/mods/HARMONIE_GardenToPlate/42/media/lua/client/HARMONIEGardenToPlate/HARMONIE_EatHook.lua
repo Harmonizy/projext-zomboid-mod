@@ -62,9 +62,13 @@ require "HARMONIEGardenToPlate/HARMONIE_VitaminData"
 
 local function applyGains(character, gains)
     if not gains then return end
+    -- sandbox FoodVitaminMultiplier (default 5.0): food only
+    local mult = tonumber(HARMONIE_GTP.Config and HARMONIE_GTP.Config.foodVitaminMultiplier) or 1
+    if mult < 0 then mult = 0 end
     for vit, amount in pairs(gains) do
-        HARMONIE_GTP.VitData.Add(character, vit, amount)
+        HARMONIE_GTP.VitData.Add(character, vit, amount * mult)
     end
+    if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("foodmult:" .. tostring(mult), "Eat", "food vitamins x%.2f (sandbox FoodVitaminMultiplier)", mult) end
 end
 
 --[[

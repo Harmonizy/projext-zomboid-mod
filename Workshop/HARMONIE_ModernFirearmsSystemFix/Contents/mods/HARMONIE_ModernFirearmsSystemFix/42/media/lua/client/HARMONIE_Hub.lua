@@ -33,7 +33,7 @@ HARMONIE_Hub = HARMONIE_Hub or {}
 local Hub = HARMONIE_Hub
 if Hub.loaded then return end
 Hub.loaded = true
-Hub.VERSION = 1
+Hub.VERSION = 2
 local Boot = HARMONIE_HubBoot or {}
 
 -- ------------------------------------------------------------------ log
@@ -153,14 +153,27 @@ end
 -- ------------------------------------------------------------------ admin
 -- admins (multiplayer access level "admin"; single player isAdmin()) and
 -- -debug only
+-- 2026-10-11: in multiplayer the game's own isAdmin() first (it is what
+-- The Only Cure used, and its admin menu did show), then the access level,
+-- then a B42 role named admin. The check is written to console.txt once.
 function Hub.isAdmin(player)
     if getDebug and getDebug() then return true, "debug" end
+    if isDebugEnabled then
+        local ok, d = pcall(isDebugEnabled)
+        if ok and d then return true, "debug" end
+    end
+    local okA, a = pcall(function() return isAdmin() end)
+    if okA and a == true then return true, isClient and isClient() and "isAdmin()" or "singleplayer admin" end
     if isClient and isClient() then
         local lvl = call(player, "getAccessLevel")
-        return lvl ~= nil and string.lower(tostring(lvl)) == "admin", tostring(lvl)
+        local low = lvl and string.lower(tostring(lvl)) or ""
+        if low == "admin" then return true, "access level " .. tostring(lvl) end
+        local role = call(player, "getRole")
+        local rname = role and (call(role, "getName") or tostring(role)) or nil
+        if rname and string.lower(tostring(rname)) == "admin" then return true, "role " .. tostring(rname) end
+        return false, "access level " .. tostring(lvl) .. ", role " .. tostring(rname)
     end
-    local ok, a = pcall(function() return isAdmin() end)
-    return ok and a == true, "singleplayer"
+    return false, "singleplayer, not -debug"
 end
 
 -- ------------------------------------------------------------------ the windows
@@ -553,35 +566,97 @@ function Hub.openSandbox(player)
     log("%s opened the HARMONIE sandbox values", nameOf(player))
 end
 
+-- other players next to the clicked squares
+local function playersAt(worldobjects, me)
+    local found, list = {}, {}
+    for _, v in ipairs(worldobjects or {}) do
+        local sq = v and v.getSquare and v:getSquare()
+        local cell = getCell and getCell()
+        if sq and cell then
+            for x = sq:getX() - 1, sq:getX() + 1 do
+                for y = sq:getY() - 1, sq:getY() + 1 do
+                    local s2 = cell:getGridSquare(x, y, sq:getZ())
+                    local mo = s2 and s2:getMovingObjects()
+                    for i = 0, (mo and mo:size() or 0) - 1 do
+                        local o = mo:get(i)
+                        if instanceof(o, "IsoPlayer") and o ~= me and not found[o] then
+                            found[o] = true
+                            list[#list + 1] = o
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return list
+end
+
+-- the built-in options of our own mods (each shows only if that mod is loaded)
+local function ownOptions(add, player, target)
+    if target then return end
+    add(T("IGUI_HUB_DebugSandbox"), function(p) Hub.openSandbox(p) end)
+    -- Garden to Plate
+    if HARMONIE_AdminPanel and HARMONIE_AdminPanel.Open then
+        add(T("IGUI_HUB_DebugGTP"), function(p) HARMONIE_AdminPanel.Open(p) end)
+    end
+    -- The Way to Attack: the weapon in hand
+    if TWAWeaponDebugWindow and TWAWeaponDebugWindow.open then
+        local w = call(player, "getPrimaryHandItem")
+        if w and instanceof(w, "HandWeapon") then add(T("IGUI_HUB_DebugTWA"), function(p) TWAWeaponDebugWindow.open(p, w) end) end
+    end
+    -- How to Survive (EHR debug window)
+    if EHR and EHR.DebugV2 and EHR.DebugV2.Toggle then
+        add(T("IGUI_HUB_DebugHM"), function() EHR.DebugV2.Toggle() end)
+    end
+    -- Mercenary Is Life: the workbench without a gun in hand
+    if HMLWorkbench and HMLWorkbench.open then
+        add(T("IGUI_HUB_DebugMIL"), function(p) HMLWorkbench.open(p, nil, true) end)
+    end
+    -- Car for Crash: re-apply the vehicle tiers (after a sandbox change)
+    if HARMONIE_SVU3SkillCap and HARMONIE_SVU3SkillCap.applyTiers then
+        add(T("IGUI_HUB_DebugSVU"), function() HARMONIE_SVU3SkillCap.applyTiers() end)
+    end
+end
+
 function Hub.onDebugMenu(playerNum, context, worldobjects, test)
     if test then return end
     local player = getSpecificPlayer and getSpecificPlayer(playerNum)
     if not player or not context then return end
     local admin, why = Hub.isAdmin(player)
+    logOnce("admincheck:" .. tostring(admin), "debug menu for %s: %s (%s)", nameOf(player), admin and "SHOWN" or "hidden", tostring(why))
     if not admin then return end
-    logOnce("debugmenu", "HARMONIE debug menu offered (%s)", tostring(why))
     local parent = context:addOption(T("IGUI_HUB_Debug"), nil, nil)
     local sub = ISContextMenu:getNew(context)
     context:addSubMenu(parent, sub)
     local icon = Boot.icon and Boot.icon()
-    local function add(label, fn)
-        local o = sub:addOption(label, player, function(p)
-            log("%s: debug > %s", nameOf(p), label)
-            local ok, err = pcall(fn, p)
-            if not ok then log("debug > %s FAILED: %s", label, tostring(err)) end
-        end)
-        if icon and o then o.iconTexture = icon end
+    local function adder(menu)
+        return function(label, fn)
+            local o = menu:addOption(label, player, function(p)
+                log("%s: debug > %s", nameOf(p), label)
+                local ok, err = pcall(fn, p)
+                if not ok then log("debug > %s FAILED: %s", label, tostring(err)) end
+            end)
+            if icon and o then o.iconTexture = icon end
+            return o
+        end
     end
-    add(T("IGUI_HUB_DebugSandbox"), function(p) Hub.openSandbox(p) end)
-    if HARMONIE_AdminPanel and HARMONIE_AdminPanel.Open then
-        add(T("IGUI_HUB_DebugGTP"), function(p) HARMONIE_AdminPanel.Open(p) end)
+    local function run(add, target)
+        local okO, errO = pcall(ownOptions, add, player, target)
+        if not okO then logOnce("dbgown", "debug: own options failed: %s", tostring(errO)) end
+        for _, e in ipairs(HARMONIE_HubDebug or {}) do
+            local ok, err = pcall(e.fn, add, player, target)
+            if not ok then logOnce("dbg:" .. e.id, "debug: %s options failed: %s", e.id, tostring(err)) end
+        end
     end
-    if TWAWeaponDebugWindow and TWAWeaponDebugWindow.open then
-        local w = call(player, "getPrimaryHandItem")
-        if w and instanceof(w, "HandWeapon") then add(T("IGUI_HUB_DebugTWA"), function(p) TWAWeaponDebugWindow.open(p, w) end) end
-    end
-    if EHR and EHR.DebugV2 and EHR.DebugV2.Toggle then
-        add(T("IGUI_HUB_DebugHM"), function() EHR.DebugV2.Toggle() end)
+    run(adder(sub), nil)
+    -- the other players under the click: their own part
+    for _, target in ipairs(playersAt(worldobjects, player)) do
+        local tOpt = sub:addOption(T("IGUI_HUB_DebugPlayer", nameOf(target)), nil, nil)
+        if icon and tOpt then tOpt.iconTexture = icon end
+        local tSub = ISContextMenu:getNew(sub)
+        sub:addSubMenu(tOpt, tSub)
+        run(adder(tSub), target)
+        if #(tSub.options or {}) == 0 then tSub:addOption(T("IGUI_HUB_DebugNothing"), nil, nil) end
     end
 end
 
