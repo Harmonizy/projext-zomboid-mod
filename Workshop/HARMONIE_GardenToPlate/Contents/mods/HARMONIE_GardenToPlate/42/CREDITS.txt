@@ -12,3 +12,8 @@ Fruit Farming (B42) by leina
   when it switches to this mod. mod.info marks FruitFarming incompatible:
   the two must not run together (the same tile ids would load twice).
   Thai texts for its crops, seeds and recipes are in the Thai translation mod.
+  Changes of ours (2026-10-10, marked "HARMONIE" in the files):
+    FF_farmingConf.lua loads the vanilla crop file it copies from first (the
+    fruit crops were switched off when it ran before it) and logs a count;
+    FF_perennialKeep.lua (new): a fruit tree left unpicked drops its fruit and
+    fruits again instead of dying like an annual crop.

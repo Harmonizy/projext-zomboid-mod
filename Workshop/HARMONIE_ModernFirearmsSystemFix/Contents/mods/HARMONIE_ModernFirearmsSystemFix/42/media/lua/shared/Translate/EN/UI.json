@@ -32,7 +32,7 @@
     "UI_options_AWCWF_enable_shell_ejection": "Shell Ejection (Spent Casings)",
     "UI_options_AWCWF_enable_shell_ejection_tooltip": "Eject spent shell casings that fall to the ground. Disable to stop spawning casings.",
     "UI_options_AWCWF_section_handgun_grip": "Handgun Grip Position",
-    "UI_options_AWCWF_desc_handgun_grip": "MFS pistol models were built around a body replacer with smaller hands, so on the default game body the pistol can sit slightly behind the hand. These settings correct that. Rifles are not affected.",
+    "UI_options_AWCWF_desc_handgun_grip": "This mod's pistol models were built around a body replacer with smaller hands, so on the default game body the pistol can sit slightly behind the hand. These settings correct that. Rifles are not affected.",
     "UI_options_AWCWF_handgun_grip_body_replacer": "VSGirlBody Installed",
     "UI_options_AWCWF_handgun_grip_body_replacer_tooltip": "Tick this if you use VSGirlBody mod. VSGirlBody then use the pistol position the models were originally built for, Leave unticked if you use the default game body.",
     "UI_options_AWCWF_handgun_grip_offset": "Handgun Grip Offset",

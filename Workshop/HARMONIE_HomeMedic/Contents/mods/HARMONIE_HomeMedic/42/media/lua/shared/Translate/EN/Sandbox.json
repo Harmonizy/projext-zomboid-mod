@@ -228,5 +228,5 @@
     "Sandbox_HomeMedic_SurgeryEnabled": "Surgery (How to Survive)",
     "Sandbox_HomeMedic_SurgeryEnabled_tooltip": "Allow the How to Survive operations (Debridement, Abscess Drainage...) from the body-part menu.",
     "Sandbox_HomeMedic_DiagnosisRequired": "Diagnosis required (How to Survive)",
-    "Sandbox_HomeMedic_DiagnosisRequired_tooltip": "Every illness shows as Unknown until someone diagnoses it in the medical window's Diagnosis tab. Off: illnesses are named as in Extensive Health Rework."
+    "Sandbox_HomeMedic_DiagnosisRequired_tooltip": "Every illness shows as Unknown until someone diagnoses it in the medical window's Diagnosis tab. Off: illnesses are named right away, without a diagnosis."
 }

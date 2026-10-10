@@ -16,8 +16,8 @@
     "IGUI_HUB_Intro": "Open the windows of the HARMONIE mods from here. A window that needs something first says what to do.",
     "IGUI_HUB_Open": "Open",
     "IGUI_HUB_None": "No HARMONIE window is installed.",
-    "IGUI_HUB_NeedVehicle": "Stand next to a vehicle (or sit in one) first.",
-    "IGUI_HUB_NeedGun": "Hold a gun in your main hand first (or right-click a gun > Inspect).",
+    "IGUI_HUB_NeedVehicle": "No vehicle next to you: the tabs about a vehicle are locked until you stand next to one (or sit in it).",
+    "IGUI_HUB_NeedGun": "No gun in your hand: the gun tabs are locked until you hold one (or right-click a gun > Upgrade gun).",
     "IGUI_HUB_GTP_Name": "Garden to Plate",
     "IGUI_HUB_GTP_Desc": "Cooking recipes, vitamins, planting calendar and guide.",
     "IGUI_HUB_TWA_Name": "The Way To Attack",
@@ -69,7 +69,7 @@
     "IGUI_MIL_ToInspect": "Go to 3D inspect",
     "IGUI_MIL_GuideTitle": "How Mercenary Is Life works",
     "IGUI_MIL_Guide_Open_T": "Opening this window",
-    "IGUI_MIL_Guide_Open": "Hold a gun in your main hand, then: right-click the gun > Inspect weapon, or press the Open Weapon Console key (Options > Keys), or open the HARMONIE tab of the character window. The window closes when the gun leaves your hand or when you shoot.",
+    "IGUI_MIL_Guide_Open": "Right-click a gun > Upgrade gun (it is taken in hand and this window opens), or hold a gun and right-click > Inspect weapon, or press the Open Weapon Console key (Options > Keys), or open the HARMONIE tab of the character window (without a gun only the guide is open). The window closes when the gun leaves your hand or when you shoot.",
     "IGUI_MIL_Guide_View_T": "The 3D view",
     "IGUI_MIL_Guide_View": "Drag with the mouse to turn the gun, use the mouse wheel to zoom. Hold Alt while dragging to turn it around another axis. Numpad 4, 5 and 6 turn it step by step.",
     "IGUI_MIL_Guide_Parts_T": "Installing and removing parts",
@@ -99,5 +99,9 @@
     "IGUI_MIL_ConditionTitle": "Condition",
     "IGUI_MIL_StatsHowTitle": "How to read it",
     "IGUI_MIL_PartsHowTitle": "How it works",
-    "IGUI_MIL_AmmoHowTitle": "In the 3D tab"
+    "IGUI_MIL_AmmoHowTitle": "In the 3D tab",
+    "IGUI_MIL_UpgradeGun": "Upgrade gun",
+    "IGUI_MIL_LockedTip": "Hold a gun in your main hand to use this tab (or right-click a gun > Upgrade gun).",
+    "IGUI_MIL_NoGunTitle": "No gun in your hand",
+    "IGUI_MIL_NoGun": "The 3D inspect, stats, parts and ammo tabs need a gun in your main hand. Take one in hand (or right-click a gun > Upgrade gun) and this window opens on it."
 }

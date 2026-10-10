@@ -1283,19 +1283,19 @@ function EHR_HealthPanelUI:getTabDefinitions()
     local meds = { id = "meds", label = safeText("UI_EHR_Tab_Meds", "Medication Handbook") }
     if self.isRemoteHealthPanel then
         return {
-            { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
+            { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "Medic") },
             stats, diagnosis, surgery, handbook, meds,
         }
     end
     if self.width < 560 then
         return {
-            { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "EHR") },
+            { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "Medic") },
         }
     end
 
     local compact = self.width < 760
     return {
-        { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "EHR") or safeText("UI_EHR_Tab_EHR", "EHR Monitor") },
+        { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "Medic") or safeText("UI_EHR_Tab_EHR", "Medic Monitor") },
         { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
         stats, diagnosis, surgery, handbook, meds,
     }
@@ -3248,7 +3248,7 @@ function EHR_HealthPanelUI:drawHeader()
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
     local titleX = 14
     local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0) - (self.hmSettingsBtn and 30 or 0))
-    self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "EHR MEDICAL STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
+    self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "HOW TO SURVIVE STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
     local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0) + (self.hmSettingsBtn and 30 or 0)  -- (blood type moved)
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
         rightReserve = rightReserve + 30

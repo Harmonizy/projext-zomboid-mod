@@ -12,5 +12,11 @@
     "AmmoReloadingKit9mm": "Reload 9mm Parabellum Ammo",
     "AmmoReloadingKitGrenadeAmmo": "Reload Underbarrel Grenade Round",
     "CraftingAmmoReloadingKit": "Craft Ammo Reloading Kit",
-    "OpenCartonOf145": "Open .145 Ammo Carton (10 Boxes)"
+    "OpenCartonOf145": "Open .145 Ammo Carton (10 Boxes)",
+    "MFS_Adapt_AmmoStraps_To_Bandolier": "Adapt Ammo Straps to Bandolier (Mercenary Is Life)",
+    "MFS_Adapt_RecoilPad_To_MFSRecoilPad": "Adapt Recoil Pad to Recoil Pad (Mercenary Is Life)",
+    "MFS_Restore_Bandolier_To_AmmoStraps": "Restore Bandolier (Mercenary Is Life) to Ammo Straps",
+    "MFS_Restore_MFSRecoilPad_To_RecoilPad": "Restore Recoil Pad (Mercenary Is Life) to Recoil Pad",
+    "MFS_Convert_ChokeTubeFull_To_MFS": "Convert Full Choke to Full Choke (Mercenary Is Life)",
+    "MFS_Convert_ChokeTubeImproved_To_MFS": "Convert Improved Choke to Improved Choke (Mercenary Is Life)"
 }
