@@ -375,10 +375,16 @@ function Win:new(x, y, w, h, player)
     return o
 end
 
+-- owner, 2026-10-09: the window opens without a vehicle too (HARMONIE tab);
+-- only the tabs about a vehicle are locked then
+H.NEEDS_VEHICLE = { vehicle = true, upgrades = true }
+function Win:locked(id) return H.NEEDS_VEHICLE[id] == true and not self.vehicle end
+
 function Win:setVehicle(vehicle)
     if vehicle ~= self.vehicle then log("vehicle: %s", vehicle and tostring(H.scriptName(vehicle)) or "none") end
     self.vehicle = vehicle
     self.scroll = {}
+    if self:locked(self.tab) then self.tab = "tiers"; log("no vehicle: opened on the tiers tab (vehicle tabs locked)") end
     self:refreshData()
 end
 
@@ -488,10 +494,11 @@ function Win:prerender()
     local sf = H.small()
     for _, id in ipairs(H.TABS) do
         local active = self.tab == id
+        local locked = self:locked(id)
         local ty, tH = hh + 6, th - 12
         local bg = active and C.accentDark or C.background
         local bd = active and C.accent or C.borderDim
-        self:drawRect(x, ty, tabW, tH, active and 0.98 or 0.82, bg[1], bg[2], bg[3])
+        self:drawRect(x, ty, tabW, tH, active and 0.98 or (locked and 0.45 or 0.82), bg[1], bg[2], bg[3])
         self:drawRectBorder(x, ty, tabW, tH, active and 0.95 or 0.62, bd[1], bd[2], bd[3])
         if active then
             self:drawRect(x + 2, ty + 2, tabW - 4, tH - 4, 0.16, C.accent[1], C.accent[2], C.accent[3])
@@ -502,12 +509,19 @@ function Win:prerender()
         local icon = texture(UI_DIR .. "tab_" .. id .. ".png")
         local total = size + 8 + tw(sf, label)
         local tx = x + math.floor((tabW - total) / 2)
-        if icon then self:drawTextureScaled(icon, tx, ty + math.floor((tH - size) / 2), size, size, active and 1 or 0.65, 1, 1, 1) end
-        shadowText(self, label, tx + size + 8, ty + math.floor((tH - fh(sf)) / 2), active and C.text or C.textDim, 1, sf)
+        if icon then self:drawTextureScaled(icon, tx, ty + math.floor((tH - size) / 2), size, size, active and 1 or (locked and 0.25 or 0.65), 1, 1, 1) end
+        shadowText(self, label, tx + size + 8, ty + math.floor((tH - fh(sf)) / 2), active and C.text or C.textDim, locked and 0.45 or 1, sf)
+        if locked then
+            -- a small padlock in the corner
+            local lx, ly = x + tabW - 18, ty + 6
+            self:drawRect(lx, ly + 5, 10, 8, 0.9, C.textDim[1], C.textDim[2], C.textDim[3])
+            self:drawRectBorder(lx + 2, ly, 6, 7, 0.9, C.textDim[1], C.textDim[2], C.textDim[3])
+        end
         local bounds = { id = id, x = x, y = ty, w = tabW, h = tH }
         self.tabBounds[#self.tabBounds + 1] = bounds
         if inside(bounds, mx, my) then
-            self.hoverTip = { text = T("IGUI_HSVU_Tab_" .. id .. "_Tip"), x = x + 30, y = ty + tH + 4 }
+            local tipKey = "IGUI_HSVU_Tab_" .. id .. "_Tip"
+            self.hoverTip = { text = locked and T("IGUI_HSVU_LockedTip") or T(tipKey), x = x + 30, y = ty + tH + 4 }
         end
         x = x + tabW + gap
     end
@@ -871,6 +885,11 @@ function Win:onMouseDown(x, y)
         return true
     end
     for _, t in ipairs(self.tabBounds or {}) do
+        if inside(t, x, y) and self:locked(t.id) then
+            getSoundManager():playUISound("UIDeactivate")
+            log("tab %s is locked: no vehicle", tostring(t.id))
+            return true
+        end
         if inside(t, x, y) then
             getSoundManager():playUISound("UISelectListItem")
             if self.tab ~= t.id then log("tab %s -> %s", tostring(self.tab), tostring(t.id)) end

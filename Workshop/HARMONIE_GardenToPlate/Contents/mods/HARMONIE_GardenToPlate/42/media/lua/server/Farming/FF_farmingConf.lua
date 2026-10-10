@@ -1,5 +1,6 @@
 -- From "Fruit Farming (B42)" by leina (Steam Workshop 3779625821), built into
--- HARMONIE - From Garden to Plate with credit -- see 42/CREDITS.txt. Unchanged.
+-- HARMONIE - From Garden to Plate with credit -- see 42/CREDITS.txt. Changed
+-- only by the marked HARMONIE lines (load order, a count in console.txt).
 --***********************************************************
 --**                    FruitFarming                       **
 --**  Adds farmable crops for vanilla fruits. Harvested    **
@@ -11,6 +12,15 @@
 
 require "Farming/farming_vegetableconf"
 if not farming_vegetableconf then return end
+-- HARMONIE (2026-10-10): the vanilla crops this file copies (BellPepper,
+-- Cucumber, Corn, Tomato, Barley...) are defined in
+-- farming_vegetableconf_vegetables.lua, which nothing requires -- it only
+-- runs when the game reaches it in its file order. Should this file come
+-- first, every fruit crop was switched off ("missing vanilla sprite
+-- source"). Load them now; running them again later only re-assigns the
+-- same vanilla entries.
+pcall(require, "Farming/farming_vegetableconf_vegetables")
+pcall(require, "Farming/farming_vegetableconf_vegetables_sprites")
 
 local spriteKinds = { "sprite", "unhealthySprite", "dyingSprite", "deadSprite", "trampledSprite" }
 
@@ -274,4 +284,18 @@ for _, rc in ipairs(rootCrops) do
     else
         print("[FruitFarming] missing vanilla sprite source '" .. rc.spriteSrc .. "' for " .. rc.key .. " - crop disabled")
     end
+end
+
+-- HARMONIE: how many crops made it, once at load (console.txt)
+do
+    local n, off = 0, {}
+    for _, f in ipairs(fruits) do
+        if farming_vegetableconf.props[f.key] then n = n + 1 else off[#off + 1] = f.key end
+    end
+    for _, k in ipairs({ "FFRice", "FFCoffee", "FFGinger", "FFPeanuts" }) do
+        if farming_vegetableconf.props[k] then n = n + 1 else off[#off + 1] = k end
+    end
+    local msg = n .. " crops registered" .. (#off > 0 and (", OFF: " .. table.concat(off, " ")) or "")
+    if HARMONIE_GTP and HARMONIE_GTP.Log then pcall(HARMONIE_GTP.Log, "FruitFarming", "%s", msg)
+    else print("[HARMONIE_GTP][FruitFarming] " .. msg) end
 end

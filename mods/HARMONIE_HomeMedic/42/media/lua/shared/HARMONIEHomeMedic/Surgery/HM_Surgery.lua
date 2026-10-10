@@ -347,12 +347,12 @@ function S.knows(player, diseaseId)
     return S.firstAid(player) >= 8
 end
 
--- procedure unlocked for `doctor`? -> ok, needFirstAid, missingKnowledge(list or nil)
+-- Request 2026-10-10: no skill locks. A procedure is always available;
+-- -> true, recommended First Aid, missingKnowledge (list or nil)
 function S.procedureUnlocked(doctor, pid)
     local p = S.Procedures[pid]
     if not p or p.planned then return false, 99, nil end
     local need = S.TIERS[p.tier].firstAid
-    local fa = S.firstAid(doctor)
     local knowOk = true
     if p.knowledge then
         knowOk = false
@@ -360,29 +360,41 @@ function S.procedureUnlocked(doctor, pid)
             if S.knows(doctor, id) then knowOk = true; break end
         end
     end
-    return fa >= need and knowOk, need, (not knowOk) and p.knowledge or nil
+    return true, need, (not knowOk) and p.knowledge or nil
+end
+
+-- does the surgeon know one of the operation's diseases? (true when it lists none)
+function S.knowsOperation(doctor, sid)
+    local s = S.Surgeries[sid]
+    if not s or not s.knowledge then return true end
+    for _, id in ipairs(s.knowledge) do
+        if S.knows(doctor, id) then return true end
+    end
+    return false
+end
+
+-- First Aid against the recommended level of the operation:
+-- -> gap (levels, negative = below), firstAid, recommended, knowsDisease
+-- Not knowing the disease counts as S.KNOWLEDGE_GAP levels below.
+function S.skillGap(doctor, sid)
+    local s = S.Surgeries[sid]
+    local rec = s and S.TIERS[s.tier] and S.TIERS[s.tier].firstAid or 0
+    local fa = S.firstAid(doctor)
+    local know = S.knowsOperation(doctor, sid)
+    local gap = fa - rec - (know and 0 or S.KNOWLEDGE_GAP)
+    return gap, fa, rec, know
 end
 
 function S.tocAvailable()
     return SetHealthPanelTOC ~= nil or (TOC_DEBUG ~= nil)
 end
 
--- -> ok, reasonKey ("Tier" | "Knowledge" | "Steps" | "TOC")
+-- -> ok, reasonKey ("TOC" | "Unknown"). Skill and knowledge no longer lock
+-- (S.skillGap makes the operation harder instead).
 function S.surgeryUnlocked(doctor, sid)
     local s = S.Surgeries[sid]
     if not s or s.planned then return false, "Unknown" end
     if s.needsTOC and not S.tocAvailable() then return false, "TOC" end
-    if S.firstAid(doctor) < S.TIERS[s.tier].firstAid then return false, "Tier" end
-    if s.knowledge then
-        local ok = false
-        for _, id in ipairs(s.knowledge) do
-            if S.knows(doctor, id) then ok = true; break end
-        end
-        if not ok then return false, "Knowledge" end
-    end
-    for _, pid in ipairs(s.steps) do
-        if not S.procedureUnlocked(doctor, pid) then return false, "Steps" end
-    end
     return true
 end
 
@@ -734,7 +746,7 @@ function S.handbookText(id)
         lines[#lines + 1] = S.T("Hb_Treat", "Success starts treatment: it clears in about %1 hours (%2 if excellent).", treat, math.floor(treat * S.EXCELLENT_TREAT + 0.5))
     end
     if S.SURGICAL[id] then
-        lines[#lines + 1] = S.T("Hb_Required", "From stage %1 surgery is needed: a finished medicine course only holds it there (Awaiting surgery).", S.SURGICAL[id])
+        lines[#lines + 1] = S.T("Hb_Required", "Surgery is needed: its medicine only holds it (Awaiting surgery); the operation starts the treatment.")
     elseif not cure then
         lines[#lines + 1] = S.T("Hb_Optional", "Optional: medicine alone can still cure it.")
     end
@@ -783,28 +795,44 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
               .. (undiagnosed > 0 and ("\n\n" .. S.T("Tip_Undiagnosed", "An illness must be diagnosed (Diagnosis tab) before it can be operated on.")) or "")
               .. "\n\n" .. S.targetsTip(sid) })
 
-    -- the operation itself (tier / disease knowledge / The Only Cure)
+    -- the operation itself: only The Only Cure can block it now
     local sok, why = S.surgeryUnlocked(doctor, sid)
-    if not sok and why ~= "Steps" then
-        local k = {}
-        for _, id in ipairs(s.knowledge or {}) do k[#k + 1] = S.T("Cond_" .. id, id) end
+    if not sok then
         row({ key = "operation", required = true, state = "fail",
               label = S.T("Row_Operation", "Operation"), value = S.T("Lock_" .. tostring(why), "Locked"),
-              tip = S.T("Tip_Lock_" .. tostring(why), "", S.TIERS[s.tier].firstAid, table.concat(k, " / ")) })
+              tip = S.T("Tip_Lock_" .. tostring(why), "") })
     end
 
-    -- skill: one row per procedure (step)
+    -- skill against the recommended level (a warning, never a lock)
+    local gap, fa, rec, know = S.skillGap(doctor, sid)
+    r.gap, r.firstAid, r.recommended, r.knowsDisease = gap, fa, rec, know
+    local kn = {}
+    for _, id in ipairs(s.knowledge or {}) do kn[#kn + 1] = S.T("Cond_" .. id, id) end
+    local skillValue
+    if gap >= 0 then
+        skillValue = S.T("Skill_Ok", "First Aid %1 / recommended %2", fa, rec)
+    else
+        skillValue = S.T("Skill_Below", "First Aid %1 / recommended %2 - DANGER", fa, rec)
+    end
+    row({ key = "skill", state = gap >= 0 and "ok" or (gap >= -2 and "warn" or "fail"),
+          label = S.T("Row_Skill", "Surgeon's skill"), value = skillValue,
+          tip = S.T("Tip_Skill", "Anyone may try any operation. Below the recommended First Aid level every step is much harder, mistakes cost far more blood, and a serious complication is far more likely: it can kill the patient. Above it, every step gets easier.")
+              .. (know and "" or ("\n\n" .. S.T("Tip_SkillNoKnow", "You do not know this disease (%1): it counts as %2 levels lower.", table.concat(kn, " / "), S.KNOWLEDGE_GAP)))
+              .. "\n\n" .. S.T("Tip_SkillComplication", "Chance of a serious complication: %1%.", math.floor(S.complicationChance(gap) + 0.5)) })
+
+    -- steps: the recommended level of each (a warning, never a lock)
     for n, pid in ipairs(s.steps) do
-        local ok, needFa, missing = S.procedureUnlocked(doctor, pid)
-        local tip = S.T("Tip_" .. pid, "") .. "\n\n" .. S.T("Tip_UnlockFA", "Needs First Aid %1.", needFa)
+        local _, needFa, missing = S.procedureUnlocked(doctor, pid)
+        local tip = S.T("Tip_" .. pid, "") .. "\n\n" .. S.T("Tip_RecFA", "Recommended First Aid %1.", needFa)
         if S.Procedures[pid].knowledge then
             local k = {}
             for _, id in ipairs(S.Procedures[pid].knowledge) do k[#k + 1] = S.T("Cond_" .. id, id) end
-            tip = tip .. "\n" .. S.T("Tip_UnlockKnow", "And knowledge of: %1 (a disease flyer, or First Aid 8).", table.concat(k, " / "))
+            tip = tip .. "\n" .. S.T("Tip_RecKnow", "Easier if you know: %1.", table.concat(k, " / "))
         end
-        row({ key = "step" .. n, required = true, state = ok and "ok" or "fail",
+        local okStep = fa >= needFa and not missing
+        row({ key = "step" .. n, state = okStep and "ok" or "warn",
               label = n .. ". " .. S.T("Proc_" .. pid, pid),
-              value = ok and S.T("Ready", "Ready") or S.T("Locked", "Locked"),
+              value = okStep and S.T("Ready", "Ready") or S.T("Harder", "Harder (FA %1)", needFa),
               tip = tip })
     end
 
@@ -816,10 +844,10 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
     local cur = type(bv) == "table" and tonumber(bv.currentVolume) or nil
     local max = type(bv) == "table" and tonumber(bv.maxVolume) or nil
     local raw = (cur and max and max > 0) and (cur - (s.bloodLoss or 0)) / max or nil
-    -- every operation leaves the patient at S.POSTOP_MAX at most; a
-    -- transfusion is worth it only for someone who would end below that
-    local after = raw and math.min(raw, S.POSTOP_MAX) or nil
-    local worth = raw ~= nil and raw < S.POSTOP_MAX
+    -- every operation leaves the patient at S.postOpBlood at most (90% when
+    -- excellent, far less after a failure)
+    local after = raw and math.min(raw, S.POSTOP_EXCELLENT) or nil
+    local worth = raw ~= nil and raw < S.POSTOP_EXCELLENT
     local must = false   -- no transfusion in surgery any more (request 2026-10-02)
     r.bloodAfter, r.mustTransfuse = after, must
     local function optionNames(slot, n)
@@ -906,14 +934,16 @@ function S.evaluate(doctor, patient, bodyPart, sid, exam)
           value = full and S.T("Fasting_Full", "Ate recently - aspiration %1%", risk) or S.T("Fasting_Ok", "Empty stomach"),
           tip = S.T("Tip_Fasting", "A patient who has just eaten may vomit and breathe it in during the operation (aspiration pneumonia), more so when asleep or sedated. Wait a few hours after a meal.") })
 
-    -- blood
+    -- blood: where the patient ends up, by result
     local bf = S.bloodFraction(patient)
+    r.bloodNow = bf
     if bf then
-        local afterTxt = r.bloodAfter and (" -> ~" .. math.floor(r.bloodAfter * 100 + 0.5) .. "%") or ""
-        local low = r.bloodAfter or bf
-        row({ key = "blood", state = low >= 0.62 and "ok" or (low >= 0.45 and "warn" or "fail"),
-              label = S.T("Row_Blood", "Blood volume"), value = math.floor(bf * 100 + 0.5) .. "%" .. afterTxt,
-              tip = S.T("Tip_Blood", "The operation costs about %1 mL of blood (more if hemostasis goes badly).", s.bloodLoss) })
+        local function at(q) return math.floor(math.min(bf, S.postOpBlood(q, 0)) * 100 + 0.5) end
+        local worst = math.min(bf, S.POSTOP_FLOOR)
+        row({ key = "blood", state = (bf >= 0.85 and gap >= 0) and "warn" or "fail",
+              label = S.T("Row_Blood", "Blood volume"),
+              value = S.T("Blood_Range", "%1% now -> %2% / %3% / %4%", math.floor(bf * 100 + 0.5), at(S.EXCELLENT), at(S.SUCCESS), math.floor(worst * 100 + 0.5)),
+              tip = S.T("Tip_BloodRange", "After the operation the patient is left at about %1% blood if it goes excellently, %2% if it only just succeeds, and down to %3% if it fails - under 20% the heart can stop. Uncontrolled bleeding takes more. The patient stays weak until the blood comes back.", at(S.EXCELLENT), at(S.SUCCESS), math.floor(worst * 100 + 0.5)) })
     end
 
     -- some operations cannot be done on yourself
@@ -953,15 +983,95 @@ function S.quality(sid, scores, toolQ)
 end
 
 -- Difficulty knobs for the minigames (client) from who operates and how.
-function S.difficulty(doctor, patient, anesthesia, toolQ)
-    local fa = S.firstAid(doctor)
-    local skill = math.min(1, fa / 10)
-    local shake = (1 - (anesthesia or 0)) * 0.8 + ((doctor == patient) and 0.5 or 0)
+-- Round 2026-10-10: the RECOMMENDED level of the operation is the middle
+-- (skill 0.5). Every level above makes it easier, every level below much
+-- harder: narrower windows (k < 1), shakier hands, less time.
+--   skill -- 0..1, the games' old knob (windows, timers)
+--   k     -- multiplier on every tolerance / target band (0.35 .. 1.5)
+--   under -- levels below the recommended one (0 when at or above)
+--   tools -- { slot = quality 0..1 } of the instruments found (S.evaluate);
+--            each game reads the one of its own step (Procedures[].tool)
+function S.difficulty(doctor, patient, anesthesia, toolQ, sid, slots)
+    local gap = sid and S.skillGap(doctor, sid) or (S.firstAid(doctor) - 4)
+    local skill
+    if gap >= 0 then skill = 0.5 + 0.1 * gap else skill = 0.5 + 0.17 * gap end
+    skill = math.max(0, math.min(1, skill))
+    local under = math.max(0, -gap)
+    local over = math.max(0, gap)
+    local k = math.max(0.35, math.min(1.5, (1 + 0.08 * over) / (1 + 0.22 * under)))
+    local shake = (1 - (anesthesia or 0)) * 0.8 + ((doctor == patient) and 0.5 or 0) + 0.12 * under
+    local tools = {}
+    for slotId, f in pairs(slots or {}) do
+        if type(f) == "table" and tonumber(f.q) then tools[slotId] = tonumber(f.q) end
+    end
     return {
         skill = skill,                                   -- 0..1 wider windows / slower timers
-        shake = math.min(1.2, shake),                    -- patient movement
+        shake = math.min(1.6, shake),                    -- patient movement + unsure hands
         tool = toolQ or 1,
+        k = k, under = under, gap = gap,
+        tools = tools,
     }
+end
+
+-- ---------------------------------------------------------------- risks (consent form)
+-- What can go wrong, why, and how badly -- shown to the PATIENT before they
+-- agree (owner, 2026-10-10). Sent over the network as keys and numbers, so
+-- each client shows it in its own language:
+--   { k = key, lv = 1 low | 2 moderate | 3 high | 4 life-threatening, a = { n1, n2, n3 } }
+-- Text: UI_HomeMedic_Surg_Risk_<k> (what, how much) and
+--       UI_HomeMedic_Surg_RiskWhy_<k> (why) -- both take exactly 3 arguments.
+S.RISK_SPECIFIC = {
+    amputation = 4, experimental = 4, neurosurgery = 4,
+    thoracic = 3, organ_salvage = 3, blood_purification = 2,
+    parasite_extraction = 2, debridement = 1, abscess_drainage = 1, foreign_body = 1,
+}
+function S.risks(doctor, patient, sid, ev)
+    local s = S.Surgeries[sid]
+    local out = {}
+    if not s then return out end
+    ev = ev or {}
+    local function add(k, lv, a1, a2, a3)
+        out[#out + 1] = { k = k, lv = lv, a = { tonumber(a1) or 0, tonumber(a2) or 0, tonumber(a3) or 0 } }
+    end
+    local gap, fa, rec, know = S.skillGap(doctor, sid)
+    local pct = function(v) return math.floor((tonumber(v) or 0) * 100 + 0.5) end
+    -- what this operation is
+    add("op_" .. sid, S.RISK_SPECIFIC[sid] or 2, 0, 0, 0)
+    -- the surgeon
+    if gap < 0 then add("skill", gap >= -2 and 3 or 4, fa, rec, -gap) end
+    if not know then add("knowledge", 3, S.KNOWLEDGE_GAP, 0, 0) end
+    -- blood
+    local bf = ev.bloodNow or S.bloodFraction(patient)
+    if bf then
+        local lv = (bf < 0.75 or gap < 0) and 4 or 3
+        add("blood", lv, pct(math.min(bf, S.postOpBlood(S.EXCELLENT, 0))), pct(math.min(bf, S.postOpBlood(S.SUCCESS, 0))), pct(math.min(bf, S.POSTOP_FLOOR)))
+        if bf < 0.75 then add("lowblood", 4, pct(bf), 0, 0) end
+    end
+    -- a serious complication, whoever operates
+    local comp = S.complicationChance(gap)
+    add("complication", comp >= 15 and 4 or (comp >= 6 and 3 or 2), math.floor(comp + 0.5), pct(S.COMPLICATION_COST), 0)
+    -- infection
+    local asep = tonumber(ev.asepsis) or 0
+    local needle = s.steps[1] ~= "P01"
+    local ssi = (1 - asep) * 60 * (needle and 0.5 or 1)
+    add("infection", ssi >= 25 and 3 or (ssi >= 10 and 2 or 1), math.floor(ssi + 0.5), pct(asep), 0)
+    -- pain
+    local an = tonumber(ev.anesthesia) or 0
+    if an < 0.6 then add("pain", an < 0.3 and 3 or 2, pct(an), s.pain or 0, 0) end
+    -- a full stomach
+    if (tonumber(ev.aspiration) or 0) > 0 then add("aspiration", 3, ev.aspiration, 0, 0) end
+    -- improvised instruments
+    if (tonumber(ev.toolQ) or 1) < 0.999 then add("tools", 2, pct(ev.toolQ), 0, 0) end
+    -- on yourself
+    if doctor == patient then add("self", 2, 0, 0, 0) end
+    table.sort(out, function(x, y) if x.lv ~= y.lv then return x.lv > y.lv end return x.k < y.k end)
+    return out
+end
+
+function S.riskLevel(list)
+    local m = 1
+    for _, r in ipairs(list or {}) do if (tonumber(r.lv) or 1) > m then m = tonumber(r.lv) end end
+    return m
 end
 
 return S

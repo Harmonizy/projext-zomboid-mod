@@ -81,9 +81,9 @@
     "MFS_Adapt_GunLight_To_PistolLight3": "Adapt Gun Light to Pistol Light 3",
     "MFS_Adapt_GunLight_To_RifleLight": "Adapt Gun Light to Rifle Light",
     "MFS_Adapt_GunLight_To_RifleLight1": "Adapt Gun Light to Rifle Light 1",
-    "MFS_Adapt_AmmoStraps_To_Bandolier": "Adapt Ammo Straps to MFS Bandolier",
+    "MFS_Adapt_AmmoStraps_To_Bandolier": "Adapt Ammo Straps to Bandolier (Mercenary Is Life)",
     "MFS_Adapt_AmmoStraps_To_ShellCarrier": "Adapt Ammo Straps to Shotgun Shell Carrier",
-    "MFS_Adapt_RecoilPad_To_MFSRecoilPad": "Adapt Recoil Pad to MFS Recoil Pad",
+    "MFS_Adapt_RecoilPad_To_MFSRecoilPad": "Adapt Recoil Pad to Recoil Pad (Mercenary Is Life)",
     "MFS_Restore_G33_To_x2Scope": "Restore G33 Magnifier to 2x Scope",
     "MFS_Restore_Leupold_To_x2Scope": "Restore Leupold Magnifier to 2x Scope",
     "MFS_Restore_TA11_To_x4Scope": "Restore TA11 Scope to 4x Scope",
@@ -110,9 +110,9 @@
     "MFS_Restore_PistolLight3_To_GunLight": "Restore Pistol Light 3 to Gun Light",
     "MFS_Restore_RifleLight_To_GunLight": "Restore Rifle Light to Gun Light",
     "MFS_Restore_RifleLight1_To_GunLight": "Restore Rifle Light 1 to Gun Light",
-    "MFS_Restore_Bandolier_To_AmmoStraps": "Restore MFS Bandolier to Ammo Straps",
+    "MFS_Restore_Bandolier_To_AmmoStraps": "Restore Bandolier (Mercenary Is Life) to Ammo Straps",
     "MFS_Restore_ShellCarrier_To_AmmoStraps": "Restore Shell Carrier to Ammo Straps",
-    "MFS_Restore_MFSRecoilPad_To_RecoilPad": "Restore MFS Recoil Pad to Recoil Pad",
+    "MFS_Restore_MFSRecoilPad_To_RecoilPad": "Restore Recoil Pad (Mercenary Is Life) to Recoil Pad",
     "MFS_Craft_AFG_Foregrip": "Craft AFG Foregrip",
     "MFS_Craft_SST_Foregrip": "Craft SST Foregrip",
     "MFS_Craft_AR15_Stock": "Craft AR-15 Stock",
@@ -287,6 +287,6 @@
     "AmmoReloadingKit86": "Reload 8.6mm Ammo",
     "AmmoReloadingKit145": "Reload .145 Ammo",
     "AmmoReloadingKitGrenadeAmmo": "Reload Underbarrel Grenade Round",
-    "MFS_Convert_ChokeTubeFull_To_MFS": "Convert Full Choke to MFS Full Choke",
-    "MFS_Convert_ChokeTubeImproved_To_MFS": "Convert Improved Choke to MFS Improved Choke"
+    "MFS_Convert_ChokeTubeFull_To_MFS": "Convert Full Choke to Full Choke (Mercenary Is Life)",
+    "MFS_Convert_ChokeTubeImproved_To_MFS": "Convert Improved Choke to Improved Choke (Mercenary Is Life)"
 }

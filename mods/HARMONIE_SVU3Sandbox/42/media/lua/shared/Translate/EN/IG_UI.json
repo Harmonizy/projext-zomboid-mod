@@ -51,7 +51,7 @@
     "IGUI_HSVU_AdminMark": "(admin)",
     "IGUI_HSVU_Card_Chapters": "Chapters",
     "IGUI_HSVU_Guide_Window_Title": "This window",
-    "IGUI_HSVU_Guide_Window_Body": "This window explains the vehicle upgrades of Standardized Vehicle Upgrades 3 (SVU3). It only shows information: you still install and remove upgrades in the Modifications window (vehicle radial menu > Modifications).\nIt opens by itself beside the Modifications window and closes with it. Turn that off in Options > Mods > HARMONIE - SVU3 Sandbox. There you can also set a key that opens it for the car you sit in or stand next to.\nTabs: This car - its tier, stats, installed upgrades and your skills. Upgrades - everything this car can take. Vehicle tiers - every car by tier. Guide - this guide.",
+    "IGUI_HSVU_Guide_Window_Body": "This window explains the vehicle upgrades of Standardized Vehicle Upgrades 3 (SVU3). It only shows information: you still install and remove upgrades in the Modifications window (vehicle radial menu > Modifications).\nIt opens by itself beside the Modifications window and closes with it. Turn that off in Options > Mods > HARMONIE - Car for Crash. There you can also set a key that opens it for the car you sit in or stand next to.\nTabs: This car - its tier, stats, installed upgrades and your skills. Upgrades - everything this car can take. Vehicle tiers - every car by tier. Guide - this guide.",
     "IGUI_HSVU_Guide_Tiers_Title": "Vehicle tiers",
     "IGUI_HSVU_Guide_Tiers_Body": "Every car SVU3 can upgrade gets a tier from 1 (small) to 3 (large). Each car is compared with all the others in four stats from its vehicle script: weight, front + rear strength, seats and trunk size. Its places in these stats are averaged and the list is cut into three equal parts. Cars with the same stats are always in the same tier.\nIf the game cannot read a stat (for example the trunk size), that stat is left out. A car with no readable stats is tier 3. An admin can also put cars in a tier by hand (see Admin settings).\nThe bars in This car show where the car sits among all cars: full = the highest of all.\nThe tier of every car is also written to console.txt when the game starts.",
     "IGUI_HSVU_Guide_Skills_Title": "Skills needed",
@@ -61,7 +61,7 @@
     "IGUI_HSVU_Guide_Materials_Title": "Materials and tools",
     "IGUI_HSVU_Guide_Materials_Body": "Every upgrade uses up materials (metal pipes, metal bars, screws, sheet metal, propane torch uses...) and needs tools (wrench and screwdriver; a welder mask when it is welded). The Upgrades tab lists them on each row; point at the list for the full names.\nThis window does not check whether you carry them. The Modifications window checks that, and it greys out an upgrade until everything is at hand.\nSome upgrades need another one first (for example a scoop hood needs its hood armour). Those show Install ... first.",
     "IGUI_HSVU_Guide_Wear_Title": "Part wear",
-    "IGUI_HSVU_Guide_Wear_Body": "Armour and bullbars from SVU3 lose condition each time they take a hit for the part they protect. The sandbox option Protection part damage multiplier (page HARMONIE: SVU3 Part Wear) sets how fast: 1.0 = SVU3's own wear, higher = they wear out faster.\nThe condition of every installed upgrade is shown in This car. Some parts fall off when they break.",
+    "IGUI_HSVU_Guide_Wear_Body": "Armour and bullbars from SVU3 lose condition each time they take a hit for the part they protect. The sandbox option Protection part damage multiplier (page HARMONIE - Car for Crash) sets how fast: 1.0 = SVU3's own wear, higher = they wear out faster.\nThe condition of every installed upgrade is shown in This car. Some parts fall off when they break.",
     "IGUI_HSVU_Guide_Admin_Title": "Admin settings",
     "IGUI_HSVU_Guide_Admin_Body": "Sandbox options, page HARMONIE: SVU3 Part Wear:\n- Install skills by vehicle tier: on = the tiers above; off = every car needs SVU3's own levels.\n- Tier 1 / 2 / 3 main skill and other skills: the ceilings (default 4+2, 6+4, 8+6).\n- Vehicle tiers set by hand: name=tier separated by ; for example Van*=2; StepVan=3. A * at the end means every car whose name starts so (Van* = Van, VanAmbulance, Van_Glass...). An exact name wins over a * one. none = nothing set by hand. The script names are in console.txt and under the car's name in This car.\n- Protection part damage multiplier: how fast armour wears (see Part wear).",
     "IGUI_HSVU_Guide_Buttons_Title": "Window buttons",
@@ -71,8 +71,8 @@
     "IGUI_HUB_Intro": "Open the windows of the HARMONIE mods from here. A window that needs something first says what to do.",
     "IGUI_HUB_Open": "Open",
     "IGUI_HUB_None": "No HARMONIE window is installed.",
-    "IGUI_HUB_NeedVehicle": "Stand next to a vehicle (or sit in one) first.",
-    "IGUI_HUB_NeedGun": "Hold a gun in your main hand first (or right-click a gun > Inspect).",
+    "IGUI_HUB_NeedVehicle": "No vehicle next to you: the tabs about a vehicle are locked until you stand next to one (or sit in it).",
+    "IGUI_HUB_NeedGun": "No gun in your hand: the gun tabs are locked until you hold one (or right-click a gun > Upgrade gun).",
     "IGUI_HUB_GTP_Name": "Garden to Plate",
     "IGUI_HUB_GTP_Desc": "Cooking recipes, vitamins, planting calendar and guide.",
     "IGUI_HUB_TWA_Name": "The Way To Attack",
@@ -93,5 +93,6 @@
     "IGUI_HUB_Close": "Close",
     "IGUI_HUB_Apply": "Apply",
     "IGUI_HUB_NotAdmin": "Only admins or -debug can change these.",
-    "IGUI_HUB_Applied": "Changed: %1"
+    "IGUI_HUB_Applied": "Changed: %1",
+    "IGUI_HSVU_LockedTip": "Stand next to a vehicle (or sit in it) to use this tab."
 }

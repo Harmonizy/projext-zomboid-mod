@@ -181,14 +181,19 @@ Hub.CARDS = {
     { id = "hm", name = "IGUI_HUB_HM_Name", desc = "IGUI_HUB_HM_Desc",
       present = function() return EHR ~= nil and EHR.UI ~= nil and EHR.UI.ShowHealthPanel ~= nil end,
       open = function(p) EHR.UI.ShowHealthPanel(p) end },
+    -- owner, 2026-10-09: every window opens from here; the tabs that need a
+    -- target (a vehicle, a gun in hand) are locked inside the window, and
+    -- the card says so (`note`, the button stays enabled)
     { id = "svu", name = "IGUI_HUB_SVU_Name", desc = "IGUI_HUB_SVU_Desc",
       present = function() return HSVU ~= nil and HSVU.open ~= nil end,
-      need = function(p) if not (HSVU.nearVehicle and HSVU.nearVehicle(p)) then return "IGUI_HUB_NeedVehicle" end end,
-      open = function(p) HSVU.open(p, HSVU.nearVehicle(p)) end },
+      note = function(p) if not (HSVU.nearVehicle and HSVU.nearVehicle(p)) then return "IGUI_HUB_NeedVehicle" end end,
+      open = function(p) HSVU.open(p, HSVU.nearVehicle and HSVU.nearVehicle(p) or nil) end },
     { id = "mfs", name = "IGUI_HUB_MFS_Name", desc = "IGUI_HUB_MFS_Desc",
-      present = function() return MFSInspectFix ~= nil and MFSInspectFix.open ~= nil end,
-      need = function(p) if not heldGun(p) then return "IGUI_HUB_NeedGun" end end,
-      open = function(p) MFSInspectFix.open(p) end },
+      present = function() return (HMLWorkbench ~= nil and HMLWorkbench.open ~= nil) or (MFSInspectFix ~= nil and MFSInspectFix.open ~= nil) end,
+      note = function(p) if not heldGun(p) then return "IGUI_HUB_NeedGun" end end,
+      open = function(p)
+          if HMLWorkbench and HMLWorkbench.open then HMLWorkbench.open(p, nil, true) else MFSInspectFix.open(p) end
+      end },
 }
 
 function Hub.openCard(card, player)
@@ -263,8 +268,9 @@ function P:render()
         if okP and present then
             shown = shown + 1
             local need = card.need and p and select(2, pcall(card.need, p)) or nil
+            local note = (not need) and card.note and p and select(2, pcall(card.note, p)) or nil
             local desc = wrap(T(card.desc), self.width - pad * 2 - 130, sf)
-            local h = math.max(58, 12 + th(mf) + 4 + #desc * (th(sf) + 1) + (need and (th(sf) + 4) or 0) + 8)
+            local h = math.max(58, 12 + th(mf) + 4 + #desc * (th(sf) + 1) + ((need or note) and (th(sf) + 4) or 0) + 8)
             local over = mx >= pad and mx <= self.width - pad and my >= y and my <= y + h
             local c = over and COL.cardHi or COL.card
             self:drawRect(pad, y, self.width - pad * 2, h, 0.95, c[1], c[2], c[3])
@@ -274,6 +280,8 @@ function P:render()
             for _, l in ipairs(desc) do self:drawText(l, pad + 12, ty, COL.dim[1], COL.dim[2], COL.dim[3], 1, sf); ty = ty + th(sf) + 1 end
             if need then
                 self:drawText(T(need), pad + 12, ty + 2, COL.warn[1], COL.warn[2], COL.warn[3], 1, sf)
+            elseif note then
+                self:drawText(T(note), pad + 12, ty + 2, COL.warn[1], COL.warn[2], COL.warn[3], 0.8, sf)
             end
             -- the open button on the right
             local bw, bh = 104, 28

@@ -1,6 +1,16 @@
 {
     "Sandbox_HARMONIE_ModernFirearmsSystemFix": "HARMONIE - Mercenary Is Life",
     "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier": "Gun/ammo drop rate multiplier",
-    "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier_tooltip": "Multiplies how often ModernFirearmsSystem's own ~230 guns and ammo items appear in loot, on top of the mod's own hardcoded weights (it ships with no rate control of its own, only per-gun on/off toggles). 1.0 = the mod's own unmodified rate. 0 = never spawns (same as disabling every per-gun toggle). Does not affect vanilla loot or this mod's weapon attachments/parts.",
-    "Sandbox_ModernFirearmsSystemSandboxGun_M1918_Spawn": "M1918 Spawn Chance"
+    "Sandbox_HARMONIE_ModernFirearmsSystemFixDropRateMultiplier_tooltip": "Multiplies how often this mod's own ~230 guns and ammo items appear in loot, on top of the mod's own hardcoded weights (it ships with no rate control of its own, only per-gun on/off toggles). 1.0 = the mod's own unmodified rate. 0 = never spawns (same as disabling every per-gun toggle). Does not affect vanilla loot or this mod's weapon attachments/parts.",
+    "Sandbox_ModernFirearmsSystemSandboxGun_M1918_Spawn": "M1918 Spawn Chance",
+    "Sandbox_MFSCommunityFixAttachmentLoot": "Mercenary Is Life 3 - Firearm and Attachment Loot",
+    "Sandbox_MFSCommunityFixGunRates": "Mercenary Is Life 2 - Individual Firearm Rates (0 = Off, 1 = Default)",
+    "Sandbox_MFSCommunityFixLoot_EnableMFSCivilianFirearms": "Add All Mercenary Is Life Firearms to Civilian Firearm Locations",
+    "Sandbox_MFSCommunityFixLoot_DisableVanillaWeaponParts_tooltip": "Removes all eleven vanilla weapon-part items from newly generated procedural container loot. Mercenary Is Life attachments, existing items, attached parts, and crafted parts are unaffected.",
+    "Sandbox_MFSCommunityFixLoot_FirearmMultiplier": "Mercenary Is Life Firearms",
+    "Sandbox_MFSCommunityFixLoot_FirearmMultiplier_tooltip": "Loot-weight multiplier for firearms supplied by Mercenary Is Life. Individual gun spawn checkboxes still apply. 0 disables Mercenary Is Life firearms in new procedural loot; 1 keeps the authored rate.",
+    "Sandbox_MFSCommunityFixLoot_FunctionalMagazineMultiplier_tooltip": "Loot-weight multiplier for usable Mercenary Is Life magazines and drums. Decorative magazine weapon parts are excluded. 0 disables this category; 1 keeps the authored rate.",
+    "Sandbox_ModernFirearmsSystemSandbox_Gun": "Mercenary Is Life 1 - Firearm Spawn Switches (Off Removes Type from New Loot)",
+    "Sandbox_ModernFirearmsSystemSandbox_Gameplay": "Mercenary Is Life 4 - Gameplay Settings",
+    "Sandbox_MFSSandbox_EnableReticle": "Enable Mercenary Is Life Reticle System (Off = Vanilla Reticle)"
 }

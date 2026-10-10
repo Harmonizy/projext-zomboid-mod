@@ -22,5 +22,6 @@
     "UI_options_AWCWF_weapon_shot_volume_tooltip": "Batch-adjusts the volume of every gunshot sound.",
     "UI_options_AWCWF_weapon_reload_volume": "Weapon Reload Volume",
     "UI_options_AWCWF_weapon_reload_volume_tooltip": "Batch-adjusts the volume of every reload sound.",
-    "UI_optionscreen_binding_KeySetting_AWCWF": "Mercenary Is Life Key Settings"
+    "UI_optionscreen_binding_KeySetting_AWCWF": "Mercenary Is Life Key Settings",
+    "UI_options_AWCWF_desc_handgun_grip": "This mod's pistol models were built around a body replacer with smaller hands, so on the default game body the pistol can sit slightly behind the hand. These settings correct that. Rifles are not affected."
 }
