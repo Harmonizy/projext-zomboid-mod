@@ -2744,6 +2744,14 @@ function EHR.Medication.KillFromOverdose(player, overdoseInfo, offScheduleCount)
         tonumber(offScheduleCount) or 3
     )
 
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and EHR.Lethal.spare(player, cause) then
+        if player.isLocalPlayer and player:isLocalPlayer() and player.Say then
+            EHR.Locale.Say(player, "Too many doses... something is very wrong...")
+        end
+        return true
+    end
+
     if EHR.RecordDeathCause then
         EHR.RecordDeathCause(player, cause)
     end
@@ -5272,6 +5280,8 @@ end
 function EHR.Medication.KillFromLastChanceEpinephrine(player)
     if not player then return false end
     local cause = "Emergency Epinephrine Auto-Injector - fatal stroke after administration above 15% overall health"
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and not EHR.Lethal.allowed() then return false end
     local bodyDamage = nil
     pcall(function() bodyDamage = player:getBodyDamage() end)
 
@@ -5406,7 +5416,10 @@ function EHR.Medication.ApplyLastChanceEpinephrine(player, medData)
     local threshold = tonumber(support.healthThreshold) or 15
     local highRisk = currentHealth > threshold
 
-    if highRisk and EHR.Medication.RollLastChanceEpinephrineDeath(support.highHealthDeathChance) then
+    -- HARMONIE (2026-10-12): no fatal roll unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if highRisk and EHR.Lethal and not EHR.Lethal.allowed() then
+        EHR.Log("Last-chance epinephrine: fatal roll skipped (LethalConditions off)")
+    elseif highRisk and EHR.Medication.RollLastChanceEpinephrineDeath(support.highHealthDeathChance) then
         local fatalToken = "fatal:" .. tostring(currentHealth)
         pcall(function()
             fatalToken = "fatal:" .. tostring(player:getUsername() or player:getOnlineID() or "player")

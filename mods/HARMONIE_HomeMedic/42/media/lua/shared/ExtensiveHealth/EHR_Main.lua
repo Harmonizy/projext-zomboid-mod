@@ -981,3 +981,6 @@ EHR.Log("Main module loaded")
 -- Loaded last so the immunity module can use the initialized EHR namespace
 -- without creating a circular require back into EHR_Main.
 pcall(function() require "ExtensiveHealth/EHR_Immunity" end)
+
+-- HARMONIE (2026-10-12): illnesses make life hard, not end it (sandbox HomeMedic.LethalConditions)
+pcall(function() require "HARMONIEHomeMedic/HM_NonLethal" end)

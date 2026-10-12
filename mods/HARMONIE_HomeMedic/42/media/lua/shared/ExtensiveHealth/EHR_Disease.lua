@@ -1959,6 +1959,8 @@ end
 
 local function EHR_DiseaseKillPlayer(player, cause)
     if not player then return end
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and EHR.Lethal.spare(player, cause or "Severe disease complications") then return end
 
     if EHR.RecordDeathCause then
         EHR.RecordDeathCause(player, cause or "Severe disease complications")
@@ -1992,6 +1994,11 @@ local function EHR_DiseaseApplyBodyHealthDamage(player, amount, cause)
         return bodyDamage:getOverallBodyHealth()
     end)
     if not okHealth or not currentHealth then return nil end
+    -- HARMONIE (2026-10-12): damage stops at the sandbox health floor (HM_NonLethal.lua)
+    if EHR.Lethal and not EHR.Lethal.allowed() then
+        amount = math.min(amount, math.max(0, currentHealth - EHR.Lethal.floor()))
+        if amount <= 0 then return currentHealth end
+    end
 
     local reducedByBodyDamage = false
     if bodyDamage.ReduceGeneralHealth then
@@ -2051,6 +2058,7 @@ local function EHR_DiseaseClampBodyHealth(player, maxHealth)
     if not okHealth or not currentHealth then return nil end
 
     local healthCap = math.max(1, math.min(100, maxHealth))
+    if EHR.Lethal then healthCap = EHR.Lethal.clampHealth(player, healthCap) end  -- HARMONIE: not under the floor
     if currentHealth > healthCap then
         local clamped = false
         if bodyDamage.ReduceGeneralHealth then
