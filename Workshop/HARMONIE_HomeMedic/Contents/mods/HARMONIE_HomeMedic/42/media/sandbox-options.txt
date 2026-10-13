@@ -985,8 +985,8 @@ option HomeMedic.NonLethalHealthFloor
 {
     type = integer,
     min = 5,
-    max = 50,
-    default = 15,
+    max = 60,
+    default = 40,
     page = HARMONIE_HomeMedic,
     translation = HomeMedic_NonLethalHealthFloor,
 }

@@ -2955,5 +2955,5 @@
     "UI_HomeMedic_Guide_window_Title": "This window",
     "UI_HomeMedic_Guide_window_P1": "Header buttons: the gear opens the settings (text size, window size, pin, sound and this mod's own client options), minus / plus folds the right side, the pin keeps the window open, X closes it. Drag the bottom-right corner to resize.",
     "UI_HomeMedic_Guide_window_P2": "Every scroll bar can be dragged with the mouse or moved with the wheel. Settings in the gear are yours only (client); rules for the whole server are in the sandbox options page \"HARMONIE - How to Survive\".",
-    "UI_HomeMedic_Guide_start_P4": "By default no illness of this mod kills: at its worst the character collapses - health stays low, endurance is gone and you are exhausted - until it is treated. The zombie infection and fights still kill. The server can switch deadly illnesses back on (sandbox \"Illnesses can kill\")."
+    "UI_HomeMedic_Guide_start_P4": "By default no illness of this mod kills: at its worst the character collapses - health stays at 40 of 100 and endurance cannot go above 30%% - until it is treated. The zombie infection and fights still kill. The server can switch deadly illnesses back on (sandbox \"Illnesses can kill\")."
 }

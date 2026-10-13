@@ -8,9 +8,19 @@
     this mod kills -- no disease, sepsis, hypothermia / heat stroke, blood
     loss (cardiac arrest), overdose, epinephrine or gene-therapy roll.
     Instead the character COLLAPSES: overall health is held at
-    HomeMedic.NonLethalHealthFloor (default 15 of 100), endurance drops to
-    nothing and tiredness jumps up -- the illness keeps every other effect
-    until it is treated.
+    HomeMedic.NonLethalHealthFloor (default 40 of 100 -- owner, 2026-10-13:
+    "ลด hp ต่ำสุดที่ 40% เป็น default") and, while it sits there, endurance
+    has a low CEILING (COLLAPSE_ENDURANCE) -- the illness keeps every other
+    effect until it is treated.
+
+    Multiplayer (owner, 2026-10-13: "ระวังเรื่อง ความอดทนเด้งขึ้นลงบนเซิร์ฟเวอร์"):
+    endurance is never SET to a value. The client simulates its own
+    endurance, so a server write fights it and the bar jumps up and down.
+    The ceiling is a min() applied about once a second on BOTH sides
+    (server for every online player, client for its own) and both sides
+    decide "collapsed" from the synced overall health -- they always agree,
+    so nothing bounces (the same rule as HARMONIE_BloodImpact). Health
+    itself is only written where it lives: the server in MP, the game in SP.
 
       EHR.Lethal.allowed()             -> true when the sandbox lets it kill
       EHR.Lethal.floor()               -> lowest overall health our code may cause
@@ -29,7 +39,9 @@ EHR = EHR or {}
 EHR.Lethal = EHR.Lethal or {}
 local N = EHR.Lethal
 
-N.DEFAULT_FLOOR = 15
+N.DEFAULT_FLOOR = 40
+N.COLLAPSE_ENDURANCE = 0.30   -- endurance ceiling while held at the floor
+N.COLLAPSED_MARGIN = 1        -- "at the floor" = health <= floor + this
 N.SUDDEN_DROP = 4          -- overall health lost in one second that counts as a fight
 N.INTERVAL_MS = 1000
 
@@ -70,13 +82,31 @@ local function setOverall(player, v)
     pcall(function() player:getBodyDamage():setOverallBodyHealth(v) end)
 end
 
--- what a collapse costs instead of the life
-local function collapse(player)
-    if not CharacterStat then return end
+local function remoteClient() return isClient and isClient() == true end
+
+-- held at the floor (both sides read the same synced health)
+function N.collapsed(player)
+    if not player or N.allowed() then return false end
+    local cur = overall(player)
+    return cur ~= nil and cur <= N.floor() + N.COLLAPSED_MARGIN
+end
+
+-- what a collapse costs instead of the life: an endurance CEILING, never a set
+N.capped = N.capped or {}
+function N.capEndurance(player)
+    if not CharacterStat or not CharacterStat.ENDURANCE then return end
+    if player.isDead and player:isDead() then return end
+    local who = nameOf(player)
+    local on = N.collapsed(player)
+    if N.capped[who] ~= on then
+        N.capped[who] = on
+        log("%s: %s (endurance ceiling %.0f%%)", who, on and "collapsed at the health floor" or "back above the health floor", N.COLLAPSE_ENDURANCE * 100)
+    end
+    if not on then return end
     pcall(function()
         local st = player:getStats()
-        if CharacterStat.ENDURANCE then st:set(CharacterStat.ENDURANCE, 0) end
-        if CharacterStat.FATIGUE and (tonumber(st:get(CharacterStat.FATIGUE)) or 0) < 0.8 then st:set(CharacterStat.FATIGUE, 0.8) end
+        local cur = tonumber(st:get(CharacterStat.ENDURANCE)) or 1
+        if cur > N.COLLAPSE_ENDURANCE then st:set(CharacterStat.ENDURANCE, N.COLLAPSE_ENDURANCE) end
     end)
 end
 
@@ -92,10 +122,12 @@ N.lastSpare = N.lastSpare or {}
 function N.spare(player, cause)
     if not player or N.allowed() then return false end
     local f = N.floor()
-    local cur = overall(player)
-    if cur == nil or cur < f then setOverall(player, f) end
-    pcall(function() if player:getHealth() < 0.05 then player:setHealth(0.05) end end)
-    collapse(player)
+    -- health lives on the server in MP: a remote client only skips the kill
+    if not remoteClient() then
+        local cur = overall(player)
+        if cur == nil or cur < f then setOverall(player, f) end
+        pcall(function() if player:getHealth() < 0.05 then player:setHealth(0.05) end end)
+    end
     local who = nameOf(player)
     local now = getTimestampMs and getTimestampMs() or 0
     local key = who .. "|" .. tostring(cause)
@@ -158,8 +190,19 @@ function N.guard(player)
     if not isIll(player) then return end
     setOverall(player, f)
     N.seen[who] = f
-    collapse(player)
     logOnce("held:" .. who, "%s: illness took health under %d -- held there (sandbox LethalConditions is off)", who, f)
+end
+
+local function each(player)
+    if not player then return end
+    -- the health guard only where health lives (server in MP, the game in SP)
+    if not remoteClient() then
+        local ok, err = pcall(N.guard, player)
+        if not ok then logOnce("guarderr", "guard failed: %s", tostring(err)) end
+    end
+    -- the endurance ceiling on both sides (a min(): harmless twice, no bouncing)
+    local ok2, err2 = pcall(N.capEndurance, player)
+    if not ok2 then logOnce("caperr", "endurance ceiling failed: %s", tostring(err2)) end
 end
 
 local nextAt = 0
@@ -167,22 +210,15 @@ function N.onTick()
     local now = getTimestampMs and getTimestampMs() or 0
     if now < nextAt then return end
     nextAt = now + N.INTERVAL_MS
-    if isClient and isClient() then return end   -- the server owns health in MP
     if isServer and isServer() then
         local online = getOnlinePlayers and getOnlinePlayers()
-        for i = 0, (online and online:size() or 0) - 1 do
-            local ok, err = pcall(N.guard, online:get(i))
-            if not ok then logOnce("guarderr", "guard failed: %s", tostring(err)) end
-        end
+        for i = 0, (online and online:size() or 0) - 1 do each(online:get(i)) end
         return
     end
     local count = getNumActivePlayers and getNumActivePlayers() or 1
     for i = 0, count - 1 do
         local p = getSpecificPlayer and getSpecificPlayer(i)
-        if p then
-            local ok, err = pcall(N.guard, p)
-            if not ok then logOnce("guarderr", "guard failed: %s", tostring(err)) end
-        end
+        if p and (not remoteClient() or not p.isLocalPlayer or p:isLocalPlayer()) then each(p) end
     end
 end
 
