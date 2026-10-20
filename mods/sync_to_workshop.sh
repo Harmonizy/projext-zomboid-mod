@@ -43,6 +43,7 @@ fi
 # rather than assuming it matches $MOD_ID (see header note -- they can differ).
 INNER_ID=""
 for d in "$STAGING_MODS_DIR"/*/; do
+    [ -d "$d" ] || continue   # an empty staging folder: the glob matched nothing
     name="$(basename "$d")"
     if [ -z "$INNER_ID" ]; then
         INNER_ID="$name"

@@ -71,6 +71,15 @@ def tab_guide(path):
     done(img, 128, path)
 
 
+def tab_trade(path):
+    img, d, s = canvas()
+    d.line(P(s, [(20, 44), (96, 44)]), fill=INK, width=int(9 * s))
+    d.polygon(P(s, [(96, 26), (118, 44), (96, 62)]), fill=INK)
+    d.line(P(s, [(108, 86), (32, 86)]), fill=GOLD, width=int(9 * s))
+    d.polygon(P(s, [(32, 68), (10, 86), (32, 104)]), fill=GOLD)
+    done(img, 128, path)
+
+
 def logo(path):
     img, d, s = canvas()
     d.ellipse([6 * s, 6 * s, 122 * s, 122 * s], fill=WHITE, outline=GOLD, width=int(6 * s))
@@ -166,6 +175,7 @@ if __name__ == "__main__":
     tab_collection(os.path.join(UI, "tab_collection.png"))
     tab_admin(os.path.join(UI, "tab_admin.png"))
     tab_guide(os.path.join(UI, "tab_guide.png"))
+    tab_trade(os.path.join(UI, "tab_trade.png"))
     logo(os.path.join(UI, "logo.png"))
     icon_close(os.path.join(UI, "icon_close.png"))
     icon_plus(os.path.join(UI, "icon_plus.png"))

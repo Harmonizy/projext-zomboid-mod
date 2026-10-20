@@ -79,6 +79,20 @@ function LWS.parseType(fullType)
     return nil
 end
 
+-- a piece of OUR catalog whose item script is in OUR module -- nothing of
+-- another mod ever goes into the wardrobe (owner, 2026-10-20)
+function LWS.isOurPiece(pieceId)
+    pieceId = tostring(pieceId or "")
+    if not LWS.PIECE[pieceId] then return false end
+    if not getScriptManager then return true end
+    local ok, it = pcall(function() return getScriptManager():FindItem(LWS.MODULE .. "." .. pieceId) end)
+    if not ok then return true end
+    if not it then return false end
+    local okM, m = pcall(function() return it:getModuleName() end)
+    if okM and m then return tostring(m) == LWS.MODULE end
+    return true
+end
+
 function LWS.isFashion(item)
     if not item then return false end
     local ok, m = pcall(function() return item:getModule() end)

@@ -83,4 +83,11 @@
 - Every piece has two items: `<Id>` (lws:<slot>, hides the vanilla
   locations of the slot via setHideModel) and `<Id>_Over` (lws:<slot>_over,
   hides nothing). Never put a piece in a loot table.
+- Only OUR pieces ever go in the wardrobe (owner, 2026-10-20): grant and
+  trade take `LWS.isOurPiece` / catalog ids only, foreign entries are pruned
+  at load (catalog check only -- never empty a wardrobe on a failed script
+  lookup), and another mod's item worn in an `lws:` slot is taken off.
+- Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
+  same revision, the server re-checks and swaps; any offer change unlocks
+  both. Sandbox page HARMONIE_LifeWithStyle (TradeEnabled, TradeMaxDistance).
 

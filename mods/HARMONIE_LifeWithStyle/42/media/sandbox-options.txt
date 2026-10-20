@@ -1,0 +1,19 @@
+VERSION = 1,
+
+option LifeWithStyle.TradeEnabled
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_TradeEnabled,
+}
+
+option LifeWithStyle.TradeMaxDistance
+{
+    type = integer,
+    min = 0,
+    max = 200,
+    default = 0,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_TradeMaxDistance,
+}

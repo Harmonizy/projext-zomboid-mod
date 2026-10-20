@@ -19,6 +19,8 @@ local C = LWS.Client
 local log = function(...) LWS.log("Client", ...) end
 
 C.state = C.state or { items = {}, worn = {}, show = {} }
+C.asks = C.asks or {}      -- trade requests to me: [from name] = deadline
+C.trade = C.trade or nil   -- the open trade (the server's view for me)
 C.admin = C.admin or nil
 
 local function me() return getPlayer and getPlayer() or nil end
@@ -36,12 +38,35 @@ function C.handle(command, args)
         for _, t in ipairs(args.types or {}) do C.pending[t] = now + 8000 end
         C.dressNow()
     elseif command == "Msg" then
-        local text = LWS.T(tostring(args.key or ""))
-        if args.arg then text = text .. ": " .. LWS.pieceName(args.arg) end
+        local text
+        if args.text then
+            text = LWS.T(tostring(args.key or ""), tostring(args.arg or ""))
+        else
+            text = LWS.T(tostring(args.key or ""))
+            if args.arg then text = text .. ": " .. LWS.pieceName(args.arg) end
+        end
         C.say(text)
     elseif command == "AdminData" then
         C.admin = args
         if LWSWindow and LWSWindow.refresh then LWSWindow.refresh() end
+    -- trading (LWS_Trade.lua on the server)
+    elseif command == "TradeAsked" then
+        local now = getTimestampMs and getTimestampMs() or 0
+        C.asks[tostring(args.from)] = now + (tonumber(args.seconds) or 60) * 1000
+        log("%s asks to trade", tostring(args.from))
+        C.say(LWS.T("IGUI_LWS_Msg_TradeAsked", tostring(args.from)))
+    elseif command == "TradeState" then
+        if not C.trade then log("trade opened with %s", tostring(args.partner)) end
+        C.trade = args
+        C.asks[tostring(args.partner)] = nil
+        if LWSWindow and LWSWindow.open and not (LWSWindow.isOpen and LWSWindow.isOpen()) then LWSWindow.open(me(), "trade") end
+        if LWSWindow and LWSWindow.window then LWSWindow.window.tab = "trade" end
+    elseif command == "TradeEnd" then
+        if C.trade then
+            log("trade ended: %s", tostring(args.reason))
+            if args.reason ~= "done" and args.reason ~= "none" then C.say(LWS.T("IGUI_LWS_Msg_TradeEnd_" .. tostring(args.reason))) end
+        end
+        C.trade = nil
     end
 end
 
@@ -96,6 +121,42 @@ end
 function C.wear(slot, uid) log("wear %s in %s", tostring(uid), tostring(slot)); C.send("Wear", { slot = slot, uid = uid }) end
 function C.takeOff(slot) log("take off %s", tostring(slot)); C.send("TakeOff", { slot = slot }) end
 function C.setShow(slot, on) log("%s: show real clothes %s", tostring(slot), tostring(on)); C.send("Show", { slot = slot, on = on == true }) end
+
+-- trading
+function C.tradeAsk(name) log("ask %s to trade", tostring(name)); C.send("TradeAsk", { to = name }) end
+function C.tradeAnswer(from, yes)
+    log("%s the trade of %s", yes and "accept" or "decline", tostring(from))
+    C.asks[tostring(from)] = nil
+    C.send("TradeAnswer", { from = from, yes = yes == true })
+end
+function C.tradeOffer(uid, add) C.send("TradeOffer", { uid = uid, add = add == true }) end
+function C.tradeLock(on)
+    if not C.trade then return end
+    log("trade: %s", on and "agree" or "take the agreement back")
+    C.send("TradeLock", { on = on == true, rev = C.trade.rev })
+end
+function C.tradeCancel() log("trade: cancel"); C.send("TradeCancel", {}) end
+function C.openAsks()
+    local now = getTimestampMs and getTimestampMs() or 0
+    local out = {}
+    for from, deadline in pairs(C.asks) do
+        if deadline > now then out[#out + 1] = { from = from, left = math.ceil((deadline - now) / 1000) } else C.asks[from] = nil end
+    end
+    table.sort(out, function(a, b) return a.from < b.from end)
+    return out
+end
+-- the other players online (multiplayer)
+function C.otherPlayers()
+    local out = {}
+    local mine = me()
+    local online = getOnlinePlayers and getOnlinePlayers()
+    for i = 0, (online and online:size() or 0) - 1 do
+        local p = online:get(i)
+        if p and p ~= mine and LWS.name(p) ~= LWS.name(mine) then out[#out + 1] = LWS.name(p) end
+    end
+    table.sort(out)
+    return out
+end
 
 function C.hello(why)
     log("hello (%s)", tostring(why))

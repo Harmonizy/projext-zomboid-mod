@@ -371,6 +371,7 @@ Hub.NAMESPACES = {
     { ns = "MFSCommunityFixLoot", label = "Mercenary Is Life: loot" },
     { ns = "MFSCommunityFixGunRates", label = "Mercenary Is Life: gun rates" },
     { ns = "ModernFirearmsSystemSandboxGun", label = "Mercenary Is Life: guns on/off" },
+    { ns = "LifeWithStyle", label = "Life With Style" },
 }
 
 -- every sandbox option of ours -> { [ns] = { {name, label, type, opt} } }

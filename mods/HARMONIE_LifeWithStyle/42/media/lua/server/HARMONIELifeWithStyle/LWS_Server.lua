@@ -125,6 +125,21 @@ function S.ensure(player, why)
             end
         end
     end
+    -- an item of another mod worn in one of OUR slots (its script says
+    -- BodyLocation = lws:...) comes off -- it stays in the inventory, it is theirs
+    pcall(function()
+        local worn = player:getWornItems()
+        local off = {}
+        for i = 0, worn:size() - 1 do
+            local it = worn:get(i):getItem()
+            local loc = it and tostring(it:getBodyLocation() or "")
+            if it and loc:sub(1, 4) == "lws:" and not LWS.isFashion(it) then off[#off + 1] = it end
+        end
+        for _, it in ipairs(off) do
+            player:removeWornItem(it)
+            log("%s: %s (another mod's item) taken off a fashion slot -- only Life With Style pieces go there", LWS.name(player), LWS.typeOf(it))
+        end
+    end)
     local wearList, added = {}, 0
     for t, _ in pairs(want) do
         local item = have[t]
@@ -270,7 +285,9 @@ function S.handle(player, command, args)
     elseif command == "AdminGrant" then
         if not admin(player, command) then return end
         local ownerKey, piece = tostring(args.owner or ""), tostring(args.piece or "")
-        if ownerKey == "" or not LWS.PIECE[piece] then log("REJECTED AdminGrant: owner %s, piece %s", ownerKey, piece); return end
+        -- owner, 2026-10-20: "ไม่สามารถใส่ไอเท็มจากม็อดอื่นเข้ามาในตู้เสื้อผ้าเราได้" --
+        -- only a piece of this mod's own catalog can go in (LWS.isOurPiece)
+        if ownerKey == "" or not LWS.isOurPiece(piece) then log("REJECTED AdminGrant: owner %s, piece %s (not a Life With Style piece)", ownerKey, piece); return end
         local o = S.owner(ownerKey, true)
         local uid = tostring(o.nextId)
         o.nextId = o.nextId + 1
@@ -293,6 +310,8 @@ function S.handle(player, command, args)
         local target = onlineByKey(ownerKey)
         if target then S.sendState(target, o); S.ensure(target, "revoked") end
         LWS.toClient(player, "AdminData", adminData(ownerKey))
+    elseif tostring(command):sub(1, 5) == "Trade" and LWS.Trade and LWS.Trade.handle then
+        LWS.Trade.handle(player, command, args)
     else
         log("REJECTED unknown command %s from %s", tostring(command), LWS.name(player))
     end
@@ -351,9 +370,18 @@ if Events and not S.registered then
     if Events.OnInitGlobalModData then
         Events.OnInitGlobalModData.Add(function()
             local db = S.db()
-            local n = 0
-            for _ in pairs(db.owners) do n = n + 1 end
-            log("wardrobes loaded: %d owners, %d pieces in the catalog", n, #LWS.CATALOG)
+            local n, pruned = 0, 0
+            for _, o in pairs(db.owners) do
+                n = n + 1
+                -- anything that is not a piece of our catalog leaves the wardrobe (the
+                -- catalog only: an item script lookup that fails at load must never
+                -- empty a wardrobe)
+                for uid, e in pairs(o.items or {}) do
+                    if type(e) ~= "table" or not LWS.PIECE[tostring(e.p)] then o.items[uid] = nil; pruned = pruned + 1 end
+                end
+                clean(o)
+            end
+            log("wardrobes loaded: %d owners, %d pieces in the catalog, %d foreign entries removed", n, #LWS.CATALOG, pruned)
         end)
     end
 end

@@ -1,0 +1,7 @@
+{
+    "Sandbox_HARMONIE_LifeWithStyle": "HARMONIE - Life With Style",
+    "Sandbox_LifeWithStyle_TradeEnabled": "ผู้เล่นแลกเปลี่ยนแฟชั่นได้",
+    "Sandbox_LifeWithStyle_TradeEnabled_tooltip": "ให้ผู้เล่นแลกชิ้น Life With Style กันได้ในหน้าต่างตู้เสื้อผ้า",
+    "Sandbox_LifeWithStyle_TradeMaxDistance": "ระยะแลกเปลี่ยน (ช่อง)",
+    "Sandbox_LifeWithStyle_TradeMaxDistance_tooltip": "ผู้เล่นสองคนต้องอยู่ใกล้กันแค่ไหนจึงจะแลกได้ 0 = ที่ไหนก็ได้ในเซิร์ฟเวอร์"
+}

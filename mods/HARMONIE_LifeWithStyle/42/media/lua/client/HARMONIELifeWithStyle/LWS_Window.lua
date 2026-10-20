@@ -7,9 +7,12 @@
 --   1 dress       the 18 fashion slots; pick one, pick a piece to wear it,
 --                 "show my real clothes" / take off for the slot
 --   2 collection  every piece the player has (filter by slot)
---   3 admin       (admins only) every owner, their pieces, the catalog:
+--   3 trade       requests and the players online; an open trade: what I
+--                 give, my collection, what they give, agree / cancel
+--                 (LWS_Trade.lua on the server does the swap)
+--   4 admin       (admins only) every owner, their pieces, the catalog:
 --                 click a catalog piece to give it, x on a piece to take it
---   4 guide       how it works
+--   5 guide       how it works
 -- Everything is drawn in render() (no child widgets). Size, text step,
 -- pin and mute are kept in Zomboid/Lua/HARMONIE_LWS_Window.txt.
 --============================================================================
@@ -32,7 +35,7 @@ H.DEFAULT_W, H.DEFAULT_H = 940, 660
 H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
 H.TILE_W, H.TILE_H = 116, 128
-H.GUIDE = { "What", "Dress", "Show", "Death", "Admin", "Soon" }
+H.GUIDE = { "What", "Dress", "Show", "Death", "Trade", "Admin", "Soon" }
 
 -- white, ink and champagne gold
 H.C = {
@@ -208,7 +211,7 @@ function Win:new(x, y, w, h, player)
 end
 
 function Win:tabs()
-    local list = { "dress", "collection" }
+    local list = { "dress", "collection", "trade" }
     if LWS.isAdmin(self.player) then list[#list + 1] = "admin" end
     list[#list + 1] = "guide"
     return list
@@ -385,7 +388,12 @@ function Win:prerender()
         self:drawRectBorder(x, ty, tabW, tH, 1, bd[1], bd[2], bd[3])
         if active then self:drawRect(x + 3, ty + tH - 4, tabW - 6, 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
         local size = math.min(tH - 8, 36)
-        local label = fit(T("IGUI_LWS_Tab_" .. id), tabW - size - 24, sf)
+        local name = T("IGUI_LWS_Tab_" .. id)
+        if id == "trade" then
+            local n = #C.openAsks()
+            if C.trade then name = name .. " *" elseif n > 0 then name = name .. " (" .. n .. ")" end
+        end
+        local label = fit(name, tabW - size - 24, sf)
         local icon = texture(UI_DIR .. "tab_" .. id .. ".png")
         local total = size + 8 + tw(sf, label)
         local tx = x + math.floor((tabW - total) / 2)
@@ -413,6 +421,7 @@ function Win:render()
         if self.tab == "dress" then self:renderDress(x, y, w, h)
         elseif self.tab == "collection" then self:renderCollection(x, y, w, h)
         elseif self.tab == "admin" then self:renderAdmin(x, y, w, h)
+        elseif self.tab == "trade" then self:renderTrade(x, y, w, h)
         else self:renderGuide(x, y, w, h) end
         local c = H.C
         local gx, gy = self.width - 16, self.height - 16
@@ -555,7 +564,107 @@ function Win:renderCollection(x, y, w, h)
     end)
 end
 
--- ----------------------------------------------------------------- tab 3: admin
+-- ----------------------------------------------------------------- tab 3: trade
+-- no trade open: requests to me (accept / decline) and the players online
+-- (ask); a trade open: what I give (click to take back), my collection
+-- (click to offer), what they give, agree / cancel
+function Win:renderTrade(x, y, w, h)
+    local c = H.C
+    local sf = H.small()
+    local bh = lineH(sf) + 10
+    local mx, my = self:getMouseX(), self:getMouseY()
+    local mp = isClient and isClient()
+    local tr = C.trade
+    if not tr then
+        local half = math.floor((w - 8) / 2)
+        local ax, ay, aw, ah = self:drawCard(x, y, half, h, T("IGUI_LWS_TradeAsks"))
+        local asks = C.openAsks()
+        if #asks == 0 then
+            for i, l in ipairs(wrap(T(mp and "IGUI_LWS_TradeNoAsks" or "IGUI_LWS_Msg_TradeMPOnly"), aw - 10, sf)) do
+                text(self, l, ax + 4, ay + 6 + (i - 1) * lineH(sf), c.textDim, 1, sf)
+            end
+        end
+        local yy = ay
+        for _, a in ipairs(asks) do
+            self:drawRect(ax, yy, aw - 4, bh * 2 + 12, 1, c.accentSoft[1], c.accentSoft[2], c.accentSoft[3])
+            self:drawRectBorder(ax, yy, aw - 4, bh * 2 + 12, 1, c.border[1], c.border[2], c.border[3])
+            text(self, fit(T("IGUI_LWS_TradeAskFrom", a.from, tostring(a.left)), aw - 20, sf), ax + 8, yy + 6, c.text, 1, sf)
+            self:button("accept:" .. a.from, T("IGUI_LWS_TradeAccept"), ax + 8, yy + bh + 4, 120, bh, true, true)
+            self:button("decline:" .. a.from, T("IGUI_LWS_TradeDecline"), ax + 136, yy + bh + 4, 120, bh, false, true)
+            yy = yy + bh * 2 + 18
+        end
+        local px, py, pw, ph = self:drawCard(x + half + 8, y, w - half - 8, h, T("IGUI_LWS_TradePlayers"))
+        local players = C.otherPlayers()
+        if #players == 0 then
+            for i, l in ipairs(wrap(T(mp and "IGUI_LWS_TradeNobody" or "IGUI_LWS_Msg_TradeMPOnly"), pw - 10, sf)) do
+                text(self, l, px + 4, py + 6 + (i - 1) * lineH(sf), c.textDim, 1, sf)
+            end
+            return
+        end
+        self.clip = { x = px, y = py, w = pw, h = ph }
+        self:scrolled("tradePlayers", px, py, pw, ph, function(top)
+            local ty = top
+            for _, name in ipairs(players) do
+                local r = { x = px, y = ty, w = pw - 10, h = bh + 8 }
+                local over = inside(r, mx, my) and inside(self.clip, mx, my)
+                local bg = over and c.hover or c.card
+                self:drawRect(r.x, r.y, r.w, r.h, 1, bg[1], bg[2], bg[3])
+                self:drawRectBorder(r.x, r.y, r.w, r.h, 1, c.borderDim[1], c.borderDim[2], c.borderDim[3])
+                text(self, fit(name, r.w - 150, sf), r.x + 8, r.y + math.floor((r.h - fh(sf)) / 2), c.text, 1, sf)
+                self:button("ask:" .. name, T("IGUI_LWS_TradeAsk"), r.x + r.w - 128, r.y + 4, 120, bh, false, true)
+                ty = ty + r.h + 6
+            end
+            return ty - top
+        end)
+        return
+    end
+    -- a trade is open
+    local top = y
+    local bar = bh + 12
+    self:drawRect(x, top, w, bar, 1, c.card[1], c.card[2], c.card[3])
+    self:drawRectBorder(x, top, w, bar, 1, c.border[1], c.border[2], c.border[3])
+    local status = T("IGUI_LWS_TradeWith", tostring(tr.partner)) .. "   " ..
+        T(tr.myLock and "IGUI_LWS_TradeYouAgree" or "IGUI_LWS_TradeYouNot") .. "   " ..
+        T(tr.theirLock and "IGUI_LWS_TradeTheyAgree" or "IGUI_LWS_TradeTheyNot")
+    text(self, fit(status, w - 300, sf), x + 10, top + math.floor((bar - fh(sf)) / 2), c.text, 1, sf)
+    self:button("cancelTrade", T("IGUI_LWS_TradeCancel"), x + w - 128, top + 6, 120, bh, false, true)
+    self:button("lock", T(tr.myLock and "IGUI_LWS_TradeUnagree" or "IGUI_LWS_TradeAgree"), x + w - 256, top + 6, 120, bh, tr.myLock, true)
+    local by = top + bar + 8
+    local bhh = y + h - by
+    local half = math.floor((w - 8) / 2)
+    local giveH = math.floor((bhh - 8) * 0.45)
+    -- what I give
+    local gx, gy, gw, gh = self:drawCard(x, by, half, giveH, T("IGUI_LWS_TradeIGive", tostring(#(tr.mine or {}))))
+    local offered = {}
+    for _, e in ipairs(tr.mine or {}) do offered[e.uid] = true end
+    if #(tr.mine or {}) == 0 then
+        text(self, T("IGUI_LWS_TradeGiveHint"), gx + 4, gy + 6, c.textDim, 1, sf)
+    else
+        self:grid("tradeMine", gx, gy, gw, gh, tr.mine, function() return { worn = true, label = T("IGUI_LWS_TradeOffered"), labelCol = c.accent, tip = T("IGUI_LWS_ClickTakeBack") } end)
+    end
+    -- my collection
+    local have = {}
+    for _, e in ipairs(C.state.items or {}) do if not offered[e.uid] then have[#have + 1] = e end end
+    local hx, hy, hw, hh2 = self:drawCard(x, by + giveH + 8, half, bhh - giveH - 8, T("IGUI_LWS_TradeMyPieces"))
+    if #have == 0 then
+        text(self, T("IGUI_LWS_TradeNoPieces"), hx + 4, hy + 6, c.textDim, 1, sf)
+    else
+        self:grid("tradeHave", hx, hy, hw, hh2, have, function(e)
+            local slot = LWS.PIECE[e.p] and LWS.PIECE[e.p].slot
+            local worn = slot and C.wornIn(slot)
+            return { label = (worn and worn.uid == e.uid) and T("IGUI_LWS_Wearing") or LWS.slotName(slot), tip = T("IGUI_LWS_ClickOffer") }
+        end)
+    end
+    -- what they give
+    local tx, ty, tw2, th2 = self:drawCard(x + half + 8, by, w - half - 8, bhh, T("IGUI_LWS_TradeTheyGive", tostring(tr.partner), tostring(#(tr.theirs or {}))))
+    if #(tr.theirs or {}) == 0 then
+        text(self, T("IGUI_LWS_TradeTheyNothing"), tx + 4, ty + 6, c.textDim, 1, sf)
+    else
+        self:grid("tradeTheirs", tx, ty, tw2, th2, tr.theirs, function() return { label = T("IGUI_LWS_TradeForYou"), tip = T("IGUI_LWS_TradeTheirTip") } end)
+    end
+end
+
+-- ----------------------------------------------------------------- tab 4: admin
 function Win:renderAdmin(x, y, w, h)
     local c = H.C
     local sf = H.small()
@@ -620,7 +729,7 @@ function Win:renderAdmin(x, y, w, h)
     end)
 end
 
--- ----------------------------------------------------------------- tab 4: guide
+-- ----------------------------------------------------------------- tab 5: guide
 function Win:renderGuide(x, y, w, h)
     local c = H.C
     local sf, mf = H.small(), H.medium()
@@ -735,6 +844,16 @@ function Win:onButton(id)
         C.setShow(self.slot, on)
     elseif id == "takeoff" then
         C.takeOff(self.slot)
+    elseif id:sub(1, 4) == "ask:" then
+        C.tradeAsk(id:sub(5))
+    elseif id:sub(1, 7) == "accept:" then
+        C.tradeAnswer(id:sub(8), true)
+    elseif id:sub(1, 8) == "decline:" then
+        C.tradeAnswer(id:sub(9), false)
+    elseif id == "lock" then
+        C.tradeLock(not (C.trade and C.trade.myLock))
+    elseif id == "cancelTrade" then
+        C.tradeCancel()
     elseif id == "refresh" then
         C.send("AdminList", { owner = self.adminOwner })
     elseif id:sub(1, 5) == "chip:" then
@@ -757,6 +876,10 @@ function Win:onTile(key, r, x, y)
             log("admin: take piece #%s from %s", tostring(e.uid), tostring(self.adminOwner))
             C.send("AdminRevoke", { owner = self.adminOwner, uid = e.uid })
         end
+    elseif key == "tradeMine" then
+        C.tradeOffer(e.uid, false)
+    elseif key == "tradeHave" then
+        C.tradeOffer(e.uid, true)
     elseif key == "catalog" then
         if not self.adminOwner then C.say(T("IGUI_LWS_PickOwner")); return end
         log("admin: give %s to %s", tostring(e.p), tostring(self.adminOwner))
