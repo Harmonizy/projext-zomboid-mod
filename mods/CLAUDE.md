@@ -94,6 +94,11 @@
   trade take `LWS.isOurPiece` / catalog ids only, foreign entries are pruned
   at load (catalog check only -- never empty a wardrobe on a failed script
   lookup), and another mod's item worn in an `lws:` slot is taken off.
+- The dress-up page is a paper doll (0.4.0): `doll.png` (256x512, drawn by
+  `gen_lws_art.py`) and `LWSWindow.DOLL` (each slot's spot on it, in those
+  pixels) go together -- redraw one, check the other. `H.LEFT` / `H.RIGHT`
+  stay sorted by the spot's height so the dotted lines do not cross.
+  Press + move 5 px = drag (`Win:drop`), no move = click (`Win:click`).
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks
   both. Sandbox page HARMONIE_LifeWithStyle (TradeEnabled, TradeMaxDistance).

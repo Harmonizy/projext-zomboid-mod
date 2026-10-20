@@ -183,6 +183,46 @@ def poster(path, size):
     print("wrote", path)
 
 
+def doll(path):
+    """the dress-up page's mannequin, 256x512 (LWSWindow.DOLL anchors use these coordinates)"""
+    W, H, k = 256, 512, 4
+    img = Image.new("RGBA", (W * k, H * k), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    fill, line = (238, 233, 226, 255), (186, 172, 156, 255)
+    lw = int(3 * k)
+    def Q(pts): return [(x * k, y * k) for x, y in pts]
+    # arms (behind the body)
+    for sx in (1, -1):
+        X = lambda x: 128 + sx * (x - 128)
+        d.polygon(Q([(X(176), 112), (X(196), 124), (X(206), 200), (X(214), 280), (X(204), 284), (X(190), 206), (X(172), 150)]), fill=fill, outline=line)
+        d.line(Q([(X(176), 112), (X(196), 124), (X(206), 200), (X(214), 280)]), fill=line, width=lw, joint="curve")
+        d.line(Q([(X(172), 150), (X(190), 206), (X(204), 284)]), fill=line, width=lw, joint="curve")
+        d.ellipse(Q([(X(198) if sx > 0 else X(222), 278), (X(222) if sx > 0 else X(198), 312)]), fill=fill, outline=line, width=lw)
+    # legs
+    for sx in (1, -1):
+        X = lambda x: 128 + sx * (x - 128)
+        leg = [(X(130), 300), (X(166), 296), (X(160), 400), (X(152), 476), (X(136), 476), (X(134), 400)]
+        d.polygon(Q(leg), fill=fill)
+        d.line(Q(leg + [leg[0]]), fill=line, width=lw, joint="curve")
+        foot = [(X(134), 474), (X(154), 474), (X(162), 496), (X(132), 498)]
+        d.polygon(Q(foot), fill=fill)
+        d.line(Q(foot + [foot[0]]), fill=line, width=lw, joint="curve")
+    # body: shoulders, waist, hips
+    body = [(116, 100), (140, 100), (180, 114), (174, 170), (160, 244), (168, 304), (88, 304), (96, 244), (82, 170), (76, 114)]
+    d.polygon(Q(body), fill=fill)
+    d.line(Q(body + [body[0]]), fill=line, width=lw, joint="curve")
+    d.line(Q([(128, 300), (128, 318)]), fill=line, width=lw)
+    # neck, head
+    d.rectangle(Q([(116, 82), (140, 104)]), fill=fill)
+    d.line(Q([(116, 82), (116, 102)]), fill=line, width=lw)
+    d.line(Q([(140, 82), (140, 102)]), fill=line, width=lw)
+    d.ellipse(Q([(102, 22), (154, 90)]), fill=fill, outline=line, width=lw)
+    img = img.resize((W, H), Image.LANCZOS)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    img.save(path)
+    print("wrote", os.path.relpath(path, MOD))
+
+
 if __name__ == "__main__":
     tab_dress(os.path.join(UI, "tab_dress.png"))
     tab_collection(os.path.join(UI, "tab_collection.png"))
@@ -198,6 +238,7 @@ if __name__ == "__main__":
     icon_settings(os.path.join(UI, "icon_settings.png"))
     pin(os.path.join(UI, "pin_on.png"), True)
     pin(os.path.join(UI, "pin_off.png"), False)
+    doll(os.path.join(UI, "doll.png"))
     lipstick(os.path.join(MOD, "media", "textures", "Item_LWS_Makeup.png"))
     poster(os.path.join(MOD, "poster.png"), (512, 512))
     poster(os.path.join(MOD, "icon.png"), (64, 64))
