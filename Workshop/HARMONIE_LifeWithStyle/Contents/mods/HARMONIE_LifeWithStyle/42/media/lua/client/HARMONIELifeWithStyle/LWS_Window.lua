@@ -4,8 +4,11 @@
 -- Owner, 2026-10-20: "ใช้รูปแบบหน้าต่างเหมือนม็อดอื่นๆของฉันด้วย ธีมสีขาว". Our
 -- windows' layout -- a header (title, A-, A+, settings, pin, close), big
 -- icon tabs, content in cards, a size grip, the shared scroll bar -- in white:
---   1 dress       the 18 fashion slots; pick one, pick a piece to wear it,
---                 "show my real clothes" / take off for the slot
+--   1 dress       a dressing room: the character in 3D in the middle, the
+--                 18 slots on both sides, a drawer with the pieces of the
+--                 picked slot ("show my real clothes" / take off). The
+--                 header's small-window button turns the whole window into
+--                 a compact dresser beside the character.
 --   2 collection  every piece the player has (filter by slot)
 --   3 trade       requests and the players online; an open trade: what I
 --                 give, my collection, what they give, agree / cancel
@@ -34,6 +37,14 @@ H.GRIP = 18
 H.DEFAULT_W, H.DEFAULT_H = 940, 660
 H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
+-- owner, 2026-10-20: "อยากให้สามารถย่อได้ จะได้ขยับไปข้างๆและดูตัวละครได้ตลอดเวลา":
+-- the compact window -- only the dress-up page, small, beside the character
+H.COMPACT_W, H.COMPACT_H = 400, 620
+H.COMPACT_MIN_W, H.COMPACT_MIN_H = 340, 420
+-- the dress-up page: slots on both sides of the character, head to feet
+H.LEFT = { "hat", "mask", "eyes", "ears", "neck", "top", "outer", "full", "back" }
+H.RIGHT = { "hands", "wrist", "rings", "waist", "bottom", "shoes", "makeup", "tail", "extra" }
+H.DIRS = { "S", "SW", "W", "NW", "N", "NE", "E", "SE" }
 H.TILE_W, H.TILE_H = 116, 128
 H.GUIDE = { "What", "Dress", "Show", "Death", "Trade", "Admin", "Soon" }
 
@@ -125,7 +136,10 @@ function H.ensurePrefs()
             elseif k == "h" then H.prefH = tonumber(v)
             elseif k == "text" then H.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
             elseif k == "muted" then H.muted = v == "1"
-            elseif k == "pinned" then H.pinned = v ~= "0" end
+            elseif k == "pinned" then H.pinned = v ~= "0"
+            elseif k == "compact" then H.compact = v == "1"
+            elseif k == "fw" then H.fullW = tonumber(v)
+            elseif k == "fh" then H.fullH = tonumber(v) end
             line = reader:readLine()
         end
     end)
@@ -143,6 +157,9 @@ function H.savePrefs()
         writer:write("text=" .. tostring(H.textStep) .. "\n")
         writer:write("pinned=" .. (H.pinned and "1" or "0") .. "\n")
         writer:write("muted=" .. (H.muted and "1" or "0") .. "\n")
+        writer:write("compact=" .. (H.compact and "1" or "0") .. "\n")
+        if H.fullW then writer:write("fw=" .. tostring(math.floor(H.fullW)) .. "\n") end
+        if H.fullH then writer:write("fh=" .. tostring(math.floor(H.fullH)) .. "\n") end
     end)
     pcall(function() writer:close() end)
 end
@@ -217,14 +234,14 @@ function Win:tabs()
     return list
 end
 
-function Win:contentTop() return H.HEADER_H + H.TAB_H + 6 end
+function Win:contentTop() return H.compact and (H.HEADER_H + 6) or (H.HEADER_H + H.TAB_H + 6) end
 
 function Win:headerButtons()
     local s = 26
     local y = math.floor((H.HEADER_H - s) / 2)
     local x = self.width - s - 8
     local b = {}
-    for _, id in ipairs({ "close", "pin", "settings", "plus", "minus" }) do
+    for _, id in ipairs({ "close", "pin", "settings", "compact", "plus", "minus" }) do
         b[#b + 1] = { id = id, x = x, y = y, w = s, h = s }
         x = x - s - 6
     end
@@ -279,7 +296,7 @@ end
 function Win:tile(x, y, e, opts)
     local c = H.C
     opts = opts or {}
-    local w, h = H.TILE_W, H.TILE_H
+    local w, h = opts.tw or H.TILE_W, opts.th or H.TILE_H
     local mx, my = self:getMouseX(), self:getMouseY()
     local r = { x = x, y = y, w = w, h = h }
     local over = inside(r, mx, my) and inside(self.clip, mx, my)
@@ -289,13 +306,18 @@ function Win:tile(x, y, e, opts)
     self:drawRectBorder(x, y, w, h, 1, bd[1], bd[2], bd[3])
     if opts.worn then self:drawRectBorder(x + 1, y + 1, w - 2, h - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
     local icon = pieceIcon(e.p)
-    local isz = 56
+    local isz = opts.isz or 56
     if icon then self:drawTextureScaled(icon, x + math.floor((w - isz) / 2), y + 10, isz, isz, 1, 1, 1, 1) end
     local font = H.small()
     local lines = wrap(LWS.pieceName(e.p), w - 12, font)
     local ty = y + 10 + isz + 6
-    for i = 1, math.min(2, #lines) do
-        local l = fit(lines[i], w - 10, font)
+    -- a label under the name (Wearing, the slot...) leaves room for one line
+    local bottom = opts.label and (h - lineH(font) - 4) or (h - 4)
+    local room = math.max(1, math.min(2, math.floor((bottom - (10 + isz + 6)) / lineH(font))))
+    for i = 1, math.min(room, #lines) do
+        local l = lines[i]
+        if i == room and #lines > room then l = l .. " " .. lines[i + 1] end  -- cut with "..."
+        l = fit(l, w - 10, font)
         text(self, l, x + math.floor((w - tw(font, l)) / 2), ty, c.text, 1, font)
         ty = ty + lineH(font)
     end
@@ -319,22 +341,24 @@ function Win:tile(x, y, e, opts)
 end
 
 -- a grid of tiles in the box; returns the height used
-function Win:grid(key, x, y, w, h, list, opts)
+function Win:grid(key, x, y, w, h, list, opts, size)
     self.tiles[key] = {}
     self.clip = { x = x, y = y, w = w, h = h }
+    local TW, TH = (size and size.w) or H.TILE_W, (size and size.h) or H.TILE_H
     self:scrolled(key, x, y, w, h, function(top)
-        local gap = 10
-        local cols = math.max(1, math.floor((w - 12 + gap) / (H.TILE_W + gap)))
+        local gap = (size and size.gap) or 10
+        local cols = math.max(1, math.floor((w - 12 + gap) / (TW + gap)))
         for i, e in ipairs(list) do
             local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
-            local tx, ty = x + col * (H.TILE_W + gap), top + row * (H.TILE_H + gap)
+            local tx, ty = x + col * (TW + gap), top + row * (TH + gap)
             local o = opts(e)
+            o.tw, o.th, o.isz = TW, TH, size and size.isz or nil
             local r = self:tile(tx, ty, e, o)
             r.e = e
             self.tiles[key][#self.tiles[key] + 1] = r
         end
         local rows = math.ceil(#list / cols)
-        return rows * (H.TILE_H + gap)
+        return rows * (TH + gap)
     end)
 end
 
@@ -350,7 +374,7 @@ function Win:prerender()
     local ix = 10
     local logo = texture(UI_DIR .. "logo.png")
     if logo then self:drawTextureScaled(logo, ix, math.floor((hh - 30) / 2), 30, 30, 1, 1, 1, 1); ix = ix + 38 end
-    text(self, fit(T("IGUI_LWS_Title"), self.width - ix - 186, font), ix, math.floor((hh - fh(font)) / 2), c.text, 1, font)
+    text(self, fit(T("IGUI_LWS_Title"), self.width - ix - 218, font), ix, math.floor((hh - fh(font)) / 2), c.text, 1, font)
     self.hoverTip = nil
     local mx, my = self:getMouseX(), self:getMouseY()
     for _, b in ipairs(self:headerButtons()) do
@@ -358,17 +382,25 @@ function Win:prerender()
         local tint = b.id == "close" and c.bad or c.border
         self:drawRect(b.x, b.y, b.w, b.h, 1, over and c.hover[1] or 1, over and c.hover[2] or 1, over and c.hover[3] or 1)
         self:drawRectBorder(b.x, b.y, b.w, b.h, 1, tint[1], tint[2], tint[3])
-        local name = b.id == "pin" and (H.pinned and "pin_on" or "pin_off") or ("icon_" .. b.id)
+        local name = b.id == "pin" and (H.pinned and "pin_on" or "pin_off")
+            or (b.id == "compact" and (H.compact and "icon_expand" or "icon_compact")) or ("icon_" .. b.id)
         local icon = texture(UI_DIR .. name .. ".png")
         local disabled = (b.id == "plus" and H.textStep >= 2) or (b.id == "minus" and H.textStep <= 0)
         if icon then self:drawTextureScaled(icon, b.x + 4, b.y + 4, b.w - 8, b.h - 8, disabled and 0.3 or 1, 1, 1, 1) end
         if over then
             local key = ({ close = "IGUI_LWS_Close", pin = H.pinned and "IGUI_LWS_Unpin" or "IGUI_LWS_Pin",
-                plus = "IGUI_LWS_TextBigger", minus = "IGUI_LWS_TextSmaller", settings = "IGUI_LWS_Settings" })[b.id]
+                plus = "IGUI_LWS_TextBigger", minus = "IGUI_LWS_TextSmaller", settings = "IGUI_LWS_Settings",
+                compact = H.compact and "IGUI_LWS_Expand" or "IGUI_LWS_Compact" })[b.id]
             self.hoverTip = { text = T(key), x = b.x - 40, y = b.y + b.h + 4 }
         end
     end
     if self.collapsed then return end
+    if H.compact then
+        self.tabBounds = {}
+        local top = hh + 2
+        self:drawRect(4, top, self.width - 8, self.height - top - 4, c.panel[4], c.panel[1], c.panel[2], c.panel[3])
+        return
+    end
     -- tabs
     self:drawRect(1, hh, self.width - 2, th, 1, 0.98, 0.975, 0.965)
     self:drawRect(0, hh + th - 1, self.width, 1, 1, c.borderDim[1], c.borderDim[2], c.borderDim[3])
@@ -418,7 +450,9 @@ function Win:render()
         self.scrollBox, self.buttons, self.tiles, self.rows = {}, {}, {}, {}
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
-        if self.tab == "dress" then self:renderDress(x, y, w, h)
+        self.avatarRect = nil
+        if H.compact then self:renderCompact(x, y, w, h)
+        elseif self.tab == "dress" then self:renderDress(x, y, w, h)
         elseif self.tab == "collection" then self:renderCollection(x, y, w, h)
         elseif self.tab == "admin" then self:renderAdmin(x, y, w, h)
         elseif self.tab == "trade" then self:renderTrade(x, y, w, h)
@@ -430,6 +464,7 @@ function Win:render()
             self:drawRect(gx + 10 - o, gy + 14 - len, 2, len, 0.9 - 0.15 * (i - 1), c.accent[1], c.accent[2], c.accent[3])
         end
     end
+    self:syncAvatar(not self.collapsed and self.avatarRect or nil)
     self:drawHoverTip()
     self:updatePin()
 end
@@ -452,67 +487,72 @@ function Win:drawHoverTip()
 end
 
 -- ----------------------------------------------------------------- tab 1: dress
-function Win:renderDress(x, y, w, h)
+-- owner, 2026-10-20: "ไม่อยากใช้รูปแบบการสวมใส่แบบเดิม มันดูไม่มีสไตล์" -- a dressing
+-- room: the character in 3D in the middle (vanilla ISUI3DModel, turn it with
+-- the arrows), the slots on both sides head to feet, a gold line from the
+-- picked slot to the stage, and a drawer under the stage with the pieces.
+
+-- one slot tile (both layouts); returns its rect
+function Win:slotTile(slot, x, y, w, h, small)
     local c = H.C
-    local leftW = math.max(250, math.min(340, math.floor(w * 0.34)))
-    local lx, ly, lw, lh = self:drawCard(x, y, leftW, h, T("IGUI_LWS_Slots"))
-    local sf = H.small()
-    local rowH = math.max(44, lineH(sf) * 2 + 10)
     local mx, my = self:getMouseX(), self:getMouseY()
-    self.clip = { x = lx, y = ly, w = lw, h = lh }
-    self:scrolled("slots", lx, ly, lw, lh, function(top)
-        local yy = top
-        for _, s in ipairs(LWS.SLOTS) do
-            local r = { x = lx, y = yy, w = lw - 10, h = rowH - 4, slot = s.id }
-            local active = self.slot == s.id
-            local over = inside(r, mx, my) and inside(self.clip, mx, my)
-            local bg = active and c.accentSoft or (over and c.hover or c.card)
-            self:drawRect(r.x, r.y, r.w, r.h, 1, bg[1], bg[2], bg[3])
-            local bd = active and c.accent or c.borderDim
-            self:drawRectBorder(r.x, r.y, r.w, r.h, 1, bd[1], bd[2], bd[3])
-            local worn = C.wornIn(s.id)
-            local isz = r.h - 8
-            local icon = worn and pieceIcon(worn.p)
-            self:drawRectBorder(r.x + 4, r.y + 4, isz, isz, 1, c.borderDim[1], c.borderDim[2], c.borderDim[3])
-            if icon then self:drawTextureScaled(icon, r.x + 5, r.y + 5, isz - 2, isz - 2, 1, 1, 1, 1) end
-            local tx = r.x + isz + 12
-            text(self, fit(LWS.slotName(s.id), r.w - isz - 20, sf), tx, r.y + 4, c.text, 1, sf)
-            local sub = worn and LWS.pieceName(worn.p) or T("IGUI_LWS_Empty")
-            if worn and C.state.show and C.state.show[s.id] then sub = sub .. " - " .. T("IGUI_LWS_ShowShort") end
-            text(self, fit(sub, r.w - isz - 20, sf), tx, r.y + 4 + lineH(sf), worn and c.accent or c.textDim, 1, sf)
-            self.rows[#self.rows + 1] = r
-            yy = yy + rowH
-        end
-        return yy - top
-    end)
-    -- right: the pieces for the slot
-    local rx = x + leftW + 8
-    local rw = w - leftW - 8
-    local cx, cy, cw, ch = self:drawCard(rx, y, rw, h, LWS.slotName(self.slot))
+    local r = { x = x, y = y, w = w, h = h, slot = slot }
+    local active = self.slot == slot
+    local over = inside(r, mx, my)
+    local worn = C.wornIn(slot)
+    local bg = active and c.accentSoft or (over and c.hover or c.card)
+    self:drawRect(x, y, w, h, 1, bg[1], bg[2], bg[3])
+    local bd = active and c.accent or (worn and c.border or c.borderDim)
+    self:drawRectBorder(x, y, w, h, 1, bd[1], bd[2], bd[3])
+    if active then self:drawRectBorder(x + 1, y + 1, w - 2, h - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
+    local sf = H.small()
+    local isz = small and (math.min(w, h) - 8) or (h - 8)
+    local ix, iy = small and (x + math.floor((w - isz) / 2)) or (x + 4), y + 4
+    self:drawRect(ix, iy, isz, isz, 1, 0.975, 0.965, 0.95)
+    local icon = worn and pieceIcon(worn.p)
+    if icon then
+        self:drawTextureScaled(icon, ix + 2, iy + 2, isz - 4, isz - 4, 1, 1, 1, 1)
+    else
+        local l = fit(LWS.slotName(slot), isz - 4, sf)
+        if small then text(self, l, ix + math.floor((isz - tw(sf, l)) / 2), iy + math.floor((isz - fh(sf)) / 2), c.borderDim, 1, sf) end
+    end
+    if worn and C.state.show and C.state.show[slot] then
+        self:drawRect(ix + isz - 9, iy + 3, 6, 6, 1, c.good[1], c.good[2], c.good[3])
+    end
+    if not small then
+        local tx = x + isz + 12
+        text(self, fit(LWS.slotName(slot), w - isz - 18, sf), tx, y + math.floor(h / 2) - lineH(sf) + 1, active and c.accent or c.text, 1, sf)
+        local sub = worn and LWS.pieceName(worn.p) or T("IGUI_LWS_Empty")
+        text(self, fit(sub, w - isz - 18, sf), tx, y + math.floor(h / 2) + 1, worn and c.text or c.textDim, worn and 0.85 or 1, sf)
+    end
+    if over then
+        self.hoverTip = { text = LWS.slotName(slot) .. "\n" .. (worn and LWS.pieceName(worn.p) or T("IGUI_LWS_Empty")), x = x + 10, y = y + h + 4 }
+    end
+    self.rows[#self.rows + 1] = r
+    return r
+end
+
+-- the pieces of the picked slot, with "real clothes" and "take off"
+function Win:drawer(x, y, w, h, size)
+    local c = H.C
+    local sf = H.small()
     local worn = C.wornIn(self.slot)
     local showing = C.state.show and C.state.show[self.slot] == true
-    local bh = lineH(sf) + 10
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, LWS.slotName(self.slot) .. (worn and ("  -  " .. LWS.pieceName(worn.p)) or ""))
+    local bh = lineH(sf) + 8
     local bx = cx
     local function btn(id, label, on, enabled)
-        local bw = math.max(120, tw(sf, label) + 24)
+        local bw = math.max(100, tw(sf, label) + 20)
         self:button(id, label, bx, cy, bw, bh, on, enabled)
-        bx = bx + bw + 8
+        bx = bx + bw + 6
     end
-    btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, true)
+    btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, #(LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}) > 0)
     btn("takeoff", T("IGUI_LWS_TakeOff"), false, worn ~= nil)
-    local hides = LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}
-    local note = (#hides == 0) and T("IGUI_LWS_HidesNothing") or (showing and T("IGUI_LWS_ShowNote") or T("IGUI_LWS_HideNote"))
-    local ny = cy + bh + 6
-    for i, l in ipairs(wrap(note, cw - 10, sf)) do
-        text(self, l, cx, ny, c.textDim, 1, sf)
-        ny = ny + lineH(sf)
-        if i >= 2 then break end
-    end
-    local gy = ny + 6
+    local gy = cy + bh + 6
     local list = C.piecesFor(self.slot)
     if #list == 0 then
         for i, l in ipairs(wrap(T("IGUI_LWS_NoPieces"), cw - 20, sf)) do
-            text(self, l, cx + 4, gy + 10 + (i - 1) * lineH(sf), c.textDim, 1, sf)
+            text(self, l, cx + 4, gy + 6 + (i - 1) * lineH(sf), c.textDim, 1, sf)
         end
         return
     end
@@ -520,7 +560,154 @@ function Win:renderDress(x, y, w, h)
         local isWorn = worn and worn.uid == e.uid
         return { worn = isWorn, label = isWorn and T("IGUI_LWS_Wearing") or nil, labelCol = c.accent,
                  tip = T(isWorn and "IGUI_LWS_ClickTakeOff" or "IGUI_LWS_ClickWear") }
-    end)
+    end, size)
+end
+
+function Win:renderDress(x, y, w, h)
+    local c = H.C
+    local mf = H.medium()
+    local gap = 6
+    local colW = math.max(170, math.min(240, math.floor(w * 0.23)))
+    local tileH = math.max(34, math.floor((h - gap * 8) / 9))
+    local rx = x + w - colW
+    local picked
+    for i, slot in ipairs(H.LEFT) do
+        local r = self:slotTile(slot, x, y + (i - 1) * (tileH + gap), colW, tileH, false)
+        if slot == self.slot then picked = { r = r, side = "L" } end
+    end
+    for i, slot in ipairs(H.RIGHT) do
+        local r = self:slotTile(slot, rx, y + (i - 1) * (tileH + gap), colW, tileH, false)
+        if slot == self.slot then picked = { r = r, side = "R" } end
+    end
+    -- the stage
+    local sx, sw = x + colW + 12, w - 2 * colW - 24
+    local drawerH = math.max(170, math.min(270, math.floor(h * 0.38)))
+    local sy, sh = y, h - drawerH - 8
+    self:drawRect(sx, sy, sw, sh, 1, 1, 1, 1)
+    for k = 0, 5 do
+        local inset = k * 10
+        self:drawRect(sx + inset, sy + sh - 34 - k * 3, sw - inset * 2, 4, 0.10 + k * 0.03, c.accent[1], c.accent[2], c.accent[3])
+    end
+    self:drawRectBorder(sx, sy, sw, sh, 1, c.border[1], c.border[2], c.border[3])
+    local name = LWS.name(self.player)
+    text(self, fit(name, sw - 20, mf), sx + math.floor((sw - tw(mf, fit(name, sw - 20, mf))) / 2), sy + 8, c.text, 1, mf)
+    local top = sy + 12 + lineH(mf)
+    self.avatarRect = { x = sx + 10, y = top, w = sw - 20, h = sh - (top - sy) - 46 }
+    if not self.avatarOK then
+        -- no 3D model: a quiet silhouette
+        local ax, aw = self.avatarRect.x, self.avatarRect.w
+        local cxm = ax + math.floor(aw / 2)
+        local ah = self.avatarRect.h
+        self:drawRect(cxm - 16, top + ah * 0.06, 32, 32, 0.25, c.textDim[1], c.textDim[2], c.textDim[3])
+        self:drawRect(cxm - 30, top + ah * 0.06 + 38, 60, ah * 0.42, 0.18, c.textDim[1], c.textDim[2], c.textDim[3])
+        self:drawRect(cxm - 26, top + ah * 0.06 + 40 + ah * 0.42, 22, ah * 0.36, 0.18, c.textDim[1], c.textDim[2], c.textDim[3])
+        self:drawRect(cxm + 4, top + ah * 0.06 + 40 + ah * 0.42, 22, ah * 0.36, 0.18, c.textDim[1], c.textDim[2], c.textDim[3])
+    end
+    local bh = lineH(H.small()) + 8
+    self:button("rotL", "<", sx + 10, sy + sh - bh - 8, 40, bh, false, true)
+    self:button("rotR", ">", sx + sw - 50, sy + sh - bh - 8, 40, bh, false, true)
+    -- a gold line from the picked slot to the stage
+    if picked then
+        local ly = picked.r.y + math.floor(picked.r.h / 2)
+        if picked.side == "L" then
+            self:drawRect(picked.r.x + picked.r.w, ly - 1, sx - (picked.r.x + picked.r.w), 2, 1, c.accent[1], c.accent[2], c.accent[3])
+        else
+            self:drawRect(sx + sw, ly - 1, picked.r.x - (sx + sw), 2, 1, c.accent[1], c.accent[2], c.accent[3])
+        end
+    end
+    self:drawer(sx, sy + sh + 8, sw, drawerH, { w = 92, h = 104, isz = 44, gap = 8 })
+end
+
+-- the compact window: the 18 slots as small tiles, then the drawer
+function Win:renderCompact(x, y, w, h)
+    local gap = 6
+    local cols = 6
+    local tile = math.max(40, math.floor((w - gap * (cols - 1)) / cols))
+    local order = {}
+    for _, s in ipairs(H.LEFT) do order[#order + 1] = s end
+    for _, s in ipairs(H.RIGHT) do order[#order + 1] = s end
+    for i, slot in ipairs(order) do
+        local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+        self:slotTile(slot, x + col * (tile + gap), y + row * (tile + gap), tile, tile, true)
+    end
+    local rows = math.ceil(#order / cols)
+    local dy = y + rows * (tile + gap) + 4
+    self:drawer(x, dy, w, y + h - dy, { w = 84, h = 98, isz = 42, gap = 6 })
+end
+
+-- ----------------------------------------------------------------- the 3D character
+function Win:syncAvatar(rect)
+    local m = self.avatar
+    if not rect then
+        if m and m:getIsVisible() then m:setVisible(false) end
+        return
+    end
+    if not m and not self.avatarTried then
+        self.avatarTried = true
+        if not ISUI3DModel then
+            log("no ISUI3DModel in this game version -- the dressing room shows a silhouette")
+            return
+        end
+        local ok, err = pcall(function()
+            m = ISUI3DModel:new(rect.x, rect.y, rect.w, rect.h)
+            m:initialise()
+            self:addChild(m)
+            m:setCharacter(self.player)
+        end)
+        if not ok or not m then
+            log("3D character could NOT be made (%s) -- silhouette instead", tostring(err))
+            m = nil
+            return
+        end
+        pcall(function() m:setState("idle") end)
+        pcall(function() m:setIsometric(false) end)
+        self.dirIndex = 1
+        pcall(function() m:setDirection(IsoDirections[H.DIRS[self.dirIndex]]) end)
+        self.avatar, self.avatarOK = m, true
+        self.avatarStateAt = C.stateAt
+        log("3D character made for the dressing room")
+    end
+    if not m then return end
+    if m:getX() ~= rect.x or m:getY() ~= rect.y then m:setX(rect.x); m:setY(rect.y) end
+    if m:getWidth() ~= rect.w or m:getHeight() ~= rect.h then m:setWidth(rect.w); m:setHeight(rect.h) end
+    if not m:getIsVisible() then m:setVisible(true) end
+    -- new clothes: show them
+    if self.avatarStateAt ~= C.stateAt or self.avatarFor ~= self.player then
+        self.avatarStateAt, self.avatarFor = C.stateAt, self.player
+        self.avatarRefreshAt = (getTimestampMs and getTimestampMs() or 0) + 400
+    end
+    local now = getTimestampMs and getTimestampMs() or 0
+    if self.avatarRefreshAt and now >= self.avatarRefreshAt then
+        self.avatarRefreshAt = nil
+        pcall(function() m:setCharacter(self.player) end)
+    end
+end
+
+function Win:turnAvatar(d)
+    local m = self.avatar
+    if not m then return end
+    self.dirIndex = ((self.dirIndex or 1) - 1 + d) % #H.DIRS + 1
+    pcall(function() m:setDirection(IsoDirections[H.DIRS[self.dirIndex]]) end)
+end
+
+function Win:toggleCompact()
+    H.compact = not H.compact
+    log("compact: %s", tostring(H.compact))
+    local core = getCore()
+    if H.compact then
+        H.fullW, H.fullH = self.width, self.height
+        self:setWidth(H.compactW or H.COMPACT_W)
+        self:setHeight(math.min(core:getScreenHeight() - 20, H.compactH or H.COMPACT_H))
+        -- to the right edge of the screen, out of the character's way
+        self:setX(math.max(0, core:getScreenWidth() - self.width - 20))
+        self.tab = "dress"
+    else
+        self:setWidth(math.max(H.MIN_W, H.fullW or H.prefW or H.DEFAULT_W))
+        self:setHeight(math.max(H.MIN_H, H.fullH or H.prefH or H.DEFAULT_H))
+        self:setX(math.max(0, math.min(self:getX(), core:getScreenWidth() - self.width - 10)))
+    end
+    self.fullH = self.height
+    H.savePrefs()
 end
 
 -- ----------------------------------------------------------------- tab 2: collection
@@ -771,6 +958,7 @@ function Win:onMouseDown(x, y)
                 elseif b.id == "pin" then self:togglePin()
                 elseif b.id == "plus" then H.stepText(1)
                 elseif b.id == "settings" then H.openSettings()
+                elseif b.id == "compact" then self:toggleCompact()
                 elseif b.id == "minus" then H.stepText(-1) end
                 return true
             end
@@ -802,7 +990,8 @@ function Win:onMouseDown(x, y)
         end
     end
     for _, r in ipairs(self.rows or {}) do
-        if inside(r, x, y) and inside(self:scrollBoxAt(x, y), x, y) then
+        -- slot tiles are not in a scroll box; the admin's owner rows are
+        if inside(r, x, y) and (r.slot or inside(self:scrollBoxAt(x, y), x, y)) then
             H.sound("UISelectListItem")
             if r.slot then self.slot = r.slot; self.scroll.pieces = 0; log("slot %s", r.slot) end
             if r.owner then
@@ -839,7 +1028,9 @@ function Win:scrollBoxAt(x, y)
 end
 
 function Win:onButton(id)
-    if id == "show" then
+    if id == "rotL" then self:turnAvatar(-1)
+    elseif id == "rotR" then self:turnAvatar(1)
+    elseif id == "show" then
         local on = not (C.state.show and C.state.show[self.slot] == true)
         C.setShow(self.slot, on)
     elseif id == "takeoff" then
@@ -901,8 +1092,10 @@ end
 
 function Win:resizeTo()
     local sw, sh = getCore():getScreenWidth(), getCore():getScreenHeight()
-    local w = math.max(H.MIN_W, math.min(sw - 20, self.resizeW + getMouseX() - self.resizeMX))
-    local h = math.max(H.MIN_H, math.min(sh - 20, self.resizeH + getMouseY() - self.resizeMY))
+    local minW, minH = H.MIN_W, H.MIN_H
+    if H.compact then minW, minH = H.COMPACT_MIN_W, H.COMPACT_MIN_H end
+    local w = math.max(minW, math.min(sw - 20, self.resizeW + getMouseX() - self.resizeMX))
+    local h = math.max(minH, math.min(sh - 20, self.resizeH + getMouseY() - self.resizeMY))
     self:setWidth(w)
     self:setHeight(h)
 end
@@ -918,7 +1111,7 @@ end
 local function endResize(self)
     if not self.resizing then return false end
     self.resizing = false
-    H.prefW, H.prefH = self.width, self.height
+    if H.compact then H.compactW, H.compactH = self.width, self.height else H.prefW, H.prefH = self.width, self.height end
     H.savePrefs()
     return true
 end
@@ -985,6 +1178,10 @@ function H.open(player, tab)
     local sw, sh = getCore():getScreenWidth(), getCore():getScreenHeight()
     local w = math.max(H.MIN_W, math.min(sw - 20, H.prefW or H.DEFAULT_W))
     local h = math.max(H.MIN_H, math.min(sh - 20, H.prefH or H.DEFAULT_H))
+    if H.compact then
+        w = math.max(H.COMPACT_MIN_W, math.min(sw - 20, H.compactW or H.COMPACT_W))
+        h = math.max(H.COMPACT_MIN_H, math.min(sh - 20, H.compactH or H.COMPACT_H))
+    end
     local win = H.window
     if not win then
         win = LWSWindowPanel:new(math.floor((sw - w) / 2), math.floor((sh - h) / 2), w, h, player)
@@ -992,7 +1189,11 @@ function H.open(player, tab)
         H.window = win
     end
     win.player = player
-    if tab and win:hasTab(tab) then win.tab = tab end
+    if tab and win:hasTab(tab) then
+        win.tab = tab
+        -- another page than dress-up: the full window
+        if tab ~= "dress" and H.compact then win:toggleCompact() end
+    end
     if win.tab == "admin" then win.adminAsked = false end
     if not win:getIsVisible() or not win.inManager then
         win:addToUIManager()
@@ -1038,21 +1239,33 @@ function H.onKey(key)
 end
 if Events and Events.OnKeyPressed then Events.OnKeyPressed.Add(H.onKey) end
 
--- right-click on yourself: "Life With Style"
-local function onWorldMenu(playerNum, context, worldObjects)
+-- right-click anywhere: "Life With Style", at the top level beside The Way To
+-- Attack's crafting (owner, 2026-10-20: "อยากให้ตู้เสื้อผ้าอยู่ในชั้นเดียวกับการคราฟ
+-- อาวุธ ไม่อยากให้ไปอยู่ในดีบัก")
+local function onWorldMenu(playerNum, context, worldObjects, test)
+    if test then return end
     local p = getSpecificPlayer(playerNum)
     if not p then return end
-    local sq = p:getCurrentSquare()
-    local mine = false
-    for _, o in ipairs(worldObjects or {}) do
-        local s = o and o.getSquare and o:getSquare()
-        if s and sq and s:getX() == sq:getX() and s:getY() == sq:getY() and s:getZ() == sq:getZ() then mine = true break end
-    end
-    if not mine then return end
-    context:addOption(T("IGUI_LWS_Menu_Open"), p, function(pl) H.open(pl, "dress") end)
+    context:addOption(T("IGUI_LWS_Menu_Open"), p, function(pl)
+        log("world right-click: open the wardrobe")
+        H.open(pl, "dress")
+    end)
 end
 if Events and Events.OnFillWorldObjectContextMenu then
     Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(onWorldMenu, "LWS"))
 end
+
+-- the HARMONIE tab of the character window: our card, also when the hub copy
+-- the game loaded is an older one without it
+local function registerCard()
+    local Hub = HARMONIE_Hub
+    if not Hub or type(Hub.CARDS) ~= "table" then log("no HARMONIE hub -- no card in the HARMONIE tab"); return end
+    for _, card in ipairs(Hub.CARDS) do if card.id == "lws" then return end end
+    table.insert(Hub.CARDS, { id = "lws", name = "IGUI_HUB_LWS_Name", desc = "IGUI_HUB_LWS_Desc",
+        present = function() return LWSWindow ~= nil and LWSWindow.open ~= nil end,
+        open = function(pl) LWSWindow.open(pl, "dress") end })
+    log("added the Life With Style card to the HARMONIE tab (the loaded hub had none)")
+end
+if Events and Events.OnGameStart then Events.OnGameStart.Add(registerCard) end
 
 HARMONIE_Scroll.install(LWSWindowPanel)
