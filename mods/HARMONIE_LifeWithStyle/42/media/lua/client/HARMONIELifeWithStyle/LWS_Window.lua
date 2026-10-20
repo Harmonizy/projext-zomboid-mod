@@ -4,11 +4,12 @@
 -- Owner, 2026-10-20: "ใช้รูปแบบหน้าต่างเหมือนม็อดอื่นๆของฉันด้วย ธีมสีขาว". Our
 -- windows' layout -- a header (title, A-, A+, settings, pin, close), big
 -- icon tabs, content in cards, a size grip, the shared scroll bar -- in white:
---   1 dress       a dressing room: the 18 slots on both sides, head to
---                 feet, the drawer with the pieces of the picked slot in
---                 the middle ("show my real clothes" / take off). The
---                 header's small-window button turns the whole window into
---                 a compact dresser beside the character.
+--   1 dress       a paper doll: 18 boxes around a figure, a dotted line
+--                 from each to its spot on the body; my pieces beside it.
+--                 Drag a piece onto its box (or click it) to wear it, drag
+--                 it off the box (or right-click the box) to take it off.
+--                 The header's small-window button turns the whole window
+--                 into a compact dresser beside the character.
 --   2 collection  every piece the player has (filter by slot)
 --   3 trade       requests and the players online; an open trade: what I
 --                 give, my collection, what they give, agree / cancel
@@ -39,11 +40,21 @@ H.MIN_W, H.MIN_H = 760, 500
 H.FOLD_DELAY_MS = 350
 -- owner, 2026-10-20: "อยากให้สามารถย่อได้ จะได้ขยับไปข้างๆและดูตัวละครได้ตลอดเวลา":
 -- the compact window -- only the dress-up page, small, beside the character
-H.COMPACT_W, H.COMPACT_H = 400, 620
-H.COMPACT_MIN_W, H.COMPACT_MIN_H = 340, 420
--- the dress-up page: slots on both sides of the character, head to feet
-H.LEFT = { "hat", "mask", "eyes", "ears", "neck", "top", "outer", "full", "back" }
-H.RIGHT = { "hands", "wrist", "rings", "waist", "bottom", "shoes", "makeup", "tail", "extra" }
+H.COMPACT_W, H.COMPACT_H = 400, 700
+H.COMPACT_MIN_W, H.COMPACT_MIN_H = 340, 480
+-- owner, 2026-10-20: "ทำให้ช่องสวมใส่เป็นช่องที่อยู่บน ui รูปคน แล้วใช้การลากไอเท็ม
+-- เข้าไปใส่ หรือคลิกที่ชองเพื่อใส่ก็ได้" -- the dress-up page is a paper doll.
+-- H.DOLL: each slot's spot on doll.png (256x512 pixels, tools/gen_lws_art.py);
+-- each column is in the order of its spots, top to bottom, so no lines cross
+H.DOLL_W, H.DOLL_H = 256, 512
+H.DOLL = {
+    hat = { 128, 26 }, ears = { 103, 58 }, neck = { 128, 94 }, outer = { 84, 130 }, top = { 116, 170 },
+    waist = { 106, 250 }, wrist = { 46, 262 }, bottom = { 110, 350 }, shoes = { 110, 488 },
+    extra = { 176, 30 }, eyes = { 140, 50 }, mask = { 146, 68 }, makeup = { 130, 80 }, back = { 172, 130 },
+    full = { 150, 210 }, hands = { 208, 288 }, rings = { 212, 306 }, tail = { 150, 312 },
+}
+H.LEFT = { "hat", "ears", "neck", "outer", "top", "waist", "wrist", "bottom", "shoes" }
+H.RIGHT = { "extra", "eyes", "mask", "makeup", "back", "full", "hands", "rings", "tail" }
 H.TILE_W, H.TILE_H = 116, 128
 H.GUIDE = { "What", "Dress", "Show", "Death", "Trade", "Admin", "Soon" }
 
@@ -455,6 +466,7 @@ function Win:render()
         elseif self.tab == "admin" then self:renderAdmin(x, y, w, h)
         elseif self.tab == "trade" then self:renderTrade(x, y, w, h)
         else self:renderGuide(x, y, w, h) end
+        if H.compact or self.tab == "dress" then self:drawDragged() end
         local c = H.C
         local gx, gy = self.width - 16, self.height - 16
         for i, len in ipairs({ 12, 8, 4 }) do
@@ -468,6 +480,7 @@ end
 
 function Win:drawHoverTip()
     local t = self.hoverTip
+    if self.dragging then return end
     if not t or not t.text or t.text == "" or t.text:find("IGUI_", 1, true) then return end
     local c = H.C
     local font = H.small()
@@ -484,126 +497,244 @@ function Win:drawHoverTip()
 end
 
 -- ----------------------------------------------------------------- tab 1: dress
--- owner, 2026-10-20: "ไม่อยากใช้รูปแบบการสวมใส่แบบเดิม มันดูไม่มีสไตล์" -- a dressing
--- room: the slots on both sides head to feet, a gold line from the picked
--- slot to the drawer in the middle with its pieces. (The 3D character of
--- 0.3.0 did not show in the game -- owner: "3d ไม่ขึ้น ไม่ต้องมีก็ได้" -- removed.)
+-- owner, 2026-10-20: "ไม่อยากใช้รูปแบบการสวมใส่แบบเดิม มันดูไม่มีสไตล์", then the
+-- paper doll (0.4.0). (The 3D character of 0.3.0 did not show in the game --
+-- owner: "3d ไม่ขึ้น ไม่ต้องมีก็ได้" -- removed.)
 
--- one slot tile (both layouts); returns its rect
-function Win:slotTile(slot, x, y, w, h, small)
+-- one box on the doll; returns its rect. While a piece is dragged its own
+-- box lights up and the others fade.
+function Win:slotBox(slot, x, y, B, dragSlot)
     local c = H.C
     local mx, my = self:getMouseX(), self:getMouseY()
-    local r = { x = x, y = y, w = w, h = h, slot = slot }
+    local r = { x = x, y = y, w = B, h = B, slot = slot }
     local active = self.slot == slot
     local over = inside(r, mx, my)
     local worn = C.wornIn(slot)
-    local bg = active and c.accentSoft or (over and c.hover or c.card)
-    self:drawRect(x, y, w, h, 1, bg[1], bg[2], bg[3])
-    local bd = active and c.accent or (worn and c.border or c.borderDim)
-    self:drawRectBorder(x, y, w, h, 1, bd[1], bd[2], bd[3])
-    if active then self:drawRectBorder(x + 1, y + 1, w - 2, h - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
+    local target = dragSlot ~= nil and dragSlot == slot
+    local bg = target and c.accentSoft or (active and c.accentSoft or (over and c.hover or c.card))
+    self:drawRect(x, y, B, B, 1, bg[1], bg[2], bg[3])
+    local bd = (target or active) and c.accent or (worn and c.border or c.borderDim)
+    self:drawRectBorder(x, y, B, B, 1, bd[1], bd[2], bd[3])
+    if target or active then self:drawRectBorder(x + 1, y + 1, B - 2, B - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
+    if target and over then self:drawRectBorder(x + 2, y + 2, B - 4, B - 4, 1, c.accent[1], c.accent[2], c.accent[3]) end
     local sf = H.small()
-    local isz = small and (math.min(w, h) - 8) or (h - 8)
-    local ix, iy = small and (x + math.floor((w - isz) / 2)) or (x + 4), y + 4
-    self:drawRect(ix, iy, isz, isz, 1, 0.975, 0.965, 0.95)
     local icon = worn and pieceIcon(worn.p)
     if icon then
-        self:drawTextureScaled(icon, ix + 2, iy + 2, isz - 4, isz - 4, 1, 1, 1, 1)
+        self:drawTextureScaled(icon, x + 4, y + 4, B - 8, B - 8, 1, 1, 1, 1)
     else
-        local l = fit(LWS.slotName(slot), isz - 4, sf)
-        if small then text(self, l, ix + math.floor((isz - tw(sf, l)) / 2), iy + math.floor((isz - fh(sf)) / 2), c.borderDim, 1, sf) end
+        -- an empty box says what goes in it, when the name fits (two lines);
+        -- a small box gets a faint + (the tip and the line to the body say it)
+        local lines = wrap(LWS.slotName(slot), B - 6, sf)
+        local fits = #lines <= 2 and #lines * lineH(sf) <= B - 4
+        for _, l in ipairs(lines) do if tw(sf, l) > B - 6 then fits = false end end
+        if fits then
+            local ty = y + math.floor((B - #lines * lineH(sf)) / 2)
+            for _, l in ipairs(lines) do
+                text(self, l, x + math.floor((B - tw(sf, l)) / 2), ty, c.textDim, 0.9, sf)
+                ty = ty + lineH(sf)
+            end
+        else
+            local ps = math.floor(B * 0.36)
+            local px, py = x + math.floor((B - ps) / 2), y + math.floor((B - ps) / 2)
+            self:drawRect(px, py + math.floor(ps / 2) - 1, ps, 2, 1, c.borderDim[1], c.borderDim[2], c.borderDim[3])
+            self:drawRect(px + math.floor(ps / 2) - 1, py, 2, ps, 1, c.borderDim[1], c.borderDim[2], c.borderDim[3])
+        end
     end
     if worn and C.state.show and C.state.show[slot] then
-        self:drawRect(ix + isz - 9, iy + 3, 6, 6, 1, c.good[1], c.good[2], c.good[3])
+        self:drawRect(x + B - 9, y + 3, 6, 6, 1, c.good[1], c.good[2], c.good[3])
     end
-    if not small then
-        local tx = x + isz + 12
-        text(self, fit(LWS.slotName(slot), w - isz - 18, sf), tx, y + math.floor(h / 2) - lineH(sf) + 1, active and c.accent or c.text, 1, sf)
-        local sub = worn and LWS.pieceName(worn.p) or T("IGUI_LWS_Empty")
-        text(self, fit(sub, w - isz - 18, sf), tx, y + math.floor(h / 2) + 1, worn and c.text or c.textDim, worn and 0.85 or 1, sf)
-    end
-    if over then
-        self.hoverTip = { text = LWS.slotName(slot) .. "\n" .. (worn and LWS.pieceName(worn.p) or T("IGUI_LWS_Empty")), x = x + 10, y = y + h + 4 }
+    if dragSlot ~= nil and not target then self:drawRect(x, y, B, B, 0.55, 0.985, 0.98, 0.972) end
+    if over and not self.dragging then
+        self.hoverTip = { text = LWS.slotName(slot) .. "\n" .. (worn and LWS.pieceName(worn.p) or T("IGUI_LWS_Empty"))
+            .. "\n" .. T(worn and "IGUI_LWS_BoxTipWorn" or "IGUI_LWS_BoxTipEmpty"), x = x + 10, y = y + B + 4 }
     end
     self.rows[#self.rows + 1] = r
     return r
 end
 
--- the pieces of the picked slot, with "real clothes" and "take off"
-function Win:drawer(x, y, w, h, size)
+-- a dotted line (small squares) from (x1, y1) to (x2, y2)
+function Win:dotted(x1, y1, x2, y2, col, a, size)
+    local dx, dy = x2 - x1, y2 - y1
+    local n = math.max(1, math.floor(math.sqrt(dx * dx + dy * dy) / 7))
+    local half = math.floor(size / 2)
+    for i = 0, n do
+        local t = i / n
+        self:drawRect(math.floor(x1 + dx * t) - half, math.floor(y1 + dy * t) - half, size, size, a, col[1], col[2], col[3])
+    end
+end
+
+-- the box size for a doll area of this height
+local function boxSize(h, w)
+    local B = math.min(60, math.floor((h - 4 * 8) / 9))
+    if w then B = math.min(B, math.floor((w - 90) / 2)) end
+    return math.max(26, B)
+end
+
+-- the doll in x, y, w, h: the picture in the middle, 9 boxes on each side,
+-- a dotted gold line from each box to its spot on the body
+function Win:drawDoll(x, y, w, h)
+    local c = H.C
+    local B = boxSize(h, w)
+    local step = (h - B) / 8
+    local dh = h
+    local dw = math.floor(dh * H.DOLL_W / H.DOLL_H)
+    local room = w - 2 * B - 24
+    if dw > room then dw = room; dh = math.floor(dw * H.DOLL_H / H.DOLL_W) end
+    local dx, dy = x + math.floor((w - dw) / 2), y + math.floor((h - dh) / 2)
+    local s = dw / H.DOLL_W
+    local doll = texture(UI_DIR .. "doll.png")
+    if doll then self:drawTextureScaled(doll, dx, dy, dw, dh, 1, 1, 1, 1) end
+    local drag = self.dragging and self.press and self.press.e
+    local dragSlot = drag and LWS.PIECE[drag.p] and LWS.PIECE[drag.p].slot or nil
+    local boxes = {}
+    for _, side in ipairs({ { H.LEFT, x }, { H.RIGHT, x + w - B } }) do
+        for i, slot in ipairs(side[1]) do
+            boxes[#boxes + 1] = { slot = slot, x = side[2], y = y + math.floor((i - 1) * step), left = side[2] == x }
+        end
+    end
+    -- the lines first, the boxes over them
+    for _, b in ipairs(boxes) do
+        local a = H.DOLL[b.slot] or { 128, 256 }
+        local ax, ay = dx + a[1] * s, dy + a[2] * s
+        local hot = b.slot == self.slot or b.slot == dragSlot
+        local worn = C.wornIn(b.slot) ~= nil
+        local col = (hot or worn) and c.accent or c.borderDim
+        self:dotted(b.left and (b.x + B) or b.x, b.y + math.floor(B / 2), ax, ay, col, hot and 1 or (worn and 0.75 or 0.6), hot and 3 or 2)
+        local d = hot and 7 or 5
+        self:drawRect(math.floor(ax - d / 2), math.floor(ay - d / 2), d, d, 1, col[1], col[2], col[3])
+    end
+    for _, b in ipairs(boxes) do self:slotBox(b.slot, b.x, b.y, B, dragSlot) end
+end
+
+-- every piece I have (or those of the picked slot); drag one onto the doll
+-- or click it; "real clothes" and "take off" for the picked slot
+function Win:wardrobe(x, y, w, h, size)
     local c = H.C
     local sf = H.small()
-    local worn = C.wornIn(self.slot)
-    local showing = C.state.show and C.state.show[self.slot] == true
-    local cx, cy, cw, ch = self:drawCard(x, y, w, h, LWS.slotName(self.slot) .. (worn and ("  -  " .. LWS.pieceName(worn.p)) or ""))
+    local all = C.piecesFor(nil)
+    local mine = C.piecesFor(self.slot)
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_LWS_CollectionTitle", tostring(#all)))
     local bh = lineH(sf) + 8
-    local bx = cx
+    local bx, by = cx, cy
     local function btn(id, label, on, enabled)
-        local bw = math.max(100, tw(sf, label) + 20)
-        self:button(id, label, bx, cy, bw, bh, on, enabled)
+        local bw = math.max(70, tw(sf, label) + 20)
+        if bx > cx and bx + bw > cx + cw then bx = cx; by = by + bh + 6 end
+        self:button(id, label, bx, by, bw, bh, on, enabled)
         bx = bx + bw + 6
     end
-    btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, #(LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}) > 0)
+    btn("dress:all", T("IGUI_LWS_All") .. " (" .. #all .. ")", self.dressFilter ~= "slot", true)
+    btn("dress:slot", LWS.slotName(self.slot) .. " (" .. #mine .. ")", self.dressFilter == "slot", true)
+    bx = bx + 8
+    local worn = C.wornIn(self.slot)
+    local showing = C.state.show and C.state.show[self.slot] == true
+    btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, worn ~= nil and #(LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}) > 0)
     btn("takeoff", T("IGUI_LWS_TakeOff"), false, worn ~= nil)
-    local gy = cy + bh + 6
-    local list = C.piecesFor(self.slot)
+    local gy = by + bh + 6
+    -- the hint at the bottom
+    local hint = wrap(T("IGUI_LWS_DollHint"), cw - 8, sf)
+    if #hint > 2 then hint = wrap(T("IGUI_LWS_DollHintShort"), cw - 8, sf) end
+    local hn = math.min(2, #hint)
+    local bottom = cy + ch - hn * lineH(sf) - 4
+    for i = 1, hn do text(self, fit(hint[i], cw - 8, sf), cx + 2, bottom + 4 + (i - 1) * lineH(sf), c.textDim, 1, sf) end
+    local list = self.dressFilter == "slot" and mine or all
     if #list == 0 then
-        for i, l in ipairs(wrap(T("IGUI_LWS_NoPieces"), cw - 20, sf)) do
+        for i, l in ipairs(wrap(T(#all == 0 and "IGUI_LWS_CollectionEmpty" or "IGUI_LWS_NoPieces"), cw - 20, sf)) do
             text(self, l, cx + 4, gy + 6 + (i - 1) * lineH(sf), c.textDim, 1, sf)
         end
         return
     end
-    self:grid("pieces", cx, gy, cw, cy + ch - gy, list, function(e)
-        local isWorn = worn and worn.uid == e.uid
-        return { worn = isWorn, label = isWorn and T("IGUI_LWS_Wearing") or nil, labelCol = c.accent,
-                 tip = T(isWorn and "IGUI_LWS_ClickTakeOff" or "IGUI_LWS_ClickWear") }
+    self:grid("wardrobe", cx, gy, cw, bottom - gy, list, function(e)
+        local slot = LWS.PIECE[e.p].slot
+        local w2 = C.wornIn(slot)
+        local isWorn = w2 and w2.uid == e.uid
+        return { worn = isWorn, label = isWorn and T("IGUI_LWS_Wearing") or LWS.slotName(slot), labelCol = isWorn and c.accent or c.textDim,
+                 tip = T(isWorn and "IGUI_LWS_DragTipWorn" or "IGUI_LWS_DragTip") }
     end, size)
 end
 
 function Win:renderDress(x, y, w, h)
-    local c = H.C
-    local gap = 6
-    local colW = math.max(170, math.min(240, math.floor(w * 0.23)))
-    local tileH = math.max(34, math.floor((h - gap * 8) / 9))
-    local rx = x + w - colW
-    local picked
-    for i, slot in ipairs(H.LEFT) do
-        local r = self:slotTile(slot, x, y + (i - 1) * (tileH + gap), colW, tileH, false)
-        if slot == self.slot then picked = { r = r, side = "L" } end
-    end
-    for i, slot in ipairs(H.RIGHT) do
-        local r = self:slotTile(slot, rx, y + (i - 1) * (tileH + gap), colW, tileH, false)
-        if slot == self.slot then picked = { r = r, side = "R" } end
-    end
-    -- the middle: the drawer of the picked slot, full height
-    local sx, sw = x + colW + 12, w - 2 * colW - 24
-    -- a gold line from the picked slot to the drawer
-    if picked then
-        local ly = picked.r.y + math.floor(picked.r.h / 2)
-        if picked.side == "L" then
-            self:drawRect(picked.r.x + picked.r.w, ly - 1, sx - (picked.r.x + picked.r.w), 2, 1, c.accent[1], c.accent[2], c.accent[3])
-        else
-            self:drawRect(sx + sw, ly - 1, picked.r.x - (sx + sw), 2, 1, c.accent[1], c.accent[2], c.accent[3])
-        end
-    end
-    self:drawer(sx, y, sw, h)
+    local dollW = math.min(math.floor(w * 0.56), math.floor(h * H.DOLL_W / H.DOLL_H) + 2 * boxSize(h) + 40)
+    local dx, dy, dw, dh = self:drawCard(x, y, dollW, h, T("IGUI_LWS_Tab_dress"))
+    self:drawDoll(dx, dy, dw, dh)
+    self:wardrobe(x + dollW + 8, y, w - dollW - 8, h)
 end
 
--- the compact window: the 18 slots as small tiles, then the drawer
+-- the compact window: the doll on top, the pieces under it
 function Win:renderCompact(x, y, w, h)
-    local gap = 6
-    local cols = 6
-    local tile = math.max(40, math.floor((w - gap * (cols - 1)) / cols))
-    local order = {}
-    for _, s in ipairs(H.LEFT) do order[#order + 1] = s end
-    for _, s in ipairs(H.RIGHT) do order[#order + 1] = s end
-    for i, slot in ipairs(order) do
-        local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
-        self:slotTile(slot, x + col * (tile + gap), y + row * (tile + gap), tile, tile, true)
+    local dh = math.floor(h * 0.58)
+    self:drawDoll(x, y, w, dh)
+    self:wardrobe(x, y + dh + 8, w, h - dh - 8, { w = 84, h = 98, isz = 42, gap = 6 })
+end
+
+-- ----------------------------------------------------------------- drag and drop
+-- press on a piece (or a worn box) and move: it follows the mouse; let go on
+-- its box to wear it, anywhere else from a box to take it off. No move = a click.
+H.DRAG_PX = 5
+
+function Win:dragMove()
+    local p = self.press
+    if not p or self.dragging or not p.e then return end
+    local dx, dy = self:getMouseX() - p.x, self:getMouseY() - p.y
+    if dx * dx + dy * dy >= H.DRAG_PX * H.DRAG_PX then
+        self.dragging = true
+        log("drag %s (%s)", tostring(p.e.p), p.box and ("from the " .. p.box .. " box") or "from the wardrobe")
     end
-    local rows = math.ceil(#order / cols)
-    local dy = y + rows * (tile + gap) + 4
-    self:drawer(x, dy, w, y + h - dy, { w = 84, h = 98, isz = 42, gap = 6 })
+end
+
+function Win:boxAt(x, y)
+    for _, r in ipairs(self.rows or {}) do if r.slot and inside(r, x, y) then return r end end
+    return nil
+end
+
+function Win:wearPiece(e)
+    local slot = LWS.PIECE[e.p] and LWS.PIECE[e.p].slot
+    if not slot then return end
+    self.slot = slot
+    local worn = C.wornIn(slot)
+    if worn and worn.uid == e.uid then return end
+    C.wear(slot, e.uid)
+end
+
+function Win:drop(p, x, y)
+    local box = self:boxAt(x, y)
+    local slot = LWS.PIECE[p.e.p] and LWS.PIECE[p.e.p].slot
+    if box then
+        if box.slot == p.box then return end
+        if box.slot == slot then
+            log("dropped %s on the %s box: wear", tostring(p.e.p), tostring(slot))
+            self:wearPiece(p.e)
+        else
+            log("dropped %s on the %s box: wrong slot (it goes in %s)", tostring(p.e.p), tostring(box.slot), tostring(slot))
+            C.say(T("IGUI_LWS_Msg_WrongSlot", LWS.pieceName(p.e.p), LWS.slotName(slot)))
+        end
+    elseif p.box then
+        log("dragged %s off the %s box: take off", tostring(p.e.p), p.box)
+        C.takeOff(p.box)
+    end
+end
+
+function Win:click(p)
+    if p.box then
+        self.slot = p.box
+        self.dressFilter = "slot"
+        self.scroll.wardrobe = 0
+        log("slot %s", p.box)
+        return
+    end
+    local slot = LWS.PIECE[p.e.p] and LWS.PIECE[p.e.p].slot
+    local worn = slot and C.wornIn(slot)
+    if worn and worn.uid == p.e.uid then self.slot = slot; C.takeOff(slot) else self:wearPiece(p.e) end
+end
+
+-- the dragged piece under the mouse
+function Win:drawDragged()
+    if not self.dragging or not self.press or not self.press.e then return end
+    local icon = pieceIcon(self.press.e.p)
+    local mx, my = self:getMouseX(), self:getMouseY()
+    local c = H.C
+    self:drawRect(mx - 24, my - 24, 48, 48, 0.85, 1, 1, 1)
+    self:drawRectBorder(mx - 24, my - 24, 48, 48, 1, c.accent[1], c.accent[2], c.accent[3])
+    if icon then self:drawTextureScaled(icon, mx - 20, my - 20, 40, 40, 0.95, 1, 1, 1) end
 end
 
 function Win:toggleCompact()
@@ -909,7 +1040,7 @@ function Win:onMouseDown(x, y)
         -- slot tiles are not in a scroll box; the admin's owner rows are
         if inside(r, x, y) and (r.slot or inside(self:scrollBoxAt(x, y), x, y)) then
             H.sound("UISelectListItem")
-            if r.slot then self.slot = r.slot; self.scroll.pieces = 0; log("slot %s", r.slot) end
+            if r.slot then self.press = { box = r.slot, e = C.wornIn(r.slot), x = x, y = y }; return true end
             if r.owner then
                 self.adminOwner = r.owner
                 self.scroll.ownerPieces = 0
@@ -924,7 +1055,7 @@ function Win:onMouseDown(x, y)
             for _, r in ipairs(list) do
                 if inside(r, x, y) then
                     H.sound("UISelectListItem")
-                    self:onTile(key, r, x, y)
+                    if key == "wardrobe" then self.press = { e = r.e, x = x, y = y } else self:onTile(key, r, x, y) end
                     return true
                 end
             end
@@ -961,6 +1092,9 @@ function Win:onButton(id)
         C.tradeCancel()
     elseif id == "refresh" then
         C.send("AdminList", { owner = self.adminOwner })
+    elseif id == "dress:all" or id == "dress:slot" then
+        self.dressFilter = id:sub(7)
+        self.scroll.wardrobe = 0
     elseif id:sub(1, 5) == "chip:" then
         self.filter = id:sub(6)
         self.scroll.collection = 0
@@ -969,11 +1103,9 @@ end
 
 function Win:onTile(key, r, x, y)
     local e = r.e
-    if key == "pieces" then
-        local worn = C.wornIn(self.slot)
-        if worn and worn.uid == e.uid then C.takeOff(self.slot) else C.wear(self.slot, e.uid) end
-    elseif key == "collection" then
+    if key == "collection" then
         self.slot = LWS.PIECE[e.p].slot
+        self.dressFilter = "slot"
         self.tab = "dress"
         log("collection -> dress, slot %s", self.slot)
     elseif key == "ownerPieces" then
@@ -1016,10 +1148,12 @@ end
 
 function Win:onMouseMove(dx, dy)
     if self.resizing then self:resizeTo() return end
+    if self.press then self:dragMove() return end
     ISPanel.onMouseMove(self, dx, dy)
 end
 function Win:onMouseMoveOutside(dx, dy)
     if self.resizing then self:resizeTo() return end
+    if self.press then self:dragMove() return end
     ISPanel.onMouseMoveOutside(self, dx, dy)
 end
 local function endResize(self)
@@ -1029,12 +1163,32 @@ local function endResize(self)
     H.savePrefs()
     return true
 end
+-- the end of a press: a drop when it moved, else a click
+local function endPress(self, x, y, outside)
+    local p = self.press
+    if not p then return false end
+    local dragged = self.dragging
+    self.press, self.dragging = nil, false
+    if dragged then
+        if outside then
+            -- let go outside the window: a worn piece comes off, a wardrobe piece goes back
+            if p.box then log("dragged %s out of the window: take off", tostring(p.e and p.e.p)); C.takeOff(p.box) end
+        else
+            self:drop(p, x, y)
+        end
+    elseif not outside then
+        self:click(p)
+    end
+    return true
+end
 function Win:onMouseUp(x, y)
     if endResize(self) then return end
+    if endPress(self, x, y, false) then return end
     ISPanel.onMouseUp(self, x, y)
 end
 function Win:onMouseUpOutside(x, y)
     if endResize(self) then return end
+    if endPress(self, x, y, true) then return end
     ISPanel.onMouseUpOutside(self, x, y)
 end
 function Win:onRightMouseDown(x, y)
@@ -1042,6 +1196,13 @@ function Win:onRightMouseDown(x, y)
         self:setWidth(H.DEFAULT_W); self:setHeight(H.DEFAULT_H)
         H.prefW, H.prefH = nil, nil
         H.savePrefs()
+        return true
+    end
+    -- right-click a box on the doll: take it off
+    local box = not self.collapsed and (H.compact or self.tab == "dress") and self:boxAt(x, y)
+    if box then
+        self.slot = box.slot
+        if C.wornIn(box.slot) then H.sound("UISelectListItem"); log("right-click the %s box: take off", box.slot); C.takeOff(box.slot) end
         return true
     end
     return false
