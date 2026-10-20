@@ -207,6 +207,10 @@ Hub.CARDS = {
       open = function(p)
           if HMLWorkbench and HMLWorkbench.open then HMLWorkbench.open(p, nil, true) else MFSInspectFix.open(p) end
       end },
+    -- 2026-10-20: HARMONIE - Life With Style, the wardrobe
+    { id = "lws", name = "IGUI_HUB_LWS_Name", desc = "IGUI_HUB_LWS_Desc",
+      present = function() return LWSWindow ~= nil and LWSWindow.open ~= nil end,
+      open = function(p) LWSWindow.open(p, "dress") end },
 }
 
 function Hub.openCard(card, player)

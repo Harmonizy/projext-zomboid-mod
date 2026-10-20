@@ -142,7 +142,10 @@ local function icon(name)
 end
 
 local function shadowText(panel, s, x, y, c, a, font)
-    panel:drawText(s, x + 1, y + 1, 0, 0, 0, (a or 1) * 0.8, font)
+    -- a light theme (theme.noShadow, e.g. Life With Style's white) has no dark shadow
+    if not (panel.theme and panel.theme.noShadow) then
+        panel:drawText(s, x + 1, y + 1, 0, 0, 0, (a or 1) * 0.8, font)
+    end
     panel:drawText(s, x, y, c[1], c[2], c[3], a or 1, font)
 end
 
