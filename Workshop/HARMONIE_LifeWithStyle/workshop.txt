@@ -1,4 +1,5 @@
 version=1
+id=3823386545
 title=HARMONIE - Life With Style
 description=A wardrobe for your server's fashion.
 description=
@@ -13,5 +14,5 @@ description=
 description=White wardrobe window: dress up, collection, trade, admin page, guide. English and Thai built in.
 description=
 description=Mod ID: HARMONIE_LifeWithStyle
-tags=Build 42;Clothing/Armor;Multiplayer;Interface
+tags=Build 42;Clothing/Armor;Interface;Multiplayer
 visibility=unlisted
