@@ -80,6 +80,19 @@ def tab_trade(path):
     done(img, 128, path)
 
 
+def icon_compact(path, out):
+    """two arrows: inward (make small) or outward (make big)"""
+    img, d, s = canvas(64)
+    for (x0, y0, x1, y1) in ((16, 16, 52, 52), (112, 112, 76, 76)):
+        if out:
+            x0, y0, x1, y1 = x1, y1, x0, y0
+        d.line([(x0 * s, y0 * s), (x1 * s, y1 * s)], fill=INK, width=int(12 * s))
+        sx = 1 if x1 > x0 else -1
+        d.polygon([(x1 * s, y1 * s), ((x1 - sx * 26) * s, y1 * s), (x1 * s, (y1 - sx * 26) * s)], fill=INK)
+    d.rectangle([52 * s, 52 * s, 76 * s, 76 * s], outline=GOLD, width=int(8 * s))
+    done(img, 64, path)
+
+
 def logo(path):
     img, d, s = canvas()
     d.ellipse([6 * s, 6 * s, 122 * s, 122 * s], fill=WHITE, outline=GOLD, width=int(6 * s))
@@ -176,6 +189,8 @@ if __name__ == "__main__":
     tab_admin(os.path.join(UI, "tab_admin.png"))
     tab_guide(os.path.join(UI, "tab_guide.png"))
     tab_trade(os.path.join(UI, "tab_trade.png"))
+    icon_compact(os.path.join(UI, "icon_compact.png"), False)
+    icon_compact(os.path.join(UI, "icon_expand.png"), True)
     logo(os.path.join(UI, "logo.png"))
     icon_close(os.path.join(UI, "icon_close.png"))
     icon_plus(os.path.join(UI, "icon_plus.png"))

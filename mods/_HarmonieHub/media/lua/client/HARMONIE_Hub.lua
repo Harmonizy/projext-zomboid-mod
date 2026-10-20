@@ -318,6 +318,7 @@ function P:render()
     if shown == 0 then
         self:drawText(T("IGUI_HUB_None"), pad, y, COL.dim[1], COL.dim[2], COL.dim[3], 1, sf); y = y + th(sf) + 8
     end
+    logOnce("cards:" .. tostring(shown), "HARMONIE tab: %d window card(s) shown", shown)
     self.wantH = y + 6
 end
 

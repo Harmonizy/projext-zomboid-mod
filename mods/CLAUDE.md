@@ -46,6 +46,10 @@
 - `next()` does not exist in Kahlua (the game's Lua): "Object tried to
   call nil" every tick (Life With Style 0.2.0). Test emptiness with
   `for _ in pairs(t) do ... end`. The lupa mock tests set `next = nil`.
+- `local T = { f = function() return T.x end }`: inside its own
+  constructor the local T does not exist yet, so T is the GLOBAL (nil) --
+  "attempted index of non-table" (UIKit HMFont, settings window 2026-10-20).
+  Declare first: `local T; T = { ... }`.
 - Never `transmitModData()` from a client; MP stats and zombie health live
   on the server (`isClient()` = remote client).
 - A PR that is merged is finished: check its state before pushing more.

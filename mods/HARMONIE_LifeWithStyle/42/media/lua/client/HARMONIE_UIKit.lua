@@ -121,7 +121,11 @@ end
 
 -- ================================================================ settings window
 -- Home Medic's windows use the game's fonts as they are
-local HMFont = {
+-- 2026-10-20 fix: the functions below read HMFont.step, so the local must
+-- exist BEFORE the table is built ("local HMFont = { ... HMFont.step ... }"
+-- reads a global HMFont that is nil: "attempted index: step of non-table")
+local HMFont
+HMFont = {
     -- the text size step of the window that opened it (0..2)
     step = 0,
     small = function() return ({ UIFont.Small, UIFont.Medium, UIFont.Large })[1 + HMFont.step] or UIFont.Small end,

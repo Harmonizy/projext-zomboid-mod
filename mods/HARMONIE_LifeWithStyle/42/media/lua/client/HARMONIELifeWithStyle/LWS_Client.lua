@@ -60,7 +60,11 @@ function C.handle(command, args)
         C.trade = args
         C.asks[tostring(args.partner)] = nil
         if LWSWindow and LWSWindow.open and not (LWSWindow.isOpen and LWSWindow.isOpen()) then LWSWindow.open(me(), "trade") end
-        if LWSWindow and LWSWindow.window then LWSWindow.window.tab = "trade" end
+        if LWSWindow and LWSWindow.window then
+            -- a trade needs the full window
+            if LWSWindow.compact and LWSWindow.window.toggleCompact then LWSWindow.window:toggleCompact() end
+            LWSWindow.window.tab = "trade"
+        end
     elseif command == "TradeEnd" then
         if C.trade then
             log("trade ended: %s", tostring(args.reason))
