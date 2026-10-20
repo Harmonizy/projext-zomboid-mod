@@ -235,6 +235,12 @@ function TR.handle(player, command, args)
 end
 
 -- ------------------------------------------------------------- upkeep
+-- Kahlua (the game's Lua) has no next(): "Object tried to call nil" (2026-10-20)
+local function isEmpty(t)
+    for _ in pairs(t or {}) do return false end
+    return true
+end
+
 local nextAt = 0
 function TR.tick()
     local t = now()
@@ -246,7 +252,7 @@ function TR.tick()
     end
     for to, list in pairs(TR.asks) do
         for from, at in pairs(list) do if t - at > TR.ASK_SECONDS * 1000 then list[from] = nil end end
-        if next(list) == nil then TR.asks[to] = nil end
+        if isEmpty(list) then TR.asks[to] = nil end
     end
 end
 

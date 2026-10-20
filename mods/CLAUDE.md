@@ -43,6 +43,9 @@
   from `tags_index.txt`), or use `ItemTag[...]` / `ItemTag.get(ResourceLocation.of(...))`.
 - `getText(key, ...)` with fewer arguments than the text's `%N` ("Missing
   arguments"). No bare `%` in translations.
+- `next()` does not exist in Kahlua (the game's Lua): "Object tried to
+  call nil" every tick (Life With Style 0.2.0). Test emptiness with
+  `for _ in pairs(t) do ... end`. The lupa mock tests set `next = nil`.
 - Never `transmitModData()` from a client; MP stats and zombie health live
   on the server (`isClient()` = remote client).
 - A PR that is merged is finished: check its state before pushing more.
