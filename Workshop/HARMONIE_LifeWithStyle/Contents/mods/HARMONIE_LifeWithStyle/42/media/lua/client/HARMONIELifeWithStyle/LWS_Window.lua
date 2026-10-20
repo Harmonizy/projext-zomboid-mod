@@ -4,9 +4,9 @@
 -- Owner, 2026-10-20: "ใช้รูปแบบหน้าต่างเหมือนม็อดอื่นๆของฉันด้วย ธีมสีขาว". Our
 -- windows' layout -- a header (title, A-, A+, settings, pin, close), big
 -- icon tabs, content in cards, a size grip, the shared scroll bar -- in white:
---   1 dress       a dressing room: the character in 3D in the middle, the
---                 18 slots on both sides, a drawer with the pieces of the
---                 picked slot ("show my real clothes" / take off). The
+--   1 dress       a dressing room: the 18 slots on both sides, head to
+--                 feet, the drawer with the pieces of the picked slot in
+--                 the middle ("show my real clothes" / take off). The
 --                 header's small-window button turns the whole window into
 --                 a compact dresser beside the character.
 --   2 collection  every piece the player has (filter by slot)
@@ -44,7 +44,6 @@ H.COMPACT_MIN_W, H.COMPACT_MIN_H = 340, 420
 -- the dress-up page: slots on both sides of the character, head to feet
 H.LEFT = { "hat", "mask", "eyes", "ears", "neck", "top", "outer", "full", "back" }
 H.RIGHT = { "hands", "wrist", "rings", "waist", "bottom", "shoes", "makeup", "tail", "extra" }
-H.DIRS = { "S", "SW", "W", "NW", "N", "NE", "E", "SE" }
 H.TILE_W, H.TILE_H = 116, 128
 H.GUIDE = { "What", "Dress", "Show", "Death", "Trade", "Admin", "Soon" }
 
@@ -450,7 +449,6 @@ function Win:render()
         self.scrollBox, self.buttons, self.tiles, self.rows = {}, {}, {}, {}
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
-        self.avatarRect = nil
         if H.compact then self:renderCompact(x, y, w, h)
         elseif self.tab == "dress" then self:renderDress(x, y, w, h)
         elseif self.tab == "collection" then self:renderCollection(x, y, w, h)
@@ -464,7 +462,6 @@ function Win:render()
             self:drawRect(gx + 10 - o, gy + 14 - len, 2, len, 0.9 - 0.15 * (i - 1), c.accent[1], c.accent[2], c.accent[3])
         end
     end
-    self:syncAvatar(not self.collapsed and self.avatarRect or nil)
     self:drawHoverTip()
     self:updatePin()
 end
@@ -488,9 +485,9 @@ end
 
 -- ----------------------------------------------------------------- tab 1: dress
 -- owner, 2026-10-20: "ไม่อยากใช้รูปแบบการสวมใส่แบบเดิม มันดูไม่มีสไตล์" -- a dressing
--- room: the character in 3D in the middle (vanilla ISUI3DModel, turn it with
--- the arrows), the slots on both sides head to feet, a gold line from the
--- picked slot to the stage, and a drawer under the stage with the pieces.
+-- room: the slots on both sides head to feet, a gold line from the picked
+-- slot to the drawer in the middle with its pieces. (The 3D character of
+-- 0.3.0 did not show in the game -- owner: "3d ไม่ขึ้น ไม่ต้องมีก็ได้" -- removed.)
 
 -- one slot tile (both layouts); returns its rect
 function Win:slotTile(slot, x, y, w, h, small)
@@ -565,7 +562,6 @@ end
 
 function Win:renderDress(x, y, w, h)
     local c = H.C
-    local mf = H.medium()
     local gap = 6
     local colW = math.max(170, math.min(240, math.floor(w * 0.23)))
     local tileH = math.max(34, math.floor((h - gap * 8) / 9))
@@ -579,34 +575,9 @@ function Win:renderDress(x, y, w, h)
         local r = self:slotTile(slot, rx, y + (i - 1) * (tileH + gap), colW, tileH, false)
         if slot == self.slot then picked = { r = r, side = "R" } end
     end
-    -- the stage
+    -- the middle: the drawer of the picked slot, full height
     local sx, sw = x + colW + 12, w - 2 * colW - 24
-    local drawerH = math.max(170, math.min(270, math.floor(h * 0.38)))
-    local sy, sh = y, h - drawerH - 8
-    self:drawRect(sx, sy, sw, sh, 1, 1, 1, 1)
-    for k = 0, 5 do
-        local inset = k * 10
-        self:drawRect(sx + inset, sy + sh - 34 - k * 3, sw - inset * 2, 4, 0.10 + k * 0.03, c.accent[1], c.accent[2], c.accent[3])
-    end
-    self:drawRectBorder(sx, sy, sw, sh, 1, c.border[1], c.border[2], c.border[3])
-    local name = LWS.name(self.player)
-    text(self, fit(name, sw - 20, mf), sx + math.floor((sw - tw(mf, fit(name, sw - 20, mf))) / 2), sy + 8, c.text, 1, mf)
-    local top = sy + 12 + lineH(mf)
-    self.avatarRect = { x = sx + 10, y = top, w = sw - 20, h = sh - (top - sy) - 46 }
-    if not self.avatarOK then
-        -- no 3D model: a quiet silhouette
-        local ax, aw = self.avatarRect.x, self.avatarRect.w
-        local cxm = ax + math.floor(aw / 2)
-        local ah = self.avatarRect.h
-        self:drawRect(cxm - 16, top + ah * 0.06, 32, 32, 0.25, c.textDim[1], c.textDim[2], c.textDim[3])
-        self:drawRect(cxm - 30, top + ah * 0.06 + 38, 60, ah * 0.42, 0.18, c.textDim[1], c.textDim[2], c.textDim[3])
-        self:drawRect(cxm - 26, top + ah * 0.06 + 40 + ah * 0.42, 22, ah * 0.36, 0.18, c.textDim[1], c.textDim[2], c.textDim[3])
-        self:drawRect(cxm + 4, top + ah * 0.06 + 40 + ah * 0.42, 22, ah * 0.36, 0.18, c.textDim[1], c.textDim[2], c.textDim[3])
-    end
-    local bh = lineH(H.small()) + 8
-    self:button("rotL", "<", sx + 10, sy + sh - bh - 8, 40, bh, false, true)
-    self:button("rotR", ">", sx + sw - 50, sy + sh - bh - 8, 40, bh, false, true)
-    -- a gold line from the picked slot to the stage
+    -- a gold line from the picked slot to the drawer
     if picked then
         local ly = picked.r.y + math.floor(picked.r.h / 2)
         if picked.side == "L" then
@@ -615,7 +586,7 @@ function Win:renderDress(x, y, w, h)
             self:drawRect(sx + sw, ly - 1, picked.r.x - (sx + sw), 2, 1, c.accent[1], c.accent[2], c.accent[3])
         end
     end
-    self:drawer(sx, sy + sh + 8, sw, drawerH, { w = 92, h = 104, isz = 44, gap = 8 })
+    self:drawer(sx, y, sw, h)
 end
 
 -- the compact window: the 18 slots as small tiles, then the drawer
@@ -633,61 +604,6 @@ function Win:renderCompact(x, y, w, h)
     local rows = math.ceil(#order / cols)
     local dy = y + rows * (tile + gap) + 4
     self:drawer(x, dy, w, y + h - dy, { w = 84, h = 98, isz = 42, gap = 6 })
-end
-
--- ----------------------------------------------------------------- the 3D character
-function Win:syncAvatar(rect)
-    local m = self.avatar
-    if not rect then
-        if m and m:getIsVisible() then m:setVisible(false) end
-        return
-    end
-    if not m and not self.avatarTried then
-        self.avatarTried = true
-        if not ISUI3DModel then
-            log("no ISUI3DModel in this game version -- the dressing room shows a silhouette")
-            return
-        end
-        local ok, err = pcall(function()
-            m = ISUI3DModel:new(rect.x, rect.y, rect.w, rect.h)
-            m:initialise()
-            self:addChild(m)
-            m:setCharacter(self.player)
-        end)
-        if not ok or not m then
-            log("3D character could NOT be made (%s) -- silhouette instead", tostring(err))
-            m = nil
-            return
-        end
-        pcall(function() m:setState("idle") end)
-        pcall(function() m:setIsometric(false) end)
-        self.dirIndex = 1
-        pcall(function() m:setDirection(IsoDirections[H.DIRS[self.dirIndex]]) end)
-        self.avatar, self.avatarOK = m, true
-        self.avatarStateAt = C.stateAt
-        log("3D character made for the dressing room")
-    end
-    if not m then return end
-    if m:getX() ~= rect.x or m:getY() ~= rect.y then m:setX(rect.x); m:setY(rect.y) end
-    if m:getWidth() ~= rect.w or m:getHeight() ~= rect.h then m:setWidth(rect.w); m:setHeight(rect.h) end
-    if not m:getIsVisible() then m:setVisible(true) end
-    -- new clothes: show them
-    if self.avatarStateAt ~= C.stateAt or self.avatarFor ~= self.player then
-        self.avatarStateAt, self.avatarFor = C.stateAt, self.player
-        self.avatarRefreshAt = (getTimestampMs and getTimestampMs() or 0) + 400
-    end
-    local now = getTimestampMs and getTimestampMs() or 0
-    if self.avatarRefreshAt and now >= self.avatarRefreshAt then
-        self.avatarRefreshAt = nil
-        pcall(function() m:setCharacter(self.player) end)
-    end
-end
-
-function Win:turnAvatar(d)
-    local m = self.avatar
-    if not m then return end
-    self.dirIndex = ((self.dirIndex or 1) - 1 + d) % #H.DIRS + 1
-    pcall(function() m:setDirection(IsoDirections[H.DIRS[self.dirIndex]]) end)
 end
 
 function Win:toggleCompact()
@@ -1028,9 +944,7 @@ function Win:scrollBoxAt(x, y)
 end
 
 function Win:onButton(id)
-    if id == "rotL" then self:turnAvatar(-1)
-    elseif id == "rotR" then self:turnAvatar(1)
-    elseif id == "show" then
+    if id == "show" then
         local on = not (C.state.show and C.state.show[self.slot] == true)
         C.setShow(self.slot, on)
     elseif id == "takeoff" then
