@@ -1,0 +1,7 @@
+{
+    "Sandbox_HARMONIE_LifeWithStyle": "HARMONIE - Life With Style",
+    "Sandbox_LifeWithStyle_TradeEnabled": "Players can trade fashion",
+    "Sandbox_LifeWithStyle_TradeEnabled_tooltip": "Lets players trade Life With Style pieces with each other in the wardrobe window.",
+    "Sandbox_LifeWithStyle_TradeMaxDistance": "Trade distance (tiles)",
+    "Sandbox_LifeWithStyle_TradeMaxDistance_tooltip": "How close two players must be to trade. 0 = anywhere on the server."
+}

@@ -972,3 +972,21 @@ option HomeMedic.DiagnosisRequired
     page = HARMONIE_HomeMedic,
     translation = HomeMedic_DiagnosisRequired,
 }
+
+option HomeMedic.LethalConditions
+{
+    type = boolean,
+    default = false,
+    page = HARMONIE_HomeMedic,
+    translation = HomeMedic_LethalConditions,
+}
+
+option HomeMedic.NonLethalHealthFloor
+{
+    type = integer,
+    min = 5,
+    max = 60,
+    default = 40,
+    page = HARMONIE_HomeMedic,
+    translation = HomeMedic_NonLethalHealthFloor,
+}

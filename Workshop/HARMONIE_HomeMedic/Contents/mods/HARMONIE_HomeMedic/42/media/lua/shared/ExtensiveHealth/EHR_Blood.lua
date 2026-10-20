@@ -1023,6 +1023,8 @@ function EHR.Blood.ApplyEffects(player, data)
             if bloodPercent <= 0.05 then
                 -- Below 5%: Immediate death (critical - always say)
                 EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blood_Collapse"))
+                -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+                if EHR.Lethal and EHR.Lethal.spare(player, "Exsanguination (total blood loss)") then return end
                 EHR.Log("DEATH: Blood volume critical (< 5%) - immediate death")
                 if EHR.RecordDeathCause then
                     EHR.RecordDeathCause(player, "Exsanguination (total blood loss)")
@@ -1032,6 +1034,7 @@ function EHR.Blood.ApplyEffects(player, data)
                 -- Below 20%: High death chance per tick (1 in 50)
                 if ZombRand(50) < 1 then
                     EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blood_HeartStops"))
+                    if EHR.Lethal and EHR.Lethal.spare(player, "Hypovolemic shock") then return end  -- HARMONIE (2026-10-12)
                     EHR.Log("DEATH: Blood volume critical (< 20%) - cardiac arrest")
                     if EHR.RecordDeathCause then
                         EHR.RecordDeathCause(player, "Hypovolemic shock")
@@ -1274,6 +1277,14 @@ function EHR.Blood.ApplyHemodilutionDeath(player, salineRatio)
         stats:set(CharacterStat.ENDURANCE, 0)  -- No endurance
     end
 
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and not EHR.Lethal.allowed() then
+        local bd = player:getBodyDamage()
+        local cur = bd and bd:getOverallBodyHealth() or 100
+        if bd then bd:setOverallBodyHealth(math.max(EHR.Lethal.floor(), math.min(cur, cur - 2))) end
+        if cur - 2 < EHR.Lethal.floor() then EHR.Lethal.spare(player, "Hemodilution - brain oxygen deprivation from excess IV saline") end
+        return
+    end
     -- DEATH CAUSE TRACKING: Record cause before dealing fatal damage
     EHR.RecordDeathCause(player, string.format("Hemodilution (%.1f%% saline ratio) - brain oxygen deprivation from excess IV saline", salineRatio * 100))
 

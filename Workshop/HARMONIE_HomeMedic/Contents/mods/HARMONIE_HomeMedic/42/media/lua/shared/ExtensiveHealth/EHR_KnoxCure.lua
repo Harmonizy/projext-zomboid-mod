@@ -961,6 +961,11 @@ function EHR.KnoxCure.UseGeneTherapy(player, item)
         return "cured"
     else
         -- FAILURE - Incompatible, death
+        -- HARMONIE (2026-10-12): a rejection knocks you down instead (sandbox HomeMedic.LethalConditions)
+        if EHR.Lethal and EHR.Lethal.spare(player, "Gene Therapy Rejection") then
+            EHR.Dialogue.SayStageChange(player, "*choking* No... it's rejecting... can't breathe...")
+            return "rejected"
+        end
         EHR.RecordDeathCause(player, "Gene Therapy Rejection - incompatible genetic markers caused fatal immune response")
 
         EHR.Dialogue.SayStageChange(player, "*choking* No... it's rejecting... can't breathe...")

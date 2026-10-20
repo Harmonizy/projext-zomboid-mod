@@ -193,6 +193,7 @@ local function EHR_SepsisClampBodyHealth(player, maxHealth)
     if not okHealth or not currentHealth then return nil end
 
     local healthCap = math.max(0, math.min(100, tonumber(maxHealth) or 100))
+    if EHR.Lethal then healthCap = EHR.Lethal.clampHealth(player, healthCap) end  -- HARMONIE: not under the floor
     if currentHealth <= healthCap then
         return currentHealth
     end
@@ -231,6 +232,11 @@ local function EHR_SepsisApplyBodyHealthDamage(player, amount, cause)
         return bodyDamage:getOverallBodyHealth()
     end)
     if not okHealth or not currentHealth then return nil end
+    -- HARMONIE (2026-10-12): damage stops at the sandbox health floor (HM_NonLethal.lua)
+    if EHR.Lethal and not EHR.Lethal.allowed() then
+        amount = math.min(amount, math.max(0, currentHealth - EHR.Lethal.floor()))
+        if amount <= 0 then return currentHealth end
+    end
 
     local reduced = false
     if bodyDamage.ReduceGeneralHealth then
@@ -753,6 +759,8 @@ function EHR.Sepsis.OnDeath(player, reason)
             data and data.stage or 0, stageName, reason or "unknown cause")
     end
 
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and EHR.Lethal.spare(player, deathCause) then return end
     -- Record death cause before killing
     if EHR.RecordDeathCause then
         EHR.RecordDeathCause(player, deathCause)

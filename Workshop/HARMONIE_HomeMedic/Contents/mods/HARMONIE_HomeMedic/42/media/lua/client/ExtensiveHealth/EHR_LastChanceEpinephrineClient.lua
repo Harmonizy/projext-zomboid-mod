@@ -142,6 +142,8 @@ function Client.ApplyFatal(args)
     if type(args) ~= "table" or not Client.ClaimToken(args.token) then return false end
     local player = Client.GetLocalPlayer()
     if not player then return false end
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and EHR.Lethal.spare(player, "Emergency epinephrine - fatal stroke") then return false end
 
     pcall(function()
         local bodyDamage = player:getBodyDamage()

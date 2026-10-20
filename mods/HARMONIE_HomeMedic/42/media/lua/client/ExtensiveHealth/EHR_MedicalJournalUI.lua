@@ -532,7 +532,10 @@ function EHR_MedicalJournalUI:getCatalogEntry(diseaseId)
         displayName = known and codexText(id, "Name", displayName) or displayName,
         incubation = codexText(id, "Incubation", info.incubation or rangeHoursToText(def and def.incubationMin, def and def.incubationMax)),
         duration = codexText(id, "Duration", info.duration or rangeHoursToText(def and def.durationMin, def and def.durationMax)),
-        canKill = (def and def.canKill == true) or info.canKill == true,
+        -- HARMONIE (2026-10-12): no "lethal" badge while illnesses cannot kill
+        -- (sandbox HomeMedic.LethalConditions); the zombie infection still kills
+        canKill = ((def and def.canKill == true) or info.canKill == true)
+            and (id == "Knox_Infection" or not (EHR.Lethal and not EHR.Lethal.allowed())),
     }
 end
 

@@ -1,0 +1,17 @@
+version=1
+title=HARMONIE - Life With Style
+description=A wardrobe for your server's fashion.
+description=
+description=Fashion pieces never spawn in the world: the server's admins give them. They belong to the player's account, not the character -- they never drop, can not be stolen, and stay after death.
+description=
+description=Wear them in 18 fashion slots of their own. While a piece is worn, the real clothes of that slot are hidden (they still protect and keep you warm, nothing pokes through) -- or shown under it, your choice per slot.
+description=
+description=Trade pieces with other players: both agree, the server swaps them at once -- nothing can be copied or lost. Sandbox: trading on/off, trade distance.
+description=
+description=Only Life With Style's own pieces ever go in the wardrobe -- never items of other mods.
+description=
+description=White wardrobe window: dress up, collection, trade, admin page, guide. English and Thai built in.
+description=
+description=Mod ID: HARMONIE_LifeWithStyle
+tags=Build 42;Clothing/Armor;Multiplayer;Interface
+visibility=unlisted

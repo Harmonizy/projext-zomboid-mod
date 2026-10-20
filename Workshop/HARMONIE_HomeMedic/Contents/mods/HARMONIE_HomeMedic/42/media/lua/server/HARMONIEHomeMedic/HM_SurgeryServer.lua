@@ -266,6 +266,11 @@ local function experimentalKnox(patient, q)
         return "cured"
     end
     if q < S.SUCCESS then
+        -- 2026-10-12: a rejection knocks the patient down unless sandbox HomeMedic.LethalConditions
+        if EHR.Lethal and EHR.Lethal.spare(patient, "Gene therapy rejection during experimental surgery") then
+            HMLog("Surgery", "%s: gene therapy rejected - collapsed (illnesses cannot kill)", HMLogName(patient))
+            return "rejected"
+        end
         if EHR.RecordDeathCause then pcall(EHR.RecordDeathCause, patient, "Gene therapy rejection during experimental surgery") end
         call(patient, "setHealth", 0)
         return "rejected"

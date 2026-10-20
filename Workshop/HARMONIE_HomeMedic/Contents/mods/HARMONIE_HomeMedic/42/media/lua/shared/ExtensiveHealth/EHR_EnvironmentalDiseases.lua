@@ -2321,6 +2321,8 @@ end
 
 local function EHR_EnvironmentalKillPlayer(player, cause)
     if not player then return end
+    -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+    if EHR.Lethal and EHR.Lethal.spare(player, cause or "Severe heat stroke") then return end
 
     if EHR.RecordDeathCause then
         pcall(function() EHR.RecordDeathCause(player, cause or "Severe heat stroke") end)
@@ -2350,6 +2352,11 @@ local function EHR_EnvironmentalApplyBodyHealthDamage(player, amount, cause)
     if not okHealth or not currentHealth then return nil end
 
     if currentHealth <= 0 then return 0 end
+    -- HARMONIE (2026-10-12): damage stops at the sandbox health floor (HM_NonLethal.lua)
+    if EHR.Lethal and not EHR.Lethal.allowed() then
+        amount = math.min(amount, math.max(0, currentHealth - EHR.Lethal.floor()))
+        if amount <= 0 then return currentHealth end
+    end
 
     local reduced = false
     if bodyDamage.ReduceGeneralHealth then
@@ -2405,6 +2412,7 @@ local function EHR_EnvironmentalClampBodyHealth(player, maxHealth)
     if not okHealth or not currentHealth then return nil end
 
     local healthCap = math.max(0, math.min(100, tonumber(maxHealth) or 100))
+    if EHR.Lethal then healthCap = EHR.Lethal.clampHealth(player, healthCap) end  -- HARMONIE: not under the floor
     if currentHealth <= healthCap then return currentHealth end
 
     local clamped = false
@@ -4244,6 +4252,8 @@ function EHR.Environmental.CheckDiseaseLethal(player, diseaseId, disease, def)
     local tickChance = deathChance / 30
 
     if ZombRand(10000) / 10000 < tickChance then
+        -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
+        if EHR.Lethal and EHR.Lethal.spare(player, string.format("%s (stage %s) - lethal disease progression", tostring(def.name or diseaseId), tostring(disease.stage))) then return end
         EHR.Log(string.format("LETHAL: %s killed player (chance was %.4f%%)", def.name, tickChance * 100))
 
         -- DEATH CAUSE TRACKING: Record cause before killing

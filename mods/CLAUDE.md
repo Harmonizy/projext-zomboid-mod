@@ -16,6 +16,7 @@
   | SVU3Sandbox = "HARMONIE - Car for Crash" | `[HARMONIE_SVU3]` | local `log` / `logOnce` per file (`C.log` in SkillCap) |
   | ModernFirearmsSystemFix = "HARMONIE - Mercenary Is Life" | `[HARMONIE_MFSFix]` | local `log` / `logOnce` per file |
   | LifestyleAudioTune | `[HARMONIE_LAT]` | local `log` / `logOnce` per file |
+  | LifeWithStyle = "HARMONIE - Life With Style" | `[HARMONIE_LWS]` | `LWS.log(tag, fmt, ...)`, `LWS.logOnce(key, tag, fmt, ...)` -- `shared/HARMONIELifeWithStyle/LWS_Core.lua` |
   | PerfProbe | `[PerfProbe` | the mod itself is a log |
 - A log line must never break the game: read item / player names through
   the safe helpers (`TWALogType(item)`, `HMLogName(p)`, ...), never
@@ -50,7 +51,7 @@
 ## HARMONIE Hub (shared by our mods)
 - Master copy: `mods/_HarmonieHub/` -- edit there, then
   `bash mods/_HarmonieHub/install.sh` (copies it into GTP, TWA, HomeMedic,
-  SVU3, Modern Firearms and MFS `tools/ours`). The copies must stay
+  SVU3, Modern Firearms and MFS `tools/ours`, Life With Style). The copies must stay
   identical: the game loads one copy of a path.
 - Register every right-click handler of ours through it:
   `Events.OnFill...ContextMenu.Add((HARMONIE_Ours or function(f) return f end)(handler, "TAG"))`
@@ -63,9 +64,30 @@
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
   Survive", HARMONIE_SVU3Sandbox = "HARMONIE - Car for Crash",
-  HARMONIE_ModernFirearmsSystemFix = "HARMONIE - Mercenary Is Life". The mod
+  HARMONIE_ModernFirearmsSystemFix = "HARMONIE - Mercenary Is Life",
+  HARMONIE_LifeWithStyle = "HARMONIE - Life With Style" (2026-10-20). The mod
   IDs and folders stay as they are (saves, server configs and Workshop
   subscriptions use the ID).
 - Each of our mods carries its own EN and TH texts. The Thai translation mod
   (HARMONIE_TooManyModThaiTranslate) is only for other people's mods: never
   put a key of ours there.
+
+## Life With Style (fashion)
+- The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key
+  -- `LWS.ownerKey`, the one place to change for Discord accounts). Pieces
+  are entries, not items; only a WORN piece exists as an item, made by the
+  server (`LWS.Server.ensure`) and worn by the client.
+- Slots and the catalog live in `tools/gen_lws.py` (one source): run it to
+  rewrite registries.lua, the item scripts, LWS_Data.lua and ItemName.json.
+  Texts: `tools/texts_lws.py`. Art: `tools/gen_lws_art.py`.
+- Every piece has two items: `<Id>` (lws:<slot>, hides the vanilla
+  locations of the slot via setHideModel) and `<Id>_Over` (lws:<slot>_over,
+  hides nothing). Never put a piece in a loot table.
+- Only OUR pieces ever go in the wardrobe (owner, 2026-10-20): grant and
+  trade take `LWS.isOurPiece` / catalog ids only, foreign entries are pruned
+  at load (catalog check only -- never empty a wardrobe on a failed script
+  lookup), and another mod's item worn in an `lws:` slot is taken off.
+- Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
+  same revision, the server re-checks and swaps; any offer change unlocks
+  both. Sandbox page HARMONIE_LifeWithStyle (TradeEnabled, TradeMaxDistance).
+
