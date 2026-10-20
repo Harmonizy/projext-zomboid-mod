@@ -142,7 +142,11 @@ end
 
 ---@param zombie IsoZombie
 local function ReapplyAmputation(zombie)
-    if not localOnlyZombiesMD or next(localOnlyZombiesMD) == nil then return end
+    -- HARMONIE (2026-10-20): Kahlua has no next()
+    if not localOnlyZombiesMD then return end
+    local any = false
+    for _ in pairs(localOnlyZombiesMD) do any = true; break end
+    if not any then return end
     if not SandboxVars.TOC.EnableZombieAmputations then return end
 
     local pID = cachedZombieID(zombie)

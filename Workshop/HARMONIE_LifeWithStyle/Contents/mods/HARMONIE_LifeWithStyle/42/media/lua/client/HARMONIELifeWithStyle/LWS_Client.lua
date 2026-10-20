@@ -257,12 +257,18 @@ local function onCreatePlayer(index, player)
     if player and player.isLocalPlayer and player:isLocalPlayer() then C.hello("character made") end
 end
 
+-- Kahlua (the game's Lua) has no next(): "Object tried to call nil" (2026-10-20)
+local function isEmpty(t)
+    for _ in pairs(t or {}) do return false end
+    return true
+end
+
 local nextTick = 0
 local function onTick()
     local now = getTimestampMs and getTimestampMs() or 0
     if now < nextTick then return end
     nextTick = now + 500
-    if next(C.pending) ~= nil then
+    if not isEmpty(C.pending) then
         local ok, err = pcall(C.dressNow)
         if not ok then LWS.logOnce("dresserr", "Client", "dressing FAILED: %s", tostring(err)) end
     end

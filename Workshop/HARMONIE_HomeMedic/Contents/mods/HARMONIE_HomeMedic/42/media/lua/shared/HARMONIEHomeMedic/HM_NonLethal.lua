@@ -146,11 +146,17 @@ local function isZombieInfected(player)
     return ok and v == true
 end
 
+-- Kahlua (the game's Lua) has no next(): "Object tried to call nil" (2026-10-20)
+local function isEmpty(t)
+    for _ in pairs(t or {}) do return false end
+    return true
+end
+
 local function isIll(player)
     local md = player.getModData and player:getModData()
     if md then
         local d = md.EHR_Disease and md.EHR_Disease.active
-        if type(d) == "table" and next(d) ~= nil then return true end
+        if type(d) == "table" and not isEmpty(d) then return true end
         local b = md.EHR_Blood
         if type(b) == "table" and tonumber(b.maxVolume) and tonumber(b.currentVolume)
                 and b.currentVolume < b.maxVolume * 0.6 then return true end
