@@ -1356,41 +1356,11 @@ local function onWorldMenu(playerNum, context, worldObjects, test)
         log("world right-click: open the wardrobe")
         H.open(pl, "dress")
     end)
-    -- the pet out: its orders and food, beside the wardrobe
-    local pet = C.pet or {}
-    if not pet.out or not pet.piece then return end
-    local opt = context:addOption(T("IGUI_LWS_Menu_Pet", LWS.pieceName(pet.piece)), p, nil)
-    local sub = ISContextMenu:getNew(context)
-    context:addSubMenu(opt, sub)
-    if pet.commands ~= false then
-        if pet.mode == "stay" then
-            sub:addOption(T("IGUI_LWS_PetFollow"), p, function() C.petMode("follow") end)
-        else
-            sub:addOption(T("IGUI_LWS_PetStay"), p, function() C.petMode("stay") end)
-        end
-        sub:addOption(T("IGUI_LWS_PetCome"), p, function() C.petCome() end)
-        sub:addOption(T("IGUI_LWS_PetSpeak"), p, function() C.petSpeak() end)
+    -- the pet out: the same menu as on the pet itself (LWS_PetMenu.lua)
+    if LWS.PetMenu and LWS.PetMenu.build then
+        local ok, err = pcall(LWS.PetMenu.build, context, p, nil)
+        if not ok then LWS.logOnce("petmenu", "Window", "pet menu FAILED: %s", tostring(err)) end
     end
-    if pet.feeding ~= false then
-        local foods = C.petFoods()
-        if #foods == 0 then
-            local o = sub:addOption(T("IGUI_LWS_PetFeed"), p, nil)
-            o.notAvailable = true
-            local tip = ISToolTip:new(); tip:initialise(); tip.description = T("IGUI_LWS_Msg_PetNoFood"); o.toolTip = tip
-        else
-            local fo = sub:addOption(T("IGUI_LWS_PetFeed"), p, nil)
-            local fsub = ISContextMenu:getNew(sub)
-            sub:addSubMenu(fo, fsub)
-            for i = 1, math.min(10, #foods) do
-                local f = foods[i]
-                fsub:addOption(f.name .. " (" .. f.n .. ")  +" .. math.floor(f.value * 100 + 0.5) .. "%", p, function() C.petFeed(f.type) end)
-            end
-        end
-    end
-    sub:addOption(T("IGUI_LWS_OpenPet"), p, function(pl)
-        H.open(pl, "dress")
-        if H.window then H.window.slot = "pet"; H.window.dressFilter = "slot" end
-    end)
 end
 if Events and Events.OnFillWorldObjectContextMenu then
     Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(onWorldMenu, "LWS"))
