@@ -1,0 +1,89 @@
+/* HARMONIE - Mercenary Is Life: MIL's own rounds -> the game's rounds.
+   B42 reads bullet tracer presets only for its ten vanilla ammo types (from the game's own
+   media/effects, never a mod folder): a gun with a mod ammo type crashed the game on its first
+   shot (IsoBulletTracerEffects.createEffect, owner 2026-10-23, Requiem_cat). Those guns now take
+   vanilla ammo (.50 / .338 / 14.5 -> 7.62x51, 5.45 / 5.8 -> 5.56); the old rounds still exist
+   (loot, saves, the reloading press) and turn into vanilla rounds here. */
+module Base
+{
+    craftRecipe HARMONIE_ConvertBullets50To308
+    {
+        timedAction = OpenAmmoBox,
+        Time = 10,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark,
+        inputs
+        {
+            item 1 [Base.Bullets50],
+        }
+        outputs
+        {
+            item 1 Base.308Bullets,
+        }
+    }
+
+    craftRecipe HARMONIE_ConvertBullets86To308
+    {
+        timedAction = OpenAmmoBox,
+        Time = 10,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark,
+        inputs
+        {
+            item 1 [Base.Bullets86],
+        }
+        outputs
+        {
+            item 1 Base.308Bullets,
+        }
+    }
+
+    craftRecipe HARMONIE_ConvertBullets145To308
+    {
+        timedAction = OpenAmmoBox,
+        Time = 10,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark,
+        inputs
+        {
+            item 1 [Base.Bullets145],
+        }
+        outputs
+        {
+            item 2 Base.308Bullets,
+        }
+    }
+
+    craftRecipe HARMONIE_Convert545To556
+    {
+        timedAction = OpenAmmoBox,
+        Time = 10,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark,
+        inputs
+        {
+            item 1 [Base.545Bullets],
+        }
+        outputs
+        {
+            item 1 Base.556Bullets,
+        }
+    }
+
+    craftRecipe HARMONIE_Convert58To556
+    {
+        timedAction = OpenAmmoBox,
+        Time = 10,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark,
+        inputs
+        {
+            item 1 [Base.A_58bullets],
+        }
+        outputs
+        {
+            item 1 Base.556Bullets,
+        }
+    }
+
+}

@@ -93,7 +93,7 @@ module Base
         ShellFallSound       = M16CartridgeFall,
         RackSound            = M16Rack,
         MagazineType         = Base.68Clip,
-        AmmoType             = base:Bullets_38,
+        AmmoType             = base:bullets_38,
         WeaponReloadType     = boltaction,
         JamGunChance = 0,
         MuzzleFlashModelKey  = muzzle_flash_assault_rifle,

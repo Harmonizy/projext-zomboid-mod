@@ -288,5 +288,10 @@
     "MFS_Convert_MFS_To_M203": "แปลง M203 รุ่นใหม่ เป็น M203 รุ่นเก่า",
     "ShotgunDrum": "ทำแม็กกาซีนดรัมลูกซอง",
     "MFS_Convert_ChokeTubeFull_To_MFS": "แปลง โช้คแบบ Full เป็น โช้คแบบ Full (Mercenary Is Life)",
-    "MFS_Convert_ChokeTubeImproved_To_MFS": "แปลง โช้คแบบ Improved เป็น โช้คแบบ Improved (Mercenary Is Life)"
+    "MFS_Convert_ChokeTubeImproved_To_MFS": "แปลง โช้คแบบ Improved เป็น โช้คแบบ Improved (Mercenary Is Life)",
+    "HARMONIE_ConvertBullets50To308": "แปลงกระสุน .50 เป็น 7.62x51mm",
+    "HARMONIE_ConvertBullets86To308": "แปลงกระสุน .338 เป็น 7.62x51mm",
+    "HARMONIE_ConvertBullets145To308": "แปลงกระสุน 14.5mm เป็น 7.62x51mm 2 นัด",
+    "HARMONIE_Convert545To556": "แปลงกระสุน 5.45x39mm เป็น 5.56x45mm",
+    "HARMONIE_Convert58To556": "แปลงกระสุน 5.8mm เป็น 5.56x45mm"
 }

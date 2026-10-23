@@ -288,5 +288,10 @@
     "AmmoReloadingKit145": "Reload .145 Ammo",
     "AmmoReloadingKitGrenadeAmmo": "Reload Underbarrel Grenade Round",
     "MFS_Convert_ChokeTubeFull_To_MFS": "Convert Full Choke to Full Choke (Mercenary Is Life)",
-    "MFS_Convert_ChokeTubeImproved_To_MFS": "Convert Improved Choke to Improved Choke (Mercenary Is Life)"
+    "MFS_Convert_ChokeTubeImproved_To_MFS": "Convert Improved Choke to Improved Choke (Mercenary Is Life)",
+    "HARMONIE_ConvertBullets50To308": "Convert .50 Round to 7.62x51mm",
+    "HARMONIE_ConvertBullets86To308": "Convert .338 Round to 7.62x51mm",
+    "HARMONIE_ConvertBullets145To308": "Convert 14.5mm Round to 2 x 7.62x51mm",
+    "HARMONIE_Convert545To556": "Convert 5.45x39mm Round to 5.56x45mm",
+    "HARMONIE_Convert58To556": "Convert 5.8mm Round to 5.56x45mm"
 }

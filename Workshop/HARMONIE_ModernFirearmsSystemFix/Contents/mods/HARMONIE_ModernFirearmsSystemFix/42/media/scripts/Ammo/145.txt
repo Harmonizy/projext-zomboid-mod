@@ -34,7 +34,7 @@ item Bullets145Clip
         DisplayName	=	145弹匣,
         Icon	=	Bullets50Clip,
         MaxAmmo = 5,
-        AmmoType = efk:cat_bullets145,
+        AmmoType = base:bullets_308,
         StaticModel = GunMagazine,
         Tags = base:GunMagazine;efk:GunMagazine,
         GunType = Base.M82_cat;M200_cat;AWM_cat;SVD_cat;GM6_cat;QLU_11;Base.AX50_cat,

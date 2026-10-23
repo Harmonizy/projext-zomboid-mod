@@ -36,7 +36,7 @@ item Bullets38Box
         DisplayName	=	68Magazine,
         Icon	=	Mag8610,
         MaxAmmo = 30,
-        AmmoType = base:Bullets_38,
+        AmmoType = base:bullets_38,
         StaticModel = GunMagazine,
         Tags = base:GunMagazine;efk:GunMagazine,
         GunType = Base.HuntingRifle,

@@ -156,7 +156,7 @@ module Base{
         ShellFallSound               = M16CartridgeFall,
         RackSound                    = M16Rack,
         MagazineType                 = Base.308ClipU,
-        AmmoType                     = efk:cat_308bullets,
+        AmmoType                     = base:bullets_308,
         WeaponReloadType             = boltaction,
         JamGunChance                 = 0,
         AttachmentType               = Rifle,
