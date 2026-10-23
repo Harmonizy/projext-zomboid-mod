@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HARMONIE - Life With Style: the Guardian Capsule's invisible armour (RWZ Retention Items v0.4.1's design).
+     No model and no texture: it exists only so the engine's normal clothing defense sees +5. -->
+<clothingItem>
+    <m_MaleModel></m_MaleModel>
+    <m_FemaleModel></m_FemaleModel>
+    <m_GUID>920322d0-bbfc-5094-8601-15a2e61493f1</m_GUID>
+    <m_Static>false</m_Static>
+    <m_AllowRandomHue>false</m_AllowRandomHue>
+    <m_AllowRandomTint>false</m_AllowRandomTint>
+    <m_AttachBone></m_AttachBone>
+    <m_MasksFolder>media/textures/Clothes/Hat/Masks</m_MasksFolder>
+    <m_UnderlayMasksFolder>media/textures/Body/UnderlayMasks</m_UnderlayMasksFolder>
+    <m_HatCategory></m_HatCategory>
+</clothingItem>

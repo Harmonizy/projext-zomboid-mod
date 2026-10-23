@@ -1,0 +1,33 @@
+/* HARMONIE - Life With Style: the one real item of the gacha items.
+   The gacha items themselves are not items (counts in the wardrobe, used from the window).
+   This is the Guardian Capsule / Mini Compound-V armour layer of RWZ Retention Items v0.4.1:
+   an invisible clothing item the SERVER wears on the player only while one of those capsules
+   is active, so the vanilla protection roll counts +5 scratch / bite / bullet BEFORE a wound
+   is made. Its own module (HARMONIE_LWSG): the fashion sweep (LWS.isFashion) must not take it. */
+module HARMONIE_LWSG
+{
+    imports
+    {
+        Base
+    }
+
+    item GuardianProtectionProxy
+    {
+        ItemType = base:clothing,
+        DisplayCategory = FirstAid,
+        Weight = 0.0,
+        Icon = LWSG_GuardianCapsule,
+        BodyLocation = lws:gacha_guardian,
+        ClothingItem = LWSG_GuardianProxy,
+        BloodLocation = Head;Neck;UpperBody;LowerBody;Groin;UpperArms;LowerArms;Hands;UpperLegs;LowerLegs;Shoes,
+        BiteDefense = 5,
+        ScratchDefense = 5,
+        BulletDefense = 5,
+        CanHaveHoles = false,
+        ConditionMax = 100,
+        ConditionLowerChanceOneIn = 1000000,
+        RemoveOnBroken = false,
+        Hidden = true,
+        Cosmetic = false,
+    }
+}

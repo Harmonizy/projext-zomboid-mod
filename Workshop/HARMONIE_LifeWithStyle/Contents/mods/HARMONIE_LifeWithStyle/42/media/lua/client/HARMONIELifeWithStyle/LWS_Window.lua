@@ -10,7 +10,11 @@
 --                 it off the box (or right-click the box) to take it off.
 --                 The header's small-window button turns the whole window
 --                 into a compact dresser beside the character.
---   2 collection  every piece the player has (filter by slot)
+--   2 collection  every piece the player has, or the whole catalog: search,
+--                 kind (clothes / pets), worn / not worn, slot
+--   2b gacha      the gacha items (RWZ Retention Items, moved here): search,
+--                 category, a detail card with Use (or Equip for the New
+--                 Dawn set) and the buffs running (LWS_Gacha.lua)
 --   3 trade       requests and the players online; an open trade: what I
 --                 give, my collection, what they give, agree / cancel
 --                 (LWS_Trade.lua on the server does the swap)
@@ -22,9 +26,11 @@
 --============================================================================
 
 require "ISUI/ISPanel"
+require "ISUI/ISTextEntryBox"
 require "HARMONIE_UIKit"
 require "HARMONIELifeWithStyle/LWS_Core"
 require "HARMONIELifeWithStyle/LWS_Client"
+require "HARMONIELifeWithStyle/LWS_GachaData"
 
 LWSWindow = LWSWindow or {}
 local H = LWSWindow
@@ -57,7 +63,7 @@ H.DOLL = {
 H.LEFT = { "hat", "ears", "neck", "outer", "top", "waist", "wrist", "bottom", "shoes" }
 H.RIGHT = { "extra", "eyes", "mask", "makeup", "back", "full", "hands", "rings", "tail", "pet" }
 H.TILE_W, H.TILE_H = 116, 128
-H.GUIDE = { "What", "Dress", "Show", "Pet", "Death", "Trade", "Admin", "Soon" }
+H.GUIDE = { "What", "Dress", "Show", "Pet", "Gacha", "Death", "Trade", "Admin", "Soon" }
 
 -- white, ink and champagne gold
 H.C = {
@@ -239,7 +245,7 @@ function Win:new(x, y, w, h, player)
 end
 
 function Win:tabs()
-    local list = { "dress", "collection", "trade" }
+    local list = { "dress", "collection", "gacha", "trade" }
     if LWS.isAdmin(self.player) then list[#list + 1] = "admin" end
     list[#list + 1] = "guide"
     return list
@@ -316,11 +322,12 @@ function Win:tile(x, y, e, opts)
     local bd = opts.worn and c.accent or c.borderDim
     self:drawRectBorder(x, y, w, h, 1, bd[1], bd[2], bd[3])
     if opts.worn then self:drawRectBorder(x + 1, y + 1, w - 2, h - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
-    local icon = pieceIcon(e.p)
+    local icon = opts.icon and texture(opts.icon) or (e.p and pieceIcon(e.p))
     local isz = opts.isz or 56
-    if icon then self:drawTextureScaled(icon, x + math.floor((w - isz) / 2), y + 10, isz, isz, 1, 1, 1, 1) end
+    if icon then self:drawTextureScaled(icon, x + math.floor((w - isz) / 2), y + 10, isz, isz, opts.dim and 0.3 or 1, 1, 1, 1) end
     local font = H.small()
-    local lines = wrap(LWS.pieceName(e.p), w - 12, font)
+    local name = opts.name or LWS.pieceName(e.p)
+    local lines = wrap(name, w - 12, font)
     local ty = y + 10 + isz + 6
     -- a label under the name (Wearing, the slot...) leaves room for one line
     local bottom = opts.label and (h - lineH(font) - 4) or (h - 4)
@@ -329,8 +336,13 @@ function Win:tile(x, y, e, opts)
         local l = lines[i]
         if i == room and #lines > room then l = l .. " " .. lines[i + 1] end  -- cut with "..."
         l = fit(l, w - 10, font)
-        text(self, l, x + math.floor((w - tw(font, l)) / 2), ty, c.text, 1, font)
+        text(self, l, x + math.floor((w - tw(font, l)) / 2), ty, opts.dim and c.textDim or c.text, 1, font)
         ty = ty + lineH(font)
+    end
+    if opts.badge then
+        local bw = tw(font, opts.badge) + 10
+        self:drawRect(x + w - bw - 4, y + 4, bw, lineH(font) + 2, 1, c.accent[1], c.accent[2], c.accent[3])
+        text(self, opts.badge, x + w - bw + 1, y + 5, { 1, 1, 1 }, 1, font)
     end
     if opts.label then
         local l = fit(opts.label, w - 10, font)
@@ -346,7 +358,8 @@ function Win:tile(x, y, e, opts)
         r.remove = rr
     end
     if over then
-        self.hoverTip = { text = LWS.pieceName(e.p) .. "\n" .. LWS.slotName(LWS.PIECE[e.p] and LWS.PIECE[e.p].slot or "") .. (opts.tip and ("\n" .. opts.tip) or ""), x = x + 20, y = y + h + 4 }
+        local tip = opts.tipText or (name .. "\n" .. LWS.slotName(LWS.PIECE[e.p] and LWS.PIECE[e.p].slot or ""))
+        self.hoverTip = { text = tip .. (opts.tip and ("\n" .. opts.tip) or ""), x = x + 20, y = y + h + 4 }
     end
     return r
 end
@@ -371,6 +384,54 @@ function Win:grid(key, x, y, w, h, list, opts, size)
         local rows = math.ceil(#list / cols)
         return rows * (TH + gap)
     end)
+end
+
+-- a search box (a real text box, the one child widget): shown only in the
+-- frames that ask for it; returns what is typed, lower case
+function Win:searchBox(key, x, y, w, h)
+    self.searchBoxes = self.searchBoxes or {}
+    local b = self.searchBoxes[key]
+    if not b then
+        b = ISTextEntryBox:new("", x, y, w, h)
+        b.font = UIFont.Small
+        b:initialise()
+        b:instantiate()
+        if b.setPlaceholderText then pcall(function() b:setPlaceholderText(T("IGUI_LWS_Search")) end) end
+        -- dark ink on the white window (the default is light text for dark windows)
+        local okInk = pcall(function() b.javaObject:setTextColor(ColorInfo.new(0.14, 0.12, 0.11, 1)) end)
+        if okInk then
+            b.backgroundColor = { r = 1, g = 1, b = 1, a = 1 }
+        else
+            b.backgroundColor = { r = 0.22, g = 0.19, b = 0.17, a = 1 }
+            LWS.logOnce("searchink", "Window", "search box: no setTextColor -- dark box instead")
+        end
+        b.borderColor = { r = H.C.border[1], g = H.C.border[2], b = H.C.border[3], a = 1 }
+        local win = self
+        b.onTextChange = function() win.scroll[key] = 0 end
+        self:addChild(b)
+        self.searchBoxes[key] = b
+        log("search box made: %s", key)
+    end
+    if b.x ~= x or b.y ~= y then b:setX(x); b:setY(y) end
+    if b.width ~= w then b:setWidth(w) end
+    if not b:getIsVisible() then b:setVisible(true) end
+    self.searchShown[key] = true
+    local ok, txt = pcall(function() return b:getText() end)
+    return ok and string.lower(tostring(txt or "")) or ""
+end
+
+function Win:hideUnusedSearch()
+    for key, b in pairs(self.searchBoxes or {}) do
+        if not self.searchShown[key] and b:getIsVisible() then b:setVisible(false) end
+    end
+end
+
+local function matches(q, ...)
+    if not q or q == "" then return true end
+    for _, s in ipairs({ ... }) do
+        if s and string.find(string.lower(tostring(s)), q, 1, true) then return true end
+    end
+    return false
 end
 
 -- ----------------------------------------------------------------- frame
@@ -459,11 +520,13 @@ end
 function Win:render()
     if not self.collapsed then
         self.scrollBox, self.buttons, self.tiles, self.rows = {}, {}, {}, {}
+        self.searchShown = {}
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
         if H.compact then self:renderCompact(x, y, w, h)
         elseif self.tab == "dress" then self:renderDress(x, y, w, h)
         elseif self.tab == "collection" then self:renderCollection(x, y, w, h)
+        elseif self.tab == "gacha" then self:renderGacha(x, y, w, h)
         elseif self.tab == "admin" then self:renderAdmin(x, y, w, h)
         elseif self.tab == "trade" then self:renderTrade(x, y, w, h)
         else self:renderGuide(x, y, w, h) end
@@ -475,6 +538,8 @@ function Win:render()
             self:drawRect(gx + 10 - o, gy + 14 - len, 2, len, 0.9 - 0.15 * (i - 1), c.accent[1], c.accent[2], c.accent[3])
         end
     end
+    if self.collapsed then self.searchShown = {} end
+    self:hideUnusedSearch()
     self:drawHoverTip()
     self:updatePin()
 end
@@ -784,44 +849,201 @@ function Win:toggleCompact()
 end
 
 -- ----------------------------------------------------------------- tab 2: collection
-function Win:renderCollection(x, y, w, h)
-    local c = H.C
-    local all = C.piecesFor(nil)
-    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_LWS_CollectionTitle", tostring(#all)))
+-- owner, 2026-10-23: "ให้มีหน้ารวมของแฟชั่นและให้มีการค้นหาและฟิลเตอร์" -- my pieces or
+-- the whole catalog (what I do not have yet greyed), search by name or slot,
+-- kind (clothes / pets), worn / not worn, slot
+function Win:chips(prefix, list, cur, x, y, maxW, bh)
     local sf = H.small()
-    -- filter chips: all + every slot that has pieces
-    local counts = {}
-    for _, e in ipairs(all) do local s = LWS.PIECE[e.p].slot; counts[s] = (counts[s] or 0) + 1 end
-    local chips = { { id = "all", label = T("IGUI_LWS_All") .. " (" .. #all .. ")" } }
-    for _, s in ipairs(LWS.SLOTS) do
-        if counts[s.id] then chips[#chips + 1] = { id = s.id, label = LWS.slotName(s.id) .. " (" .. counts[s.id] .. ")" } end
-    end
-    local bh = lineH(sf) + 8
-    local bx, by = cx, cy
-    for _, chip in ipairs(chips) do
+    local bx, by = x, y
+    for _, chip in ipairs(list) do
         local bw = tw(sf, chip.label) + 20
-        if bx + bw > cx + cw then bx = cx; by = by + bh + 6 end
-        self:button("chip:" .. chip.id, chip.label, bx, by, bw, bh, self.filter == chip.id, true)
+        if bx > x and bx + bw > x + maxW then bx = x; by = by + bh + 6 end
+        self:button(prefix .. chip.id, chip.label, bx, by, bw, bh, cur == chip.id, chip.enabled ~= false)
         bx = bx + bw + 6
     end
-    local gy = by + bh + 10
-    local list = {}
-    for _, e in ipairs(all) do
-        if self.filter == "all" or LWS.PIECE[e.p].slot == self.filter then list[#list + 1] = e end
+    return by + bh + 6
+end
+
+function Win:renderCollection(x, y, w, h)
+    local c = H.C
+    local sf = H.small()
+    local mine = C.piecesFor(nil)
+    local whole = self.colCatalog == true
+    local title = whole and T("IGUI_LWS_CatalogAll", tostring(#LWS.CATALOG), tostring(#mine)) or T("IGUI_LWS_CollectionTitle", tostring(#mine))
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, title)
+    local bh = lineH(sf) + 8
+    -- the search box, and "mine / whole catalog"
+    local sw = math.min(320, math.floor(cw * 0.45))
+    local q = self:searchBox("collection", cx, cy, sw, bh)
+    local bx = cx + sw + 10
+    self:button("col:mine", T("IGUI_LWS_ColMine"), bx, cy, 110, bh, not whole, true)
+    self:button("col:catalog", T("IGUI_LWS_ColCatalog"), bx + 116, cy, 130, bh, whole, true)
+    local yy = cy + bh + 6
+    -- the list before the filters (for the counts on the chips)
+    local owned = {}
+    for _, e in ipairs(mine) do owned[e.p] = owned[e.p] or e end
+    local base = {}
+    if whole then
+        for _, piece in ipairs(LWS.CATALOG) do base[#base + 1] = owned[piece.id] or { p = piece.id, missing = true } end
+    else
+        for _, e in ipairs(mine) do base[#base + 1] = e end
     end
+    local function wornE(e)
+        if e.missing then return false end
+        local wn = C.wornIn(LWS.PIECE[e.p].slot)
+        return wn ~= nil and wn.uid == e.uid
+    end
+    local kind, worn, slot = self.colType or "all", self.colWorn or "all", self.filter or "all"
+    local function pass(e, skip)
+        local piece = LWS.PIECE[e.p]
+        if not piece then return false end
+        if skip ~= "kind" and kind ~= "all" and ((kind == "pets") ~= (piece.pet ~= nil)) then return false end
+        if skip ~= "worn" and worn ~= "all" and ((worn == "worn") ~= wornE(e)) then return false end
+        if skip ~= "slot" and slot ~= "all" and piece.slot ~= slot then return false end
+        return matches(q, LWS.pieceName(e.p), LWS.slotName(piece.slot))
+    end
+    local function count(skip, f) local n = 0; for _, e in ipairs(base) do if pass(e, skip) and f(e) then n = n + 1 end end; return n end
+    yy = self:chips("col:type:", {
+        { id = "all", label = T("IGUI_LWS_All") .. " (" .. count("kind", function() return true end) .. ")" },
+        { id = "clothes", label = T("IGUI_LWS_ColClothes") .. " (" .. count("kind", function(e) return not LWS.PIECE[e.p].pet end) .. ")" },
+        { id = "pets", label = T("IGUI_LWS_ColPets") .. " (" .. count("kind", function(e) return LWS.PIECE[e.p].pet ~= nil end) .. ")" },
+    }, kind, cx, yy, math.floor(cw / 2) - 10, bh)
+    local wy = cy + bh + 6
+    local wx = cx + math.floor(cw / 2)
+    self:chips("col:worn:", {
+        { id = "all", label = T("IGUI_LWS_All") },
+        { id = "worn", label = T("IGUI_LWS_ColWorn") .. " (" .. count("worn", wornE) .. ")", enabled = true },
+        { id = "notworn", label = T("IGUI_LWS_ColNotWorn") .. " (" .. count("worn", function(e) return not wornE(e) end) .. ")" },
+    }, worn, wx, wy, math.floor(cw / 2), bh)
+    -- slot chips: every slot that has something under the other filters
+    local per = {}
+    for _, e in ipairs(base) do if pass(e, "slot") then local sl = LWS.PIECE[e.p].slot; per[sl] = (per[sl] or 0) + 1 end end
+    local slots = { { id = "all", label = T("IGUI_LWS_AllSlots") } }
+    for _, sdef in ipairs(LWS.SLOTS) do
+        if per[sdef.id] then slots[#slots + 1] = { id = sdef.id, label = LWS.slotName(sdef.id) .. " (" .. per[sdef.id] .. ")" } end
+    end
+    yy = self:chips("chip:", slots, slot, cx, yy, cw, bh)
+    local gy = yy + 4
+    local list = {}
+    for _, e in ipairs(base) do if pass(e) then list[#list + 1] = e end end
     if #list == 0 then
-        for i, l in ipairs(wrap(T("IGUI_LWS_CollectionEmpty"), cw - 20, sf)) do
+        for i, l in ipairs(wrap(T((#base == 0 and not whole) and "IGUI_LWS_CollectionEmpty" or "IGUI_LWS_NoMatch"), cw - 20, sf)) do
             text(self, l, cx + 4, gy + 10 + (i - 1) * lineH(sf), c.textDim, 1, sf)
         end
         return
     end
     self:grid("collection", cx, gy, cw, cy + ch - gy, list, function(e)
-        local slot = LWS.PIECE[e.p].slot
-        local worn = C.wornIn(slot)
-        local isWorn = worn and worn.uid == e.uid
-        return { worn = isWorn, label = isWorn and T("IGUI_LWS_Wearing") or LWS.slotName(slot), labelCol = isWorn and c.accent or c.textDim,
+        local pslot = LWS.PIECE[e.p].slot
+        if e.missing then
+            return { dim = true, label = LWS.slotName(pslot), tip = T("IGUI_LWS_NotOwned") }
+        end
+        local isWorn = wornE(e)
+        return { worn = isWorn, label = isWorn and T("IGUI_LWS_Wearing") or LWS.slotName(pslot), labelCol = isWorn and c.accent or c.textDim,
                  tip = T("IGUI_LWS_ClickGoDress") }
     end)
+end
+
+-- ----------------------------------------------------------------- tab 2b: gacha items
+-- owner, 2026-10-23: "ไอเท็มในกาชา ... แอดมินเป็นคนให้ และไม่สามารถไปโผล่ใน inventory ของ
+-- vanilla และดรอปไม่ได้ ... ต้องกดใช้งานในแท็บของเรา แยกไปเป็นแท็บ ไอเท็มกาชา"
+local function GC() return LWS.GachaClient end
+
+function Win:renderGacha(x, y, w, h)
+    local c = H.C
+    local sf = H.small()
+    local gc = GC()
+    if not gc then text(self, "Gacha client not loaded", x + 10, y + 10, c.bad, 1, sf); return end
+    local bh = lineH(sf) + 8
+    local rightW = math.max(260, math.min(340, math.floor(w * 0.34)))
+    local lw = w - rightW - 8
+    local total, kinds = 0, 0
+    for _, g in ipairs(LWS.GACHA_ITEMS) do local n = gc.count(g.id); if n > 0 then total = total + n; kinds = kinds + 1 end end
+    local lx, ly, lww, lh = self:drawCard(x, y, lw, h, T("IGUI_LWSG_Title", tostring(total), tostring(kinds)))
+    local sw = math.min(300, math.floor(lww * 0.5))
+    local q = self:searchBox("gacha", lx, ly, sw, bh)
+    local all = self.gachaAll == true
+    self:button("gacha:mine", T("IGUI_LWS_ColMine"), lx + sw + 10, ly, 110, bh, not all, true)
+    self:button("gacha:all", T("IGUI_LWSG_AllItems"), lx + sw + 126, ly, 130, bh, all, true)
+    local cat = self.gachaCat or "all"
+    local base = {}
+    for _, g in ipairs(LWS.GACHA_ITEMS) do
+        if (all or gc.count(g.id) > 0) and matches(q, T("IGUI_LWSG_Name_" .. g.id), T("IGUI_LWSG_Desc_" .. g.id), T("IGUI_LWSG_Cat_" .. g.cat)) then
+            base[#base + 1] = g
+        end
+    end
+    local per = {}
+    for _, g in ipairs(base) do per[g.cat] = (per[g.cat] or 0) + 1 end
+    local chips = { { id = "all", label = T("IGUI_LWS_All") .. " (" .. #base .. ")" } }
+    for _, cid in ipairs(LWS.GACHA_CATEGORIES) do
+        chips[#chips + 1] = { id = cid, label = T("IGUI_LWSG_Cat_" .. cid) .. " (" .. (per[cid] or 0) .. ")", enabled = (per[cid] or 0) > 0 or cat == cid }
+    end
+    local gy = self:chips("gacha:cat:", chips, cat, lx, ly + bh + 6, lww, bh) + 4
+    local list = {}
+    for _, g in ipairs(base) do if cat == "all" or g.cat == cat then list[#list + 1] = g end end
+    if #list == 0 then
+        local key = (kinds == 0 and not all) and "IGUI_LWSG_None" or "IGUI_LWS_NoMatch"
+        for i, l in ipairs(wrap(T(key), lww - 20, sf)) do text(self, l, lx + 4, gy + 10 + (i - 1) * lineH(sf), c.textDim, 1, sf) end
+    else
+        self:grid("gacha", lx, gy, lww, ly + lh - gy, list, function(g)
+            local n = gc.count(g.id)
+            local on = g.use and g.use.set and gc.equipped(g.id)
+            return { icon = g.icon, name = T("IGUI_LWSG_Name_" .. g.id), badge = n > 0 and ("x" .. n) or nil, dim = n == 0,
+                     worn = self.gachaSel == g.id or on, label = on and T("IGUI_LWSG_Equipped") or T("IGUI_LWSG_Cat_" .. g.cat),
+                     labelCol = on and c.accent or c.textDim,
+                     tipText = T("IGUI_LWSG_Name_" .. g.id) .. "\n" .. T("IGUI_LWSG_Desc_" .. g.id) }
+        end, { w = 108, h = 124, isz = 52, gap = 8 })
+    end
+    -- the picked item, and the buffs running
+    local rx = x + lw + 8
+    local half = math.floor(h * 0.58)
+    local dx, dy, dw, dh = self:drawCard(rx, y, rightW, half, T("IGUI_LWSG_Detail"))
+    local g = self.gachaSel and LWS.GACHA_ITEM[self.gachaSel]
+    if not g then
+        for i, l in ipairs(wrap(T("IGUI_LWSG_PickOne"), dw - 8, sf)) do text(self, l, dx + 2, dy + 6 + (i - 1) * lineH(sf), c.textDim, 1, sf) end
+    else
+        local n = gc.count(g.id)
+        local icon = texture(g.icon)
+        if icon then self:drawTextureScaled(icon, dx, dy, 64, 64, n > 0 and 1 or 0.35, 1, 1, 1) end
+        local mf = H.medium()
+        local ty = dy
+        for i, l in ipairs(wrap(T("IGUI_LWSG_Name_" .. g.id), dw - 76, mf)) do
+            if i <= 2 then text(self, l, dx + 72, ty, c.text, 1, mf); ty = ty + lineH(mf) end
+        end
+        text(self, fit(T("IGUI_LWSG_Cat_" .. g.cat) .. "   " .. T("IGUI_LWSG_Have", tostring(n)), dw - 76, sf), dx + 72, ty + 2, c.textDim, 1, sf)
+        ty = math.max(dy + 70, ty + lineH(sf) + 6)
+        for _, l in ipairs(wrap(T("IGUI_LWSG_Desc_" .. g.id), dw - 4, sf)) do
+            if ty + lineH(sf) < dy + dh - bh - 8 then text(self, l, dx + 2, ty, c.text, 1, sf) end
+            ty = ty + lineH(sf)
+        end
+        local by = dy + dh - bh
+        if g.use and g.use.set then
+            local on = gc.equipped(g.id)
+            self:button("gacha:equip", T(on and "IGUI_LWSG_Unequip" or "IGUI_LWSG_Equip"), dx, by, dw, bh, on, n > 0)
+        else
+            self:button("gacha:use", T("IGUI_LWSG_Use"), dx, by, dw, bh, false, n > 0)
+        end
+    end
+    local bx2, by2, bw2, bh2 = self:drawCard(rx, y + half + 8, rightW, h - half - 8, T("IGUI_LWSG_Active"))
+    local rows = {}
+    local t = getTimestampMs and getTimestampMs() or 0
+    for k, b in pairs(gc.activeBuffs()) do rows[#rows + 1] = { label = gc.buffLabel(k), left = b.u - t, s = b.s } end
+    table.sort(rows, function(a, b2) return a.s < b2.s end)
+    local sb, sc = gc.setBonus()
+    if sc > 0 then rows[#rows + 1] = { label = T("IGUI_LWSG_SetLine", tostring(sc), tostring(math.floor(sb * 100 + 0.5))) } end
+    if #rows == 0 then
+        text(self, T("IGUI_LWSG_NoActive"), bx2 + 2, by2 + 4, c.textDim, 1, sf)
+    else
+        self:scrolled("gachaActive", bx2, by2, bw2, bh2, function(top)
+            local yy = top
+            for _, r in ipairs(rows) do
+                local left = r.left and gc.fmt(r.left) or ""
+                text(self, fit(r.label, bw2 - tw(sf, left) - 20, sf), bx2 + 2, yy, c.text, 1, sf)
+                if left ~= "" then text(self, left, bx2 + bw2 - tw(sf, left) - 10, yy, c.accent, 1, sf) end
+                yy = yy + lineH(sf) + 4
+            end
+            return yy - top
+        end)
+    end
 end
 
 -- ----------------------------------------------------------------- tab 3: trade
@@ -966,8 +1188,28 @@ function Win:renderAdmin(x, y, w, h)
     local view = data and data.view == self.adminOwner and data.state or nil
     local ownerName = self.adminOwner or "-"
     for _, o in ipairs(data and data.owners or {}) do if o.key == self.adminOwner then ownerName = o.name end end
-    local ax, ay, aw, ah = self:drawCard(rx, y, rw, half, T("IGUI_LWS_OwnerPieces", tostring(ownerName)))
-    if not self.adminOwner then
+    local gachaMode = self.adminCat == "gacha"
+    local ax, ay, aw, ah = self:drawCard(rx, y, rw, half, T(gachaMode and "IGUI_LWSG_OwnerItems" or "IGUI_LWS_OwnerPieces", tostring(ownerName)))
+    local gview = C.adminGacha and C.adminGacha.owner == self.adminOwner and C.adminGacha.state or nil
+    if gachaMode and self.adminOwner and not gview and self.adminGachaAsked ~= self.adminOwner then
+        self.adminGachaAsked = self.adminOwner
+        C.send("AdminGachaView", { owner = self.adminOwner })
+    end
+    if gachaMode then
+        if not self.adminOwner then
+            text(self, T("IGUI_LWS_PickOwner"), ax + 4, ay + 8, c.textDim, 1, sf)
+        elseif not gview then
+            text(self, T("IGUI_LWS_Loading"), ax + 4, ay + 8, c.textDim, 1, sf)
+        else
+            local have = {}
+            for _, gi in ipairs(LWS.GACHA_ITEMS) do if (gview.items[gi.id] or 0) > 0 then have[#have + 1] = gi end end
+            if #have == 0 then text(self, T("IGUI_LWSG_None"), ax + 4, ay + 8, c.textDim, 1, sf) end
+            self:grid("ownerGacha", ax, ay, aw, ah, have, function(gi)
+                return { icon = gi.icon, name = T("IGUI_LWSG_Name_" .. gi.id), badge = "x" .. tostring(gview.items[gi.id]), remove = true,
+                         label = T("IGUI_LWSG_Cat_" .. gi.cat), tipText = T("IGUI_LWSG_Name_" .. gi.id), tip = T("IGUI_LWSG_ClickRevoke") }
+            end, { w = 104, h = 120, isz = 48, gap = 8 })
+        end
+    elseif not self.adminOwner then
         text(self, T("IGUI_LWS_PickOwner"), ax + 4, ay + 8, c.textDim, 1, sf)
     elseif not view then
         text(self, T("IGUI_LWS_Loading"), ax + 4, ay + 8, c.textDim, 1, sf)
@@ -980,10 +1222,30 @@ function Win:renderAdmin(x, y, w, h)
             return { worn = wornBy[e.uid], remove = true, label = "#" .. tostring(e.uid), tip = T("IGUI_LWS_ClickRevoke") }
         end)
     end
-    -- the catalog
-    local kx, ky, kw, kh = self:drawCard(rx, y + half + 8, rw, h - half - 8, T("IGUI_LWS_Catalog", tostring(#LWS.CATALOG)))
+    -- the catalog: fashion or gacha items
+    local kx, ky, kw, kh = self:drawCard(rx, y + half + 8, rw, h - half - 8,
+        gachaMode and T("IGUI_LWSG_Catalog", tostring(#LWS.GACHA_ITEMS)) or T("IGUI_LWS_Catalog", tostring(#LWS.CATALOG)))
+    local sbh = lineH(sf) + 8
+    self:button("admin:fashion", T("IGUI_LWS_AdminFashion"), kx, ky, 120, sbh, not gachaMode, true)
+    self:button("admin:gacha", T("IGUI_LWS_AdminGacha"), kx + 126, ky, 120, sbh, gachaMode, true)
+    local q = self:searchBox("admin", kx + 256, ky, math.max(120, kw - 266), sbh)
+    ky, kh = ky + sbh + 6, kh - sbh - 6
+    if gachaMode then
+        local glist = {}
+        for _, gi in ipairs(LWS.GACHA_ITEMS) do
+            if matches(q, T("IGUI_LWSG_Name_" .. gi.id), T("IGUI_LWSG_Cat_" .. gi.cat)) then glist[#glist + 1] = gi end
+        end
+        self:grid("adminGacha", kx, ky, kw, kh, glist, function(gi)
+            return { icon = gi.icon, name = T("IGUI_LWSG_Name_" .. gi.id), label = T("IGUI_LWSG_Cat_" .. gi.cat),
+                     tipText = T("IGUI_LWSG_Name_" .. gi.id) .. "\n" .. T("IGUI_LWSG_Desc_" .. gi.id),
+                     tip = self.adminOwner and T("IGUI_LWS_ClickGive", tostring(ownerName)) or T("IGUI_LWS_PickOwner") }
+        end, { w = 104, h = 120, isz = 48, gap = 8 })
+        return
+    end
     local cat = {}
-    for _, cpiece in ipairs(LWS.CATALOG) do cat[#cat + 1] = { p = cpiece.id, catalog = true } end
+    for _, cpiece in ipairs(LWS.CATALOG) do
+        if matches(q, LWS.pieceName(cpiece.id), LWS.slotName(cpiece.slot)) then cat[#cat + 1] = { p = cpiece.id, catalog = true } end
+    end
     self:grid("catalog", kx, ky, kw, kh, cat, function(e)
         return { label = LWS.slotName(LWS.PIECE[e.p].slot), tip = self.adminOwner and T("IGUI_LWS_ClickGive", tostring(ownerName)) or T("IGUI_LWS_PickOwner") }
     end)
@@ -1071,6 +1333,7 @@ function Win:onMouseDown(x, y)
                 self.adminOwner = r.owner
                 self.scroll.ownerPieces = 0
                 C.send("AdminList", { owner = r.owner })
+                if self.adminCat == "gacha" then C.send("AdminGachaView", { owner = r.owner }) end
             end
             return true
         end
@@ -1123,6 +1386,23 @@ function Win:onButton(id)
     elseif id == "pet:come" then C.petCome()
     elseif id == "pet:speak" then C.petSpeak()
     elseif id == "pet:feed" then C.petFeed(nil)
+    elseif id == "col:mine" or id == "col:catalog" then
+        self.colCatalog = id == "col:catalog"; self.scroll.collection = 0
+    elseif id:sub(1, 9) == "col:type:" then
+        self.colType = id:sub(10); self.scroll.collection = 0
+    elseif id:sub(1, 9) == "col:worn:" then
+        self.colWorn = id:sub(10); self.scroll.collection = 0
+    elseif id == "gacha:mine" or id == "gacha:all" then
+        self.gachaAll = id == "gacha:all"; self.scroll.gacha = 0
+    elseif id:sub(1, 10) == "gacha:cat:" then
+        self.gachaCat = id:sub(11); self.scroll.gacha = 0
+    elseif id == "gacha:use" then
+        if self.gachaSel and LWS.GachaClient then LWS.GachaClient.use(self.gachaSel) end
+    elseif id == "gacha:equip" then
+        if self.gachaSel and LWS.GachaClient then LWS.GachaClient.equip(self.gachaSel, not LWS.GachaClient.equipped(self.gachaSel)) end
+    elseif id == "admin:fashion" or id == "admin:gacha" then
+        self.adminCat = id:sub(7)
+        if self.adminCat == "gacha" and self.adminOwner then C.send("AdminGachaView", { owner = self.adminOwner }) end
     elseif id == "dress:all" or id == "dress:slot" then
         self.dressFilter = id:sub(7)
         self.scroll.wardrobe = 0
@@ -1135,10 +1415,23 @@ end
 function Win:onTile(key, r, x, y)
     local e = r.e
     if key == "collection" then
+        if e.missing then return end
         self.slot = LWS.PIECE[e.p].slot
         self.dressFilter = "slot"
         self.tab = "dress"
         log("collection -> dress, slot %s", self.slot)
+    elseif key == "gacha" then
+        self.gachaSel = e.id
+        log("gacha: picked %s", tostring(e.id))
+    elseif key == "adminGacha" then
+        if not self.adminOwner then C.say(T("IGUI_LWS_PickOwner")); return end
+        log("admin: give gacha %s to %s", tostring(e.id), tostring(self.adminOwner))
+        C.send("AdminGachaGrant", { owner = self.adminOwner, id = e.id, n = 1 })
+    elseif key == "ownerGacha" then
+        if r.remove and inside(r.remove, x, y) then
+            log("admin: take gacha %s from %s", tostring(e.id), tostring(self.adminOwner))
+            C.send("AdminGachaRevoke", { owner = self.adminOwner, id = e.id, n = 1 })
+        end
     elseif key == "ownerPieces" then
         if r.remove and inside(r.remove, x, y) then
             log("admin: take piece #%s from %s", tostring(e.uid), tostring(self.adminOwner))

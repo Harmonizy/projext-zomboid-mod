@@ -80,6 +80,17 @@ def tab_trade(path):
     done(img, 128, path)
 
 
+def tab_gacha(path):
+    """a capsule machine: a round globe of capsules on a stand"""
+    img, d, s = canvas()
+    d.ellipse(P(s, [(28, 12), (100, 84)]), outline=INK, width=int(8 * s))
+    for cx, cy, col in ((50, 56, GOLD), (74, 52, ROSE), (62, 34, GOLD), (82, 70, INK), (44, 72, ROSE)):
+        d.ellipse(P(s, [(cx - 8, cy - 8), (cx + 8, cy + 8)]), fill=col)
+    d.rectangle(P(s, [(40, 88), (88, 116)]), outline=INK, width=int(8 * s))
+    d.rectangle(P(s, [(56, 98), (72, 108)]), fill=GOLD)
+    done(img, 128, path)
+
+
 def icon_compact(path, out):
     """two arrows: inward (make small) or outward (make big)"""
     img, d, s = canvas(64)
@@ -229,6 +240,7 @@ if __name__ == "__main__":
     tab_admin(os.path.join(UI, "tab_admin.png"))
     tab_guide(os.path.join(UI, "tab_guide.png"))
     tab_trade(os.path.join(UI, "tab_trade.png"))
+    tab_gacha(os.path.join(UI, "tab_gacha.png"))
     icon_compact(os.path.join(UI, "icon_compact.png"), False)
     icon_compact(os.path.join(UI, "icon_expand.png"), True)
     logo(os.path.join(UI, "logo.png"))

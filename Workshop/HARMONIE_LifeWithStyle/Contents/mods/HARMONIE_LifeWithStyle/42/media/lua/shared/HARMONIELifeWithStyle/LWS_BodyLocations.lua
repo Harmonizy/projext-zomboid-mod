@@ -58,6 +58,9 @@ local function setup()
         end
       end
     end
+    -- the gacha Guardian Capsule's invisible armour layer (LWS_Gacha.lua), hides nothing
+    local g = loc("lws:gacha_guardian")
+    if g and pcall(function() group:getOrCreateLocation(g) end) then made = made + 1 else missing[#missing + 1] = "lws:gacha_guardian" end
     LWS.log("BodyLocations", "%d fashion body locations, %d hide rules%s", made, hides,
         #missing > 0 and (" -- not found: " .. table.concat(missing, ", ")) or "")
 end

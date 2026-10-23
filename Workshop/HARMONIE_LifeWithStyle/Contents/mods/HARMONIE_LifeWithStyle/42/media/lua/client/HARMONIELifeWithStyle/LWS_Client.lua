@@ -30,6 +30,8 @@ local function me() return getPlayer and getPlayer() or nil end
 C.pending = C.pending or {}   -- full types to wear, with a deadline
 function C.handle(command, args)
     args = type(args) == "table" and args or {}
+    -- the gacha items (LWS_GachaClient.lua)
+    if LWS.GachaClient and LWS.GachaClient.handle(command, args) then return end
     if command == "State" then
         C.state = { items = args.items or {}, worn = args.worn or {}, show = args.show or {} }
         C.stateAt = getTimestampMs and getTimestampMs() or 0
