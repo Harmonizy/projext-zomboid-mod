@@ -60,6 +60,9 @@
   read from the game's own media/effects, never a mod folder (MIL 0.7.3,
   Requiem_cat). Guns take vanilla ammo types; MIL's
   `shared/HARMONIE_MIL_AmmoCheck.lua` lists any left at game start.
+  The three left on mod ammo (MTL30, interceptor crossbow, Flamethrower) are
+  out of the world loot with their own ammo (`server/zzz_HARMONIE_MIL_RemovedLoot.lua`,
+  MIL 0.7.4); keep Base.GrenadeAmmo (the under-barrel launchers use it).
 
 
 ## HARMONIE Hub (shared by our mods)
