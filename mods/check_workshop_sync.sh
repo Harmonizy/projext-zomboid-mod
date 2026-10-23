@@ -27,8 +27,21 @@ for workshop_dir in "$REPO_ROOT"/Workshop/*/; do
     MOD_ID="$(basename "$workshop_dir")"
     [ "$MOD_ID" = "ModTemplate" ] && continue
 
-    MODS_DIR="$REPO_ROOT/mods/$MOD_ID"
     STAGING_MODS_DIR="${workshop_dir}Contents/mods"
+    # Workshop/ folders carry the display name (2026-10-23); the mods/ folder is
+    # the one whose mod.info id= matches the Contents/mods/<id>/ folder.
+    MODS_DIR="$REPO_ROOT/mods/$MOD_ID"
+    if [ ! -d "$MODS_DIR" ]; then
+        for d in "$STAGING_MODS_DIR"/*/; do
+            [ -d "$d" ] || continue
+            inner="$(basename "$d")"
+            for info in "$REPO_ROOT"/mods/*/*/mod.info; do
+                if [ "$(grep -m1 '^id=' "$info" | cut -d= -f2- | tr -d '\r')" = "$inner" ]; then
+                    MODS_DIR="$(dirname "$(dirname "$info")")"; break 2
+                fi
+            done
+        done
+    fi
 
     if [ ! -d "$MODS_DIR" ] || [ ! -d "$STAGING_MODS_DIR" ]; then
         echo "SKIP  $MOD_ID (missing mods/ or staging Contents/mods/ folder)"
@@ -54,6 +67,7 @@ for workshop_dir in "$REPO_ROOT"/Workshop/*/; do
 
     for version_dir in "$MODS_DIR"/*/; do
         VERSION="$(basename "$version_dir")"
+        [ -f "${version_dir}mod.info" ] || continue   # tools/, _reference_assets/: not shipped
         SRC="$MODS_DIR/$VERSION"
         DST="$STAGING_INNER_DIR/$VERSION"
 
@@ -76,7 +90,7 @@ done
 
 if [ "$ANY_DRIFT" -eq 1 ]; then
     echo
-    echo "Drift found. Fix with: mods/sync_to_workshop.sh <ModId> <version>"
+    echo "Drift found. Fix with: mods/sync_to_workshop.sh <mods/ folder> <version>"
     exit 1
 else
     echo

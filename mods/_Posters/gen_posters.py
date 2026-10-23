@@ -3,7 +3,7 @@
 Drawn here with Pillow (4x supersampled) -- no copied or generated art.
 Writes, for every mod:
   mods/<Mod>/42/poster.png           512x512 (the in-game mod list picture)
-  Workshop/<Mod>/preview.png          512x512 (the Steam Workshop picture)
+  Workshop/<Display name>/preview.png 512x512 (the Steam Workshop picture)
 Not a mod itself (no mod.info). Run: python3 mods/_Posters/gen_posters.py
 then sync each mod (mods/sync_to_workshop.sh <Mod> 42).
 Fonts are only used to draw the letters (DejaVu Sans Bold, Loma Bold for
@@ -263,11 +263,26 @@ MODS = [
     ("HARMONIE_TooManyModThaiTranslate", (30, 46, 120), (10, 14, 44), (255, 110, 120), e_thai, ["Too Many Mod", "Thai Translate"], None, "แปลไทย"),
 ]
 
+def workshop_dir(mod):
+    """Workshop/ folders carry the display name: find the one holding Contents/mods/<id>."""
+    ids = {mod}
+    info = os.path.join(ROOT, "mods", mod, "42", "mod.info")
+    if os.path.exists(info):
+        for line in open(info, encoding="utf-8"):
+            if line.startswith("id="):
+                ids.add(line[3:].strip())
+    base = os.path.join(ROOT, "Workshop")
+    for d in sorted(os.listdir(base)):
+        if any(os.path.isdir(os.path.join(base, d, "Contents", "mods", i)) for i in ids):
+            return os.path.join(base, d)
+    return os.path.join(base, mod)
+
+
 if __name__ == "__main__":
     for mod, c1, c2, acc, em, title, sub, thai in MODS:
         img = poster(mod, c1, c2, acc, em, title, sub, thai)
         img.save(os.path.join(ROOT, "mods", mod, "42", "poster.png"), optimize=True)
-        img.save(os.path.join(ROOT, "Workshop", mod, "preview.png"), optimize=True)
+        img.save(os.path.join(workshop_dir(mod), "preview.png"), optimize=True)
         print("poster", mod)
         if mod in ICON_MODS:
             icon(mod, c1, c2, acc, em).save(os.path.join(ROOT, "mods", mod, "42", "icon.png"), optimize=True)

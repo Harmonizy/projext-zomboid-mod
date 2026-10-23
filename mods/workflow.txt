@@ -251,6 +251,15 @@ mods/<ModId>/<version>/...
   would", keeping the Workshop entry selected is reasonable too — in that case,
   rely on the two scripts above instead. ***
 
+*** Workshop/ folder names (2026-10-23): the game's upload screen ("choose the
+  Workshop item's folder") lists the folder names under Workshop/, so each one is
+  named after the mod's DISPLAY name, e.g. "Workshop/HARMONIE - Mercenary Is Life/".
+  Only that outer folder: Contents/mods/<ModId>/ and mods/<ModId>/ keep the ID
+  (saves, server configs and subscriptions use it), and workshop.txt keeps the
+  item's id=, so the upload still updates the same Workshop item. The scripts
+  (sync_to_workshop.sh, check_workshop_sync.sh, _Posters/gen_posters.py) find the
+  outer folder by the Contents/mods/<id>/ inside it. Below, Workshop/<ModId>/
+  means that display-name folder. ***
 Workshop/<ModId>/Contents/mods/<ModId>/<version>/...
   = the copy used for the Steam Workshop upload (needs the extra "Contents/mods/
   <ModId>/" wrapper layer per PZ's Workshop uploader convention — compare

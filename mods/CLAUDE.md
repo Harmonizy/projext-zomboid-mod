@@ -85,6 +85,10 @@
   HARMONIE_LifeWithStyle = "HARMONIE - Life With Style" (2026-10-20). The mod
   IDs and folders stay as they are (saves, server configs and Workshop
   subscriptions use the ID).
+- `Workshop/` folders carry the display name (2026-10-23, the upload screen
+  lists them): `Workshop/HARMONIE - Mercenary Is Life/Contents/mods/HARMONIE_ModernFirearmsSystemFix/`.
+  `sync_to_workshop.sh <mods/ folder>` finds it by the id inside -- quote the
+  path (spaces) when you diff it.
 - Each of our mods carries its own EN and TH texts. The Thai translation mod
   (HARMONIE_TooManyModThaiTranslate) is only for other people's mods: never
   put a key of ours there.
