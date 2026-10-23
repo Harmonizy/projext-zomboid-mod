@@ -113,7 +113,10 @@
   file -- each gated on a variable only our pets have (`lwsPet`,
   `lwsNetGait`, `lwsIdle2`...). Animation variables do not travel: the
   server sends `PetAnim`, and an MP client drives its own copies' walk
-  (`C.petGaitTick`, from how fast they move). Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  (`C.petGaitTick`, from how fast they move). Cats (0.6.0): one type
+  `lwspet_cat`, a coat = a breed; `kind` picks the voice (`LWS.PET_VOICE`)
+  and the cat-only sit / groom nodes (those clips exist only in the cat
+  model -- a node for a missing clip fails silently). Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks

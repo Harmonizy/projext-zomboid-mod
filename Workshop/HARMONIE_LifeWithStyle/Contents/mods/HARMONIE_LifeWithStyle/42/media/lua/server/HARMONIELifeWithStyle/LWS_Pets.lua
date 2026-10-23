@@ -114,6 +114,12 @@ function P.sound(animal, name)
     end
 end
 
+-- the pet's own voice for this moment (a dog barks, a cat meows -- LWS.PET_VOICE)
+function P.voice(rec, what)
+    local v = LWS.PET_VOICE[rec.kind or "dog"] or LWS.PET_VOICE.dog
+    P.sound(rec.animal, v[what])
+end
+
 -- ------------------------------------------------------------- spawn / despawn
 local function makeAt(x, y, z, want)
     local def = AnimalDefinitions and AnimalDefinitions.getDef and AnimalDefinitions.getDef(want.pet.type)
@@ -157,7 +163,7 @@ function P.spawn(player, want, why)
         local md = a:getModData()
         md.LWS_pet = { owner = want.key, uid = want.uid }
     end)
-    local rec = { animal = a, id = idOf(a), uid = want.uid, piece = want.piece, pathAt = 0 }
+    local rec = { animal = a, id = idOf(a), uid = want.uid, piece = want.piece, pathAt = 0, kind = want.pet.kind or "dog" }
     P.active[want.key] = rec
     log("%s: %s came out (%s, animal id %s)", LWS.name(player), want.piece, tostring(why), tostring(rec.id))
     return rec
@@ -200,7 +206,49 @@ function P.animTick(rec, moving)
     end
 end
 
+-- a cat sits down (the sit-down clip, then the sitting loop) and grooms now and then
+P.SIT_AFTER_MS = 5000
+function P.catSit(rec)
+    if rec.anims and (rec.anims.lwsSit or rec.anims.lwsRest) then return end
+    P.anim(rec, "lwsSitIn", true, 1200)
+    P.anim(rec, "lwsSit", true)
+    log("%s sits down", tostring(rec.piece))
+end
+
+function P.catIdleTick(rec, d)
+    local t = now()
+    local sitting = rec.anims and rec.anims.lwsSit
+    if d.mode == "stay" then
+        rec.stillSince = rec.stillSince or t
+        local still = t - rec.stillSince
+        if still >= P.REST_AFTER_MS * 2 and not (rec.anims and rec.anims.lwsRest) then
+            P.anim(rec, "lwsSit", false)
+            P.anim(rec, "lwsRest", true)
+            log("%s curls up", tostring(rec.piece))
+            return
+        elseif still >= P.SIT_AFTER_MS and not sitting and not (rec.anims and rec.anims.lwsRest) then
+            P.catSit(rec)
+            return
+        end
+        if rec.anims and rec.anims.lwsRest then return end
+    end
+    if not rec.idleAt then rec.idleAt = t + ZombRand(P.IDLE_MIN_MS, P.IDLE_MAX_MS) end
+    if t < rec.idleAt then return end
+    rec.idleAt = t + ZombRand(P.IDLE_MIN_MS, P.IDLE_MAX_MS)
+    if sitting then
+        local g = LWS.CAT_GROOM_VARS[ZombRand(1, #LWS.CAT_GROOM_VARS + 1)]
+        if not (rec.anims.lwsSitGroom or rec.anims.lwsSitGroom2) then P.anim(rec, g, true, 3500) end
+        return
+    end
+    for _ in pairs(rec.anims or {}) do return end
+    -- standing by the owner: sit down, or one of the idle variations
+    if ZombRand(0, 3) == 0 then P.catSit(rec) return end
+    local var = LWS.PET_IDLE_VARS[ZombRand(1, #LWS.PET_IDLE_VARS + 1)]
+    P.anim(rec, var, true, var == "lwsSniff" and 4000 or 3000)
+end
+
 function P.idleTick(rec, d)
+    if rec.kind == "cat" then return P.catIdleTick(rec, d) end
     local t = now()
     if d.mode == "stay" then
         rec.stillSince = rec.stillSince or t
@@ -267,6 +315,8 @@ function P.sync(player, why)
     if rec and (not want or want.uid ~= rec.uid) then
         P.despawn(key, want and "another pet" or (P.sv("PetsEnabled") and "taken off" or "pets are off in sandbox"))
         rec, changed = nil, true
+        -- the owner chose: the new pet comes now (the wait is only for a lost one)
+        if P.respawnAt then P.respawnAt[key] = nil end
     end
     if want and not rec then
         local t = now()
@@ -293,12 +343,12 @@ function P.hungerTick(player, rec, o)
     if before >= 0.25 and d.hunger < 0.25 then
         log("%s: %s is hungry (%.0f%%)", LWS.name(player), rec.piece, d.hunger * 100)
         LWS.toClient(player, "Msg", { key = "IGUI_LWS_Msg_PetHungry", arg = LWS.pieceName(rec.piece), text = true })
-        P.sound(rec.animal, "LWSPetWhine")
+        P.voice(rec, "hungry")
         P.sendState(player)
     elseif before > 0 and d.hunger <= 0 then
         log("%s: %s is starving -- it will not take orders until fed", LWS.name(player), rec.piece)
         LWS.toClient(player, "Msg", { key = "IGUI_LWS_Msg_PetStarving", arg = LWS.pieceName(rec.piece), text = true })
-        P.sound(rec.animal, "LWSPetWhine")
+        P.voice(rec, "hungry")
         P.sendState(player)
     end
     return d
@@ -417,7 +467,7 @@ function P.handle(player, command, args)
         d.hunger = math.min(1, d.hunger + v)
         d.hourAt = hour()
         log("%s fed %s with %s: %.0f%% -> %.0f%%", LWS.name(player), rec.piece, t, before * 100, d.hunger * 100)
-        P.sound(rec.animal, "LWSPetEat")
+        P.voice(rec, "eat")
         P.anim(rec, "lwsEat", true, 4000)
         LWS.toClient(player, "Msg", { key = "IGUI_LWS_Msg_PetFed", arg = LWS.pieceName(rec.piece), text = true })
         P.sendState(player)
@@ -428,7 +478,7 @@ function P.handle(player, command, args)
         -- a starving pet only follows (feeding it brings the tricks back)
         if P.sv("PetHunger") and d.hunger <= 0 and command ~= "PetCome" then
             log("%s: %s is starving and ignores %s", LWS.name(player), rec.piece, command)
-            P.sound(rec.animal, "LWSPetWhine")
+            P.voice(rec, "hungry")
             LWS.toClient(player, "Msg", { key = "IGUI_LWS_Msg_PetStarving", arg = LWS.pieceName(rec.piece), text = true })
             return
         end
@@ -449,7 +499,7 @@ function P.handle(player, command, args)
             local ok, err = pcall(pathTo, rec.animal, player)
             log("%s calls %s%s", LWS.name(player), rec.piece, ok and "" or (" -- path FAILED: " .. tostring(err)))
         else
-            P.sound(rec.animal, "LWSPetBark")
+            P.voice(rec, "speak")
             log("%s: %s barks", LWS.name(player), rec.piece)
         end
         P.sendState(player)

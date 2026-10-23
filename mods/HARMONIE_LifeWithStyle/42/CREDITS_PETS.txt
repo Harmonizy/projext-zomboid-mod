@@ -22,6 +22,23 @@ Taken (renamed LWSPet_*, nothing else of it is included):
                                           kibble" by aisselles (#725619) for
                                           eating.
 
+The cats come from "CD: Cats" (Steam Workshop 3791294616), the Companion Dogs
+add-on by the same author, used with permission as well:
+  models_X/Skinned/LWSPet_Cat.glb      <- its Cat_Body.glb. Its credits say the
+                                          model was rebuilt from a third-party
+                                          GLB, and that the lie-down, sitting
+                                          and limping animation sets inside it
+                                          were authored by Cerise
+                                          (steamcommunity.com/profiles/76561198351533061)
+  textures/Body/LWSPet_Cat_<Coat>.png  <- its coats; BrownTabby, GreyTabby,
+                                          OrangeTabby, Barley, Cow and Tortie
+                                          were painted by Cerise
+  textures/Item_LWSPet_Cat_<Coat>.png  <- its CDPortrait_cat.png; the coats
+                                          other than black are our recolour of it
+  AnimSets/raccoon/idle/lwsSit*.xml    <- its sitting nodes, renamed
+  sound/LWSPet_Cat*.ogg                <- its cat voices: BigSoundBank.com
+                                          (Joseph Sardin), "free and royalty free"
+
 The code that makes the pets follow, take orders and eat is our own
 (lua/server/HARMONIELifeWithStyle/LWS_Pets.lua); none of Companion Dogs' code
 is included. tools/import_pets.py copies the files above.

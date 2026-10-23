@@ -105,7 +105,7 @@ end
 -- ------------------------------------------------------------- pet food
 -- how much of a pet's hunger (0..1) one item fills: dog food all of it, other
 -- food by how filling it is; rotten, poisoned or not food = 0 (cannot be fed)
-LWS.DOG_FOOD = { ["Base.Dogfood"] = true, ["Base.DogfoodOpen"] = true, ["Base.DogFoodBag"] = true }
+LWS.DOG_FOOD = { ["Base.Dogfood"] = true, ["Base.DogfoodOpen"] = true, ["Base.DogFoodBag"] = true, ["Base.CatFoodBag"] = true }
 function LWS.petFoodValue(item)
     if not item then return 0 end
     local okF, isFood = pcall(function() return instanceof(item, "Food") end)
@@ -129,6 +129,17 @@ end
 LWS.PET_WALK_SCALE, LWS.PET_RUN_SCALE = 0.939, 1.0
 LWS.PET_WALK_SPEED, LWS.PET_RUN_SPEED = 6.03, 3.82   -- animalSpeed while walking / running
 LWS.PET_IDLE_VARS = { "lwsIdle2", "lwsIdle3", "lwsSniff" }
+-- cats only (the clips are only in the cat model): sit down, sit, groom while sitting
+LWS.CAT_GROOM_VARS = { "lwsSitGroom", "lwsSitGroom2" }
+-- what a pet says, by kind (sounds: tools/import_pets.py)
+LWS.PET_VOICE = {
+    dog = { speak = "LWSPetBark", hungry = "LWSPetWhine", eat = "LWSPetEat", happy = "LWSPetHappy" },
+    cat = { speak = "LWSPetMeow", hungry = "LWSPetMeow", eat = "LWSPetPurr", happy = "LWSPetPurr" },
+}
+function LWS.petKind(pieceId)
+    local c = LWS.PIECE[tostring(pieceId)]
+    return c and c.pet and c.pet.kind or "dog"
+end
 function LWS.isPetAnimal(animal)
     local ok, t = pcall(function() return animal:getAnimalType() end)
     return ok and t ~= nil and tostring(t):sub(1, 7) == "lwspet_"
