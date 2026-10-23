@@ -21729,3 +21729,29 @@ LOG  : Lua          f:3149> [PerfProbe singleplayer]       32 ms     1201 calls 
 LOG  : Lua          f:3149> [PerfProbe singleplayer]       23 ms     1201 calls  OnTickEvenPaused  HARMONIE_HomeMedic client/lua_timers.lua:45
 LOG  : Lua          f:3149> [PerfProbe singleplayer]        3 ms     1201 calls  OnPostUIDraw  vanilla Tutorial/TutorialSetup.lua:16
 LOG  : Lua          f:3149> [PerfProbe singleplayer]        2 ms     1201 calls  OnPreUIDraw  HARMONIE_TheWayToAttack client/HARMONIE_TWA_ZombieHP.lua:324
+LOG  : Lua          f:3149> [PerfProbe singleplayer] 20 s: frames=0 (0.0/s), mod handlers 248 ms total (0.0 ms per frame)
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       78 ms     1176 calls  OnPreUIDraw  HARMONIE_HomeMedic ExtensiveHealth/EHR_WatchBattery.lua:338
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       51 ms     1176 calls  OnPreUIDraw  MS SettingPanel/MS_GlobalControlPanel.lua:278
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       45 ms     1176 calls  OnPreUIDraw  HARMONIE_HomeMedic HARMONIEHomeMedic/HARMONIE_BloodVision.lua:58
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       36 ms     1176 calls  OnPostUIDraw  HARMONIE_HomeMedic ExtensiveHealth/EHR_Delirium.lua:407
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       16 ms     1178 calls  OnRenderTick  vanilla Gamepad/JoyPadSetup.lua:980
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       14 ms     1178 calls  OnTickEvenPaused  HARMONIE_HomeMedic client/lua_timers.lua:45
+LOG  : Lua          f:3149> [PerfProbe singleplayer]        5 ms     1176 calls  OnPostUIDraw  vanilla Tutorial/TutorialSetup.lua:16
+LOG  : Lua          f:3149> [PerfProbe singleplayer]        3 ms     1176 calls  OnPreUIDraw  HARMONIE_TheWayToAttack client/HARMONIE_TWA_ZombieHP.lua:324
+LOG  : Lua          f:3149> [PerfProbe singleplayer] 20 s: frames=0 (0.0/s), mod handlers 259 ms total (0.0 ms per frame)
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       88 ms     1164 calls  OnPreUIDraw  HARMONIE_HomeMedic ExtensiveHealth/EHR_WatchBattery.lua:338
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       41 ms     1164 calls  OnPreUIDraw  HARMONIE_HomeMedic HARMONIEHomeMedic/HARMONIE_BloodVision.lua:58
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       40 ms     1164 calls  OnPreUIDraw  MS SettingPanel/MS_GlobalControlPanel.lua:278
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       36 ms     1180 calls  OnRenderTick  vanilla Gamepad/JoyPadSetup.lua:980
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       26 ms     1164 calls  OnPostUIDraw  HARMONIE_HomeMedic ExtensiveHealth/EHR_Delirium.lua:407
+LOG  : Lua          f:3149> [PerfProbe singleplayer]       22 ms     1180 calls  OnTickEvenPaused  HARMONIE_HomeMedic client/lua_timers.lua:45
+LOG  : Lua          f:3149> [PerfProbe singleplayer]        4 ms     1164 calls  OnPreUIDraw  HARMONIE_TheWayToAttack client/HARMONIE_TWA_ZombieHP.lua:324
+LOG  : Lua          f:3149> [PerfProbe singleplayer]        2 ms     1164 calls  OnPostUIDraw  vanilla Tutorial/TutorialSetup.lua:16
+LOG  : General      f:3149> Saving worldgen params
+LOG  : General      f:3149> Saving GlobalModData
+LOG  : Lua          f:3149> removing all player data
+LOG  : Lua          f:3149> - player: 0
+LOG  : Lua          f:3149> removing tuningUI
+LOG  : Lua          f:3149> removing all player data
+LOG  : Lua          f:3149> - player: 0
+LOG  : General      f:3149> GameThread exited.
