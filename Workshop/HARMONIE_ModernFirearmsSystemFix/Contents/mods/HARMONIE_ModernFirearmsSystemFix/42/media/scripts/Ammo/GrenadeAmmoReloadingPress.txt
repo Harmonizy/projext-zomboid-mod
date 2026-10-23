@@ -32,7 +32,7 @@ module Base
         DisplayName = 40mm Grenade Ammo magazine,
         Icon = Bullets50Clip,
         MaxAmmo = 5,
-        AmmoType = efk:cat_GrenadeAmmo,
+        AmmoType = efk:cat_grenadeammo,
         StaticModel = GunMagazine,
         Tags = efk:gunmagazine,
         GunType = Base.MFS_MTL30_cat,

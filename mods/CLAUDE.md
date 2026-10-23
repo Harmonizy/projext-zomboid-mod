@@ -53,6 +53,16 @@
 - Never `transmitModData()` from a client; MP stats and zombie health live
   on the server (`isClient()` = remote client).
 - A PR that is merged is finished: check its state before pushing more.
+- A firearm with an ammo type of a MOD (`AmmoType = efk:...`, anything
+  `AmmoType.register`ed) crashes the game on its first shot in B42.20:
+  `IsoBulletTracerEffects.createEffect` NPE, "isoBulletTracerEffectsConfigOption
+  is null" -- tracer presets exist only for the ten vanilla ammo types and are
+  read from the game's own media/effects, never a mod folder (MIL 0.7.3,
+  Requiem_cat). Guns take vanilla ammo types; MIL's
+  `shared/HARMONIE_MIL_AmmoCheck.lua` lists any left at game start.
+  The three left on mod ammo (MTL30, interceptor crossbow, Flamethrower) are
+  out of the world loot with their own ammo (`server/zzz_HARMONIE_MIL_RemovedLoot.lua`,
+  MIL 0.7.4); keep Base.GrenadeAmmo (the under-barrel launchers use it).
 
 
 ## HARMONIE Hub (shared by our mods)
