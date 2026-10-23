@@ -78,7 +78,7 @@ module Base
 		EjectAmmoStartSound = MSR700EjectAmmoStart,
 		EjectAmmoStopSound = MSR700EjectAmmoStop,
         ShellFallSound = MSR700CartridgeFall,
-        RackSound = gangganbuqiang,
+        RackSound = MSR700Rack,
         AmmoType = base:bullets_44,
         WeaponReloadType = shotgun,
         JamGunChance = 0,

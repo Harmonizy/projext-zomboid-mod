@@ -14,7 +14,7 @@ module Base
         ReloadTime = 40,
         AimingTime = 55,
         SoundRadius = 130,
-        SwingSound = Beowulf_cat,
+        SwingSound = MSR788Shoot,
         RackSound = M16Rack,
         MagazineType = Base.Bullets50Clip,
         AmmoType = base:bullets_308,

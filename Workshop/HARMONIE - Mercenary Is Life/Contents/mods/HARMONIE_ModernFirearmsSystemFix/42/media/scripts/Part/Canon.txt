@@ -12,7 +12,7 @@ module Gunpart
                 WeightModifier      = 0.1,
                 AimingTimeModifier  = -6,
                 RecoilDelayModifier = -2,
-                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;VSSM1_cat,
+                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;VSSM_cat,
             }
             model XY_Beowulf
             {
@@ -35,7 +35,7 @@ module Gunpart
                 Tooltip             = Tooltip_XY_sr_s,
                 WorldStaticModel    = XY_sr_s,
                 WeightModifier      = 0.1,
-                DamageModifier      = -0.5,                    MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;SRM3_cat;SVD_cat;QBU191_cat;MDR_cat;UMP45_cat;mp5_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
+                DamageModifier      = -0.5,                    MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;SRM3_cat;SVD_cat;QBU191_cat;MDR_cat;UMP45_cat;mp5_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
             }
             model XY_sr_s
             {
@@ -207,7 +207,7 @@ module Gunpart
                 WeightModifier      = 0.1,
                 AimingTimeModifier  = -6,
                 RecoilDelayModifier = -2,
-                DamageModifier      = 0,                    MountOn = MCX_cat;hk416_cat,
+                DamageModifier      = 0,                    MountOn = MCX_cat;HK416_cat,
             }
             model XY_109
             {
@@ -237,7 +237,7 @@ module Gunpart
  P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;
  Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;
  M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;
- AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;
+ AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;
  LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;RSC_cat,
             }
             model XY_MK18
@@ -263,7 +263,7 @@ module Gunpart
                 WeightModifier      = 0.1,
                 DamageModifier      = -0.5,
                 MountOn = C96_cat;Taran2011_cat;revolver_cat2;G18_cat;G17_cat;FN57_cat;SIGP226_cat;G19_cat;
- QSZ_92G;G34_cat;Pistolt;Pistol2;usp45_cat;uzi_cat;MP7_cat;Pistol;BerettaM93R_cat;M9A4_cat;lugerP80_cat,
+ QSZ_92G;G34_cat;Pistolt;Pistol2;usp45_cat;uzi_cat;MP7_cat;Pistol;BerettaM93R_cat;M9A4_cat;lugerP08_cat,
             }
             model AACMini7_Silencer
             {
@@ -288,7 +288,7 @@ module Gunpart
                 WeightModifier      = 0.1,
                 DamageModifier      = -0.5,
                 MountOn = C96_cat;Taran2011_cat;revolver_cat2;G18_cat;G17_cat;FN57_cat;SIGP226_cat;G19_cat;
- QSZ_92G;G34_cat;Pistolt;Pistol2;usp45_cat;uzi_cat;MP7_cat;Pistol;BerettaM93R_cat;M9A4_cat;lugerP80_cat,
+ QSZ_92G;G34_cat;Pistolt;Pistol2;usp45_cat;uzi_cat;MP7_cat;Pistol;BerettaM93R_cat;M9A4_cat;lugerP08_cat,
             }
             model AAC_Silencer_2
             {
@@ -336,7 +336,7 @@ module Gunpart
                 WorldStaticModel    = XY_baoguo,
                 WeightModifier      = 0.1,
                 DamageModifier      = -0.85,
-                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;UMP45_cat;mp5_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
+                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;UMP45_cat;mp5_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
             }
             model XY_baoguo
             {
@@ -360,7 +360,7 @@ module Gunpart
                 WorldStaticModel    = XY_kac,
                 WeightModifier      = 0.1,
                 DamageModifier      = -0.5,
-                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
+                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
             }
             model XY_kac
             {
@@ -384,7 +384,7 @@ module Gunpart
                 WorldStaticModel    = XY_fang,
                 WeightModifier      = 0.1,
                 DamageModifier      = -0.5,
-                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;UMP45_cat;mp5_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;UTS15_cat;M240_cat;FN_Evolys_cat;QJS201_cat;M870_cat;TTI_Benelli_M4_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
+                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;UMP45_cat;mp5_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;UTS15_cat;M240_cat;FN_Evolys_cat;QJS201_cat;M870_cat;TTI_Benelli_M4_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
             }
             model XY_fang
             {
@@ -408,7 +408,7 @@ module Gunpart
                 WorldStaticModel    = XY_M4MK18,
                 WeightModifier      = 0.1,
                 DamageModifier      = -0.5,
-                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;UMP45_cat;mp5_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;UTS15_cat;M240_cat;FN_Evolys_cat;QJS201_cat;M870_cat;TTI_Benelli_M4_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
+                MountOn = AssaultRifle;M16D_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;UMP45_cat;mp5_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;MK12_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;UTS15_cat;M240_cat;FN_Evolys_cat;QJS201_cat;M870_cat;TTI_Benelli_M4_cat;98k_cat;lee_enfield_cat;56S_cat;BAR_cat;RSC_cat,
             }
             model XY_M4MK18
             {
@@ -433,7 +433,7 @@ module Gunpart
                 WeightModifier      = 0.1,
                 AimingTimeModifier  = -6,
                 RecoilDelayModifier = -2,
-                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat,
+                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat,
             }
             model XY_pomen
             {
@@ -458,7 +458,7 @@ module Gunpart
                 WeightModifier      = 0.3,
                 AimingTimeModifier  = -2,
                 RecoilDelayModifier = -2,
-                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;VSSM1_cat,
+                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;VSSM_cat,
             }
             model XY_yazhui
             {
@@ -483,7 +483,7 @@ module Gunpart
                 WeightModifier      = 0.3,
                 AimingTimeModifier  = -2,
                 RecoilDelayModifier = -2,
-                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;VSSM1_cat,
+                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat;VSSM_cat,
             }
             model XY_yazhuiX
             {
@@ -508,7 +508,7 @@ module Gunpart
                 WeightModifier      = 0.1,
                 AimingTimeModifier  = -7,
                 RecoilDelayModifier = -1,
-                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat,
+                DamageModifier      = 0,                    MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat,
             }
             model VP09
             {
@@ -706,7 +706,7 @@ module Gunpart
                 WeightModifier      = 0,
                 AimingTimeModifier  = 0,
                 DamageModifier      = 0,
-                MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;MG338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat,
+                MountOn = AssaultRifle;M16D_cat;UMP45_cat;mp5_cat;QBZ191_cat;QBZ192_cat;QBU191_cat;MDR_cat;Factor_cat;FactorMax_cat;AA12_cat;Typhoon_cat;FAL_cat;QBU203_cat;Christine45_cat;Saiga12_cat;MG3_cat;AKS74U_cat;CycloneAK_cat;origin12_cat;M14_cat;AssaultRifle2;P90_cat;M14_Albedo;KrissVector_cat;M1Garand_cat;AN94_cat;AK103_cat;RPK16_cat;AEK971_cat;AK12_cat;M7_cat;SRM3_cat;SVD_cat;Type81_cat;ScarH_cat;ARX200_cat;HK416_cat;HK416D_cat;NoveskeN4_cat;URG_S_cat;M4A1S_cat;SG553_cat;HK51_cat;KS1_KAC_cat;M4Mk18_cat;Thoridal;MK18_cat;MCX_cat;M1918_cat;HK416_cat_60;HK417_cat;AR57_cat;mk47_cat;Marlin1894;AR01_Brynhild_cat;AR02_Brynhild_cat;AR03_Brynhild_cat;QBZ95_cat;M91_cat;mg338_cat;PKM_cat;QJY201_cat;LWMMG_cat;REAPR_cat;M240_cat;FN_Evolys_cat;QJS201_cat;BAR_cat,
             }
             model XY_OF
             {

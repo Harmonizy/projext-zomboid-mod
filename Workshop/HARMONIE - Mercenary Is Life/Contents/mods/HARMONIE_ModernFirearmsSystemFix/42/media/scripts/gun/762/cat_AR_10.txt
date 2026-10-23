@@ -68,7 +68,7 @@ module Base
         BreakSound = M16Break,
         TwoHandWeapon = TRUE,
         MetalValue = 45,
-        AmmoBox = 308bOX,
+        AmmoBox = Base.308Box,
         MaxAmmo = 20,
         EquipSound = M16Equip,
         UnequipSound = M16UnEquip,

@@ -51,6 +51,9 @@ local function check()
     local vt = vanillaTypes()
     if not vt then log("AmmoType.get not available -- no check"); return end
     local guns, risky, list = 0, 0, {}
+    -- flow check (2026-10-23): a gun with no shot sound, or whose magazine type
+    -- is not an item, still loads -- it only fails when used
+    local silent, noMag = {}, {}
     for i = 0, items:size() - 1 do
         local it = items:get(i)
         local ranged = false
@@ -61,6 +64,19 @@ local function check()
             pcall(function() t = it:getAmmoType() end)
             local known = false
             for _, v in ipairs(vt) do if t == v then known = true end end
+            local name0 = "?"
+            pcall(function() name0 = it:getFullName() end)
+            local swing, typ, mag
+            local swingRead = pcall(function() swing = it:getSwingSound() end)
+            pcall(function() typ = it:getName() end)
+            pcall(function() mag = it:getMagazineType() end)
+            local profiles = AWCWF_GunShotProfiles
+            if swingRead and (swing == nil or swing == "") and not (profiles and typ and profiles[typ]) then
+                silent[#silent + 1] = name0
+            end
+            if mag and mag ~= "" and not sm:getItem(mag) then
+                noMag[#noMag + 1] = name0 .. " (" .. tostring(mag) .. ")"
+            end
             if t and not known then
                 local key = "?"
                 pcall(function() key = tostring(t) end)
@@ -70,6 +86,14 @@ local function check()
                 list[#list + 1] = name .. " (" .. key .. ")"
             end
         end
+    end
+    if #silent > 0 then
+        log("%d firearms have no shot sound (empty SwingSound, no shot profile): %s", #silent, table.concat(silent, ", "))
+    else
+        log("every firearm has a shot sound (SwingSound or a shot profile)")
+    end
+    if #noMag > 0 then
+        log("%d firearms take a magazine that is not an item: %s", #noMag, table.concat(noMag, ", "))
     end
     if risky == 0 then
         log("%d firearms checked: every one uses a vanilla ammo type (no tracer crash)", guns)

@@ -83,7 +83,7 @@ module Base
         MaxAmmo              = 30,
         EquipSound           = M16Equip,
         UnequipSound         = M16UnEquip,
-        InsertAmmoSound      = ARReload,
+        InsertAmmoSound      = M16InsertAmmo,
         EjectAmmoSound       = M16EjectAmmo,
         InsertAmmoStartSound = ,
         InsertAmmoStopSound  = M16InsertAmmoStop,

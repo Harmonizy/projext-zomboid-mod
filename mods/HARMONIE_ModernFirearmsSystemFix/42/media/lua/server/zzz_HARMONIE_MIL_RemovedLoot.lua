@@ -2,7 +2,7 @@
     HARMONIE - Mercenary Is Life : guns taken out of the world loot
 
     Owner, 2026-10-23: MTL30 (grenade launcher), the interceptor crossbow and
-    the Flamethrower still use an ammo type of a mod (efk:cat_grenadeammo,
+    the Flamethrower (and bolter, 0.7.5) still use an ammo type of a mod (efk:cat_grenadeammo,
     efk:cat_crossbowbolt, flamethrower:flame_fuel). In B42.20 such a gun can
     crash the game on its first shot (no bullet tracer preset, see
     shared/HARMONIE_MIL_AmmoCheck.lua), so they never spawn in the world.
@@ -21,6 +21,7 @@ local REMOVED = {
     ["Base.MTL30_cat"] = true,
     ["Base.MFS_MTL30_cat"] = true,
     ["Base.interceptor_cat"] = true,
+    ["Base.bolter_cat"] = true,
     ["Base.CrossbowBolt"] = true,
     ["Base.CrossbowBoltBox"] = true,
     ["Base.CrossbowClip"] = true,
@@ -103,7 +104,7 @@ local function removeLoot(when)
     local byItem = {}
     for name, c in pairs(counts) do byItem[#byItem + 1] = name .. " x" .. c end
     table.sort(byItem)
-    log("%s: removed %d loot rows of MTL30 / interceptor crossbow / flamethrower (%s)%s",
+    log("%s: removed %d loot rows of MTL30 / bolter / interceptor crossbow / flamethrower (%s)%s",
         when, total, table.concat(parts, ", "),
         #byItem > 0 and (": " .. table.concat(byItem, ", ")) or "")
 end

@@ -37,7 +37,7 @@ module Base
         MaxHitCount = 2,
         Weight = 3.0,
         RackSound = M16Rack,
-        InsertAmmoSound = AKplayReloadSound,
+        InsertAmmoSound = AW_AK103_Reload_MagIn,
         SwingSound = ,
         Tags = base:hasmetal;base:firearm,
         DisplayCategory = Weapon,

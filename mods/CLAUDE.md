@@ -63,6 +63,13 @@
   The three left on mod ammo (MTL30, interceptor crossbow, Flamethrower) are
   out of the world loot with their own ammo (`server/zzz_HARMONIE_MIL_RemovedLoot.lua`,
   MIL 0.7.4); keep Base.GrenadeAmmo (the under-barrel launchers use it).
+  bolter_cat too (0.7.5).
+- MIL sounds: a name that is neither a `sound` script (MIL or vanilla) nor a
+  file in `media/sound/` is silent with no error. An empty `SwingSound = ,`
+  fires silently unless `AWCWF_GunShotProfiles[<type>]` exists
+  (`EFK_Gun_Shot_Profiles.lua`; aliases at its end). `MountOn` names are
+  matched exactly (`MG338_cat` is not `mg338_cat`). AmmoCheck logs guns with
+  no shot sound and magazines that are not items (MIL 0.7.5).
 
 
 ## HARMONIE Hub (shared by our mods)
