@@ -7,7 +7,7 @@ DST = os.path.join(os.path.dirname(HERE), "42", "media", "lua", "shared", "Trans
 HUB_SRC = os.path.join(MODS, "HARMONIE_SVU3Sandbox", "42", "media", "lua", "shared", "Translate", "%s", "IG_UI.json")
 import sys
 sys.path.insert(0, HERE)
-from gen_lws import SLOT_NAMES
+from gen_lws import SLOT_NAMES, PETS
 
 T = {
  "IGUI_LWS_Title": ("Life With Style", "Life With Style - ตู้เสื้อผ้า"),
@@ -136,10 +136,35 @@ T = {
  "IGUI_LWS_Guide_Admin_Title": ("For admins", "สำหรับแอดมิน"),
  "IGUI_LWS_Guide_Admin_Body": ("The Admin tab lists every player (online first). Pick one, click a catalog piece to give it, or x on one of their pieces to take it back. The HARMONIE debug right-click has a shortcut and a whole test set.",
      "แท็บแอดมินแสดงผู้เล่นทุกคน (คนที่ออนไลน์อยู่ก่อน) เลือกผู้เล่น แล้วคลิกชิ้นในแคตตาล็อกเพื่อมอบให้ หรือกด x ที่ชิ้นของเขาเพื่อนำออก เมนูคลิกขวา HARMONIE debug มีทางลัดและการมอบชุดทดสอบทั้งชุด"),
+ "IGUI_LWS_Guide_Pet_Title": ("Pets", "สัตว์เลี้ยง"),
+ "IGUI_LWS_Guide_Pet_Body": ("A pet is a wardrobe piece of the Pet box (by the doll's feet). Put it on and your dog or cat comes out beside you and follows you; take it off and it goes back to the wardrobe. It also goes away when you die or leave, and comes back when you return.<br><br>Orders (the Pet box buttons, or right-click anywhere): Follow, Stay, Come here, Speak, Feed. Feed it any food you carry - dog or cat food fills it up. A cat sits down and grooms itself when it waits, and curls up after a while. If hunger is on (sandbox) a pet gets hungry over time, and a starving pet ignores orders until it is fed.<br><br>A pet never attacks anyone and nothing can hurt it. If it gets left far behind, or you change floors, it comes to you. Admins can switch pets, orders, feeding and hunger on or off in the sandbox options. The dogs and cats are the art of the Companion Dogs mod and its CD: Cats add-on, used with the author's permission.",
+   "สัตว์เลี้ยงคือชิ้นในตู้เสื้อผ้าของช่องสัตว์เลี้ยง (ข้างเท้าหุ่น) สวมแล้วสุนัขหรือแมวจะออกมาข้างตัวและเดินตามคุณ ถอดแล้วจะกลับเข้าตู้ เมื่อคุณตายหรือออกจากเกม สัตว์เลี้ยงจะหายไปด้วย และกลับมาเมื่อคุณกลับมา<br><br>คำสั่ง (ปุ่มของช่องสัตว์เลี้ยง หรือคลิกขวาที่ไหนก็ได้): ตามมา, อยู่ตรงนี้, มานี่, เห่า, ให้อาหาร ให้อาหารอะไรก็ได้ที่คุณพกอยู่ อาหารสุนัขหรืออาหารแมวอิ่มเต็มที่ แมวจะนั่งเลียขนตอนรอ และนอนขดตัวเมื่อรอนาน ถ้าเปิดความหิวไว้ (sandbox) สัตว์เลี้ยงจะหิวตามเวลา และถ้าหิวจัดจะไม่ฟังคำสั่งจนกว่าจะได้กิน<br><br>สัตว์เลี้ยงไม่โจมตีใคร และไม่มีอะไรทำร้ายมันได้ ถ้าถูกทิ้งไว้ไกล หรือคุณขึ้นลงชั้น มันจะมาหาคุณเอง แอดมินเปิดปิดสัตว์เลี้ยง คำสั่ง การให้อาหาร และความหิว ได้ใน sandbox สุนัขและแมวเป็นงานศิลป์ของม็อด Companion Dogs และส่วนเสริม CD: Cats ใช้โดยได้รับอนุญาตจากผู้สร้าง"),
+ "IGUI_LWS_PetFollow": ("Follow", "ตามมา"),
+ "IGUI_LWS_PetStay": ("Stay", "อยู่ตรงนี้"),
+ "IGUI_LWS_PetCome": ("Come here", "มานี่"),
+ "IGUI_LWS_PetSpeak": ("Speak", "เห่า"),
+ "IGUI_LWS_PetFeed": ("Feed", "ให้อาหาร"),
+ "IGUI_LWS_PetPutAway": ("Put away", "เก็บเข้าตู้"),
+ "IGUI_LWS_PetOff": ("Pets are switched off on this server (sandbox).", "เซิร์ฟเวอร์นี้ปิดสัตว์เลี้ยงไว้ (sandbox)"),
+ "IGUI_LWS_PetNone": ("No pet out. Drag a pet onto the Pet box to bring it out.", "ยังไม่มีสัตว์เลี้ยงออกมา ลากสัตว์เลี้ยงไปวางที่ช่องสัตว์เลี้ยงเพื่อพาออกมา"),
+ "IGUI_LWS_PetComing": ("Your pet is on its way...", "สัตว์เลี้ยงกำลังมา..."),
+ "IGUI_LWS_PetFollowing": ("%1 follows you.", "%1 เดินตามคุณ"),
+ "IGUI_LWS_PetStaying": ("%1 stays here.", "%1 รออยู่ตรงนี้"),
+ "IGUI_LWS_PetHunger": ("Fed: %1%%", "อิ่ม: %1%%"),
+ "IGUI_LWS_Menu_Pet": ("Pet: %1", "สัตว์เลี้ยง: %1"),
+ "IGUI_LWS_OpenPet": ("Open the pet in the wardrobe", "เปิดสัตว์เลี้ยงในตู้เสื้อผ้า"),
+ "IGUI_LWS_Msg_PetNotOut": ("Your pet is not out.", "สัตว์เลี้ยงของคุณยังไม่ได้ออกมา"),
+ "IGUI_LWS_Msg_PetNoFood": ("You carry no food the pet can eat.", "คุณไม่มีอาหารที่สัตว์เลี้ยงกินได้"),
+ "IGUI_LWS_Msg_PetFed": ("%1 ate happily.", "%1 กินอย่างมีความสุข"),
+ "IGUI_LWS_Msg_PetHungry": ("%1 is hungry.", "%1 หิวแล้ว"),
+ "IGUI_LWS_Msg_PetStarving": ("%1 is starving and will not listen until fed.", "%1 หิวจัด จะไม่ฟังคำสั่งจนกว่าจะได้กิน"),
+ "IGUI_LWS_Msg_PetCameBack": ("%1 was left too far away and came back to you.", "%1 ถูกทิ้งไว้ไกลเกินไป จึงกลับมาหาคุณ"),
  "IGUI_LWS_Guide_Soon_Title": ("Coming next", "เร็วๆ นี้"),
- "IGUI_LWS_Guide_Soon_Body": ("A Discord-linked wardrobe, and pets that wear fashion and follow you.",
-     "ตู้เสื้อผ้าที่ผูกกับบัญชี Discord และสัตว์เลี้ยงที่ใส่แฟชั่นและเดินตามคุณ"),
+ "IGUI_LWS_Guide_Soon_Body": ("A Discord-linked wardrobe, and fashion for pets.",
+     "ตู้เสื้อผ้าที่ผูกกับบัญชี Discord และแฟชั่นสำหรับสัตว์เลี้ยง"),
 }
+for p in PETS:
+    T["IGUI_LWS_PetName_" + p["id"]] = (p["en"], p["th"])
 for s, (en, th) in SLOT_NAMES.items():
     T["IGUI_LWS_Slot_" + s] = (en, th)
 
@@ -148,6 +173,20 @@ SANDBOX = {
  "Sandbox_LifeWithStyle_TradeEnabled": ("Players can trade fashion", "ผู้เล่นแลกเปลี่ยนแฟชั่นได้"),
  "Sandbox_LifeWithStyle_TradeEnabled_tooltip": ("Lets players trade Life With Style pieces with each other in the wardrobe window.", "ให้ผู้เล่นแลกชิ้น Life With Style กันได้ในหน้าต่างตู้เสื้อผ้า"),
  "Sandbox_LifeWithStyle_TradeMaxDistance": ("Trade distance (tiles)", "ระยะแลกเปลี่ยน (ช่อง)"),
+ "Sandbox_LifeWithStyle_PetsEnabled": ("Pets", "สัตว์เลี้ยง"),
+ "Sandbox_LifeWithStyle_PetsEnabled_tooltip": ("A pet in the wardrobe's Pet box comes out and follows its owner. Off: no pet comes out (they stay in the wardrobes).", "สัตว์เลี้ยงในช่องสัตว์เลี้ยงจะออกมาเดินตามเจ้าของ ปิด: ไม่มีสัตว์เลี้ยงออกมา (ยังอยู่ในตู้เสื้อผ้า)"),
+ "Sandbox_LifeWithStyle_PetCommands": ("Pets take orders", "สั่งสัตว์เลี้ยงได้"),
+ "Sandbox_LifeWithStyle_PetCommands_tooltip": ("Follow, Stay, Come here and Speak. Off: pets only follow.", "ตามมา อยู่ตรงนี้ มานี่ และเห่า ปิด: สัตว์เลี้ยงทำได้แค่เดินตาม"),
+ "Sandbox_LifeWithStyle_PetFeeding": ("Pets can be fed", "ให้อาหารสัตว์เลี้ยงได้"),
+ "Sandbox_LifeWithStyle_PetFeeding_tooltip": ("Owners can feed their pet food they carry.", "เจ้าของให้อาหารที่พกอยู่กับสัตว์เลี้ยงได้"),
+ "Sandbox_LifeWithStyle_PetHunger": ("Pets get hungry", "สัตว์เลี้ยงหิว"),
+ "Sandbox_LifeWithStyle_PetHunger_tooltip": ("A pet gets hungry over time; a starving pet ignores orders until fed. It never dies or leaves.", "สัตว์เลี้ยงหิวตามเวลา ถ้าหิวจัดจะไม่ฟังคำสั่งจนกว่าจะได้กิน แต่จะไม่ตายและไม่หนีไป"),
+ "Sandbox_LifeWithStyle_PetHungerHours": ("Hours from full to starving", "ชั่วโมงจากอิ่มจนหิวจัด"),
+ "Sandbox_LifeWithStyle_PetHungerHours_tooltip": ("In-game hours a pet takes to go from full to starving.", "จำนวนชั่วโมงในเกมที่สัตว์เลี้ยงใช้จากอิ่มเต็มจนหิวจัด"),
+ "Sandbox_LifeWithStyle_PetSounds": ("Pet sounds", "เสียงสัตว์เลี้ยง"),
+ "Sandbox_LifeWithStyle_PetSounds_tooltip": ("Barks, whines and eating sounds. Pets never draw zombies.", "เสียงเห่า ครางหงิง และเสียงกิน สัตว์เลี้ยงไม่เรียกซอมบี้"),
+ "Sandbox_LifeWithStyle_PetTeleportDistance": ("Bring-back distance (tiles)", "ระยะที่สัตว์เลี้ยงจะกลับมาหา (ช่อง)"),
+ "Sandbox_LifeWithStyle_PetTeleportDistance_tooltip": ("A following pet farther than this comes straight to its owner (a staying pet: twice this).", "สัตว์เลี้ยงที่เดินตามและอยู่ไกลกว่านี้จะมาหาเจ้าของทันที (ที่สั่งให้รอ: สองเท่าของระยะนี้)"),
  "Sandbox_LifeWithStyle_TradeMaxDistance_tooltip": ("How close two players must be to trade. 0 = anywhere on the server.", "ผู้เล่นสองคนต้องอยู่ใกล้กันแค่ไหนจึงจะแลกได้ 0 = ที่ไหนก็ได้ในเซิร์ฟเวอร์"),
 }
 for i, lang in enumerate(("EN", "TH")):

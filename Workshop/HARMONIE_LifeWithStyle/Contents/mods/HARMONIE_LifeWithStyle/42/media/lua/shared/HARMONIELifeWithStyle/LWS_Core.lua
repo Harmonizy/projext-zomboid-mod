@@ -84,6 +84,8 @@ end
 function LWS.isOurPiece(pieceId)
     pieceId = tostring(pieceId or "")
     if not LWS.PIECE[pieceId] then return false end
+    -- a pet has no item script: our catalog is the whole check
+    if LWS.PIECE[pieceId].pet then return true end
     if not getScriptManager then return true end
     local ok, it = pcall(function() return getScriptManager():FindItem(LWS.MODULE .. "." .. pieceId) end)
     if not ok then return true end
@@ -98,6 +100,57 @@ function LWS.isFashion(item)
     local ok, m = pcall(function() return item:getModule() end)
     if ok and m then return tostring(m) == LWS.MODULE end
     return LWS.typeOf(item):sub(1, #LWS.MODULE + 1) == LWS.MODULE .. "."
+end
+
+-- ------------------------------------------------------------- pet food
+-- how much of a pet's hunger (0..1) one item fills: dog food all of it, other
+-- food by how filling it is; rotten, poisoned or not food = 0 (cannot be fed)
+LWS.DOG_FOOD = { ["Base.Dogfood"] = true, ["Base.DogfoodOpen"] = true, ["Base.DogFoodBag"] = true, ["Base.CatFoodBag"] = true }
+function LWS.petFoodValue(item)
+    if not item then return 0 end
+    local okF, isFood = pcall(function() return instanceof(item, "Food") end)
+    if not okF or not isFood then return 0 end
+    local okR, rotten = pcall(function() return item:isRotten() end)
+    if okR and rotten then return 0 end
+    local okP, poison = pcall(function() return item:getPoisonPower() end)
+    if okP and tonumber(poison) and poison > 0 then return 0 end
+    if LWS.DOG_FOOD[LWS.typeOf(item)] then return 1 end
+    local ok, hc = pcall(function() return item:getHungChange() end)
+    hc = ok and tonumber(hc) or 0
+    if hc >= 0 then return 0 end
+    return math.min(1, 0.15 + (-hc) * 2)
+end
+
+-- ------------------------------------------------------------- pet animation
+-- Companion Dogs' animation nodes, renamed (AnimSets/raccoon/*/lws*.xml, made by
+-- tools/import_pets.py). Each needs a variable only our pets have. Their
+-- measured gait scales: the walk clip at 0.939 matches the body's speed (the
+-- vanilla 1.20 slid the feet), the run clip at 1.0.
+LWS.PET_WALK_SCALE, LWS.PET_RUN_SCALE = 0.939, 1.0
+LWS.PET_WALK_SPEED, LWS.PET_RUN_SPEED = 6.03, 3.82   -- animalSpeed while walking / running
+LWS.PET_IDLE_VARS = { "lwsIdle2", "lwsIdle3", "lwsSniff" }
+-- cats only (the clips are only in the cat model): sit down, sit, groom while sitting
+LWS.CAT_GROOM_VARS = { "lwsSitGroom", "lwsSitGroom2" }
+-- what a pet says, by kind (sounds: tools/import_pets.py)
+LWS.PET_VOICE = {
+    dog = { speak = "LWSPetBark", hungry = "LWSPetWhine", eat = "LWSPetEat", happy = "LWSPetHappy" },
+    cat = { speak = "LWSPetMeow", hungry = "LWSPetMeow", eat = "LWSPetPurr", happy = "LWSPetPurr" },
+}
+function LWS.petKind(pieceId)
+    local c = LWS.PIECE[tostring(pieceId)]
+    return c and c.pet and c.pet.kind or "dog"
+end
+function LWS.isPetAnimal(animal)
+    local ok, t = pcall(function() return animal:getAnimalType() end)
+    return ok and t ~= nil and tostring(t):sub(1, 7) == "lwspet_"
+end
+-- the variables every copy of a pet needs (server, single player and each client)
+function LWS.petBaseVars(animal)
+    pcall(function()
+        animal:setVariable("lwsPet", true)
+        animal:setVariable("lwsWalkScale", LWS.PET_WALK_SCALE)
+        animal:setVariable("lwsRunScale", LWS.PET_RUN_SCALE)
+    end)
 end
 
 -- ------------------------------------------------------------- owner
@@ -139,6 +192,8 @@ function LWS.T(key, ...)
 end
 function LWS.slotName(slot) return LWS.T("IGUI_LWS_Slot_" .. tostring(slot)) end
 function LWS.pieceName(pieceId)
+    local c = LWS.PIECE[tostring(pieceId)]
+    if c and c.pet then return LWS.T("IGUI_LWS_PetName_" .. tostring(pieceId)) end
     local key = LWS.MODULE .. "." .. tostring(pieceId)
     local ok, it = pcall(function() return getScriptManager():FindItem(key) end)
     if ok and it then

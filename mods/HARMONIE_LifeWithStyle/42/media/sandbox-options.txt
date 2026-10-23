@@ -17,3 +17,63 @@ option LifeWithStyle.TradeMaxDistance
     page = HARMONIE_LifeWithStyle,
     translation = LifeWithStyle_TradeMaxDistance,
 }
+
+option LifeWithStyle.PetsEnabled
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetsEnabled,
+}
+
+option LifeWithStyle.PetCommands
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetCommands,
+}
+
+option LifeWithStyle.PetFeeding
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetFeeding,
+}
+
+option LifeWithStyle.PetHunger
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetHunger,
+}
+
+option LifeWithStyle.PetHungerHours
+{
+    type = integer,
+    min = 6,
+    max = 720,
+    default = 72,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetHungerHours,
+}
+
+option LifeWithStyle.PetSounds
+{
+    type = boolean,
+    default = true,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetSounds,
+}
+
+option LifeWithStyle.PetTeleportDistance
+{
+    type = integer,
+    min = 6,
+    max = 100,
+    default = 25,
+    page = HARMONIE_LifeWithStyle,
+    translation = LifeWithStyle_PetTeleportDistance,
+}
