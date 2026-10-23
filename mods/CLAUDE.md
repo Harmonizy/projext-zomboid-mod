@@ -99,6 +99,25 @@
   pixels) go together -- redraw one, check the other. `H.LEFT` / `H.RIGHT`
   stay sorted by the spot's height so the dotted lines do not cross.
   Press + move 5 px = drag (`Win:drop`), no move = click (`Win:click`).
+- Pets (0.5.0, `server/.../LWS_Pets.lua`): a piece of the "pet" slot
+  (`body = false`: no body location, no item) brings out one animal of our
+  own type `lwspet_<breed>` (`shared/Definitions/animal/LWS_PetDefinitions.lua`,
+  generated from `PETS` in gen_lws.py; animset = vanilla "raccoon", the
+  meshes are rigged to it). The server owns it: follow by pathToCharacter
+  (at most every 2.5 s), stay, bring-back by despawn + spawn beside the
+  owner, health kept full, never attacks. Every `lwspet_` animal that is not
+  an out pet is deleted (`P.sweep`) -- saved chunks bring copies back.
+  Deletes are repeated to clients with `PetGone` (the engine's notice is
+  unreliable). Animations (0.5.1): Companion Dogs' nodes as NEW files
+  `AnimSets/raccoon/<state>/lws*.xml` -- never replace a vanilla raccoon
+  file -- each gated on a variable only our pets have (`lwsPet`,
+  `lwsNetGait`, `lwsIdle2`...). Animation variables do not travel: the
+  server sends `PetAnim`, and an MP client drives its own copies' walk
+  (`C.petGaitTick`, from how fast they move). Cats (0.6.0): one type
+  `lwspet_cat`, a coat = a breed; `kind` picks the voice (`LWS.PET_VOICE`)
+  and the cat-only sit / groom nodes (those clips exist only in the cat
+  model -- a node for a missing clip fails silently). Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks
   both. Sandbox page HARMONIE_LifeWithStyle (TradeEnabled, TradeMaxDistance).

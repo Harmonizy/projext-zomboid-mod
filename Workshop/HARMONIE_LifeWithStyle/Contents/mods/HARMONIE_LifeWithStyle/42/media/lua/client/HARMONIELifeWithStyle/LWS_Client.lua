@@ -22,6 +22,7 @@ C.state = C.state or { items = {}, worn = {}, show = {} }
 C.asks = C.asks or {}      -- trade requests to me: [from name] = deadline
 C.trade = C.trade or nil   -- the open trade (the server's view for me)
 C.admin = C.admin or nil
+C.pet = C.pet or {}        -- the pet out (LWS_Pets.lua on the server): piece, mode, hunger, out, id
 
 local function me() return getPlayer and getPlayer() or nil end
 
@@ -46,6 +47,17 @@ function C.handle(command, args)
             if args.arg then text = text .. ": " .. LWS.pieceName(args.arg) end
         end
         C.say(text)
+    elseif command == "PetState" then
+        local was = C.pet and C.pet.out
+        C.pet = args
+        if was ~= (args.out == true) then log("pet %s: %s", args.out and "out" or "not out", tostring(args.piece)) end
+    elseif command == "PetSound" then
+        local a = getAnimal and getAnimal(tonumber(args.id) or -1)
+        if a then pcall(function() a:getEmitter():playSoundImpl(tostring(args.s), nil) end) end
+    elseif command == "PetAnim" then
+        C.petAnim(tonumber(args.id), tostring(args.v), args.on == true, tonumber(args.ms))
+    elseif command == "PetGone" then
+        C.petGone(tonumber(args.id))
     elseif command == "AdminData" then
         C.admin = args
         if LWSWindow and LWSWindow.refresh then LWSWindow.refresh() end
@@ -116,6 +128,96 @@ local function onServerCommand(module, command, args)
     if not ok then log("server command %s FAILED: %s", tostring(command), tostring(err)) end
 end
 
+-- the server deleted a pet animal: make sure this client's copy goes too (the
+-- engine's own notice is unreliable -- Companion Dogs found ghosts left behind)
+function C.petGone(id)
+    if not id or not (isClient and isClient()) then return end
+    local a = getAnimal and getAnimal(id)
+    if a and removeAnimal then
+        pcall(removeAnimal, id)
+        return
+    end
+    local cell = getCell and getCell()
+    local list = cell and cell:getAnimals()
+    for i = (list and list:size() or 0) - 1, 0, -1 do
+        local o = list:get(i)
+        if o and o:getOnlineID() == id then
+            pcall(function() o:delete() end)
+            log("removed a left-over copy of pet animal %s", tostring(id))
+        end
+    end
+end
+
+-- the server's animation of a pet, on this client's copy
+C.animOff = C.animOff or {}   -- [id .. "|" .. var] = { animal, var, at }
+function C.petAnim(id, var, on, ms)
+    local a = id and getAnimal and getAnimal(id)
+    if not a then return end
+    pcall(function() a:setVariable(var, on) end)
+    local k = tostring(id) .. "|" .. var
+    if on and ms then C.animOff[k] = { a = a, v = var, at = (getTimestampMs and getTimestampMs() or 0) + ms } else C.animOff[k] = nil end
+end
+
+-- Multiplayer: this client's copies of the pets (anyone's). The server's
+-- path state never reaches a client, so a remote copy would slide in its
+-- idle pose: while it moves, lwsNetGait plays the walk / run node instead
+-- (the way Companion Dogs does it), from how fast it moves here.
+C.petCopies = C.petCopies or {}   -- [animal] = { x, y, at, holdUntil }
+C.GAIT_HOLD_MS = 350
+C.RUN_SPEED = 3.0                 -- tiles a second
+local nextScan = 0
+function C.petGaitTick()
+    local t = getTimestampMs and getTimestampMs() or 0
+    if t >= nextScan then
+        nextScan = t + 1000
+        local seen = {}
+        local cell = getCell and getCell()
+        local list = cell and cell:getAnimals()
+        for i = 0, (list and list:size() or 0) - 1 do
+            local a = list:get(i)
+            if a and LWS.isPetAnimal(a) then
+                seen[a] = true
+                if not C.petCopies[a] then
+                    C.petCopies[a] = { x = a:getX(), y = a:getY(), at = t, holdUntil = 0 }
+                    LWS.logOnce("petcopy", "Client", "a pet animal is near: its walk is driven here (multiplayer)")
+                end
+                LWS.petBaseVars(a)
+            end
+        end
+        for a in pairs(C.petCopies) do if not seen[a] then C.petCopies[a] = nil end end
+    end
+    for a, st in pairs(C.petCopies) do
+        local x, y = a:getX(), a:getY()
+        local dt = math.max(1, t - st.at)
+        local dx, dy = x - st.x, y - st.y
+        local moved = math.sqrt(dx * dx + dy * dy)
+        if moved > 0.01 then
+            st.holdUntil = t + C.GAIT_HOLD_MS
+            st.speed = moved * 1000 / dt
+        end
+        st.x, st.y, st.at = x, y, t
+        local gait = st.holdUntil > t
+        if gait ~= st.gait then
+            st.gait = gait
+            pcall(function() a:setVariable("lwsNetGait", gait) end)
+        end
+        local run = gait and (st.speed or 0) > C.RUN_SPEED
+        if run ~= st.run then
+            st.run = run
+            pcall(function()
+                a:setVariable("animalRunning", run)
+                a:setVariable("animalSpeed", run and LWS.PET_RUN_SPEED or LWS.PET_WALK_SPEED)
+            end)
+        end
+    end
+    for k, o in pairs(C.animOff) do
+        if t >= o.at then
+            pcall(function() o.a:setVariable(o.v, false) end)
+            C.animOff[k] = nil
+        end
+    end
+end
+
 -- ------------------------------------------------------------- client -> server
 function C.send(command, args)
     local p = me()
@@ -125,6 +227,33 @@ end
 function C.wear(slot, uid) log("wear %s in %s", tostring(uid), tostring(slot)); C.send("Wear", { slot = slot, uid = uid }) end
 function C.takeOff(slot) log("take off %s", tostring(slot)); C.send("TakeOff", { slot = slot }) end
 function C.setShow(slot, on) log("%s: show real clothes %s", tostring(slot), tostring(on)); C.send("Show", { slot = slot, on = on == true }) end
+
+-- the pet
+function C.petMode(mode) log("pet: %s", tostring(mode)); C.send("PetMode", { mode = mode }) end
+function C.petCome() log("pet: come"); C.send("PetCome", {}) end
+function C.petSpeak() log("pet: speak"); C.send("PetSpeak", {}) end
+function C.petFeed(t) log("pet: feed %s", tostring(t or "best food")); C.send("PetFeed", { type = t }) end
+-- the foods the player carries a pet can eat: { type, name, value, n }, best first
+function C.petFoods()
+    local p = me()
+    local out, seen = {}, {}
+    local items = p and p:getInventory():getItems()
+    for i = 0, (items and items:size() or 0) - 1 do
+        local it = items:get(i)
+        local v = LWS.petFoodValue(it)
+        if v > 0 then
+            local t = LWS.typeOf(it)
+            if seen[t] then seen[t].n = seen[t].n + 1
+            else
+                local ok, n = pcall(function() return it:getDisplayName() end)
+                seen[t] = { type = t, name = ok and tostring(n) or t, value = v, n = 1 }
+                out[#out + 1] = seen[t]
+            end
+        end
+    end
+    table.sort(out, function(a, b) if a.value ~= b.value then return a.value > b.value end return a.name < b.name end)
+    return out
+end
 
 -- trading
 function C.tradeAsk(name) log("ask %s to trade", tostring(name)); C.send("TradeAsk", { to = name }) end
@@ -278,11 +407,18 @@ local function onTick()
     end
 end
 
+-- every frame in multiplayer (the walk must follow the movement); a few pets at most
+local function onPetTick()
+    if not (isClient and isClient()) then return end
+    local ok, err = pcall(C.petGaitTick)
+    if not ok then LWS.logOnce("petgait", "Client", "pet walk FAILED: %s", tostring(err)) end
+end
+
 if Events and not C.registered then
     C.registered = true
     if Events.OnServerCommand then Events.OnServerCommand.Add(onServerCommand) end
     if Events.OnCreatePlayer then Events.OnCreatePlayer.Add(onCreatePlayer) end
-    if Events.OnTick then Events.OnTick.Add(onTick) end
+    if Events.OnTick then Events.OnTick.Add(onTick); Events.OnTick.Add(onPetTick) end
     if Events.OnGameStart then
         Events.OnGameStart.Add(function()
             C.installGuards()

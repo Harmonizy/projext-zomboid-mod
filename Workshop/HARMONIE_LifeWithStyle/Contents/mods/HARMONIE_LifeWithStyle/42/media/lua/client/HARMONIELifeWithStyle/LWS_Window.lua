@@ -52,11 +52,12 @@ H.DOLL = {
     waist = { 106, 250 }, wrist = { 46, 262 }, bottom = { 110, 350 }, shoes = { 110, 488 },
     extra = { 176, 30 }, eyes = { 140, 50 }, mask = { 146, 68 }, makeup = { 130, 80 }, back = { 172, 130 },
     full = { 150, 210 }, hands = { 208, 288 }, rings = { 212, 306 }, tail = { 150, 312 },
+    pet = { 206, 486 },   -- at the feet: the pet walks beside you (LWS_Pets.lua)
 }
 H.LEFT = { "hat", "ears", "neck", "outer", "top", "waist", "wrist", "bottom", "shoes" }
-H.RIGHT = { "extra", "eyes", "mask", "makeup", "back", "full", "hands", "rings", "tail" }
+H.RIGHT = { "extra", "eyes", "mask", "makeup", "back", "full", "hands", "rings", "tail", "pet" }
 H.TILE_W, H.TILE_H = 116, 128
-H.GUIDE = { "What", "Dress", "Show", "Death", "Trade", "Admin", "Soon" }
+H.GUIDE = { "What", "Dress", "Show", "Pet", "Death", "Trade", "Admin", "Soon" }
 
 -- white, ink and champagne gold
 H.C = {
@@ -565,7 +566,8 @@ end
 
 -- the box size for a doll area of this height
 local function boxSize(h, w)
-    local B = math.min(60, math.floor((h - 4 * 8) / 9))
+    local rows = math.max(#H.LEFT, #H.RIGHT)
+    local B = math.min(60, math.floor((h - 4 * (rows - 1)) / rows))
     if w then B = math.min(B, math.floor((w - 90) / 2)) end
     return math.max(26, B)
 end
@@ -575,7 +577,6 @@ end
 function Win:drawDoll(x, y, w, h)
     local c = H.C
     local B = boxSize(h, w)
-    local step = (h - B) / 8
     local dh = h
     local dw = math.floor(dh * H.DOLL_W / H.DOLL_H)
     local room = w - 2 * B - 24
@@ -588,6 +589,7 @@ function Win:drawDoll(x, y, w, h)
     local dragSlot = drag and LWS.PIECE[drag.p] and LWS.PIECE[drag.p].slot or nil
     local boxes = {}
     for _, side in ipairs({ { H.LEFT, x }, { H.RIGHT, x + w - B } }) do
+        local step = (h - B) / math.max(1, #side[1] - 1)
         for i, slot in ipairs(side[1]) do
             boxes[#boxes + 1] = { slot = slot, x = side[2], y = y + math.floor((i - 1) * step), left = side[2] == x }
         end
@@ -626,10 +628,34 @@ function Win:wardrobe(x, y, w, h, size)
     btn("dress:slot", LWS.slotName(self.slot) .. " (" .. #mine .. ")", self.dressFilter == "slot", true)
     bx = bx + 8
     local worn = C.wornIn(self.slot)
-    local showing = C.state.show and C.state.show[self.slot] == true
-    btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, worn ~= nil and #(LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}) > 0)
-    btn("takeoff", T("IGUI_LWS_TakeOff"), false, worn ~= nil)
-    local gy = by + bh + 6
+    local gy
+    if self.slot == "pet" then
+        -- the pet: orders, food, and how it is
+        local pet = C.pet or {}
+        local out = worn ~= nil and pet.out == true
+        local cmd = out and pet.commands ~= false
+        btn("pet:follow", T("IGUI_LWS_PetFollow"), out and pet.mode ~= "stay", cmd)
+        btn("pet:stay", T("IGUI_LWS_PetStay"), out and pet.mode == "stay", cmd)
+        btn("pet:come", T("IGUI_LWS_PetCome"), false, cmd)
+        btn("pet:speak", T("IGUI_LWS_PetSpeak"), false, cmd)
+        btn("pet:feed", T("IGUI_LWS_PetFeed"), false, out and pet.feeding ~= false)
+        btn("takeoff", T("IGUI_LWS_PetPutAway"), false, worn ~= nil)
+        local line
+        if pet.enabled == false then line = T("IGUI_LWS_PetOff")
+        elseif not worn then line = T("IGUI_LWS_PetNone")
+        elseif not out then line = T("IGUI_LWS_PetComing")
+        else
+            line = T(pet.mode == "stay" and "IGUI_LWS_PetStaying" or "IGUI_LWS_PetFollowing", LWS.pieceName(worn.p))
+            if pet.hungerOn ~= false then line = line .. "   " .. T("IGUI_LWS_PetHunger", tostring(math.floor((tonumber(pet.hunger) or 1) * 100 + 0.5))) end
+        end
+        text(self, fit(line, cw - 8, sf), cx + 2, by + bh + 6, (pet.hunger and pet.hunger < 0.25 and out) and c.bad or c.textDim, 1, sf)
+        gy = by + bh + 6 + lineH(sf) + 4
+    else
+        local showing = C.state.show and C.state.show[self.slot] == true
+        btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, worn ~= nil and #(LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}) > 0)
+        btn("takeoff", T("IGUI_LWS_TakeOff"), false, worn ~= nil)
+        gy = by + bh + 6
+    end
     -- the hint at the bottom
     local hint = wrap(T("IGUI_LWS_DollHint"), cw - 8, sf)
     if #hint > 2 then hint = wrap(T("IGUI_LWS_DollHintShort"), cw - 8, sf) end
@@ -1092,6 +1118,11 @@ function Win:onButton(id)
         C.tradeCancel()
     elseif id == "refresh" then
         C.send("AdminList", { owner = self.adminOwner })
+    elseif id == "pet:follow" then C.petMode("follow")
+    elseif id == "pet:stay" then C.petMode("stay")
+    elseif id == "pet:come" then C.petCome()
+    elseif id == "pet:speak" then C.petSpeak()
+    elseif id == "pet:feed" then C.petFeed(nil)
     elseif id == "dress:all" or id == "dress:slot" then
         self.dressFilter = id:sub(7)
         self.scroll.wardrobe = 0
@@ -1324,6 +1355,41 @@ local function onWorldMenu(playerNum, context, worldObjects, test)
     context:addOption(T("IGUI_LWS_Menu_Open"), p, function(pl)
         log("world right-click: open the wardrobe")
         H.open(pl, "dress")
+    end)
+    -- the pet out: its orders and food, beside the wardrobe
+    local pet = C.pet or {}
+    if not pet.out or not pet.piece then return end
+    local opt = context:addOption(T("IGUI_LWS_Menu_Pet", LWS.pieceName(pet.piece)), p, nil)
+    local sub = ISContextMenu:getNew(context)
+    context:addSubMenu(opt, sub)
+    if pet.commands ~= false then
+        if pet.mode == "stay" then
+            sub:addOption(T("IGUI_LWS_PetFollow"), p, function() C.petMode("follow") end)
+        else
+            sub:addOption(T("IGUI_LWS_PetStay"), p, function() C.petMode("stay") end)
+        end
+        sub:addOption(T("IGUI_LWS_PetCome"), p, function() C.petCome() end)
+        sub:addOption(T("IGUI_LWS_PetSpeak"), p, function() C.petSpeak() end)
+    end
+    if pet.feeding ~= false then
+        local foods = C.petFoods()
+        if #foods == 0 then
+            local o = sub:addOption(T("IGUI_LWS_PetFeed"), p, nil)
+            o.notAvailable = true
+            local tip = ISToolTip:new(); tip:initialise(); tip.description = T("IGUI_LWS_Msg_PetNoFood"); o.toolTip = tip
+        else
+            local fo = sub:addOption(T("IGUI_LWS_PetFeed"), p, nil)
+            local fsub = ISContextMenu:getNew(sub)
+            sub:addSubMenu(fo, fsub)
+            for i = 1, math.min(10, #foods) do
+                local f = foods[i]
+                fsub:addOption(f.name .. " (" .. f.n .. ")  +" .. math.floor(f.value * 100 + 0.5) .. "%", p, function() C.petFeed(f.type) end)
+            end
+        end
+    end
+    sub:addOption(T("IGUI_LWS_OpenPet"), p, function(pl)
+        H.open(pl, "dress")
+        if H.window then H.window.slot = "pet"; H.window.dressFilter = "slot" end
     end)
 end
 if Events and Events.OnFillWorldObjectContextMenu then
