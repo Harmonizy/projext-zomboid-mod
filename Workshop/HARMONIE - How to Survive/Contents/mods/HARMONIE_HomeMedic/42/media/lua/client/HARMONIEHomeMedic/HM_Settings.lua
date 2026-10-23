@@ -23,7 +23,13 @@ require "HARMONIE_UIKit"
 HMSettingsUI = HMSettingsUI or {}
 -- Home Medic's blue (HM_Theme)
 HMSettingsUI.THEME = {
-    bg = { 0.012, 0.05, 0.068, 0.97 }
+    bg = { 0.012, 0.05, 0.068, 0.97 }, header = { 0.02, 0.075, 0.1, 0.98 },
+    row = { 0.02, 0.07, 0.095 }, rowHover = { 0.05, 0.18, 0.24 },
+    border = { 0.24, 0.74, 0.96 }, borderDim = { 0.1, 0.34, 0.46 },
+    accent = { 0.3, 0.84, 1.0 }, accentDark = { 0.03, 0.24, 0.34 },
+    text = { 0.93, 0.91, 0.86 }, textDim = { 0.62, 0.68, 0.76 },
+}
+
 function HMSettingsUI.open(title, buildRows, theme, opts)
     return HARMONIE_SettingsUI.open(title, buildRows, theme or HMSettingsUI.THEME, opts)
 end

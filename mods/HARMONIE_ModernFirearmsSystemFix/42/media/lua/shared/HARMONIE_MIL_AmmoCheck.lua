@@ -67,9 +67,19 @@ local function check()
             local name0 = "?"
             pcall(function() name0 = it:getFullName() end)
             local swing, typ, mag
-            local swingRead = pcall(function() swing = it:getSwingSound() end)
-            pcall(function() typ = it:getName() end)
-            pcall(function() mag = it:getMagazineType() end)
+            -- the script Item has no getSwingSound (calling it logs "Object tried
+            -- to call nil" even inside pcall -- 0.7.5, once per gun): read it from
+            -- a weapon made from the script, and only if the methods exist
+            local swingRead = false
+            if instanceItem and name0 ~= "?" then
+                local w
+                pcall(function() w = instanceItem(name0) end)
+                if w and w.getSwingSound then
+                    swingRead = pcall(function() swing = w:getSwingSound() end)
+                end
+            end
+            if it.getName then pcall(function() typ = it:getName() end) end
+            if it.getMagazineType then pcall(function() mag = it:getMagazineType() end) end
             local profiles = AWCWF_GunShotProfiles
             if swingRead and (swing == nil or swing == "") and not (profiles and typ and profiles[typ]) then
                 silent[#silent + 1] = name0
@@ -87,7 +97,9 @@ local function check()
             end
         end
     end
-    if #silent > 0 then
+    if not instanceItem then
+        log("instanceItem not available -- shot sounds not checked")
+    elseif #silent > 0 then
         log("%d firearms have no shot sound (empty SwingSound, no shot profile): %s", #silent, table.concat(silent, ", "))
     else
         log("every firearm has a shot sound (SwingSound or a shot profile)")
@@ -103,5 +115,41 @@ local function check()
     end
 end
 
+-- An item whose icon texture does not exist has getTex() == nil, and dropping it
+-- on the floor throws in IsoWorldInventoryObject.updateSprite (console 2026-10-23,
+-- 12x "getTex() is null" from ISInventoryTransferAction). List them once, on a
+-- client (a dedicated server has no textures).
+local function iconCheck()
+    if isServer and isServer() then return end
+    if not getTexture then log("getTexture not available -- icons not checked"); return end
+    local sm = getScriptManager and getScriptManager()
+    local items
+    if not sm or not pcall(function() items = sm:getAllItems() end) or not items then return end
+    local n, missing = 0, {}
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        local icon, name
+        if it.getIcon then pcall(function() icon = it:getIcon() end) end
+        if icon and icon ~= "" and icon ~= "None" then
+            n = n + 1
+            local tex
+            pcall(function() tex = getTexture("Item_" .. icon) or getTexture(icon) end)
+            if not tex then
+                pcall(function() name = it:getFullName() end)
+                missing[#missing + 1] = tostring(name) .. " (" .. tostring(icon) .. ")"
+            end
+        end
+    end
+    if #missing == 0 then
+        log("%d item icons checked: all found", n)
+    else
+        local shown = {}
+        for i = 1, math.min(#missing, 80) do shown[i] = missing[i] end
+        log("%d item icons checked: %d have no texture (blank icon; dropping one on the floor throws)%s: %s",
+            n, #missing, #missing > 80 and " -- first 80" or "", table.concat(shown, ", "))
+    end
+end
+
 if Events and Events.OnGameStart then Events.OnGameStart.Add(function() pcall(check) end) end
+if Events and Events.OnGameStart then Events.OnGameStart.Add(function() pcall(iconCheck) end) end
 if Events and Events.OnServerStarted then Events.OnServerStarted.Add(function() pcall(check) end) end

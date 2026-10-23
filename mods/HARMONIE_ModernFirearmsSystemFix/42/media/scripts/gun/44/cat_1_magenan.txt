@@ -62,7 +62,7 @@ module Base
         AmmoBox = Bullets44Box,
         MaxAmmo = 6,
         BringToBearSound = MagnumBringToBear,
-        SwingSound = pistol_2,
+        SwingSound = MagnumShoot,
         HitSound = BulletHitBody,
         ClickSound = MagnumJam,
         EquipSound = MagnumEquip,

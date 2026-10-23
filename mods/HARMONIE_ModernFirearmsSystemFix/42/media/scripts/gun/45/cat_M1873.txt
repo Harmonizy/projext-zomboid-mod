@@ -74,7 +74,7 @@ module Base
 		SubCategory = Firearm,
 		SwingAmountBeforeImpact = 0,
 		SwingAnim = Handgun,
-		SwingSound = M1873_cat,
+		SwingSound = M625Shoot,
 		SwingTime = 0.5,
 		ToHitModifier = 1.5,
 		UnequipSound = MagnumUnEquip,
