@@ -74,7 +74,7 @@ module Base
         MaxAmmo = 30,
         EquipSound = M16Equip,
         UnequipSound = M16UnEquip,
-        InsertAmmoSound = AKplayReloadSound,
+        InsertAmmoSound = AW_AK103_Reload_MagIn,
         EjectAmmoSound = M16EjectAmmo,
         InsertAmmoStartSound = ,
         InsertAmmoStopSound = M16InsertAmmoStop,

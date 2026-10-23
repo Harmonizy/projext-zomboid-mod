@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mirrors mods/<ModId>/<version>/ -> Workshop/<ModId>/Contents/mods/<InnerId>/<version>/
+# Mirrors mods/<ModId>/<version>/ -> Workshop/<Display name>/Contents/mods/<InnerId>/<version>/
 # exactly (deletes stale files in the staging copy, then copies everything fresh,
 # .ogg / other gitignored assets included). Run this after ANY edit to a mod that
 # already has a Workshop/<ModId>/ staging folder -- the game may be loading mods
@@ -27,14 +27,28 @@ VERSION="${2:-42}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$REPO_ROOT/mods/$MOD_ID/$VERSION"
-STAGING_MODS_DIR="$REPO_ROOT/Workshop/$MOD_ID/Contents/mods"
+
+# The Workshop/ folder is named after the mod's DISPLAY name (2026-10-23: the
+# game's upload screen lists those folder names), e.g. "Workshop/HARMONIE -
+# Mercenary Is Life" for mods/HARMONIE_ModernFirearmsSystemFix. Find it by the
+# Contents/mods/<id>/ folder inside (id= of mod.info), or by the old name.
+MOD_INFO_ID=""
+[ -f "$SRC/mod.info" ] && MOD_INFO_ID="$(grep -m1 '^id=' "$SRC/mod.info" | cut -d= -f2- | tr -d '\r')"
+WORKSHOP_DIR=""
+for w in "$REPO_ROOT"/Workshop/*/; do
+    for inner in "$MOD_INFO_ID" "$MOD_ID"; do
+        if [ -n "$inner" ] && [ -d "${w}Contents/mods/$inner" ]; then WORKSHOP_DIR="${w%/}"; break 2; fi
+    done
+done
+[ -z "$WORKSHOP_DIR" ] && WORKSHOP_DIR="$REPO_ROOT/Workshop/$MOD_ID"
+STAGING_MODS_DIR="$WORKSHOP_DIR/Contents/mods"
 
 if [ ! -d "$SRC" ]; then
     echo "ERROR: source folder not found: $SRC" >&2
     exit 1
 fi
 if [ ! -d "$STAGING_MODS_DIR" ]; then
-    echo "ERROR: no Workshop/$MOD_ID/Contents/mods/ staging folder exists -- this mod" >&2
+    echo "ERROR: no Workshop/<name>/Contents/mods/ staging folder for $MOD_ID -- this mod" >&2
     echo "       has never been set up for Workshop upload, nothing to sync to." >&2
     exit 1
 fi

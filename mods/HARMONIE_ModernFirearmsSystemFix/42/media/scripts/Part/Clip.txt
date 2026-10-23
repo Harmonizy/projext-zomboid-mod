@@ -450,7 +450,7 @@ module Gunpart {
                 DisplayName      = 弹匣,
                 Icon             = Clip_lugerP80_cat,
                 Weight           = 0.2,
-                MountOn = lugerP80_cat,
+                MountOn = lugerP08_cat,
                 PartType         = Clip,
                 WorldStaticModel = Clip_lugerP80_cat,
             }
@@ -1270,7 +1270,7 @@ module Gunpart {
                 DisplayName      = 弹匣,
                 Icon             = 762Drum_cat,
                 Weight           = 0.2,
-                MountOn = MK47_cat,
+                MountOn = mk47_cat,
                 PartType         = Clip,
                 WorldStaticModel = Clip_MK47_cat,
                 Tooltip          = "M14弹鼓(50发)",

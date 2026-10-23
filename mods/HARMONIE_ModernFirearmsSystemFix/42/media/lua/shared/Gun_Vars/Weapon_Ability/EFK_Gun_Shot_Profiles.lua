@@ -3570,6 +3570,14 @@ AWCWF_GunShotProfiles.M1919a6_cat = AWCWF_GunShotProfiles.QJY201_cat
 AWCWF_GunShotProfiles.M240_cat = AWCWF_GunShotProfiles.QJY201_cat
 AWCWF_GunShotProfiles.M1873_cat = AWCWF_GunShotProfiles.Taurus_cat
 
+-- HARMONIE (2026-10-23): these five had an empty SwingSound and no profile, so
+-- they fired without a sound. Reuse a profile of the same kind of gun.
+AWCWF_GunShotProfiles.CycloneAK_cat = AWCWF_GunShotProfiles.AK103_cat
+AWCWF_GunShotProfiles.nagant_m1895_cat = AWCWF_GunShotProfiles.Taurus_cat
+AWCWF_GunShotProfiles.SW629_cat = AWCWF_GunShotProfiles.Taurus_cat
+AWCWF_GunShotProfiles.Thompson_cat = AWCWF_GunShotProfiles.UMP45_cat
+AWCWF_GunShotProfiles.lugerP08_cat = AWCWF_GunShotProfiles.BerettaM93R_cat
+
 -- Base.HuntingRifle is replaced by the integrally suppressed MFS MSR788.
 -- It must use its suppressed rifle layer even though no detachable suppressor
 -- is present. Both branches are identical by design.

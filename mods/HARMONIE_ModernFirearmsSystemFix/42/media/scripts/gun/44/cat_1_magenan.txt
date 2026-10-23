@@ -66,7 +66,7 @@ module Base
         HitSound = BulletHitBody,
         ClickSound = MagnumJam,
         EquipSound = MagnumEquip,
-        UnequipSound = MagumUnEquip,
+        UnequipSound = MagnumUnEquip,
         InsertAmmoSound = MagnumInsertAmmo,
         EjectAmmoSound = MagnumEjectAmmo,
         InsertAmmoStartSound = MagnumInsertAmmoStart,

@@ -73,7 +73,7 @@ module Base
 		SwingSound = ,
 		SwingTime = 0.5,
 		ToHitModifier = 1.5,
-		UnequipSound = MagumUnEquip,
+		UnequipSound = MagnumUnEquip,
 		UseEndurance = FALSE,
 		WeaponReloadType = revolver,
 		WeaponSprite = M500_cat,

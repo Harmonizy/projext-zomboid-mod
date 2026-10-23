@@ -78,7 +78,7 @@ module Base
         EjectAmmoStartSound = MSR700EjectAmmoStart,
         EjectAmmoStopSound = MSR700EjectAmmoStop,
         ShellFallSound = MSR700CartridgeFall,
-        RackSound = GM6_cat1,
+        RackSound = MSR788Rack,
         MagazineType = Base.Bullets50Clip,
         AmmoType = base:bullets_308,
         WeaponReloadType = boltaction,

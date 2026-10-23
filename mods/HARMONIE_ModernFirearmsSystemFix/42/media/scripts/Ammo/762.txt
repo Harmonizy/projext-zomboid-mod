@@ -99,7 +99,7 @@ item M14Drum_cat
         AmmoType = base:bullets_308,
         StaticModel = GunMagazine,
         Tags =  base:GunDrum;efk:GunDrum,
-        GunType = Groza_cat;AEK971_cat;mk47_cat;ScarH_cat;MG3_cat,
+        GunType = Groza_cat;AEK971_cat;mk47_cat;ScarH_cat;MG3_cat;PKM_cat;QJY201_cat;lewis_cat;FN_Evolys_cat;M1919a6_cat,
         WorldStaticModel = Gun_Magazine_Ground,
     }
     item M240BeltBox
