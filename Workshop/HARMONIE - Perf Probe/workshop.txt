@@ -7,4 +7,4 @@ description=Every 10 seconds it writes to console.txt (client and server) which 
 description=
 description=Mod ID: HARMONIE_PerfProbe
 tags=Build 42;Misc
-visibility=unlisted
+visibility=public
