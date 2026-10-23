@@ -38,4 +38,5 @@ LWS_Registries.bodylocations = {
     tail_over = ItemBodyLocation.register("lws:tail_over"),
     extra = ItemBodyLocation.register("lws:extra"),
     extra_over = ItemBodyLocation.register("lws:extra_over"),
+    gacha_guardian = ItemBodyLocation.register("lws:gacha_guardian"),
 }

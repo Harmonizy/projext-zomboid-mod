@@ -240,6 +240,8 @@ def main():
             continue
         reg.append('    %s = ItemBodyLocation.register("lws:%s"),' % (s, s))
         reg.append('    %s_over = ItemBodyLocation.register("lws:%s_over"),' % (s, s))
+    # the gacha Guardian Capsule's invisible armour (scripts/HARMONIE_LWS_gacha.txt)
+    reg.append('    gacha_guardian = ItemBodyLocation.register("lws:gacha_guardian"),')
     reg.append("}")
     write(os.path.join(ROOT, "registries.lua"), "\n".join(reg) + "\n")
 

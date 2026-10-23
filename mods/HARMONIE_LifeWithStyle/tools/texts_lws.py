@@ -8,6 +8,7 @@ HUB_SRC = os.path.join(MODS, "HARMONIE_SVU3Sandbox", "42", "media", "lua", "shar
 import sys
 sys.path.insert(0, HERE)
 from gen_lws import SLOT_NAMES, PETS
+from gen_gacha import TEXTS as GACHA_TEXTS
 
 T = {
  "IGUI_LWS_Title": ("Life With Style", "Life With Style - ตู้เสื้อผ้า"),
@@ -166,12 +167,57 @@ T = {
  "IGUI_LWS_Msg_PetHungry": ("%1 is hungry.", "%1 หิวแล้ว"),
  "IGUI_LWS_Msg_PetStarving": ("%1 is starving and will not listen until fed.", "%1 หิวจัด จะไม่ฟังคำสั่งจนกว่าจะได้กิน"),
  "IGUI_LWS_Msg_PetCameBack": ("%1 was left too far away and came back to you.", "%1 ถูกทิ้งไว้ไกลเกินไป จึงกลับมาหาคุณ"),
+ "IGUI_LWS_Tab_gacha": ("Gacha items", "ไอเท็มกาชา"),
+ "IGUI_LWS_Tab_gacha_Tip": ("Items from the gacha: use them here (they never go in your inventory).", "ไอเท็มจากกาชา: ใช้งานที่นี่ (ไม่เข้า inventory ของเกม)"),
+ "IGUI_LWS_Search": ("Search...", "ค้นหา..."),
+ "IGUI_LWS_CatalogAll": ("All fashion (%1 pieces, you have %2)", "แฟชั่นทั้งหมด (%1 ชิ้น คุณมี %2)"),
+ "IGUI_LWS_ColMine": ("Mine", "ของฉัน"),
+ "IGUI_LWS_ColCatalog": ("All fashion", "แฟชั่นทั้งหมด"),
+ "IGUI_LWS_ColClothes": ("Clothes", "เสื้อผ้า"),
+ "IGUI_LWS_ColPets": ("Pets", "สัตว์เลี้ยง"),
+ "IGUI_LWS_ColWorn": ("Worn", "สวมอยู่"),
+ "IGUI_LWS_ColNotWorn": ("Not worn", "ไม่ได้สวม"),
+ "IGUI_LWS_AllSlots": ("All slots", "ทุกช่อง"),
+ "IGUI_LWS_NoMatch": ("Nothing matches the search and filters.", "ไม่มีรายการที่ตรงกับการค้นหาและตัวกรอง"),
+ "IGUI_LWS_NotOwned": ("Not in your wardrobe yet (admins give pieces).", "ยังไม่มีในตู้ของคุณ (แอดมินเป็นผู้มอบ)"),
+ "IGUI_LWS_AdminFashion": ("Fashion", "แฟชั่น"),
+ "IGUI_LWS_AdminGacha": ("Gacha items", "ไอเท็มกาชา"),
+ "IGUI_LWSG_Title": ("Gacha items (%1 items, %2 kinds)", "ไอเท็มกาชา (%1 ชิ้น %2 ชนิด)"),
+ "IGUI_LWSG_AllItems": ("Every item", "ไอเท็มทั้งหมด"),
+ "IGUI_LWSG_None": ("You have no gacha item yet. Gacha items are given by the server's admins.", "คุณยังไม่มีไอเท็มกาชา ไอเท็มกาชาได้จากแอดมินของเซิร์ฟเวอร์"),
+ "IGUI_LWSG_Equipped": ("Equipped", "สวมอยู่"),
+ "IGUI_LWSG_Detail": ("Item", "ไอเท็ม"),
+ "IGUI_LWSG_PickOne": ("Click an item to see what it does.", "คลิกที่ไอเท็มเพื่อดูว่าใช้ทำอะไร"),
+ "IGUI_LWSG_Have": ("You have: %1", "มีอยู่: %1"),
+ "IGUI_LWSG_Use": ("Use", "ใช้"),
+ "IGUI_LWSG_Equip": ("Equip", "สวม"),
+ "IGUI_LWSG_Unequip": ("Take off", "ถอด"),
+ "IGUI_LWSG_Active": ("Active now", "กำลังทำงาน"),
+ "IGUI_LWSG_NoActive": ("Nothing active.", "ยังไม่มีอะไรทำงาน"),
+ "IGUI_LWSG_SetLine": ("New Dawn %1/4: all XP +%2%%", "New Dawn %1/4: XP ทุกทักษะ +%2%%"),
+ "IGUI_LWSG_OwnerItems": ("Gacha items of %1", "ไอเท็มกาชาของ %1"),
+ "IGUI_LWSG_Catalog": ("Gacha catalog (%1)", "แคตตาล็อกไอเท็มกาชา (%1)"),
+ "IGUI_LWSG_ClickRevoke": ("x: take one away", "x: นำออก 1 ชิ้น"),
+ "IGUI_LWSG_Msg_NoWound": ("No wound needs a bandage.", "ไม่มีแผลที่ต้องพัน"),
+ "IGUI_LWSG_Msg_NoNeed": ("You do not need it now.", "ตอนนี้ยังไม่จำเป็นต้องใช้"),
+ "IGUI_LWSG_Msg_NoEffect": ("This item could not be used.", "ใช้ไอเท็มนี้ไม่ได้"),
+ "IGUI_LWSG_Msg_Used": ("%1 used.", "ใช้ %1 แล้ว"),
+ "IGUI_LWSG_Msg_Got": ("You got a gacha item: %1", "คุณได้รับไอเท็มกาชา: %1"),
+ "IGUI_LWSG_Msg_Journey": ("+%1 XP (%2)", "XP +%1 (%2)"),
+ "IGUI_LWSG_TrayExp": ("EXP BOOSTS", "บัฟ EXP"),
+ "IGUI_LWSG_TraySet": ("NEW DAWN SET", "ชุด NEW DAWN"),
+ "IGUI_LWSG_TraySetFull": ("4/4 equipped - all XP x1.10", "สวมครบ 4/4 - XP ทุกทักษะ x1.10"),
+ "IGUI_LWSG_Left": ("Remaining: %1", "เหลือ: %1"),
+ "IGUI_LWS_Guide_Gacha_Title": ("Gacha items", "ไอเท็มกาชา"),
+ "IGUI_LWS_Guide_Gacha_Body": ("Gacha items are given by the server's admins, like fashion. They never go in your inventory and can not be dropped: open the Gacha items tab, click an item to read what it does, then press Use. Search by name or effect, or pick a category.<br><br>Medical and body items work at once. Manuals and field guides raise XP for real minutes; only one training manual at a time. Capsules last 30 minutes and only one capsule is active at a time - a new one replaces the old one. Survival journeys give flat XP at once. The New Dawn set is equipped, not used up: each piece adds XP on every skill, and all four make it x1.10.<br><br>The icons on the right of the screen show what is running; hover for the timers. Buffs end when your character dies.",
+   "ไอเท็มกาชาได้จากแอดมินของเซิร์ฟเวอร์ เหมือนแฟชั่น ไม่เข้า inventory ของเกมและทิ้งไม่ได้ เปิดแท็บไอเท็มกาชา คลิกที่ไอเท็มเพื่ออ่านว่าใช้ทำอะไร แล้วกด ใช้ ค้นหาได้ด้วยชื่อหรือผลของไอเท็ม หรือเลือกหมวด<br><br>ไอเท็มการแพทย์และร่างกายมีผลทันที คู่มือและไกด์ภาคสนามเพิ่ม XP ตามเวลาจริง ใช้คู่มือฝึกได้ทีละเล่ม แคปซูลอยู่ได้ 30 นาที และทำงานได้ทีละเม็ด เม็ดใหม่จะแทนเม็ดเดิม บันทึกการเอาชีวิตรอดให้ XP ค่าคงที่ทันที ชุด New Dawn ใช้วิธีสวม ไม่หมดไป แต่ละชิ้นเพิ่ม XP ทุกทักษะ ครบ 4 ชิ้นรวมเป็น x1.10<br><br>ไอคอนทางขวาของจอแสดงสิ่งที่กำลังทำงาน เอาเมาส์ชี้เพื่อดูเวลาที่เหลือ บัฟจะหมดเมื่อตัวละครตาย"),
  "IGUI_LWS_Guide_Soon_Title": ("Coming next", "เร็วๆ นี้"),
  "IGUI_LWS_Guide_Soon_Body": ("A Discord-linked wardrobe, and fashion for pets.",
      "ตู้เสื้อผ้าที่ผูกกับบัญชี Discord และแฟชั่นสำหรับสัตว์เลี้ยง"),
 }
 for p in PETS:
     T["IGUI_LWS_PetName_" + p["id"]] = (p["en"], p["th"])
+T.update(GACHA_TEXTS)
 for s, (en, th) in SLOT_NAMES.items():
     T["IGUI_LWS_Slot_" + s] = (en, th)
 

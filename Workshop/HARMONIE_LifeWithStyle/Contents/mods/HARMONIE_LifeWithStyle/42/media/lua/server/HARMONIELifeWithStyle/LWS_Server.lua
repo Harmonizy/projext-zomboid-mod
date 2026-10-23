@@ -262,6 +262,7 @@ function S.handle(player, command, args)
         o.name = LWS.name(player)
         S.sendState(player, o)
         S.ensure(player, "hello")
+        if LWS.Gacha and LWS.Gacha.handle then LWS.Gacha.handle(player, "GachaHello", {}) end
     elseif command == "Wear" then
         local o = S.owner(key, true)
         local slot, uid = tostring(args.slot or ""), tostring(args.uid or "")
@@ -321,6 +322,8 @@ function S.handle(player, command, args)
         local target = onlineByKey(ownerKey)
         if target then S.sendState(target, o); S.ensure(target, "revoked") end
         LWS.toClient(player, "AdminData", adminData(ownerKey))
+    elseif (tostring(command):sub(1, 5) == "Gacha" or tostring(command):sub(1, 10) == "AdminGacha") and LWS.Gacha and LWS.Gacha.handle then
+        LWS.Gacha.handle(player, command, args)
     elseif tostring(command):sub(1, 3) == "Pet" and LWS.Pets and LWS.Pets.handle then
         LWS.Pets.handle(player, command, args)
     elseif tostring(command):sub(1, 5) == "Trade" and LWS.Trade and LWS.Trade.handle then

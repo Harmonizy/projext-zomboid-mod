@@ -125,6 +125,20 @@
   `complete()` on a client-only timed action (MP net-action sync). A pet
   item in an inventory is deleted by the server sweep. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
+- Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
+  in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
+  descriptions -> `LWS_GachaData.lua`; texts_lws.py imports its TEXTS).
+  NOT items: counts in the wardrobe record (`o.gacha`, `o.gachaSet` for the
+  New Dawn pieces equipped, `o.gachaBuffs` in real-time ms), used from the
+  "gacha" tab (`server/.../LWS_Gacha.lua`). Effects / numbers / the locked XP
+  formula are RWZ's -- change them only when the owner asks. The one real
+  item is the Guardian armour layer `HARMONIE_LWSG.GuardianProtectionProxy`
+  (own module: the fashion sweep deletes any `HARMONIE_LWS` item it does not
+  expect) in body location `lws:gacha_guardian`, worn by the server while
+  Guardian / Compound-V runs. Buffs end on death. Client: XP hook, capsule
+  runtime, buff tray (`client/.../LWS_GachaClient.lua`).
+- Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
+  shown only in frames that ask for them (`hideUnusedSearch`).
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks
   both. Sandbox page HARMONIE_LifeWithStyle (TradeEnabled, TradeMaxDistance).
