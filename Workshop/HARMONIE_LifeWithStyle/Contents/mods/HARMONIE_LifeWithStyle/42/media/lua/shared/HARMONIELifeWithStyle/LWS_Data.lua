@@ -22,6 +22,7 @@ LWS.SLOTS = {
     { id = "makeup", hides = { "makeup_fullface", "makeup_eyesshadow", "makeup_eyes", "makeup_lips" } },
     { id = "tail", hides = { "tail" } },
     { id = "extra", hides = {  } },
+    { id = "pet", hides = {  }, body = false },
 }
 LWS.CATALOG = {
     { id = "Test_BunnyEarsWhite", slot = "hat", icon = "RabbitearsWhite" },
@@ -49,4 +50,9 @@ LWS.CATALOG = {
     { id = "Test_LipsRed", slot = "makeup", icon = "LWS_Makeup" },
     { id = "Test_SpiffoTail", slot = "tail", icon = "SpiffoTail" },
     { id = "Test_BunnyEarsBlack", slot = "extra", icon = "RabbitearsBlack" },
+    { id = "Pet_Caramelo", slot = "pet", icon = "LWSPet_Caramelo", pet = { type = "lwspet_caramelo", breed = "Caramelo" } },
+    { id = "Pet_GermanShepherd", slot = "pet", icon = "LWSPet_GermanShepherd", pet = { type = "lwspet_germanshepherd", breed = "GermanShepherd" } },
+    { id = "Pet_Retriever", slot = "pet", icon = "LWSPet_Retriever", pet = { type = "lwspet_retriever", breed = "Retriever" } },
+    { id = "Pet_Husky", slot = "pet", icon = "LWSPet_Husky", pet = { type = "lwspet_husky", breed = "Husky" } },
+    { id = "Pet_BorderCollie", slot = "pet", icon = "LWSPet_BorderCollie", pet = { type = "lwspet_bordercollie", breed = "BorderCollie" } },
 }

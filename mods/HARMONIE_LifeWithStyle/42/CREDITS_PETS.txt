@@ -1,0 +1,23 @@
+HARMONIE - Life With Style: pet credits
+=======================================
+
+The pets' dog models, body textures, portraits (our icons) and voices come
+from the mod "Companion Dogs" (Steam Workshop 3740052292), used in this mod
+with its author's permission (owner of HARMONIE, 2026-10-23). Thank you!
+
+Taken (renamed LWSPet_*, nothing else of it is included):
+  models_X/Skinned/LWSPet_<Breed>.glb  <- Companion Dogs' <Breed>_Body.glb
+                                          (its own 3D models, rigged to the
+                                          vanilla raccoon skeleton)
+  textures/Body/LWSPet_<Breed>.png     <- its body textures
+  textures/Item_LWSPet_<Breed>.png     <- its CDPortrait_*.png, made smaller
+  sound/LWSPet_*.ogg                   <- its dog voices. Companion Dogs credits
+                                          them as CC0: BigSoundBank.com (Joseph
+                                          Sardin) for the barks, whines and
+                                          huffs; Freesound.org "a dog eats his
+                                          kibble" by aisselles (#725619) for
+                                          eating.
+
+The code that makes the pets follow, take orders and eat is our own
+(lua/server/HARMONIELifeWithStyle/LWS_Pets.lua); none of Companion Dogs' code
+is included. tools/import_pets.py copies the files above.

@@ -84,6 +84,8 @@ end
 function LWS.isOurPiece(pieceId)
     pieceId = tostring(pieceId or "")
     if not LWS.PIECE[pieceId] then return false end
+    -- a pet has no item script: our catalog is the whole check
+    if LWS.PIECE[pieceId].pet then return true end
     if not getScriptManager then return true end
     local ok, it = pcall(function() return getScriptManager():FindItem(LWS.MODULE .. "." .. pieceId) end)
     if not ok then return true end
@@ -98,6 +100,25 @@ function LWS.isFashion(item)
     local ok, m = pcall(function() return item:getModule() end)
     if ok and m then return tostring(m) == LWS.MODULE end
     return LWS.typeOf(item):sub(1, #LWS.MODULE + 1) == LWS.MODULE .. "."
+end
+
+-- ------------------------------------------------------------- pet food
+-- how much of a pet's hunger (0..1) one item fills: dog food all of it, other
+-- food by how filling it is; rotten, poisoned or not food = 0 (cannot be fed)
+LWS.DOG_FOOD = { ["Base.Dogfood"] = true, ["Base.DogfoodOpen"] = true, ["Base.DogFoodBag"] = true }
+function LWS.petFoodValue(item)
+    if not item then return 0 end
+    local okF, isFood = pcall(function() return instanceof(item, "Food") end)
+    if not okF or not isFood then return 0 end
+    local okR, rotten = pcall(function() return item:isRotten() end)
+    if okR and rotten then return 0 end
+    local okP, poison = pcall(function() return item:getPoisonPower() end)
+    if okP and tonumber(poison) and poison > 0 then return 0 end
+    if LWS.DOG_FOOD[LWS.typeOf(item)] then return 1 end
+    local ok, hc = pcall(function() return item:getHungChange() end)
+    hc = ok and tonumber(hc) or 0
+    if hc >= 0 then return 0 end
+    return math.min(1, 0.15 + (-hc) * 2)
 end
 
 -- ------------------------------------------------------------- owner
@@ -139,6 +160,8 @@ function LWS.T(key, ...)
 end
 function LWS.slotName(slot) return LWS.T("IGUI_LWS_Slot_" .. tostring(slot)) end
 function LWS.pieceName(pieceId)
+    local c = LWS.PIECE[tostring(pieceId)]
+    if c and c.pet then return LWS.T("IGUI_LWS_PetName_" .. tostring(pieceId)) end
     local key = LWS.MODULE .. "." .. tostring(pieceId)
     local ok, it = pcall(function() return getScriptManager():FindItem(key) end)
     if ok and it then

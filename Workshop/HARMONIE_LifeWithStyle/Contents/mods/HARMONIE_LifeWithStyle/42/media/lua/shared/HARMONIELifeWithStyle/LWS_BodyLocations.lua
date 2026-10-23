@@ -31,6 +31,8 @@ local function setup()
     if not group then LWS.log("BodyLocations", "no Human body location group -- fashion slots NOT made"); return end
     local made, hides, missing = 0, 0, {}
     for _, s in ipairs(LWS.SLOTS) do
+      -- the pet slot is not on the body (LWS_Pets.lua)
+      if s.body ~= false then
         for _, suffix in ipairs({ "", "_over" }) do
             local id = loc("lws:" .. s.id .. suffix)
             if id then
@@ -54,6 +56,7 @@ local function setup()
                 end
             end
         end
+      end
     end
     LWS.log("BodyLocations", "%d fashion body locations, %d hide rules%s", made, hides,
         #missing > 0 and (" -- not found: " .. table.concat(missing, ", ")) or "")

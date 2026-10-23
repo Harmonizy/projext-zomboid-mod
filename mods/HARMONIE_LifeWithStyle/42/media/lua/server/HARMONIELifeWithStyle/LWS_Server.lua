@@ -103,7 +103,10 @@ function S.ensure(player, why)
         clean(o)
         for slot, uid in pairs(o.worn) do
             local e = o.items[uid]
-            if e then want[LWS.carrierType(e.p, o.show[slot] == true)] = slot end
+            -- the pet slot makes no item (LWS_Pets.lua makes the animal)
+            if e and not (LWS.SLOT[slot] and LWS.SLOT[slot].body == false) then
+                want[LWS.carrierType(e.p, o.show[slot] == true)] = slot
+            end
         end
     end
     local inv = player:getInventory()
@@ -166,6 +169,11 @@ function S.ensure(player, why)
             S.wearHere(player, wearList)
         end
     end
+    -- the pet out = the pet slot
+    if LWS.Pets and LWS.Pets.sync then
+        local ok, err = pcall(LWS.Pets.sync, player, why)
+        if not ok then LWS.logOnce("petsync", "Server", "pet sync FAILED: %s", tostring(err)) end
+    end
 end
 
 -- single player: wear them now (multiplayer: the client does it, LWS_Client)
@@ -181,6 +189,8 @@ function S.wearHere(player, types)
 end
 
 -- ------------------------------------------------------------- commands
+local onlineByKey
+
 local function admin(player, command)
     if LWS.isAdmin(player) then return true end
     log("REJECTED %s from %s: not an admin", tostring(command), LWS.name(player))
@@ -227,7 +237,7 @@ function S.count(o)
     return n
 end
 
-local function onlineByKey(key)
+function S.onlineByKey(key)
     local online = getOnlinePlayers and getOnlinePlayers()
     for i = 0, (online and online:size() or 0) - 1 do
         local p = online:get(i)
@@ -239,6 +249,7 @@ local function onlineByKey(key)
     end
     return nil
 end
+onlineByKey = S.onlineByKey
 
 function S.handle(player, command, args)
     if not player then return end
@@ -274,7 +285,7 @@ function S.handle(player, command, args)
     elseif command == "Show" then
         local o = S.owner(key, true)
         local slot = tostring(args.slot or "")
-        if not LWS.SLOT[slot] then return end
+        if not LWS.SLOT[slot] or LWS.SLOT[slot].body == false then return end
         o.show[slot] = args.on == true or nil
         log("%s: %s -> %s real clothes", LWS.name(player), slot, o.show[slot] and "show" or "hide")
         S.sendState(player, o)
@@ -310,6 +321,8 @@ function S.handle(player, command, args)
         local target = onlineByKey(ownerKey)
         if target then S.sendState(target, o); S.ensure(target, "revoked") end
         LWS.toClient(player, "AdminData", adminData(ownerKey))
+    elseif tostring(command):sub(1, 3) == "Pet" and LWS.Pets and LWS.Pets.handle then
+        LWS.Pets.handle(player, command, args)
     elseif tostring(command):sub(1, 5) == "Trade" and LWS.Trade and LWS.Trade.handle then
         LWS.Trade.handle(player, command, args)
     else
