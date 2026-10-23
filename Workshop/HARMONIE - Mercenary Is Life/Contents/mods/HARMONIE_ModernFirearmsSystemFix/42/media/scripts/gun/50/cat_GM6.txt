@@ -40,7 +40,7 @@ module Base
         SwingTime = 0.7,
         MultipleHitConditionAffected = FALSE,
 	    BringToBearSound = MSR700BringToBear,
-        SwingSound = GM6_cat,
+        SwingSound = MSR788Shoot,
         HitSound = BulletHitBody,
         ClickSound = M16Jam,
         SoundRadius = 130,

@@ -70,6 +70,12 @@
   (`EFK_Gun_Shot_Profiles.lua`; aliases at its end). `MountOn` names are
   matched exactly (`MG338_cat` is not `mg338_cat`). AmmoCheck logs guns with
   no shot sound and magazines that are not items (MIL 0.7.5).
+- Calling a method a Java object does not have (`scriptItem:getSwingSound()`)
+  logs "Object tried to call nil" with a stack trace even inside pcall (MIL
+  0.7.5 AmmoCheck: 142 per load). Test `obj.method` first.
+- A Lua syntax error kills the whole file with one console line and no other
+  sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
+  release, load every changed .lua once (lupa `load()` is enough).
 
 
 ## HARMONIE Hub (shared by our mods)

@@ -15,7 +15,7 @@ module Base
         ReloadTime = 45,
         AimingTime = 50,
         SoundRadius = 130,
-        SwingSound = AX50_cat,
+        SwingSound = MSR788Shoot,
         RackSound = ,
         MagazineType = Base.Bullets50Clip,
         AmmoType = base:bullets_308,

@@ -58,7 +58,7 @@ module Base
         SwingTime = 0.7,
         MultipleHitConditionAffected = FALSE,
         BringToBearSound = M16BringToBear,
-        SwingSound = minigun_cat,
+        SwingSound = Minigun_catShoot,
         HitSound = BulletHitBody,
         ClickSound = M16Jam,
         SoundRadius = 50,
