@@ -401,6 +401,8 @@ function P.step(key, rec, owner)
         return
     end
     rec.stillSince = nil
+    -- being petted: it stays where it is a moment
+    if rec.holdUntil and now() < rec.holdUntil then return end
     if dd <= P.FOLLOW_NEAR then
         P.animTick(rec, false)
         if rec.anims and rec.anims.lwsRest then P.anim(rec, "lwsRest", false) end
@@ -448,8 +450,29 @@ function P.findFood(player, wantType)
     return best, bestV
 end
 
+-- a pet by its animal id (anyone may pet anyone's pet)
+local function recById(id)
+    for key, rec in pairs(P.active) do
+        if rec.id ~= nil and rec.id == id and valid(rec.animal) then return rec, key end
+    end
+    -- single player: the ids may all be the same -- the one pet there is
+    if not isMP() then for key, rec in pairs(P.active) do if valid(rec.animal) then return rec, key end end end
+    return nil
+end
+
+P.PET_HOLD_MS = 6000
 function P.handle(player, command, args)
-    if command == "PetFeed" then
+    if command == "PetPet" then
+        local rec = recById(tonumber(args.id))
+        if not rec then log("REJECTED PetPet from %s: no such pet out (%s)", LWS.name(player), tostring(args.id)); return end
+        -- it stays still to be stroked, and is happy about it
+        rec.holdUntil = now() + P.PET_HOLD_MS
+        pcall(function() rec.animal:stopAllMovementNow() end)
+        pcall(function() rec.animal:faceThisObject(player) end)
+        P.voice(rec, "happy")
+        log("%s pets %s", LWS.name(player), tostring(rec.piece))
+        return
+    elseif command == "PetFeed" then
         if not P.sv("PetFeeding") then log("REJECTED PetFeed from %s: feeding is off in sandbox", LWS.name(player)); return end
         local rec, d = petOf(player)
         if not rec or not d then return end
@@ -539,6 +562,29 @@ function P.sweep()
     end
 end
 
+-- a pet must never sit in an inventory (vanilla's pick-up, or any other way in):
+-- the item goes, the pet comes back out beside its owner
+function P.cleanInventory(player)
+    local inv = player and player:getInventory()
+    if not inv then return 0 end
+    local items, gone = inv:getItems(), {}
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        local okA, isAnimal = pcall(function() return instanceof(it, "AnimalInventoryItem") end)
+        if okA and isAnimal then
+            local a
+            pcall(function() a = it:getAnimal() end)
+            if a and LWS.isPetAnimal(a) then gone[#gone + 1] = it end
+        end
+    end
+    for _, it in ipairs(gone) do
+        pcall(function() inv:Remove(it) end)
+        if isServer and isServer() and sendRemoveItemFromContainer then pcall(sendRemoveItemFromContainer, inv, it) end
+        log("%s: a pet was in the inventory -- removed (it walks beside its owner instead)", LWS.name(player))
+    end
+    return #gone
+end
+
 local function ownerOnline(key)
     return LWS.Server and LWS.Server.onlineByKey and LWS.Server.onlineByKey(key) or nil
 end
@@ -570,6 +616,12 @@ function P.onTick()
     end
     if t >= nextSweep then
         nextSweep = t + P.SWEEP_MS
+        local online = (isServer and isServer()) and getOnlinePlayers and getOnlinePlayers()
+        if online then
+            for i = 0, online:size() - 1 do pcall(P.cleanInventory, online:get(i)) end
+        elseif getPlayer and getPlayer() then
+            pcall(P.cleanInventory, getPlayer())
+        end
         local ok, err = pcall(P.sweep)
         if not ok then LWS.logOnce("sweeperr", "Pets", "stray pet sweep FAILED: %s", tostring(err)) end
     end
