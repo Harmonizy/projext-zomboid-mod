@@ -42,6 +42,10 @@ P.FOLLOW_NEAR = 2.5             -- closer than this: no new path
 P.REPATH_MS = 2500              -- a new path at most this often (A* is not free)
 P.RESPAWN_MS = 3000             -- a lost pet is made again at most this often
 P.STAY_LEASH = 2                -- a staying pet farther than teleport x this comes back
+P.RUN_FROM = 6                  -- runs when farther than this (or when the owner runs) ...
+P.WALK_UNDER = 3.5              -- ... and walks again under this
+P.REST_AFTER_MS = 20000         -- a staying pet lies down after this
+P.IDLE_MIN_MS, P.IDLE_MAX_MS = 12000, 25000   -- a standing pet does something now and then
 
 -- ------------------------------------------------------------- sandbox
 local DEFAULTS = {
@@ -148,6 +152,7 @@ function P.spawn(player, want, why)
     pcall(function() a:setIsInvincible(true) end)
     pcall(function() a:setInvulnerable(true) end)
     pcall(function() a:setCustomName(LWS.pieceName(want.piece)) end)
+    LWS.petBaseVars(a)
     pcall(function()
         local md = a:getModData()
         md.LWS_pet = { owner = want.key, uid = want.uid }
@@ -171,6 +176,63 @@ function P.despawn(key, why)
     P.active[key] = nil
     if valid(rec.animal) then deleteAnimal(rec.animal) end
     log("%s: %s went back to the wardrobe (%s)", tostring(key), tostring(rec.piece), tostring(why))
+end
+
+-- ------------------------------------------------------------- animation
+-- a short animation (ms) or one that stays until turned off (ms = nil): set
+-- here and on every client (an animation variable does not travel by itself)
+function P.anim(rec, var, on, ms)
+    if not rec or not valid(rec.animal) then return end
+    rec.anims = rec.anims or {}
+    if rec.anims[var] and rec.anims[var].on == on then return end
+    pcall(function() rec.animal:setVariable(var, on) end)
+    rec.anims[var] = on and { on = true, untilMs = ms and (now() + ms) or nil } or nil
+    if isServer and isServer() and rec.id then
+        sendServerCommand(LWS.NET, "PetAnim", { id = rec.id, v = var, on = on, ms = ms })
+    end
+end
+
+-- turn off the short ones that are over; everything off when it moves
+function P.animTick(rec, moving)
+    local t = now()
+    for var, a in pairs(rec.anims or {}) do
+        if moving or (a.untilMs and t >= a.untilMs) then P.anim(rec, var, false) end
+    end
+end
+
+function P.idleTick(rec, d)
+    local t = now()
+    if d.mode == "stay" then
+        rec.stillSince = rec.stillSince or t
+        if t - rec.stillSince >= P.REST_AFTER_MS and not (rec.anims and rec.anims.lwsRest) then
+            P.anim(rec, "lwsRest", true)
+            log("%s lies down", tostring(rec.piece))
+        end
+        if rec.anims and rec.anims.lwsRest then return end
+    end
+    if not rec.idleAt then rec.idleAt = t + ZombRand(P.IDLE_MIN_MS, P.IDLE_MAX_MS) end
+    if t >= rec.idleAt then
+        rec.idleAt = t + ZombRand(P.IDLE_MIN_MS, P.IDLE_MAX_MS)
+        local busy = false
+        for _ in pairs(rec.anims or {}) do busy = true end
+        if not busy then
+            local var = LWS.PET_IDLE_VARS[ZombRand(1, #LWS.PET_IDLE_VARS + 1)]
+            P.anim(rec, var, true, var == "lwsSniff" and 4000 or 3000)
+        end
+    end
+end
+
+-- walk or run (with a gap so it does not flip at one distance)
+local function setGait(rec, owner, dd)
+    local ownerRuns = false
+    pcall(function() ownerRuns = owner:isRunning() or owner:isSprinting() end)
+    local run = rec.run == true
+    if dd > P.RUN_FROM or ownerRuns then run = true elseif dd < P.WALK_UNDER then run = false end
+    if run ~= rec.run then rec.run = run end
+    pcall(function()
+        rec.animal:setVariable("animalRunning", run)
+        rec.animal:setVariable("animalSpeed", run and LWS.PET_RUN_SPEED or LWS.PET_WALK_SPEED)
+    end)
 end
 
 -- ------------------------------------------------------------- state
@@ -268,6 +330,8 @@ function P.step(key, rec, owner)
     local dd = dist(animal, owner)
     local dz = math.abs(math.floor(animal:getZ()) - math.floor(owner:getZ()))
     if d.mode == "stay" then
+        P.animTick(rec, false)
+        P.idleTick(rec, d)
         if dd > far * P.STAY_LEASH then
             d.mode = "follow"
             log("%s: %s was left too far away (%.0f tiles) -- it comes back and follows", LWS.name(owner), rec.piece, dd)
@@ -286,7 +350,16 @@ function P.step(key, rec, owner)
         P.sync(owner, "teleport")
         return
     end
-    if dd <= P.FOLLOW_NEAR then return end
+    rec.stillSince = nil
+    if dd <= P.FOLLOW_NEAR then
+        P.animTick(rec, false)
+        if rec.anims and rec.anims.lwsRest then P.anim(rec, "lwsRest", false) end
+        P.idleTick(rec, d)
+        return
+    end
+    P.animTick(rec, true)
+    rec.idleAt = nil
+    setGait(rec, owner, dd)
     local t = now()
     local moved = not rec.ox or math.abs(owner:getX() - rec.ox) + math.abs(owner:getY() - rec.oy) > 1.5
     if t - (rec.pathAt or 0) >= P.REPATH_MS or (moved and t - (rec.pathAt or 0) >= 800) then
@@ -345,6 +418,7 @@ function P.handle(player, command, args)
         d.hourAt = hour()
         log("%s fed %s with %s: %.0f%% -> %.0f%%", LWS.name(player), rec.piece, t, before * 100, d.hunger * 100)
         P.sound(rec.animal, "LWSPetEat")
+        P.anim(rec, "lwsEat", true, 4000)
         LWS.toClient(player, "Msg", { key = "IGUI_LWS_Msg_PetFed", arg = LWS.pieceName(rec.piece), text = true })
         P.sendState(player)
     elseif command == "PetMode" or command == "PetCome" or command == "PetSpeak" then
@@ -361,6 +435,7 @@ function P.handle(player, command, args)
         if command == "PetMode" then
             d.mode = args.mode == "stay" and "stay" or "follow"
             if d.mode == "stay" then
+                rec.stillSince = now()
                 pcall(function() rec.animal:stopAllMovementNow() end)
                 pcall(function() local b = rec.animal:getBehavior(); if b then b:setBlockMovement(true) end end)
             else

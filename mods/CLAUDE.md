@@ -108,7 +108,12 @@
   owner, health kept full, never attacks. Every `lwspet_` animal that is not
   an out pet is deleted (`P.sweep`) -- saved chunks bring copies back.
   Deletes are repeated to clients with `PetGone` (the engine's notice is
-  unreliable). Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  unreliable). Animations (0.5.1): Companion Dogs' nodes as NEW files
+  `AnimSets/raccoon/<state>/lws*.xml` -- never replace a vanilla raccoon
+  file -- each gated on a variable only our pets have (`lwsPet`,
+  `lwsNetGait`, `lwsIdle2`...). Animation variables do not travel: the
+  server sends `PetAnim`, and an MP client drives its own copies' walk
+  (`C.petGaitTick`, from how fast they move). Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks

@@ -3,5 +3,5 @@ id=HARMONIE_LifeWithStyle
 description=A wardrobe for the server's fashion. Fashion pieces never spawn in the world: admins give them. They belong to the player's account, not the character -- they never drop, can not be stolen, and stay after death. Wear them in 18 fashion slots of their own (hat, mask, glasses, ears, neck, top, outerwear, full outfit, bottoms, gloves, shoes, wrists, rings, waist, back, make-up, tail, special); while a piece is worn, the real clothes of that slot are hidden (they still protect and keep you warm), or shown under it if you like. Players can trade pieces with each other (both agree, the server swaps them; sandbox: on/off, distance). Pets: a dog in the wardrobe's Pet box comes out and follows its owner -- Follow, Stay, Come here, Speak, Feed; it never attacks and nothing hurts it (sandbox: pets, orders, feeding, hunger on/off). The dogs' models, textures and voices are from Companion Dogs, used with its author's permission (CREDITS_PETS.txt). Only Life With Style's own pieces ever go in the wardrobe -- never items of other mods. White wardrobe window with a collection, trading, an admin page and a guide. English and Thai.
 poster=poster.png
 icon=icon.png
-modversion=0.5.0
+modversion=0.5.1
 versionMin=42.0.0

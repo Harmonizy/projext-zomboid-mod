@@ -121,6 +121,27 @@ function LWS.petFoodValue(item)
     return math.min(1, 0.15 + (-hc) * 2)
 end
 
+-- ------------------------------------------------------------- pet animation
+-- Companion Dogs' animation nodes, renamed (AnimSets/raccoon/*/lws*.xml, made by
+-- tools/import_pets.py). Each needs a variable only our pets have. Their
+-- measured gait scales: the walk clip at 0.939 matches the body's speed (the
+-- vanilla 1.20 slid the feet), the run clip at 1.0.
+LWS.PET_WALK_SCALE, LWS.PET_RUN_SCALE = 0.939, 1.0
+LWS.PET_WALK_SPEED, LWS.PET_RUN_SPEED = 6.03, 3.82   -- animalSpeed while walking / running
+LWS.PET_IDLE_VARS = { "lwsIdle2", "lwsIdle3", "lwsSniff" }
+function LWS.isPetAnimal(animal)
+    local ok, t = pcall(function() return animal:getAnimalType() end)
+    return ok and t ~= nil and tostring(t):sub(1, 7) == "lwspet_"
+end
+-- the variables every copy of a pet needs (server, single player and each client)
+function LWS.petBaseVars(animal)
+    pcall(function()
+        animal:setVariable("lwsPet", true)
+        animal:setVariable("lwsWalkScale", LWS.PET_WALK_SCALE)
+        animal:setVariable("lwsRunScale", LWS.PET_RUN_SCALE)
+    end)
+end
+
 -- ------------------------------------------------------------- owner
 -- One key per owner. Now: the account name in multiplayer, the save itself
 -- in single player (a new character in the same save gets the wardrobe

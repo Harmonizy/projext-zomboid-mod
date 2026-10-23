@@ -11,6 +11,10 @@ Taken (renamed LWSPet_*, nothing else of it is included):
                                           vanilla raccoon skeleton)
   textures/Body/LWSPet_<Breed>.png     <- its body textures
   textures/Item_LWSPet_<Breed>.png     <- its CDPortrait_*.png, made smaller
+  AnimSets/raccoon/*/lws*.xml          <- its animation nodes (walk, run, idle
+                                          variations, lying down, sniffing,
+                                          eating), renamed; its attack nodes
+                                          are not used
   sound/LWSPet_*.ogg                   <- its dog voices. Companion Dogs credits
                                           them as CC0: BigSoundBank.com (Joseph
                                           Sardin) for the barks, whines and
