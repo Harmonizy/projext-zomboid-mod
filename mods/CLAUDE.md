@@ -116,7 +116,14 @@
   (`C.petGaitTick`, from how fast they move). Cats (0.6.0): one type
   `lwspet_cat`, a coat = a breed; `kind` picks the voice (`LWS.PET_VOICE`)
   and the cat-only sit / groom nodes (those clips exist only in the cat
-  model -- a node for a missing clip fails silently). Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  model -- a node for a missing clip fails silently). Right-click (0.6.1,
+  `client/.../LWS_PetMenu.lua`): vanilla's animal menu, pick-up, animal info
+  (ISAnimalUI throws: no avatar definition for our types) and the interact
+  key are wrapped OFF for `lwspet_` animals only; our menu instead. Petting
+  is our timed action with the raccoon pose (`animal = "raccoonboar"`,
+  `petanimal`) -- vanilla picks the pose by type and strokes the air. No
+  `complete()` on a client-only timed action (MP net-action sync). A pet
+  item in an inventory is deleted by the server sweep. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks
