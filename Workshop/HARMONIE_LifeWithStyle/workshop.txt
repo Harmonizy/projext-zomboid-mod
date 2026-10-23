@@ -15,4 +15,4 @@ description=White wardrobe window: dress up, collection, trade, admin page, guid
 description=
 description=Mod ID: HARMONIE_LifeWithStyle
 tags=Build 42;Clothing/Armor;Interface;Multiplayer
-visibility=unlisted
+visibility=public
