@@ -70,6 +70,12 @@
   (`EFK_Gun_Shot_Profiles.lua`; aliases at its end). `MountOn` names are
   matched exactly (`MG338_cat` is not `mg338_cat`). AmmoCheck logs guns with
   no shot sound and magazines that are not items (MIL 0.7.5).
+- A second mod that defines the same item types and loads LATER wins: the
+  owner's MP server also ran the original `ModernFirearmsSystem`, which put its
+  efk: ammo types back on our guns (Requiem crashed again, 2026-10-24). MIL
+  0.7.7 warns when it is on and puts our vanilla ammo types back with
+  `DoParam` (`shared/HARMONIE_MIL_AmmoTypes.lua`, generated from our scripts).
+  Check the mod list in the console (`loading <id>` lines) first.
 - Calling a method a Java object does not have (`scriptItem:getSwingSound()`)
   logs "Object tried to call nil" with a stack trace even inside pcall (MIL
   0.7.5 AmmoCheck: 142 per load). Test `obj.method` first.
@@ -86,6 +92,7 @@
 - Register every right-click handler of ours through it:
   `Events.OnFill...ContextMenu.Add((HARMONIE_Ours or function(f) return f end)(handler, "TAG"))`
   -- its options get the H icon and stay together (tag `"debug"` = last).
+- `Hub.CARDS[i].accent`: each card in its mod's window colour (Hub 3).
 - Admin / -debug only things go in the HARMONIE debug right-click
   (`Hub.onDebugMenu`); a new window of ours gets a card in `Hub.CARDS`
   (with `need` when it needs a target first), a new sandbox page a line in
