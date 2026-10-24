@@ -912,5 +912,6 @@
     "IGUI_HUB_Set_Mute_Tip": "No clicks or sounds from this window.",
     "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options.",
     "IGUI_GTPG_Set_Title": "Settings - From Garden to Plate",
-    "IGUI_GTPG_SetKey": "Key that opens the guide"
+    "IGUI_GTPG_SetKey": "Key that opens the guide",
+    "IGUI_GTPC_Failed_stuck": "It got stuck while putting the ingredients in (an action was stopped). What went in is still in the dish."
 }

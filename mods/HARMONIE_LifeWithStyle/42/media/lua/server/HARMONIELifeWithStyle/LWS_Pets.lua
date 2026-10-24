@@ -567,8 +567,7 @@ end
 
 -- ------------------------------------------------------------- the loops
 local function isPetType(animal)
-    local ok, t = pcall(function() return animal:getAnimalType() end)
-    return ok and t and tostring(t):sub(1, 7) == "lwspet_"
+    return LWS.isPetAnimal(animal)
 end
 
 -- every lwspet_ animal that is not an out pet goes (a saved copy, a lost one)
@@ -674,7 +673,8 @@ if Events and not P.registered then
     -- a hit on a pet (a shot, a swing): health back at once, logged
     if Events.OnWeaponHitCharacter then
         Events.OnWeaponHitCharacter.Add(function(attacker, target, weapon, damage)
-            if not (target and LWS.isPetAnimal(target)) then return end
+            -- fires for every hit (zombies, players): animals only (0.7.6)
+            if not LWS.isPetAnimal(target) then return end
             pcall(function() target:setHealth(1) end)
             LWS.petProtect(target)
             LWS.petCalm(target)

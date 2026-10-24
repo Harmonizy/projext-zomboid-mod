@@ -26,6 +26,14 @@ local K = HARMONIE_GTP.Cook
 local log = K.log
 
 F.MAX_WAITS = 25
+-- Owner, 2026-10-24: stuck "putting the food in", and Cancel did not work.
+-- Vanilla's ISTimedActionQueue clears the whole queue when one action turns
+-- invalid (an ISAddItemInRecipe or a transfer the server refused): our wait
+-- action behind it went too, so F.addNext was never called again. A watchdog
+-- carries on when nothing happened for STALL_MS and the character is idle.
+F.STALL_MS = 8000
+F.MAX_STALLS = 3
+local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 
 local function call(o, m, ...) return K.call(o, m, ...) end
 local function inv(player) return call(player, "getInventory") end
@@ -53,6 +61,10 @@ function F.cancel(why)
     log("cooking %s cancelled at %s (%s)", r.dish.id, tostring(r.phase), tostring(why or "button"))
     if HARMONIE_GTP.CookGames and HARMONIE_GTP.CookGames.close then HARMONIE_GTP.CookGames.close() end
     if r.action then pcall(function() r.action:forceStop() end) end
+    if r.phase == "adding" and ISTimedActionQueue and ISTimedActionQueue.clear then
+        pcall(ISTimedActionQueue.clear, r.player)
+        log("cooking %s: %d of %d ingredients were already in (they stay in the dish)", r.dish.id, r.addIdx or 0, #(r.adds or {}))
+    end
     F.run = nil
 end
 
@@ -182,6 +194,8 @@ function F.startAdding()
     r.adds = plan.adds
     r.addIdx = 0
     r.waits = 0
+    r.stalls = 0
+    r.progressAt = nowMs()
     local base = plan.base
     r.baseId = call(base, "getID")
     r.partial = plan.fam and plan.fam.partial == true
@@ -233,6 +247,7 @@ end
 
 function F.addNext(character, r)
     if F.run ~= r or r.phase ~= "adding" then return end
+    r.progressAt = nowMs()
     if r.addIdx >= #r.adds then return F.finish(r) end
     local base = F.currentBase(r)
     if not base or (r.addIdx > 0 and not r.partial and K.typeOf(base) ~= r.resultType) then
@@ -272,6 +287,35 @@ function F.addNext(character, r)
     log("%s: addition %d/%d -- %s into %s", r.dish.id, r.addIdx, #r.adds, K.typeOf(item), K.typeOf(base))
     ISTimedActionQueue.add(ISAddItemInRecipe:new(character, r.recipe, base, item))
     ISTimedActionQueue.add(HARMONIE_GTP_CookWaitAction:new(character, 3, F.addNext, r))
+end
+
+-- the watchdog (OnTick): the queue was cleared under us -> carry on
+function F.watch()
+    local r = F.run
+    if not r or r.phase ~= "adding" then return end
+    local t = nowMs()
+    if t - (r.progressAt or t) < F.STALL_MS then return end
+    local busy = false
+    pcall(function() busy = ISTimedActionQueue.isPlayerDoingAction(r.player) end)
+    if busy then r.progressAt = t; return end
+    r.stalls = (r.stalls or 0) + 1
+    if r.stalls > F.MAX_STALLS then
+        r.phase = "failed"; r.failReason = "stuck"
+        if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(r.player, "Failed") end
+        log("%s: adding stalled %d times (addition %d of %d) -- stopped", r.dish.id, r.stalls - 1, r.addIdx or 0, #(r.adds or {}))
+        return
+    end
+    log("%s: adding stalled at addition %d of %d (the action queue was cleared) -- carrying on (%d/%d)",
+        r.dish.id, r.addIdx or 0, #(r.adds or {}), r.stalls, F.MAX_STALLS)
+    r.progressAt = t
+    F.addNext(r.player, r)
+end
+if Events and Events.OnTick and not F.watchAdded then
+    F.watchAdded = true
+    Events.OnTick.Add(function()
+        local ok, err = pcall(F.watch)
+        if not ok and not F.watchErr then F.watchErr = true; log("cooking watchdog FAILED: %s", tostring(err)) end
+    end)
 end
 
 function F.finish(r)
