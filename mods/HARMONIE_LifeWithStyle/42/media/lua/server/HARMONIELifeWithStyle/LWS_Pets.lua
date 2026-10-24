@@ -155,8 +155,6 @@ function P.spawn(player, want, why)
     end
     pcall(function() a:setWild(false) end)
     pcall(function() a:addToWorld() end)
-    pcall(function() a:setIsInvincible(true) end)
-    pcall(function() a:setInvulnerable(true) end)
     pcall(function() a:setCustomName(LWS.pieceName(want.piece)) end)
     LWS.petBaseVars(a)
     pcall(function()
@@ -371,8 +369,12 @@ end
 
 function P.step(key, rec, owner)
     local animal = rec.animal
-    -- nothing hurts it (zombies, players, falls): health stays full
+    -- nothing hurts it (zombies, players, falls, shots): health stays full,
+    -- and a gunshot or a zombie does not scare it off (owner, 2026-10-24)
     pcall(function() if animal:getHealth() < 1 then animal:setHealth(1) end end)
+    LWS.petCalm(animal)
+    rec.protectAt = rec.protectAt or 0
+    if now() - rec.protectAt > 2000 then rec.protectAt = now(); LWS.petProtect(animal) end
     local o = LWS.Server.owner(key, false)
     if not o then return end
     local d = P.hungerTick(owner, rec, o)
@@ -382,6 +384,15 @@ function P.step(key, rec, owner)
     if d.mode == "stay" then
         P.animTick(rec, false)
         P.idleTick(rec, d)
+        -- it ran from where it was told to stay (a shot, a zombie): stop it there
+        if not rec.stayX then rec.stayX, rec.stayY = animal:getX(), animal:getY() end
+        local sx, sy = animal:getX() - rec.stayX, animal:getY() - rec.stayY
+        if sx * sx + sy * sy > 4 then
+            LWS.logOnce("petfled:" .. key .. ":" .. tostring(rec.stayX), "Pets", "%s: %s moved off its stay spot -- stopped there", LWS.name(owner), rec.piece)
+            pcall(function() animal:stopAllMovementNow() end)
+            pcall(function() local b = animal:getBehavior(); if b then b:setBlockMovement(true) end end)
+            rec.stayX, rec.stayY = animal:getX(), animal:getY()
+        end
         if dd > far * P.STAY_LEASH then
             d.mode = "follow"
             log("%s: %s was left too far away (%.0f tiles) -- it comes back and follows", LWS.name(owner), rec.piece, dd)
@@ -401,6 +412,29 @@ function P.step(key, rec, owner)
         return
     end
     rec.stillSince = nil
+    rec.stayX, rec.stayY = nil, nil
+    -- running AWAY from the owner while following (it was scared): every
+    -- 0.5 s, if the pet itself moved over half a tile in a direction away
+    -- from its owner, path back at once
+    local t0 = now()
+    if not rec.fx or t0 - (rec.fAt or 0) >= 500 then
+        if rec.fx then
+            local mx, my = animal:getX() - rec.fx, animal:getY() - rec.fy
+            local ox, oy = owner:getX() - animal:getX(), owner:getY() - animal:getY()
+            local away = mx * mx + my * my > 0.25 and (mx * ox + my * oy) < 0
+            if away and dd > P.FOLLOW_NEAR then
+                if not rec.fleeing then
+                    rec.fleeing = true
+                    log("%s: %s ran away from its owner (%.1f tiles) -- called back", LWS.name(owner), rec.piece, dd)
+                end
+                LWS.petCalm(animal)
+                rec.pathAt = 0
+            else
+                rec.fleeing = nil
+            end
+        end
+        rec.fx, rec.fy, rec.fAt = animal:getX(), animal:getY(), t0
+    end
     -- being petted: it stays where it is a moment
     if rec.holdUntil and now() < rec.holdUntil then return end
     if dd <= P.FOLLOW_NEAR then
@@ -637,6 +671,17 @@ if Events and not P.registered then
     P.registered = true
     if Events.OnTick then Events.OnTick.Add(P.onTick) end
     if Events.OnPlayerDeath then Events.OnPlayerDeath.Add(onDeath) end
+    -- a hit on a pet (a shot, a swing): health back at once, logged
+    if Events.OnWeaponHitCharacter then
+        Events.OnWeaponHitCharacter.Add(function(attacker, target, weapon, damage)
+            if not (target and LWS.isPetAnimal(target)) then return end
+            pcall(function() target:setHealth(1) end)
+            LWS.petProtect(target)
+            LWS.petCalm(target)
+            LWS.logOnce("pethit:" .. LWS.name(attacker) .. ":" .. tostring(math.floor((getTimestampMs and getTimestampMs() or 0) / 60000)),
+                "Pets", "a pet was hit by %s (%s) -- no harm done", LWS.name(attacker), tostring(damage))
+        end)
+    end
     if Events.OnGameStart then
         Events.OnGameStart.Add(function()
             log("pets: %s, commands %s, feeding %s, hunger %s (%s h), sounds %s, bring-back distance %s",

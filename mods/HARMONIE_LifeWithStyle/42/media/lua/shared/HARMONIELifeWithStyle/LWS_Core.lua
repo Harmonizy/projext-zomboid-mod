@@ -162,6 +162,54 @@ function LWS.petBaseVars(animal)
         animal:setVariable("lwsWalkScale", LWS.PET_WALK_SCALE)
         animal:setVariable("lwsRunScale", LWS.PET_RUN_SCALE)
     end)
+    LWS.petProtect(animal)
+end
+
+-- Owner, 2026-10-24: pets ran off when someone fired a gun, and could be shot.
+-- Every copy of a pet (the server's AND each client's -- in multiplayer the
+-- shooter's own game decides a hit) is made unhurtable, and its fear is reset
+-- (LWS_Pets.lua calls LWS.petCalm every tick). The B42 animal API is not
+-- documented: only methods the animal really has are called (a missing one
+-- logs "Object tried to call nil" even inside pcall), and which ones exist is
+-- written to console.txt once.
+LWS.PET_PROTECT = { "setIsInvincible", "setInvulnerable", "setGodMod", "setAvoidDamage", "setNoDamage" }
+LWS.PET_CALM = { { "setStress", 0 }, { "setStressLevel", 0 }, { "setFear", 0 },
+                 { "setAlerted", false }, { "setIsAlerted", false }, { "setPanic", false } }
+LWS.PET_CALM_BEHAVIOR = { { "setFleeing", false }, { "setIsFleeing", false }, { "setPanic", false } }
+local apiLogged = false
+local function logApi(animal)
+    if apiLogged then return end
+    apiLogged = true
+    local have = {}
+    for _, m in ipairs(LWS.PET_PROTECT) do if animal[m] then have[#have + 1] = m end end
+    for _, c in ipairs(LWS.PET_CALM) do if animal[c[1]] then have[#have + 1] = c[1] end end
+    local b
+    if animal.getBehavior then pcall(function() b = animal:getBehavior() end) end
+    for _, c in ipairs(LWS.PET_CALM_BEHAVIOR) do if b and b[c[1]] then have[#have + 1] = "behavior:" .. c[1] end end
+    LWS.log("Pets", "pet protection / calm methods found on the animal: %s", #have > 0 and table.concat(have, ", ") or "NONE")
+end
+function LWS.petProtect(animal)
+    if not animal then return end
+    logApi(animal)
+    for _, m in ipairs(LWS.PET_PROTECT) do
+        local f = animal[m]
+        if f then pcall(f, animal, true) end
+    end
+end
+function LWS.petCalm(animal)
+    if not animal then return end
+    for _, c in ipairs(LWS.PET_CALM) do
+        local f = animal[c[1]]
+        if f then pcall(f, animal, c[2]) end
+    end
+    local b
+    if animal.getBehavior then pcall(function() b = animal:getBehavior() end) end
+    if b then
+        for _, c in ipairs(LWS.PET_CALM_BEHAVIOR) do
+            local f = b[c[1]]
+            if f then pcall(f, b, c[2]) end
+        end
+    end
 end
 
 -- ------------------------------------------------------------- owner

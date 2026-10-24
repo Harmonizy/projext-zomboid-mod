@@ -183,7 +183,8 @@ function C.petGaitTick()
                     C.petCopies[a] = { x = a:getX(), y = a:getY(), at = t, holdUntil = 0 }
                     LWS.logOnce("petcopy", "Client", "a pet animal is near: its walk is driven here (multiplayer)")
                 end
-                LWS.petBaseVars(a)
+                LWS.petBaseVars(a)   -- also unhurtable on this client: a shooter's own game decides the hit
+                LWS.petCalm(a)
             end
         end
         for a in pairs(C.petCopies) do if not seen[a] then C.petCopies[a] = nil end end
