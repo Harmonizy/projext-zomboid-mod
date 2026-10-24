@@ -84,6 +84,11 @@
 - Calling a method a Java object does not have (`scriptItem:getSwingSound()`)
   logs "Object tried to call nil" with a stack trace even inside pcall (MIL
   0.7.5 AmmoCheck: 142 per load). Test `obj.method` first.
+- `OnWeaponHitCharacter(attacker, target, ...)` fires for EVERY hit -- zombies
+  and players too, on the attacker's game, the nearby clients and the server.
+  LWS 0.7.5 called `target:getAnimalType()` on zombies: an exception on every
+  zombie hit for everyone near it (LWS 0.7.6). Animal checks go through
+  `LWS.isAnimal` / `LWS.isPetAnimal` (`instanceof(o, "IsoAnimal")` + method test).
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).
