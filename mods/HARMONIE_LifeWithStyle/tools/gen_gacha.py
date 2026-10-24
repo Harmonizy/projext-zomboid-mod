@@ -14,7 +14,7 @@ TEXTS (names + descriptions, EN/TH) is read by tools/texts_lws.py.
 
     python3 tools/gen_gacha.py [--icons <unzipped>/RWZ_Retention_Items]
 """
-import argparse, os, shutil
+import argparse, os, re, shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MEDIA = os.path.join(os.path.dirname(HERE), "42", "media")
@@ -157,6 +157,20 @@ for cid, en, th in CATEGORIES:
 for it in ITEMS:
     TEXTS["IGUI_LWSG_Name_" + it["id"]] = (it["en"], it["th"])
     TEXTS["IGUI_LWSG_Desc_" + it["id"]] = (it["den"], it["dth"])
+
+
+# getText goes through java.util.Formatter: a bare "%" ("+20%") throws and the
+# text shows wrong or blank (workflow.txt). Numbers in words instead (2026-10-24:
+# all 122 gacha descriptions had one).
+def _no_percent(en, th):
+    en = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"\1 percent", en)
+    th = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"\1 เปอร์เซ็นต์", th)
+    assert "%" not in en and "%" not in th, (en, th)
+    return en, th
+
+
+for _k in list(TEXTS):
+    TEXTS[_k] = _no_percent(*TEXTS[_k])
 
 
 def main(icons):

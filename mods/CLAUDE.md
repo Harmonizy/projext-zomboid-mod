@@ -164,6 +164,11 @@
   expect) in body location `lws:gacha_guardian`, worn by the server while
   Guardian / Compound-V runs. Buffs end on death. Client: XP hook, capsule
   runtime, buff tray (`client/.../LWS_GachaClient.lua`).
+- Give tab (tab id "admin", 0.7.1): `LWS.isAdmin` = -debug or the access level
+  (`LWS.hasAdminAccess`); single player without -debug is NOT an admin. A MP
+  client's own -debug shows the tab but the server trusts only the access level
+  (isDebugEnabled() on the server is the server's flag); the tab says so.
+  `fit()` cuts whole UTF-8 characters (Thai is 3 bytes).
 - Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
   shown only in frames that ask for them (`hideUnusedSearch`).
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the

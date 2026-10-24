@@ -18,8 +18,9 @@
 --   3 trade       requests and the players online; an open trade: what I
 --                 give, my collection, what they give, agree / cancel
 --                 (LWS_Trade.lua on the server does the swap)
---   4 admin       (admins only) every owner, their pieces, the catalog:
---                 click a catalog piece to give it, x on a piece to take it
+--   4 admin       "Give" (admins and -debug only, LWS.isAdmin): every owner
+--                 (Me = yourself), their pieces / gacha items, the catalog:
+--                 click a catalog entry to give it, x on one to take it
 --   5 guide       how it works
 -- Everything is drawn in render() (no child widgets). Size, text step,
 -- pin and mute are kept in Zomboid/Lua/HARMONIE_LWS_Window.txt.
@@ -117,7 +118,13 @@ local function fit(s, maxW, font)
     s = tostring(s or "")
     if maxW <= 0 then return "" end
     if tw(font, s) <= maxW then return s end
-    while #s > 1 and tw(font, s .. "...") > maxW do s = s:sub(1, -2) end
+    -- cut whole UTF-8 characters: a Thai letter is 3 bytes, and half of one
+    -- draws as garbage (2026-10-24)
+    while #s > 1 and tw(font, s .. "...") > maxW do
+        local i = #s
+        while i > 1 and s:byte(i) >= 0x80 and s:byte(i) < 0xC0 do i = i - 1 end
+        s = s:sub(1, i - 1)
+    end
     return s .. "..."
 end
 
@@ -246,7 +253,12 @@ end
 
 function Win:tabs()
     local list = { "dress", "collection", "gacha", "trade" }
-    if LWS.isAdmin(self.player) then list[#list + 1] = "admin" end
+    -- the Give tab: admins and -debug only (LWS.isAdmin)
+    if LWS.isAdmin(self.player) then
+        list[#list + 1] = "admin"
+        LWS.logOnce("giveTab", "Window", "Give tab shown (%s)",
+            (isDebugEnabled and isDebugEnabled()) and "-debug" or "admin access level")
+    end
     list[#list + 1] = "guide"
     return list
 end
@@ -1159,8 +1171,22 @@ function Win:renderAdmin(x, y, w, h)
     local lx, ly, lw, lh = self:drawCard(x, y, leftW, h, T("IGUI_LWS_Owners"))
     local mx, my = self:getMouseX(), self:getMouseY()
     local bh = lineH(sf) + 8
-    self:button("refresh", T("IGUI_LWS_Refresh"), lx, ly, lw - 10, bh, false, true)
+    -- "Me": give to yourself without looking for your name in the list
+    local myKey = LWS.ownerKey(self.player)
+    local bw = math.floor((lw - 16) / 2)
+    self:button("admin:me", T("IGUI_LWS_Me"), lx, ly, bw, bh, myKey ~= nil and self.adminOwner == myKey, myKey ~= nil)
+    self:button("refresh", T("IGUI_LWS_Refresh"), lx + bw + 6, ly, bw, bh, false, true)
     local oy = ly + bh + 6
+    -- multiplayer: the client's own -debug shows this tab, but the server gives
+    -- only for admins -- say so instead of letting clicks fail silently
+    if isClient and isClient() and not LWS.hasAdminAccess(self.player) then
+        LWS.logOnce("giveDebugOnly", "Window", "Give tab shown by -debug only: the server will refuse (not an admin)")
+        for _, line in ipairs(wrap(T("IGUI_LWS_DebugOnlyMP"), lw - 10, sf)) do
+            text(self, line, lx, oy, c.bad or c.accent, 1, sf)
+            oy = oy + lineH(sf)
+        end
+        oy = oy + 4
+    end
     self.clip = { x = lx, y = oy, w = lw, h = ly + lh - oy }
     self:scrolled("owners", lx, oy, lw, ly + lh - oy, function(top)
         local yy = top
@@ -1381,6 +1407,14 @@ function Win:onButton(id)
         C.tradeCancel()
     elseif id == "refresh" then
         C.send("AdminList", { owner = self.adminOwner })
+    elseif id == "admin:me" then
+        local me = LWS.ownerKey(self.player)
+        if me then
+            self.adminOwner = me
+            log("admin: give to myself (%s)", tostring(me))
+            C.send("AdminList", { owner = me })
+            if self.adminCat == "gacha" then C.send("AdminGachaView", { owner = me }) end
+        end
     elseif id == "pet:follow" then C.petMode("follow")
     elseif id == "pet:stay" then C.petMode("stay")
     elseif id == "pet:come" then C.petCome()
