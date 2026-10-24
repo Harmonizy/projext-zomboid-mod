@@ -157,7 +157,12 @@
   is our timed action with the raccoon pose (`animal = "raccoonboar"`,
   `petanimal`) -- vanilla picks the pose by type and strokes the air. No
   `complete()` on a client-only timed action (MP net-action sync). A pet
-  item in an inventory is deleted by the server sweep. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  item in an inventory is deleted by the server sweep. Not scared, not hurt
+  (0.7.5): `LWS.petProtect` (invincible on EVERY copy -- in MP the shooter's
+  own game decides a hit) and `LWS.petCalm` (stress / fear reset each tick)
+  call only methods the animal has and log which exist; running away from
+  the owner re-paths at once, a stay pet that drifts is stopped, and
+  OnWeaponHitCharacter on a pet puts its health back. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
