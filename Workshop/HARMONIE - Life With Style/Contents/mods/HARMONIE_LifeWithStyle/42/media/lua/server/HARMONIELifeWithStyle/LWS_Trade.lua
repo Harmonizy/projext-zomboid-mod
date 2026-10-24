@@ -19,8 +19,14 @@
     Sandbox (page HARMONIE_LifeWithStyle): LifeWithStyle.TradeEnabled,
     LifeWithStyle.TradeMaxDistance (tiles, 0 = anywhere on the server).
 
+    Gacha items (0.7.3, owner: "ไอเท็มกาชาให้เป็นไอเท็ม แต่เงื่อนไขเดียวกับแฟชั่น"):
+    counts, offered one at a time (TradeOfferGacha { id, add }); at the swap
+    the server checks each giver still has that many, moves the counts, and a
+    New Dawn piece given away completely is taken off (gachaSet).
+
     Commands: TradeAsk { to = username }, TradeAnswer { from, yes },
-              TradeOffer { uid, add }, TradeLock { on, rev }, TradeCancel
+              TradeOffer { uid, add }, TradeOfferGacha { id, add },
+              TradeLock { on, rev }, TradeCancel
     Replies:  TradeAsked { from, name }, TradeState { ... }, TradeEnd { reason }, Msg
 ]]--
 
@@ -84,13 +90,29 @@ local function pieceList(owner, set)
     return out
 end
 
+local function gachaList(set)
+    local out = {}
+    for id, n in pairs(set or {}) do
+        if LWS.GACHA_ITEM and LWS.GACHA_ITEM[id] and (tonumber(n) or 0) > 0 then out[#out + 1] = { g = id, n = n } end
+    end
+    table.sort(out, function(a, b) return a.g < b.g end)
+    return out
+end
+
+local function gachaHave(owner, id)
+    return tonumber(owner and owner.gacha and owner.gacha[id]) or 0
+end
+
 function TR.viewFor(s, key)
     local other = s.a == key and s.b or s.a
+    s.goffer = s.goffer or { [s.a] = {}, [s.b] = {} }
     return {
         id = s.id, rev = s.rev,
         partner = s.names[other] or other,
         mine = pieceList(S.owner(key, false), s.offer[key]),
         theirs = pieceList(S.owner(other, false), s.offer[other]),
+        gmine = gachaList(s.goffer[key]),
+        gtheirs = gachaList(s.goffer[other]),
         myLock = s.lock[key] == true, theirLock = s.lock[other] == true,
     }
 end
@@ -116,6 +138,19 @@ end
 -- ------------------------------------------------------------- the swap
 local function swap(s)
     local oa, ob = S.owner(s.a, true), S.owner(s.b, true)
+    s.goffer = s.goffer or { [s.a] = {}, [s.b] = {} }
+    -- check again: every offered gacha item is still there, as many as offered
+    for _, side in ipairs({ { s.a, oa }, { s.b, ob } }) do
+        for id, n in pairs(s.goffer[side[1]] or {}) do
+            if gachaHave(side[2], id) < n then
+                log("trade #%d: %s has only %d of %s (offered %d) -- not swapped, both unlocked", s.id, tostring(side[1]), gachaHave(side[2], id), tostring(id), n)
+                s.goffer[side[1]][id] = nil
+                s.lock = {}
+                s.rev = s.rev + 1
+                return false
+            end
+        end
+    end
     -- check again: every offered piece is still in its giver's wardrobe
     for _, side in ipairs({ { s.a, oa }, { s.b, ob } }) do
         for uid in pairs(s.offer[side[1]]) do
@@ -142,14 +177,31 @@ local function swap(s)
             log("trade #%d: %s (%s #%s) -> %s #%s", s.id, tostring(e.p), tostring(s.names[fromKey]), tostring(uid), tostring(s.names[toKey]), newUid)
         end
     end
+    local gmoved = 0
+    local function giveGacha(fromKey, from, toKey, to)
+        from.gacha = from.gacha or {}; to.gacha = to.gacha or {}
+        for id, n in pairs(s.goffer[fromKey] or {}) do
+            from.gacha[id] = gachaHave(from, id) - n
+            if from.gacha[id] <= 0 then
+                from.gacha[id] = nil
+                if from.gachaSet then from.gachaSet[id] = nil end
+            end
+            to.gacha[id] = gachaHave(to, id) + n
+            gmoved = gmoved + n
+            log("trade #%d: %d x %s %s -> %s", s.id, n, tostring(id), tostring(s.names[fromKey]), tostring(s.names[toKey]))
+        end
+    end
     give(s.a, oa, s.b, ob)
     give(s.b, ob, s.a, oa)
-    log("trade #%d DONE: %d pieces moved", s.id, moved)
+    giveGacha(s.a, oa, s.b, ob)
+    giveGacha(s.b, ob, s.a, oa)
+    log("trade #%d DONE: %d pieces and %d gacha items moved", s.id, moved, gmoved)
     for _, key in ipairs({ s.a, s.b }) do
         local p = onlineByKey(key)
         if p then
             S.sendState(p, S.owner(key, false))
             S.ensure(p, "trade")
+            if LWS.Gacha and LWS.Gacha.sendState then LWS.Gacha.sendState(p) end
             msg(p, "IGUI_LWS_Msg_TradeDone")
         end
     end
@@ -191,7 +243,7 @@ function TR.handle(player, command, args)
         end
         if TR.byKey[key] or TR.byKey[akey] then msg(player, "IGUI_LWS_Msg_TradeBusy"); return end
         if not close(player, asker) then msg(player, "IGUI_LWS_Msg_TradeFar"); return end
-        local s = { id = TR.nextId, a = akey, b = key, rev = 1, offer = { [akey] = {}, [key] = {} }, lock = {},
+        local s = { id = TR.nextId, a = akey, b = key, rev = 1, offer = { [akey] = {}, [key] = {} }, goffer = { [akey] = {}, [key] = {} }, lock = {},
                     names = { [akey] = LWS.name(asker), [key] = me }, touched = now() }
         TR.nextId = TR.nextId + 1
         TR.sessions[s.id] = s
@@ -213,6 +265,25 @@ function TR.handle(player, command, args)
                 s.offer[key][uid] = true
             else
                 s.offer[key][uid] = nil
+            end
+            s.lock = {}
+            s.rev = s.rev + 1
+            TR.push(s)
+        elseif command == "TradeOfferGacha" then
+            local o = S.owner(key, true)
+            local id = tostring(args.id or "")
+            s.goffer = s.goffer or { [s.a] = {}, [s.b] = {} }
+            local mine = s.goffer[key]
+            if not (LWS.GACHA_ITEM and LWS.GACHA_ITEM[id]) then log("REJECTED TradeOfferGacha %s: %s is not a gacha item", me, id); return end
+            local cur = tonumber(mine[id]) or 0
+            if args.add == true then
+                if cur + 1 > gachaHave(o, id) then log("REJECTED TradeOfferGacha %s: has only %d of %s", me, gachaHave(o, id), id); TR.push(s); return end
+                local kinds = 0
+                for _ in pairs(mine) do kinds = kinds + 1 end
+                if cur == 0 and kinds >= TR.MAX_OFFER then msg(player, "IGUI_LWS_Msg_TradeFull"); return end
+                mine[id] = cur + 1
+            else
+                mine[id] = cur > 1 and (cur - 1) or nil
             end
             s.lock = {}
             s.rev = s.rev + 1

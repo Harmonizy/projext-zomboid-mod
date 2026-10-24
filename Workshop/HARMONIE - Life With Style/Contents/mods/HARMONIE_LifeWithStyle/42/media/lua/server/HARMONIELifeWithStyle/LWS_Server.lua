@@ -126,6 +126,11 @@ function S.ensure(player, why)
                 removed = removed + 1
                 log("%s: removed %s (%s)", LWS.name(player), t, mine ~= key and "not theirs" or "not worn in the wardrobe")
             end
+        elseif LWS.isGachaItem(item) then
+            -- a gacha item lives in the wardrobe record only (debug spawn, old save)
+            removeItem(player, inv, item)
+            removed = removed + 1
+            log("%s: removed %s (gacha items are not inventory items)", LWS.name(player), LWS.typeOf(item))
         end
     end
     -- an item of another mod worn in one of OUR slots (its script says
@@ -349,7 +354,7 @@ local function onDeath(player)
         local list, n = {}, 0
         for i = 0, items:size() - 1 do list[#list + 1] = items:get(i) end
         for _, item in ipairs(list) do
-            if LWS.isFashion(item) then removeItem(player, inv, item); n = n + 1 end
+            if LWS.isFashion(item) or LWS.isGachaItem(item) then removeItem(player, inv, item); n = n + 1 end
         end
         if n > 0 then log("%s died: %d worn fashion items removed (the wardrobe keeps them)", LWS.name(player), n) end
     end)

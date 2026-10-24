@@ -155,7 +155,11 @@
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
   descriptions -> `LWS_GachaData.lua`; texts_lws.py imports its TEXTS).
-  NOT items: counts in the wardrobe record (`o.gacha`, `o.gachaSet` for the
+  Item TYPES since 0.7.3 (`scripts/HARMONIE_LWS_gacha_items.txt`, module
+  HARMONIE_LWSG, generated; names in ItemName.json via gen_lws.py) but never
+  in an inventory: the sweep deletes any `LWS.isGachaItem`. Traded in the Trade
+  tab as counts (`TradeOfferGacha`, `s.goffer`, re-checked at the swap).
+  Otherwise counts in the wardrobe record (`o.gacha`, `o.gachaSet` for the
   New Dawn pieces equipped, `o.gachaBuffs` in real-time ms), used from the
   "gacha" tab (`server/.../LWS_Gacha.lua`). Effects / numbers / the locked XP
   formula are RWZ's -- change them only when the owner asks. The one real
@@ -169,6 +173,9 @@
   client's own -debug shows the tab but the server trusts only the access level
   (isDebugEnabled() on the server is the server's flag); the tab says so.
   `fit()` cuts whole UTF-8 characters (Thai is 3 bytes).
+- Icons of things that are not items (gacha): `getTexture("Item_X")` finds a
+  bare name only when an item script uses it; fall back to
+  `media/textures/Item_X.png` (the window's `texture()` does, 0.7.2).
 - Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
   shown only in frames that ask for them (`hideUnusedSearch`).
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the

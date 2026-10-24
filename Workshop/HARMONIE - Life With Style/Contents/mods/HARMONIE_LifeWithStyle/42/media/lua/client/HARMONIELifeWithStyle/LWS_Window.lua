@@ -85,9 +85,17 @@ H.C = {
 
 local UI_DIR = "media/textures/HARMONIE_LWS/"
 local tex = {}
+-- A bare name ("Item_LWSG_DamageCapsule") is found by getTexture only when an
+-- item script uses it as its icon; the gacha items are not items, so their
+-- icons drew nothing (owner, 2026-10-24). Bare names fall back to the file.
 local function texture(path)
     if not path then return nil end
-    if tex[path] == nil then tex[path] = getTexture(path) or false end
+    if tex[path] == nil then
+        local t = getTexture(path)
+        if not t and not path:find("/", 1, true) then t = getTexture("media/textures/" .. path .. ".png") end
+        tex[path] = t or false
+        if not t then LWS.log("Window", "texture not found: %s", tostring(path)) end
+    end
     return tex[path] or nil
 end
 local function pieceIcon(pieceId)
@@ -1127,34 +1135,75 @@ function Win:renderTrade(x, y, w, h)
     local bhh = y + h - by
     local half = math.floor((w - 8) / 2)
     local giveH = math.floor((bhh - 8) * 0.45)
+    -- a tile for a piece ({ uid, p }) or a gacha item ({ g = id, n = count })
+    local function tradeTile(e, extra)
+        local o = {}
+        if e.g then
+            local g = LWS.GACHA_ITEM and LWS.GACHA_ITEM[e.g]
+            o.icon = g and g.icon
+            o.name = T("IGUI_LWSG_Name_" .. e.g)
+            o.badge = "x" .. tostring(e.n or 1)
+            o.tipText = o.name .. "\n" .. T("IGUI_LWSG_Desc_" .. e.g)
+        end
+        for k, v in pairs(extra) do o[k] = v end
+        return o
+    end
+    local function both(pieces, gacha)
+        local out = {}
+        for _, e in ipairs(pieces or {}) do out[#out + 1] = e end
+        for _, e in ipairs(gacha or {}) do out[#out + 1] = e end
+        return out
+    end
     -- what I give
-    local gx, gy, gw, gh = self:drawCard(x, by, half, giveH, T("IGUI_LWS_TradeIGive", tostring(#(tr.mine or {}))))
-    local offered = {}
+    local mine = both(tr.mine, tr.gmine)
+    local gx, gy, gw, gh = self:drawCard(x, by, half, giveH, T("IGUI_LWS_TradeIGive", tostring(#mine)))
+    local offered, gOffered = {}, {}
     for _, e in ipairs(tr.mine or {}) do offered[e.uid] = true end
-    if #(tr.mine or {}) == 0 then
+    for _, e in ipairs(tr.gmine or {}) do gOffered[e.g] = tonumber(e.n) or 0 end
+    if #mine == 0 then
         text(self, T("IGUI_LWS_TradeGiveHint"), gx + 4, gy + 6, c.textDim, 1, sf)
     else
-        self:grid("tradeMine", gx, gy, gw, gh, tr.mine, function() return { worn = true, label = T("IGUI_LWS_TradeOffered"), labelCol = c.accent, tip = T("IGUI_LWS_ClickTakeBack") } end)
+        self:grid("tradeMine", gx, gy, gw, gh, mine, function(e)
+            return tradeTile(e, { worn = true, label = T("IGUI_LWS_TradeOffered"), labelCol = c.accent, tip = T(e.g and "IGUI_LWS_ClickTakeBackOne" or "IGUI_LWS_ClickTakeBack") })
+        end)
     end
-    -- my collection
-    local have = {}
-    for _, e in ipairs(C.state.items or {}) do if not offered[e.uid] then have[#have + 1] = e end end
+    -- my collection: fashion pieces or gacha items (counts left after the offer)
+    local gachaMode = self.tradeCat == "gacha"
     local hx, hy, hw, hh2 = self:drawCard(x, by + giveH + 8, half, bhh - giveH - 8, T("IGUI_LWS_TradeMyPieces"))
+    local sbh = lineH(sf) + 8
+    self:button("tradeCat:fashion", T("IGUI_LWS_AdminFashion"), hx, hy, 120, sbh, not gachaMode, true)
+    self:button("tradeCat:gacha", T("IGUI_LWS_AdminGacha"), hx + 126, hy, 120, sbh, gachaMode, true)
+    hy, hh2 = hy + sbh + 6, hh2 - sbh - 6
+    local have = {}
+    if gachaMode then
+        local GC = LWS.GachaClient
+        for _, gi in ipairs(LWS.GACHA_ITEMS or {}) do
+            local left = (GC and GC.count(gi.id) or 0) - (gOffered[gi.id] or 0)
+            if left > 0 then have[#have + 1] = { g = gi.id, n = left } end
+        end
+    else
+        for _, e in ipairs(C.state.items or {}) do if not offered[e.uid] then have[#have + 1] = e end end
+    end
     if #have == 0 then
-        text(self, T("IGUI_LWS_TradeNoPieces"), hx + 4, hy + 6, c.textDim, 1, sf)
+        text(self, T(gachaMode and "IGUI_LWSG_None" or "IGUI_LWS_TradeNoPieces"), hx + 4, hy + 6, c.textDim, 1, sf)
     else
         self:grid("tradeHave", hx, hy, hw, hh2, have, function(e)
+            if e.g then
+                local GC = LWS.GachaClient
+                return tradeTile(e, { label = (GC and GC.equipped(e.g)) and T("IGUI_LWS_Wearing") or T("IGUI_LWSG_Cat_" .. ((LWS.GACHA_ITEM[e.g] or {}).cat or "")), tip = T("IGUI_LWS_ClickOfferOne") })
+            end
             local slot = LWS.PIECE[e.p] and LWS.PIECE[e.p].slot
             local worn = slot and C.wornIn(slot)
             return { label = (worn and worn.uid == e.uid) and T("IGUI_LWS_Wearing") or LWS.slotName(slot), tip = T("IGUI_LWS_ClickOffer") }
         end)
     end
     -- what they give
-    local tx, ty, tw2, th2 = self:drawCard(x + half + 8, by, w - half - 8, bhh, T("IGUI_LWS_TradeTheyGive", tostring(tr.partner), tostring(#(tr.theirs or {}))))
-    if #(tr.theirs or {}) == 0 then
+    local theirs = both(tr.theirs, tr.gtheirs)
+    local tx, ty, tw2, th2 = self:drawCard(x + half + 8, by, w - half - 8, bhh, T("IGUI_LWS_TradeTheyGive", tostring(tr.partner), tostring(#theirs)))
+    if #theirs == 0 then
         text(self, T("IGUI_LWS_TradeTheyNothing"), tx + 4, ty + 6, c.textDim, 1, sf)
     else
-        self:grid("tradeTheirs", tx, ty, tw2, th2, tr.theirs, function() return { label = T("IGUI_LWS_TradeForYou"), tip = T("IGUI_LWS_TradeTheirTip") } end)
+        self:grid("tradeTheirs", tx, ty, tw2, th2, theirs, function(e) return tradeTile(e, { label = T("IGUI_LWS_TradeForYou"), tip = T("IGUI_LWS_TradeTheirTip") }) end)
     end
 end
 
@@ -1434,6 +1483,9 @@ function Win:onButton(id)
         if self.gachaSel and LWS.GachaClient then LWS.GachaClient.use(self.gachaSel) end
     elseif id == "gacha:equip" then
         if self.gachaSel and LWS.GachaClient then LWS.GachaClient.equip(self.gachaSel, not LWS.GachaClient.equipped(self.gachaSel)) end
+    elseif id == "tradeCat:fashion" or id == "tradeCat:gacha" then
+        self.tradeCat = id:sub(10)
+        self.scroll.tradeHave = 0
     elseif id == "admin:fashion" or id == "admin:gacha" then
         self.adminCat = id:sub(7)
         if self.adminCat == "gacha" and self.adminOwner then C.send("AdminGachaView", { owner = self.adminOwner }) end
@@ -1472,9 +1524,9 @@ function Win:onTile(key, r, x, y)
             C.send("AdminRevoke", { owner = self.adminOwner, uid = e.uid })
         end
     elseif key == "tradeMine" then
-        C.tradeOffer(e.uid, false)
+        if e.g then C.tradeOfferGacha(e.g, false) else C.tradeOffer(e.uid, false) end
     elseif key == "tradeHave" then
-        C.tradeOffer(e.uid, true)
+        if e.g then C.tradeOfferGacha(e.g, true) else C.tradeOffer(e.uid, true) end
     elseif key == "catalog" then
         if not self.adminOwner then C.say(T("IGUI_LWS_PickOwner")); return end
         log("admin: give %s to %s", tostring(e.p), tostring(self.adminOwner))
