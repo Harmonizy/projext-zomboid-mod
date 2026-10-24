@@ -169,6 +169,9 @@
   client's own -debug shows the tab but the server trusts only the access level
   (isDebugEnabled() on the server is the server's flag); the tab says so.
   `fit()` cuts whole UTF-8 characters (Thai is 3 bytes).
+- Icons of things that are not items (gacha): `getTexture("Item_X")` finds a
+  bare name only when an item script uses it; fall back to
+  `media/textures/Item_X.png` (the window's `texture()` does, 0.7.2).
 - Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
   shown only in frames that ask for them (`hideUnusedSearch`).
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the

@@ -85,9 +85,17 @@ H.C = {
 
 local UI_DIR = "media/textures/HARMONIE_LWS/"
 local tex = {}
+-- A bare name ("Item_LWSG_DamageCapsule") is found by getTexture only when an
+-- item script uses it as its icon; the gacha items are not items, so their
+-- icons drew nothing (owner, 2026-10-24). Bare names fall back to the file.
 local function texture(path)
     if not path then return nil end
-    if tex[path] == nil then tex[path] = getTexture(path) or false end
+    if tex[path] == nil then
+        local t = getTexture(path)
+        if not t and not path:find("/", 1, true) then t = getTexture("media/textures/" .. path .. ".png") end
+        tex[path] = t or false
+        if not t then LWS.log("Window", "texture not found: %s", tostring(path)) end
+    end
     return tex[path] or nil
 end
 local function pieceIcon(pieceId)
