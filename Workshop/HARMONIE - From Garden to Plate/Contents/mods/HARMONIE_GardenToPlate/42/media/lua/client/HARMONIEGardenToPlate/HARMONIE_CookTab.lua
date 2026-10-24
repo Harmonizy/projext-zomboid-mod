@@ -587,7 +587,8 @@ function Win:renderCookRun(x, y, w, h, run)
     if run.phase == "done" or run.phase == "failed" then
         self:cookButton(bx, by, T("IGUI_GTPC_NewDish"), true, function() F.clear(); log("cooking: back to the list") end)
     else
-        self:cookButton(bx, by, T("IGUI_GTPC_Cancel"), run.phase ~= "adding", function() F.cancel("button") end)
+        -- always enabled (owner, 2026-10-24: stuck while adding, could not cancel)
+        self:cookButton(bx, by, T("IGUI_GTPC_Cancel"), true, function() F.cancel("button") end)
     end
 end
 

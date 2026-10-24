@@ -76,6 +76,11 @@
   0.7.7 warns when it is on and puts our vanilla ammo types back with
   `DoParam` (`shared/HARMONIE_MIL_AmmoTypes.lua`, generated from our scripts).
   Check the mod list in the console (`loading <id>` lines) first.
+- Vanilla's `ISTimedActionQueue` CLEARS the whole queue when one action turns
+  invalid: anything chained behind it (a wait action that calls the next step)
+  is gone and the flow hangs. GTP cooking (0.13.14) has an OnTick watchdog
+  (`CookFlow.F.watch`: no progress 8 s + character idle -> carry on, 3 times,
+  then failed "stuck"); never disable a Cancel button during such a chain.
 - Calling a method a Java object does not have (`scriptItem:getSwingSound()`)
   logs "Object tried to call nil" with a stack trace even inside pcall (MIL
   0.7.5 AmmoCheck: 142 per load). Test `obj.method` first.

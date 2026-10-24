@@ -912,5 +912,6 @@
     "IGUI_HUB_Set_Mute_Tip": "ไม่มีเสียงคลิกหรือเสียงอื่นจากหน้าต่างนี้",
     "IGUI_HUB_Set_Client": "ตั้งค่าเหล่านี้เป็นของคุณคนเดียว (เครื่องนี้) ส่วนกฎของเซิร์ฟเวอร์อยู่ในตั้งค่า sandbox",
     "IGUI_GTPG_Set_Title": "ตั้งค่า - From Garden to Plate",
-    "IGUI_GTPG_SetKey": "ปุ่มเปิดคู่มือ"
+    "IGUI_GTPG_SetKey": "ปุ่มเปิดคู่มือ",
+    "IGUI_GTPC_Failed_stuck": "ค้างระหว่างใส่วัตถุดิบ (มี action ถูกหยุดไป) ของที่ใส่ไปแล้วยังอยู่ในจาน"
 }
