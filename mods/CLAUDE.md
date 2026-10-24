@@ -155,7 +155,11 @@
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
   descriptions -> `LWS_GachaData.lua`; texts_lws.py imports its TEXTS).
-  NOT items: counts in the wardrobe record (`o.gacha`, `o.gachaSet` for the
+  Item TYPES since 0.7.3 (`scripts/HARMONIE_LWS_gacha_items.txt`, module
+  HARMONIE_LWSG, generated; names in ItemName.json via gen_lws.py) but never
+  in an inventory: the sweep deletes any `LWS.isGachaItem`. Traded in the Trade
+  tab as counts (`TradeOfferGacha`, `s.goffer`, re-checked at the swap).
+  Otherwise counts in the wardrobe record (`o.gacha`, `o.gachaSet` for the
   New Dawn pieces equipped, `o.gachaBuffs` in real-time ms), used from the
   "gacha" tab (`server/.../LWS_Gacha.lua`). Effects / numbers / the locked XP
   formula are RWZ's -- change them only when the owner asks. The one real

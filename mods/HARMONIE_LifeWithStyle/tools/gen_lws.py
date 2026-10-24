@@ -295,6 +295,10 @@ def main():
             n = (en, th)[i]
             names["%s.%s" % (MODULE, cid)] = n
             names["%s.%s_Over" % (MODULE, cid)] = n
+        # the gacha items' item types (tools/gen_gacha.py writes their scripts)
+        from gen_gacha import ITEMS as GACHA_ITEMS, TEXTS as GACHA_TEXTS
+        for g in GACHA_ITEMS:
+            names["HARMONIE_LWSG.%s" % g["id"]] = GACHA_TEXTS["IGUI_LWSG_Name_" + g["id"]][i]
         write(os.path.join(ROOT, "lua", "shared", "Translate", lang, "ItemName.json"),
               json.dumps(names, indent=4, ensure_ascii=False) + "\n")
     write(os.path.join(ROOT, "lua", "shared", "Definitions", "animal", "LWS_PetDefinitions.lua"), pet_definitions())

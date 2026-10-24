@@ -265,6 +265,10 @@ function C.tradeAnswer(from, yes)
     C.send("TradeAnswer", { from = from, yes = yes == true })
 end
 function C.tradeOffer(uid, add) C.send("TradeOffer", { uid = uid, add = add == true }) end
+function C.tradeOfferGacha(id, add)
+    log("trade: %s one %s", add and "offer" or "take back", tostring(id))
+    C.send("TradeOfferGacha", { id = id, add = add == true })
+end
 function C.tradeLock(on)
     if not C.trade then return end
     log("trade: %s", on and "agree" or "take the agreement back")

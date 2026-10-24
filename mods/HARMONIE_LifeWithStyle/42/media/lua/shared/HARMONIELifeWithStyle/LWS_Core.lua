@@ -102,6 +102,17 @@ function LWS.isFashion(item)
     return LWS.typeOf(item):sub(1, #LWS.MODULE + 1) == LWS.MODULE .. "."
 end
 
+-- A gacha item as an item (module HARMONIE_LWSG, 0.7.3): it lives in the
+-- wardrobe record, never in an inventory -- the server sweep deletes one. The
+-- Guardian armour layer of the same module is the one exception.
+LWS.GACHA_MODULE = "HARMONIE_LWSG"
+LWS.GACHA_PROXY = "HARMONIE_LWSG.GuardianProtectionProxy"
+function LWS.isGachaItem(item)
+    if not item then return false end
+    local t = LWS.typeOf(item)
+    return t:sub(1, #LWS.GACHA_MODULE + 1) == LWS.GACHA_MODULE .. "." and t ~= LWS.GACHA_PROXY
+end
+
 -- ------------------------------------------------------------- pet food
 -- how much of a pet's hunger (0..1) one item fills: dog food all of it, other
 -- food by how filling it is; rotten, poisoned or not food = 0 (cannot be fed)
