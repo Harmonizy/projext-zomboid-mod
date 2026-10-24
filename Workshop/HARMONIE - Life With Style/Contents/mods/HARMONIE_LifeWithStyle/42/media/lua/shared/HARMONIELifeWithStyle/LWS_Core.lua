@@ -168,10 +168,9 @@ function LWS.ownerKey(player)
     return "sp:local"
 end
 
-function LWS.isAdmin(player)
+-- The game's access level only (never -debug): what a multiplayer server trusts.
+function LWS.hasAdminAccess(player)
     if not player then return false end
-    if isDebugEnabled and isDebugEnabled() then return true end
-    if not (isServer and isServer()) and not (isClient and isClient()) then return true end -- single player
     local ok, a = pcall(function() return player:isAccessLevel("admin") end)
     if ok and a then return true end
     local ok2, lvl = pcall(function() return player:getAccessLevel() end)
@@ -182,6 +181,17 @@ function LWS.isAdmin(player)
         if ok3 and me then return true end
     end
     return false
+end
+
+-- Admin tools (the Give tab, the debug menu, Admin* commands): admins, and a game
+-- started with -debug (owner, 2026-10-24: "เห็นเฉพาะแอดมินหรือคนเปิด -debug").
+-- Single player without -debug is no longer an admin. On a multiplayer server
+-- isDebugEnabled() is the SERVER's -debug: a client's own -debug shows the tab on
+-- that client, but the server still asks for the access level.
+function LWS.isAdmin(player)
+    if not player then return false end
+    if isDebugEnabled and isDebugEnabled() then return true end
+    return LWS.hasAdminAccess(player)
 end
 
 -- ------------------------------------------------------------- texts
