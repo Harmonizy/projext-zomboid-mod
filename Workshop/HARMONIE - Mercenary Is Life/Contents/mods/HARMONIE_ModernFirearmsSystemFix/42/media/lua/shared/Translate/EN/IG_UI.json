@@ -234,5 +234,6 @@
     "IGUI_HUB_Set_Volume_Tip": "Only this mod's own sounds; the game's volume is in the game's options.",
     "IGUI_HUB_Set_Mute": "Mute this mod's sounds",
     "IGUI_HUB_Set_Mute_Tip": "No clicks or sounds from this window.",
-    "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options."
+    "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options.",
+    "IGUI_MIL_OriginalOn": "Mercenary Is Life: the original Modern Firearms System mod is also on and replaces our guns with its own ammo -- firing them crashes the game. Take ModernFirearmsSystem off the mod list."
 }

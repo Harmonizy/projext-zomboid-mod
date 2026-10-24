@@ -15,6 +15,8 @@
     is written to console.txt, so the next one is found before it is fired.
 ]]--
 
+require "HARMONIE_MIL_AmmoTypes"
+
 local VANILLA = {
     ["base:bullets_3030"] = true, ["base:bullets_308"] = true, ["base:bullets_357"] = true,
     ["base:bullets_38"] = true, ["base:bullets_44"] = true, ["base:bullets_45"] = true,
@@ -150,6 +152,67 @@ local function iconCheck()
     end
 end
 
+-- 2026-10-24, owner's multiplayer console: the server also ran the original
+-- "ModernFirearmsSystem", loaded after us; its scripts replaced our guns with
+-- its own ammo types (efk:...), and the first shot of Requiem crashed the game
+-- again. Warn, and put our vanilla ammo types back on every item it changed.
+local ORIGINAL_IDS = { "ModernFirearmsSystem", "\\ModernFirearmsSystem" }
+local function originalOn()
+    local mods
+    pcall(function() mods = getActivatedMods() end)
+    if not mods then return false end
+    for _, id in ipairs(ORIGINAL_IDS) do
+        local ok, has = pcall(function() return mods:contains(id) end)
+        if ok and has then return true end
+    end
+    return false
+end
+
+local function enforceAmmo(when)
+    local want = HARMONIE_MIL_AMMO
+    local sm = getScriptManager and getScriptManager()
+    if not want or not sm then return end
+    local fixed, failed, seen = 0, {}, 0
+    for fullType, key in pairs(want) do
+        local it
+        pcall(function() it = sm:getItem(fullType) end)
+        if it and it.getAmmoType then
+            seen = seen + 1
+            local cur, target
+            pcall(function() cur = it:getAmmoType() end)
+            pcall(function() target = AmmoType.get(ResourceLocation.of(key)) end)
+            if target and cur ~= target then
+                if it.DoParam then pcall(function() it:DoParam("AmmoType = " .. key) end) end
+                local now
+                pcall(function() now = it:getAmmoType() end)
+                if now == target then fixed = fixed + 1 else failed[#failed + 1] = fullType .. " (" .. tostring(now) .. ")" end
+            end
+        end
+    end
+    if fixed > 0 or #failed > 0 then
+        log("%s: %d of our %d items had another mod's ammo type: %d put back to the vanilla one%s",
+            when, fixed + #failed, seen, fixed, #failed > 0 and ("; could NOT fix: " .. table.concat(failed, ", ")) or "")
+    else
+        log("%s: all %d of our items keep their vanilla ammo types", when, seen)
+    end
+end
+
+local warned = false
+local function originalCheck(when)
+    if not originalOn() then return end
+    log("WARNING: the original ModernFirearmsSystem mod is ON as well -- it replaces our guns (its ammo types crash the game). Take it off the mod list.")
+    if not warned and isClient and not (isServer and isServer()) then
+        warned = true
+        local p = getPlayer and getPlayer()
+        local ok, msg = pcall(getText, "IGUI_MIL_OriginalOn")
+        if p and ok and msg then pcall(function() p:Say(msg) end) end
+    end
+end
+
+pcall(enforceAmmo, "load")
+if Events and Events.OnGameBoot then Events.OnGameBoot.Add(function() pcall(enforceAmmo, "OnGameBoot") end) end
+if Events and Events.OnGameStart then Events.OnGameStart.Add(function() pcall(enforceAmmo, "OnGameStart"); pcall(originalCheck, "OnGameStart") end) end
+if Events and Events.OnServerStarted then Events.OnServerStarted.Add(function() pcall(enforceAmmo, "OnServerStarted"); pcall(originalCheck, "OnServerStarted") end) end
 if Events and Events.OnGameStart then Events.OnGameStart.Add(function() pcall(check) end) end
 if Events and Events.OnGameStart then Events.OnGameStart.Add(function() pcall(iconCheck) end) end
 if Events and Events.OnServerStarted then Events.OnServerStarted.Add(function() pcall(check) end) end

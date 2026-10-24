@@ -33,7 +33,7 @@ HARMONIE_Hub = HARMONIE_Hub or {}
 local Hub = HARMONIE_Hub
 if Hub.loaded then return end
 Hub.loaded = true
-Hub.VERSION = 2
+Hub.VERSION = 3
 local Boot = HARMONIE_HubBoot or {}
 
 -- ------------------------------------------------------------------ log
@@ -184,31 +184,38 @@ local function heldGun(p)
     if w and instanceof(w, "HandWeapon") and call(w, "isRanged") then return w end
     return nil
 end
+-- accent: each card in its mod's own window colour (owner, 2026-10-24)
 Hub.CARDS = {
-    { id = "gtp", name = "IGUI_HUB_GTP_Name", desc = "IGUI_HUB_GTP_Desc",
+    { id = "gtp", accent = { 0.50, 0.90, 0.52 }, -- green
+      name = "IGUI_HUB_GTP_Name", desc = "IGUI_HUB_GTP_Desc",
       present = function() return GTPGuide ~= nil and GTPGuide.open ~= nil end,
       open = function(p) GTPGuide.open(p, nil, "cook") end },
-    { id = "twa", name = "IGUI_HUB_TWA_Name", desc = "IGUI_HUB_TWA_Desc",
+    { id = "twa", accent = { 1.0, 0.78, 0.2 }, -- gold
+      name = "IGUI_HUB_TWA_Name", desc = "IGUI_HUB_TWA_Desc",
       present = function() return TWACraftUI ~= nil and TWACraftUI.open ~= nil end,
       open = function(p) TWACraftUI.open(p) end },
-    { id = "hm", name = "IGUI_HUB_HM_Name", desc = "IGUI_HUB_HM_Desc",
+    { id = "hm", accent = { 0.3, 0.84, 1.0 }, -- sky blue
+      name = "IGUI_HUB_HM_Name", desc = "IGUI_HUB_HM_Desc",
       present = function() return EHR ~= nil and EHR.UI ~= nil and EHR.UI.ShowHealthPanel ~= nil end,
       open = function(p) EHR.UI.ShowHealthPanel(p) end },
     -- owner, 2026-10-09: every window opens from here; the tabs that need a
     -- target (a vehicle, a gun in hand) are locked inside the window, and
     -- the card says so (`note`, the button stays enabled)
-    { id = "svu", name = "IGUI_HUB_SVU_Name", desc = "IGUI_HUB_SVU_Desc",
+    { id = "svu", accent = { 0.45, 0.68, 1.0 }, -- steel blue
+      name = "IGUI_HUB_SVU_Name", desc = "IGUI_HUB_SVU_Desc",
       present = function() return HSVU ~= nil and HSVU.open ~= nil end,
       note = function(p) if not (HSVU.nearVehicle and HSVU.nearVehicle(p)) then return "IGUI_HUB_NeedVehicle" end end,
       open = function(p) HSVU.open(p, HSVU.nearVehicle and HSVU.nearVehicle(p) or nil) end },
-    { id = "mfs", name = "IGUI_HUB_MFS_Name", desc = "IGUI_HUB_MFS_Desc",
+    { id = "mfs", accent = { 0.92, 0.24, 0.20 }, -- red
+      name = "IGUI_HUB_MFS_Name", desc = "IGUI_HUB_MFS_Desc",
       present = function() return (HMLWorkbench ~= nil and HMLWorkbench.open ~= nil) or (MFSInspectFix ~= nil and MFSInspectFix.open ~= nil) end,
       note = function(p) if not heldGun(p) then return "IGUI_HUB_NeedGun" end end,
       open = function(p)
           if HMLWorkbench and HMLWorkbench.open then HMLWorkbench.open(p, nil, true) else MFSInspectFix.open(p) end
       end },
     -- 2026-10-20: HARMONIE - Life With Style, the wardrobe
-    { id = "lws", name = "IGUI_HUB_LWS_Name", desc = "IGUI_HUB_LWS_Desc",
+    { id = "lws", accent = { 0.70, 0.49, 0.28 }, -- fashion brown
+      name = "IGUI_HUB_LWS_Name", desc = "IGUI_HUB_LWS_Desc",
       present = function() return LWSWindow ~= nil and LWSWindow.open ~= nil end,
       open = function(p) LWSWindow.open(p, "dress") end },
 }
@@ -287,18 +294,24 @@ function P:render()
             local need = card.need and p and select(2, pcall(card.need, p)) or nil
             local note = (not need) and card.note and p and select(2, pcall(card.note, p)) or nil
             local desc = wrap(T(card.desc), self.width - pad * 2 - 130, sf)
-            local h = math.max(58, 12 + th(mf) + 4 + #desc * (th(sf) + 1) + ((need or note) and (th(sf) + 4) or 0) + 8)
+            -- the warning wraps too (it ran past the card's edge before)
+            local warn = (need or note) and wrap(T(need or note), self.width - pad * 2 - 130, sf) or {}
+            local h = math.max(58, 12 + th(mf) + 4 + #desc * (th(sf) + 1) + (#warn > 0 and (#warn * (th(sf) + 1) + 3) or 0) + 8)
             local over = mx >= pad and mx <= self.width - pad and my >= y and my <= y + h
-            local c = over and COL.cardHi or COL.card
+            -- the card in its mod's colour: a tinted background, stripe, border and title
+            local ac = card.accent or COL.gold
+            local base = over and COL.cardHi or COL.card
+            local tint = over and 0.24 or 0.14
+            local c = { base[1] + (ac[1] - base[1]) * tint, base[2] + (ac[2] - base[2]) * tint, base[3] + (ac[3] - base[3]) * tint }
             self:drawRect(pad, y, self.width - pad * 2, h, 0.95, c[1], c[2], c[3])
-            self:drawRect(pad, y, 3, h, 1, COL.gold[1], COL.gold[2], COL.gold[3])
-            self:drawText(T(card.name), pad + 12, y + 8, COL.text[1], COL.text[2], COL.text[3], 1, mf)
+            self:drawRectBorder(pad, y, self.width - pad * 2, h, over and 0.9 or 0.45, ac[1], ac[2], ac[3])
+            self:drawRect(pad, y, 4, h, 1, ac[1], ac[2], ac[3])
+            self:drawText(T(card.name), pad + 12, y + 8, ac[1], ac[2], ac[3], 1, mf)
             local ty = y + 12 + th(mf)
             for _, l in ipairs(desc) do self:drawText(l, pad + 12, ty, COL.dim[1], COL.dim[2], COL.dim[3], 1, sf); ty = ty + th(sf) + 1 end
-            if need then
-                self:drawText(T(need), pad + 12, ty + 2, COL.warn[1], COL.warn[2], COL.warn[3], 1, sf)
-            elseif note then
-                self:drawText(T(note), pad + 12, ty + 2, COL.warn[1], COL.warn[2], COL.warn[3], 0.8, sf)
+            for _, l in ipairs(warn) do
+                self:drawText(l, pad + 12, ty + 2, COL.warn[1], COL.warn[2], COL.warn[3], need and 1 or 0.8, sf)
+                ty = ty + th(sf) + 1
             end
             -- the open button on the right
             local bw, bh = 104, 28
@@ -306,8 +319,9 @@ function P:render()
             local enabled = not need
             local b = { x = bx, y = by, w = bw, h = bh, card = card }
             local bover = mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
-            self:drawRect(bx, by, bw, bh, enabled and (bover and 1 or 0.85) or 0.35, COL.btn[1], COL.btn[2], COL.btn[3])
-            self:drawRectBorder(bx, by, bw, bh, enabled and 1 or 0.4, COL.gold[1], COL.gold[2], COL.gold[3])
+            local bc = { ac[1] * 0.38, ac[2] * 0.38, ac[3] * 0.38 }
+            self:drawRect(bx, by, bw, bh, enabled and (bover and 1 or 0.85) or 0.35, bc[1], bc[2], bc[3])
+            self:drawRectBorder(bx, by, bw, bh, enabled and 1 or 0.4, ac[1], ac[2], ac[3])
             local label = T("IGUI_HUB_Open")
             self:drawText(label, bx + math.floor((bw - tw(sf, label)) / 2), by + math.floor((bh - th(sf)) / 2),
                 enabled and COL.text[1] or COL.dim[1], enabled and COL.text[2] or COL.dim[2], enabled and COL.text[3] or COL.dim[3], 1, sf)
