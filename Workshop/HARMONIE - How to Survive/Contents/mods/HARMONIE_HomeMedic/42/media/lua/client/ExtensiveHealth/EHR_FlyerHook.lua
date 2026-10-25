@@ -292,7 +292,8 @@ local function handleFlyerRead(character, item, source)
     log("Detected EHR disease flyer! Disease: " .. tostring(diseaseId))
 
     if EHR.DiseaseFlyers.OnFlyerRead then
-        EHR.DiseaseFlyers.OnFlyerRead(character, item)
+        -- HARMONIE: false = First Aid too low, the flyer stays unread
+        if EHR.DiseaseFlyers.OnFlyerRead(character, item) == false then return end
     else
         log("OnFlyerRead not found, handling directly")
         local modData = character:getModData()
@@ -307,7 +308,7 @@ local function handleFlyerRead(character, item, source)
             end
 
             if isClient() and sendClientCommand then
-                sendClientCommand(character, "EHR_Flyers", "UnlockDisease", { diseaseId = diseaseId })
+                sendClientCommand(character, "EHR_Flyers", "UnlockDisease", { diseaseId = diseaseId, source = "flyer" })
                 log("Sent UnlockDisease command to server")
             end
         end
@@ -451,6 +452,14 @@ local function hookInventoryReadItem()
         if isFlyerItem(item) then
             local playerObj = getSpecificPlayer(player)
             if not playerObj or item:getContainer() == nil then
+                return
+            end
+
+            -- HARMONIE (2026-10-25): First Aid at least half the level that
+            -- knows the illness unaided -- refused before the reading starts
+            local flyerDisease = EHR.DiseaseFlyers.Config.FLYER_ITEMS[item:getFullType()]
+            if flyerDisease and EHR.DiseaseFlyers.CheckReadLevel
+                and not EHR.DiseaseFlyers.CheckReadLevel(playerObj, flyerDisease, "menu") then
                 return
             end
 

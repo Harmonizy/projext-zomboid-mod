@@ -3118,6 +3118,14 @@ function EHR.ServerCommands.UnlockDiseaseKnowledge(player, args)
         log("[EHR Server] Knox disease knowledge rejected: Kentucky Herald July 16 required.")
         return
     end
+    -- HARMONIE (2026-10-25): a flyer needs half the unaided First Aid level
+    if args.source == "flyer" and EHR.DiseaseFlyers and EHR.DiseaseFlyers.CanLearnByReading then
+        local ok, need, have = EHR.DiseaseFlyers.CanLearnByReading(player, diseaseId)
+        if not ok then
+            log("[EHR Server] flyer knowledge " .. tostring(diseaseId) .. " rejected: First Aid " .. tostring(have) .. ", needs " .. tostring(need))
+            return
+        end
+    end
 
     if EHR.DiseaseFlyers and EHR.DiseaseFlyers.UnlockDiseaseKnowledge then
         EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId, {
