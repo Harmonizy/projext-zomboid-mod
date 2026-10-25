@@ -340,8 +340,8 @@ end
     VitaminUnit, same convention HARMONIE_TooltipHook.lua's own item-tooltip
     vitamin breakdown uses).
 ]]--
--- 2026-10-25: shown to everyone; without the knowledge "High" / "Low"
--- in the parentheses instead of the amount
+-- 2026-10-25: shown to everyone; with the knowledge the amount and
+-- "(High)" / "(Low)", without it the names only
 function HARMONIE_VitaminPanel:buildFoodIndexData(canSeeFoodIndex)
 
     local sections = {}
@@ -352,9 +352,9 @@ function HARMONIE_VitaminPanel:buildFoodIndexData(canSeeFoodIndex)
         if #topFoods > 0 then
             for i, food in ipairs(topFoods) do
                 if canSeeFoodIndex then
-                    table.insert(lines, string.format("%d. %s (%.1f %s)", i, food.displayName, food.amount, unit))
+                    table.insert(lines, string.format("%d. %s %.1f %s", i, food.displayName, food.amount, unit) .. HARMONIE_GTP.VitaminTag(vit, food.amount))
                 else
-                    table.insert(lines, string.format("%d. %s (%s)", i, food.displayName, HARMONIE_GTP.VitaminWord(vit, food.amount) or "-"))
+                    table.insert(lines, string.format("%d. %s", i, food.displayName))
                 end
             end
         else

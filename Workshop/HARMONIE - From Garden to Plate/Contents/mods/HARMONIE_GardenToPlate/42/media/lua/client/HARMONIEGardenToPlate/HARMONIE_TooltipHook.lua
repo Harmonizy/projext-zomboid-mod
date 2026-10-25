@@ -5,7 +5,7 @@
     (base:nutritionist -- its vanilla description is literally "Can see the
     nutritional values of any food", it just never had any actual
     Lua/Java hook doing that until now). 2026-10-25: everyone else sees the
-    same box with "High" / "Low" instead of the amounts.
+    same box with "Yes" instead of the amounts.
 
     Technique note: an earlier version tried to hook ISToolTip:setDescription
     to append text into the vanilla tooltip's own description string. That
@@ -132,26 +132,25 @@ local function buildVitaminLines(item, knows)
     if not rates then return nil end
 
     -- 2026-10-25: everyone sees the vitamins; without the knowledge
-    -- (Cooking 3 / Nutritionist) "High" / "Low" instead of the amount
-    -- (HARMONIE_GTP.VitaminWord: the item's amount against the median food)
+    -- (Cooking 3 / Nutritionist) only "Yes", with it the amount and
+    -- "(High)" / "(Low)" (the item's amount against the median food)
     local header = knows and getText("IGUI_HARMONIE_TooltipHeader")
         or getText("IGUI_HARMONIE_TooltipHeaderWords", tostring(REQUIRED_COOKING_LEVEL))
     local lines = {{ text = header, r = 1, g = 1, b = 1 }}
-    local profile = not knows and HARMONIE_GTP.GetVitaminProfileForItem(item) or nil
+    local profile = HARMONIE_GTP.GetVitaminProfileForItem(item) or {}
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         if rates[vit] then
             if knows then
                 table.insert(lines, {
-                    text = getText(VitaminLabel[vit]) .. ": " .. string.format("%.1f", rates[vit]) .. " " .. VitaminUnit[vit],
+                    text = getText(VitaminLabel[vit]) .. ": " .. string.format("%.1f", rates[vit]) .. " " .. VitaminUnit[vit]
+                        .. (HARMONIE_GTP.VitaminTag and HARMONIE_GTP.VitaminTag(vit, profile[vit]) or ""),
                     r = 0.55, g = 0.85, b = 0.6,
                 })
             else
-                local wkey = HARMONIE_GTP.VitaminWordKey and HARMONIE_GTP.VitaminWordKey(vit, profile and profile[vit])
-                if wkey then
-                    local high = wkey == "IGUI_HARMONIE_VitHigh"
+                if (profile[vit] or 0) > 0 then
                     table.insert(lines, {
-                        text = getText(VitaminLabel[vit]) .. ": " .. HARMONIE_GTP.VitaminWord(vit, profile[vit]),
-                        r = high and 0.55 or 0.75, g = high and 0.95 or 0.75, b = high and 0.6 or 0.7,
+                        text = getText(VitaminLabel[vit]) .. ": " .. HARMONIE_GTP.VitaminHasText(),
+                        r = 0.55, g = 0.85, b = 0.6,
                     })
                 end
             end

@@ -388,15 +388,14 @@ function Win:renderCookInfo(x, y, w, h, d, p)
             if H.knows(self.player) then
                 local vits = {}
                 for _, v in ipairs(VIT_ORDER) do
-                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, pv.vit[v], H.UNITS[v] or "") end
+                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, pv.vit[v], H.UNITS[v] or "") .. HARMONIE_GTP.VitaminTag(v, pv.vit[v]) end
                 end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
             else
-                -- 2026-10-25: "High" / "Low" instead of the amounts
+                -- 2026-10-25: which vitamins, "Yes" instead of the amounts
                 local vits = {}
                 for _, v in ipairs(VIT_ORDER) do
-                    local word = HARMONIE_GTP.VitaminWord and HARMONIE_GTP.VitaminWord(v, pv.vit[v])
-                    if word and (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = v .. " " .. word end
+                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = v .. " " .. HARMONIE_GTP.VitaminHasText() end
                 end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
                 yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewVitLocked", tostring(H.KNOW_COOKING)), tx, yy, tw2 - 10, C.textDim, sf) + 2
@@ -573,8 +572,8 @@ function Win:renderCookRun(x, y, w, h, run)
                 local vits = {}
                 for _, v in ipairs(VIT_ORDER) do
                     if (prof[v] or 0) > 0.05 then
-                        vits[#vits + 1] = knows and string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "")
-                            or (v .. " " .. (HARMONIE_GTP.VitaminWord(v, prof[v]) or ""))
+                        vits[#vits + 1] = knows and (string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "") .. HARMONIE_GTP.VitaminTag(v, prof[v]))
+                            or (v .. " " .. HARMONIE_GTP.VitaminHasText())
                     end
                 end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 4
