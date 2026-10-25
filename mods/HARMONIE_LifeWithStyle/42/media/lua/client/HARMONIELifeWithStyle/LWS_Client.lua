@@ -167,6 +167,10 @@ end
 C.petCopies = C.petCopies or {}   -- [animal] = { x, y, at, holdUntil }
 C.GAIT_HOLD_MS = 350
 C.RUN_SPEED = 3.0                 -- tiles a second
+-- 0.7.7: the walk shows only for real movement (owner: "ติดที่อนิเมชั่นเดินหรือวิ่งอยู่
+-- กับที่บ่อยมาก") -- the small position corrections the server sends to a
+-- standing copy are not a walk
+C.WALK_MIN_SPEED = 0.4            -- tiles a second
 local nextScan = 0
 function C.petGaitTick()
     local t = getTimestampMs and getTimestampMs() or 0
@@ -194,9 +198,10 @@ function C.petGaitTick()
         local dt = math.max(1, t - st.at)
         local dx, dy = x - st.x, y - st.y
         local moved = math.sqrt(dx * dx + dy * dy)
-        if moved > 0.01 then
+        local speed = moved * 1000 / dt
+        if moved > 0.01 and speed >= C.WALK_MIN_SPEED then
             st.holdUntil = t + C.GAIT_HOLD_MS
-            st.speed = moved * 1000 / dt
+            st.speed = speed
         end
         st.x, st.y, st.at = x, y, t
         local gait = st.holdUntil > t

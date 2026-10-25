@@ -118,9 +118,11 @@ function F.nextStep()
     local Gm = HARMONIE_GTP.CookGames
     if K.minigamesOn() and Gm and Gm.play then
         local cur = K.cursorItem(plan, pp)
-        log("step %s: minigame with %s (%s), difficulty %.2f", pid, cur and K.typeOf(cur) or "bare hands",
-            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.difficulty(r.player, pp))
-        local ok = Gm.play(r.player, pid, { difficulty = K.difficulty(r.player, pp), icon = ingredientIcon(plan),
+        local diff = K.difficulty(r.player, pp, r.dish)
+        local ease = K.levelEase(K.level(r.player))
+        log("step %s: minigame with %s (%s), Cooking %d: difficulty %.2f, slips x%.2f, time x%.2f", pid, cur and K.typeOf(cur) or "bare hands",
+            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.level(r.player), diff, ease.slip, ease.time)
+        local ok = Gm.play(r.player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = ease.time, icon = ingredientIcon(plan),
             spice = spiceIcon(plan), base = plan.base and call(plan.base, "getTexture"),
             tool = pp.tools[1] and pp.tools[1].item and call(pp.tools[1].item, "getTexture"),
             cursor = K.cursorTexture(plan, pp), bare = pp.tools[1] and pp.tools[1].grade == "bare",
@@ -183,7 +185,9 @@ function F.startAdding()
     local plan = K.plan(r.player, r.dish, K.scan(r.player, true))
     if not plan.ready then
         r.phase = "failed"
-        r.failReason = plan.reasons[1]
+        -- nothing went in yet; the steps' results stay for Retry
+        r.failReason = "ingredients"
+        r.failWhy = plan.reasons[1]
         if HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(r.player, "Failed") end
         log("%s: cannot add the ingredients any more (%s)", r.dish.id, table.concat(plan.reasons, ", "))
         return
@@ -316,6 +320,57 @@ if Events and Events.OnTick and not F.watchAdded then
         local ok, err = pcall(F.watch)
         if not ok and not F.watchErr then F.watchErr = true; log("cooking watchdog FAILED: %s", tostring(err)) end
     end)
+end
+
+-- Owner, 2026-10-25: "บางครั้งตอนทำอาหารแล้วเกิดบัค เช่นหาจานไม่เจอ แล้วมันไม่ทำต่อ
+-- ให้สามารถกดลองใหม่": a failed dish keeps its steps' results. Retry plans
+-- the additions again when nothing went in yet, else carries on from the
+-- addition it stopped at, with the dish item looked up again (also in the
+-- containers nearby, then moved to the inventory).
+local function findDishNearby(r)
+    local scan = K.scan(r.player, true)
+    if not scan then return nil end
+    for _, list in pairs(scan.byType) do
+        for _, it in ipairs(list) do
+            if r.baseId and call(it, "getID") == r.baseId then return it end
+        end
+    end
+    for _, it in ipairs(scan.byType[r.resultType or ""] or {}) do
+        if not (r.preIds and r.preIds[call(it, "getID") or -1]) then return it end
+    end
+    return nil
+end
+
+function F.retryFailed()
+    local r = F.run
+    if not r or r.phase ~= "failed" then return false end
+    r.retries = (r.retries or 0) + 1
+    local why = r.failReason
+    r.failReason, r.failWhy = nil, nil
+    if not r.adds or (r.addIdx or 0) == 0 then
+        log("%s: retry %d after %s -- planning the additions again (steps kept)", r.dish.id, r.retries, tostring(why))
+        r.phase = "ready"
+        F.startAdding()
+        return true
+    end
+    r.phase = "adding"
+    r.waits, r.stalls = 0, 0
+    r.progressAt = nowMs()
+    local dish = F.currentBase(r)
+    if not dish then
+        dish = findDishNearby(r)
+        if dish then
+            r.baseId = call(dish, "getID")
+            if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
+                ISInventoryPaneContextMenu.transferIfNeeded(r.player, dish)
+            end
+        end
+    end
+    log("%s: retry %d after %s -- carrying on from addition %d of %d (dish item %s)", r.dish.id, r.retries, tostring(why),
+        r.addIdx or 0, #r.adds, dish and K.typeOf(dish) or "not found yet")
+    pcall(ISTimedActionQueue.clear, r.player)
+    ISTimedActionQueue.add(HARMONIE_GTP_CookWaitAction:new(r.player, 2, F.addNext, r))
+    return true
 end
 
 function F.finish(r)

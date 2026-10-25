@@ -38,7 +38,7 @@ local log = function(...) LWS.log("Pets", ...) end
 P.active = P.active or {}       -- [owner key] = { animal, id, uid, piece, pathAt, ox, oy, respawnAt }
 P.TICK_MS = 500
 P.SWEEP_MS = 10000
-P.FOLLOW_NEAR = 2.5             -- closer than this: no new path
+P.FOLLOW_NEAR = 2.5             -- (old; see P.REST_NEAR / P.FOLLOW_FROM)
 P.REPATH_MS = 2500              -- a new path at most this often (A* is not free)
 P.RESPAWN_MS = 3000             -- a lost pet is made again at most this often
 P.STAY_LEASH = 2                -- a staying pet farther than teleport x this comes back
@@ -367,6 +367,45 @@ local function pathTo(animal, owner)
     pcall(function() animal:setVariable("bPathfind", true) end)
 end
 
+-- 0.7.7: waiting by the owner / following (see P.step)
+P.REST_NEAR = 2.5          -- a follower this close stops and waits
+P.FOLLOW_FROM = 5          -- a waiting pet follows when the owner is farther than this
+P.STUCK_MS = 2000          -- a follower is checked for progress this often ...
+P.STUCK_MOVE = 0.35        -- ... and is stuck when it moved less than this (tiles)
+P.STUCK_TRIES = 3          -- stuck this many checks in a row (and not close): brought over
+P.WAITING = { mode = "stay" }   -- a waiting pet idles like a staying one (sits, lies down)
+
+function P.stop(rec)
+    local a = rec.animal
+    pcall(function() a:stopAllMovementNow() end)
+    pcall(function() a:setVariable("bPathfind", false) end)
+    pcall(function() a:setVariable("animalRunning", false) end)
+    pcall(function() local b = a:getBehavior(); if b then b:setBlockMovement(true) end end)
+    rec.run = false
+end
+function P.unblock(rec)
+    pcall(function() local b = rec.animal:getBehavior(); if b then b:setBlockMovement(false) end end)
+end
+function P.startFollow(rec)
+    local a = rec.animal
+    rec.following = true
+    rec.waitFrom = nil
+    rec.stillSince, rec.idleAt = nil, nil
+    rec.progX, rec.progY, rec.progAt, rec.stuck = a:getX(), a:getY(), now(), 0
+    P.unblock(rec)
+end
+function P.arrive(rec, owner, dd, why)
+    rec.following = false
+    rec.stuck = 0
+    -- it stopped farther out than usual (stuck): it follows again only when
+    -- the owner gets 2 tiles farther than that, never at once
+    rec.waitFrom = math.max(P.FOLLOW_FROM, dd + 2)
+    rec.waitX, rec.waitY = rec.animal:getX(), rec.animal:getY()
+    rec.stillSince, rec.idleAt = now(), nil
+    P.stop(rec)
+    log("%s: %s waits by its owner (%.1f tiles, %s)", LWS.name(owner), rec.piece, dd, why)
+end
+
 function P.step(key, rec, owner)
     local animal = rec.animal
     -- nothing hurts it (zombies, players, falls, shots): health stays full,
@@ -411,42 +450,68 @@ function P.step(key, rec, owner)
         P.sync(owner, "teleport")
         return
     end
-    rec.stillSince = nil
     rec.stayX, rec.stayY = nil, nil
-    -- running AWAY from the owner while following (it was scared): every
-    -- 0.5 s, if the pet itself moved over half a tile in a direction away
-    -- from its owner, path back at once
-    local t0 = now()
-    if not rec.fx or t0 - (rec.fAt or 0) >= 500 then
-        if rec.fx then
-            local mx, my = animal:getX() - rec.fx, animal:getY() - rec.fy
-            local ox, oy = owner:getX() - animal:getX(), owner:getY() - animal:getY()
-            local away = mx * mx + my * my > 0.25 and (mx * ox + my * oy) < 0
-            if away and dd > P.FOLLOW_NEAR then
-                if not rec.fleeing then
-                    rec.fleeing = true
-                    log("%s: %s ran away from its owner (%.1f tiles) -- called back", LWS.name(owner), rec.piece, dd)
-                end
-                LWS.petCalm(animal)
-                rec.pathAt = 0
-            else
-                rec.fleeing = nil
-            end
-        end
-        rec.fx, rec.fy, rec.fAt = animal:getX(), animal:getY(), t0
-    end
     -- being petted: it stays where it is a moment
     if rec.holdUntil and now() < rec.holdUntil then return end
-    if dd <= P.FOLLOW_NEAR then
-        P.animTick(rec, false)
-        if rec.anims and rec.anims.lwsRest then P.anim(rec, "lwsRest", false) end
-        P.idleTick(rec, d)
+    local t = now()
+    -- 0.7.7 (owner, 2026-10-25: "ไม่ต้องพยายามให้สัตว์เลี้ยงเดินตลอดเวลา ตอนนี้มันติดที่
+    -- อนิเมชั่นเดินหรือวิ่งอยู่กับที่บ่อยมาก ... นั่ง หรือทำอนิเมชั่นอื่นรอ จนกว่าผู้เล่นจะ
+    -- ออกจากระยะแล้วค่อยเดินตาม"): two states with a gap between them --
+    -- WAITING by the owner (stopped, no path, sits / lies down / idles like a
+    -- staying pet) until the owner is farther than FOLLOW_FROM, then
+    -- FOLLOWING (paths) until it is within REST_NEAR again. A follower that
+    -- does not get anywhere (walking on the spot) waits instead when it is
+    -- close, and is brought to the owner when it is not.
+    if not rec.following then
+        if dd > (rec.waitFrom or P.FOLLOW_FROM) then
+            P.startFollow(rec)
+            log("%s: %s follows (owner %.1f tiles away)", LWS.name(owner), rec.piece, dd)
+        else
+            -- it moved off its waiting spot by itself (scared, pushed): stop it there
+            if not rec.waitX then rec.waitX, rec.waitY = animal:getX(), animal:getY() end
+            local wx, wy = animal:getX() - rec.waitX, animal:getY() - rec.waitY
+            if wx * wx + wy * wy > 2.25 then
+                LWS.logOnce("petdrift:" .. key .. ":" .. tostring(math.floor(t / 60000)), "Pets", "%s: %s wandered off while waiting -- stopped", LWS.name(owner), rec.piece)
+                P.stop(rec)
+                rec.waitX, rec.waitY = animal:getX(), animal:getY()
+            end
+            P.animTick(rec, false)
+            P.idleTick(rec, P.WAITING)
+            return
+        end
+    end
+    -- following
+    if dd <= P.REST_NEAR then
+        P.arrive(rec, owner, dd, "reached the owner")
         return
     end
+    -- getting anywhere? (checked every STUCK_MS)
+    if t - (rec.progAt or t) >= P.STUCK_MS then
+        local mx, my = animal:getX() - (rec.progX or animal:getX()), animal:getY() - (rec.progY or animal:getY())
+        if mx * mx + my * my < P.STUCK_MOVE * P.STUCK_MOVE then
+            rec.stuck = (rec.stuck or 0) + 1
+            if dd <= P.FOLLOW_FROM + 1 then
+                P.arrive(rec, owner, dd, "stuck close by")
+                return
+            end
+            if rec.stuck >= P.STUCK_TRIES then
+                log("%s: %s is stuck %.0f tiles away (%d checks) -- brought to the owner", LWS.name(owner), rec.piece, dd, rec.stuck)
+                P.despawn(key, "stuck")
+                P.respawnAt = P.respawnAt or {}
+                P.respawnAt[key] = nil
+                P.sync(owner, "stuck")
+                return
+            end
+            rec.pathAt = 0
+        else
+            rec.stuck = 0
+        end
+        rec.progX, rec.progY, rec.progAt = animal:getX(), animal:getY(), t
+    end
+    LWS.petCalm(animal)
     P.animTick(rec, true)
     rec.idleAt = nil
     setGait(rec, owner, dd)
-    local t = now()
     local moved = not rec.ox or math.abs(owner:getX() - rec.ox) + math.abs(owner:getY() - rec.oy) > 1.5
     if t - (rec.pathAt or 0) >= P.REPATH_MS or (moved and t - (rec.pathAt or 0) >= 800) then
         rec.pathAt, rec.ox, rec.oy = t, owner:getX(), owner:getY()
@@ -547,12 +612,14 @@ function P.handle(player, command, args)
                 pcall(function() local b = rec.animal:getBehavior(); if b then b:setBlockMovement(true) end end)
             else
                 rec.pathAt = 0
+                P.startFollow(rec)
                 pcall(pathTo, rec.animal, player)
             end
             log("%s: %s -> %s", LWS.name(player), rec.piece, d.mode)
         elseif command == "PetCome" then
             d.mode = "follow"
             rec.pathAt = now()
+            P.startFollow(rec)   -- comes over even when the owner is close
             local ok, err = pcall(pathTo, rec.animal, player)
             log("%s calls %s%s", LWS.name(player), rec.piece, ok and "" or (" -- path FAILED: " .. tostring(err)))
         else

@@ -92,6 +92,9 @@ function G.play(player, pid, opts, onWord)
     o.kind, o.variant = proc.game, proc.variant
     o.opts = opts or {}
     o.d = clamp(tonumber(o.opts.difficulty) or 0.5, 0.05, 1)
+    -- 0.13.17: the Cooking level -- slips cost less, more time (K.levelEase)
+    o.slipMul = clamp(tonumber(o.opts.slipMul) or 1, 0.2, 1)
+    o.timeMul = clamp(tonumber(o.opts.timeMul) or 1, 1, 2)
     o.background = false
     o.moveWithMouse = false
     o.q = 1
@@ -218,6 +221,8 @@ function P:setup()
         self:newWatch()
         self.limit = 16000
     end
+    -- the ring keeps its beat; everything else gets the level's extra time
+    if self.kind ~= "ring" then self.limit = math.floor(self.limit * (self.timeMul or 1)) end
 end
 
 function P:newBand()
@@ -260,7 +265,7 @@ function P:spend(amount, key, every)
     self.lastSpend = self.lastSpend or {}
     if every ~= false and self.lastSpend[key] and t - self.lastSpend[key] < 600 then return end
     self.lastSpend[key] = t
-    self.q = clamp(self.q - amount, 0, 1)
+    self.q = clamp(self.q - amount * (self.slipMul or 1), 0, 1)
     self:flash(key, C.bad)
     FX.play("Slip")
 end
