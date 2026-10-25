@@ -374,6 +374,40 @@ function EHR.DiseaseFlyers.KnowledgeLevel(knowledgeId)
     return EHR.DiseaseFlyers.Config.KNOWLEDGE_LEVEL[id]
 end
 
+-- HARMONIE (owner, 2026-10-25: "จำกัดเลเวล firstaid ในการอ่านหนังสือเพื่อเรียนรู้โรค
+-- ครึ่งนึงของเลเวลที่เรียนรู้ได้เอง"): a flyer teaches its illness only from half
+-- the First Aid level that knows it without one (2 -> 1, 4 -> 2, 6 -> 3,
+-- 8 -> 4). Knox (flyer / Herald only, no such level) has no limit.
+function EHR.DiseaseFlyers.ReadLevel(knowledgeId)
+    local lvl = EHR.DiseaseFlyers.KnowledgeLevel(knowledgeId)
+    if not lvl then return 0 end
+    return math.ceil(lvl / 2)
+end
+function EHR.DiseaseFlyers.CanLearnByReading(player, knowledgeId)
+    local need = EHR.DiseaseFlyers.ReadLevel(knowledgeId)
+    local have = EHR.DiseaseFlyers.GetFirstAidLevel(player)
+    return have >= need, need, have
+end
+function EHR.DiseaseFlyers.TooHardText(need)
+    local fallback = "I can not make sense of this yet. (First Aid " .. tostring(need) .. " needed)"
+    if not getText then return fallback end
+    local ok, t = pcall(getText, "UI_EHR_FlyerTooHard", tostring(need))
+    if not ok or not t or t == "UI_EHR_FlyerTooHard" then return fallback end
+    return t
+end
+-- false (and a line said) when the reader's First Aid is too low; logged
+function EHR.DiseaseFlyers.CheckReadLevel(player, diseaseId, where)
+    if EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then return true end
+    local ok, need, have = EHR.DiseaseFlyers.CanLearnByReading(player, diseaseId)
+    if ok then return true end
+    EHR.Log("[HARMONIE] flyer " .. tostring(diseaseId) .. " refused (" .. tostring(where) .. "): First Aid "
+        .. tostring(have) .. ", needs " .. tostring(need))
+    if player and player.Say and EHR.Locale and EHR.Locale.Say then
+        EHR.Locale.Say(player, EHR.DiseaseFlyers.TooHardText(need))
+    end
+    return false
+end
+
 function EHR.DiseaseFlyers.HasMedicalKnowledge(player, knowledgeId, requiredFirstAidLevel)
     if not player or not knowledgeId then return false end
 
@@ -451,6 +485,7 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
     local isKnox = isKnoxDiseaseId(diseaseId)
 
     EHR.Log("OnFlyerRead triggered for: " .. tostring(itemId) .. " -> disease: " .. tostring(diseaseId))
+    if not EHR.DiseaseFlyers.CheckReadLevel(player, diseaseId, "read") then return false end
 
     if isClient and isClient() then
         local newlyLearned = EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId)
@@ -465,7 +500,7 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
             end
         end
         if sendClientCommand and not isKnox then
-            sendClientCommand(player, "EHR_Flyers", "UnlockDisease", { diseaseId = normalizeDiseaseId(diseaseId) })
+            sendClientCommand(player, "EHR_Flyers", "UnlockDisease", { diseaseId = normalizeDiseaseId(diseaseId), source = "flyer" })
         end
         return
     end

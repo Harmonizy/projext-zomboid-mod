@@ -402,3 +402,62 @@ function HARMONIE_GTP.GetVitaminRatePerHunger(item)
     end
     return rates
 end
+
+
+--[[
+    2026-10-25 (owner: "ปรับเงื่อนไขการเห็นวิตามินใหม่ ทั้งใน tooltip และหน้าต่าง
+    ..." then "เปลี่ยนค่าเป็น มี ดีกว่า หากไม่มีก็ไม่ขึ้นแถววิตามินนั้น แล้วการขึ้น
+    มาก หรือน้อย ให้ไปเป็นวงเล็บหลังตัวเลข"): everyone sees which vitamins a
+    food has. A reader without the knowledge (Cooking 3 or the Nutritionist
+    trait) sees "Yes" (VitaminHasText) and no amount; one with it sees the
+    amount followed by "(High)" / "(Low)" (VitaminTag). High = at least the
+    median amount of that vitamin among the tracked foods that have it --
+    measured per whole item (the profile), worked out once on first use,
+    after every vitamin table is filled.
+]]--
+function HARMONIE_GTP.VitaminMedianOf(vit)
+    local M = HARMONIE_GTP.VitaminMedians
+    if not M then
+        M = {}
+        local parts = {}
+        for _, v in ipairs(HARMONIE_GTP.Vitamins) do
+            local vals = {}
+            for _, prof in pairs(DB) do
+                local a = prof[v]
+                if a and a > 0 then vals[#vals + 1] = a end
+            end
+            table.sort(vals)
+            M[v] = #vals > 0 and vals[math.floor((#vals + 1) / 2)] or 0
+            parts[#parts + 1] = string.format("%s %.2f (%d foods)", v, M[v], #vals)
+        end
+        HARMONIE_GTP.VitaminMedians = M
+        if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Vitamins", "high/low line per item: %s", table.concat(parts, ", ")) end
+    end
+    return M[vit] or 0
+end
+
+-- "High" / "Low" text key for `amount` of `vit` in one item (nil = none)
+function HARMONIE_GTP.VitaminWordKey(vit, amount)
+    amount = tonumber(amount) or 0
+    if amount <= 0 then return nil end
+    return amount >= HARMONIE_GTP.VitaminMedianOf(vit) and "IGUI_HARMONIE_VitHigh" or "IGUI_HARMONIE_VitLow"
+end
+local function txt(key, fallback)
+    local t = getText and getText(key)
+    if not t or t == key then return fallback end
+    return t
+end
+-- the word for a reader without the knowledge: the food has it
+function HARMONIE_GTP.VitaminHasText() return txt("IGUI_HARMONIE_VitHas", "Yes") end
+-- " (High)" / " (Low)" to put after an amount ("" = none)
+function HARMONIE_GTP.VitaminTag(vit, amount)
+    local w = HARMONIE_GTP.VitaminWord(vit, amount)
+    return w and (" (" .. w .. ")") or ""
+end
+function HARMONIE_GTP.VitaminWord(vit, amount)
+    local key = HARMONIE_GTP.VitaminWordKey(vit, amount)
+    if not key then return nil end
+    local t = getText and getText(key)
+    if not t or t == key then return key == "IGUI_HARMONIE_VitHigh" and "High" or "Low" end
+    return t
+end

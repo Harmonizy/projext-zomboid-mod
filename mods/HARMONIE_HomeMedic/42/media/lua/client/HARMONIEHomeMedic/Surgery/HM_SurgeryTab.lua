@@ -119,12 +119,26 @@ local function draw(panel)
     local rowH = fh(FONT_M) + fh() + 14
     local mx, my = panel:getLocalMousePosition()
     st.rows, st.tip = {}, nil
-    local y = top
+    -- 2026-10-25 (owner: the surgery tab spilled out of the window): the list
+    -- scrolls (wheel or the bar) and is clipped to the frame -- 10 rows do not
+    -- fit a short window, Thai lines are taller
+    local listH = math.max(rowH, b.y + b.h - 8 - top)
+    local maxScroll = math.max(0, #S.SURGERY_ORDER * rowH - 4 - listH)
+    if maxScroll > 0 then w = w - 8 end
+    st.scroll = math.max(0, math.min(maxScroll, st.scroll or 0))
+    st.list = { x = x, y = top, w = listW, h = listH, maxScroll = maxScroll, step = rowH }
+    if maxScroll > 0 and st.loggedFit ~= listH then
+        st.loggedFit = listH
+        HMLog("SurgeryTab", "the list scrolls: %d rows of %d px, %d px shown", #S.SURGERY_ORDER, rowH, listH)
+    end
+    local overList = inside(mx, my, x, top, w, listH)
+    panel:setStencilRect(x, top, w + 1, listH)
+    local y = top - st.scroll
     for _, sid in ipairs(S.SURGERY_ORDER) do
         local e = info[sid] or { parts = {} }
         local needed = #e.parts > 0
         local active = st.sid == sid
-        local hov = needed and inside(mx, my, x, y, w, rowH - 4)
+        local hov = needed and overList and inside(mx, my, x, y, w, rowH - 4)
         local bg = active and c.accentDark or c.panelSoft
         panel:drawRect(x, y, w, rowH - 4, active and 0.95 or (hov and 0.7 or 0.4), bg.r, bg.g, bg.b)
         local bd = active and c.accent or c.borderDim
@@ -145,11 +159,21 @@ local function draw(panel)
         elseif needed then state, sc = S.T("Tab_NeededLocked", "Needed - locked"), c.yellow
         else state, sc = S.T("Tab_NotNeeded", "Not needed now"), c.textDim end
         panel:drawText(S.fitText(state, x + w - 8 - tx, function(t) return tw(t) end), tx, y + 6 + fh(FONT_M), sc.r, sc.g, sc.b, 1, FONT)
-        if inside(mx, my, x, y, w, rowH - 4) then
+        if overList and inside(mx, my, x, y, w, rowH - 4) then
             st.tip = S.T("Tip_Surgery_" .. sid, "") .. "\n\n" .. S.targetsTip(sid)
         end
-        st.rows[#st.rows + 1] = { x = x, y = y, w = w, h = rowH - 4, sid = sid, needed = needed }
+        -- only the shown part of a row is clickable
+        local cy, ch = math.max(y, top), math.min(y + rowH - 4, top + listH) - math.max(y, top)
+        if ch > 0 then st.rows[#st.rows + 1] = { x = x, y = cy, w = w, h = ch, sid = sid, needed = needed } end
         y = y + rowH
+    end
+    panel:clearStencilRect()
+    if HARMONIE_Scroll then
+        HARMONIE_Scroll.bar(panel, "surgeryList", x + w + 2, top, 5, listH, st.scroll, maxScroll,
+            function(v) st.scroll = v end, { c.accent.r, c.accent.g, c.accent.b })
+    elseif maxScroll > 0 then
+        local barH = math.max(20, listH * listH / (listH + maxScroll))
+        panel:drawRect(x + w + 3, top + (listH - barH) * (st.scroll / maxScroll), 3, barH, 0.8, c.accent.r, c.accent.g, c.accent.b)
     end
     if not st.prep then
         local hint = S.T("Tab_Pick", "Pick an operation on the left. It opens when the patient needs it.")
@@ -187,6 +211,14 @@ EHR_HealthPanelUI.ExtraTabs.surgery = {
         draw(panel)
     end,
     render = tooltip,
+    wheel = function(panel, del)
+        local L = panel.hmSurg and panel.hmSurg.list
+        if not L or L.maxScroll <= 0 then return false end
+        local mx, my = panel:getLocalMousePosition()
+        if not inside(mx, my, L.x, L.y, L.w, L.h) then return false end
+        panel.hmSurg.scroll = math.max(0, math.min(L.maxScroll, (panel.hmSurg.scroll or 0) + del * L.step))
+        return true
+    end,
     mouseDown = function(panel, x, y)
         local st = panel.hmSurg
         for _, r in ipairs(st and st.rows or {}) do

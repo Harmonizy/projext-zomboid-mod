@@ -151,7 +151,20 @@ function LWS.petKind(pieceId)
     local c = LWS.PIECE[tostring(pieceId)]
     return c and c.pet and c.pet.kind or "dog"
 end
+-- 0.7.6: callers pass any character (OnWeaponHitCharacter gives zombies and
+-- players too). Calling getAnimalType on one of those logs an exception even
+-- inside pcall (on every client near the hit and the server), so: IsoAnimal
+-- only, and only when the method is there.
+function LWS.isAnimal(obj)
+    if obj == nil then return false end
+    if instanceof then
+        local ok, yes = pcall(instanceof, obj, "IsoAnimal")
+        if ok and not yes then return false end
+    end
+    return obj.getAnimalType ~= nil
+end
 function LWS.isPetAnimal(animal)
+    if not LWS.isAnimal(animal) then return false end
     local ok, t = pcall(function() return animal:getAnimalType() end)
     return ok and t ~= nil and tostring(t):sub(1, 7) == "lwspet_"
 end

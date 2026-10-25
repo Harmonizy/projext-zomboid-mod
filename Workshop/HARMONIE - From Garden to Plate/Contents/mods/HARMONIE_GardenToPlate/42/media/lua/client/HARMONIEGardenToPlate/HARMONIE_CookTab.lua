@@ -388,10 +388,16 @@ function Win:renderCookInfo(x, y, w, h, d, p)
             if H.knows(self.player) then
                 local vits = {}
                 for _, v in ipairs(VIT_ORDER) do
-                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, pv.vit[v], H.UNITS[v] or "") end
+                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, pv.vit[v], H.UNITS[v] or "") .. HARMONIE_GTP.VitaminTag(v, pv.vit[v]) end
                 end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
             else
+                -- 2026-10-25: which vitamins, "Yes" instead of the amounts
+                local vits = {}
+                for _, v in ipairs(VIT_ORDER) do
+                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = v .. " " .. HARMONIE_GTP.VitaminHasText() end
+                end
+                yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
                 yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewVitLocked", tostring(H.KNOW_COOKING)), tx, yy, tw2 - 10, C.textDim, sf) + 2
             end
             yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewNote"), tx, yy, tw2 - 10, C.textDim, sf)
@@ -560,10 +566,16 @@ function Win:renderCookRun(x, y, w, h, run)
                 string.format("%.0f", math.abs(tonumber(K.call(item, "getHungerChange")) or 0) * 100))
             local used = self:paragraphs(line, tx + 58, yy, tw2 - 68, C.text, sf)
             yy = yy + math.max(52, used) + 4
-            if H.knows(self.player) and HARMONIE_GTP.GetVitaminProfileForItem then
+            if HARMONIE_GTP.GetVitaminProfileForItem then
                 local prof = HARMONIE_GTP.GetVitaminProfileForItem(item) or {}
+                local knows = H.knows(self.player)
                 local vits = {}
-                for _, v in ipairs(VIT_ORDER) do if (prof[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "") end end
+                for _, v in ipairs(VIT_ORDER) do
+                    if (prof[v] or 0) > 0.05 then
+                        vits[#vits + 1] = knows and (string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "") .. HARMONIE_GTP.VitaminTag(v, prof[v]))
+                            or (v .. " " .. HARMONIE_GTP.VitaminHasText())
+                    end
+                end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 4
             end
             local cooked = K.call(item, "isCooked") == true
@@ -587,7 +599,8 @@ function Win:renderCookRun(x, y, w, h, run)
     if run.phase == "done" or run.phase == "failed" then
         self:cookButton(bx, by, T("IGUI_GTPC_NewDish"), true, function() F.clear(); log("cooking: back to the list") end)
     else
-        self:cookButton(bx, by, T("IGUI_GTPC_Cancel"), run.phase ~= "adding", function() F.cancel("button") end)
+        -- always enabled (owner, 2026-10-24: stuck while adding, could not cancel)
+        self:cookButton(bx, by, T("IGUI_GTPC_Cancel"), true, function() F.cancel("button") end)
     end
 end
 

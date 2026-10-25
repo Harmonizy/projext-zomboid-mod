@@ -38,8 +38,9 @@
 -- Reserve per serving, the richest-first order -- need the same knowledge
 -- as the food tooltip and the Vitamins tab's best-foods list: Cooking 3 or
 -- the Nutritionist trait (H.knows). Without it the lists are A-Z and the
--- table only marks which vitamins a food has. A search box filters both
--- lists by name.
+-- amounts read "Yes"; with it each amount has "(High)" / "(Low)" after it
+-- (2026-10-25, HARMONIE_GTP.VitaminTag). A
+-- search box filters both lists by name.
 --============================================================================
 
 require "ISUI/ISPanel"
@@ -695,8 +696,9 @@ function Win:renderVitamins(x, y, w, h)
             local tx = ix + itemH + 2
             local amount = H.fmt1(f.prof[v]) .. " " .. H.UNITS[v]
             local gain = "+" .. H.fmt1(H.reserveOf(v, f.prof[v]))
-            local right = knows and gain or ""
-            if knows then shadowText(self, right, ix + colW - tw(sf, right) - 4, yy + 1, C.accent, 1, sf) end
+            -- 2026-10-25: the gain and "(High)" / "(Low)"; without the knowledge only "Yes"
+            local right = knows and (gain .. HARMONIE_GTP.VitaminTag(v, f.prof[v])) or HARMONIE_GTP.VitaminHasText()
+            shadowText(self, right, ix + colW - tw(sf, right) - 4, yy + 1, C.accent, 1, sf)
             shadowText(self, fit(foodLabel(f), ix + colW - tw(sf, right) - 14 - tx, sf), tx, yy + 1, f.canned and C.warn or C.text, 1, sf)
             if knows then self:drawBar(tx, yy + lh + 2, colW - (tx - ix) - 8, 4, f.prof[v] / top, C.accent) end
             local r = { x = ix, y = yy, w = colW, h = itemH }
@@ -799,12 +801,14 @@ function Win:renderFoods(x, y, w, h)
                     local bx = cx + nameW + (j - 1) * colW
                     if knows then
                         self:drawRect(bx + 2, yy + 2, colW - 6, rowH - 4, 0.15 + 0.6 * math.min(1, g / maxBy[v]), C.accentDark[1] * 2, C.accentDark[2] * 2, C.accentDark[3] * 2)
-                        local s = H.fmt1(g)
+                        -- 2026-10-25: "(High)" / "(Low)" after the number when it fits
+                        local s = H.fmt1(g) .. HARMONIE_GTP.VitaminTag(v, amt)
+                        if tw(sf, s) > colW - 8 then s = H.fmt1(g) end
                         shadowText(self, s, bx + math.floor((colW - tw(sf, s)) / 2), yy + math.floor((rowH - fh(sf)) / 2), C.text, 1, sf)
                     else
-                        -- only "has it": a dot, no amount
-                        local d = math.max(6, math.floor(rowH / 3))
-                        self:drawRect(bx + math.floor((colW - d) / 2) - 2, yy + math.floor((rowH - d) / 2), d, d, 0.95, C.accent[1], C.accent[2], C.accent[3])
+                        -- 2026-10-25: "Yes" instead of the amount
+                        local s = fit(HARMONIE_GTP.VitaminHasText(), colW - 8, sf)
+                        shadowText(self, s, bx + math.floor((colW - tw(sf, s)) / 2), yy + math.floor((rowH - fh(sf)) / 2), C.accent, 1, sf)
                     end
                 end
             end
