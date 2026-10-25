@@ -4,7 +4,8 @@
     anyone with Cooking 3+ or vanilla's own "Nutritionist" trait
     (base:nutritionist -- its vanilla description is literally "Can see the
     nutritional values of any food", it just never had any actual
-    Lua/Java hook doing that until now).
+    Lua/Java hook doing that until now). 2026-10-25: everyone else sees the
+    same box with "High" / "Low" instead of the amounts.
 
     Technique note: an earlier version tried to hook ISToolTip:setDescription
     to append text into the vanilla tooltip's own description string. That
@@ -115,7 +116,7 @@ local function isPossiblyFood(item)
     return ok and isFood
 end
 
-local function buildVitaminLines(item)
+local function buildVitaminLines(item, knows)
     if not item or not isPossiblyFood(item) then return nil end
 
     -- A legitimately-crafted sealed jar carries its real vitamin content
@@ -130,15 +131,33 @@ local function buildVitaminLines(item)
     local rates = HARMONIE_GTP.GetVitaminRatePerHunger(item)
     if not rates then return nil end
 
-    local lines = {{ text = getText("IGUI_HARMONIE_TooltipHeader"), r = 1, g = 1, b = 1 }}
+    -- 2026-10-25: everyone sees the vitamins; without the knowledge
+    -- (Cooking 3 / Nutritionist) "High" / "Low" instead of the amount
+    -- (HARMONIE_GTP.VitaminWord: the item's amount against the median food)
+    local header = knows and getText("IGUI_HARMONIE_TooltipHeader")
+        or getText("IGUI_HARMONIE_TooltipHeaderWords", tostring(REQUIRED_COOKING_LEVEL))
+    local lines = {{ text = header, r = 1, g = 1, b = 1 }}
+    local profile = not knows and HARMONIE_GTP.GetVitaminProfileForItem(item) or nil
     for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
         if rates[vit] then
-            table.insert(lines, {
-                text = getText(VitaminLabel[vit]) .. ": " .. string.format("%.1f", rates[vit]) .. " " .. VitaminUnit[vit],
-                r = 0.55, g = 0.85, b = 0.6,
-            })
+            if knows then
+                table.insert(lines, {
+                    text = getText(VitaminLabel[vit]) .. ": " .. string.format("%.1f", rates[vit]) .. " " .. VitaminUnit[vit],
+                    r = 0.55, g = 0.85, b = 0.6,
+                })
+            else
+                local wkey = HARMONIE_GTP.VitaminWordKey and HARMONIE_GTP.VitaminWordKey(vit, profile and profile[vit])
+                if wkey then
+                    local high = wkey == "IGUI_HARMONIE_VitHigh"
+                    table.insert(lines, {
+                        text = getText(VitaminLabel[vit]) .. ": " .. HARMONIE_GTP.VitaminWord(vit, profile[vit]),
+                        r = high and 0.55 or 0.75, g = high and 0.95 or 0.75, b = high and 0.6 or 0.7,
+                    })
+                end
+            end
         end
     end
+    if #lines == 1 then return nil end
 
     -- No separate freshness/rot line: vanilla already tracks how stale
     -- an item is on its own (Fresh/Stale/Rotten, visible on the item
@@ -161,11 +180,11 @@ function ISToolTipInv:render()
     if not HARMONIE_VitaminTooltip.instance then return end
 
     local playerObj = getSpecificPlayer(0)
-    if not self.item or not playerObj or not playerCanSeeVitamins(playerObj) then
+    if not self.item or not playerObj then
         return
     end
 
-    local lines = buildVitaminLines(self.item)
+    local lines = buildVitaminLines(self.item, playerCanSeeVitamins(playerObj))
     if not lines then return end
 
     local box = HARMONIE_VitaminTooltip.instance

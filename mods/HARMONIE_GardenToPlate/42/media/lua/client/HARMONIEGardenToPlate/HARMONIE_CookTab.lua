@@ -392,6 +392,13 @@ function Win:renderCookInfo(x, y, w, h, d, p)
                 end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
             else
+                -- 2026-10-25: "High" / "Low" instead of the amounts
+                local vits = {}
+                for _, v in ipairs(VIT_ORDER) do
+                    local word = HARMONIE_GTP.VitaminWord and HARMONIE_GTP.VitaminWord(v, pv.vit[v])
+                    if word and (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = v .. " " .. word end
+                end
+                yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
                 yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewVitLocked", tostring(H.KNOW_COOKING)), tx, yy, tw2 - 10, C.textDim, sf) + 2
             end
             yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewNote"), tx, yy, tw2 - 10, C.textDim, sf)
@@ -560,10 +567,16 @@ function Win:renderCookRun(x, y, w, h, run)
                 string.format("%.0f", math.abs(tonumber(K.call(item, "getHungerChange")) or 0) * 100))
             local used = self:paragraphs(line, tx + 58, yy, tw2 - 68, C.text, sf)
             yy = yy + math.max(52, used) + 4
-            if H.knows(self.player) and HARMONIE_GTP.GetVitaminProfileForItem then
+            if HARMONIE_GTP.GetVitaminProfileForItem then
                 local prof = HARMONIE_GTP.GetVitaminProfileForItem(item) or {}
+                local knows = H.knows(self.player)
                 local vits = {}
-                for _, v in ipairs(VIT_ORDER) do if (prof[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "") end end
+                for _, v in ipairs(VIT_ORDER) do
+                    if (prof[v] or 0) > 0.05 then
+                        vits[#vits + 1] = knows and string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "")
+                            or (v .. " " .. (HARMONIE_GTP.VitaminWord(v, prof[v]) or ""))
+                    end
+                end
                 yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 4
             end
             local cooked = K.call(item, "isCooked") == true
