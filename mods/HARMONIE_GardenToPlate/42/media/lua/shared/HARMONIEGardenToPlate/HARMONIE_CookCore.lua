@@ -487,8 +487,11 @@ function K.plan(player, dish, scan)
     -- locked until then (dish.level). A step's own level stays a suggestion
     -- (K.difficulty: harder below it) -- 16 dishes have a step above their
     -- own level, and locking those would make an unlocked dish unmakeable.
-    p.locked = level < (dish.level or 0)
-    if p.locked then no("level") end
+    -- 0.13.17 (owner, 2026-10-25: "ปลดล็อคให้ทุกคนสามารถทำอาหารได้ทุกประเภท แต่
+    -- ยิ่งระดับสูงอาจยิ่งกรรมวิธียากขึ้น"): no lock any more -- below the
+    -- dish's level every step is harder (K.difficulty), p.hard says so
+    p.locked = false
+    p.hard = level < (dish.level or 0)
     if not recipe then no("base") end
     local maxItems = recipe and K.maxItems(recipe) or nil
     if not maxItems then maxItems = K.baseNeed(dish.family).max end
@@ -572,7 +575,7 @@ function K.plan(player, dish, scan)
     for _, pid in ipairs(dish.procs) do
         local proc = K.PROCS[pid]
         local pp = { id = pid, proc = proc, ok = true, tools = {}, help = {} }
-        pp.levelLow = level < (proc.level or 0)
+        pp.levelLow = level < math.max(proc.level or 0, dish.level or 0)
         -- 0.13.2 (owner: "กรรมวิธีทำอาหารบางอันควรต้องการให้มีเตาหรือกองไฟใน
         -- ระยะถึงจะทำได้"): a hot step needs a stove, fire or grill in reach
         if proc.heat then
@@ -596,12 +599,15 @@ function K.plan(player, dish, scan)
 end
 
 -- how hard a step is for this player: 0 (easy) .. 1 (hard)
-function K.difficulty(player, pp)
+-- 0.13.17 (owner: "การมีเลเวล cooking สูงให้มีผลกับความยากง่ายของเกมเพิ่มขึ้นอย่างมี
+-- นัยยะ"): 0.85 at level 0 down to 0.15 at level 10; below the step's or the
+-- dish's level 0.06 harder per level missing
+function K.difficulty(player, pp, dish)
     local lvl = K.level(player)
-    local d = 0.75 - lvl * 0.06
-    -- below a step's suggested level it is harder still (0.13.2)
-    local below = math.max(0, ((pp.proc and pp.proc.level) or 0) - lvl)
-    d = d + below * 0.05
+    local d = 0.85 - lvl * 0.07
+    local want = math.max((pp.proc and pp.proc.level) or 0, (dish and dish.level) or 0)
+    local below = math.max(0, want - lvl)
+    d = d + below * 0.06
     -- a good tool keeps it as it is, an ok one a little harder, a makeshift
     -- one or bare hands clearly harder
     for _, t in ipairs(pp.tools or {}) do d = d + (K.GRADE_COST[t.grade] or 0) end
@@ -609,6 +615,13 @@ function K.difficulty(player, pp)
     return math.max(0.05, math.min(1, d))
 end
 K.GRADE_COST = { best = 0, ok = 0.06, makeshift = 0.15, bare = 0.2 }
+
+-- 0.13.17: the Cooking level also makes a slip cost less quality (-6% per
+-- level, down to 40% of it at 10) and gives more time (+6% per level)
+function K.levelEase(lvl)
+    lvl = math.max(0, math.min(10, tonumber(lvl) or 0))
+    return { slip = math.max(0.4, 1 - 0.06 * lvl), time = 1 + 0.06 * lvl }
+end
 
 -- what the minigame draws at the mouse: the real item in use
 local function firstAdd(plan, spice)
@@ -725,10 +738,9 @@ function K.serveQuality(player, args)
         log("quality from %s for unknown dish %s -- rejected", tostring(call(player, "getUsername")), tostring(args.dish))
         return nil
     end
-    -- 0.13.5: a locked recipe again (the server's own copy of the level)
+    -- 0.13.17: no recipe lock any more (0.13.5's check removed) -- logged only
     if K.level(player) < (dish.level or 0) then
-        log("quality from %s for %s rejected: Cooking %d, the recipe unlocks at %d", tostring(call(player, "getUsername")), dish.id, K.level(player), dish.level or 0)
-        return nil
+        log("quality from %s for %s: Cooking %d, below the dish's level %d (harder steps, allowed)", tostring(call(player, "getUsername")), dish.id, K.level(player), dish.level or 0)
     end
     -- 0.13.2: the hot steps (toss / flip / steep) were checked for a heat
     -- source on the client; the server looks too but only LOGS a miss --

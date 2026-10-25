@@ -193,7 +193,7 @@ function Win:renderCookBrowse(x, y, w, h, plans)
     for _, d in ipairs(K.DISHES) do
         local p = plans[d.id]
         local name = dishName(d)
-        if (q == "" or name:lower():find(q, 1, true)) and (f ~= "ready" or (p and p.ready)) and (f ~= "known" or not (p and p.locked))
+        if (q == "" or name:lower():find(q, 1, true)) and (f ~= "ready" or (p and p.ready)) and (f ~= "known" or not (p and p.hard))
             and (not self.cookFam or self.cookFam == d.family) then
             shown[#shown + 1] = d
         end
@@ -207,7 +207,8 @@ function Win:renderCookBrowse(x, y, w, h, plans)
         for _, d in ipairs(shown) do
             local p = plans[d.id]
             local ready = p and p.ready
-            local lock = p and p.locked
+            local lock = false
+            local hard = p and p.hard
             local r = { x = lx, y = yy, w = lw - 10, h = rowH }
             local over = inside(r, mx, my) and inside(self.scrollBox and self.scrollBox.cookList, mx, my)
             local stateCol = lock and C.bad or (ready and C.good or C.warn)
@@ -222,12 +223,12 @@ function Win:renderCookBrowse(x, y, w, h, plans)
             local tx = r.x + 10 + isz + 10
             local textMax = r.x + r.w - 10 - tx
             local l1 = fit(dishName(d), textMax, sf)
-            local l2 = fit(T("IGUI_GTPC_Family_" .. d.family) .. "  -  " .. T(lock and "IGUI_GTPC_UnlocksAt" or "IGUI_GTPC_LevelShort", tostring(d.level or 0)), textMax, sf)
+            local l2 = fit(T("IGUI_GTPC_Family_" .. d.family) .. "  -  " .. T(hard and "IGUI_GTPC_HardShort" or "IGUI_GTPC_LevelShort", tostring(d.level or 0)), textMax, sf)
             local l3 = fit(lock and T("IGUI_GTPC_LockedShort", tostring(d.level or 0), tostring(p.level))
                 or (ready and T("IGUI_GTPC_CanMake") or T("IGUI_GTPC_Why_" .. tostring(p and p.reasons[1] or "ingredients"))), textMax, sf)
             local ty0 = r.y + math.floor((rowH - lh * 3) / 2)
             shadowText(self, l1, tx, ty0, lock and C.textDim or C.text, 1, sf)
-            shadowText(self, l2, tx, ty0 + lh, C.textDim, 1, sf)
+            shadowText(self, l2, tx, ty0 + lh, hard and C.warn or C.textDim, 1, sf)
             shadowText(self, l3, tx, ty0 + lh * 2, stateCol, 1, sf)
             -- the steps, right-aligned after the widest line (as many as fit)
             local widest = math.max(tw(sf, l1), tw(sf, l2), tw(sf, l3), 120)
@@ -316,13 +317,16 @@ function Win:renderCookInfo(x, y, w, h, d, p)
         end
         -- suggested level (never a lock: below it the steps are harder)
         local lvl = p and p.level or 0
-        if p and p.locked then
-            -- shown in full, but it cannot be started yet
-            padlock(self, tx, yy + 2, 14, C.bad)
-            yy = yy + self:paragraphs(T("IGUI_GTPC_Locked", tostring(d.level or 0), tostring(lvl)), tx + 22, yy, tw2 - 32, C.bad, sf) + 4
+        if p and p.hard then
+            -- 0.13.17: open to everyone, every step harder below its level
+            yy = yy + self:paragraphs(T("IGUI_GTPC_HardDish", tostring(d.level or 0), tostring(lvl)), tx, yy, tw2 - 10, C.warn, sf) + 4
         else
             yy = yy + self:paragraphs(T("IGUI_GTPC_NeedLevel", tostring(d.level or 0), tostring(lvl)), tx, yy, tw2 - 10, C.good, sf) + 4
         end
+        -- what the Cooking level does in the minigames
+        local ease = K.levelEase(lvl)
+        yy = yy + self:paragraphs(T("IGUI_GTPC_LevelEase", tostring(lvl), string.format("%.0f", (1 - ease.slip) * 100),
+            string.format("%.0f", (ease.time - 1) * 100)), tx, yy, tw2 - 10, C.textDim, sf) + 4
         -- base
         if p and p.base then
             local what = K.typeOf(p.base)
@@ -547,6 +551,8 @@ function Win:renderCookRun(x, y, w, h, run)
     end
     if run.phase == "failed" then
         yy = yy + self:paragraphs(T("IGUI_GTPC_Failed_" .. tostring(run.failReason or "ingredients")), tx, yy, tw2 - 10, C.bad, sf) + 6
+        if run.failWhy then yy = yy + self:paragraphs(T("IGUI_GTPC_Why_" .. tostring(run.failWhy)), tx, yy, tw2 - 10, C.warn, sf) + 6 end
+        yy = yy + self:paragraphs(T("IGUI_GTPC_RetryHint"), tx, yy, tw2 - 10, C.textDim, sf) + 6
     end
     if run.phase == "blocked" then
         yy = yy + self:paragraphs(T("IGUI_GTPC_Why_" .. tostring(run.blockedBy or "tools")), tx, yy, tw2 - 10, C.bad, sf) + 6
@@ -596,6 +602,10 @@ function Win:renderCookRun(x, y, w, h, run)
     if run.phase == "retry" or run.phase == "paused" or run.phase == "blocked" then
         bx = bx + self:cookButton(bx, by, T(run.phase == "retry" and "IGUI_GTPC_Retry" or "IGUI_GTPC_Continue"), true, function() F.retry() end) + 8
     end
+    -- 2026-10-25: a failed dish can be tried again, its steps kept
+    if run.phase == "failed" then
+        bx = bx + self:cookButton(bx, by, T("IGUI_GTPC_RetryFailed"), true, function() F.retryFailed() end) + 8
+    end
     if run.phase == "done" or run.phase == "failed" then
         self:cookButton(bx, by, T("IGUI_GTPC_NewDish"), true, function() F.clear(); log("cooking: back to the list") end)
     else
@@ -619,7 +629,8 @@ if Events and Events.LevelPerk then
         for _, d in ipairs(K.DISHES) do
             if (d.level or 0) == level then n = n + 1; if #names < 3 then names[#names + 1] = T("IGUI_GTPC_Dish_" .. d.id) end end
         end
-        log("Cooking level %d: %d recipes unlocked (%s)", level, n, table.concat(names, ", "))
+        log("Cooking level %d: %d recipes now at the cook's level (%s)", level, n, table.concat(names, ", "))
+        -- 0.13.17: nothing is locked; these are now at the cook's level
         if n > 0 and HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(chr, "Unlock") end
         if n > 0 and HaloTextHelper then
             local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
