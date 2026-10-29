@@ -222,6 +222,14 @@ function ISToolTipInv:render()
     origRender(self)
     if not self.item then return end
     local item = self.item
+    -- 2026-10-29: other inventory mods (Inventory Tetris Grand Master's
+    -- StackTooltips) render this tooltip with self.item set to something
+    -- that is not an InventoryItem (a stack). Calling a method it does not
+    -- have logs an error even inside pcall, every frame: real items only.
+    if not (instanceof and instanceof(item, "InventoryItem")) or not item.getFullType then
+        if TWALogOnce then TWALogOnce("tiertip:notitem", "TierTooltip", "a tooltip came with something that is not an item (%s) -- skipped", type(item)) end
+        return
+    end
     local ok, fullType = pcall(function() return item:getFullType() end)
     if not ok or not fullType then return end
 
