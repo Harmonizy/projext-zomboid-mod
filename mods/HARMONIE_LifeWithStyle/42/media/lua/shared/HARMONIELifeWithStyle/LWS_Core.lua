@@ -144,8 +144,8 @@ LWS.PET_IDLE_VARS = { "lwsIdle2", "lwsIdle3", "lwsSniff" }
 LWS.CAT_GROOM_VARS = { "lwsSitGroom", "lwsSitGroom2" }
 -- what a pet says, by kind (sounds: tools/import_pets.py)
 LWS.PET_VOICE = {
-    dog = { speak = "LWSPetBark", hungry = "LWSPetWhine", eat = "LWSPetEat", happy = "LWSPetHappy" },
-    cat = { speak = "LWSPetMeow", hungry = "LWSPetMeow", eat = "LWSPetPurr", happy = "LWSPetPurr" },
+    dog = { speak = "LWSPetBark", hungry = "LWSPetWhine", eat = "LWSPetEat", happy = "LWSPetHappy", scared = "LWSPetWhine" },
+    cat = { speak = "LWSPetMeow", hungry = "LWSPetMeow", eat = "LWSPetPurr", happy = "LWSPetPurr", scared = "LWSPetHiss" },
 }
 function LWS.petKind(pieceId)
     local c = LWS.PIECE[tostring(pieceId)]

@@ -17,5 +17,9 @@
     "Sandbox_LifeWithStyle_PetSounds_tooltip": "Barks, whines and eating sounds. Pets never draw zombies.",
     "Sandbox_LifeWithStyle_PetTeleportDistance": "Bring-back distance (tiles)",
     "Sandbox_LifeWithStyle_PetTeleportDistance_tooltip": "A following pet farther than this comes straight to its owner (a staying pet: twice this).",
+    "Sandbox_LifeWithStyle_PetZombieFear": "Pets fear zombies",
+    "Sandbox_LifeWithStyle_PetZombieFear_tooltip": "A zombie close by: the pet cries, runs off, waits at a safe distance and comes back when the zombies are gone. Calling it (Come here) brings it at once. Off: pets ignore zombies.",
+    "Sandbox_LifeWithStyle_PetFearRange": "Zombie fear distance (tiles)",
+    "Sandbox_LifeWithStyle_PetFearRange_tooltip": "A zombie this close to the pet scares it.",
     "Sandbox_LifeWithStyle_TradeMaxDistance_tooltip": "How close two players must be to trade. 0 = anywhere on the server."
 }
