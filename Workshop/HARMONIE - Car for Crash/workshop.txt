@@ -11,4 +11,4 @@ description=English and Thai built in.
 description=
 description=Mod ID: HARMONIE_SVU3Sandbox (formerly "HARMONIE - SVU3 Sandbox": same mod, same ID, new name)
 tags=Build 42;Balance;Realistic;Vehicles
-visibility=public
+visibility=public 
