@@ -89,6 +89,11 @@
   LWS 0.7.5 called `target:getAnimalType()` on zombies: an exception on every
   zombie hit for everyone near it (LWS 0.7.6). Animal checks go through
   `LWS.isAnimal` / `LWS.isPetAnimal` (`instanceof(o, "IsoAnimal")` + method test).
+- `ISToolTipInv:render()` hooks: other inventory mods render the tooltip with
+  `self.item` that is NOT an InventoryItem (Inventory Tetris Grand Master's
+  StackTooltips: a stack). `item:getFullType()` on it logs every frame (TWA
+  0.73.4). Check `instanceof(item, "InventoryItem")` / `instanceof(item,
+  "Food" | "HandWeapon")` before any method call.
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).
