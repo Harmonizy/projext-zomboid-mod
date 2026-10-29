@@ -51,6 +51,7 @@ P.IDLE_MIN_MS, P.IDLE_MAX_MS = 12000, 25000   -- a standing pet does something n
 local DEFAULTS = {
     PetsEnabled = true, PetCommands = true, PetFeeding = true, PetHunger = true,
     PetHungerHours = 72, PetSounds = true, PetTeleportDistance = 25,
+    PetZombieFear = true, PetFearRange = 7,
 }
 function P.sv(name)
     local sv = SandboxVars and SandboxVars.LifeWithStyle
@@ -406,6 +407,179 @@ function P.arrive(rec, owner, dd, why)
     log("%s: %s waits by its owner (%.1f tiles, %s)", LWS.name(owner), rec.piece, dd, why)
 end
 
+-- 0.7.8 (owner, 2026-10-29: "เวลามีซอมบี้อยู่ใกล้ให้มีพฤติกรรมเหมือนตอนโดนปืนยิง ที่มี
+-- การร้องและวิ่งหนีไป แล้วให้ไปนั่งรอที่ห่างๆจนกว่าซอมบี้จะหายไปค่อยกลับมามีพฤติกรรม
+-- ปกติ"): a zombie within PetFearRange of the pet -> it cries (its pain
+-- voice), runs FLEE_DIST tiles away from the zombies, sits there, runs
+-- again if one comes close, and when no zombie has been within the range
+-- + CALM_EXTRA for CALM_MS it comes back (a staying pet to its spot).
+-- Shots alone still do not scare it (0.7.5). Called "Come" = brave a moment.
+P.FEAR_SCAN_MS = 1000
+P.FLEE_DIST = 12
+P.CALM_EXTRA = 5
+P.CALM_MS = 10000
+P.REFLEE_MS = 3000
+P.FEAR_VOICE_MS = 6000
+P.BRAVE_MS = 8000
+
+function P.fearRange() return math.max(2, tonumber(P.sv("PetFearRange")) or 7) end
+
+-- zombies (alive, same floor) within `range` of the animal: count, centre, nearest
+function P.zombiesNear(animal, range)
+    local cell = getCell and getCell()
+    local list = cell and cell.getZombieList and cell:getZombieList()
+    if not list then return 0 end
+    local ax, ay, az = animal:getX(), animal:getY(), math.floor(animal:getZ())
+    local r2 = range * range
+    local n, sx, sy, best = 0, 0, 0, nil
+    for i = 0, list:size() - 1 do
+        local z = list:get(i)
+        if z and not z:isDead() and math.floor(z:getZ()) == az then
+            local dx, dy = z:getX() - ax, z:getY() - ay
+            local dsq = dx * dx + dy * dy
+            if dsq <= r2 then
+                n, sx, sy = n + 1, sx + z:getX(), sy + z:getY()
+                if not best or dsq < best then best = dsq end
+            end
+        end
+    end
+    if n == 0 then return 0 end
+    return n, sx / n, sy / n, math.sqrt(best)
+end
+
+-- a path to a spot: the animal's own pathToLocation, else its PathFindBehavior2
+function P.pathToXY(rec, x, y, z)
+    local a = rec.animal
+    P.unblock(rec)
+    local how
+    local ok, err = pcall(function()
+        if a.pathToLocation then
+            a:pathToLocation(x, y, z); how = "pathToLocation"
+        else
+            local pf = a.getPathFindBehavior2 and a:getPathFindBehavior2()
+            if pf and pf.pathToLocation then pf:pathToLocation(x, y, z); how = "PathFindBehavior2" end
+        end
+        if how then a:setVariable("bPathfind", true) end
+    end)
+    if not ok then LWS.logOnce("pathxyerr", "Pets", "path to a spot FAILED: %s", tostring(err)) end
+    LWS.logOnce("pathxy:" .. tostring(how), "Pets", "pets walk to a spot with %s", how or "NOTHING (no path-to-location method on the animal)")
+    return how ~= nil
+end
+
+local function dryAt(x, y, z)
+    local cell = getCell and getCell()
+    local sq = cell and cell:getGridSquare(math.floor(x), math.floor(y), z)
+    if not sq then return false end
+    local ok, water = pcall(function() return sq:isWaterSquare() end)
+    return not (ok and water)
+end
+
+-- run away from the zombies' centre (a few angles tried for a dry square)
+function P.flee(rec, A, owner)
+    local a = rec.animal
+    local ax, ay, z = a:getX(), a:getY(), math.floor(a:getZ())
+    local vx, vy = ax - (rec.zcx or ax), ay - (rec.zcy or ay)
+    if vx * vx + vy * vy < 0.01 then vx, vy = ax - owner:getX() + 0.5, ay - owner:getY() + 0.3 end
+    local len = math.sqrt(vx * vx + vy * vy)
+    vx, vy = vx / len, vy / len
+    for _, deg in ipairs({ 0, 30, -30, 60, -60, 90, -90, 135, -135 }) do
+        local r = math.rad(deg)
+        local dx, dy = vx * math.cos(r) - vy * math.sin(r), vx * math.sin(r) + vy * math.cos(r)
+        local tx, ty = ax + dx * P.FLEE_DIST, ay + dy * P.FLEE_DIST
+        if dryAt(tx, ty, z) then
+            A.target, A.fleeAt, A.sitting = { x = tx, y = ty }, now(), false
+            P.animTick(rec, true)
+            pcall(function()
+                a:setVariable("animalRunning", true)
+                a:setVariable("animalSpeed", LWS.PET_RUN_SPEED)
+            end)
+            rec.run = true
+            P.pathToXY(rec, math.floor(tx), math.floor(ty), z)
+            return true
+        end
+    end
+    LWS.logOnce("fleenowhere:" .. tostring(rec.piece), "Pets", "%s found nowhere dry to run to -- it waits where it is", tostring(rec.piece))
+    A.target, A.fleeAt = { x = ax, y = ay }, now()
+    return false
+end
+
+-- true = scared this tick (the normal follow / stay logic waits)
+function P.fearTick(key, rec, owner, d, dd, far)
+    local t = now()
+    if not P.sv("PetZombieFear") or (rec.braveUntil and t < rec.braveUntil) then
+        if rec.afraid then rec.afraid = nil; P.unblock(rec) end
+        return false
+    end
+    local animal = rec.animal
+    local range = P.fearRange()
+    local A = rec.afraid
+    if not rec.scanAt or t - rec.scanAt >= P.FEAR_SCAN_MS then
+        rec.scanAt = t
+        local n, cx, cy, nearest = P.zombiesNear(animal, A and (range + P.CALM_EXTRA) or range)
+        rec.zn, rec.zcx, rec.zcy, rec.znear = n, cx, cy, nearest
+        if n > 0 then rec.zSeenAt = t end
+    end
+    if not A then
+        if (rec.zn or 0) == 0 then return false end
+        A = { since = t, stay = d.mode == "stay", stayX = rec.stayX, stayY = rec.stayY }
+        rec.afraid = A
+        rec.following = false
+        rec.returning = nil
+        P.voice(rec, "scared")
+        A.voiceAt = t
+        log("%s: %s is scared of %d zombie(s) (nearest %.1f tiles) -- it runs off", LWS.name(owner), rec.piece, rec.zn, rec.znear or 0)
+        P.flee(rec, A, owner)
+        return true
+    end
+    -- the owner went far away meanwhile: forget the fear, the bring-back takes over
+    if dd > far * 1.5 then
+        rec.afraid = nil
+        log("%s: %s was scared but its owner is %.0f tiles away -- brought back", LWS.name(owner), rec.piece, dd)
+        return false
+    end
+    -- calm again
+    if t - (rec.zSeenAt or 0) >= P.CALM_MS then
+        rec.afraid = nil
+        log("%s: %s calms down (no zombie near for %d s, scared %d s)", LWS.name(owner), rec.piece,
+            math.floor(P.CALM_MS / 1000), math.floor((t - A.since) / 1000))
+        P.animTick(rec, true)
+        if A.stay and d.mode == "stay" and A.stayX then
+            rec.stayX, rec.stayY = A.stayX, A.stayY
+            rec.returning = t
+            P.pathToXY(rec, math.floor(A.stayX), math.floor(A.stayY), math.floor(animal:getZ()))
+        else
+            P.startFollow(rec)
+        end
+        return false
+    end
+    if (rec.zn or 0) > 0 and t - (A.voiceAt or 0) >= P.FEAR_VOICE_MS then
+        A.voiceAt = t
+        P.voice(rec, "scared")
+    end
+    -- at the safe spot: sit and wait
+    if A.target and not A.sitting then
+        local tx, ty = A.target.x - animal:getX(), A.target.y - animal:getY()
+        if tx * tx + ty * ty < 2.25 or t - (A.fleeAt or t) > 15000 then
+            A.sitting = true
+            P.stop(rec)
+            rec.stillSince, rec.idleAt = t, nil
+            log("%s: %s waits at a safe spot (%.0f tiles from its owner)", LWS.name(owner), rec.piece, dd)
+        end
+    end
+    -- a zombie came close again: run again
+    if rec.znear and rec.znear < range and (A.sitting or t - (A.fleeAt or 0) >= P.REFLEE_MS) then
+        log("%s: a zombie came close again (%.1f tiles) -- %s runs again", LWS.name(owner), rec.znear, rec.piece)
+        P.voice(rec, "scared")
+        A.voiceAt = t
+        P.flee(rec, A, owner)
+    end
+    if A.sitting then
+        P.animTick(rec, false)
+        P.idleTick(rec, P.WAITING)
+    end
+    return true
+end
+
 function P.step(key, rec, owner)
     local animal = rec.animal
     -- nothing hurts it (zombies, players, falls, shots): health stays full,
@@ -420,7 +594,15 @@ function P.step(key, rec, owner)
     local far = math.max(6, tonumber(P.sv("PetTeleportDistance")) or 25)
     local dd = dist(animal, owner)
     local dz = math.abs(math.floor(animal:getZ()) - math.floor(owner:getZ()))
+    if P.fearTick(key, rec, owner, d, dd, far) then return end
     if d.mode == "stay" then
+        -- back from a scare: walking to its spot (the drift stop waits)
+        if rec.returning and rec.stayX then
+            local rx, ry = animal:getX() - rec.stayX, animal:getY() - rec.stayY
+            if rx * rx + ry * ry > 2.25 and now() - rec.returning < 20000 then return end
+            rec.returning = nil
+            P.stop(rec)
+        end
         P.animTick(rec, false)
         P.idleTick(rec, d)
         -- it ran from where it was told to stay (a shot, a zombie): stop it there
@@ -619,6 +801,10 @@ function P.handle(player, command, args)
         elseif command == "PetCome" then
             d.mode = "follow"
             rec.pathAt = now()
+            -- called: it comes even when scared, and is brave a moment
+            if rec.afraid then log("%s: %s is called while scared -- it comes", LWS.name(player), rec.piece) end
+            rec.afraid = nil
+            rec.braveUntil = now() + P.BRAVE_MS
             P.startFollow(rec)   -- comes over even when the owner is close
             local ok, err = pcall(pathTo, rec.animal, player)
             log("%s calls %s%s", LWS.name(player), rec.piece, ok and "" or (" -- path FAILED: " .. tostring(err)))

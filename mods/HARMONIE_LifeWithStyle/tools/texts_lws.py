@@ -245,6 +245,10 @@ SANDBOX = {
  "Sandbox_LifeWithStyle_PetSounds_tooltip": ("Barks, whines and eating sounds. Pets never draw zombies.", "เสียงเห่า ครางหงิง และเสียงกิน สัตว์เลี้ยงไม่เรียกซอมบี้"),
  "Sandbox_LifeWithStyle_PetTeleportDistance": ("Bring-back distance (tiles)", "ระยะที่สัตว์เลี้ยงจะกลับมาหา (ช่อง)"),
  "Sandbox_LifeWithStyle_PetTeleportDistance_tooltip": ("A following pet farther than this comes straight to its owner (a staying pet: twice this).", "สัตว์เลี้ยงที่เดินตามและอยู่ไกลกว่านี้จะมาหาเจ้าของทันที (ที่สั่งให้รอ: สองเท่าของระยะนี้)"),
+ "Sandbox_LifeWithStyle_PetZombieFear": ("Pets fear zombies", "สัตว์เลี้ยงกลัวซอมบี้"),
+ "Sandbox_LifeWithStyle_PetZombieFear_tooltip": ("A zombie close by: the pet cries, runs off, waits at a safe distance and comes back when the zombies are gone. Calling it (Come here) brings it at once. Off: pets ignore zombies.", "มีซอมบี้อยู่ใกล้: สัตว์เลี้ยงจะร้อง วิ่งหนี ไปนั่งรอในที่ห่างๆ แล้วกลับมาเมื่อซอมบี้ไปแล้ว สั่ง มานี่ ได้ทันที ปิด: สัตว์เลี้ยงไม่สนซอมบี้"),
+ "Sandbox_LifeWithStyle_PetFearRange": ("Zombie fear distance (tiles)", "ระยะที่สัตว์เลี้ยงกลัวซอมบี้ (ช่อง)"),
+ "Sandbox_LifeWithStyle_PetFearRange_tooltip": ("A zombie this close to the pet scares it.", "ซอมบี้ที่อยู่ใกล้สัตว์เลี้ยงภายในระยะนี้จะทำให้มันกลัว"),
  "Sandbox_LifeWithStyle_TradeMaxDistance_tooltip": ("How close two players must be to trade. 0 = anywhere on the server.", "ผู้เล่นสองคนต้องอยู่ใกล้กันแค่ไหนจึงจะแลกได้ 0 = ที่ไหนก็ได้ในเซิร์ฟเวอร์"),
 }
 for i, lang in enumerate(("EN", "TH")):

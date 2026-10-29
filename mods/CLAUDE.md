@@ -182,7 +182,14 @@
   than `P.FOLLOW_FROM`, then FOLLOWING until within `P.REST_NEAR`; a follower
   that makes no progress waits when close (and its follow line moves out,
   `rec.waitFrom`, so it never flips back at once) or is brought over when
-  far. The MP client shows the walk only above `C.WALK_MIN_SPEED`. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  far. The MP client shows the walk only above `C.WALK_MIN_SPEED`. Zombie fear (0.7.8, `P.fearTick`, sandbox PetZombieFear /
+  PetFearRange): a zombie within the range -> pain voice (`scared` in
+  `LWS.PET_VOICE`), runs `P.FLEE_DIST` away from the zombies' centre
+  (`P.pathToXY`: the animal's pathToLocation, else PathFindBehavior2 -- the
+  console says which), sits, runs again if one comes close; calm after
+  `P.CALM_MS` without a zombie within range + `P.CALM_EXTRA` (a staying pet
+  walks back to its spot, `rec.returning`). "Come" = brave for `P.BRAVE_MS`.
+  Gunshots alone still do not scare it. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
