@@ -207,6 +207,11 @@
   expect) in body location `lws:gacha_guardian`, worn by the server while
   Guardian / Compound-V runs. Buffs end on death. Client: XP hook, capsule
   runtime, buff tray (`client/.../LWS_GachaClient.lua`).
+- Discord gacha (0.7.9, the owner's file, `server/.../LWS_DiscordGachaBridge.lua`):
+  the KnoxCoin bot writes `RWZ_GachaDeliveryInbox.txt` (Zomboid/Lua, SFTP);
+  the server grants each new roll id (gacha item or pet piece) and writes
+  `RWZ_GachaDeliveryReceipts.txt`; seen ids live in `HARMONIE_LWS`.discordGacha.
+  Its owner key is `"u:" .. username` -- keep `LWS.ownerKey` in step with it.
 - Give tab (tab id "admin", 0.7.1): `LWS.isAdmin` = -debug or the access level
   (`LWS.hasAdminAccess`); single player without -debug is NOT an admin. A MP
   client's own -debug shows the tab but the server trusts only the access level
