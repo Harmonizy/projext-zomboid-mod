@@ -184,6 +184,7 @@
     "IGUI_LWS_PetOrders": "Orders",
     "IGUI_LWS_PetSomeone": "someone's pet",
     "IGUI_LWS_PetTooFar": "Your pet is not near you.",
+    "IGUI_LWS_PetDidNotCome": "My pet did not come.",
     "IGUI_LWS_PetFoodWhat": "What can it eat?",
     "IGUI_LWS_PetFoodInfo": "Dog food (canned, open can, dry bag) and dry cat food fill a pet up completely. Any other food you carry works too, filling it by how filling that food is (bread, meat, a can of beans...). Rotten or poisoned food is refused. One item at a time; the pet must be out.",
     "IGUI_LWS_PetFeed": "Feed",

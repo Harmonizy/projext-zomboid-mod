@@ -115,6 +115,59 @@ function PM.pet(player, animal)
     end
 end
 
+-- ------------------------------------------------------------- come first, then act
+-- 0.7.11 (owner, 2026-11-06: "คลิกขวาที่สัตว์เลี้ยงแล้วไม่มี action สัตว์เลี้ยงขึ้นมา ...
+-- คลิกขวาที่พื้นให้สัตว์เลี้ยงวิ่งมาหาในจุดที่ทำ action ได้ แล้วค่อยทำ action"): the
+-- small animal is easy to miss with the mouse, so every action works from
+-- the ground menu: the pet is called over (PetCome), and the action starts
+-- once it is within COME_NEAR tiles (or at once when it already is).
+PM.COME_NEAR = 3
+PM.COME_WAIT_MS = 15000
+local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
+local function distTo(a, p)
+    local ok, d = pcall(function()
+        local dx, dy = a:getX() - p:getX(), a:getY() - p:getY()
+        return math.sqrt(dx * dx + dy * dy)
+    end)
+    return ok and d or 999
+end
+
+function PM.comeThen(player, what, fn)
+    local a = PM.myAnimal()
+    if a and distTo(a, player) <= PM.COME_NEAR then
+        log("menu: %s (the pet is already here)", what)
+        fn(player, a)
+        return
+    end
+    local pet = C.pet or {}
+    if pet.commands == false then
+        -- orders are off in sandbox: walk to it instead (if it is loaded)
+        log("menu: %s -- orders are off, walking to the pet", what)
+        if a then fn(player, a) else C.say(T("IGUI_LWS_PetTooFar")) end
+        return
+    end
+    C.petCome()
+    PM.pending = { player = player, what = what, fn = fn, untilMs = nowMs() + PM.COME_WAIT_MS }
+    log("menu: %s -- the pet is called over first", what)
+    C.say(T("IGUI_LWS_PetComing"))
+end
+
+function PM.pendingTick()
+    local pd = PM.pending
+    if not pd then return end
+    local a = PM.myAnimal()
+    if a and distTo(a, pd.player) <= PM.COME_NEAR then
+        PM.pending = nil
+        log("menu: the pet came -- %s now", pd.what)
+        local ok, err = pcall(pd.fn, pd.player, a)
+        if not ok then log("menu: %s FAILED: %s", pd.what, tostring(err)) end
+    elseif nowMs() > pd.untilMs then
+        PM.pending = nil
+        log("menu: the pet did not come within %d s -- %s cancelled", math.floor(PM.COME_WAIT_MS / 1000), pd.what)
+        C.say(T("IGUI_LWS_PetDidNotCome"))
+    end
+end
+
 -- ------------------------------------------------------------- the menu
 local function tip(text)
     local t = ISWorldObjectContextMenu and ISWorldObjectContextMenu.addToolTip and ISWorldObjectContextMenu.addToolTip()
@@ -126,9 +179,14 @@ end
 -- context: the menu; player; animal: the pet clicked (nil = from anywhere, my pet)
 function PM.build(context, player, animal)
     if context.lwsPetMenu then return end   -- once per menu (the pet and the ground both fire)
-    local mine = animal == nil or PM.isMine(animal)
+    local fromGround = animal == nil
+    local mine = fromGround or PM.isMine(animal)
     local pet = C.pet or {}
-    if mine and not pet.out then return end
+    if mine and not pet.out then
+        LWS.logOnce("petmenu:none:" .. tostring(pet.piece), "PetMenu", "no pet menu: no pet out (piece %s, state %s)",
+            tostring(pet.piece), pet.out == nil and "not received yet" or "out = false")
+        return
+    end
     animal = animal or PM.myAnimal()
     context.lwsPetMenu = true
     local name = mine and pet.piece and LWS.pieceName(pet.piece) or T("IGUI_LWS_PetSomeone")
@@ -136,8 +194,13 @@ function PM.build(context, player, animal)
     local sub = ISContextMenu:getNew(context)
     context:addSubMenu(opt, sub)
     -- pet (anyone)
-    local po = sub:addOption(T("IGUI_LWS_PetStroke"), player, function(p) PM.pet(p, animal) end)
-    if not animal then po.notAvailable = true; po.toolTip = tip(T("IGUI_LWS_PetTooFar")) end
+    if fromGround or mine then
+        -- my pet: it comes over first, wherever it is (0.7.11)
+        sub:addOption(T("IGUI_LWS_PetStroke"), player, function(p) PM.comeThen(p, "pet it", PM.pet) end)
+    else
+        local po = sub:addOption(T("IGUI_LWS_PetStroke"), player, function(p) PM.pet(p, animal) end)
+        if not animal then po.notAvailable = true; po.toolTip = tip(T("IGUI_LWS_PetTooFar")) end
+    end
     if not mine then return end
     -- feed
     if pet.feeding ~= false then
@@ -154,7 +217,8 @@ function PM.build(context, player, animal)
         end
         for i = 1, math.min(10, #foods) do
             local f = foods[i]
-            fsub:addOption(f.name .. " (" .. f.n .. ")  +" .. math.floor(f.value * 100 + 0.5) .. "%", player, function() C.petFeed(f.type) end)
+            fsub:addOption(f.name .. " (" .. f.n .. ")  +" .. math.floor(f.value * 100 + 0.5) .. "%", player,
+                function(p) PM.comeThen(p, "feed " .. tostring(f.type), function() C.petFeed(f.type) end) end)
         end
     end
     -- orders
@@ -244,6 +308,12 @@ if Events and not PM.registered then
         log("no OnClickedAnimalForContext event -- the pet menu is only on the ground right-click")
     end
     if Events.OnGameStart then Events.OnGameStart.Add(PM.installHooks) end
+    if Events.OnTick then
+        Events.OnTick.Add(function()
+            local ok, err = pcall(PM.pendingTick)
+            if not ok then PM.pending = nil; LWS.logOnce("petpending", "PetMenu", "waiting for the pet FAILED: %s", tostring(err)) end
+        end)
+    end
 end
 
 return PM

@@ -12,7 +12,7 @@
     "Sandbox_LifeWithStyle_PetHunger": "Pets get hungry",
     "Sandbox_LifeWithStyle_PetHunger_tooltip": "A pet gets hungry over time; a starving pet ignores orders until fed. It never dies or leaves.",
     "Sandbox_LifeWithStyle_PetHungerHours": "Hours from full to starving",
-    "Sandbox_LifeWithStyle_PetHungerHours_tooltip": "In-game hours a pet takes to go from full to starving.",
+    "Sandbox_LifeWithStyle_PetHungerHours_tooltip": "In-game hours a pet takes to go from full to starving (default 360 = 15 days).",
     "Sandbox_LifeWithStyle_PetSounds": "Pet sounds",
     "Sandbox_LifeWithStyle_PetSounds_tooltip": "Barks, whines and eating sounds. Pets never draw zombies.",
     "Sandbox_LifeWithStyle_PetTeleportDistance": "Bring-back distance (tiles)",
