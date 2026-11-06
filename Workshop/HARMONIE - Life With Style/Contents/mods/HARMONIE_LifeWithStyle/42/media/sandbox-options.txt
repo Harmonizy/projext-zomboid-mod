@@ -54,8 +54,8 @@ option LifeWithStyle.PetHungerHours
 {
     type = integer,
     min = 6,
-    max = 720,
-    default = 72,
+    max = 3600,
+    default = 360,
     page = HARMONIE_LifeWithStyle,
     translation = LifeWithStyle_PetHungerHours,
 }

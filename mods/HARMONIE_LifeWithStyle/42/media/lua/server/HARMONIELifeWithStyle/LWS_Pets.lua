@@ -50,7 +50,7 @@ P.IDLE_MIN_MS, P.IDLE_MAX_MS = 12000, 25000   -- a standing pet does something n
 -- ------------------------------------------------------------- sandbox
 local DEFAULTS = {
     PetsEnabled = true, PetCommands = true, PetFeeding = true, PetHunger = true,
-    PetHungerHours = 72, PetSounds = true, PetTeleportDistance = 25,
+    PetHungerHours = 360, PetSounds = true, PetTeleportDistance = 25,
     PetZombieFear = true, PetFearRange = 7,
 }
 function P.sv(name)
@@ -329,13 +329,20 @@ function P.sync(player, why)
 end
 
 -- ------------------------------------------------------------- hunger
+P.OLD_HUNGER_HOURS = 72
 function P.hungerTick(player, rec, o)
     local d = P.data(o, rec.uid)
     local h = hour()
     local dt = h - (tonumber(d.hourAt) or h)
     d.hourAt = h
     if not P.sv("PetHunger") or dt <= 0 then return d end
-    local hours = math.max(1, tonumber(P.sv("PetHungerHours")) or 72)
+    -- 0.7.11 (owner: "ความหิวสัตว์เลี้ยงให้ลดช้าลง 5เท่า"): the default went 72 -> 360;
+    -- a server still on the old default (saved in its sandbox) gets the new one
+    local hours = math.max(1, tonumber(P.sv("PetHungerHours")) or 360)
+    if hours == P.OLD_HUNGER_HOURS then
+        hours = P.OLD_HUNGER_HOURS * 5
+        LWS.logOnce("hunger72", "Pets", "PetHungerHours is the old default %d -- pets get hungry 5 times slower (%d h)", P.OLD_HUNGER_HOURS, hours)
+    end
     local before = d.hunger
     d.hunger = math.max(0, d.hunger - dt / hours)
     -- the owner hears about it at 25 % and when it reaches 0 (once each, until fed)
