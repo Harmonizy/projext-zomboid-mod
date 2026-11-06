@@ -189,7 +189,10 @@
   console says which), sits, runs again if one comes close; calm after
   `P.CALM_MS` without a zombie within range + `P.CALM_EXTRA` (a staying pet
   walks back to its spot, `rec.returning`). "Come" = brave for `P.BRAVE_MS`.
-  Gunshots alone still do not scare it. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  Gunshots alone still do not scare it. Menu (0.7.11): every action of the
+  owner's own pet works from the ground right-click -- `PM.comeThen` calls it
+  over (PetCome) and acts once it is within `PM.COME_NEAR` (15 s timeout).
+  Hunger: default 360 h; a sandbox still on the old 72 is read as 360. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and

@@ -12,7 +12,7 @@
     "Sandbox_LifeWithStyle_PetHunger": "สัตว์เลี้ยงหิว",
     "Sandbox_LifeWithStyle_PetHunger_tooltip": "สัตว์เลี้ยงหิวตามเวลา ถ้าหิวจัดจะไม่ฟังคำสั่งจนกว่าจะได้กิน แต่จะไม่ตายและไม่หนีไป",
     "Sandbox_LifeWithStyle_PetHungerHours": "ชั่วโมงจากอิ่มจนหิวจัด",
-    "Sandbox_LifeWithStyle_PetHungerHours_tooltip": "จำนวนชั่วโมงในเกมที่สัตว์เลี้ยงใช้จากอิ่มเต็มจนหิวจัด",
+    "Sandbox_LifeWithStyle_PetHungerHours_tooltip": "จำนวนชั่วโมงในเกมที่สัตว์เลี้ยงใช้จากอิ่มเต็มจนหิวจัด (ค่าเริ่มต้น 360 = 15 วัน)",
     "Sandbox_LifeWithStyle_PetSounds": "เสียงสัตว์เลี้ยง",
     "Sandbox_LifeWithStyle_PetSounds_tooltip": "เสียงเห่า ครางหงิง และเสียงกิน สัตว์เลี้ยงไม่เรียกซอมบี้",
     "Sandbox_LifeWithStyle_PetTeleportDistance": "ระยะที่สัตว์เลี้ยงจะกลับมาหา (ช่อง)",

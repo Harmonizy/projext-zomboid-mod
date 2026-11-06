@@ -231,8 +231,10 @@ function G.journeyXP(player, perkId, amount)
     amount = tonumber(amount)
     if not perk then return false, "IGUI_LWSG_Msg_NoEffect" end
     if not amount or amount <= 0 then return false, "IGUI_LWSG_Msg_NoEffect" end
-    -- flat XP, no book / trait multiplier; GameServer.addXp replicates it in multiplayer
-    local ok = server() and pcall(function() GameServer.addXp(player, perk, amount, true, true) end)
+    -- flat XP, no book / trait multiplier. addXpNoMultiplier is B42's global that also reaches
+    -- the client in multiplayer; GameServer is not exposed to Lua, so GameServer.addXp always
+    -- failed and the server-only fallback below never showed up on the player.
+    local ok = pcall(function() addXpNoMultiplier(player, perk, amount) end)
     if not ok then
         local okXp = pcall(function() player:getXp():AddXPNoMultiplier(perk, amount) end)
         if not okXp then return false, "IGUI_LWSG_Msg_NoEffect" end
