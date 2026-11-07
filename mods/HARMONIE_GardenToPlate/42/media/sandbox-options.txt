@@ -141,3 +141,13 @@ option HARMONIE_GardenToPlate.CookBuffHours
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_CookBuffHours,
 }
+
+option HARMONIE_GardenToPlate.CookMinigameTime
+{
+    type = double,
+    default = 2.0,
+    min = 0.5,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookMinigameTime,
+}

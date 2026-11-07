@@ -120,9 +120,10 @@ function F.nextStep()
         local cur = K.cursorItem(plan, pp)
         local diff = K.difficulty(r.player, pp, r.dish)
         local ease = K.levelEase(K.level(r.player))
-        log("step %s: minigame with %s (%s), Cooking %d: difficulty %.2f, slips x%.2f, time x%.2f", pid, cur and K.typeOf(cur) or "bare hands",
-            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.level(r.player), diff, ease.slip, ease.time)
-        local ok = Gm.play(r.player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = ease.time, icon = ingredientIcon(plan),
+        local timeMul = ease.time * K.minigameTime()
+        log("step %s: minigame with %s (%s), Cooking %d: difficulty %.2f, slips x%.2f, time x%.2f (level x%.2f, sandbox x%.2f)", pid, cur and K.typeOf(cur) or "bare hands",
+            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.level(r.player), diff, ease.slip, timeMul, ease.time, K.minigameTime())
+        local ok = Gm.play(r.player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = timeMul, icon = ingredientIcon(plan),
             spice = spiceIcon(plan), base = plan.base and call(plan.base, "getTexture"),
             tool = pp.tools[1] and pp.tools[1].item and call(pp.tools[1].item, "getTexture"),
             cursor = K.cursorTexture(plan, pp), bare = pp.tools[1] and pp.tools[1].grade == "bare",
