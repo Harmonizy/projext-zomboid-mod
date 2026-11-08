@@ -324,4 +324,58 @@ function LWS.toClient(player, command, args)
     end
 end
 
+-- ------------------------------------------------------------- picture only
+-- A fashion piece must do nothing to the body (owner, 2026-11-08): no warmth,
+-- no wind / water cover, no bite / scratch / bullet defence, no speed or
+-- comfort change. The item script already says so; this sets it again on the
+-- real item in case the game fills in a value from the clothing model, and
+-- the console shows what the item reported before and after (once a session).
+LWS.PLAIN_STATS = {
+    { "setInsulation", 0, "getInsulation" },
+    { "setWindresistance", 0, "getWindresistance" },
+    { "setWaterResistance", 0, "getWaterResistance" },
+    { "setBiteDefense", 0, "getBiteDefense" },
+    { "setScratchDefense", 0, "getScratchDefense" },
+    { "setBulletDefense", 0, "getBulletDefense" },
+    { "setNeckProtectionModifier", 0, "getNeckProtectionModifier" },
+    { "setCorpseSicknessDefense", 0, "getCorpseSicknessDefense" },
+    { "setDiscomfortModifier", 0, "getDiscomfortModifier" },
+    { "setRunSpeedModifier", 1, "getRunSpeedModifier" },
+    { "setCombatSpeedModifier", 1, "getCombatSpeedModifier" },
+    { "setActualWeight", 0, "getActualWeight" },
+    { "setWeight", 0, "getWeight" },
+}
+local function readStats(item)
+    local parts = {}
+    for _, s in ipairs(LWS.PLAIN_STATS) do
+        local get = item[s[3]]
+        if get then
+            local ok, v = pcall(get, item)
+            if ok and v ~= nil then parts[#parts + 1] = s[3]:sub(4) .. "=" .. tostring(v) end
+        end
+    end
+    return table.concat(parts, " ")
+end
+function LWS.plainClothes(item, where)
+    if not item then return end
+    local first = not LWS.logSeen["plainclothes"]
+    local before = first and readStats(item) or nil
+    local missing = {}
+    for _, s in ipairs(LWS.PLAIN_STATS) do
+        local set = item[s[1]]
+        if set then
+            local ok = pcall(set, item, s[2])
+            if not ok then missing[#missing + 1] = s[1] .. "(failed)" end
+        else
+            missing[#missing + 1] = s[1]
+        end
+    end
+    if first then
+        local t = item.getFullType and item:getFullType() or "?"
+        LWS.logOnce("plainclothes", "Core", "fashion %s made picture-only (%s). before: %s | after: %s | no setter: %s",
+            tostring(t), tostring(where), before, readStats(item),
+            #missing > 0 and table.concat(missing, ", ") or "none")
+    end
+end
+
 return LWS

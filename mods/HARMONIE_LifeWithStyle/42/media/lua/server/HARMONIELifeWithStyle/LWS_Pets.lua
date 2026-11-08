@@ -300,7 +300,11 @@ function P.stateFor(player)
 end
 
 function P.sendState(player)
-    LWS.toClient(player, "PetState", P.stateFor(player))
+    local st = P.stateFor(player)
+    LWS.toClient(player, "PetState", st)
+    -- 0.7.14: what the owner was told (P.step sends it again when it is wrong)
+    local rec = st.uid and P.active[LWS.ownerKey(player)]
+    if rec then rec.sentOut, rec.sentId = st.out == true, st.id end
 end
 
 -- the pet out = the wardrobe (called from LWS.Server.ensure and the commands)
@@ -596,6 +600,13 @@ function P.step(key, rec, owner)
         log("%s: %s animal id %s -> %s", LWS.name(owner), rec.piece, tostring(rec.id), tostring(id))
         rec.id = id
         P.sendState(owner)
+    -- 0.7.14 (owner's console: "no pet menu: no pet out ... out = false" with the
+    -- dog right there): the state sent at spawn said out = false, because the
+    -- new animal is not "in the world" until a tick later; nothing sent it
+    -- again, so the owner's menu called it someone else's pet
+    elseif rec.sentOut ~= true or not LWS.sameId(rec.sentId, rec.id) then
+        log("%s: %s is out -- telling the owner again (they were told out = %s)", LWS.name(owner), rec.piece, tostring(rec.sentOut))
+        P.sendState(owner)
     end
     -- nothing hurts it (zombies, players, falls, shots): health stays full,
     -- and a gunshot or a zombie does not scare it off (owner, 2026-10-24)
@@ -761,7 +772,11 @@ P.PET_WAIT_MS = 10000
 function P.handle(player, command, args)
     -- 0.7.12: someone walks over to pet it -- it stands still meanwhile (it
     -- kept walking off and the stroke went into the air)
-    if command == "PetHold" then
+    if command == "PetStateAsk" then
+        log("%s asked for the pet state", LWS.name(player))
+        P.sendState(player)
+        return
+    elseif command == "PetHold" then
         local rec = recById(tonumber(args.id))
         if not rec then log("REJECTED PetHold from %s: no such pet out (%s)", LWS.name(player), tostring(args.id)); return end
         rec.holdUntil = now() + P.PET_WAIT_MS

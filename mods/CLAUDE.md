@@ -141,6 +141,19 @@
 - Slots and the catalog live in `tools/gen_lws.py` (one source): run it to
   rewrite registries.lua, the item scripts, LWS_Data.lua and ItemName.json.
   Texts: `tools/texts_lws.py`. Art: `tools/gen_lws_art.py`.
+- Picture only (0.7.15, owner): a piece changes nothing on the body -- the
+  script zeroes warmth / wind / water / bite / scratch / bullet / discomfort
+  and keeps speeds at 1.0, and `LWS.plainClothes` sets them again on the real
+  item (server ensure + client wear; logs before / after once). The Guardian
+  proxy (gacha) is the one item that protects, on purpose.
+- Never in the world (0.7.16, owner): no loot table lists a piece, but a piece
+  shares its vanilla ClothingItem and the game keeps ONE item type per
+  clothing model (zombie clothes -> items), so a zombie could drop OUR piece.
+  `server/.../LWS_WorldGuard.lua` finds each piece's Base twin, logs which
+  models the game maps to us, and on OnZombieDead (server / SP) turns fashion
+  types in the zombie's visuals and inventory back into the twin; the sweep
+  gives the twin for a fashion item without an owner mark. A clean cure needs
+  our own clothingItems XML copies (vanilla XML not in the repo).
 - Every piece has two items: `<Id>` (lws:<slot>, hides the vanilla
   locations of the slot via setHideModel) and `<Id>_Over` (lws:<slot>_over,
   hides nothing). Never put a piece in a loot table.
@@ -197,7 +210,10 @@
   Gunshots alone still do not scare it. Menu (0.7.11): every action of the
   owner's own pet works from the ground right-click -- `PM.comeThen` calls it
   over (PetCome) and acts once it is within `PM.COME_NEAR` (15 s timeout).
-  Hunger: default 360 h; a sandbox still on the old 72 is read as 360. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  Hunger: default 360 h; a sandbox still on the old 72 is read as 360. Pet state (0.7.14): the
+  `PetState` sent at spawn says out = false (the animal is not in the world
+  until a tick later) -- `P.step` re-sends it while `rec.sentOut` is wrong,
+  and a client whose menu finds no pet asks with `PetStateAsk`. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
