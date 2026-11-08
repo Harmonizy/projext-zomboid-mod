@@ -20925,3 +20925,7 @@ LOG  : Lua          f:241272 st:8,366,984,492> [RWZ NAMEPLATE] draw username=Gen
 LOG  : Lua          f:241272 st:8,366,984,495> [RWZ NAMEPLATE] roster complete entries=11 received=11/11 renderer=POST_UI_ZOOM_REMOTE_103725
 LOG  : Lua          f:241741 st:8,367,000,075> [RWZ NAMEPLATE] roster complete entries=11 received=11/11 renderer=POST_UI_ZOOM_REMOTE_103725
 LOG  : Lua          f:241742 st:8,367,000,123> [RWZ NAMEPLATE] draw username=GeneralKiryu role=UNVERIFIED chief= sub= target=SELF renderer=POST_UI_ZOOM_REMOTE_103725 anchor=ISO_NAME_TAG_128_ZOOM_SAFE_UI24/zoom=1.00 nameCenter=960,444 icon=902,445 leadY=429
+LOG  : Lua          f:242083 st:8,367,014,703> [RWZ NAMEPLATE] draw username=GeneralKiryu role=UNVERIFIED chief= sub= target=SELF renderer=POST_UI_ZOOM_REMOTE_103725 anchor=ISO_NAME_TAG_128_ZOOM_SAFE_UI24/zoom=1.00 nameCenter=960,444 icon=902,445 leadY=429
+LOG  : Lua          f:242083 st:8,367,014,706> [RWZ NAMEPLATE] roster complete entries=11 received=11/11 renderer=POST_UI_ZOOM_REMOTE_103725
+LOG  : Lua          f:242761 st:8,367,029,722> [RWZ NAMEPLATE] draw username=GeneralKiryu role=UNVERIFIED chief= sub= target=SELF renderer=POST_UI_ZOOM_REMOTE_103725 anchor=ISO_NAME_TAG_128_ZOOM_SAFE_UI24/zoom=1.00 nameCenter=960,444 icon=902,445 leadY=429
+LOG  : Lua          f:242761 st:8,367,029,726> [RWZ NAMEPLATE] roster complete entries=11 received=11/11 renderer=POST_UI_ZOOM_REMOTE_103725
