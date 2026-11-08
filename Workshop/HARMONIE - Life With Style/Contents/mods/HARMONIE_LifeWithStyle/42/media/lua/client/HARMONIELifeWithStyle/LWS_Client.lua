@@ -143,7 +143,7 @@ function C.petGone(id)
     local list = cell and cell:getAnimals()
     for i = (list and list:size() or 0) - 1, 0, -1 do
         local o = list:get(i)
-        if o and o:getOnlineID() == id then
+        if o and LWS.sameId(o:getOnlineID(), id) then
             pcall(function() o:delete() end)
             log("removed a left-over copy of pet animal %s", tostring(id))
         end
