@@ -125,6 +125,14 @@ function S.ensure(player, why)
                 removeItem(player, inv, item)
                 removed = removed + 1
                 log("%s: removed %s (%s)", LWS.name(player), t, mine ~= key and "not theirs" or "not worn in the wardrobe")
+                -- no owner mark = it came from the world (a zombie's clothes,
+                -- LWS_WorldGuard.lua): the player gets the real vanilla item
+                local tw = mine == nil and LWS.WorldGuard and LWS.WorldGuard.twinOf(t)
+                if tw then
+                    local real = inv:AddItem(tw)
+                    if real and isServer and isServer() and sendAddItemToContainer then pcall(sendAddItemToContainer, inv, real) end
+                    log("%s: %s came from the world -- given the vanilla %s instead", LWS.name(player), t, tostring(real and tw or "(could not make)"))
+                end
             end
         elseif LWS.isGachaItem(item) then
             -- a gacha item lives in the wardrobe record only (debug spawn, old save)
@@ -161,7 +169,7 @@ function S.ensure(player, why)
                 log("%s: could not make %s (no such item?)", LWS.name(player), t)
             end
         end
-        if item then wearList[#wearList + 1] = t end
+        if item then wearList[#wearList + 1] = t; LWS.plainClothes(item, why) end
     end
     if added > 0 or removed > 0 or why ~= "sweep" then
         log("%s: dressed (%s): %d worn, %d made, %d removed", LWS.name(player), tostring(why), #wearList, added, removed)
@@ -186,6 +194,7 @@ function S.wearHere(player, types)
     local inv = player:getInventory()
     for _, t in ipairs(types or {}) do
         local item = inv:FindAndReturn(t)
+        if item then LWS.plainClothes(item, "wear SP") end
         if item and not player:isEquippedClothing(item) then
             pcall(function() player:setWornItem(item:getBodyLocation(), item) end)
         end
