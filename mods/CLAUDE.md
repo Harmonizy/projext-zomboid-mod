@@ -94,6 +94,11 @@
   StackTooltips: a stack). `item:getFullType()` on it logs every frame (TWA
   0.73.4). Check `instanceof(item, "InventoryItem")` / `instanceof(item,
   "Food" | "HandWeapon")` before any method call.
+- The game REUSES one context-menu object for every right-click (EHR even
+  clears `context.origin` itself): a flag set on `context` stays for every
+  later menu. LWS 0.6.1-0.7.11 marked `context.lwsPetMenu` and the pet menu
+  never showed again. Mark the OPTION you added (`opt.lwsPetMenu`) and scan
+  `context.options` -- that list is cleared each time (LWS 0.7.12).
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).

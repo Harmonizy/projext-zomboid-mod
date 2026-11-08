@@ -94,7 +94,8 @@ function G.play(player, pid, opts, onWord)
     o.d = clamp(tonumber(o.opts.difficulty) or 0.5, 0.05, 1)
     -- 0.13.17: the Cooking level -- slips cost less, more time (K.levelEase)
     o.slipMul = clamp(tonumber(o.opts.slipMul) or 1, 0.2, 1)
-    o.timeMul = clamp(tonumber(o.opts.timeMul) or 1, 1, 2)
+    -- the level (x1..1.6) times the sandbox CookMinigameTime (x0.5..5, default 2)
+    o.timeMul = clamp(tonumber(o.opts.timeMul) or 1, 0.5, 8)
     o.background = false
     o.moveWithMouse = false
     o.q = 1

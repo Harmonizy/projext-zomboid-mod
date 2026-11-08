@@ -749,8 +749,19 @@ local function recById(id)
 end
 
 P.PET_HOLD_MS = 6000
+P.PET_WAIT_MS = 10000
 function P.handle(player, command, args)
-    if command == "PetPet" then
+    -- 0.7.12: someone walks over to pet it -- it stands still meanwhile (it
+    -- kept walking off and the stroke went into the air)
+    if command == "PetHold" then
+        local rec = recById(tonumber(args.id))
+        if not rec then log("REJECTED PetHold from %s: no such pet out (%s)", LWS.name(player), tostring(args.id)); return end
+        rec.holdUntil = now() + P.PET_WAIT_MS
+        pcall(function() rec.animal:stopAllMovementNow() end)
+        pcall(function() rec.animal:faceThisObject(player) end)
+        log("%s walks over to pet %s -- it waits", LWS.name(player), tostring(rec.piece))
+        return
+    elseif command == "PetPet" then
         local rec = recById(tonumber(args.id))
         if not rec then log("REJECTED PetPet from %s: no such pet out (%s)", LWS.name(player), tostring(args.id)); return end
         -- it stays still to be stroked, and is happy about it

@@ -72,7 +72,19 @@ function ISLWSPetAnimal:update()
     pcall(function() self.character:faceThisObject(self.animal) end)
 end
 
+PM.PET_REACH = 1.8
 function ISLWSPetAnimal:start()
+    -- 0.7.12: the pet moved off while we walked over: walk to it again (once)
+    local ok, d = pcall(function()
+        local dx, dy = self.animal:getX() - self.character:getX(), self.animal:getY() - self.character:getY()
+        return math.sqrt(dx * dx + dy * dy)
+    end)
+    if ok and d > PM.PET_REACH then
+        log("petting: the pet is %.1f tiles away%s", d, self.retried and " again -- given up" or " -- walking to it again")
+        if not self.retried then PM.retryPet = { player = self.character, animal = self.animal } end
+        pcall(function() self:forceStop() end)
+        return
+    end
     -- the vanilla petting animation needs the pose of the animal's skeleton:
     -- ours are rigged to the raccoon one (Companion Dogs' finding)
     pcall(function()
@@ -106,12 +118,18 @@ function ISLWSPetAnimal:new(character, animal)
     return o
 end
 
-function PM.pet(player, animal)
+function PM.pet(player, animal, retried)
     if not player or not animal then return end
     local sq = animal:getSquare()
     if not sq then return end
+    -- 0.7.12: the pet stands still while we walk over (server PetHold)
+    local id
+    pcall(function() id = animal:getOnlineID() end)
+    C.send("PetHold", { id = id })
     if luautils.walkAdj(player, sq) then
-        ISTimedActionQueue.add(ISLWSPetAnimal:new(player, animal))
+        local a = ISLWSPetAnimal:new(player, animal)
+        a.retried = retried == true
+        ISTimedActionQueue.add(a)
     end
 end
 
@@ -153,6 +171,11 @@ function PM.comeThen(player, what, fn)
 end
 
 function PM.pendingTick()
+    local rp = PM.retryPet
+    if rp then
+        PM.retryPet = nil
+        PM.pet(rp.player, rp.animal, true)
+    end
     local pd = PM.pending
     if not pd then return end
     local a = PM.myAnimal()
@@ -177,8 +200,21 @@ local function tip(text)
 end
 
 -- context: the menu; player; animal: the pet clicked (nil = from anywhere, my pet)
+-- once per menu: the pet and the ground right-click both fire. 0.7.12: the
+-- game REUSES one context menu object for every right-click, so a flag on
+-- it stayed set after the first menu and the pet menu never showed again
+-- (owner: "พอลูบเสร็จ การคลิกขวาจะหายไปเลย"); look for our option instead --
+-- the option list is cleared each time
+local function hasPetMenu(context)
+    for _, o in pairs(context.options or {}) do
+        if type(o) == "table" and o.lwsPetMenu then return true end
+    end
+    return false
+end
+PM.hasPetMenu = hasPetMenu
+
 function PM.build(context, player, animal)
-    if context.lwsPetMenu then return end   -- once per menu (the pet and the ground both fire)
+    if hasPetMenu(context) then return end
     local fromGround = animal == nil
     local mine = fromGround or PM.isMine(animal)
     local pet = C.pet or {}
@@ -188,9 +224,9 @@ function PM.build(context, player, animal)
         return
     end
     animal = animal or PM.myAnimal()
-    context.lwsPetMenu = true
     local name = mine and pet.piece and LWS.pieceName(pet.piece) or T("IGUI_LWS_PetSomeone")
     local opt = context:addOption(T("IGUI_LWS_Menu_Pet", name), player, nil)
+    if opt then opt.lwsPetMenu = true end
     local sub = ISContextMenu:getNew(context)
     context:addSubMenu(opt, sub)
     -- pet (anyone)
