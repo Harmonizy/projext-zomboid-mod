@@ -532,17 +532,29 @@ function D.knows(doctor, id)
     return HM_Surgery and HM_Surgery.knows and HM_Surgery.knows(doctor, id) or false
 end
 
--- illnesses that show ALL the selected signs (selected: set tag -> true)
+-- 2026-11-07 (owner: "ปรับให้การเลือกอาการในการวินิจฉัย จะแสดงโรคที่มีอาการนี้ทั้งหมด
+-- แทนที่การแสดงแบบเดิม"): every illness that shows ANY selected sign (it was:
+-- only those showing ALL of them), the most matching signs first (ties keep
+-- D.ORDER). Returns the ids, the matched count per id and how many signs
+-- are selected.
 function D.candidates(selected)
-    local out = {}
-    for _, id in ipairs(D.ORDER) do
-        local set, ok = D.TAGSET[id], true
+    local picked = 0
+    for _, on in pairs(selected or {}) do if on then picked = picked + 1 end end
+    local rows, hits = {}, {}
+    for i, id in ipairs(D.ORDER) do
+        local set, n = D.TAGSET[id] or {}, 0
         for t, on in pairs(selected or {}) do
-            if on and not set[t] then ok = false; break end
+            if on and set[t] then n = n + 1 end
         end
-        if ok then out[#out + 1] = id end
+        if n > 0 then rows[#rows + 1] = { id = id, n = n, i = i }; hits[id] = n end
     end
-    return out
+    table.sort(rows, function(a, b)
+        if a.n ~= b.n then return a.n > b.n end
+        return a.i < b.i
+    end)
+    local out = {}
+    for _, r in ipairs(rows) do out[#out + 1] = r.id end
+    return out, hits, picked
 end
 
 -- drop diagnoses of illnesses that are gone (a new infection starts unknown)

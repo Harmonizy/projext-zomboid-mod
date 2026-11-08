@@ -2,8 +2,9 @@
     HARMONIE - Home Medic : "Diagnosis" tab of the medical window (client)
 
     Request 2026-10-01 -- a diagnosis game: the doctor ticks the signs the
-    patient shows; the candidate list narrows to the illnesses that cause
-    all of them (HM_Diagnosis.DISEASES, built from what each illness really
+    patient shows; the candidate list shows every illness that causes any of
+    them, the most matching first (2026-11-07; it was: only those causing all
+    of them) (HM_Diagnosis.DISEASES, built from what each illness really
     does in game). Illnesses the doctor does not know stay "Unknown" and
     cannot be picked. Picking one the patient really has records the
     diagnosis (server-checked); from then on the medical window names it.
@@ -505,7 +506,7 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
         end
     end
-    for _, l in ipairs(wrap(L("Intro", "Tick the signs the patient shows. The list narrows to illnesses that cause all of them."), leftW)) do
+    for _, l in ipairs(wrap(L("Intro", "Tick the signs the patient shows. The list shows every illness that causes any of them, the most matching first."), leftW)) do
         self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
     end
 
@@ -558,9 +559,13 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
         end
     else
-        local list = D.candidates(st.tags)
+        local list, hits, picked = D.candidates(st.tags)
+        if st.loggedPick ~= picked .. ":" .. #list then
+            st.loggedPick = picked .. ":" .. #list
+            HMLog("Diagnosis", "%d signs ticked: %d possible illnesses (any sign)", picked, #list)
+        end
         if #list == 0 then
-            for _, l in ipairs(wrap(L("NoMatch", "No illness causes all of these signs. Remove one."), leftW)) do
+            for _, l in ipairs(wrap(L("NoMatch", "No illness causes these signs."), leftW)) do
                 self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
             end
         end
@@ -587,7 +592,13 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             local by = y + math.floor((rowH - 4 - chipH) / 2)
             local name = known and diseaseName(id) or L("Unknown", "Unknown illness")
             local nc = known and c.text or c.textDim
-            self:drawText(S.fitText(name, bx - lx - 18, function(t) return tw(t, FONT_M) end), lx + 10, y + 3, nc.r, nc.g, nc.b, 1, FONT_M)
+            -- how many of the ticked signs this illness causes (all = green)
+            local mt = L("Matches", "%1/%2 signs", (hits and hits[id]) or 0, picked or 0)
+            local mw = tw(mt) + 10
+            local full = hits and picked and hits[id] == picked
+            local mc = full and c.green or c.textDim
+            self:drawText(S.fitText(name, bx - lx - 18 - mw, function(t) return tw(t, FONT_M) end), lx + 10, y + 3, nc.r, nc.g, nc.b, 1, FONT_M)
+            self:drawText(mt, bx - mw, y + 3 + math.floor((fh(FONT_M) - fh()) / 2), mc.r, mc.g, mc.b, 1, FONT)
             local canPick = known and not done and not locked
             local bh = canPick and inView and inside(mx, my, bx, by, bw, chipH)
             if canPick then

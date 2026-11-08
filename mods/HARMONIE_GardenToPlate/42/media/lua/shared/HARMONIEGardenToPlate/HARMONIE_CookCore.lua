@@ -618,6 +618,10 @@ K.GRADE_COST = { best = 0, ok = 0.06, makeshift = 0.15, bare = 0.2 }
 
 -- 0.13.17: the Cooking level also makes a slip cost less quality (-6% per
 -- level, down to 40% of it at 10) and gives more time (+6% per level)
+-- 0.13.18 (owner, 2026-11-07: "เพิ่มเวลาทำอาหารให้นานขึ้น 2 เท่า มันหมดเวลาเร็วไป"):
+-- every minigame's time limit, times this (sandbox CookMinigameTime, default 2)
+function K.minigameTime() return math.max(0.5, math.min(5, tonumber(K.sv("CookMinigameTime", 2.0)) or 2.0)) end
+
 function K.levelEase(lvl)
     lvl = math.max(0, math.min(10, tonumber(lvl) or 0))
     return { slip = math.max(0.4, 1 - 0.06 * lvl), time = 1 + 0.06 * lvl }
