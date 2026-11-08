@@ -37,8 +37,14 @@ function PM.isMine(animal)
     local pet = C.pet or {}
     if not pet.out or not animal or not LWS.isPetAnimal(animal) then return false end
     if not mp() then return true end   -- single player: the only pet there is
+    -- the same object the ground menu finds by the id (getAnimal) = mine
+    local found = PM.myAnimal()
+    if found ~= nil and found == animal then return true end
     local ok, id = pcall(function() return animal:getOnlineID() end)
-    return ok and pet.id ~= nil and id == pet.id
+    if ok and LWS.sameId(id, pet.id) then return true end
+    LWS.logOnce("notmine:" .. tostring(id) .. ":" .. tostring(pet.id), "PetMenu", "clicked pet animal id %s (%s) is not mine (my pet id %s, %s)",
+        tostring(id), type(id), tostring(pet.id), type(pet.id))
+    return false
 end
 
 -- the animal of my pet out, near me (for the petting action from the menu anywhere)

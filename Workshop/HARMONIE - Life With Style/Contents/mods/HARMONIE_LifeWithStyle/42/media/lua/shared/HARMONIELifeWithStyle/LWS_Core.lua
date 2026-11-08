@@ -163,6 +163,22 @@ function LWS.isAnimal(obj)
     end
     return obj.getAnimalType ~= nil
 end
+-- 0.7.13 (owner: "มันขึ้นว่าสัตว์เลี้ยงของคนอื่น ... ทั้งๆที่หมาคือของเรา"): an animal's
+-- online id from Java (getOnlineID) and the same id sent over the network
+-- may not be the same Lua number type, so `==` said "not the same" for one
+-- id; both are compared as whole-number text
+local function idKey(v)
+    if v == nil then return nil end
+    local n = tonumber(v)
+    if n then return string.format("%d", math.floor(n + 0.5)) end
+    return tostring(v)
+end
+LWS.idKey = idKey
+function LWS.sameId(a, b)
+    local ka, kb = idKey(a), idKey(b)
+    return ka ~= nil and ka == kb
+end
+
 function LWS.isPetAnimal(animal)
     if not LWS.isAnimal(animal) then return false end
     local ok, t = pcall(function() return animal:getAnimalType() end)

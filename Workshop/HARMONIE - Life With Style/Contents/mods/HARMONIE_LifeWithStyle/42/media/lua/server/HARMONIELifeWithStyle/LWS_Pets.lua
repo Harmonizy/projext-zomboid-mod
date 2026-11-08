@@ -589,6 +589,14 @@ end
 
 function P.step(key, rec, owner)
     local animal = rec.animal
+    -- 0.7.13: the online id can change after it came out (none yet at spawn):
+    -- the owner's client must know the current one (its menu compares it)
+    local id = idOf(animal)
+    if id ~= nil and not LWS.sameId(id, rec.id) then
+        log("%s: %s animal id %s -> %s", LWS.name(owner), rec.piece, tostring(rec.id), tostring(id))
+        rec.id = id
+        P.sendState(owner)
+    end
     -- nothing hurts it (zombies, players, falls, shots): health stays full,
     -- and a gunshot or a zombie does not scare it off (owner, 2026-10-24)
     pcall(function() if animal:getHealth() < 1 then animal:setHealth(1) end end)
@@ -741,7 +749,7 @@ end
 -- a pet by its animal id (anyone may pet anyone's pet)
 local function recById(id)
     for key, rec in pairs(P.active) do
-        if rec.id ~= nil and rec.id == id and valid(rec.animal) then return rec, key end
+        if rec.id ~= nil and LWS.sameId(rec.id, id) and valid(rec.animal) then return rec, key end
     end
     -- single player: the ids may all be the same -- the one pet there is
     if not isMP() then for key, rec in pairs(P.active) do if valid(rec.animal) then return rec, key end end end
