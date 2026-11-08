@@ -825,6 +825,24 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
         self:drawText(lethal, x + w - lethalW, ty, c.red.r, c.red.g, c.red.b, c.red.a, UIFont.Medium)
     end
     ty = ty + tm:getFontHeight(UIFont.Medium)
+    -- HARMONIE (2026-11-08): how it ends, as coloured badges (HM_Handbook.outcome)
+    local outcome = entry.known and HM_Handbook and HM_Handbook.outcome and HM_Handbook.outcome(entry.id)
+    if outcome and #outcome.tags > 0 then
+        local TAG_COL = { surgery = c.orange, meds = c.green, self = c.cyan, noself = c.red }
+        local bx = titleX
+        ty = ty + 4
+        local bh = tm:getFontHeight(UIFont.Small) + 6
+        for _, t in ipairs(outcome.tags) do
+            local col = TAG_COL[t.key] or c.textDim
+            local tw2 = measureText(UIFont.Small, t.text) + 12
+            if bx + tw2 > x + w and bx > titleX then bx = titleX; ty = ty + bh + 4 end
+            self:drawRect(bx, ty, tw2, bh, 0.22, col.r, col.g, col.b)
+            self:drawRectBorder(bx, ty, tw2, bh, 0.9, col.r, col.g, col.b)
+            self:drawText(t.text, bx + 6, ty + 3, col.r, col.g, col.b, 1, UIFont.Small)
+            bx = bx + tw2 + 6
+        end
+        ty = ty + bh
+    end
 
     y = math.max(y + iconSize, ty) + 18
     self:drawRect(x, y, w, 1, 0.76, c.border.r, c.border.g, c.border.b)
@@ -840,6 +858,9 @@ function EHR_MedicalJournalUI:drawDiseaseDetails(entry, x, y, w, h)
     end
 
     local info = entry.info or {}
+    if outcome and outcome.text and outcome.text ~= "" then
+        y = self:drawInfoSection(L("UI_HomeMedic_Hb_Out_Section", "How it ends"), outcome.text, x, y, w)
+    end
     y = self:drawInfoSection(L("UI_EHR_Codex_Cause", "Cause"), codexText(entry.id, "Cause", info.cause or L("UI_EHR_Codex_UnknownSentence", "Unknown.")), x, y, w)
     -- HARMONIE: symptoms / how to check / treatment from the game's own data (HM_Handbook)
     local HB = HM_Handbook
@@ -887,6 +908,18 @@ function EHR_MedicalJournalUI.drawDiseaseItem(self, y, item, alt)
 
     local category = truncateText(categoryName(entry.category), self:getWidth() - 118, UIFont.Small)
     self:drawText(category, 76, y + 42, c.textDim.r, c.textDim.g, c.textDim.b, c.textDim.a, UIFont.Small)
+    -- HARMONIE (2026-11-08): the first "how it ends" badge, short, after the category
+    local oc = entry.known and HM_Handbook and HM_Handbook.outcome and HM_Handbook.outcome(entry.id)
+    local first = oc and oc.tags[1]
+    if first then
+        local TAG_COL = { surgery = c.orange, meds = c.green, self = c.cyan, noself = c.red }
+        local col = TAG_COL[first.key] or c.textDim
+        local cx = 76 + measureText(UIFont.Small, category) + 10
+        local room = self:getWidth() - 118 - cx
+        if room > 40 then
+            self:drawText(truncateText(first.text, room, UIFont.Small), cx, y + 42, col.r, col.g, col.b, 1, UIFont.Small)
+        end
+    end
 
     local status = entry.known and L("UI_EHR_Codex_Known", "Known") or L("UI_EHR_Codex_Locked", "Locked")
     local statusColor = entry.known and c.green or c.yellow

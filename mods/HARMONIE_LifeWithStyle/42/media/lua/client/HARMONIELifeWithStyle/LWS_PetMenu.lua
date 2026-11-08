@@ -227,6 +227,12 @@ function PM.build(context, player, animal)
     if mine and not pet.out then
         LWS.logOnce("petmenu:none:" .. tostring(pet.piece), "PetMenu", "no pet menu: no pet out (piece %s, state %s)",
             tostring(pet.piece), pet.out == nil and "not received yet" or "out = false")
+        -- 0.7.14: a pet piece is worn -- the state may be old: ask again (5 s apart)
+        if pet.piece and nowMs() - (PM.askedAt or 0) > 5000 then
+            PM.askedAt = nowMs()
+            log("asking the server for the pet state again")
+            C.send("PetStateAsk", {})
+        end
         return
     end
     animal = animal or PM.myAnimal()

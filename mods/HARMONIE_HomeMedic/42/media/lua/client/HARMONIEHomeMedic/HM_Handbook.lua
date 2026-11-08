@@ -158,6 +158,83 @@ H.CARE = {
     painkiller_addiction = "An active painkiller dose holds the withdrawal off for a while.",
 }
 
+-- ------------------------------------------------------------- how it ends
+-- 2026-11-08 (owner: "มีข้อมูลนี้ในคู่มือไหม มี indicator หรือมีคำอะไรบอกไหม ควรชัดเจน"):
+-- one clear verdict per illness -- needs surgery / a medicine course cures
+-- it / it clears by itself (and how long) / it does not -- as badges in the
+-- disease handbook and its list, plus one paragraph. Built from the game's
+-- data (HM_Surgery.SURGICAL, the curing medicines, the illness's duration);
+-- H.NO_SELF / H.OUT_NOTE are the cases the code handles on its own way.
+H.NO_SELF = {
+    wound_infection = "It does not clear by itself: left alone it turns into sepsis (about 84 hours).",
+    sepsis = "It does not clear by itself: it keeps getting worse.",
+    cellulitis = "It does not clear by itself: its last stage turns into sepsis.",
+    delirium = "It never clears by itself: only antipsychotics end it.",
+    knox_infection = "It does not clear: the zombie infection. Only the experimental gene therapy, or cutting off a bitten arm in time (no other bite), saves you.",
+}
+-- illnesses that end by something other than a medicine or time alone
+H.OUT_SPECIAL = {
+    hypothermia = { key = "self", tag = "Clears once warm", text = "It clears only once the body is warm again; while you stay cold it stays at its worst stage." },
+    heat_stroke = { key = "meds", tag = "Cooling cures it", text = "Cooling the body cures it (see below)." },
+}
+H.OUT_NOTE = {
+    common_cold = "Untreated, it may turn into pneumonia (35 percent).",
+    concussion = "No medicine helps; brain surgery ends it at once.",
+    dysentery = "Keep drinking: it harms you through thirst.",
+    heat_stroke = "Cool down: an instant ice pack, or a cold bath (a bathtub with 8 units of water, 3 hours).",
+    tuberculosis = "It takes weeks: a medicine course is much faster.",
+}
+local function spanText(def)
+    local a, b = tonumber(def and def.durationMin), tonumber(def and def.durationMax)
+    if not a or not b or b >= 9999 then return nil end
+    if b < 24 then return L("Out_Hours", "%1-%2 hours", math.floor(a + 0.5), math.floor(b + 0.5)) end
+    local da, db = math.max(1, math.floor(a / 24 + 0.5)), math.max(1, math.floor(b / 24 + 0.5))
+    if da == db then return L("Out_Day", "%1 days", da) end
+    return L("Out_Days", "%1-%2 days", da, db)
+end
+
+-- { tags = { { key, text } ... }, text = paragraph }; key: surgery | meds | self | noself
+function H.outcome(id)
+    id = HM_Diagnosis and HM_Diagnosis.normalize(id) or id
+    local out = { tags = {}, lines = {} }
+    local S = HM_Surgery
+    local surgical = S and S.SURGICAL and S.SURGICAL[id] ~= nil
+    local cure = 0
+    for _, m in ipairs(H.meds()) do
+        for _, t in ipairs(m.treats) do if t == id and m.curative then cure = cure + 1 end end
+    end
+    local defs = EHR and EHR.Disease and EHR.Disease.Diseases
+    local def = defs and (defs[id] or (id == "knox_infection" and defs.Knox_Infection))
+    local function tag(key, text) out.tags[#out.tags + 1] = { key = key, text = text } end
+    local sp = H.OUT_SPECIAL[id]
+    if sp then
+        tag(sp.key, L("Out_Tag_" .. id, sp.tag))
+        out.lines[#out.lines + 1] = L("Out_Special_" .. id, sp.text)
+    end
+    if sp then
+        -- its own verdict above; only the time it takes, when it has one
+    elseif surgical then
+        tag("surgery", L("Out_Surgery", "Needs surgery"))
+        out.lines[#out.lines + 1] = L("Out_SurgeryText", "Needs surgery: its medicine only holds it (Awaiting surgery) and does not cure it. A successful operation starts the treatment.")
+    elseif cure > 0 or id == "heat_stroke" then
+        tag("meds", L("Out_Meds", "Medicine cures it"))
+        out.lines[#out.lines + 1] = L("Out_MedsText", "A course of its medicine cures it (see Treatment).")
+    end
+    if H.NO_SELF[id] then
+        tag("noself", L("Out_NoSelf", "Does not clear by itself"))
+        out.lines[#out.lines + 1] = L("Out_NoSelf_" .. id, H.NO_SELF[id])
+    elseif not surgical and not (sp and sp.key == "self") then
+        local span = spanText(def)
+        if span then
+            tag("self", L("Out_Self", "Clears by itself: %1", span))
+            out.lines[#out.lines + 1] = L("Out_SelfText", "Left alone it clears by itself in about %1.", span)
+        end
+    end
+    if H.OUT_NOTE[id] then out.lines[#out.lines + 1] = L("Out_Note_" .. id, H.OUT_NOTE[id]) end
+    out.text = table.concat(out.lines, "\n")
+    return out
+end
+
 function H.treatment(id)
     local cure, ease = {}, {}
     for _, m in ipairs(H.meds()) do

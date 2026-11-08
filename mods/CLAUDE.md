@@ -197,7 +197,10 @@
   Gunshots alone still do not scare it. Menu (0.7.11): every action of the
   owner's own pet works from the ground right-click -- `PM.comeThen` calls it
   over (PetCome) and acts once it is within `PM.COME_NEAR` (15 s timeout).
-  Hunger: default 360 h; a sandbox still on the old 72 is read as 360. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
+  Hunger: default 360 h; a sandbox still on the old 72 is read as 360. Pet state (0.7.14): the
+  `PetState` sent at spawn says out = false (the animal is not in the world
+  until a tick later) -- `P.step` re-sends it while `rec.sentOut` is wrong,
+  and a client whose menu finds no pet asks with `PetStateAsk`. Assets: Companion Dogs, with permission -- `tools/import_pets.py`
   copies them under `LWSPet_` names; credit in `42/CREDITS_PETS.txt`.
 - Gacha items (0.7.0): the owner's own RWZ Retention Items v0.4.2, moved
   in. One source `tools/gen_gacha.py` (items, buffs, EN/TH names and
