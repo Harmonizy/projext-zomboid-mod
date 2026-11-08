@@ -161,7 +161,7 @@ function S.ensure(player, why)
                 log("%s: could not make %s (no such item?)", LWS.name(player), t)
             end
         end
-        if item then wearList[#wearList + 1] = t end
+        if item then wearList[#wearList + 1] = t; LWS.plainClothes(item, why) end
     end
     if added > 0 or removed > 0 or why ~= "sweep" then
         log("%s: dressed (%s): %d worn, %d made, %d removed", LWS.name(player), tostring(why), #wearList, added, removed)
@@ -186,6 +186,7 @@ function S.wearHere(player, types)
     local inv = player:getInventory()
     for _, t in ipairs(types or {}) do
         local item = inv:FindAndReturn(t)
+        if item then LWS.plainClothes(item, "wear SP") end
         if item and not player:isEquippedClothing(item) then
             pcall(function() player:setWornItem(item:getBodyLocation(), item) end)
         end

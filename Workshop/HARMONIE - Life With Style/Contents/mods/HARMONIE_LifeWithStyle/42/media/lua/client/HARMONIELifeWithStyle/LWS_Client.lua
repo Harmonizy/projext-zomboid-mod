@@ -108,6 +108,7 @@ function C.dressNow()
     for t, deadline in pairs(C.pending) do
         local item = inv:FindAndReturn(t)
         if item then
+            LWS.plainClothes(item, "wear")
             if not p:isEquippedClothing(item) then
                 local ok, err = pcall(function() p:setWornItem(item:getBodyLocation(), item) end)
                 if ok then changed = true else log("could not wear %s: %s", t, tostring(err)) end

@@ -141,6 +141,11 @@
 - Slots and the catalog live in `tools/gen_lws.py` (one source): run it to
   rewrite registries.lua, the item scripts, LWS_Data.lua and ItemName.json.
   Texts: `tools/texts_lws.py`. Art: `tools/gen_lws_art.py`.
+- Picture only (0.7.15, owner): a piece changes nothing on the body -- the
+  script zeroes warmth / wind / water / bite / scratch / bullet / discomfort
+  and keeps speeds at 1.0, and `LWS.plainClothes` sets them again on the real
+  item (server ensure + client wear; logs before / after once). The Guardian
+  proxy (gacha) is the one item that protects, on purpose.
 - Every piece has two items: `<Id>` (lws:<slot>, hides the vanilla
   locations of the slot via setHideModel) and `<Id>_Over` (lws:<slot>_over,
   hides nothing). Never put a piece in a loot table.
