@@ -125,6 +125,14 @@ function S.ensure(player, why)
                 removeItem(player, inv, item)
                 removed = removed + 1
                 log("%s: removed %s (%s)", LWS.name(player), t, mine ~= key and "not theirs" or "not worn in the wardrobe")
+                -- no owner mark = it came from the world (a zombie's clothes,
+                -- LWS_WorldGuard.lua): the player gets the real vanilla item
+                local tw = mine == nil and LWS.WorldGuard and LWS.WorldGuard.twinOf(t)
+                if tw then
+                    local real = inv:AddItem(tw)
+                    if real and isServer and isServer() and sendAddItemToContainer then pcall(sendAddItemToContainer, inv, real) end
+                    log("%s: %s came from the world -- given the vanilla %s instead", LWS.name(player), t, tostring(real and tw or "(could not make)"))
+                end
             end
         elseif LWS.isGachaItem(item) then
             -- a gacha item lives in the wardrobe record only (debug spawn, old save)

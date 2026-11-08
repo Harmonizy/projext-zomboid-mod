@@ -146,6 +146,14 @@
   and keeps speeds at 1.0, and `LWS.plainClothes` sets them again on the real
   item (server ensure + client wear; logs before / after once). The Guardian
   proxy (gacha) is the one item that protects, on purpose.
+- Never in the world (0.7.16, owner): no loot table lists a piece, but a piece
+  shares its vanilla ClothingItem and the game keeps ONE item type per
+  clothing model (zombie clothes -> items), so a zombie could drop OUR piece.
+  `server/.../LWS_WorldGuard.lua` finds each piece's Base twin, logs which
+  models the game maps to us, and on OnZombieDead (server / SP) turns fashion
+  types in the zombie's visuals and inventory back into the twin; the sweep
+  gives the twin for a fashion item without an owner mark. A clean cure needs
+  our own clothingItems XML copies (vanilla XML not in the repo).
 - Every piece has two items: `<Id>` (lws:<slot>, hides the vanilla
   locations of the slot via setHideModel) and `<Id>_Over` (lws:<slot>_over,
   hides nothing). Never put a piece in a loot table.
