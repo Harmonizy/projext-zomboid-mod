@@ -29,6 +29,8 @@ local function currentPatientZeroDisabledOption()
 end
 
 local function isPatientZeroDisabled()
+    -- HARMONIE 0.32.8: the trait is removed for good (EHR_Professions.lua)
+    do return true end
     local currentOption = currentPatientZeroDisabledOption()
     if currentOption ~= nil then
         return currentOption

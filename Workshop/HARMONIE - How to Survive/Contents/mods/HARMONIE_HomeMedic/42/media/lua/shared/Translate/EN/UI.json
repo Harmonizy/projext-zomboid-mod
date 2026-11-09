@@ -2977,7 +2977,7 @@
     "UI_HomeMedic_Guide_stats_P1": "The Body Stats tab shows every stat of the patient (pulse, temperature, stress, other mods' stats...). It needs a powered medical monitor watch worn by the patient.",
     "UI_HomeMedic_Guide_stats_P2": "Examining someone without one? The button in that tab puts a medical watch from your inventory onto the patient's wrist. The values are a snapshot; press Refresh for new ones.",
     "UI_HomeMedic_Guide_toc_Title": "Amputation (The Only Cure)",
-    "UI_HomeMedic_Guide_toc_P1": "With The Only Cure installed, its options (amputate with a saw, cauterize, clean the stump, prosthesis) are in the body part's right-click menu of this window, on yourself and on others.",
+    "UI_HomeMedic_Guide_toc_P1": "With The Only Cure installed, its options (amputate with a saw, cauterize, clean the stump, prosthesis) are in the body part's right-click menu of this window, on yourself and on others. An amputation done this way (not in the Surgery tab) costs half the patient's blood: have a blood bag or saline ready.",
     "UI_HomeMedic_Guide_toc_P2": "The body view shows the amputated part, how far the stump has healed, whether it is cauterized or dirty, and the prosthesis. Admins find its debug in the HARMONIE debug right-click.",
     "UI_HomeMedic_Guide_window_Title": "This window",
     "UI_HomeMedic_Guide_window_P1": "Header buttons: the gear opens the settings (text size, window size, pin, sound and this mod's own client options), minus / plus folds the right side, the pin keeps the window open, X closes it. Drag the bottom-right corner to resize.",

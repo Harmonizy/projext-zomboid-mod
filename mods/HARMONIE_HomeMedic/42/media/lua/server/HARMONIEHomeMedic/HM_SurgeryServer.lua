@@ -283,12 +283,15 @@ local function amputate(doctor, patient, part, q, sawDamage)
     if not limb then return false end
     local ok, AH = pcall(require, "TOC/Handlers/AmputationHandler")
     if not ok or not AH then return false end
+    -- the grade already costs blood: HM_AmputationBlood must not take its 50% too
+    S.amputatingNow = true
     local done = pcall(function()
         local h = AH:new(doctor, patient, limb)
         -- a dirty (infected-risk) stump unless excellent with a clean bone cut
         h:execute(q < S.EXCELLENT or (tonumber(sawDamage) or 0) > 0.3)
         h:close()
     end)
+    S.amputatingNow = false
     return done
 end
 

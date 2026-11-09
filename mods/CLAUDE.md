@@ -133,6 +133,18 @@
   (HARMONIE_TooManyModThaiTranslate) is only for other people's mods: never
   put a key of ours there.
 
+## How to Survive (HomeMedic)
+- Patient Zero trait removed (0.32.8, owner): `EHR_Professions.lua`
+  (PATIENT_ZERO_REMOVED: never grants immunity, taken off old characters,
+  logged) + `EHR_PatientZeroTraitToggle.lua` (always hidden in creation).
+  Sandbox PatientZeroTraitDisabled now only decides Gene Therapy's permanent
+  immunity (`EHR.KnoxCure.IsPatientZeroTraitEnabled`, unchanged).
+- A TOC amputation outside the Surgery tab costs 50% of full blood
+  (0.32.8, `shared/HARMONIEHomeMedic/HM_AmputationBlood.lua`, wraps
+  `AmputationHandler:execute(true)`; server / SP only -- blood lives on the
+  server). The Surgery tab's amputation sets `HM_Surgery.amputatingNow` so it
+  is not charged twice (its grade already costs -10..-50%).
+
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key
   -- `LWS.ownerKey`, the one place to change for Discord accounts). Pieces
