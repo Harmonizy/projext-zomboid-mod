@@ -69,6 +69,11 @@ function M.install()
         local r = original(self, damagePlayer, ...)
         local okA, err = pcall(M.afterCut, self, damagePlayer)
         if not okA then log("blood after amputation FAILED: %s", tostring(err)) end
+        -- illnesses on the limb that is gone (HM_AmputatedParts.lua), any amputation
+        if HM_AmputatedParts and HM_AmputatedParts.onCut then
+            local okP, errP = pcall(HM_AmputatedParts.onCut, self)
+            if not okP then log("clearing the cut limb's illnesses FAILED: %s", tostring(errP)) end
+        end
         return r
     end
     M.installed = true
