@@ -169,12 +169,16 @@
   EHR_Blood said "*collapses*" every second while blood stayed <= 5% with
   deaths off (0.33.1). With deaths off it now calls spare() only (spare says
   "*collapses*" once a minute); "*heart stops*" (< 20%) the same.
-- A stage line is said once (0.33.2): the concussion's stage 2 line ("The
-  worst of it is fading...") repeated over and over. `EHR.Dialogue.SayStageChange`
-  drops the same line from the same player within 10 min real time (logged
-  once per line); a reverse illness (concussion) speaks only on a NEW lowest
-  stage (`disease.lowestStageSaid`, reset by SetStage) and logs "went back UP"
-  when its stage rises -- look for that line to find what writes old data.
+- Talking limits (0.33.2, owner): every line the character says by itself
+  goes through `EHR.Locale.Say` (EHR_Localization.lua): at most ONE line a
+  minute per player and 10 minutes per line (real time); a line that does not
+  pass is dropped (logged: once per line on cooldown + a count every 10 min).
+  Answers to something the player just did use `EHR.Locale.SayAction` /
+  `EHR.Dialogue.SayAction` (never dropped, still start the 1-minute gap):
+  Medication dose / can't-use / too-early lines, Knox cure item answers.
+  A reverse illness (concussion) speaks only on a NEW lowest stage
+  (`disease.lowestStageSaid`, reset by SetStage) and logs "went back UP" when
+  its stage rises -- look for that line to find what writes old data.
 - Two writers on one stage = a talking loop: heat stroke's CheckHeatCooling put
   stage 4 back to 3 while hot and UpdateProgression put it to 4 again 2 s later
   (two "Still too hot" lines in turns). The generic branch now holds stage 3
