@@ -1283,10 +1283,12 @@ function EHR_HealthPanelUI:getTabDefinitions()
     local meds = { id = "meds", label = safeText("UI_EHR_Tab_Meds", "Medication Handbook") }
     -- HARMONIE (2026-10-11): "เพิ่มแท็บ คู่มือการแพทย์ ใน HTS" (HM_GuideTab.lua)
     local guide = { id = "guide", label = safeText("UI_EHR_Tab_Guide", "Medical Guide") }
+    -- HARMONIE (2026-11-10): "เพิ่มแท็บการตัดอวัยวะ" (HM_AmputationTab.lua)
+    local amputation = { id = "amputation", label = safeText("UI_EHR_Tab_Amputation", "Amputation") }
     if self.isRemoteHealthPanel then
         return {
             { id = "ehr", label = safeText("UI_EHR_Tab_EHR_Compact", "Medic") },
-            stats, diagnosis, surgery, handbook, meds, guide,
+            stats, diagnosis, surgery, amputation, handbook, meds, guide,
         }
     end
     if self.width < 560 then
@@ -1299,7 +1301,7 @@ function EHR_HealthPanelUI:getTabDefinitions()
     return {
         { id = "ehr", label = compact and safeText("UI_EHR_Tab_EHR_Compact", "Medic") or safeText("UI_EHR_Tab_EHR", "Medic Monitor") },
         { id = "immunity", label = compact and safeText("UI_EHR_Tab_Immunity_Compact", "Immune System") or safeText("UI_EHR_Tab_Immunity", "Immune System") },
-        stats, diagnosis, surgery, handbook, meds, guide,
+        stats, diagnosis, surgery, amputation, handbook, meds, guide,
     }
 end
 
@@ -6057,13 +6059,12 @@ local function patchEquippedItemHealthButton()
                     EHR.UI.HideHealthPanelOnly()
                 end
                 return result
-            elseif EHR.UI.HideHealthPanelOnly then
+            else
+                -- HARMONIE 2026-11-10: "Open with the character window" is off --
+                -- the heart button is vanilla's own and leaves the medical
+                -- window as it is (open or closed with H)
                 if EHR.UI.ClearLegacyHealthSuppression then
                     EHR.UI.ClearLegacyHealthSuppression()
-                end
-                EHR.UI.HideHealthPanelOnly()
-                if EHR.UI.HideMonitor then
-                    EHR.UI.HideMonitor()
                 end
             end
         end

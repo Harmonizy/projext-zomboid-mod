@@ -74,7 +74,7 @@ function HMSettingsUI.homeMedicRows()
     end
     if O.followCharWindow then
         rows[#rows + 1] = { kind = "tick", label = T("followCharWindow"), tip = T("followCharWindow_tooltip"),
-            get = function() return optGet(O.followCharWindow, true) == true end, set = function(v) optSet(O.followCharWindow, v) end }
+            get = function() return optGet(O.followCharWindow, false) == true end, set = function(v) optSet(O.followCharWindow, v) end }
     end
     rows[#rows + 1] = { kind = "tick", label = text("UI_HomeMedic_Set_Pin", "Keep the medical window open (pin)"),
         tip = text("UI_HomeMedic_Set_Pin_Tip"),

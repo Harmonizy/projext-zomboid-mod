@@ -26,9 +26,9 @@ local function enabled()
     local opt = O and O.followCharWindow
     if opt and opt.getValue then
         local ok, v = pcall(opt.getValue, opt)
-        if ok and v == false then return false end
+        if ok then return v == true end
     end
-    return true
+    return false   -- off by default (2026-11-10)
 end
 
 local function visible(panel)

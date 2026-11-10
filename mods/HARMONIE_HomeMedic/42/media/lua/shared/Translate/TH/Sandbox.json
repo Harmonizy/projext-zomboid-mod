@@ -154,7 +154,7 @@
     "Sandbox_EHR_HouseholdPrescriptionLoot": "ยาตามใบสั่งแพทย์ในบ้านพักอาศัย",
     "Sandbox_EHR_HouseholdPrescriptionLoot_tooltip": "อนุญาตให้ยาตามใบสั่งแพทย์ที่เหลืออยู่ซึ่งหายาก ปรากฏในบ้าน ห้องนอน โต๊ะทำงาน และสถานที่อื่นที่ไม่ใช่สถานพยาบาล",
     "Sandbox_EHR_PatientZeroTraitDisabled": "ปิดใช้งานลักษณะนิสัยผู้ป่วยศูนย์",
-    "Sandbox_EHR_PatientZeroTraitDisabled_tooltip": "เมื่อเปิดใช้งาน ลักษณะนิสัยผู้ป่วยศูนย์จะถูกซ่อนระหว่างการสร้างตัวละคร และยีนบำบัดจะรักษาเฉพาะการติดเชื้อน็อกซ์ในปัจจุบันเท่านั้น โดยไม่มอบภูมิคุ้มกันน็อกซ์ถาวร",
+    "Sandbox_EHR_PatientZeroTraitDisabled_tooltip": "ลักษณะนิสัยผู้ป่วยศูนย์: HARMONIE เอาออกแล้ว (ไม่มีให้เลือกและไม่ให้ภูมิคุ้มกัน) ตัวเลือกนี้มีผลแค่กับยีนบำบัด: เมื่อเปิด ยีนบำบัดจะรักษาเฉพาะการติดเชื้อน็อกซ์ตอนนี้ โดยไม่ให้ภูมิคุ้มกันน็อกซ์ถาวร",
     "Sandbox_EHR_DebugMode": "โหมดดีบัก",
     "Sandbox_EHR_DebugMode_tooltip": "เปิดใช้งานการเข้าถึงเมนูดีบักของ How to Survive (กด G) นอกจากนี้ยังเปิดใช้งานการบันทึกล็อกในคอนโซล ไม่จำเป็นต้องใช้แฟล็ก -debug ของ Steam ในโหมดผู้เล่นหลายคนจำเป็นต้องมีสิทธิ์แอดมินด้วย",
     "Sandbox_EHR_RealisticTemperatureCompatibility": "ความเข้ากันได้กับ Realistic Temperature",

@@ -84,7 +84,14 @@ local function hasCharacterTrait(player, registryKey)
     return false
 end
 
+-- HARMONIE 0.32.8 (owner, 2026-11-09: "เอา trait zero patient ออก"): the
+-- Patient Zero creation trait is gone -- it never grants immunity, it is
+-- hidden in character creation (EHR_PatientZeroTraitToggle.lua) and taken
+-- off a character that still has it. Gene Therapy's own permanent immunity
+-- still follows sandbox PatientZeroTraitDisabled (EHR.KnoxCure).
+local PATIENT_ZERO_REMOVED = true
 local function isPatientZeroTraitEnabled()
+    if PATIENT_ZERO_REMOVED then return false end
     if EHR.KnoxCure and EHR.KnoxCure.IsPatientZeroTraitEnabled then
         return EHR.KnoxCure.IsPatientZeroTraitEnabled()
     end
@@ -266,6 +273,27 @@ local function getKnoxData(player)
     return modData.EHR_KnoxCure
 end
 
+-- take the removed trait off an old character (once per player per session)
+local removedTried = setmetatable({}, { __mode = "k" })
+function EHR.Professions.RemovePatientZeroTrait(player)
+    if not player or removedTried[player] then return false end
+    removedTried[player] = true
+    local token = EHRCharacterTraits and EHRCharacterTraits.patientzero
+    local who = "?"
+    pcall(function() who = tostring(player:getUsername()) end)
+    local removed = false
+    if token and type(token) ~= "string" then
+        local traitsOk, traits = safeCall(player, "getCharacterTraits")
+        if traitsOk and traits then
+            local ok = safeCall(traits, "remove", token)
+            if ok then removed = not hasCharacterTrait(player, "patientzero") end
+        end
+    end
+    print(string.format("[HARMONIE_HM][PatientZero] %s had the removed Patient Zero trait: %s", who,
+        removed and "taken off (no Knox immunity from it)" or "could not take it off -- it gives nothing any more"))
+    return removed
+end
+
 function EHR.Professions.ApplyPatientZeroTrait(player)
     if not player then return false end
 
@@ -274,6 +302,7 @@ function EHR.Professions.ApplyPatientZeroTrait(player)
     if not data then return false end
 
     if not isPatientZeroTraitEnabled() then
+        if hasPatientZero then EHR.Professions.RemovePatientZeroTrait(player) end
         if data.patientZeroTraitSource == true then
             data.geneTherapyImmune = false
             data.immunityTraitGranted = false
