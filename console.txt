@@ -38043,3 +38043,8 @@ LOG  : Lua          f:249113 st:8,528,566,133> [RWZ NAMEPLATE] draw username=DrE
 LOG  : Lua          f:249390 st:8,528,570,740> [RWZ NPC] BIND WARN // rwznpc:MENTOR_MERCENARY:1.794238503736E9:5 // timeout // last=actor_replica_not_found
 LOG  : Lua          f:250010 st:8,528,581,120> [RWZ NAMEPLATE] roster complete entries=6 received=6/6 renderer=POST_UI_ZOOM_REMOTE_103725
 LOG  : Lua          f:250011 st:8,528,581,133> [RWZ NAMEPLATE] draw username=DrElenaMercer role=UNVERIFIED chief= sub= target=SELF renderer=POST_UI_ZOOM_REMOTE_103725 anchor=ISO_NAME_TAG_128_ZOOM_SAFE_UI24/zoom=0.50 nameCenter=960,372 icon=896,373 leadY=357
+LOG  : Lua          f:250863 st:8,528,596,137> [RWZ NAMEPLATE] roster complete entries=6 received=6/6 renderer=POST_UI_ZOOM_REMOTE_103725
+LOG  : Lua          f:250864 st:8,528,596,151> [RWZ NAMEPLATE] draw username=DrElenaMercer role=UNVERIFIED chief= sub= target=SELF renderer=POST_UI_ZOOM_REMOTE_103725 anchor=ISO_NAME_TAG_128_ZOOM_SAFE_UI24/zoom=0.50 nameCenter=960,372 icon=896,373 leadY=357
+LOG  : Lua          f:251589 st:8,528,608,223> [RWZ NPC] BIND WARN // rwznpc:MENTOR_MERCENARY:1.794238503736E9:5 // timeout // last=actor_replica_not_found
+LOG  : Lua          f:251754 st:8,528,611,159> [RWZ NAMEPLATE] roster complete entries=6 received=6/6 renderer=POST_UI_ZOOM_REMOTE_103725
+LOG  : Lua          f:251755 st:8,528,611,176> [RWZ NAMEPLATE] draw username=DrElenaMercer role=UNVERIFIED chief= sub= target=SELF renderer=POST_UI_ZOOM_REMOTE_103725 anchor=ISO_NAME_TAG_128_ZOOM_SAFE_UI24/zoom=0.50 nameCenter=960,372 icon=896,373 leadY=357
