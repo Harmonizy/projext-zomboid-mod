@@ -276,8 +276,16 @@ function EHR.Keybinds.ShouldHotkeyOpenEHR()
 end
 
 function EHR.Keybinds.ShouldHeartButtonOpenEHR()
-    -- HARMONIE: the vanilla health (heart) button always opens the medical window
-    return true
+    -- HARMONIE 2026-11-10: the vanilla health (heart) button opens the medical
+    -- window only when "Open with the character window" is ticked (off by
+    -- default); H still opens it on its own
+    local O = HARMONIE_HomeMedic_Options
+    local opt = O and O.followCharWindow
+    if opt and opt.getValue then
+        local ok, v = pcall(opt.getValue, opt)
+        if ok then return v == true end
+    end
+    return false
 end
 
 --[[

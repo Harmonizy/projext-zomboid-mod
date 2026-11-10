@@ -46,6 +46,39 @@ function O.set(id, v)
     if o.setValue then TWALogErr("Options", "setValue " .. tostring(id), pcall(o.setValue, o, v)) end
     -- a combo box keeps its choice in .selected (1-based), like getValue()
     if type(v) == "number" and type(o.selected) == "number" then o.selected = v end
+    -- 2026-11-10 ("หน้าตั้งค่าของ twa ไม่สามารถติ๊กออกได้"): a tick box could read
+    -- back its old value after setValue(false), so the settings window could
+    -- never untick it. Read it back; when it did not take, write the value
+    -- where the option keeps it (its .value and its Options-page tick box).
+    if type(v) == "boolean" then
+        local back = O.get(id, nil)
+        if back ~= v then
+            o.value = v
+            local el = o.element
+            if el and el.setSelected then pcall(el.setSelected, el, 1, v) end
+            if el and type(el.selected) == "table" then el.selected[1] = v end
+            TWALog("Options", "set %s = %s did not take (read %s) -- written to the option directly, now reads %s",
+                tostring(id), tostring(v), tostring(back), tostring(O.get(id, nil)))
+            if O.get(id, nil) ~= v then
+                -- still the old value: this option answers from our own copy
+                -- from now on (the Options page's own changes update it too)
+                o._twaValue = v
+                if not o._twaWrapped then
+                    o._twaWrapped = true
+                    local og, oc = o.getValue, o.onChange
+                    o.getValue = function(self)
+                        if self._twaValue ~= nil then return self._twaValue end
+                        return og and og(self)
+                    end
+                    o.onChange = function(self, value, ...)
+                        self._twaValue = value
+                        if oc then return oc(self, value, ...) end
+                    end
+                end
+                TWALog("Options", "%s now kept by The Way To Attack itself: reads %s", tostring(id), tostring(O.get(id, nil)))
+            end
+        end
+    end
     if o.onChangeApply then TWALogErr("Options", "onChangeApply " .. tostring(id), pcall(o.onChangeApply, o, v)) end
     if PZAPI and PZAPI.ModOptions and PZAPI.ModOptions.save then pcall(PZAPI.ModOptions.save, PZAPI.ModOptions) end
 end
