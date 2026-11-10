@@ -81,6 +81,11 @@
   is gone and the flow hangs. GTP cooking (0.13.14) has an OnTick watchdog
   (`CookFlow.F.watch`: no progress 8 s + character idle -> carry on, 3 times,
   then failed "stuck"); never disable a Cancel button during such a chain.
+- A B42 ModOptions tick box can read back its old value after
+  `setValue(false)` (TWA settings window could never untick, 0.73.5):
+  `TWAOptions.set` reads it back, writes `.value` / the page's tick box, and
+  if it still does not take keeps the value itself (wrapped getValue +
+  onChange). Logged as "did not take".
 - Calling a method a Java object does not have (`scriptItem:getSwingSound()`)
   logs "Object tried to call nil" with a stack trace even inside pcall (MIL
   0.7.5 AmmoCheck: 142 per load). Test `obj.method` first.
@@ -151,6 +156,15 @@
   infected-wound flag, cellulitis whose sourceBodyPart is gone) at the cut
   (called from the HM_AmputationBlood wrapper) and every 5 s for players with
   a cut limb (stump or prosthesis). Whole-body illnesses stay. Server / SP.
+- Amputation tab (0.33.0, `client/HARMONIEHomeMedic/HM_AmputationTab.lua`,
+  tab id "amputation" after Surgery): per arm the highest cut part, stump
+  healing (TOC cicatrization hours vs 120/144/192), cauterized, dirtiness,
+  bite, prosthesis, action time multiplier; Left/Right Side and Prosthesis
+  Familiarity levels. Read only, from TOC's DataController.
+- The medical window no longer opens with the character window by default
+  (0.33.0): option id `followCharWindowV2` (new id so old saved "on" is not
+  read), default off; the heart button follows the same option and leaves
+  an open medical window alone when it is off.
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key
