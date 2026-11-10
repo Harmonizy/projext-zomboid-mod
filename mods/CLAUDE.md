@@ -165,6 +165,10 @@
   (0.33.0): option id `followCharWindowV2` (new id so old saved "on" is not
   read), default off; the heart button follows the same option and leaves
   an open medical window alone when it is off.
+- A kill site that runs every tick must not talk before `EHR.Lethal.spare`:
+  EHR_Blood said "*collapses*" every second while blood stayed <= 5% with
+  deaths off (0.33.1). With deaths off it now calls spare() only (spare says
+  "*collapses*" once a minute); "*heart stops*" (< 20%) the same.
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key
