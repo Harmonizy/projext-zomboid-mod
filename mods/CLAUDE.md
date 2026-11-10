@@ -169,6 +169,12 @@
   EHR_Blood said "*collapses*" every second while blood stayed <= 5% with
   deaths off (0.33.1). With deaths off it now calls spare() only (spare says
   "*collapses*" once a minute); "*heart stops*" (< 20%) the same.
+- A stage line is said once (0.33.2): the concussion's stage 2 line ("The
+  worst of it is fading...") repeated over and over. `EHR.Dialogue.SayStageChange`
+  drops the same line from the same player within 10 min real time (logged
+  once per line); a reverse illness (concussion) speaks only on a NEW lowest
+  stage (`disease.lowestStageSaid`, reset by SetStage) and logs "went back UP"
+  when its stage rises -- look for that line to find what writes old data.
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key

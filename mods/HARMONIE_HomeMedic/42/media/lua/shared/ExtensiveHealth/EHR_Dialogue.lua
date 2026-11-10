@@ -235,7 +235,43 @@ end
     @param text (string) - The text to say
     @return boolean - True if said
 ]]--
+-- HARMONIE 0.33.2 (owner, 2026-11-10: "ขึ้นบทพูดเดิมซ้ำๆ รัวๆ" -- the
+-- concussion's "The worst of it is fading, but my head still hurts."): a
+-- stage line is news once. The same line from the same player within
+-- STAGE_REPEAT_MS (real time) is dropped and logged once per line.
+EHR.Dialogue.STAGE_REPEAT_MS = 10 * 60 * 1000
+local stageSaid = {}
+local stageSkipLogged = {}
+local function nowMs()
+    if getTimestampMs then
+        local ok, v = pcall(getTimestampMs)
+        if ok and tonumber(v) then return tonumber(v) end
+    end
+    return (os and os.time and os.time() or 0) * 1000
+end
+local function speakerKey(player)
+    local key
+    pcall(function() key = player:getUsername() end)
+    if not key or key == "" then pcall(function() key = "id" .. tostring(player:getOnlineID()) end) end
+    return tostring(key or "?")
+end
+
 function EHR.Dialogue.SayStageChange(player, text)
+    if player and text and text ~= "" then
+        local key = speakerKey(player) .. "|" .. tostring(text)
+        local now = nowMs()
+        local last = stageSaid[key]
+        if last and now >= last and now - last < (EHR.Dialogue.STAGE_REPEAT_MS or 600000) then
+            if not stageSkipLogged[key] then
+                stageSkipLogged[key] = true
+                local msg = string.format("stage line repeated within %d s, dropped (logged once per line): %s -- %s",
+                    math.floor((now - last) / 1000), speakerKey(player), tostring(text))
+                if HMLog then HMLog("Dialogue", "%s", msg) else print("[HARMONIE_HM][Dialogue] " .. msg) end
+            end
+            return false
+        end
+        stageSaid[key] = now
+    end
     return EHR.Dialogue.Say(player, text, EHR.Dialogue.Types.STAGE_CHANGE)
 end
 
