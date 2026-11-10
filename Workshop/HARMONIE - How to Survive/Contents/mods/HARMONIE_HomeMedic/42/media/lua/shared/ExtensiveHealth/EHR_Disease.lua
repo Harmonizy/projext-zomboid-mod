@@ -1446,6 +1446,20 @@ function EHR.Disease.UpdateProgression(player, data)
                             if EHR.DEBUG then
                                 EHR.Log(string.format("%s: Recovery blocked - warmthBlocked=true", diseaseId))
                             end
+                        elseif disease.coolingBlocked then
+                            -- HARMONIE 0.33.2: heat stroke's cooling check
+                            -- (EHR_EnvironmentalDiseases CheckHeatCooling) puts
+                            -- stage 4 back to 3 while it is still hot, and this
+                            -- line put it to 4 again 2 s later: the two lines
+                            -- ("*pants* Still too hot..." / "*weak* Still too
+                            -- hot...") took turns every few seconds. Stay at
+                            -- peak until cool, like hypothermia's warmthBlocked.
+                            disease.stage = 3
+                            if oldStage ~= 3 or not disease._hmCoolLogged then
+                                disease._hmCoolLogged = true
+                                local msg = string.format("%s: recovery held at stage 3 until cool (was %s)", tostring(diseaseId), tostring(oldStage))
+                                if HMLog then HMLog("Disease", "%s", msg) else print("[HARMONIE_HM][Disease] " .. msg) end
+                            end
                         else
                             disease.stage = 4  -- Recovery
                         end

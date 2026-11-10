@@ -175,6 +175,13 @@
   once per line); a reverse illness (concussion) speaks only on a NEW lowest
   stage (`disease.lowestStageSaid`, reset by SetStage) and logs "went back UP"
   when its stage rises -- look for that line to find what writes old data.
+- Two writers on one stage = a talking loop: heat stroke's CheckHeatCooling put
+  stage 4 back to 3 while hot and UpdateProgression put it to 4 again 2 s later
+  (two "Still too hot" lines in turns). The generic branch now holds stage 3
+  while `disease.coolingBlocked` (like hypothermia's warmthBlocked), 0.33.2.
+  Audit 2026-11-10: every other tick-driven "*collapses*" / death line sits
+  behind `EHR.Lethal.spare`; random symptom lines have cooldowns;
+  `EHR.Environmental.CheckTreatment` is never called (dead).
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key
