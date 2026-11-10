@@ -2996,7 +2996,7 @@
     "UI_HomeMedic_Amp_Part_UpperArm": "Upper arm",
     "UI_HomeMedic_Amp_Stump": "Stump",
     "UI_HomeMedic_Amp_Healed": "Healed",
-    "UI_HomeMedic_Amp_Healing": "Healing %1%% (%2 h left)",
+    "UI_HomeMedic_Amp_Healing": "Healing %1%% (~%2 in game)",
     "UI_HomeMedic_Amp_Cauterized": "Cauterized",
     "UI_HomeMedic_Amp_Yes": "Yes",
     "UI_HomeMedic_Amp_No": "No",
@@ -3014,5 +3014,8 @@
     "UI_HomeMedic_Amp_LvlMax": "Level %1 (max)",
     "UI_HomeMedic_Amp_Note1": "Left Side / Right Side grow while you do timed actions with an arm cut on that side; Prosthesis Familiarity grows while one is worn. Each level takes 0.1 off the action time multiplier (never faster than normal).",
     "UI_HomeMedic_Amp_Note2": "Illnesses on a cut arm are cleared, and a stump or prosthesis cannot get infected. A saw amputation outside the Surgery tab costs half the blood.",
+    "UI_HomeMedic_Amp_Hours": "%1 h",
+    "UI_HomeMedic_Amp_DaysHours": "%1 d %2 h",
+    "UI_HomeMedic_Amp_Note4": "Stump healing time is in-game time, counted as if the stump is not cleaned again: dirt builds up every hour and, with blood on the arm, slows healing down to a tenth. Clean the stump (right-click, with a bandage) to bring its dirt back down and heal much faster.",
     "UI_HomeMedic_Amp_Note3": "Actions (amputate, cauterize, clean the stump) are in the body part right-click, here or in the vanilla health window."
 }

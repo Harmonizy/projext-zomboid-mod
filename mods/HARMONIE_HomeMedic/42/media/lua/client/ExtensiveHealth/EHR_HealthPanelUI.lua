@@ -2057,6 +2057,7 @@ function EHR_HealthPanelUI:getTabIconTexture(tabId)
         diagnosis = "media/textures/HARMONIE_HomeMedic/tab_diagnosis.png",
         handbook = "media/textures/HARMONIE_HomeMedic/tab_handbook.png",
         surgery = "media/textures/HARMONIE_HomeMedic/tab_surgery.png",
+        amputation = "media/textures/HARMONIE_HomeMedic/tab_amputation.png",
         meds = "media/textures/HARMONIE_HomeMedic/tab_meds.png",
         guide = "media/textures/HARMONIE_HomeMedic/tab_guide.png",
     }

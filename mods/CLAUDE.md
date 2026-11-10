@@ -161,6 +161,13 @@
   healing (TOC cicatrization hours vs 120/144/192), cauterized, dirtiness,
   bite, prosthesis, action time multiplier; Left/Right Side and Prosthesis
   Familiarity levels. Read only, from TOC's DataController.
+  Pictures (0.33.3): `tools/gen_amputation_art.py` (run with /usr/bin/python3,
+  it has Pillow) writes `tab_amputation.png` and `amp/arm_<L|R>_<none|Hand|
+  ForeArm|UpperArm|Hand_prost|ForeArm_prost>.png`. TOC's cicatrization time
+  is NOT hours: every in-game hour it drops by max(0.1, CicatrizationSpeed -
+  dirtiness) and dirtiness grows 0.01 x multiplier per hour (+ blood / dirt on
+  the arm), so an uncleaned hand stump takes ~800 in-game hours. The tab shows
+  that estimate in in-game time (`hoursToHeal`); CleanWoundAction lowers dirt.
 - The medical window no longer opens with the character window by default
   (0.33.0): option id `followCharWindowV2` (new id so old saved "on" is not
   read), default off; the heart button follows the same option and leaves

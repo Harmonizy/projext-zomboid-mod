@@ -14,6 +14,14 @@
     for another player it is requested once, as the TOC bridge does) and the
     patient's perks. Read only: the actions stay in the body part's
     right-click (here and in vanilla's health window).
+
+    0.33.3 (owner: "ยังไม่มีรูปเลย" / "วงเล็บ ชม. ... เวลาในเกมหรือชีวิตจริง"):
+      * each arm has a picture (tools/gen_amputation_art.py): whole, cut at
+        hand / forearm / upper arm, or with a prosthesis;
+      * TOC's "cicatrization time" is not hours: it goes down once per
+        IN-GAME hour by CicatrizationSpeed - dirtiness (at least 0.1), so a
+        dirty stump heals up to 10x slower. The tab shows the in-game time
+        left if the stump stays as clean as it is now.
 ]]--
 
 require "HARMONIEHomeMedic/HM_Text"
@@ -33,6 +41,46 @@ local CIC_BASE = { Hand = 120, ForeArm = 144, UpperArm = 192 }
 local PERKS = { "Side_L", "Side_R", "ProstFamiliarity" }
 
 local requested = {}
+
+-- the arm pictures (amp/arm_<side>_<state>.png), cached per path
+local texCache = {}
+local function armTexture(side, st)
+    local state = "none"
+    if st then
+        state = st.part
+        if st.prost and st.part ~= "UpperArm" then state = state .. "_prost" end
+    end
+    local path = "media/textures/HARMONIE_HomeMedic/amp/arm_" .. side .. "_" .. state .. ".png"
+    if texCache[path] == nil then
+        texCache[path] = (getTexture and getTexture(path)) or false
+        if not texCache[path] then log("arm picture missing: %s", path) end
+    end
+    return texCache[path] or nil
+end
+
+-- in-game hours until the stump heals, as TOC counts it (LocalPlayerController
+-- .UpdateAmputations, every in-game hour): dirtiness += 0.01 x
+-- WoundDirtynessMultiplier, time -= max(0.1, CicatrizationSpeed - dirtiness).
+-- Assumes no new dirt or blood on that arm, so it is the best case.
+local function hoursToHeal(cicTime, dirt)
+    local sv = SandboxVars and SandboxVars.TOC or {}
+    local speed = tonumber(sv.CicatrizationSpeed) or 1
+    local grow = 0.01 * (tonumber(sv.WoundDirtynessMultiplier) or 1)
+    local t, d, h = tonumber(cicTime) or 0, math.min(1, tonumber(dirt) or 0), 0
+    while t > 0 and h < 5000 do
+        d = math.min(1, d + grow)
+        local dec = speed - d
+        if dec <= 0 then dec = 0.1 end
+        t = t - dec
+        h = h + 1
+    end
+    return h
+end
+
+local function gameTime(h)
+    if h >= 24 then return L("DaysHours", "%1 d %2 h", math.floor(h / 24), h % 24) end
+    return L("Hours", "%1 h", h)
+end
 
 local function tocData(patient)
     local okD, DC = pcall(require, "TOC/Controllers/DataController")
@@ -122,7 +170,12 @@ local function draw(panel)
         local boxH = lineH * 9 + 16
         panel:drawRect(x, yy, colW, boxH, 0.45, c.panelSoft.r, c.panelSoft.g, c.panelSoft.b)
         panel:drawRectBorder(x, yy, colW, boxH, 1, bd.r, bd.g, bd.b)
-        local px = x + 10
+        local picH = boxH - 16
+        local picW = math.floor(picH * 96 / 224)
+        local tex = armTexture(side, st)
+        if tex then panel:drawTextureScaled(tex, x + 8, yy + 8, picW, picH, 1, 1, 1, 1) end
+        local px = x + 16 + picW
+        local innerW = colW - (px - x) - 8
         yy = yy + 8
         text(L("Side_" .. side, side == "L" and "LEFT ARM" or "RIGHT ARM"), px, yy, c.accent, FONT_M)
         yy = yy + fh(FONT_M) + 6
@@ -132,7 +185,7 @@ local function draw(panel)
             any = true
             local function row(label, value, col)
                 text(label, px, yy, c.textDim)
-                text(value, px + math.floor(colW * 0.48), yy, col)
+                text(value, px + math.floor(innerW * 0.42), yy, col)
                 yy = yy + lineH
             end
             row(L("CutAt", "Cut at"), L("Part_" .. st.part, st.part), c.red)
@@ -141,7 +194,13 @@ local function draw(panel)
             else
                 local base = CIC_BASE[st.part] or 1
                 local pct = math.max(0, math.min(100, math.floor((1 - st.cicTime / base) * 100 + 0.5)))
-                row(L("Stump", "Stump"), L("Healing", "Healing %1%% (%2 h left)", pct, math.ceil(st.cicTime)), c.yellow)
+                local hrs = hoursToHeal(st.cicTime, st.dirt)
+                row(L("Stump", "Stump"), L("Healing", "Healing %1%% (~%2 in game)", pct, gameTime(hrs)), c.yellow)
+                panel.hmAmpHealLog = panel.hmAmpHealLog or {}
+                if panel.hmAmpHealLog[st.limb] ~= hrs then
+                    panel.hmAmpHealLog[st.limb] = hrs
+                    log("%s: stump %d%%, TOC time %.1f, dirt %.2f -> about %d in-game hours left", st.limb, pct, st.cicTime, st.dirt, hrs)
+                end
             end
             row(L("Cauterized", "Cauterized"), st.cauterized and L("Yes", "Yes") or L("No", "No"), st.cauterized and c.green or c.textDim)
             local dirt = math.floor(st.dirt * 100 + 0.5)
@@ -177,7 +236,7 @@ local function draw(panel)
         y = y + lineH
     end
     y = y + 6
-    for _, k in ipairs({ "Note1", "Note2", "Note3" }) do
+    for _, k in ipairs({ "Note4", "Note1", "Note2", "Note3" }) do
         local t = L(k, "")
         if t ~= "" and t ~= "UI_HomeMedic_Amp_" .. k then
             local lines = (HM_Surgery and HM_Surgery.wrap) and HM_Surgery.wrap(t, b.w - 30, FONT) or { t }
