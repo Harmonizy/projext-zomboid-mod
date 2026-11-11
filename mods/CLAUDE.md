@@ -180,6 +180,15 @@
   EHR's own events. Cellulitis' wound counts as inflamed (sourceBodyPart).
   A new sign or illness: add it to STAGE_SIGNS and, if EHR does not do it,
   an `E.EFFECT[tag]` (the console says "no effect written for it").
+- Delirium starts on the SERVER in MP (0.33.8): EHR's trigger (12 game h at
+  >= 98% stress) is in `client/ExtensiveHealth/EHR_Delirium.lua`, so in MP the
+  illness was only in the client's modData -- the server never had it,
+  Antipsychotics (UseMedication runs on the server and treats only
+  `EHR_Disease.active[id]`) started no course, and the next sync wiped it.
+  `shared/HARMONIEHomeMedic/HM_DeliriumServer.lua` runs the same rule on the
+  server (logs the clock start / reset / start); the client trigger returns on
+  `isClient()`. SP unchanged. Any other client-folder illness trigger has the
+  same trap: illnesses must be contracted where EHR is authoritative.
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
