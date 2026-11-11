@@ -2412,6 +2412,21 @@ EHR.Medication.SideEffects = {
             local enduranceCap = effectData.enduranceCap or math.max(0.45, 0.57 - (0.04 * intensity))
             local thirstTarget = effectData.thirstTarget or math.min(0.78, 0.64 + (0.04 * intensity))
             local healthCap = effectData.healthCap or math.max(45, 70 - (7 * intensity))
+            -- HARMONIE 0.33.4 (owner, 2026-11-11): with illnesses not lethal the
+            -- overdose cap (45..63) never goes under the sandbox health floor
+            -- (HM_NonLethal: EHR.Lethal.floor(), default 40) -- a floor set above
+            -- the cap used to pull health below it.
+            if EHR.Lethal and EHR.Lethal.allowed and not EHR.Lethal.allowed() and EHR.Lethal.floor then
+                local fl = tonumber(EHR.Lethal.floor()) or 0
+                if healthCap < fl then
+                    if not effectData._hmFloorLogged then
+                        effectData._hmFloorLogged = true
+                        local msg = string.format("overdose health cap %.0f raised to the health floor %.0f", healthCap, fl)
+                        if HMLog then HMLog("NonLethal", "%s", msg) else print("[HARMONIE_HM][NonLethal] " .. msg) end
+                    end
+                    healthCap = fl
+                end
+            end
 
             local stats = nil
             pcall(function() stats = player:getStats() end)
@@ -2747,7 +2762,7 @@ function EHR.Medication.KillFromOverdose(player, overdoseInfo, offScheduleCount)
     -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
     if EHR.Lethal and EHR.Lethal.spare(player, cause) then
         if player.isLocalPlayer and player:isLocalPlayer() and player.Say then
-            EHR.Locale.Say(player, "Too many doses... something is very wrong...")
+            EHR.Locale.SayAction(player, "Too many doses... something is very wrong...")
         end
         return true
     end
@@ -2757,7 +2772,7 @@ function EHR.Medication.KillFromOverdose(player, overdoseInfo, offScheduleCount)
     end
 
     if player.isLocalPlayer and player:isLocalPlayer() and player.Say then
-        EHR.Locale.Say(player, "Too many doses... something is very wrong...")
+        EHR.Locale.SayAction(player, "Too many doses... something is very wrong...")
     end
 
     local bodyDamage = nil
@@ -2833,11 +2848,11 @@ function EHR.Medication.ApplyEarlyDoseOverdose(player, overdoseInfo)
     if player.isLocalPlayer and player:isLocalPlayer() then
         local earlyText = string.format("%.1f", overdoseInfo.earlyBy or 0)
         if (overdoseInfo.intensity or 1) >= 3 then
-            EHR.Locale.Say(player, "I took that way too soon... I feel awful.")
+            EHR.Locale.SayAction(player, "I took that way too soon... I feel awful.")
         elseif (overdoseInfo.intensity or 1) >= 2 then
-            EHR.Locale.Say(player, "That dose was too early. My body is reacting badly.")
+            EHR.Locale.SayAction(player, "That dose was too early. My body is reacting badly.")
         else
-            EHR.Locale.Say(player, "I should have waited another " .. earlyText .. "h before taking that.")
+            EHR.Locale.SayAction(player, "I should have waited another " .. earlyText .. "h before taking that.")
         end
     end
 
@@ -3880,7 +3895,7 @@ function EHR.Medication.UseConsumedMedication(player, itemFullType, administerin
 
     if EHR.Medication.ShouldConsumeActiveDoseWithoutTreatment(player, medData, itemFullType) then
         if medData.activeDoseMessage and player.isLocalPlayer and player:isLocalPlayer() then
-            EHR.Locale.Say(player, medData.activeDoseMessage)
+            EHR.Locale.SayAction(player, medData.activeDoseMessage)
         end
         EHRMedicationRequestSync(player)
         EHR.Log("Consumed food medication during active dose without treatment progress: " .. tostring(itemFullType))
@@ -3893,7 +3908,7 @@ function EHR.Medication.UseConsumedMedication(player, itemFullType, administerin
             and (status.isOverdue == true or (tonumber(status.hoursUntilNextDose) or 0) <= 0)
         if ok and status and status.isDoseActive and not doseDue then
             if medData.activeDoseMessage and player.isLocalPlayer and player:isLocalPlayer() then
-                EHR.Locale.Say(player, medData.activeDoseMessage)
+                EHR.Locale.SayAction(player, medData.activeDoseMessage)
             end
             EHRMedicationRequestSync(player)
             EHR.Log("Consumed blocked food medication during active dose without treatment progress: " .. tostring(itemFullType))
@@ -3902,7 +3917,7 @@ function EHR.Medication.UseConsumedMedication(player, itemFullType, administerin
     end
 
     if medData.usageMessage and player.isLocalPlayer and player:isLocalPlayer() then
-        EHR.Locale.Say(player, medData.usageMessage)
+        EHR.Locale.SayAction(player, medData.usageMessage)
     end
 
     local treatedAny = false
@@ -3998,7 +4013,7 @@ function EHR.Medication.UseMedication(player, item, administeringPlayer)
     local canUse, reason, reasonKey = EHR.Medication.CanUseMedication(player, item, inventoryOwner)
     if not canUse then
         if player.isLocalPlayer and player:isLocalPlayer() then
-            EHR.Locale.Say(player, EHR.Medication.GetCanUseReasonText(reason, reasonKey))
+            EHR.Locale.SayAction(player, EHR.Medication.GetCanUseReasonText(reason, reasonKey))
         end
         return false
     end
@@ -4017,7 +4032,7 @@ function EHR.Medication.UseMedication(player, item, administeringPlayer)
 
     if EHR.Medication.ShouldConsumeActiveDoseWithoutTreatment(player, medData, itemFullType) then
         if medData.activeDoseMessage and player.isLocalPlayer and player:isLocalPlayer() then
-            EHR.Locale.Say(player, medData.activeDoseMessage)
+            EHR.Locale.SayAction(player, medData.activeDoseMessage)
         end
 
         local consumed, consumeMode, useDelta, newUsed, remainingDoses = EHR.Medication.ConsumeOneDose(inventoryOwner, item, inventory)
@@ -4043,7 +4058,7 @@ function EHR.Medication.UseMedication(player, item, administeringPlayer)
 
     -- Display usage message
     if medData.usageMessage and player.isLocalPlayer and player:isLocalPlayer() then
-        EHR.Locale.Say(player, medData.usageMessage)
+        EHR.Locale.SayAction(player, medData.usageMessage)
     end
 
     -- Consume exactly one usable supply unit from the practitioner's inventory.
@@ -7299,7 +7314,7 @@ local function OnEatItemHandler(character, item)
 
                 if EHR.Medication.ShouldConsumeActiveDoseWithoutTreatment(character, medData, itemFullType) then
                     if medData.activeDoseMessage and character:isLocalPlayer() then
-                        EHR.Locale.Say(character, medData.activeDoseMessage)
+                        EHR.Locale.SayAction(character, medData.activeDoseMessage)
                     end
                     EHR.Log("Vanilla medication consumed too early without treatment progress: " .. itemFullType)
                     return
@@ -7332,7 +7347,7 @@ local function OnEatItemHandler(character, item)
 
                 -- Show usage message if defined
                 if medData.usageMessage and character:isLocalPlayer() then
-                    EHR.Locale.Say(character, medData.usageMessage)
+                    EHR.Locale.SayAction(character, medData.usageMessage)
                 end
             end
         end

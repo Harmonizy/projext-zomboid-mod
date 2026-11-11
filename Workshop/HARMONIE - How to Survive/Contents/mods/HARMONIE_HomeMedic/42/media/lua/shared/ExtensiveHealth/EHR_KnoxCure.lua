@@ -909,13 +909,13 @@ function EHR.KnoxCure.UseGeneTherapy(player, item)
 
     -- Check if already a Gene Therapy survivor (immune)
     if EHR.KnoxCure.HasPermanentKnoxImmunity(player, data) then
-        EHR.Dialogue.SayStageChange(player, "I'm already immune to the virus...")
+        EHR.Dialogue.SayAction(player, "I'm already immune to the virus...")
         return "already_immune"
     end
 
     -- Check if actually infected
     if not EHR.KnoxCure.IsInfected(player) then
-        EHR.Dialogue.SayStageChange(player, "I'm not infected... no need to risk this.")
+        EHR.Dialogue.SayAction(player, "I'm not infected... no need to risk this.")
         return "not_infected"
     end
 
@@ -951,7 +951,7 @@ function EHR.KnoxCure.UseGeneTherapy(player, item)
         EHR.KnoxCure.ApplyGeneTherapySideEffects(player)
 
         -- Dialogue
-        EHR.Dialogue.SayStageChange(player, "*gasps* It... it worked! I can feel it working!")
+        EHR.Dialogue.SayAction(player, "*gasps* It... it worked! I can feel it working!")
 
         if grantPermanentImmunity then
             EHR.Log("KnoxCure: Gene Therapy SUCCESS - player cured and now immune")
@@ -963,12 +963,12 @@ function EHR.KnoxCure.UseGeneTherapy(player, item)
         -- FAILURE - Incompatible, death
         -- HARMONIE (2026-10-12): a rejection knocks you down instead (sandbox HomeMedic.LethalConditions)
         if EHR.Lethal and EHR.Lethal.spare(player, "Gene Therapy Rejection") then
-            EHR.Dialogue.SayStageChange(player, "*choking* No... it's rejecting... can't breathe...")
+            EHR.Dialogue.SayAction(player, "*choking* No... it's rejecting... can't breathe...")
             return "rejected"
         end
         EHR.RecordDeathCause(player, "Gene Therapy Rejection - incompatible genetic markers caused fatal immune response")
 
-        EHR.Dialogue.SayStageChange(player, "*choking* No... it's rejecting... can't breathe...")
+        EHR.Dialogue.SayAction(player, "*choking* No... it's rejecting... can't breathe...")
 
         -- Kill player after short delay (let dialogue play)
         EHR.Log("KnoxCure: Gene Therapy FAILED - incompatible, player dies")
@@ -1041,13 +1041,13 @@ function EHR.KnoxCure.UsePhalanx(player, item)
 
     -- Check if immune (Gene Therapy survivor)
     if EHR.KnoxCure.HasPermanentKnoxImmunity(player, data) then
-        EHR.Dialogue.SayStageChange(player, "I don't need this anymore... I'm immune.")
+        EHR.Dialogue.SayAction(player, "I don't need this anymore... I'm immune.")
         return "immune"
     end
 
     -- Check if actually infected
     if not EHR.KnoxCure.IsInfected(player) then
-        EHR.Dialogue.SayStageChange(player, "I'm not infected... saving this for later.")
+        EHR.Dialogue.SayAction(player, "I'm not infected... saving this for later.")
         return "not_infected"
     end
 
@@ -1055,7 +1055,7 @@ function EHR.KnoxCure.UsePhalanx(player, item)
     local resetTo = EHR.KnoxCure.GetPhalanxEffectiveness(player)
 
     if resetTo >= 100 then
-        EHR.Dialogue.SayStageChange(player, "*swallows pill* Nothing... my body's adapted to it.")
+        EHR.Dialogue.SayAction(player, "*swallows pill* Nothing... my body's adapted to it.")
         -- Still consume the dose
         if item and item.Use then
             pcall(function() item:Use() end)
@@ -1080,7 +1080,7 @@ function EHR.KnoxCure.UsePhalanx(player, item)
 
     -- Only reset if it would actually lower the infection (never raise it)
     if newProgress >= currentProgress then
-        EHR.Dialogue.SayStageChange(player, "*swallows pill* No effect... infection is already lower than what this would do.")
+        EHR.Dialogue.SayAction(player, "*swallows pill* No effect... infection is already lower than what this would do.")
         -- Still consume the dose
         if item and item.Use then
             pcall(function() item:Use() end)
@@ -1100,13 +1100,13 @@ function EHR.KnoxCure.UsePhalanx(player, item)
     -- Dialogue based on effectiveness
     local usageCount = data.phalanxUsageCount
     if usageCount == 1 then
-        EHR.Dialogue.SayStageChange(player, "*swallows pill* Ugh... that's rough. But I feel... clearer.")
+        EHR.Dialogue.SayAction(player, "*swallows pill* Ugh... that's rough. But I feel... clearer.")
     elseif usageCount == 2 then
-        EHR.Dialogue.SayStageChange(player, "*grimaces* It's working... but not as well as before.")
+        EHR.Dialogue.SayAction(player, "*grimaces* It's working... but not as well as before.")
     elseif usageCount == 3 then
-        EHR.Dialogue.SayStageChange(player, "*groans* Barely felt anything... body's building resistance.")
+        EHR.Dialogue.SayAction(player, "*groans* Barely felt anything... body's building resistance.")
     else
-        EHR.Dialogue.SayStageChange(player, "*coughs* This is the last time this'll work...")
+        EHR.Dialogue.SayAction(player, "*coughs* This is the last time this'll work...")
     end
 
     EHR.Log(string.format("KnoxCure: Phalanx used (#%d). Infection reset from %.0f%% to %.0f%%",
@@ -1270,30 +1270,30 @@ function EHR.KnoxCure.UseImmunobooster(player, item)
 
     -- Check if already immune (Gene Therapy survivor)
     if EHR.KnoxCure.HasPermanentKnoxImmunity(player, data) then
-        EHR.Dialogue.SayStageChange(player, "I'm already permanently immune...")
+        EHR.Dialogue.SayAction(player, "I'm already permanently immune...")
         return "already_immune"
     end
 
     -- Check if already active
     if EHR.KnoxCure.IsImmunoboosterActive(player) then
         local remaining = EHR.KnoxCure.GetImmunoboosterRemaining(player)
-        EHR.Dialogue.SayStageChange(player, string.format("Already protected for %.0f more hours.", remaining))
+        EHR.Dialogue.SayAction(player, string.format("Already protected for %.0f more hours.", remaining))
         return "already_active"
     end
 
     -- Check cooldown
     if EHR.KnoxCure.IsImmunoboosterOnCooldown(player) then
-        EHR.Dialogue.SayStageChange(player, "My body hasn't recovered from the last shot...")
+        EHR.Dialogue.SayAction(player, "My body hasn't recovered from the last shot...")
         return "on_cooldown"
     end
 
     -- Check if already infected (doesn't help)
     if EHR.KnoxCure.IsInfected(player) then
-        EHR.Dialogue.SayStageChange(player, "Too late... I'm already infected. This won't help now.")
+        EHR.Dialogue.SayAction(player, "Too late... I'm already infected. This won't help now.")
         return "already_infected"
     end
     if EHR.KnoxCure.HasBites and EHR.KnoxCure.HasBites(player) then
-        EHR.Dialogue.SayStageChange(player, "Too late... I needed this before the bite.")
+        EHR.Dialogue.SayAction(player, "Too late... I needed this before the bite.")
         return "already_bitten"
     end
 

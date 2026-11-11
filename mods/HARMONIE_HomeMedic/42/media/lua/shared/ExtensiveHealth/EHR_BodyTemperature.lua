@@ -765,8 +765,12 @@ function EHR.BodyTemp.SyncHypothermiaFromTemperature(player, tempData)
         if EHR.DEBUG then
             EHR.Log(string.format("BodyTemp: Hypothermia temperature stage %d (%.1fC)", stage, tempData.bodyTemp or 0))
         end
-        if (created or stage > oldStage) and EHR.Dialogue and EHR.Dialogue.SayStageChange and def.stageEntryDialogue and def.stageEntryDialogue[stage] then
-            EHR.Dialogue.SayStageChange(player, def.stageEntryDialogue[stage])
+        -- HARMONIE 0.33.5: the temperature stage's own line first (stage 4 is
+        -- the worst here, the definition's [4] is a recovery line)
+        local entry = (def.temperatureStageEntryDialogue and def.temperatureStageEntryDialogue[stage])
+            or (def.stageEntryDialogue and def.stageEntryDialogue[stage])
+        if (created or stage > oldStage) and EHR.Dialogue and EHR.Dialogue.SayStageChange and entry then
+            EHR.Dialogue.SayStageChange(player, entry)
         end
     end
 end

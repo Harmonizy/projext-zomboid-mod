@@ -1,7 +1,9 @@
 {
     "Sandbox_TOC": "How to Survive: ศัลยกรรมและการตัดแขน",
-    "Sandbox_TOC_CicatrizationSpeed": "ความเร็วในการเกิดแผลเป็น",
-    "Sandbox_TOC_WoundDirtynessMultiplier": "ตัวคูณความสกปรกของแผล",
+    "Sandbox_TOC_CicatrizationSpeed": "ความเร็วที่ตอแขนหาย",
+    "Sandbox_TOC_CicatrizationSpeed_tooltip": "ตอแขนหลังตัดหายเร็วแค่ไหน ทุกชั่วโมงในเกม ตอแขนหายเพิ่มเท่ากับค่านี้ลบความสกปรกของแผล (ขั้นต่ำ 0.1) และความสกปรกเพิ่มขึ้นทุกชั่วโมงถ้าไม่ล้างแผล <LINE> <LINE> ตอมือ ไม่ล้างแผลเลย ไม่มีเลือดเปื้อนแขน (เวลาในเกม): <LINE> 1.0 = ประมาณ 33 วัน (5 วันถ้าล้างแผลสม่ำเสมอ) <LINE> 1.25 = ประมาณ 12 วัน <LINE> 1.5 = ประมาณ 6 วัน <LINE> 2.0 = ประมาณ 3 วัน <LINE> 3.0 = ประมาณ 2 วัน <LINE> <LINE> ตอแขนท่อนล่างใช้เวลาประมาณ 1.3 เท่า ตอแขนท่อนบนประมาณ 1.9 เท่า",
+    "Sandbox_TOC_WoundDirtynessMultiplier_tooltip": "ตอแขนที่ไม่ได้ล้างสกปรกเร็วแค่ไหน (เพิ่ม 0.01 x ค่านี้ ทุกชั่วโมงในเกม บวกดินและเลือดที่เปื้อนแขนข้างนั้น) 0 = สกปรกเฉพาะจากดินและเลือดที่เปื้อนแขน",
+    "Sandbox_TOC_WoundDirtynessMultiplier": "ความสกปรกของตอแขนที่เพิ่มขึ้น",
     "Sandbox_TOC_SurgeonAbilityImportance": "ความสำคัญของทักษะศัลยแพทย์",
     "Sandbox_TOC_EnableZombieAmputations": "เปิดใช้งานการตัดอวัยวะจากซอมบี้",
     "Sandbox_TOC_ZombieAmputationDamageThreshold": "ค่าความเสียหายขั้นต่ำสำหรับการตัดอวัยวะจากซอมบี้",

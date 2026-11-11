@@ -433,6 +433,16 @@ EHR.Disease.Diseases["hypothermia"] = {
         [3] = "Everything's... getting fuzzy... so... tired...",
         [4] = "*warming up* I thought I was going to die...",
     },
+    -- HARMONIE 0.33.5: when the stage follows the body temperature (the
+    -- default), stage 4 is the WORST one (<= 31 C), not a recovery: these
+    -- replace the recovery lines above / below for it (EHR_BodyTemperature
+    -- SyncHypothermiaFromTemperature, EHR_Disease CheckDialogue).
+    temperatureStageEntryDialogue = {
+        [4] = "*barely moving* Can't... feel anything... so... cold...",
+    },
+    temperatureDialogue = {
+        [4] = { "*barely conscious*", "Heart... slowing down...", "Can't... move... my legs...", "Need... fire... now..." },
+    },
     -- Random dialogue
     dialogue = {
         [1] = {

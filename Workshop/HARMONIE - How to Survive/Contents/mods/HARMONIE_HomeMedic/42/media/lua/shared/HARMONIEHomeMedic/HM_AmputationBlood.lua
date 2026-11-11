@@ -21,6 +21,10 @@
 HM_AmputationBlood = HM_AmputationBlood or {}
 local M = HM_AmputationBlood
 M.SHARE = 0.50
+-- 0.33.4 (owner, 2026-11-11, choice "ข"): blood under ~5% never comes back by
+-- itself (regeneration only works above 30%), so this cut never leaves less
+-- than MIN_LEFT (10%) of full blood: it takes up to 50%, but only down to 10%.
+M.MIN_LEFT = 0.10
 
 local function log(fmt, ...)
     if HMLog then HMLog("AmputationBlood", fmt, ...) else print("[HARMONIE_HM][AmputationBlood] " .. string.format(fmt, ...)) end
@@ -49,10 +53,18 @@ function M.afterCut(handler, damagePlayer)
         return false
     end
     local loss = math.floor(M.SHARE * maxV + 0.5)
+    local keep = math.floor(M.MIN_LEFT * maxV + 0.5)
+    if curV - loss < keep then
+        local was = loss
+        loss = math.max(0, math.floor(curV - keep))
+        log("%s: %s cut at %.0f%% blood -- loss %d mL cut to %d mL so %d%% stays", nameOf(patient),
+            tostring(handler.limbName), curV / maxV * 100, was, loss, math.floor(M.MIN_LEFT * 100 + 0.5))
+        if loss <= 0 then return false end
+    end
     pcall(B.ModifyBloodVolume, patient, -loss)
     local nowV = tonumber(bd.currentVolume) or (curV - loss)
     log("%s: %s amputated without surgery -- blood %.0f%% -> %.0f%% (-%d mL, %d%% of full)", nameOf(patient),
-        tostring(handler.limbName), curV / maxV * 100, nowV / maxV * 100, loss, math.floor(M.SHARE * 100 + 0.5))
+        tostring(handler.limbName), curV / maxV * 100, nowV / maxV * 100, loss, math.floor(loss / maxV * 100 + 0.5))
     if EHR.SafeTransmitModData then pcall(EHR.SafeTransmitModData, patient) end
     return true
 end

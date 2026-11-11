@@ -1021,6 +1021,13 @@ function EHR.Blood.ApplyEffects(player, data)
         local bodyDamage = player:getBodyDamage()
         if bodyDamage then
             if bloodPercent <= 0.05 then
+                -- HARMONIE (2026-11-10): with deaths off this runs every second for as
+                -- long as the blood stays this low, so "*collapses*" was said every
+                -- second. spare() says it itself, once a minute; say nothing here.
+                if EHR.Lethal and not EHR.Lethal.allowed() then
+                    EHR.Lethal.spare(player, "Exsanguination (total blood loss)")
+                    return
+                end
                 -- Below 5%: Immediate death (critical - always say)
                 EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blood_Collapse"))
                 -- HARMONIE (2026-10-12): illnesses do not kill unless sandbox HomeMedic.LethalConditions (HM_NonLethal.lua)
@@ -1033,6 +1040,11 @@ function EHR.Blood.ApplyEffects(player, data)
             else
                 -- Below 20%: High death chance per tick (1 in 50)
                 if ZombRand(50) < 1 then
+                    -- HARMONIE (2026-11-10): deaths off -> no "*heart stops*" spam either
+                    if EHR.Lethal and not EHR.Lethal.allowed() then
+                        EHR.Lethal.spare(player, "Hypovolemic shock")
+                        return
+                    end
                     EHR.Dialogue.SayCritical(player, getText("UI_EHR_Dialogue_Blood_HeartStops"))
                     if EHR.Lethal and EHR.Lethal.spare(player, "Hypovolemic shock") then return end  -- HARMONIE (2026-10-12)
                     EHR.Log("DEATH: Blood volume critical (< 20%) - cardiac arrest")

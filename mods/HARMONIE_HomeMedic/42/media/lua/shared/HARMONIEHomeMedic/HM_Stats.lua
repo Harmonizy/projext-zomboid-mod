@@ -330,6 +330,11 @@ function St.vitals(player)
             end
         end
     end
+    -- 0.33.6: cellulitis inflames the wound it came from (EHR puts its pain
+    -- there) without vanilla's infected-wound flag
+    local dis = type(md.EHR_Disease) == "table" and md.EHR_Disease.active or nil
+    local cel = type(dis) == "table" and dis.cellulitis or nil
+    if type(cel) == "table" and type(cel.sourceBodyPart) == "string" then v.cellulitisPart = cel.sourceBodyPart end
     -- GTP vitamin D deficiency holds every body part at stiffness 20:
     -- the stiffness signs then count only what is above that floor
     v.gtp = St.gtp(player)
@@ -367,13 +372,46 @@ end
 
 -- ------------------------------------------------------------- signs
 -- the illness signs that can be read off the body right now (HM_Diagnosis.SIGNS)
+-- 0.33.6 (owner, 2026-11-11: "อาการขึ้นไม่ครบในแท็บสถานะ ... มันควรขึ้นครบ"):
+-- besides what can be measured, every sign the patient's illnesses show at
+-- their current stage (HM_SignEffects.currentSigns) -- a measurable one with
+-- its reading or "not at the threshold yet", an observed one with the last
+-- time it happened (cough, vomit...) or "observed".
 local function signRows(player, out)
     local D = HM_Diagnosis
     if not (D and D.readSigns) then return end
     local any = false
-    for _, r in ipairs(D.readSigns(St.vitals(player))) do
-        out[#out + 1] = { g = "signs", k = "UI_HomeMedic_Diag_Tag_" .. r.tag, t = r.tag, tag = r.tag, s = r.reading }
-        any = true
+    local measured = {}
+    for _, r in ipairs(D.readSigns(St.vitals(player))) do measured[r.tag] = r.reading or "" end
+    local E = HM_SignEffects
+    local fromIll = {}
+    if E and E.currentSigns then
+        local ok, signs = pcall(E.currentSigns, player)
+        if ok and type(signs) == "table" then fromIll = signs end
+    end
+    local md = call(player, "getModData") or {}
+    local get = function(k) return md[k] end
+    local now = getGameTime and getGameTime():getWorldAgeHours() or 0
+    for _, grp in ipairs(D.GROUPS or {}) do
+        for _, tag in ipairs(grp.tags) do
+            local row
+            if measured[tag] then
+                row = { g = "signs", k = "UI_HomeMedic_Diag_Tag_" .. tag, t = tag, tag = tag, s = measured[tag] }
+            elseif fromIll[tag] then
+                row = { g = "signs", k = "UI_HomeMedic_Diag_Tag_" .. tag, t = tag, tag = tag }
+                local sg = D.SIGNS and D.SIGNS[tag]
+                local last = E and E.lastEvent and E.lastEvent(get, tag)
+                if last and now - last >= 0 and now - last <= 6 then
+                    local mins = math.floor((now - last) * 60 + 0.5)
+                    row.sk, row.sa, row.s = "UI_HomeMedic_Sign_Ago", tostring(mins), tostring(mins) .. " min ago"
+                elseif sg and sg.at == "stats" then
+                    row.sk, row.s = "UI_HomeMedic_Sign_NotYet", "below the threshold yet"
+                else
+                    row.sk, row.s = "UI_HomeMedic_Sign_Observed", "observed"
+                end
+            end
+            if row then out[#out + 1] = row; any = true end
+        end
     end
     -- From Garden to Plate: a vitamin deficiency that is acting on the body
     local gtp = St.gtp(player)
