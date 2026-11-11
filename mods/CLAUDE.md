@@ -149,6 +149,16 @@
   `AmputationHandler:execute(true)`; server / SP only -- blood lives on the
   server). The Surgery tab's amputation sets `HM_Surgery.amputatingNow` so it
   is not charged twice (its grade already costs -10..-50%).
+  Never below 10% (0.33.4, owner choice "ข"): `HM_AmputationBlood.MIN_LEFT`
+  -- the saw cut and the Surgery tab's amputation (HM_SurgeryServer) take
+  only down to 10% of full blood, because blood under ~5% never regenerates.
+- Overdose health cap (45..63, `medication_overdose` in EHR_Medication) is
+  raised to `EHR.Lethal.floor()` when illnesses are not lethal (0.33.4).
+- TOC Left/Right Side + Prosthesis Familiarity levels stay as TOC made them
+  (owner, 2026-11-11, option 1).
+- `TOC.CicatrizationSpeed` is a double 1.0-10.0 (0.33.4; was integer: 1 -> 2
+  jumped from ~33 to ~3 in-game days for an uncleaned hand stump), with
+  EN/TH tooltips giving the days per value.
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /

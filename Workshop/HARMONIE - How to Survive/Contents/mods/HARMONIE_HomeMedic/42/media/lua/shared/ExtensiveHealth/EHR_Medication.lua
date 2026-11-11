@@ -2412,6 +2412,21 @@ EHR.Medication.SideEffects = {
             local enduranceCap = effectData.enduranceCap or math.max(0.45, 0.57 - (0.04 * intensity))
             local thirstTarget = effectData.thirstTarget or math.min(0.78, 0.64 + (0.04 * intensity))
             local healthCap = effectData.healthCap or math.max(45, 70 - (7 * intensity))
+            -- HARMONIE 0.33.4 (owner, 2026-11-11): with illnesses not lethal the
+            -- overdose cap (45..63) never goes under the sandbox health floor
+            -- (HM_NonLethal: EHR.Lethal.floor(), default 40) -- a floor set above
+            -- the cap used to pull health below it.
+            if EHR.Lethal and EHR.Lethal.allowed and not EHR.Lethal.allowed() and EHR.Lethal.floor then
+                local fl = tonumber(EHR.Lethal.floor()) or 0
+                if healthCap < fl then
+                    if not effectData._hmFloorLogged then
+                        effectData._hmFloorLogged = true
+                        local msg = string.format("overdose health cap %.0f raised to the health floor %.0f", healthCap, fl)
+                        if HMLog then HMLog("NonLethal", "%s", msg) else print("[HARMONIE_HM][NonLethal] " .. msg) end
+                    end
+                    healthCap = fl
+                end
+            end
 
             local stats = nil
             pcall(function() stats = player:getStats() end)
