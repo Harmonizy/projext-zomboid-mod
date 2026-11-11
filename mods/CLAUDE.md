@@ -189,6 +189,14 @@
   server (logs the clock start / reset / start); the client trigger returns on
   `isClient()`. SP unchanged. Any other client-folder illness trigger has the
   same trap: illnesses must be contracted where EHR is authoritative.
+  Audit (0.33.9): server-side or guarded already -- EHR_Disease food /
+  environment / corpse / wound / sepsis / concussion (client nominates) /
+  painkiller addiction / AHTR (MP transfusion on the server) / stitch
+  cellulitis (StitchCellulitisRisk) / body temperature. Not guarded: insomnia
+  (`EHR.Insomnia.Contract`) and scabies (`EHR.HyperkeratoticScabies.Start`):
+  `shared/HARMONIEHomeMedic/HM_ContractRelay.lua` wraps them on an MP client to
+  send `HARMONIE_HM_Contract/Request` instead; the server starts them with the
+  same function (sender only, relayed ids only, 1 min per illness, logged).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
