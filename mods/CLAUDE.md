@@ -159,6 +159,13 @@
 - `TOC.CicatrizationSpeed` is a double 1.0-10.0 (0.33.4; was integer: 1 -> 2
   jumped from ~33 to ~3 in-game days for an uncleaned hand stump), with
   EN/TH tooltips giving the days per value.
+- Hypothermia stage 4 talks like the worst stage (0.33.5): with the stage
+  following the body temperature (default) stage 4 is <= 31 C, but the
+  definition's stage 4 lines were recovery lines ("*warming up* I thought I
+  was going to die..."). `temperatureStageEntryDialogue` / `temperatureDialogue`
+  in its definition are used for a temperature-driven stage (BodyTemperature
+  entry line, Disease CheckDialogue); the old lines stay for the time-based
+  mode (body temperature off), where stage 4 really is recovery.
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /

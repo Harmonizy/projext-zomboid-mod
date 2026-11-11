@@ -3992,6 +3992,10 @@ function EHR.Disease.CheckDialogue(player, data)
 
             if not skipDialogue then
                 local stageDialogue = def.dialogue[disease.stage]
+                -- HARMONIE 0.33.5: a temperature-driven stage has its own lines
+                if disease.temperatureDriven and def.temperatureDialogue and def.temperatureDialogue[disease.stage] then
+                    stageDialogue = def.temperatureDialogue[disease.stage]
+                end
                 if stageDialogue and #stageDialogue > 0 then
                     -- Random chance to speak (lower in incubation)
                     -- Base chance: 5% incubation, 15% otherwise (converted to 1-in-X format)
