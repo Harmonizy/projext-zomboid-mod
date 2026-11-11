@@ -166,6 +166,20 @@
   in its definition are used for a temperature-driven stage (BodyTemperature
   entry line, Disease CheckDialogue); the old lines stay for the time-based
   mode (body temperature off), where stage 4 really is recovery.
+- Every listed sign is shown and real (0.33.6, owner): `HM_Diagnosis.STAGE_SIGNS`
+  is the spec. Tab 3 (HM_Stats signRows) shows the measured signs AND every
+  sign of the patient's illnesses at their current stage
+  (`HM_SignEffects.currentSigns`): measured -> reading, measurable but low ->
+  "not at the threshold yet", observed -> "N min ago" (event times in
+  `EHR_Disease.hmSignEvents`, EHR syncs it) or "present". `HM_SignEffects`
+  (server / SP, every 10 s) gives a mild real effect to the (illness, stage,
+  sign) EHR leaves without one: stage 1 of the ApplyEffects illnesses (it runs
+  from stage 2 only), corpse "eye_burn" (was a line), delirium "confusion"
+  (had nothing). Never touches health; a medicine for that illness cuts it to
+  40%. It wraps EHR.Environmental Trigger* + scabies ApplyScratch to record
+  EHR's own events. Cellulitis' wound counts as inflamed (sourceBodyPart).
+  A new sign or illness: add it to STAGE_SIGNS and, if EHR does not do it,
+  an `E.EFFECT[tag]` (the console says "no effect written for it").
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
