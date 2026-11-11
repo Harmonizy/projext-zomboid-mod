@@ -800,6 +800,10 @@ function EHR.Delirium.StartEpisode(player, playerIndex, currentHour)
 end
 
 function EHR.Delirium.UpdateStressTrigger(player, currentHour)
+    -- HARMONIE 0.33.8: on an MP client the illness would be written only into
+    -- this client's copy (the server never had it: Antipsychotics treated
+    -- nothing). The server starts it (HM_DeliriumServer); single player keeps this.
+    if isClient and isClient() then return end
     if not isPlayerValid(player) then return end
     if EHR.Delirium.HasActive(player) then return end
 

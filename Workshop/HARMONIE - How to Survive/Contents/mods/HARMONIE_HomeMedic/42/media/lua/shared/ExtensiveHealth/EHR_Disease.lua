@@ -1371,10 +1371,26 @@ function EHR.Disease.UpdateProgression(player, data)
                     disease.progress = progress
                     disease.stage = math.max(1, stageCount - math.floor(progress * stageCount))
 
-                    if oldStage ~= disease.stage then
-                        if EHR.DEBUG then
-                            EHR.Log(string.format("%s recovered down to stage %d", def.name, disease.stage))
+                    -- HARMONIE 0.33.2: a reverse illness only ever goes DOWN. A
+                    -- stage that comes back up (old data written over the
+                    -- live one) is logged, and only a new lowest stage speaks
+                    -- -- the concussion said its stage 2 line over and over.
+                    local lowest = tonumber(disease.lowestStageSaid) or stageCount
+                    if oldStage ~= disease.stage and (tonumber(oldStage) or 0) < disease.stage then
+                        EHR.Disease._riseLogged = EHR.Disease._riseLogged or {}
+                        local rk = tostring(diseaseId) .. "|" .. tostring(disease.startTime)
+                        local n = (EHR.Disease._riseLogged[rk] or 0) + 1
+                        EHR.Disease._riseLogged[rk] = n
+                        if n <= 3 or n % 100 == 0 then
+                            local msg = string.format("%s went back UP %s -> %d (progress %.3f, start %.2f end %.2f now %.2f, lowest said %d) x%d",
+                                tostring(diseaseId), tostring(oldStage), disease.stage, progress,
+                                tonumber(disease.startTime) or -1, tonumber(disease.endTime) or -1, currentHour, lowest, n)
+                            if HMLog then HMLog("Disease", "%s", msg) else print("[HARMONIE_HM][Disease] " .. msg) end
                         end
+                    end
+                    if oldStage ~= disease.stage and disease.stage < lowest then
+                        disease.lowestStageSaid = disease.stage
+                        EHR.Log(string.format("%s recovered down to stage %d", def.name, disease.stage))
 
                         local allowStageDialogue = true
                         if diseaseId == "tetanus" and (tonumber(disease.stage) or 1) > 1 then
@@ -1429,6 +1445,20 @@ function EHR.Disease.UpdateProgression(player, data)
                             disease.stage = 3  -- Stay at peak until warm
                             if EHR.DEBUG then
                                 EHR.Log(string.format("%s: Recovery blocked - warmthBlocked=true", diseaseId))
+                            end
+                        elseif disease.coolingBlocked then
+                            -- HARMONIE 0.33.2: heat stroke's cooling check
+                            -- (EHR_EnvironmentalDiseases CheckHeatCooling) puts
+                            -- stage 4 back to 3 while it is still hot, and this
+                            -- line put it to 4 again 2 s later: the two lines
+                            -- ("*pants* Still too hot..." / "*weak* Still too
+                            -- hot...") took turns every few seconds. Stay at
+                            -- peak until cool, like hypothermia's warmthBlocked.
+                            disease.stage = 3
+                            if oldStage ~= 3 or not disease._hmCoolLogged then
+                                disease._hmCoolLogged = true
+                                local msg = string.format("%s: recovery held at stage 3 until cool (was %s)", tostring(diseaseId), tostring(oldStage))
+                                if HMLog then HMLog("Disease", "%s", msg) else print("[HARMONIE_HM][Disease] " .. msg) end
                             end
                         else
                             disease.stage = 4  -- Recovery
@@ -3962,6 +3992,10 @@ function EHR.Disease.CheckDialogue(player, data)
 
             if not skipDialogue then
                 local stageDialogue = def.dialogue[disease.stage]
+                -- HARMONIE 0.33.5: a temperature-driven stage has its own lines
+                if disease.temperatureDriven and def.temperatureDialogue and def.temperatureDialogue[disease.stage] then
+                    stageDialogue = def.temperatureDialogue[disease.stage]
+                end
                 if stageDialogue and #stageDialogue > 0 then
                     -- Random chance to speak (lower in incubation)
                     -- Base chance: 5% incubation, 15% otherwise (converted to 1-in-X format)
@@ -5520,6 +5554,7 @@ function EHR.Disease.SetStage(player, diseaseId, stage)
         disease.stageStartTime = currentHour
         disease.lastStageTime = currentHour
         disease.debugForcedStageAt = currentHour
+        disease.lowestStageSaid = nil  -- HARMONIE 0.33.2: a set stage may speak again
 
         if stage == 4 then
             disease.warmthBlocked = nil

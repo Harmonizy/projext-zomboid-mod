@@ -149,6 +149,54 @@
   `AmputationHandler:execute(true)`; server / SP only -- blood lives on the
   server). The Surgery tab's amputation sets `HM_Surgery.amputatingNow` so it
   is not charged twice (its grade already costs -10..-50%).
+  Never below 10% (0.33.4, owner choice "ข"): `HM_AmputationBlood.MIN_LEFT`
+  -- the saw cut and the Surgery tab's amputation (HM_SurgeryServer) take
+  only down to 10% of full blood, because blood under ~5% never regenerates.
+- Overdose health cap (45..63, `medication_overdose` in EHR_Medication) is
+  raised to `EHR.Lethal.floor()` when illnesses are not lethal (0.33.4).
+- TOC Left/Right Side + Prosthesis Familiarity levels stay as TOC made them
+  (owner, 2026-11-11, option 1).
+- `TOC.CicatrizationSpeed` is a double 1.0-10.0 (0.33.4; was integer: 1 -> 2
+  jumped from ~33 to ~3 in-game days for an uncleaned hand stump), with
+  EN/TH tooltips giving the days per value.
+- Hypothermia stage 4 talks like the worst stage (0.33.5): with the stage
+  following the body temperature (default) stage 4 is <= 31 C, but the
+  definition's stage 4 lines were recovery lines ("*warming up* I thought I
+  was going to die..."). `temperatureStageEntryDialogue` / `temperatureDialogue`
+  in its definition are used for a temperature-driven stage (BodyTemperature
+  entry line, Disease CheckDialogue); the old lines stay for the time-based
+  mode (body temperature off), where stage 4 really is recovery.
+- Every listed sign is shown and real (0.33.6, owner): `HM_Diagnosis.STAGE_SIGNS`
+  is the spec. Tab 3 (HM_Stats signRows) shows the measured signs AND every
+  sign of the patient's illnesses at their current stage
+  (`HM_SignEffects.currentSigns`): measured -> reading, measurable but low ->
+  "not at the threshold yet", observed -> "N min ago" (event times in
+  `EHR_Disease.hmSignEvents`, EHR syncs it) or "present". `HM_SignEffects`
+  (server / SP, every 10 s) gives a mild real effect to the (illness, stage,
+  sign) EHR leaves without one: stage 1 of the ApplyEffects illnesses (it runs
+  from stage 2 only), corpse "eye_burn" (was a line), delirium "confusion"
+  (had nothing). Never touches health; a medicine for that illness cuts it to
+  40%. It wraps EHR.Environmental Trigger* + scabies ApplyScratch to record
+  EHR's own events. Cellulitis' wound counts as inflamed (sourceBodyPart).
+  A new sign or illness: add it to STAGE_SIGNS and, if EHR does not do it,
+  an `E.EFFECT[tag]` (the console says "no effect written for it").
+- Delirium starts on the SERVER in MP (0.33.8): EHR's trigger (12 game h at
+  >= 98% stress) is in `client/ExtensiveHealth/EHR_Delirium.lua`, so in MP the
+  illness was only in the client's modData -- the server never had it,
+  Antipsychotics (UseMedication runs on the server and treats only
+  `EHR_Disease.active[id]`) started no course, and the next sync wiped it.
+  `shared/HARMONIEHomeMedic/HM_DeliriumServer.lua` runs the same rule on the
+  server (logs the clock start / reset / start); the client trigger returns on
+  `isClient()`. SP unchanged. Any other client-folder illness trigger has the
+  same trap: illnesses must be contracted where EHR is authoritative.
+  Audit (0.33.9): server-side or guarded already -- EHR_Disease food /
+  environment / corpse / wound / sepsis / concussion (client nominates) /
+  painkiller addiction / AHTR (MP transfusion on the server) / stitch
+  cellulitis (StitchCellulitisRisk) / body temperature. Not guarded: insomnia
+  (`EHR.Insomnia.Contract`) and scabies (`EHR.HyperkeratoticScabies.Start`):
+  `shared/HARMONIEHomeMedic/HM_ContractRelay.lua` wraps them on an MP client to
+  send `HARMONIE_HM_Contract/Request` instead; the server starts them with the
+  same function (sender only, relayed ids only, 1 min per illness, logged).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
@@ -161,10 +209,38 @@
   healing (TOC cicatrization hours vs 120/144/192), cauterized, dirtiness,
   bite, prosthesis, action time multiplier; Left/Right Side and Prosthesis
   Familiarity levels. Read only, from TOC's DataController.
+  Pictures (0.33.3): `tools/gen_amputation_art.py` (run with /usr/bin/python3,
+  it has Pillow) writes `tab_amputation.png` and `amp/arm_<L|R>_<none|Hand|
+  ForeArm|UpperArm|Hand_prost|ForeArm_prost>.png`. TOC's cicatrization time
+  is NOT hours: every in-game hour it drops by max(0.1, CicatrizationSpeed -
+  dirtiness) and dirtiness grows 0.01 x multiplier per hour (+ blood / dirt on
+  the arm), so an uncleaned hand stump takes ~800 in-game hours. The tab shows
+  that estimate in in-game time (`hoursToHeal`); CleanWoundAction lowers dirt.
 - The medical window no longer opens with the character window by default
   (0.33.0): option id `followCharWindowV2` (new id so old saved "on" is not
   read), default off; the heart button follows the same option and leaves
   an open medical window alone when it is off.
+- A kill site that runs every tick must not talk before `EHR.Lethal.spare`:
+  EHR_Blood said "*collapses*" every second while blood stayed <= 5% with
+  deaths off (0.33.1). With deaths off it now calls spare() only (spare says
+  "*collapses*" once a minute); "*heart stops*" (< 20%) the same.
+- Talking limits (0.33.2, owner): every line the character says by itself
+  goes through `EHR.Locale.Say` (EHR_Localization.lua): at most ONE line a
+  minute per player and 10 minutes per line (real time); a line that does not
+  pass is dropped (logged: once per line on cooldown + a count every 10 min).
+  Answers to something the player just did use `EHR.Locale.SayAction` /
+  `EHR.Dialogue.SayAction` (never dropped, still start the 1-minute gap):
+  Medication dose / can't-use / too-early lines, Knox cure item answers.
+  A reverse illness (concussion) speaks only on a NEW lowest stage
+  (`disease.lowestStageSaid`, reset by SetStage) and logs "went back UP" when
+  its stage rises -- look for that line to find what writes old data.
+- Two writers on one stage = a talking loop: heat stroke's CheckHeatCooling put
+  stage 4 back to 3 while hot and UpdateProgression put it to 4 again 2 s later
+  (two "Still too hot" lines in turns). The generic branch now holds stage 3
+  while `disease.coolingBlocked` (like hypothermia's warmthBlocked), 0.33.2.
+  Audit 2026-11-10: every other tick-driven "*collapses*" / death line sits
+  behind `EHR.Lethal.spare`; random symptom lines have cooldowns;
+  `EHR.Environmental.CheckTreatment` is never called (dead).
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key

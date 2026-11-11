@@ -1,7 +1,9 @@
 {
     "Sandbox_TOC": "How to Survive: Surgery & Amputation",
-    "Sandbox_TOC_CicatrizationSpeed": "Cicatrization Speed",
-    "Sandbox_TOC_WoundDirtynessMultiplier": "Wound Dirtyness Multiplier",
+    "Sandbox_TOC_CicatrizationSpeed": "Stump Healing Speed",
+    "Sandbox_TOC_CicatrizationSpeed_tooltip": "How fast an amputation stump heals. Every in-game hour the stump heals by this value minus its dirtiness (at least 0.1), and dirtiness builds up every hour unless the stump is cleaned. <LINE> <LINE> Hand stump, never cleaned, no blood on the arm (in-game): <LINE> 1.0 = about 33 days (5 days if kept clean) <LINE> 1.25 = about 12 days <LINE> 1.5 = about 6 days <LINE> 2.0 = about 3 days <LINE> 3.0 = about 2 days <LINE> <LINE> A forearm stump takes about 1.3x, an upper arm stump about 1.9x as long.",
+    "Sandbox_TOC_WoundDirtynessMultiplier_tooltip": "How fast an uncleaned stump gets dirty (0.01 x this value per in-game hour, plus dirt and blood on that arm). 0 = it only gets dirty from dirt and blood on the arm.",
+    "Sandbox_TOC_WoundDirtynessMultiplier": "Stump Dirt Build-up",
     "Sandbox_TOC_SurgeonAbilityImportance": "Relevance of surgeon doctor ability",
     "Sandbox_TOC_EnableZombieAmputations": "Enable Zombie amputations",
     "Sandbox_TOC_ZombieAmputationDamageThreshold": "Zombie amputations damage treshold",

@@ -362,6 +362,7 @@ D.SIGNS = {
         for name, p in pairs(v.parts or {}) do
             if p.infected then return true, partName(name) end
         end
+        if v.cellulitisPart then return true, partName(v.cellulitisPart) end   -- 0.33.6
         return false
     end },
 }

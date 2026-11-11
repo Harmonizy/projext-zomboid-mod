@@ -467,6 +467,18 @@ function SV.Finish(doctor, args)
     local bloodAfter
     if B and B.ModifyBloodVolume and maxV and curV and maxV > 0 then
         local loss = math.floor(lossShare * maxV * progress + 0.5)
+        -- 0.33.4 (owner, choice "ข"): an amputation never leaves less than
+        -- 10% of full blood (HM_AmputationBlood.MIN_LEFT), same as a saw cut
+        if amputated then
+            local minLeft = (HM_AmputationBlood and tonumber(HM_AmputationBlood.MIN_LEFT)) or 0.10
+            local keep = math.floor(minLeft * maxV + 0.5)
+            if curV - loss < keep then
+                local was = loss
+                loss = math.max(0, math.floor(curV - keep))
+                HMLog("Surgery", "%s: amputation at %.0f%% blood -- loss %d mL cut to %d mL so %d%% stays", HMLogName(patient),
+                    curV / maxV * 100, was, loss, math.floor(minLeft * 100 + 0.5))
+            end
+        end
         if loss > 0 then pcall(B.ModifyBloodVolume, patient, -loss) end
         blood = loss
         local nowV = tonumber(bdc.currentVolume) or (curV - loss)

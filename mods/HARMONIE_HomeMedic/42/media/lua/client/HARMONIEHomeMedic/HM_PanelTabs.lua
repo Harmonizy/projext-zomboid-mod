@@ -331,6 +331,8 @@ function EHR_HealthPanelUI:hmDrawStats()
                 if y + rowH >= top and y <= top + viewH then
                     if i % 2 == 0 then self:drawRect(col.x, y - 1, colW, rowH, 0.18, c.panelSoft.r, c.panelSoft.g, c.panelSoft.b) end
                     local value = tostring(row.s or row.v or "")
+                    -- 0.33.6: a sign row's text by key (translated here, on the viewer's game)
+                    if row.sk then value = row.sa and HM_Text(row.sk, value, row.sa) or HM_Text(row.sk, value) end
                     local valueW = tw(value)
                     local labelW = math.floor(colW * 0.45)
                     local lx = col.x + 6 + (row.indent or 0) * 14

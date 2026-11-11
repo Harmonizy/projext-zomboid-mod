@@ -235,7 +235,18 @@ end
     @param text (string) - The text to say
     @return boolean - True if said
 ]]--
+-- HARMONIE 0.33.2: the 1-line-a-minute / 10-minutes-per-line limits live
+-- in EHR.Locale.Say (EHR_Localization.lua), for every line.
 function EHR.Dialogue.SayStageChange(player, text)
+    return EHR.Dialogue.Say(player, text, EHR.Dialogue.Types.STAGE_CHANGE)
+end
+
+-- the answer to something the player just did (used an item): always said
+-- unless dialogue is Off, not held back by the 1-minute / 10-minute limits
+function EHR.Dialogue.SayAction(player, text)
+    if not player or not text or text == "" then return false end
+    if EHR.Dialogue.GetFrequencyMultiplier() == 0 then return false end
+    if EHR.Locale and EHR.Locale.SayAction then return EHR.Locale.SayAction(player, text) end
     return EHR.Dialogue.Say(player, text, EHR.Dialogue.Types.STAGE_CHANGE)
 end
 
