@@ -80,7 +80,9 @@ end
 
 local function hasItem(player, fullType)
     local inv = call(player, "getInventory")
-    return inv and (call(inv, "getFirstTypeRecurse", fullType) ~= nil) or false
+    if inv and call(inv, "getFirstTypeRecurse", fullType) ~= nil then return true end
+    -- HARMONIE: a box / bag in the same room counts too (HM_Reach)
+    return (HM_Reach and HM_Reach.findType and HM_Reach.findType(player, fullType) ~= nil) or false
 end
 
 -- the illness it treats -- by name only once diagnosed

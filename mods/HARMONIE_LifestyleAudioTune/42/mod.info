@@ -5,5 +5,5 @@ poster=poster.png
 icon=icon.png
 require=LifestyleHobbies
 author=HARMONIE
-modversion=0.2.2
+modversion=1.0.0
 versionMin=42.0.0

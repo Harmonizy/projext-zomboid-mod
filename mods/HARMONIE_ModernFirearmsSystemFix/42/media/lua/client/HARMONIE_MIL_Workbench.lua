@@ -343,7 +343,7 @@ end
 function W.openSettings()
     log("settings opened")
     HARMONIE_SettingsUI.open(T("IGUI_MIL_Set_Title"), function()
-        return HARMONIE_SettingsUI.commonRows({
+        return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(HARMONIE_SettingsUI.commonRows({
             getText = function() return W.textStep end,
             setText = function(v) W.stepText(v - W.textStep) end,
             resetSize = function()
@@ -358,7 +358,7 @@ function W.openSettings()
             setPin = function(v) if v ~= W.pinned then if W.instance then W.instance:togglePin() else W.pinned = v; W.savePrefs() end end end,
             getMuted = function() return W.muted == true end,
             setMuted = function(v) W.muted = v == true; W.savePrefs() end,
-        })
+        }), { "HARMONIE_ModernFirearmsSystemFix", "MFSSandbox", "MFSEject", "MFSCommunityFixLoot", "MFSCommunityFixGunRates", "ModernFirearmsSystemSandboxGun" })
     end, W.SETTINGS_THEME, { textStep = W.textStep })
 end
 -- Mercenary Is Life's red, for the settings window
@@ -1031,6 +1031,48 @@ function W.upgradeGun(player, gun)
     end)
     log("right-click > Upgrade gun: %s %s", fullType(gun), ok and "-- equip queued, then the window" or ("FAILED: " .. tostring(err)))
 end
+
+-- 1.0.0 (owner, 2026-11-12: "หาของได้จากตัวเอง กระเป๋า และกล่องหรือตู้รอบตัว"):
+-- the original lists parts from the inventory and containers 1 tile away
+-- (getReachableContainers); now every box / cupboard / floor bag in the same
+-- room too (HARMONIE_Reach, the hub's shared rule). A part in a box across
+-- the room: the character walks there first (vanilla walk), then the
+-- original's transfer + attach run as before (synced in MP).
+function W.installReach()
+    if W.reachInstalled then return end
+    if type(getReachableContainers) ~= "function" or not HARMONIE_Reach then
+        logOnce("noreach", "room-wide part search not installed (getReachableContainers %s, HARMONIE_Reach %s)",
+            tostring(type(getReachableContainers)), tostring(HARMONIE_Reach ~= nil))
+        return
+    end
+    W.reachInstalled = true
+    local orig = getReachableContainers
+    getReachableContainers = function(player, ...)
+        local list = orig(player, ...) or {}
+        local ok, err = pcall(function()
+            local seen = {}
+            for _, c in ipairs(list) do seen[c] = true end
+            for _, e in ipairs(HARMONIE_Reach.containers(player)) do
+                if not seen[e.c] then seen[e.c] = true; list[#list + 1] = e.c end
+            end
+        end)
+        if not ok then logOnce("reachfail", "room-wide containers FAILED: %s", tostring(err)) end
+        return list
+    end
+    if addAttachmentButton and type(addAttachmentButton.onMouseDown) == "function" then
+        local origDown = addAttachmentButton.onMouseDown
+        addAttachmentButton.onMouseDown = function(self, ...)
+            if self.slotItem and self.enabled and self.type == "WeaponPart" and HARMONIE_Reach.walkTo then
+                local p = getPlayer()
+                local c = self.slotItem.getContainer and self.slotItem:getContainer()
+                if p and c and not HARMONIE_Reach.isCarried(p, self.slotItem) then HARMONIE_Reach.walkTo(p, c) end
+            end
+            return origDown(self, ...)
+        end
+    end
+    log("parts are listed from the boxes in the whole room (HARMONIE_Reach)")
+end
+if Events and Events.OnGameStart then Events.OnGameStart.Add(function() W.installReach() end) end
 
 function W.onInventoryMenu(playerNum, context, items)
     local player = getSpecificPlayer and getSpecificPlayer(playerNum)

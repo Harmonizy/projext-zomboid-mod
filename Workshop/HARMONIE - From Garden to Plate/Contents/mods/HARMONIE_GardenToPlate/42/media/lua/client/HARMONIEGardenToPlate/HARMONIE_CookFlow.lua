@@ -38,6 +38,17 @@ local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 local function call(o, m, ...) return K.call(o, m, ...) end
 local function inv(player) return call(player, "getInventory") end
 
+-- an item from a bag, a box across the room or the floor into the inventory:
+-- the hub's HARMONIE_Reach.bring (walks to a far box first), else vanilla
+function F.bring(player, item)
+    if HARMONIE_Reach and HARMONIE_Reach.bring then return HARMONIE_Reach.bring(player, item) end
+    if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
+        ISInventoryPaneContextMenu.transferIfNeeded(player, item)
+        return true
+    end
+    return false
+end
+
 function F.busy() return F.run ~= nil and F.run.phase ~= "done" and F.run.phase ~= "failed" end
 
 -- ----------------------------------------------------------------- start
@@ -208,9 +219,7 @@ function F.startAdding()
     r.resultType = res:find("%.") and res or ("Base." .. res)
     r.preIds = idsOfType(r.player, r.resultType)
     log("%s: adding %d ingredients with vanilla (base %s id %s, makes %s)", r.dish.id, #r.adds, K.typeOf(base), tostring(r.baseId), r.resultType)
-    if call(base, "getContainer") ~= inv(r.player) and ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
-        ISInventoryPaneContextMenu.transferIfNeeded(r.player, base)
-    end
+    if call(base, "getContainer") ~= inv(r.player) then F.bring(r.player, base) end
     ISTimedActionQueue.add(HARMONIE_GTP_CookWaitAction:new(r.player, 2, F.addNext, r))
 end
 
@@ -286,9 +295,7 @@ function F.addNext(character, r)
         end
     end
     r.addIdx = r.addIdx + 1
-    if call(item, "getContainer") ~= inv(character) and ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
-        ISInventoryPaneContextMenu.transferIfNeeded(character, item)
-    end
+    if call(item, "getContainer") ~= inv(character) then F.bring(character, item) end
     log("%s: addition %d/%d -- %s into %s", r.dish.id, r.addIdx, #r.adds, K.typeOf(item), K.typeOf(base))
     ISTimedActionQueue.add(ISAddItemInRecipe:new(character, r.recipe, base, item))
     ISTimedActionQueue.add(HARMONIE_GTP_CookWaitAction:new(character, 3, F.addNext, r))
@@ -362,9 +369,7 @@ function F.retryFailed()
         dish = findDishNearby(r)
         if dish then
             r.baseId = call(dish, "getID")
-            if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
-                ISInventoryPaneContextMenu.transferIfNeeded(r.player, dish)
-            end
+            F.bring(r.player, dish)
         end
     end
     log("%s: retry %d after %s -- carrying on from addition %d of %d (dish item %s)", r.dish.id, r.retries, tostring(why),

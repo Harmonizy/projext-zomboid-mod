@@ -226,10 +226,27 @@ end
 -- -------------------------------------------------------------- reach
 -- the containers vanilla offers for crafting (client); the inventory only
 -- where that helper is missing (server / tests)
+-- 1.0.0 (owner, 2026-11-12: "หาของได้จากตัวเอง กระเป๋า และกล่องหรือตู้รอบตัว"):
+-- plus every box / cupboard / floor bag in the same room (HARMONIE_Reach,
+-- the hub's shared rule); items from there are walked to and moved in
+-- before use (CookFlow F.bring)
+local function addReach(player, list)
+    if not (HARMONIE_Reach and HARMONIE_Reach.containers and list and list.add) then return list end
+    local seen = {}
+    for i = 0, list:size() - 1 do seen[list:get(i)] = true end
+    local ok, err = pcall(function()
+        for _, e in ipairs(HARMONIE_Reach.containers(player)) do
+            if not seen[e.c] then seen[e.c] = true; list:add(e.c) end
+        end
+    end)
+    if not ok then logOnce("reachfail", "room-wide containers FAILED: %s", tostring(err)) end
+    return list
+end
+
 function K.containers(player)
     if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.getContainers then
         local ok, list = pcall(ISInventoryPaneContextMenu.getContainers, player)
-        if ok and list then return list end
+        if ok and list then return addReach(player, list) end
         logOnce("nocont", "getContainers FAILED (%s) -- inventory only", tostring(list))
     end
     local inv = call(player, "getInventory")

@@ -33,7 +33,7 @@ HARMONIE_Hub = HARMONIE_Hub or {}
 local Hub = HARMONIE_Hub
 if Hub.loaded then return end
 Hub.loaded = true
-Hub.VERSION = 3
+Hub.VERSION = 4
 local Boot = HARMONIE_HubBoot or {}
 
 -- ------------------------------------------------------------------ log
@@ -219,6 +219,124 @@ Hub.CARDS = {
       present = function() return LWSWindow ~= nil and LWSWindow.open ~= nil end,
       open = function(p) LWSWindow.open(p, "dress") end },
 }
+
+-- ------------------------------------------------------------------ 4. open a tab
+-- Owner, 2026-11-12 (1.0.0): "มีคลิกขวา เปิดแท็บ พอไปชี้ก็มีย่อยออกมาเป็นแท็บ
+-- ต่างๆของม็อด Harmonie ที่สามารถเปิดได้". Each card lists its window's tabs:
+-- { id, key (label text key), icon (texture path) } and opens one with
+-- openTab(player, id). Right-click anywhere > "HARMONIE: open a tab" > the
+-- mod > the tab.
+local function tabList(ids, keyPrefix, iconDir)
+    local out = {}
+    for _, id in ipairs(ids) do out[#out + 1] = { id = id, key = keyPrefix .. id, icon = iconDir .. "tab_" .. id .. ".png" } end
+    return out
+end
+local function fromTabs(list, iconDir)
+    local out = {}
+    for _, t in ipairs(type(list) == "table" and list or {}) do
+        if type(t) == "table" and t.id then out[#out + 1] = { id = t.id, key = t.key, icon = iconDir .. "tab_" .. t.id .. ".png" } end
+    end
+    return out
+end
+Hub.TABS = {
+    gtp = function() return tabList(GTPGuide and GTPGuide.TABS or { "cook", "overview", "vitamins", "foods", "other" }, "IGUI_GTPG_Tab_", "media/textures/GTP_UI/") end,
+    twa = function() return fromTabs(TWAWorkbench and TWAWorkbench.TABS, "media/textures/TWA_UI/") end,
+    hm = function()
+        local keys = { ehr = "EHR", immunity = "Immunity", stats = "Stats", diagnosis = "Diagnosis", surgery = "Surgery",
+            amputation = "Amputation", handbook = "Handbook", meds = "Meds", guide = "Guide" }
+        local out = {}
+        for _, id in ipairs({ "ehr", "immunity", "stats", "diagnosis", "surgery", "amputation", "handbook", "meds", "guide" }) do
+            out[#out + 1] = { id = id, key = "UI_EHR_Tab_" .. keys[id], icon = "media/textures/HARMONIE_HomeMedic/tab_" .. id .. ".png" }
+        end
+        return out
+    end,
+    svu = function() return tabList(HSVU and HSVU.TABS or { "vehicle", "upgrades", "tiers", "guide" }, "IGUI_HSVU_Tab_", "media/textures/HSVU_UI/") end,
+    mfs = function() return fromTabs(HMLWorkbench and HMLWorkbench.TABS, "media/textures/MIL_UI/") end,
+    lws = function() return tabList({ "dress", "collection", "gacha", "trade", "guide" }, "IGUI_LWS_Tab_", "media/textures/HARMONIE_LWS/") end,
+}
+Hub.OPEN_TAB = {
+    gtp = function(p, id) GTPGuide.open(p, nil, id) end,
+    twa = function(p, id)
+        TWACraftUI.open(p)
+        local w = TWACraftUI.window
+        if w and w.setTab then w:setTab(id) end
+    end,
+    hm = function(p, id)
+        EHR.UI.ShowHealthPanel(p)
+        local w = EHR.UI.HealthPanelInstance
+        if w and w.setActiveTab and id ~= "ehr" then w:setActiveTab(id) end
+    end,
+    svu = function(p, id)
+        HSVU.open(p, HSVU.nearVehicle and HSVU.nearVehicle(p) or nil)
+        local w = HSVU.window
+        if w then w.tab = id; if w.refreshData then w:refreshData() end end
+    end,
+    mfs = function(p, id)
+        HMLWorkbench.open(p, nil, true)
+        local w = HMLWorkbench.instance
+        if w and w.setTab then w:setTab(id) end
+    end,
+    lws = function(p, id) LWSWindow.open(p, id) end,
+}
+
+local texCache = {}
+local function tex(path)
+    if texCache[path] == nil then
+        local ok, t = pcall(getTexture, path)
+        texCache[path] = (ok and t) or false
+    end
+    return texCache[path] or nil
+end
+
+function Hub.openTab(card, player, id)
+    local fn = card.openTab or Hub.OPEN_TAB[card.id]
+    if not fn then return Hub.openCard(card, player) end
+    local ok, err = pcall(fn, player, id)
+    if ok then log("%s opened %s > %s from the right-click", nameOf(player), card.id, tostring(id))
+    else log("opening %s > %s FAILED: %s -- opening the window instead", card.id, tostring(id), tostring(err)); Hub.openCard(card, player) end
+end
+
+function Hub.onOpenMenu(playerNum, context, worldobjects, test)
+    if test then return end
+    local player = getSpecificPlayer and getSpecificPlayer(playerNum)
+    if not player or not context then return end
+    local parent = context:addOption(T("IGUI_HUB_OpenMenu"), nil, nil)
+    local sub = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, sub)
+    local icon = Boot.icon and Boot.icon()
+    local shown = 0
+    for _, card in ipairs(Hub.CARDS) do
+        local okP, present = pcall(card.present)
+        if okP and present then
+            shown = shown + 1
+            local modOpt = sub:addOption(T(card.name), nil, nil)
+            if icon and modOpt then modOpt.iconTexture = icon end
+            local note = card.note and select(2, pcall(card.note, player)) or nil
+            if note and modOpt then
+                local tip = ISToolTip:new(); tip:initialise(); tip:setName(T(card.name)); tip.description = T(note)
+                modOpt.toolTip = tip
+            end
+            local tabsFn = card.tabs or Hub.TABS[card.id]
+            local okT, tabs = pcall(function() return tabsFn and tabsFn() or {} end)
+            if not okT then tabs = {}; logOnce("tabsfail:" .. card.id, "tabs of %s FAILED: %s", card.id, tostring(tabs)) end
+            local tsub = ISContextMenu:getNew(sub)
+            sub:addSubMenu(modOpt, tsub)
+            if #tabs == 0 then
+                local o = tsub:addOption(T("IGUI_HUB_Open"), player, function(p) Hub.openCard(card, p) end)
+                if icon and o then o.iconTexture = icon end
+            end
+            for _, t in ipairs(tabs) do
+                local label = T(t.key)
+                if label == t.key then label = tostring(t.id) end
+                local o = tsub:addOption(label, player, function(p) Hub.openTab(card, p, t.id) end)
+                local ti = t.icon and tex(t.icon)
+                if o then o.iconTexture = ti or icon end
+            end
+        end
+    end
+    if shown == 0 then sub:addOption(T("IGUI_HUB_None"), nil, nil) end
+    logOnce("openmenu:" .. shown, "right-click 'open a tab': %d window(s) listed", shown)
+end
 
 function Hub.openCard(card, player)
     local need = card.need and card.need(player)
@@ -685,6 +803,8 @@ Hub.hookMenus()
 Hub.hookCharacterWindow()
 if Events then
     if Events.OnFillWorldObjectContextMenu then
+        -- "open a tab" first: it leads our block (Hub.regroup keeps the order added)
+        Events.OnFillWorldObjectContextMenu.Add(HARMONIE_Ours and HARMONIE_Ours(Hub.onOpenMenu, "HUB") or Hub.onOpenMenu)
         Events.OnFillWorldObjectContextMenu.Add(HARMONIE_Ours and HARMONIE_Ours(Hub.onDebugMenu, "debug") or Hub.onDebugMenu)
     end
     -- another mod may replace the menu functions after us: hook again

@@ -788,7 +788,14 @@ local function findInventoryItemByID(player, itemID)
     if not player or itemID == nil then return nil, nil end
     local inventory = player:getInventory()
     if not inventory then return nil, nil end
-    return findItemInContainer(inventory, itemID, {})
+    local item, container = findItemInContainer(inventory, itemID, {})
+    if item then return item, container end
+    -- HARMONIE: an item the client found in a box / bag in the same room
+    if HM_Reach and HM_Reach.findById then
+        local near, cont = HM_Reach.findById(player, itemID)
+        if near then return near, cont end
+    end
+    return nil, nil
 end
 
 local function findItemTypeInContainer(container, fullType, visited)
@@ -828,7 +835,13 @@ local function findInventoryItemByFullType(player, fullType)
     if not player or not fullType then return nil, nil end
     local inventory = player:getInventory()
     if not inventory then return nil, nil end
-    return findItemTypeInContainer(inventory, fullType, {})
+    local item, container = findItemTypeInContainer(inventory, fullType, {})
+    if item then return item, container end
+    if HM_Reach and HM_Reach.findType then
+        local near, cont = HM_Reach.findType(player, fullType)
+        if near then return near, cont end
+    end
+    return nil, nil
 end
 
 local function removeInventoryItem(item, fallbackContainer)
@@ -4468,6 +4481,8 @@ local function OnClientCommand(module, command, player, args)
                 log("[EHR] Server: Synced item removal for " .. player:getUsername())
                 return
             end
+            if HM_Reach and HM_Reach.serverMissing then HM_Reach.serverMissing(player, args.itemID, "RemoveItem") end
+            return
         elseif command == "UnpackCleanBandage" then
             EHR.ServerCommands.UnpackCleanBandage(player, args)
             return
@@ -4487,6 +4502,8 @@ local function OnClientCommand(module, command, player, args)
                 log("[EHR] Server: Synced item usedDelta for " .. player:getUsername())
                 return
             end
+            if HM_Reach and HM_Reach.serverMissing then HM_Reach.serverMissing(player, args.itemID, "UpdateItemDelta") end
+            return
         elseif command == "TrackMedication" and args and args.medKey then
             -- Sync medication tracking from client (for generic medical items)
             local data = player:getModData()

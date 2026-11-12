@@ -416,7 +416,7 @@ function H.openSettings()
     log("settings opened")
     local C = H.C
     HARMONIE_SettingsUI.open(T("IGUI_HSVU_Set_Title"), function()
-        return HARMONIE_SettingsUI.commonRows({
+        return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(HARMONIE_SettingsUI.commonRows({
             getText = function() return H.textStep end,
             setText = function(v) H.stepText(v - H.textStep) end,
             resetSize = function()
@@ -434,7 +434,7 @@ function H.openSettings()
             setPin = function(v) if v ~= H.pinned then if H.window then H.window:togglePin() else H.pinned = v; H.savePrefs() end end end,
             getMuted = function() return H.muted == true end,
             setMuted = function(v) H.muted = v == true; H.savePrefs() end,
-        })
+        }), { "HARMONIE_SVU3PartWear" })
     end, {
         bg = C.background, header = C.header, row = C.card, rowHover = { 0.06, 0.12, 0.26 },
         border = C.border, borderDim = C.borderDim, accent = C.accent, accentDark = C.accentDark,

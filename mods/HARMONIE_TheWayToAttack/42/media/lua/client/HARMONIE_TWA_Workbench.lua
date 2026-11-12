@@ -690,7 +690,7 @@ function W.settingsRows()
         end
     end
     rows[#rows + 1] = { kind = "note", label = getText("IGUI_TWA_Set_KeysNote") }
-    return rows
+    return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HARMONIE_TheWayToAttack" })
 end
 
 function W.openSettings()

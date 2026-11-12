@@ -117,7 +117,7 @@ function HMSettingsUI.homeMedicRows()
             get = function() return tonumber(optGet(O.bloodVisionStrength, 1)) or 1 end, set = function(v) optSet(O.bloodVisionStrength, v) end, fmt = pct }
     end
     rows[#rows + 1] = { kind = "note", label = text("UI_HomeMedic_Set_KeysNote") }
-    return rows
+    return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HomeMedic", "ExtensiveHealthRework", "TOC", "MultiplierConfig" })
 end
 
 function HMSettingsUI.openHomeMedic()

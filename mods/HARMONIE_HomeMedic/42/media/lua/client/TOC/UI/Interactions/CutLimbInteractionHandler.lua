@@ -29,6 +29,10 @@ local function GetBandageItem(player)
     local bandageItem = plInv:FindAndReturn("Base.Bandage") or
                         plInv:FindAndReturn("Base.RippedSheets") or
                         plInv:FindAndReturn("Base.AlcoholBandage")
+    -- HARMONIE: bags and the boxes in the same room too (HM_Reach)
+    if not bandageItem and HM_Reach and HM_Reach.findType then
+        bandageItem = HM_Reach.findType(player, { "Base.Bandage", "Base.RippedSheets", "Base.AlcoholBandage" })
+    end
 
     ---@cast bandageItem InventoryItem
 
@@ -44,6 +48,7 @@ local function GetStitchesConsumableItem(player)
     -- Suture needle has priority
 
     local sutureNeedle = plInv:FindAndReturn("Base.SutureNeedle")
+    if not sutureNeedle and HM_Reach and HM_Reach.findType then sutureNeedle = HM_Reach.findType(player, "Base.SutureNeedle") end
 
     if sutureNeedle then
         return sutureNeedle
@@ -51,12 +56,18 @@ local function GetStitchesConsumableItem(player)
         -- Didn't find the suture one, so let's search for the normal one + thread
 
         local needleItem = plInv:FindAndReturn("Base.Needle")
+        if not needleItem and HM_Reach and HM_Reach.findType then needleItem = HM_Reach.findType(player, "Base.Needle") end
 
         if needleItem == nil then return nil end
 
         -- Found the normal one, searching for thread
 
         local threadItem = plInv:FindAndReturn("Base.Thread")
+        if (not threadItem or threadItem:getUseDelta() <= 0) and HM_Reach and HM_Reach.findFirst then
+            threadItem = HM_Reach.findFirst(player, function(it)
+                return it:getFullType() == "Base.Thread" and it:getUseDelta() > 0
+            end) or threadItem
+        end
         ---@cast threadItem DrainableComboItem
 
         if threadItem and threadItem:getUseDelta() > 0 then
@@ -88,6 +99,13 @@ local function PerformAction(surgeon, patient, limbName, sawItem, stitchesItem, 
 
 
     ConfirmationPanel.Open(textConfirmAmp, x, y, nil, function()
+
+        -- HARMONIE: supplies found in a bag or a box nearby are moved into the
+        -- surgeon's inventory first (vanilla transfer, synced in MP)
+        if HM_Reach and HM_Reach.bring then
+            HM_Reach.bring(surgeon, stitchesItem)
+            HM_Reach.bring(surgeon, bandageItem)
+        end
 
         -- get saw in hand
         -- todo primary or secondary depending on amputation status of surgeon
@@ -307,6 +325,9 @@ end
 function CutLimbInteractionHandler:perform(previousAction, itemType)
     local item = self:getItemOfType(self.items.ITEMS, itemType)
     previousAction = self:toPlayerInventory(item, previousAction)
+    -- HARMONIE: stitches / bandage found in a box or bag nearby come along too
+    if self.stitchesItem then previousAction = self:toPlayerInventory(self.stitchesItem, previousAction) end
+    if self.bandageItem then previousAction = self:toPlayerInventory(self.bandageItem, previousAction) end
     TOC_DEBUG.print("Perform CutLimbInteractionHandler on " .. self.limbName)
     local action = CutLimbAction:new(self:getDoctor(), self:getPatient(), self.limbName, item, self.stitchesItem, self.bandageItem)
     ISTimedActionQueue.addAfter(previousAction, action)

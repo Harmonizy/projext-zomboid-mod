@@ -67,6 +67,17 @@ function TWASources.get(player)
     if c and now - c.at < 400 then return c.src end
     local conts, floor = { player:getInventory() }, {}
     nearby(player, math.max(1, math.floor(TWAConfig.num("NearbyRadius", 1))), conts, floor)
+    -- 1.0.0 (owner, 2026-11-12: "หาของได้จากตัวเอง กระเป๋า และกล่องหรือตู้รอบตัว"):
+    -- every box / cupboard / floor bag in the same room too (HARMONIE_Reach,
+    -- the hub's shared rule: room <= 12 tiles, outdoors <= 3); loose floor
+    -- items stay within NearbyRadius
+    if HARMONIE_Reach and HARMONIE_Reach.containers then
+        local seen = {}
+        for _, c in ipairs(conts) do seen[c] = true end
+        for _, e in ipairs(HARMONIE_Reach.containers(player)) do
+            if not seen[e.c] then seen[e.c] = true; conts[#conts + 1] = e.c end
+        end
+    end
     local src = setmetatable({ conts = conts, floor = floor, inv = player:getInventory() }, Multi)
     if client then cache[player] = { at = now, src = src } end
     return src

@@ -71,27 +71,64 @@ local function AddAdminTocOptions(playerNum, context, worldobjects)
     
 end
 -- HARMONIE (2026-10-11, owner: "เอา ดีบัก TOC ไปรวมใน ดีบัก HARMONIE"): with
--- the HARMONIE hub the same actions sit inside the one "HARMONIE debug"
--- menu -- under the clicked player's name, or for yourself in its general
--- part -- instead of a separate "TOC admin" entry per player.
+-- the HARMONIE hub these actions sit inside the one "HARMONIE debug" menu.
+-- 1.0.0 (2026-11-12, owner: "กรณีของ onlycure ให้ไปรวมอยู่ในหน้าต่างเดียว ไม่ใช่
+-- ออกมาเยอะแบบนี้"): ONE option per player opens ONE window
+-- (HARMONIE_SettingsUI rows): each limb with its state and an Amputate
+-- button, and Reset at the top. Same server relay commands as before.
+local DataController = require("TOC/Controllers/DataController")
+local function tocLog(fmt, ...)
+    local ok, s = pcall(string.format, fmt, ...)
+    print("[HARMONIE_HM][TOCAdmin] " .. (ok and s or tostring(fmt)))
+end
+
+local function resetTOC(pl)
+    local num = pl:getOnlineID()
+    if isClient() then
+        sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayExecuteInitialization, { patientNum = num })
+    else
+        ClientRelayCommands.ReceiveExecuteInitialization()
+    end
+    tocLog("reset TOC for %s (online id %s)", tostring(pl:getUsername()), tostring(num))
+end
+
+local function amputate(pl, limbName)
+    sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayForcedAmputation,
+        { patientNum = pl:getOnlineID(), limbName = limbName })
+    tocLog("force amputation %s on %s", tostring(limbName), tostring(pl:getUsername()))
+end
+
+local function isCut(pl, limbName)
+    local ok, cut = pcall(function() return DataController.GetInstance(pl:getUsername()):getIsCut(limbName) end)
+    return ok and cut == true
+end
+
+function HM_OpenTOCAdmin(pl)
+    if not pl or not HARMONIE_SettingsUI then tocLog("no player / no HARMONIE settings window -- not opened"); return end
+    local name = tostring(pl:getUsername() or "?")
+    HARMONIE_SettingsUI.open(getText("ContextMenu_Admin_TOC") .. " - " .. name, function()
+        local rows = {
+            { kind = "note", label = getText("IGUI_HM_TOCAdmin_Note") },
+            { kind = "button", id = "toc_reset", label = getText("ContextMenu_Admin_ResetTOC"), text = getText("IGUI_HM_TOCAdmin_Reset"),
+              run = function() resetTOC(pl) end },
+            { kind = "section", label = getText("ContextMenu_Admin_ForceAmputation") },
+        }
+        for i = 1, #StaticData.LIMBS_STR do
+            local limbName = StaticData.LIMBS_STR[i]
+            rows[#rows + 1] = { kind = "button", id = "toc_" .. limbName,
+                label = getText("ContextMenu_Limb_" .. limbName) .. (isCut(pl, limbName) and (" (" .. getText("IGUI_HM_TOCAdmin_Cut") .. ")") or ""),
+                text = getText("IGUI_HM_TOCAdmin_Amputate"), run = function() amputate(pl, limbName) end }
+        end
+        return rows
+    end, HMSettingsUI and HMSettingsUI.THEME or nil)
+    tocLog("admin window opened for %s", name)
+end
+
 local function tocDebug(add, player, target)
     local pl = target or player
     if not pl then return end
-    local num = pl:getOnlineID()
     local who = target and "" or (" (" .. getText("IGUI_HUB_DebugSelf") .. ")")
-    add(getText("ContextMenu_Admin_TOC") .. ": " .. getText("ContextMenu_Admin_ResetTOC") .. who, function()
-        if isClient() then
-            sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayExecuteInitialization, { patientNum = num })
-        else
-            ClientRelayCommands.ReceiveExecuteInitialization()
-        end
-    end)
-    for i = 1, #StaticData.LIMBS_STR do
-        local limbName = StaticData.LIMBS_STR[i]
-        add(getText("ContextMenu_Admin_TOC") .. ": " .. getText("ContextMenu_Admin_ForceAmputation") .. " - " .. getText("ContextMenu_Limb_" .. limbName) .. who, function()
-            sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayForcedAmputation, { patientNum = num, limbName = limbName })
-        end)
-    end
+    add(getText("ContextMenu_Admin_TOC") .. who, function() HM_OpenTOCAdmin(pl) end)
 end
 if HARMONIE_RegisterDebug then
     HARMONIE_RegisterDebug("TOC", tocDebug)
