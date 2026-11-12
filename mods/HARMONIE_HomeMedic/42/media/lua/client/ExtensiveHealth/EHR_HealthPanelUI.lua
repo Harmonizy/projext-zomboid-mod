@@ -1016,6 +1016,20 @@ function EHR_HealthPanelUI:createChildren()
     self.administerMedicationButton:setVisible(false)
     self:addChild(self.administerMedicationButton)
 
+    -- HARMONIE 0.33.12: draw this patient's blood (HM_DrawBloodFrom; the patient consents)
+    local drawText = HM_Text and HM_Text("UI_HomeMedic_DrawFrom_Button", "Draw Blood") or "Draw Blood"
+    self.drawBloodButton = ISButton:new(self.width - 442, 6, 100, 24, drawText, self, EHR_HealthPanelUI.onDrawBloodFromPatient)
+    self.drawBloodButton:initialise()
+    self.drawBloodButton:instantiate()
+    self.drawBloodButton.borderColor = { r = 0.86, g = 0.24, b = 0.28, a = 1 }
+    self.drawBloodButton.backgroundColor = { r = 0.12, g = 0.02, b = 0.03, a = 0.88 }
+    self.drawBloodButton.backgroundColorMouseOver = { r = 0.38, g = 0.06, b = 0.09, a = 0.95 }
+    self.drawBloodButton:setTooltip(HM_Text and HM_Text("UI_HomeMedic_DrawFrom_ButtonTooltip",
+        "Draw 500 mL of this patient's blood into an empty blood bag (carried, or in a box in this room). The patient must agree.")
+        or "Draw blood")
+    self.drawBloodButton:setVisible(false)
+    self:addChild(self.drawBloodButton)
+
     self:ensureBodyPartPanel()
     self:createEmbeddedVanillaTabs()
     self:syncTabVisibility()
@@ -1061,6 +1075,17 @@ function EHR_HealthPanelUI:shouldShowMedicationAdministerButton()
         and (self.remotePatient or self.player) ~= nil
         and EHR.MPMedication ~= nil
         and EHR.MPMedication.Open ~= nil
+end
+
+function EHR_HealthPanelUI:shouldShowDrawBloodButton()
+    return self:shouldShowMedicationAdministerButton()
+        and HM_DrawBloodFrom ~= nil and HM_DrawBloodFrom.ask ~= nil
+        and (self.remotePatient or self.player) ~= self.remoteDoctor
+end
+
+function EHR_HealthPanelUI:onDrawBloodFromPatient()
+    if not self:shouldShowDrawBloodButton() then return end
+    HM_DrawBloodFrom.ask(self.remoteDoctor, self.remotePatient or self.player)
 end
 
 function EHR_HealthPanelUI:onOpenMedicationAdminister()
@@ -1773,6 +1798,9 @@ function EHR_HealthPanelUI:syncTabVisibility()
     if self.administerMedicationButton then
         self.administerMedicationButton:setVisible(self:shouldShowMedicationAdministerButton())
     end
+    if self.drawBloodButton then
+        self.drawBloodButton:setVisible(self:shouldShowDrawBloodButton())
+    end
     for id, extra in pairs(EHR_HealthPanelUI.ExtraTabs) do
         if extra.sync then extra.sync(self, self.activeTab == id) end
     end
@@ -1838,6 +1866,10 @@ function EHR_HealthPanelUI:repositionControls()
     if self.administerMedicationButton then
         self.administerMedicationButton:setX(self.width - 334)
         self.administerMedicationButton:setY(math.floor((self.HEADER_HEIGHT - self.administerMedicationButton.height) / 2))
+    end
+    if self.drawBloodButton then
+        self.drawBloodButton:setX(self.width - 442)
+        self.drawBloodButton:setY(math.floor((self.HEADER_HEIGHT - self.drawBloodButton.height) / 2))
     end
 end
 
@@ -3253,7 +3285,8 @@ function EHR_HealthPanelUI:drawHeader()
     self:drawRect(0, self.HEADER_HEIGHT - 1, self.width, 1, 0.85, c.border.r, c.border.g, c.border.b)
     self:drawRectBorder(0, 0, self.width, self.height, c.border.a, c.border.r, c.border.g, c.border.b)
     local titleX = 14
-    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0) - (self.hmSettingsBtn and 30 or 0))
+    local titleWidth = math.max(90, self.width - (self.isRemoteHealthPanel and 388 or 190) - (self.hmPinBtn and 30 or 0) - (self.hmSettingsBtn and 30 or 0)
+        - ((self.drawBloodButton and self.drawBloodButton:isVisible()) and 108 or 0))
     self:drawDockedText(self:truncateText(safeText("UI_EHR_HealthPanelTitle", "HOW TO SURVIVE STATUS"), titleWidth, UIFont.Medium), titleX, 0, titleWidth, self.HEADER_HEIGHT, c.text.r, c.text.g, c.text.b, c.text.a, UIFont.Medium)
     local rightReserve = (self.activeTab == "ehr" and 86 or 50) + (self.hmPinBtn and 30 or 0) + (self.hmSettingsBtn and 30 or 0)  -- (blood type moved)
     if self.antibodiesButton and self.antibodiesButton:isVisible() then
@@ -3261,6 +3294,9 @@ function EHR_HealthPanelUI:drawHeader()
     end
     if self.administerMedicationButton and self.administerMedicationButton:isVisible() then
         rightReserve = rightReserve + 184
+    end
+    if self.drawBloodButton and self.drawBloodButton:isVisible() then
+        rightReserve = rightReserve + 108
     end
     -- HARMONIE: the blood type is shown after "BLOOD COMPOSITION" instead
 end
@@ -3550,20 +3586,24 @@ function EHR_HealthPanelUI:collectDoctorInventoryItems(predicate)
         end
     end
 
+    local seen = {}
+    local scanned = false
     if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.getContainers then
         local ok, containers = pcall(function()
             return ISInventoryPaneContextMenu.getContainers(doctor)
         end)
         if ok and containers and containers.size then
-            local seen = {}
             for i = 0, containers:size() - 1 do
                 scanContainer(containers:get(i), seen)
             end
-            return items
+            scanned = true
         end
     end
-
-    scanContainer(doctor.getInventory and doctor:getInventory() or nil, {})
+    if not scanned then scanContainer(doctor.getInventory and doctor:getInventory() or nil, seen) end
+    -- HARMONIE: every box / floor bag in the same room as well (HM_Reach)
+    if HM_Reach and HM_Reach.containers then
+        for _, e in ipairs(HM_Reach.containers(doctor)) do scanContainer(e.c, seen) end
+    end
     return items
 end
 

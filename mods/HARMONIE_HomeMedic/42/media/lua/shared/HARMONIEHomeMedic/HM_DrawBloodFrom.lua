@@ -71,13 +71,18 @@ local function distance(a, b)
 end
 local function alive(p) return p ~= nil and not call(p, "isDead") end
 
--- the first empty blood bag anywhere in the inventory (bags included)
+-- the first empty blood bag: inventory (bags included), then the boxes in the room
 function DB.findEmptyBag(p)
     local inv = call(p, "getInventory")
     if not inv then return nil end
     for _, ft in ipairs(DB.EMPTY_BAGS) do
         local it = inv.getFirstTypeRecurse and call(inv, "getFirstTypeRecurse", ft) or call(inv, "getFirstType", ft)
         if it then return it end
+    end
+    -- not carried: a box / bag in the same room (HM_Reach)
+    if HM_Reach and HM_Reach.findType then
+        local near = HM_Reach.findType(p, DB.EMPTY_BAGS)
+        if near then return near end
     end
     return nil
 end

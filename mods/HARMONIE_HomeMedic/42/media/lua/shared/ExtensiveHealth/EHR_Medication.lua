@@ -3448,7 +3448,16 @@ function EHR.Medication.FindMedicalSupply(player, kind)
             return EHR.Medication.IsMedicalSupply(candidate, kind)
         end)
     end)
-    if not ok or not item then return nil end
+    if not ok or not item then
+        -- HARMONIE: not carried -> a box / bag in the same room (HM_Reach)
+        if HM_Reach and HM_Reach.findFirstNearby then
+            local near, cont = HM_Reach.findFirstNearby(player, function(candidate)
+                return EHR.Medication.IsMedicalSupply(candidate, kind)
+            end)
+            if near then return near, cont or near:getContainer() end
+        end
+        return nil
+    end
     return item, item:getContainer() or inventory
 end
 

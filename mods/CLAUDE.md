@@ -215,6 +215,25 @@
   (EHR.Blood.ModifyBloodVolume), gives the doctor a fresh bag of the PATIENT's
   type (EHR_BloodSpoilage + EHR_DonorBloodType, like EHR's own DrawBlood).
   Every step logged ("[DrawBlood]").
+  Button (0.33.12): "Draw Blood" (red) left of "Administer Medication" in
+  the remote health panel header (tab 1, `drawBloodButton`, x = width-442),
+  calls `HM_DrawBloodFrom.ask`; the right-click option stays.
+- Medical items within reach (0.33.12, `shared/HARMONIEHomeMedic/HM_Reach.lua`,
+  owner: "ต้องดูทั้งในตัว ในกระเป๋า และในกล่องรอบๆ ... ทั้งห้อง"): inventory +
+  bags (any depth), then every container (+ bags lying on the floor, 3 deep)
+  on squares of the player's ROOM (same z, <= 12 tiles; any container 1 tile
+  away counts), outdoors <= 3 tiles. Client caches 500 ms; never per tick.
+  Used by: `EHR.Medication.FindMedicalSupply` (IV kit / syringe fallback),
+  `EHR.MPMedication.GetInventoryMedications` (doctor's list) + its
+  `findInventoryItemByID`, server `findInventoryItemByID` /
+  `findInventoryItemByFullType` (so RemoveItem / UpdateItemDelta / administer
+  / transfusion / DrawBlood resolve a box item; server removes with
+  sendRemoveItemFromContainer), `HM_DrawBloodFrom.findEmptyBag`, HM_Surgery
+  `collect` (boxes room-wide; loose floor items still S.REACH = 1),
+  HealthPanelUI `collectDoctorInventoryItems` (bandage / disinfectant / splint
+  pickers), HM_DoseReminder `hasItem`, TOC cut-limb bandage / suture needle /
+  needle / thread (moved into the inventory first: `toPlayerInventory` /
+  `HM_Reach.bring` = vanilla transferIfNeeded).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
