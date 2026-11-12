@@ -31,6 +31,15 @@ EHR.DiseaseFlyers.Config = EHR.DiseaseFlyers.Config or {
     },
 }
 
+-- HARMONIE: the answer to the player's own action, never dropped by the
+-- one-line-a-minute limit. (A line that starts with "(" is a syntax error
+-- in the game's Lua -- "ambiguous syntax" -- so it is a named function.)
+local function sayAction(player, text)
+    local L = EHR and EHR.Locale
+    local f = L and (L.SayAction or L.Say)
+    if f then return f(player, text) end
+end
+
 local function log(msg)
     if EHR and EHR.Log then
         EHR.Log(msg)
@@ -91,13 +100,13 @@ local function unlockMedicalWildPlants(character, item)
             pcall(function() EHR.SkillXP.AwardXP(character, 50, "medical_wild_plants_flyer", nil) end)
         end
         if EHR and EHR.Locale and EHR.Locale.Say then
-            (EHR.Locale.SayAction or EHR.Locale.Say)(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeLearned", "Medical wild plant knowledge acquired."))
+            sayAction(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeLearned", "Medical wild plant knowledge acquired."))
         elseif character.Say then
             character:Say("Medical wild plant knowledge acquired.")
         end
     else
         if EHR and EHR.Locale and EHR.Locale.Say then
-            (EHR.Locale.SayAction or EHR.Locale.Say)(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeAlreadyKnown", "I already know how to identify medicinal wild plants."))
+            sayAction(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeAlreadyKnown", "I already know how to identify medicinal wild plants."))
         elseif character.Say then
             character:Say("I already know how to identify medicinal wild plants.")
         end
@@ -305,9 +314,9 @@ local function handleFlyerRead(character, item, source)
             if not modData.EHR_KnownDiseases[diseaseId] then
                 modData.EHR_KnownDiseases[diseaseId] = true
                 log("Disease knowledge unlocked: " .. diseaseId)
-                (EHR.Locale.SayAction or EHR.Locale.Say)(character, "Disease knowledge acquired: " .. diseaseId)
+                sayAction(character, "Disease knowledge acquired: " .. diseaseId)
             else
-                (EHR.Locale.SayAction or EHR.Locale.Say)(character, "You already know about this disease.")
+                sayAction(character, "You already know about this disease.")
             end
 
             if isClient() and sendClientCommand then
