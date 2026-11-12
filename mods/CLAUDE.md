@@ -342,6 +342,15 @@
   `SERVER_SLACK`) and, when it is gone, `HM_Reach.serverMissing` logs once
   and sends `HARMONIE_HM_Reach/Missing` -> the client drops its cache and
   says "not there any more" (only for its own pending box requests).
+- Disease flyers (HM 1.0.2, owner "หนังสือโรคอ่านไม่ได้"): other mods start
+  vanilla ISReadABook themselves (AutoAll "Read" is on the owner's list) and
+  skip EHR's readItem hook -- vanilla only marks the pages read, so nothing
+  was learned. `client/ExtensiveHealth/EHR_FlyerHook.lua` now also wraps
+  `ISReadABook.new` on the client: a flyer becomes ISEHRReadFlyerAction
+  (`refused` = First Aid below half the unaided level -> isValid false).
+  The refusal / learned / already-known lines use `EHR.Locale.SayAction`
+  (the 1-line-a-minute limit dropped them: the flyer looked dead). Steps
+  logged with HMLog "[Flyer]" (EHR.Log prints only errors).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
