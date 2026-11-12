@@ -4,8 +4,10 @@
     games, nothing copied); the scene art is this mod's own
     (tools/gen_cook_art.py). One modal panel, one simple action per step:
 
-      timing  chop / slice / mince / trim / core -- the knife sweeps over
-              the board, click on each cut line
+      timing  chop / slice / mince / trim / core -- chop as fast as you
+              can: every click (or Space) is one cut; stop and the food
+              slowly closes up again (1.0.4, owner: "เปลี่ยนมินิเกมการหั่นเป็น
+              หั่นรัวๆ"); the quicker it is done the better
       ring    knead / pound / crack / toss -- click when the ring closes
       scrub   wash / scale / peel / spread -- rub over the spots (peel in
               order around the food; spread covers the toast)
@@ -133,7 +135,9 @@ end
 function P:tol() return 1.45 - self.d end
 
 -- ------------------------------------------------------------------ setup
-local SWEEP = { chop = { 5, 240, 14 }, slice = { 7, 250, 11 }, mince = { 8, 330, 14 }, trim = { 4, 190, 9 }, core = { 3, 180, 10 } }
+-- cuts needed (at the middle difficulty) for the rapid chop game
+local CUTS = { chop = 24, slice = 20, mince = 32, trim = 14, core = 12 }
+local CUT_GRACE_MS, CUT_DECAY_MS = 600, 350   -- no cut for 0.6 s: one cut lost every 0.35 s
 local RING = { knead = { 6, 1100 }, pound = { 5, 850 }, crack = { 2, 1000 }, toss = { 4, 950 } }
 local LANE = { grate = 9, zest = 6, roll = 6 }
 local CIRCLE = { stir = { 2.2, 6.0, 5200, 128 }, whisk = { 8.5, 17, 4200, 112 }, fold = { 1.2, 3.4, 4600, 112 }, grind = { 4.5, 10, 4200, 78 } }
@@ -143,18 +147,10 @@ function P:setup()
     local cx, cy = PX + PW / 2, PY + PH / 2
     self.limit = 14000
     if self.kind == "timing" then
-        local def = SWEEP[v] or SWEEP.chop
-        local n = def[1]
-        self.speed = def[2] * (0.8 + 0.4 * self.d)
-        self.tolW = def[3] * self:tol()
-        self.targets = {}
-        local left, right = PX + 110, PX + PW - 110
-        for i = 1, n do
-            local tx = left + (right - left) * (i - 0.5) / n + ZombRand(-10, 11)
-            self.targets[i] = { x = tx, hit = false, score = 0 }
-        end
-        self.mx, self.dir = left - 40, 1
-        self.limit = 9000 + n * 900
+        local base = CUTS[v] or CUTS.chop
+        self.need = math.max(6, math.floor(base * (0.8 + 0.5 * self.d) + 0.5))
+        self.cuts, self.best, self.lastCut, self.decayAt, self.chopAnim = 0, 0, now(), 0, 0
+        self.limit = 5000 + self.need * 170
     elseif self.kind == "ring" then
         local def = RING[v] or RING.knead
         self.beats, self.beat, self.ring = def[1], 0, 0
@@ -320,9 +316,12 @@ function P:tick()
     local held = self.held
     local k = self.kind
     if k == "timing" then
-        self.mx = self.mx + self.dir * self.speed * dt / 1000
-        local left, right = PX + 60, PX + PW - 60
-        if self.mx > right then self.mx, self.dir = right, -1 elseif self.mx < left then self.mx, self.dir = left, 1 end
+        self.chopAnim = math.max(0, (self.chopAnim or 0) - dt / 120)
+        -- stopped chopping: the cut slowly closes up again
+        if self.cuts > 0 and t - self.lastCut > CUT_GRACE_MS and t >= (self.decayAt or 0) then
+            self.cuts = self.cuts - 1
+            self.decayAt = t + CUT_DECAY_MS
+        end
     elseif k == "ring" then
         self.ring = ((t - self.started) % self.period) / self.period
         self.hop = math.max(0, self.hop - dt / 300)
@@ -415,11 +414,7 @@ end
 function P:timeout()
     log("minigame %s timed out", self.pid)
     -- what was reached counts, what was not is a Miss
-    if self.kind == "timing" and self.targets then
-        local hit = 0
-        for _, t in ipairs(self.targets) do if t.hit then hit = hit + 1 end end
-        if hit >= #self.targets then return self:complete() end
-    end
+    if self.kind == "timing" and self.need and self.cuts >= self.need then return self:complete() end
     self:flash(("Time"), C.bad)
     self:finish("Miss")
 end
@@ -427,9 +422,14 @@ end
 function P:complete()
     local q = self.q
     local k = self.kind
-    if k == "timing" or k == "ring" then
+    if k == "timing" then
+        -- done within 40% of the time: full marks, then down to half at the limit
+        local used = clamp((now() - self.started) / self.limit, 0, 1)
+        q = q * (1 - 0.5 * clamp((used - 0.4) / 0.6, 0, 1))
+        log("minigame %s: %d cuts in %.1f s (%.0f%% of the time)", self.pid, self.need, (now() - self.started) / 1000, used * 100)
+    elseif k == "ring" then
         local sum, n = 0, 0
-        for _, t in ipairs(self.targets or self.scores) do sum = sum + (type(t) == "table" and t.score or t); n = n + 1 end
+        for _, t in ipairs(self.scores) do sum = sum + (type(t) == "table" and t.score or t); n = n + 1 end
         q = q * (n > 0 and sum / n or 0)
     elseif k == "scrub" or k == "circle" or k == "lane" or k == "press" then
         local used = (now() - self.started) / self.limit
@@ -465,24 +465,7 @@ function P:onMouseDown(x, y)
         self:flash((s > 0.7 and "Nice" or (s > 0.2 and "Ok" or "Late")), s > 0.7 and C.good or (s > 0.2 and C.warn or C.bad))
         FX.play(({ knead = "Thump", pound = "Thump", crack = "Crack", toss = "Toss" })[self.variant] or "Thump")
     elseif k == "timing" then
-        local best, bd
-        for _, t in ipairs(self.targets) do
-            if not t.hit then
-                local d = math.abs(t.x - self.mx)
-                if not bd or d < bd then best, bd = t, d end
-            end
-        end
-        if best and bd <= self.tolW then
-            best.hit = true
-            best.score = clamp(1 - bd / self.tolW * 0.6, 0, 1)
-            self:flash((best.score > 0.8 and "Nice" or "Ok"), best.score > 0.8 and C.good or C.warn)
-            FX.play((self.variant == "slice" or self.variant == "core" or self.variant == "trim") and "Slice" or "Chop")
-            local all = true
-            for _, t in ipairs(self.targets) do if not t.hit then all = false end end
-            if all then self:complete() end
-        else
-            self:spend(0.12, "Slip", false)
-        end
+        self:chopOnce()
     elseif k == "press" then
         local hit
         for _, l in ipairs(self.lumps) do
@@ -503,6 +486,31 @@ function P:onMouseDown(x, y)
         self:stopWatch()
     end
     return true
+end
+
+-- one cut of the rapid chop game (a click or Space)
+function P:chopOnce()
+    if self.done or self.kind ~= "timing" then return end
+    local t = now()
+    self.cuts = self.cuts + 1
+    self.lastCut = t
+    self.decayAt = t + CUT_GRACE_MS
+    self.chopAnim = 1
+    if self.cuts > self.best then
+        self.best = self.cuts
+        -- a word at every quarter
+        local q4 = math.floor(self.cuts * 4 / self.need)
+        if q4 > (self.lastQuarter or 0) and self.cuts < self.need then
+            self.lastQuarter = q4
+            self:flash("Nice", C.good)
+        end
+    end
+    -- the sound at most every 70 ms (very fast clicking)
+    if not self.lastChopSnd or t - self.lastChopSnd > 70 then
+        self.lastChopSnd = t
+        FX.play((self.variant == "slice" or self.variant == "core" or self.variant == "trim") and "Slice" or "Chop")
+    end
+    if self.cuts >= self.need then self:complete() end
 end
 
 function P:stopWatch()
@@ -561,7 +569,8 @@ function P:onMouseUpOutside(x, y) return self:onMouseUp(x, y) end
 function P:onMouseMove() return true end
 function P:onMouseMoveOutside() return true end
 function P:onMouseWheel() return true end
-function P:isKeyConsumed(key) return key == Keyboard.KEY_ESCAPE end
+function P:isKeyConsumed(key) return key == Keyboard.KEY_ESCAPE or (key == Keyboard.KEY_SPACE and self.kind == "timing") end
+function P:onKeyPress(key) if key == Keyboard.KEY_SPACE and self.kind == "timing" then self:chopOnce() end end
 function P:onKeyRelease(key) if key == Keyboard.KEY_ESCAPE then self:finish(nil, true) end end
 
 -- ------------------------------------------------------------------ drawing
@@ -754,23 +763,37 @@ function P:renderGame()
     local k, v = self.kind, self.variant
     if k == "timing" then
         self:pic("board", cx, cy + 6)
-        for i = -1, 1 do self:food(cx + i * 120, cy, 104) end
-        for _, t in ipairs(self.targets) do
-            local col = t.hit and C.good or C.warn
-            for yy = cy - 58, cy + 56, 8 do self:drawRect(t.x - 1, yy, 2, 5, t.hit and 0.95 or 0.8, col[1], col[2], col[3]) end
-            self:drawRect(t.x - self.tolW, cy + 66, self.tolW * 2, 3, 0.45, col[1], col[2], col[3])
-            if t.hit then self:drawRect(t.x - 1, cy - 58, 2, 114, 0.35, 0.1, 0.06, 0.03) end
+        local frac = clamp(self.cuts / math.max(1, self.need), 0, 1)
+        -- the food falls apart as the cuts add up: the pieces spread out
+        local pieces = 1 + math.floor(frac * 7)
+        local spread = 6 + 40 * frac
+        for i = 1, pieces do
+            local off = (i - (pieces + 1) / 2) * (spread + 300 / (pieces + 2))
+            self:food(cx + off, cy + ((i % 2 == 0) and 6 or -4) * frac, math.max(46, 130 - 10 * pieces))
         end
-        -- the real knife sweeps over the board, its edge on the dotted line
-        local kx = self.mx
-        for yy = cy - 50, cy + 66, 6 do self:drawRect(kx - 0.5, yy, 1, 3, 0.45, 1, 1, 1) end
+        -- cut lines on the board
+        local nLines = math.floor(frac * 14)
+        for i = 1, nLines do
+            local lx = cx - 150 + (i - 0.5) * 300 / 14
+            self:drawRect(lx - 1, cy - 50, 2, 100, 0.35, 0.1, 0.06, 0.03)
+        end
+        -- the knife going up and down over the next cut
+        local kx = cx - 150 + ((self.cuts % 14) + 0.5) * 300 / 14
+        local up = 40 * (self.chopAnim or 0)
         local tex = self.opts.tool or self.opts.cursor
         if tex then
-            self:drawTextureScaled(tex, kx - 32, cy - 128, 64, 64, 1, 1, 1, 1)
+            self:drawTextureScaled(tex, kx - 32, cy - 96 - (40 - up), 64, 64, 1, 1, 1, 1)
         else
-            self:drawRect(kx - 2, cy - 110, 4, 60, 1, C.metal[1], C.metal[2], C.metal[3])
-            self:drawRect(kx - 4, cy - 132, 8, 24, 1, 0.15, 0.10, 0.06)
+            self:drawRect(kx - 2, cy - 80 - (40 - up), 4, 60, 1, C.metal[1], C.metal[2], C.metal[3])
+            self:drawRect(kx - 4, cy - 102 - (40 - up), 8, 24, 1, 0.15, 0.10, 0.06)
         end
+        -- how far: a bar under the board, and the count
+        local bx, bw, by = PX + 80, PW - 160, PY + PH - 26
+        self:drawRect(bx, by, bw, 12, 0.85, 0.05, 0.08, 0.05)
+        self:drawRect(bx, by, math.floor(bw * frac), 12, 1, C.good[1], C.good[2], C.good[3])
+        self:drawRectBorder(bx, by, bw, 12, 1, C.border[1], C.border[2], C.border[3])
+        self:text(T("IGUI_GTPC_Game_Cuts", self.cuts, self.need), cx, PY + 10, C.text, UIFont.Small, true)
+        self:text(T("IGUI_GTPC_Game_ChopFast"), cx, by - 22, C.warn, UIFont.Small, true)
     elseif k == "ring" then
         local tx, ty = cx, cy + 16
         if v == "knead" then

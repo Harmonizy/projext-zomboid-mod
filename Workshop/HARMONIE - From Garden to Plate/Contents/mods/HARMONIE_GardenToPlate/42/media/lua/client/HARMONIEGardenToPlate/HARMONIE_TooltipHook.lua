@@ -169,7 +169,7 @@ local function buildVitaminLines(item, knows)
 end
 
 -- ============================================
--- HOOK: draw the box next to the vanilla tooltip
+-- HOOK: draw the box under the vanilla tooltip
 -- ============================================
 
 local original_ISToolTipInv_render = ISToolTipInv.render
@@ -189,15 +189,18 @@ function ISToolTipInv:render()
     local box = HARMONIE_VitaminTooltip.instance
     box:renderLines(lines)
 
+    -- 1.0.3 (owner, 2026-11-12: "หน้าต่างวิตามินตอนชี้ให้ขึ้นข้างล่างแทนทางขวาของ
+    -- tooltips"): under the item tooltip, its left edges lined up; above it
+    -- when there is no room below
     local core = getCore()
-    local x = self:getX() + self:getWidth() + 6
-    local y = self:getY()
-    if x + box:getWidth() > core:getScreenWidth() then
-        x = self:getX() - box:getWidth() - 6
+    local sw, sh = core:getScreenWidth(), core:getScreenHeight()
+    local x = self:getX()
+    local y = self:getY() + self:getHeight() + 4
+    if y + box:getHeight() > sh then
+        y = self:getY() - box:getHeight() - 4
+        if y < 0 then y = math.max(0, sh - box:getHeight() - 5) end
     end
-    if y + box:getHeight() > core:getScreenHeight() then
-        y = core:getScreenHeight() - box:getHeight() - 5
-    end
+    x = math.max(0, math.min(x, sw - box:getWidth() - 5))
     box:setX(x)
     box:setY(y)
 end

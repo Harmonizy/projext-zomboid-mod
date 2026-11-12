@@ -194,6 +194,18 @@
   (บราเดียม) the HIGHER one -- Legendary bar and Make_GemPure; Elunium stays
   on the Elite bar. Hand-edited in HARMONIE_TWA_RecipeData.lua (its generator
   is not in the repo; tools/gen_new_weapons.py only inserts weapon recipes).
+- Craft button (TWA 1.0.3, owner): a base / extra item card whose item some
+  recipe MAKES (`recipeMaking`: result map, keepType gem recipes excluded)
+  shows "Craft" -> `TWACraftWindow:jumpToRecipe` (craft page, search cleared;
+  locked while a recipe is under way). Rects in `self.craftLinks`.
+- GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
+  GTP 1.0.2 (HARMONIE_TooltipHook.lua).
+- GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
+  (chop / slice / mince / trim / core) in HARMONIE_CookGames.lua -- every
+  click or Space is one cut (`P:chopOnce`), `CUTS[variant]` x (0.8 + 0.5 d)
+  needed; no cut for CUT_GRACE_MS -> one cut lost every CUT_DECAY_MS; quality
+  = full when done within 40% of the time limit, half at the limit; timeout
+  before the last cut = Miss. Hints IGUI_GTPC_Hint_* / Tip lines say so.
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
