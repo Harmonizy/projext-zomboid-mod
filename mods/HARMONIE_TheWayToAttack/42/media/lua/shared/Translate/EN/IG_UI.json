@@ -556,7 +556,7 @@
     "IGUI_TWA_Guide_Recipes_Title": "Choosing a recipe",
     "IGUI_TWA_Guide_Recipes_Body": "1. Weapon recipes are in tab 2. Materials and gems (bars, plates, gem stones) are in tab 3.\n2. The buttons along the top of the list filter by category. Type in the search box to find a name.\n3. Click the star on a recipe to add it to your favourites, then use the Favourites filter to see only those.\n4. Click a recipe to open it in tab 1, Craft. If you open tab 1 with no recipe, it shows buttons that take you back to tab 2 or 3.",
     "IGUI_TWA_Guide_Steps_Title": "Making the item",
-    "IGUI_TWA_Guide_Steps_Body": "1. On the left are the base item and the supplementary item. They can be on you, in your bags, on the floor next to you or in any box or cupboard in the same room.\n2. Press Start. Both items are taken at once and stay taken until you finish or cancel.\n3. The middle shows the procedures. A yellow dot marks the ones still to do. Each one needs its tools, materials and skill level.\n4. Press a procedure to do it. When all are done, press Finish to get the item.",
+    "IGUI_TWA_Guide_Steps_Body": "1. On the left are the base item and the supplementary item. They can be on you, in your bags, on the floor next to you or in any box or cupboard in the same room.\n2. Press Start. Both items are taken at once and stay taken until you finish or cancel.\n3. The middle shows the procedures. A yellow dot marks the ones still to do. Each one needs its tools, materials and skill level.\n4. Press a procedure to do it. When all are done, press Finish to get the item.\n5. A base or extra item that is crafted itself (material lump, bars...) has a Craft button on its card: it opens that item's recipe.",
     "IGUI_TWA_Guide_Minigame_Title": "Procedure minigames",
     "IGUI_TWA_Guide_Minigame_Body": "1. Every procedure is a short minigame: striking, filing, wrapping, coating, heating, pouring and more.\n2. Read the hint at the top of the minigame. Start at the gold ring or mark when it asks you to.\n3. The result is Excellent, Good, Bad or Miss.\n4. A Miss uses the materials but leaves the procedure undone, so you can try it again. You only get XP when you don't miss.",
     "IGUI_TWA_Guide_Quality_Title": "Quality and grade",
@@ -667,5 +667,7 @@
     "IGUI_HUB_Test_Note": "Admins only. Changes are made by the server and are real: use a test character or a test server.",
     "IGUI_HUB_Test_None": "No tests for this tab.",
     "IGUI_HUB_Test_Run": "Run",
-    "IGUI_HUB_Test_Button": "Admin tests for this tab"
+    "IGUI_HUB_Test_Button": "Admin tests for this tab",
+    "IGUI_TWA_CraftThis": "Craft",
+    "IGUI_TWA_CraftThis_Tip": "Go to the recipe that makes %1"
 }

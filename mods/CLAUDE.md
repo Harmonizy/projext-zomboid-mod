@@ -194,6 +194,12 @@
   (บราเดียม) the HIGHER one -- Legendary bar and Make_GemPure; Elunium stays
   on the Elite bar. Hand-edited in HARMONIE_TWA_RecipeData.lua (its generator
   is not in the repo; tools/gen_new_weapons.py only inserts weapon recipes).
+- Craft button (TWA 1.0.3, owner): a base / extra item card whose item some
+  recipe MAKES (`recipeMaking`: result map, keepType gem recipes excluded)
+  shows "Craft" -> `TWACraftWindow:jumpToRecipe` (craft page, search cleared;
+  locked while a recipe is under way). Rects in `self.craftLinks`.
+- GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
+  GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
