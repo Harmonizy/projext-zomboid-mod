@@ -188,6 +188,13 @@
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
+## The Way To Attack (TWA)
+- Rare ores (2026-11-12, owner swapped them, TWA 1.0.2): Oridecon (โอริเดคอน)
+  is the LOWER one -- base2 of the Epic bar and of Make_GemFine; Bradium
+  (บราเดียม) the HIGHER one -- Legendary bar and Make_GemPure; Elunium stays
+  on the Elite bar. Hand-edited in HARMONIE_TWA_RecipeData.lua (its generator
+  is not in the repo; tools/gen_new_weapons.py only inserts weapon recipes).
+
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
   Survive", HARMONIE_SVU3Sandbox = "HARMONIE - Car for Crash",
