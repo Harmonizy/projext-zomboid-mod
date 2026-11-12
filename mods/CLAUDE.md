@@ -104,6 +104,13 @@
   later menu. LWS 0.6.1-0.7.11 marked `context.lwsPetMenu` and the pet menu
   never showed again. Mark the OPTION you added (`opt.lwsPetMenu`) and scan
   `context.options` -- that list is cleared each time (LWS 0.7.12).
+- A line that STARTS with "(" after a complete statement --
+  `(A or B)(x)` -- is "ambiguous syntax (function call x new statement)" in
+  the game's Lua 5.1 parser: the whole file fails and in MP the client is
+  thrown out while connecting (HM 1.0.2 EHR_FlyerHook.lua:308, owner
+  2026-11-12). Lua 5.4/5.5 accepts it, so a lupa `load()` check missed it.
+  Check with `lupa.lua51` + `loadstring` (scratchpad loadcheck.py does now),
+  and call through a named local instead.
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).
