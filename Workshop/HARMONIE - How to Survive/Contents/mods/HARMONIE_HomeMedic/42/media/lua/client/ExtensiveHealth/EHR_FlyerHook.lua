@@ -62,6 +62,9 @@ local function markFlyerReadProgress(character, item, itemId)
     end
 end
 
+-- HARMONIE: EHR.Log prints only errors, so the reading steps go to HMLog
+local function hmlog(fmt, ...) if HMLog then HMLog("Flyer", fmt, ...) end end
+
 local function isMedicalWildPlantsFlyer(item)
     if not item or not item.getFullType then return false end
     return item:getFullType() == "ExtensiveHealth.MedicalWildPlants"
@@ -88,13 +91,13 @@ local function unlockMedicalWildPlants(character, item)
             pcall(function() EHR.SkillXP.AwardXP(character, 50, "medical_wild_plants_flyer", nil) end)
         end
         if EHR and EHR.Locale and EHR.Locale.Say then
-            EHR.Locale.Say(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeLearned", "Medical wild plant knowledge acquired."))
+            (EHR.Locale.SayAction or EHR.Locale.Say)(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeLearned", "Medical wild plant knowledge acquired."))
         elseif character.Say then
             character:Say("Medical wild plant knowledge acquired.")
         end
     else
         if EHR and EHR.Locale and EHR.Locale.Say then
-            EHR.Locale.Say(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeAlreadyKnown", "I already know how to identify medicinal wild plants."))
+            (EHR.Locale.SayAction or EHR.Locale.Say)(character, EHR.Locale.Text("UI_EHR_HerbalSearch_KnowledgeAlreadyKnown", "I already know how to identify medicinal wild plants."))
         elseif character.Say then
             character:Say("I already know how to identify medicinal wild plants.")
         end
@@ -302,9 +305,9 @@ local function handleFlyerRead(character, item, source)
             if not modData.EHR_KnownDiseases[diseaseId] then
                 modData.EHR_KnownDiseases[diseaseId] = true
                 log("Disease knowledge unlocked: " .. diseaseId)
-                EHR.Locale.Say(character, "Disease knowledge acquired: " .. diseaseId)
+                (EHR.Locale.SayAction or EHR.Locale.Say)(character, "Disease knowledge acquired: " .. diseaseId)
             else
-                EHR.Locale.Say(character, "You already know about this disease.")
+                (EHR.Locale.SayAction or EHR.Locale.Say)(character, "You already know about this disease.")
             end
 
             if isClient() and sendClientCommand then
@@ -322,6 +325,7 @@ end
 ISEHRReadFlyerAction = ISBaseTimedAction:derive("ISEHRReadFlyerAction")
 
 function ISEHRReadFlyerAction:isValid()
+    if self.refused then return false end
     return self.character ~= nil and self.item ~= nil and self.item:getContainer() ~= nil
 end
 
@@ -355,6 +359,7 @@ function ISEHRReadFlyerAction:perform()
     if self.item then
         pcall(function() self.item:setJobDelta(0.0) end)
     end
+    hmlog("%s finished reading %s", HMLogName and HMLogName(self.character) or "?", HMLogType and HMLogType(self.item) or "?")
     handleFlyerRead(self.character, self.item, "EHRReadFlyerAction")
     ISBaseTimedAction.perform(self)
 end
@@ -472,7 +477,10 @@ local function hookInventoryReadItem()
                 local okPages, value = pcall(function() return item:getNumberOfPages() end)
                 if okPages and tonumber(value) then pages = tonumber(value) end
             end
+            EHR.DiseaseFlyers.queueingOwn = true
             ISTimedActionQueue.add(ISEHRReadFlyerAction:new(playerObj, item, math.max(80, pages * 15)))
+            EHR.DiseaseFlyers.queueingOwn = false
+            hmlog("menu: reading %s queued", HMLogType and HMLogType(item) or "?")
 
             if ISCraftingUI and ISCraftingUI.ReturnItemToOriginalContainer then
                 pcall(function() ISCraftingUI.ReturnItemToOriginalContainer(playerObj, item) end)
@@ -487,6 +495,51 @@ local function hookInventoryReadItem()
     EHR.DiseaseFlyers.hooked_readItem = wrappedReadItem
     ISInventoryPaneContextMenu.readItem = wrappedReadItem
     log("Hooked ISInventoryPaneContextMenu.readItem for disease flyers")
+    hmlog("inventory Read hooked for disease flyers")
+    return true
+end
+
+-- HARMONIE (owner 2026-11-12: "หนังสือโรคอ่านไม่ได้"): other mods start the
+-- vanilla read action themselves (AutoAll's "Read", Read-all buttons, ...)
+-- and never pass through readItem above. Vanilla ISReadABook only marks the
+-- pages read (in MP it is a server action that knows nothing of flyers), so
+-- the illness was never learned. Every ISReadABook made for a flyer on this
+-- client becomes our reading action instead. Newspapers (Herald) stay vanilla.
+local function flyerReadTime(item)
+    local pages = 8
+    if item and item.getNumberOfPages then
+        local okPages, value = pcall(function() return item:getNumberOfPages() end)
+        if okPages and tonumber(value) then pages = tonumber(value) end
+    end
+    return math.max(80, pages * 15)
+end
+
+local function hookReadABookNew()
+    if not ISReadABook or type(ISReadABook.new) ~= "function" then
+        hmlog("ISReadABook.new missing -- flyers read only from the inventory menu")
+        return false
+    end
+    if isServer and isServer() then return false end
+    if EHR.DiseaseFlyers.hookedReadNew and ISReadABook.new == EHR.DiseaseFlyers.hookedReadNew then return true end
+    local originalNew = ISReadABook.new
+    local wrapped = function(cls, character, item, ...)
+        local ok, flyer = pcall(isFlyerItem, item)
+        if not (ok and flyer) or EHR.DiseaseFlyers.queueingOwn then
+            return originalNew(cls, character, item, ...)
+        end
+        local action = ISEHRReadFlyerAction:new(character, item, flyerReadTime(item))
+        local diseaseId = EHR.DiseaseFlyers.Config.FLYER_ITEMS[item:getFullType()]
+        if diseaseId and EHR.DiseaseFlyers.CheckReadLevel
+            and not EHR.DiseaseFlyers.CheckReadLevel(character, diseaseId, "other read") then
+            action.refused = true
+        end
+        hmlog("%s: vanilla read of %s turned into the flyer reading%s", HMLogName and HMLogName(character) or "?",
+            HMLogType and HMLogType(item) or "?", action.refused and " (refused: First Aid too low)" or "")
+        return action
+    end
+    EHR.DiseaseFlyers.hookedReadNew = wrapped
+    ISReadABook.new = wrapped
+    hmlog("ISReadABook.new hooked for disease flyers")
     return true
 end
 
@@ -494,6 +547,7 @@ local function hookFlyerReading()
     restoreOldReadBookHooks()
     local flyerHooked = hookInventoryReadItem()
     local heraldHooked = hookHeraldReadBook()
+    pcall(hookReadABookNew)
     EHR.DiseaseFlyers.clientHooked = flyerHooked == true
     EHR.DiseaseFlyers.heraldClientHooked = heraldHooked == true
     return EHR.DiseaseFlyers.clientHooked == true

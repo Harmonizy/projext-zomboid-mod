@@ -335,7 +335,9 @@ function EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId, options)
 
     local name = EHR.DiseaseFlyers.GetDiseaseFriendlyName(diseaseId)
     if player.Say and not options.silent then
-        EHR.Locale.Say(player, flyerText("UI_EHR_FlyerLearned", "Disease knowledge acquired: %1", name))
+        -- HARMONIE: reading a flyer = the player's own action, always answered
+        local say = (options.action and EHR.Locale.SayAction) or EHR.Locale.Say
+        say(player, flyerText("UI_EHR_FlyerLearned", "Disease knowledge acquired: %1", name))
     end
 
     EHR.Log("Player learned disease: " .. tostring(diseaseId))
@@ -402,8 +404,12 @@ function EHR.DiseaseFlyers.CheckReadLevel(player, diseaseId, where)
     if ok then return true end
     EHR.Log("[HARMONIE] flyer " .. tostring(diseaseId) .. " refused (" .. tostring(where) .. "): First Aid "
         .. tostring(have) .. ", needs " .. tostring(need))
-    if player and player.Say and EHR.Locale and EHR.Locale.Say then
-        EHR.Locale.Say(player, EHR.DiseaseFlyers.TooHardText(need))
+    -- HARMONIE: an answer to the player's own action -- never dropped by the
+    -- one-line-a-minute limit (it was: the flyer seemed to do nothing)
+    if HMLog then HMLog("Flyer", "%s refused (%s): First Aid %s, needs %s", tostring(diseaseId), tostring(where), tostring(have), tostring(need)) end
+    if player and player.Say and EHR.Locale then
+        local say = EHR.Locale.SayAction or EHR.Locale.Say
+        if say then say(player, EHR.DiseaseFlyers.TooHardText(need)) end
     end
     return false
 end
@@ -488,15 +494,15 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
     if not EHR.DiseaseFlyers.CheckReadLevel(player, diseaseId, "read") then return false end
 
     if isClient and isClient() then
-        local newlyLearned = EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId)
+        local newlyLearned = EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId, { action = true })
         if newlyLearned then
             EHR.DiseaseFlyers.AwardKnowledgeXP(player, diseaseId)
         end
         if not newlyLearned and player.Say then
             if isKnox and not EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then
-                EHR.Locale.Say(player, "This flyer is too vague. I need a real source.")
+                (EHR.Locale.SayAction or EHR.Locale.Say)(player, "This flyer is too vague. I need a real source.")
             else
-                EHR.Locale.Say(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
+                (EHR.Locale.SayAction or EHR.Locale.Say)(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
             end
         end
         if sendClientCommand and not isKnox then
@@ -505,15 +511,15 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
         return
     end
 
-    local newlyLearned = EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId)
+    local newlyLearned = EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId, { action = true })
     if newlyLearned then
         EHR.DiseaseFlyers.AwardKnowledgeXP(player, diseaseId)
     end
     if not newlyLearned and player.Say then
         if isKnox and not EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then
-            EHR.Locale.Say(player, "This flyer is too vague. I need a real source.")
+            (EHR.Locale.SayAction or EHR.Locale.Say)(player, "This flyer is too vague. I need a real source.")
         else
-            EHR.Locale.Say(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
+            (EHR.Locale.SayAction or EHR.Locale.Say)(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
         end
     end
 end
