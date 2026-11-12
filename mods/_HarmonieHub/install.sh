@@ -7,7 +7,7 @@
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 MODS="$(dirname "$HERE")"
-FILES="media/lua/shared/000_HARMONIE_HubBoot.lua media/lua/client/HARMONIE_Hub.lua media/lua/client/HARMONIE_UIKit.lua media/ui/HARMONIE_H.png media/ui/HARMONIE_icon_close.png media/ui/HARMONIE_icon_settings.png media/ui/HARMONIE_icon_check.png media/ui/HARMONIE_icon_minus.png media/ui/HARMONIE_icon_plus.png media/ui/HARMONIE_icon_left.png media/ui/HARMONIE_icon_right.png"
+FILES="media/lua/shared/000_HARMONIE_HubBoot.lua media/lua/shared/000_HARMONIE_Reach.lua media/lua/shared/000_HARMONIE_AdminTest.lua media/ui/HARMONIE_icon_test.png media/lua/client/HARMONIE_Hub.lua media/lua/client/HARMONIE_UIKit.lua media/ui/HARMONIE_H.png media/ui/HARMONIE_icon_close.png media/ui/HARMONIE_icon_settings.png media/ui/HARMONIE_icon_check.png media/ui/HARMONIE_icon_minus.png media/ui/HARMONIE_icon_plus.png media/ui/HARMONIE_icon_left.png media/ui/HARMONIE_icon_right.png"
 for mod in HARMONIE_GardenToPlate HARMONIE_TheWayToAttack HARMONIE_HomeMedic HARMONIE_SVU3Sandbox HARMONIE_ModernFirearmsSystemFix HARMONIE_LifeWithStyle; do
     targets="$MODS/$mod/42"
     # Modern Firearms re-imports the original's files; its own files live in tools/ours
@@ -18,5 +18,6 @@ for mod in HARMONIE_GardenToPlate HARMONIE_TheWayToAttack HARMONIE_HomeMedic HAR
             cp "$HERE/$f" "$t/$f"
         done
         echo "hub -> ${t#$MODS/}"
+        python3 "$HERE/tools/merge_translate.py" "$t"
     done
 done

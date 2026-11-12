@@ -3448,7 +3448,16 @@ function EHR.Medication.FindMedicalSupply(player, kind)
             return EHR.Medication.IsMedicalSupply(candidate, kind)
         end)
     end)
-    if not ok or not item then return nil end
+    if not ok or not item then
+        -- HARMONIE: not carried -> a box / bag in the same room (HM_Reach)
+        if HM_Reach and HM_Reach.findFirstNearby then
+            local near, cont = HM_Reach.findFirstNearby(player, function(candidate)
+                return EHR.Medication.IsMedicalSupply(candidate, kind)
+            end)
+            if near then return near, cont or near:getContainer() end
+        end
+        return nil
+    end
     return item, item:getContainer() or inventory
 end
 
@@ -3492,6 +3501,23 @@ function EHR.Medication.ConsumeOneDose(player, item, inventory)
         local okType, drainable = pcall(instanceof, item, "DrainableComboItem")
         if not okType then return false, "type_unavailable" end
         canUseDose = drainable == true
+    end
+
+    -- HARMONIE (HM_Reach): an item in a world box is changed by the SERVER
+    -- only; an MP client just asks, so a refused request leaves no ghost
+    if HM_Reach and HM_Reach.clientMustNotTouch and itemID ~= nil
+            and HM_Reach.clientMustNotTouch(player, item) then
+        local doseInfo = canUseDose and EHR.Medication.GetItemDoseInfo(item) or nil
+        if doseInfo and (doseInfo.remainingDoses or 0) <= 0 then return false, "empty" end
+        if doseInfo and doseInfo.remainingDoses > 1 then
+            local newUsed = math.max(0, math.min(1.0, (tonumber(doseInfo.currentUsesFloat) or 0) - doseInfo.useDelta))
+            if HM_Reach.notePending then HM_Reach.notePending(itemID, "drain") end
+            sendClientCommand(player, "EHR", "UpdateItemDelta", {itemID = itemID, usedDelta = newUsed})
+            return true, "dose", doseInfo.useDelta, newUsed, doseInfo.remainingDoses - 1
+        end
+        if HM_Reach.notePending then HM_Reach.notePending(itemID, "remove") end
+        sendClientCommand(player, "EHR", "RemoveItem", {itemID = itemID})
+        return true, "removed", useDelta, 1.0
     end
 
     if canUseDose then

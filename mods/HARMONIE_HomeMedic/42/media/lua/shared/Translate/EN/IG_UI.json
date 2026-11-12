@@ -68,5 +68,21 @@
     "IGUI_HUB_Set_Volume_Tip": "Only this mod's own sounds; the game's volume is in the game's options.",
     "IGUI_HUB_Set_Mute": "Mute this mod's sounds",
     "IGUI_HUB_Set_Mute_Tip": "No clicks or sounds from this window.",
-    "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options."
+    "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options.",
+    "IGUI_HM_TOCAdmin_Note": "Admin: amputate a limb of this player or reset all amputations. Changes go through the server.",
+    "IGUI_HM_TOCAdmin_Reset": "Reset",
+    "IGUI_HM_TOCAdmin_Amputate": "Amputate",
+    "IGUI_HM_TOCAdmin_Cut": "already cut",
+    "IGUI_HUB_LWS_Name": "Life With Style: fashion and gacha items",
+    "IGUI_HUB_LWS_Desc": "Fashion pieces you keep forever (worn over your real clothes), gacha items, pets and trading.",
+    "IGUI_HUB_Reach_Missing": "That item is not there any more (someone may have taken it). Try again.",
+    "IGUI_HUB_OpenMenu": "HARMONIE: open a tab",
+    "IGUI_HUB_Set_Server": "Server rules (sandbox)",
+    "IGUI_HUB_Set_ServerAdmin": "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).",
+    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options).",
+    "IGUI_HUB_Test_Title": "Admin tests",
+    "IGUI_HUB_Test_Note": "Admins only. Changes are made by the server and are real: use a test character or a test server.",
+    "IGUI_HUB_Test_None": "No tests for this tab.",
+    "IGUI_HUB_Test_Run": "Run",
+    "IGUI_HUB_Test_Button": "Admin tests for this tab"
 }

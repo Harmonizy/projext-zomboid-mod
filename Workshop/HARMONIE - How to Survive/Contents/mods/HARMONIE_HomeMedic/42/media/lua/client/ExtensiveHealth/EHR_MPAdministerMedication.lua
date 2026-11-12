@@ -136,6 +136,7 @@ local function findInventoryItemByID(player, itemID)
         local ok, currentID = pcall(function() return item:getID() end)
         if ok and tostring(currentID) == tostring(itemID) then found = item end
     end)
+    if not found and HM_Reach and HM_Reach.findById then found = HM_Reach.findById(player, itemID) end
     return found
 end
 
@@ -272,7 +273,14 @@ function EHR.MPMedication.GetInventoryMedications(doctor)
     local inventory = doctor and doctor:getInventory() or nil
     if not inventory or not EHR.Medication or not EHR.Medication.Database then return {} end
 
-    visitInventory(inventory, function(item)
+    -- HARMONIE: the inventory, its bags, and every box / bag in the same room
+    local sources = { inventory }
+    if HM_Reach and HM_Reach.containers then
+        sources = {}
+        for _, e in ipairs(HM_Reach.containers(doctor)) do sources[#sources + 1] = e.c end
+    end
+    local visitedSources = {}
+    for _, source in ipairs(sources) do visitInventory(source, function(item)
         local fullType = item.getFullType and item:getFullType() or nil
         if isBloodBagFullType(fullType) then
             local baseName = getItemDisplayName(item, fullType)
@@ -313,7 +321,7 @@ function EHR.MPMedication.GetInventoryMedications(doctor)
             grouped[fullType] = entry
         end
         entry.doses = entry.doses + doses
-    end)
+    end, visitedSources) end
 
     local entries = {}
     for _, entry in pairs(grouped) do table.insert(entries, entry) end

@@ -122,6 +122,71 @@
   (`Hub.onDebugMenu`); a new window of ours gets a card in `Hub.CARDS`
   (with `need` when it needs a target first), a new sandbox page a line in
   `Hub.NAMESPACES`.
+- Every mod is 1.0.0 since 2026-11-12 (owner's 1.0.0 list: MP-safe items,
+  items from body / bags / boxes in the room, admin things in the debug
+  menu, an "open a tab" right-click, settings in the window AND sandbox).
+- Hub texts (IGUI_HUB_*): master copy `_HarmonieHub/translate/{EN,TH}.json`;
+  install.sh merges them into each mod's IG_UI.json
+  (`tools/merge_translate.py`). Never edit IGUI_HUB_ keys in a mod.
+  LWS's `tools/texts_lws.py` reads the master too.
+- Hub 4 (1.0.0): right-click anywhere > "HARMONIE: open a tab" (H icon,
+  first in our block) > each mod (card) > its tabs with the window's own tab
+  icons -- `Hub.TABS[id]()` lists { id, key, icon }, `Hub.OPEN_TAB[id](p, tab)`
+  opens one (GTPGuide.open(p,nil,tab) / TWACraftUI.window:setTab /
+  HealthPanelInstance:setActiveTab / HSVU.window.tab / HMLWorkbench.instance:
+  setTab / LWSWindow.open(p,tab)). A new window: add both.
+- `shared/000_HARMONIE_Reach.lua` (hub, was HM_Reach): where an item may come
+  from -- inventory + bags, every container in the player's ROOM (<= 12
+  tiles, same z; 1 tile counts anyway), outdoors <= 3 tiles; floor bags.
+  MP: only the server changes a world box (clientMustNotTouch / notePending /
+  serverMissing -> "HARMONIE_Reach"/"Missing"); `bring(p, item)` walks to a
+  far box (`walkTo`, luautils.walkToContainer) then transferIfNeeded. Used
+  by How to Survive (HM_Reach = HARMONIE_Reach), TWA (TWASources.get adds
+  the room's containers), GTP cooking (CookCore K.containers + CookFlow
+  F.bring), MIL parts (W.installReach wraps getReachableContainers + walks
+  before addAttachmentButton's transfer).
+- Settings window server rules (UIKit `HARMONIE_SettingsUI.addServerRows(rows,
+  {namespaces})`): each mod's gear window ends with its sandbox options --
+  tick / step / choice rows reading the live value; admins (Hub.isAdmin)
+  change them through Hub.setOption + Hub.applyAll (MP: sendToServer).
+  Called as `(HARMONIE_SettingsUI.addServerRows or function(r) return r end)`.
+- Admin things live in the debug menu only (1.0.0): TOC = ONE window per
+  player (`HM_OpenTOCAdmin`, client/TOC/Admin.lua, settings-window rows);
+  GTP vitamin admin for another player = HARMONIE_RegisterDebug("GTP");
+  TWA weapon debug = the hub's "weapon in hand" (inventory option removed).
+  In-window admin tools stay in their windows (TWA craft admin buttons, LWS
+  Give tab -- also reachable from the debug menu).
+- MIL item changes in MP (1.0.0, `shared/HARMONIE_MIL_NetItems.lua`, also in
+  tools/ours): the original adds/removes items on the client in battery
+  in/out, grenade launcher + under-barrel reload, repair kit, ammo bag and
+  ChangeMagzine (gun replaced). On an MP client these send
+  "HARMONIE_MIL_Items" ops (batteryIn/Out, consume, repair, bagIn/Out,
+  swapGun); the server changes its copy and sends it (sendAdd/Remove/
+  sendItemStats); the client only updates what it shows. SP unchanged.
+- Admin test button (1.0.1, owner: "ในทุกหน้าต่างและแท็บให้มีปุ่มที่แอดมินสามารถกด
+  เพื่อทดสอบ"): hub `shared/000_HARMONIE_AdminTest.lua` + `media/ui/HARMONIE_icon_test.png`
+  (tools/gen_test_icon.py). `AT.decorate(WindowClass, {mod, tab(win), rect(win),
+  player(win), ctx(win)})` draws a flask left of the header buttons (admins /
+  -debug only) and opens `AT.open(mod, tab)` = settings-window rows of the
+  tests registered with `AT.register(mod, tab | "*", {{key, fallback, run}})`.
+  World changes are server ops (`AT.serverOp` / `AT.send`): the server runs
+  them only for a sender with access level / role admin (or server -debug).
+  Built-in ops: give {items}, skill {perk, level}. Per mod: HM
+  `shared/HARMONIEHomeMedic/HM_AdminTests.lua` (hm_* ops call
+  EHR.ServerCommands.*; on someone else's window args.target = their online
+  id), TWA `client/HARMONIE_TWA_AdminTests.lua` (TWAAdminGrant.request),
+  GTP `client/HARMONIEGardenToPlate/HARMONIE_GTP_AdminTests.lua` (VitData.Set),
+  SVU `shared/HARMONIESVU3PartWear/HARMONIE_SVU3_AdminTests.lua` (svu_repair /
+  svu_wear), MIL `shared/HARMONIE_MIL_AdminTests.lua` (+ tools/ours; mil_ammo /
+  mil_parts / mil_condition on the gun in hand), LWS
+  `client/HARMONIELifeWithStyle/LWS_AdminTests.lua` (AdminGrant /
+  AdminGachaGrant). A new tab: register its tests under its tab id.
+- Surgery tab (1.0.1, owner): every operation can be OPENED (view only when
+  the patient has no indication: the prep checklist on every body part it
+  can be done on, `opts.viewOnly`, Start off); Start works only with an
+  indication (the server's S.evaluate checks again).
+- Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
+  "fashion and gacha items" (1.0.0, owner).
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
@@ -197,6 +262,51 @@
   `shared/HARMONIEHomeMedic/HM_ContractRelay.lua` wraps them on an MP client to
   send `HARMONIE_HM_Contract/Request` instead; the server starts them with the
   same function (sender only, relayed ids only, 1 min per illness, logged).
+- Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
+  prints only errors by default, so nothing said a pill was taken. Tab 1's
+  ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
+  painkillers 3 h). Path: vanilla ISTakePillAction -> EHR_MedicationHook ->
+  SP writes the dose / MP `UseConsumedMedication` on the server, which
+  records ONLY items in `EHR.Medication.Database` (SP records any FirstAid /
+  Medical item as generic). The wrapper logs each pill (client + server
+  result with dose status) and records an unlisted medical item on the server
+  with `TrackDoseOnly` (tier 0) like SP.
+- A doctor draws a patient's blood with consent (0.33.11, MP,
+  `shared/HARMONIEHomeMedic/HM_DrawBloodFrom.lua`, module HARMONIE_HM_DrawFrom):
+  right-click a player within 3 tiles -> "Draw blood (name)" (needs an empty
+  blood bag) -> server checks (alive, distance, doctor's empty bag, patient
+  >= 80% blood, known type) -> patient's Yes/No (60 s) -> doctor's timed
+  action (~13 s, perform only) -> server re-checks, takes the bag and 500 mL
+  (EHR.Blood.ModifyBloodVolume), gives the doctor a fresh bag of the PATIENT's
+  type (EHR_BloodSpoilage + EHR_DonorBloodType, like EHR's own DrawBlood).
+  Every step logged ("[DrawBlood]").
+  Button (0.33.12): "Draw Blood" (red) left of "Administer Medication" in
+  the remote health panel header (tab 1, `drawBloodButton`, x = width-442),
+  calls `HM_DrawBloodFrom.ask`; the right-click option stays.
+- Medical items within reach (0.33.12, `shared/HARMONIEHomeMedic/HM_Reach.lua` -- since 1.0.0 an alias of the hub's HARMONIE_Reach,
+  owner: "ต้องดูทั้งในตัว ในกระเป๋า และในกล่องรอบๆ ... ทั้งห้อง"): inventory +
+  bags (any depth), then every container (+ bags lying on the floor, 3 deep)
+  on squares of the player's ROOM (same z, <= 12 tiles; any container 1 tile
+  away counts), outdoors <= 3 tiles. Client caches 500 ms; never per tick.
+  Used by: `EHR.Medication.FindMedicalSupply` (IV kit / syringe fallback),
+  `EHR.MPMedication.GetInventoryMedications` (doctor's list) + its
+  `findInventoryItemByID`, server `findInventoryItemByID` /
+  `findInventoryItemByFullType` (so RemoveItem / UpdateItemDelta / administer
+  / transfusion / DrawBlood resolve a box item; server removes with
+  sendRemoveItemFromContainer), `HM_DrawBloodFrom.findEmptyBag`, HM_Surgery
+  `collect` (boxes room-wide; loose floor items still S.REACH = 1),
+  HealthPanelUI `collectDoctorInventoryItems` (bandage / disinfectant / splint
+  pickers), HM_DoseReminder `hasItem`, TOC cut-limb bandage / suture needle /
+  needle / thread (moved into the inventory first: `toPlayerInventory` /
+  `HM_Reach.bring` = vanilla transferIfNeeded).
+  MP sync guards (0.33.13, owner: "ระวังปัญหา server ไม่ซิงก์"): a world box is
+  changed by the SERVER only -- EHR ConsumeOneDose on an MP client sends
+  RemoveItem / UpdateItemDelta for an item that is not carried
+  (`HM_Reach.clientMustNotTouch` / `isCarried`) without touching it
+  locally (`notePending`); the server looks it up itself (+2 tiles slack,
+  `SERVER_SLACK`) and, when it is gone, `HM_Reach.serverMissing` logs once
+  and sends `HARMONIE_HM_Reach/Missing` -> the client drops its cache and
+  says "not there any more" (only for its own pending box requests).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
@@ -241,6 +351,21 @@
   Audit 2026-11-10: every other tick-driven "*collapses*" / death line sits
   behind `EHR.Lethal.spare`; random symptom lines have cooldowns;
   `EHR.Environmental.CheckTreatment` is never called (dead).
+
+## From Garden to Plate (GTP) farming
+- No vanilla farming Lua in the repo; function names come from
+  PZ-Umbrella/pz-lua-stubdata (yml/server/Farming): SFarmingSystem has
+  `destroyOnWalk(luaObject, square)` (trampling), `plowFadeCheck`,
+  `removePlant`; SPlantGlobalObject has `destroyThis` (trampled state),
+  `killThis`, `dryThis`, `rottenThis`.
+- Grown fruit trees are not trampled (0.13.19, owner,
+  `server/Farming/FF_trampleGuard.lua`): FF crops with growBack (trees,
+  vines, coffee) from stage `FROM_STAGE` = 3 skip destroyOnWalk and
+  destroyThis. Seedlings, annual FF crops and vanilla crops are trampled as
+  before. Installed at OnGameBoot (SFarmingSystem loads after "FF_"); logs
+  once per tree per game day.
+- A destroyed (trampled) plant is cleared from the plot by vanilla later
+  (owner saw a trampled apple vanish, 2026-11-12) -- not ours.
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key

@@ -573,6 +573,115 @@ function U.commonRows(o)
     return rows
 end
 
+-- ---------------------------------------------------------------- server rules (sandbox)
+-- Owner, 2026-11-12 (1.0.0): "ใช้ตั้งค่าได้ทั้งใน tab และ sandbox และต้องใช้ได้ใน
+-- mp ด้วย". The sandbox options of a mod's namespaces as rows in its own
+-- settings window: everyone sees the server's values; admins and -debug
+-- change them here -- single player: applied at once; multiplayer: sent to
+-- the server (SandboxOptions:sendToServer, the same as vanilla's admin
+-- sandbox screen), which applies and sends them to every client.
+-- HARMONIE_SettingsUI.addServerRows(rows, { "NS1", "NS2" }) appends them.
+local function hubAdmin()
+    local Hub = HARMONIE_Hub
+    local p = getPlayer and getPlayer()
+    if Hub and Hub.isAdmin then return Hub.isAdmin(p) end
+    return (getDebug and getDebug()) or false
+end
+
+local function optCall(o, m, ...)
+    if not o or type(o[m]) ~= "function" then return nil end
+    local ok, v = pcall(o[m], o, ...)
+    if ok then return v end
+    return nil
+end
+
+local function setServer(entry, text)
+    local Hub = HARMONIE_Hub
+    if not (Hub and Hub.setOption and Hub.applyAll) then klog("server rule %s: no HARMONIE hub -- not changed", entry.name); return end
+    if not hubAdmin() then klog("server rule %s: not an admin -- not changed", entry.name); return end
+    local p = getPlayer and getPlayer()
+    if Hub.setOption(entry, text, p) then Hub.applyAll(1, p) end
+end
+
+function U.serverRows(namespaces)
+    local Hub = HARMONIE_Hub
+    local rows = {}
+    if not (Hub and Hub.collectOptions) then return rows end
+    local all = Hub.collectOptions()
+    local function T(k, fb)
+        local t = getText and getText(k)
+        if not t or t == k then return fb or k end
+        return t
+    end
+    local admin = hubAdmin()
+    local any = false
+    for _, ns in ipairs(namespaces or {}) do
+        for _, e in ipairs(all[ns] or {}) do
+            if not any then
+                any = true
+                rows[#rows + 1] = { kind = "section", label = T("IGUI_HUB_Set_Server", "Server rules (sandbox)") }
+                rows[#rows + 1] = { kind = "note", label = admin and T("IGUI_HUB_Set_ServerAdmin", "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).")
+                    or T("IGUI_HUB_Set_ServerView", "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options).") }
+            end
+            local label = e.label and e.label ~= "" and e.label or e.short
+            local tip = optCall(e.opt, "getTooltip")
+            local co = e.co
+            local ty = string.lower(tostring(e.type))
+            local row = { id = "srv_" .. e.name, label = label, tip = tip and tostring(tip) or e.name }
+            if ty == "boolean" then
+                row.kind = "tick"
+                row.get = function() return tostring(optCall(co, "getValueAsString")) == "true" end
+                row.set = function(v) setServer(e, v and "true" or "false") end
+            elseif ty == "enum" then
+                local n = tonumber(optCall(co, "getNumValues")) or 0
+                local values = {}
+                for i = 1, n do
+                    local tr = optCall(e.opt, "getValueTranslationByIndex", i) or optCall(co, "getValueTranslationByIndex", i)
+                    values[i] = tr and tostring(tr) or tostring(i)
+                end
+                row.kind = "choice"
+                row.values = values
+                row.get = function() return tonumber(optCall(co, "getValueAsString")) or 1 end
+                row.set = function(i) setServer(e, tostring(i)) end
+            elseif ty == "integer" or ty == "double" then
+                local mn, mx = tonumber(optCall(co, "getMin")), tonumber(optCall(co, "getMax"))
+                local function cur() return tonumber(optCall(co, "getValueAsString")) or 0 end
+                local function stepOf(v)
+                    if ty == "integer" then
+                        local span = (mx and mn) and (mx - mn) or 100
+                        if span > 1000 then return math.max(1, math.floor(math.abs(v) / 10)) end
+                        return span > 100 and 5 or 1
+                    end
+                    local span = (mx and mn) and (mx - mn) or 10
+                    return span > 20 and 1 or 0.1
+                end
+                local function clamp(v)
+                    if mn then v = math.max(mn, v) end
+                    if mx then v = math.min(mx, v) end
+                    if ty == "integer" then return tostring(math.floor(v + 0.5)) end
+                    return string.format("%.2f", v):gsub("0+$", ""):gsub("%.$", "")
+                end
+                row.kind = "step"
+                row.text = function() return tostring(optCall(co, "getValueAsString") or "?") end
+                row.minus = function() local v = cur(); setServer(e, clamp(v - stepOf(v))) end
+                row.plus = function() local v = cur(); setServer(e, clamp(v + stepOf(v))) end
+            else
+                row.kind = "note"
+                row.label = label .. ": " .. tostring(optCall(co, "getValueAsString") or "?")
+            end
+            rows[#rows + 1] = row
+        end
+    end
+    return rows
+end
+
+function U.addServerRows(rows, namespaces)
+    local ok, extra = pcall(U.serverRows, namespaces)
+    if not ok then klog("server rules rows FAILED: %s", tostring(extra)); return rows end
+    for _, r in ipairs(extra) do rows[#rows + 1] = r end
+    return rows
+end
+
 -- a gear button drawn in a header (the windows draw their own headers)
 function U.gearIcon()
     local p = U.ICON_DIR .. "icon_settings.png"

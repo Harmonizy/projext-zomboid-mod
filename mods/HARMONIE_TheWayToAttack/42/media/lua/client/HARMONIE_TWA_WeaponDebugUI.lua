@@ -150,11 +150,6 @@ function TWAWeaponDebugWindow.open(player, item)
     TWAWeaponDebugWindow.instance = w
 end
 
-Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, items)
-    local player = getSpecificPlayer(playerNum)
-    if not player or not W.isAllowed(player) then return end
-    local item = items and items[1]
-    if item and type(item) == "table" and item.items then item = item.items[1] end
-    if not item or not instanceof(item, "HandWeapon") then return end
-    context:addOption(getText("IGUI_TWA_Debug_Menu"), player, TWAWeaponDebugWindow.open, item)
-end, "debug"))
+-- 1.0.0 (owner, 2026-11-12: "อะไรที่แอดมินสามารถทำได้ให้ไปรวมใน คลิกขวาดีบัก
+-- Harmonie"): no inventory right-click any more -- HARMONIE debug > "The Way
+-- To Attack: weapon in hand" opens this window (HARMONIE_Hub ownOptions).

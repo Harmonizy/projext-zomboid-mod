@@ -1268,7 +1268,7 @@ function H.openSettings()
             run = function() H.capturing = false; H.setKey(0) end }
         rows[#rows + 1] = { kind = "tick", id = "follow", label = T("IGUI_GTPG_OptFollow"), tip = T("IGUI_GTPG_OptFollow_tt"),
             get = function() return H.followEnabled() end, set = function(v) if v ~= H.followEnabled() then H.setFollow(v) end end }
-        return rows
+        return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HARMONIE_GardenToPlate" })
     end, {
         bg = C.background, header = C.header, row = C.card, rowHover = { 0.06, 0.18, 0.08 },
         border = C.border, borderDim = C.borderDim, accent = C.accent, accentDark = C.accentDark,

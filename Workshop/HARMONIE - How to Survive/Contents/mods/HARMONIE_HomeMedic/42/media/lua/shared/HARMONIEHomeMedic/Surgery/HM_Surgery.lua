@@ -4,7 +4,9 @@
     * Sources   -- supplies are found on the doctor (bags too), on the floor
                    and in any container within S.REACH tiles (request: "การใช้
                    อุปกรณ์หรือวัตถุดิบให้สามารถดูบนพื้นหรือในกล่องรอบตัวและใน
-                   inventory ได้"). The server consumes from wherever they are.
+                   inventory ได้"). Containers: the whole room (HM_Reach, 0.33.12);
+                   loose floor items: S.REACH tiles. The server consumes from
+                   wherever they are.
     * Unlocks   -- a procedure needs First Aid at its tier and, if it lists
                    diseases, EHR knowledge of one of them.
     * Indication-- what the operation would treat on this body part.
@@ -149,8 +151,17 @@ local Src = S.Sources
 
 local function collect(player)
     local conts, floor = {}, {}
-    local inv = call(player, "getInventory")
-    if inv then conts[#conts + 1] = { c = inv, where = "inv" } end
+    local seenC = {}
+    if HM_Reach and HM_Reach.containers then
+        -- the inventory + every box / floor bag in the same room (HM_Reach)
+        for _, e in ipairs(HM_Reach.containers(player)) do
+            seenC[e.c] = true
+            conts[#conts + 1] = { c = e.c, where = e.where == "inv" and "inv" or "box" }
+        end
+    else
+        local inv = call(player, "getInventory")
+        if inv then seenC[inv] = true; conts[#conts + 1] = { c = inv, where = "inv" } end
+    end
     local sq = call(player, "getCurrentSquare")
     local cell = getCell and getCell()
     if sq and cell and S.REACH > 0 then
@@ -165,7 +176,7 @@ local function collect(player)
                         local n = o and call(o, "getContainerCount") or 0
                         for k = 0, n - 1 do
                             local c = call(o, "getContainerByIndex", k)
-                            if c then conts[#conts + 1] = { c = c, where = "box" } end
+                            if c and not seenC[c] then seenC[c] = true; conts[#conts + 1] = { c = c, where = "box" } end
                         end
                     end
                     local w = call(s, "getWorldObjects")

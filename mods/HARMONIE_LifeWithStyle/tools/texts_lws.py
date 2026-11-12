@@ -4,14 +4,14 @@ import json, os, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODS = os.path.dirname(os.path.dirname(HERE))
 DST = os.path.join(os.path.dirname(HERE), "42", "media", "lua", "shared", "Translate", "%s", "IG_UI.json")
-HUB_SRC = os.path.join(MODS, "HARMONIE_SVU3Sandbox", "42", "media", "lua", "shared", "Translate", "%s", "IG_UI.json")
+HUB_SRC = os.path.join(MODS, "_HarmonieHub", "translate", "%s.json")  # the Hub texts, master copy
 import sys
 sys.path.insert(0, HERE)
 from gen_lws import SLOT_NAMES, PETS
 from gen_gacha import TEXTS as GACHA_TEXTS
 
 T = {
- "IGUI_LWS_Title": ("Life With Style", "Life With Style - ตู้เสื้อผ้า"),
+ "IGUI_LWS_Title": ("Life With Style - fashion and gacha items", "Life With Style - แฟชั่นและไอเท็มกาชา"),
  "IGUI_LWS_Tab_dress": ("Dress up", "แต่งตัว"),
  "IGUI_LWS_Tab_collection": ("Collection", "คอลเลกชัน"),
  "IGUI_LWS_Tab_admin": ("Give", "ให้ของ"),
@@ -69,19 +69,21 @@ T = {
  "IGUI_LWS_Msg_Got": ("New fashion piece", "ได้รับชิ้นแฟชั่นใหม่"),
  "IGUI_LWS_Msg_NotAdmin": ("Only admins can do that.", "เฉพาะแอดมินเท่านั้น"),
  "IGUI_LWS_Msg_Locked": ("Fashion pieces come off only in the Life With Style window.", "ชิ้นแฟชั่นถอดได้จากหน้าต่าง Life With Style เท่านั้น"),
- "IGUI_LWS_Menu_Open": ("Life With Style (wardrobe)", "Life With Style (ตู้เสื้อผ้า)"),
+ "IGUI_LWS_Menu_Open": ("Life With Style: fashion and gacha items", "แฟชั่นและไอเท็มกาชา"),
+ "IGUI_LWS_Test_Give": ("Open the Give tab", "เปิดแท็บให้ของ"),
+ "IGUI_LWS_Test_Set": ("Give yourself every fashion piece", "ให้ชิ้นแฟชั่นทุกชิ้นกับตัวเอง"),
+ "IGUI_LWS_Test_Gacha1": ("Give yourself one of every gacha item", "ให้ไอเท็มกาชาทุกชนิดอย่างละ 1 กับตัวเอง"),
+ "IGUI_LWS_Test_Gacha5": ("Give yourself five of every gacha item", "ให้ไอเท็มกาชาทุกชนิดอย่างละ 5 กับตัวเอง"),
  "IGUI_LWS_Debug_Admin": ("Life With Style: admin page", "Life With Style: หน้าแอดมิน"),
  "IGUI_LWS_Debug_GiveSet": ("Life With Style: give the whole test set to %1", "Life With Style: มอบชุดทดสอบทั้งหมดให้ %1"),
  "IGUI_ItemCat_Fashion": ("Fashion", "แฟชั่น"),
- "IGUI_HUB_LWS_Name": ("Life With Style", "Life With Style"),
- "IGUI_HUB_LWS_Desc": ("Your wardrobe: fashion pieces you keep forever, worn over your real clothes.", "ตู้เสื้อผ้าของคุณ: ชิ้นแฟชั่นที่อยู่กับคุณตลอดไป สวมทับชุดจริง"),
  "UI_options_HARMONIE_LWS_title": ("HARMONIE - Life With Style", "HARMONIE - Life With Style"),
- "UI_options_HARMONIE_LWS_key": ("Open the wardrobe", "เปิดตู้เสื้อผ้า"),
+ "UI_options_HARMONIE_LWS_key": ("Open fashion and gacha items", "เปิดหน้าต่างแฟชั่นและไอเท็มกาชา"),
  "UI_options_HARMONIE_LWS_key_tooltip": ("A key that opens or closes the Life With Style window.", "ปุ่มเปิด/ปิดหน้าต่าง Life With Style"),
  # guide
  "IGUI_LWS_Guide_What_Title": ("What is it", "คืออะไร"),
- "IGUI_LWS_Guide_What_Body": ("Fashion pieces are clothes for the look only. They never spawn in the world: the server's admins give them, or you trade them with other players. They belong to you - your account - not to your character: they never drop, can not be stolen, and stay when you die. Only Life With Style's own pieces go in the wardrobe - never items of other mods.",
-     "ชิ้นแฟชั่นคือเสื้อผ้าเพื่อความสวยงามอย่างเดียว ไม่มีเกิดในโลก ได้จากแอดมินของเซิร์ฟเวอร์ หรือแลกกับผู้เล่นคนอื่น ชิ้นแฟชั่นเป็นของคุณ (ผูกกับบัญชี) ไม่ใช่ของตัวละคร จึงไม่ดรอป ขโมยไม่ได้ และไม่หายเมื่อตาย ตู้รับเฉพาะชิ้นของ Life With Style เท่านั้น ไม่รับไอเท็มจากม็อดอื่น"),
+ "IGUI_LWS_Guide_What_Body": ("Fashion pieces are clothes for the look only. They never spawn in the world: the server's admins give them, or you trade them with other players. They belong to you - your account - not to your character: they never drop, can not be stolen, and stay when you die. Only Life With Style's own pieces go in the wardrobe - never items of other mods. Open this window: right-click anywhere > Fashion and gacha items (or HARMONIE: open a tab > Life With Style > any tab), its key (Options > Keybinds), or the HARMONIE tab of the character window.",
+     "ชิ้นแฟชั่นคือเสื้อผ้าเพื่อความสวยงามอย่างเดียว ไม่มีเกิดในโลก ได้จากแอดมินของเซิร์ฟเวอร์ หรือแลกกับผู้เล่นคนอื่น ชิ้นแฟชั่นเป็นของคุณ (ผูกกับบัญชี) ไม่ใช่ของตัวละคร จึงไม่ดรอป ขโมยไม่ได้ และไม่หายเมื่อตาย ตู้รับเฉพาะชิ้นของ Life With Style เท่านั้น ไม่รับไอเท็มจากม็อดอื่น เปิดหน้าต่างนี้: คลิกขวาที่ไหนก็ได้ > แฟชั่นและไอเท็มกาชา (หรือ HARMONIE: เปิดแท็บ > Life With Style > แท็บที่ต้องการ) กดปุ่มลัด (ตั้งค่า > ปุ่ม) หรือแท็บ HARMONIE ในหน้าต่างตัวละคร"),
  "IGUI_LWS_Guide_Dress_Title": ("Dressing up", "การแต่งตัว"),
  "IGUI_LWS_Guide_Dress_Body": ("The Dress up tab is a paper doll: 18 boxes around a figure, each with a dotted line to its place on the body, and your pieces beside it. Drag a piece onto its box to wear it (it only fits its own box), or just click it. Drag a worn piece off its box, right-click the box, or press Take off to take it off. Click a box to see only its pieces. The small-window button in the header shrinks the window to the doll and your pieces, so you can move it aside and watch your character while you dress. Pieces weigh nothing and protect nothing - your real clothes do that.",
    "แท็บแต่งตัวเป็นหุ่นกระดาษ: มี 18 ช่องรอบตัวหุ่น แต่ละช่องมีเส้นประชี้ไปยังตำแหน่งบนร่างกาย และชิ้นของคุณอยู่ข้างๆ ลากชิ้นไปวางที่ช่องของมันเพื่อสวม (ใส่ได้เฉพาะช่องของตัวเอง) หรือคลิกที่ชิ้นก็ได้ ลากชิ้นที่สวมอยู่ออกจากช่อง คลิกขวาที่ช่อง หรือกด ถอด เพื่อถอด คลิกที่ช่องเพื่อดูเฉพาะชิ้นของช่องนั้น ปุ่มย่อหน้าต่างที่หัวหน้าต่างจะย่อเหลือแค่หุ่นกับชิ้นของคุณ ย้ายไปไว้ข้างๆ แล้วดูตัวละครไปพร้อมกับแต่งตัวได้ ชิ้นแฟชั่นไม่มีน้ำหนักและไม่ป้องกันอะไร - เสื้อผ้าจริงของคุณทำหน้าที่นั้น"),
@@ -140,8 +142,8 @@ T = {
  "IGUI_LWS_Guide_Trade_Body": ("Open the Trade tab and ask a player online. When they accept, each of you clicks things of your own to offer them: fashion pieces, or gacha items (switch with the buttons above your collection; each click offers one more, a click on the offer takes one back). Any change cancels both agreements; when you both press Agree on the same offer, the server swaps everything at once (a worn piece or a New Dawn piece you give away is taken off). Nothing can be copied or lost. Only Life With Style things can be traded - never items of other mods.",
      "เปิดแท็บแลกเปลี่ยน แล้วขอแลกกับผู้เล่นที่ออนไลน์ เมื่ออีกฝ่ายรับ แต่ละคนคลิกของของตัวเองเพื่อเสนอแลก ได้ทั้งชิ้นแฟชั่นและไอเท็มกาชา (สลับด้วยปุ่มเหนือคอลเลกชัน คลิกหนึ่งครั้งเสนอเพิ่ม 1 ชิ้น คลิกที่ของที่เสนอแล้วเพื่อนำคืน 1 ชิ้น) ถ้ามีการเปลี่ยนแปลง การตกลงของทั้งสองฝ่ายจะถูกยกเลิก เมื่อทั้งสองกดตกลงที่ข้อเสนอเดียวกัน เซิร์ฟเวอร์จะสลับของให้ทันที (ชิ้นที่สวมอยู่หรือชุด New Dawn ที่ให้ไปจะถูกถอดออก) ไม่มีทางปั๊มหรือหาย และแลกได้เฉพาะของ Life With Style เท่านั้น ไม่มีไอเท็มจากม็อดอื่น"),
  "IGUI_LWS_Guide_Admin_Title": ("Giving (admins)", "ให้ของ (แอดมิน)"),
- "IGUI_LWS_Guide_Admin_Body": ("The Give tab is shown only to admins and to a game started with -debug. Pick the player who gets it on the left (Me = yourself; online players first), choose Fashion or Gacha items, then click an item in the catalog to give one. Click x on something the player owns to take it back. In multiplayer the server checks again and gives only for admins: -debug on your own game is not enough there. The HARMONIE debug right-click has a shortcut and a whole test set.",
-     "แท็บให้ของจะแสดงเฉพาะแอดมิน และเกมที่เปิดด้วย -debug เท่านั้น เลือกผู้รับทางซ้าย (ตัวเอง = ให้ตัวเอง ผู้เล่นที่ออนไลน์อยู่ด้านบน) เลือกแฟชั่นหรือไอเท็มกาชา แล้วคลิกของในแคตตาล็อกเพื่อให้ทีละชิ้น คลิก x ที่ของของผู้เล่นเพื่อนำคืน ในโหมดผู้เล่นหลายคน เซิร์ฟเวอร์จะตรวจซ้ำและให้ของเฉพาะแอดมินเท่านั้น การเปิด -debug ในเกมของคุณอย่างเดียวไม่พอ คลิกขวาเมนูดีบัก HARMONIE มีทางลัดและชุดทดสอบทั้งชุด"),
+ "IGUI_LWS_Guide_Admin_Body": ("The Give tab is shown only to admins and to a game started with -debug. Pick the player who gets it on the left (Me = yourself; online players first), choose Fashion or Gacha items, then click an item in the catalog to give one. Click x on something the player owns to take it back. In multiplayer the server checks again and gives only for admins: -debug on your own game is not enough there. The HARMONIE debug right-click has a shortcut and a whole test set. Admins also see a flask button in the header: tests for the open tab (give every piece, gacha items...).",
+     "แท็บให้ของจะแสดงเฉพาะแอดมิน และเกมที่เปิดด้วย -debug เท่านั้น เลือกผู้รับทางซ้าย (ตัวเอง = ให้ตัวเอง ผู้เล่นที่ออนไลน์อยู่ด้านบน) เลือกแฟชั่นหรือไอเท็มกาชา แล้วคลิกของในแคตตาล็อกเพื่อให้ทีละชิ้น คลิก x ที่ของของผู้เล่นเพื่อนำคืน ในโหมดผู้เล่นหลายคน เซิร์ฟเวอร์จะตรวจซ้ำและให้ของเฉพาะแอดมินเท่านั้น การเปิด -debug ในเกมของคุณอย่างเดียวไม่พอ คลิกขวาเมนูดีบัก HARMONIE มีทางลัดและชุดทดสอบทั้งชุด แอดมินยังเห็นปุ่มรูปขวดทดลองบนหัวหน้าต่าง: รายการทดสอบของแท็บที่เปิดอยู่ (ให้ชิ้นแฟชั่นทุกชิ้น ไอเท็มกาชา...)"),
  "IGUI_LWS_Guide_Pet_Title": ("Pets", "สัตว์เลี้ยง"),
  "IGUI_LWS_Guide_Pet_Body": ("A pet is a wardrobe piece of the Pet box (by the doll's feet). Put it on and your dog or cat comes out beside you and follows you; take it off and it goes back to the wardrobe. It also goes away when you die or leave, and comes back when you return.<br><br>Right-click your pet (or anywhere): Pet, Feed, Orders (Follow, Stay, Come here, Make a sound) and Put away; the Pet box has the same buttons. Anyone may pet anyone's pet. Food: canned or dry dog food and dry cat food fill it up completely; any other food you carry fills it by how filling it is (bread, meat, beans...); rotten or poisoned food is refused. A cat sits down and grooms itself when it waits, and curls up after a while. If hunger is on (sandbox) a pet gets hungry over time, and a starving pet ignores orders until it is fed.<br><br>A pet never attacks anyone and nothing can hurt it. If it gets left far behind, or you change floors, it comes to you. Admins can switch pets, orders, feeding and hunger on or off in the sandbox options. The dogs and cats are the art of the Companion Dogs mod and its CD: Cats add-on, used with the author's permission.",
    "สัตว์เลี้ยงคือชิ้นในตู้เสื้อผ้าของช่องสัตว์เลี้ยง (ข้างเท้าหุ่น) สวมแล้วสุนัขหรือแมวจะออกมาข้างตัวและเดินตามคุณ ถอดแล้วจะกลับเข้าตู้ เมื่อคุณตายหรือออกจากเกม สัตว์เลี้ยงจะหายไปด้วย และกลับมาเมื่อคุณกลับมา<br><br>คลิกขวาที่สัตว์เลี้ยง (หรือที่ไหนก็ได้): ลูบ, ให้อาหาร, คำสั่ง (ตามมา, อยู่ตรงนี้, มานี่, ส่งเสียงร้อง) และ เก็บ ช่องสัตว์เลี้ยงในหน้าต่างก็มีปุ่มเหมือนกัน ใครก็ลูบสัตว์เลี้ยงของใครได้ อาหาร: อาหารสุนัขกระป๋องหรือแบบเม็ด และอาหารแมวเม็ด อิ่มเต็มที่ อาหารอื่นที่พกอยู่อิ่มตามความอิ่มของอาหารนั้น (ขนมปัง เนื้อ ถั่ว...) อาหารเน่าหรือมีพิษให้ไม่ได้ แมวจะนั่งเลียขนตอนรอ และนอนขดตัวเมื่อรอนาน ถ้าเปิดความหิวไว้ (sandbox) สัตว์เลี้ยงจะหิวตามเวลา และถ้าหิวจัดจะไม่ฟังคำสั่งจนกว่าจะได้กิน<br><br>สัตว์เลี้ยงไม่โจมตีใคร และไม่มีอะไรทำร้ายมันได้ ถ้าถูกทิ้งไว้ไกล หรือคุณขึ้นลงชั้น มันจะมาหาคุณเอง แอดมินเปิดปิดสัตว์เลี้ยง คำสั่ง การให้อาหาร และความหิว ได้ใน sandbox สุนัขและแมวเป็นงานศิลป์ของม็อด Companion Dogs และส่วนเสริม CD: Cats ใช้โดยได้รับอนุญาตจากผู้สร้าง"),
