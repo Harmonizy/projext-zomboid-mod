@@ -615,8 +615,13 @@ function U.serverRows(namespaces)
     end
     local admin = hubAdmin()
     local any = false
-    for _, ns in ipairs(namespaces or {}) do
+    for _, nsEntry in ipairs(namespaces or {}) do
+        -- a namespace, or { ns = "...", only = { OptionName = true } } for a
+        -- few options of a shared page (vanilla MultiplierConfig)
+        local ns, only = nsEntry, nil
+        if type(nsEntry) == "table" then ns, only = nsEntry.ns, nsEntry.only end
         for _, e in ipairs(all[ns] or {}) do
+          if not only or only[e.short] then
             if not any then
                 any = true
                 rows[#rows + 1] = { kind = "section", label = T("IGUI_HUB_Set_Server", "Server rules (sandbox)") }
@@ -670,6 +675,7 @@ function U.serverRows(namespaces)
                 row.label = label .. ": " .. tostring(optCall(co, "getValueAsString") or "?")
             end
             rows[#rows + 1] = row
+          end
         end
     end
     return rows
