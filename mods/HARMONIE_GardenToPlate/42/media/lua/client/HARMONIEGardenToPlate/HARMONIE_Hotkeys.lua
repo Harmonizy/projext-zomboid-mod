@@ -172,24 +172,23 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
         option.toolTip = tooltip
 
         -- 0.13.4 (owner: "คลิกขวาที่ผู้เล่นคนอื่นเพื่อตั้งค่าวิตามินให้ได้ แต่ต้องเป็น
-        -- แอดมินเท่านั้น"): staff get the vitamin admin panel for this player.
-        -- Only shown to staff; the server checks the role again on every edit.
-        local staff, lvl = HARMONIE_GTP.IsStaff(playerObj)
-        if staff then
-            local name = target:getDisplayName()
-            local adminText = getText("IGUI_HARMONIE_AdminEditOther", name)
-            local adminOpt = context:addOption(adminText, target, function(t)
-                HARMONIE_GTP.Log("Admin", "%s (access %s) opened the vitamin admin panel for %s (right-click)",
-                    safeName(playerObj), tostring(lvl), safeName(t))
-                HARMONIE_AdminPanel.Open(t)
-            end)
-            local tip = ISWorldObjectContextMenu.addToolTip()
-            tip:setName(adminText)
-            tip.description = getText("IGUI_HARMONIE_AdminEditOtherDesc")
-            adminOpt.toolTip = tip
-            HARMONIE_GTP.LogOnce("adminopt", "Admin", "vitamin admin option offered on other players (access %s)", tostring(lvl))
-        end
+        -- แอดมินเท่านั้น") -- since 1.0.0 in the HARMONIE debug menu (owner:
+        -- "อะไรที่แอดมินสามารถทำได้ให้ไปรวมใน คลิกขวาดีบัก Harmonie"), see the
+        -- HARMONIE_RegisterDebug("GTP", ...) below.
     end
 end
 
 Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(onFillWorldObjectContextMenu, "GTP"))
+
+-- HARMONIE debug > Player: <name> > Garden to Plate: vitamin admin panel
+-- (the general part already has one for yourself, HARMONIE_Hub ownOptions).
+-- The server checks the role again on every edit.
+if HARMONIE_RegisterDebug then
+    HARMONIE_RegisterDebug("GTP", function(add, player, target)
+        if not target or not (HARMONIE_AdminPanel and HARMONIE_AdminPanel.Open) then return end
+        add(getText("IGUI_HARMONIE_AdminEditOther", target:getDisplayName()), function(p)
+            HARMONIE_GTP.Log("Admin", "%s opened the vitamin admin panel for %s (HARMONIE debug)", safeName(p), safeName(target))
+            HARMONIE_AdminPanel.Open(target)
+        end)
+    end)
+end

@@ -122,6 +122,49 @@
   (`Hub.onDebugMenu`); a new window of ours gets a card in `Hub.CARDS`
   (with `need` when it needs a target first), a new sandbox page a line in
   `Hub.NAMESPACES`.
+- Every mod is 1.0.0 since 2026-11-12 (owner's 1.0.0 list: MP-safe items,
+  items from body / bags / boxes in the room, admin things in the debug
+  menu, an "open a tab" right-click, settings in the window AND sandbox).
+- Hub texts (IGUI_HUB_*): master copy `_HarmonieHub/translate/{EN,TH}.json`;
+  install.sh merges them into each mod's IG_UI.json
+  (`tools/merge_translate.py`). Never edit IGUI_HUB_ keys in a mod.
+  LWS's `tools/texts_lws.py` reads the master too.
+- Hub 4 (1.0.0): right-click anywhere > "HARMONIE: open a tab" (H icon,
+  first in our block) > each mod (card) > its tabs with the window's own tab
+  icons -- `Hub.TABS[id]()` lists { id, key, icon }, `Hub.OPEN_TAB[id](p, tab)`
+  opens one (GTPGuide.open(p,nil,tab) / TWACraftUI.window:setTab /
+  HealthPanelInstance:setActiveTab / HSVU.window.tab / HMLWorkbench.instance:
+  setTab / LWSWindow.open(p,tab)). A new window: add both.
+- `shared/000_HARMONIE_Reach.lua` (hub, was HM_Reach): where an item may come
+  from -- inventory + bags, every container in the player's ROOM (<= 12
+  tiles, same z; 1 tile counts anyway), outdoors <= 3 tiles; floor bags.
+  MP: only the server changes a world box (clientMustNotTouch / notePending /
+  serverMissing -> "HARMONIE_Reach"/"Missing"); `bring(p, item)` walks to a
+  far box (`walkTo`, luautils.walkToContainer) then transferIfNeeded. Used
+  by How to Survive (HM_Reach = HARMONIE_Reach), TWA (TWASources.get adds
+  the room's containers), GTP cooking (CookCore K.containers + CookFlow
+  F.bring), MIL parts (W.installReach wraps getReachableContainers + walks
+  before addAttachmentButton's transfer).
+- Settings window server rules (UIKit `HARMONIE_SettingsUI.addServerRows(rows,
+  {namespaces})`): each mod's gear window ends with its sandbox options --
+  tick / step / choice rows reading the live value; admins (Hub.isAdmin)
+  change them through Hub.setOption + Hub.applyAll (MP: sendToServer).
+  Called as `(HARMONIE_SettingsUI.addServerRows or function(r) return r end)`.
+- Admin things live in the debug menu only (1.0.0): TOC = ONE window per
+  player (`HM_OpenTOCAdmin`, client/TOC/Admin.lua, settings-window rows);
+  GTP vitamin admin for another player = HARMONIE_RegisterDebug("GTP");
+  TWA weapon debug = the hub's "weapon in hand" (inventory option removed).
+  In-window admin tools stay in their windows (TWA craft admin buttons, LWS
+  Give tab -- also reachable from the debug menu).
+- MIL item changes in MP (1.0.0, `shared/HARMONIE_MIL_NetItems.lua`, also in
+  tools/ours): the original adds/removes items on the client in battery
+  in/out, grenade launcher + under-barrel reload, repair kit, ammo bag and
+  ChangeMagzine (gun replaced). On an MP client these send
+  "HARMONIE_MIL_Items" ops (batteryIn/Out, consume, repair, bagIn/Out,
+  swapGun); the server changes its copy and sends it (sendAdd/Remove/
+  sendItemStats); the client only updates what it shows. SP unchanged.
+- Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
+  "fashion and gacha items" (1.0.0, owner).
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
@@ -218,7 +261,7 @@
   Button (0.33.12): "Draw Blood" (red) left of "Administer Medication" in
   the remote health panel header (tab 1, `drawBloodButton`, x = width-442),
   calls `HM_DrawBloodFrom.ask`; the right-click option stays.
-- Medical items within reach (0.33.12, `shared/HARMONIEHomeMedic/HM_Reach.lua`,
+- Medical items within reach (0.33.12, `shared/HARMONIEHomeMedic/HM_Reach.lua` -- since 1.0.0 an alias of the hub's HARMONIE_Reach,
   owner: "ต้องดูทั้งในตัว ในกระเป๋า และในกล่องรอบๆ ... ทั้งห้อง"): inventory +
   bags (any depth), then every container (+ bags lying on the floor, 3 deep)
   on squares of the player's ROOM (same z, <= 12 tiles; any container 1 tile

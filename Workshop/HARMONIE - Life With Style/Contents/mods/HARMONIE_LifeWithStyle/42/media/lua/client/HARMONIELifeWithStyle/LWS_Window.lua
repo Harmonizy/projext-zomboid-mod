@@ -212,7 +212,7 @@ function H.openSettings()
     log("settings opened")
     local c = H.C
     HARMONIE_SettingsUI.open(T("IGUI_LWS_Set_Title"), function()
-        return HARMONIE_SettingsUI.commonRows({
+        return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(HARMONIE_SettingsUI.commonRows({
             getText = function() return H.textStep end,
             setText = function(v) H.stepText(v - H.textStep) end,
             resetSize = function()
@@ -230,7 +230,7 @@ function H.openSettings()
             setPin = function(v) if v ~= H.pinned then if H.window then H.window:togglePin() else H.pinned = v; H.savePrefs() end end end,
             getMuted = function() return H.muted == true end,
             setMuted = function(v) H.muted = v == true; H.savePrefs() end,
-        })
+        }), { "LifeWithStyle" })
     end, {
         bg = c.background, header = c.header, row = { 0.95, 0.93, 0.90 }, rowHover = c.hover,
         border = c.border, borderDim = c.borderDim, accent = c.accent, accentDark = c.accentSoft,

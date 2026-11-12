@@ -63,7 +63,7 @@
     "IGUI_HSVU_Guide_Wear_Title": "Part wear",
     "IGUI_HSVU_Guide_Wear_Body": "Armour and bullbars from SVU3 lose condition each time they take a hit for the part they protect. The sandbox option Protection part damage multiplier (page HARMONIE - Car for Crash) sets how fast: 1.0 = SVU3's own wear, higher = they wear out faster.\nThe condition of every installed upgrade is shown in This car. Some parts fall off when they break.",
     "IGUI_HSVU_Guide_Admin_Title": "Admin settings",
-    "IGUI_HSVU_Guide_Admin_Body": "Sandbox options, page HARMONIE: SVU3 Part Wear:\n- Install skills by vehicle tier: on = the tiers above; off = every car needs SVU3's own levels.\n- Tier 1 / 2 / 3 main skill and other skills: the ceilings (default 4+2, 6+4, 8+6).\n- Vehicle tiers set by hand: name=tier separated by ; for example Van*=2; StepVan=3. A * at the end means every car whose name starts so (Van* = Van, VanAmbulance, Van_Glass...). An exact name wins over a * one. none = nothing set by hand. The script names are in console.txt and under the car's name in This car.\n- Protection part damage multiplier: how fast armour wears (see Part wear).",
+    "IGUI_HSVU_Guide_Admin_Body": "Sandbox options, page HARMONIE: SVU3 Part Wear:\n- Install skills by vehicle tier: on = the tiers above; off = every car needs SVU3's own levels.\n- Tier 1 / 2 / 3 main skill and other skills: the ceilings (default 4+2, 6+4, 8+6).\n- Vehicle tiers set by hand: name=tier separated by ; for example Van*=2; StepVan=3. A * at the end means every car whose name starts so (Van* = Van, VanAmbulance, Van_Glass...). An exact name wins over a * one. none = nothing set by hand. The script names are in console.txt and under the car's name in This car.\n- Protection part damage multiplier: how fast armour wears (see Part wear).\nThe same options are at the bottom of this window's settings (the gear): everyone sees them, an admin can change them there (multiplayer: sent to the server).",
     "IGUI_HSVU_Guide_Buttons_Title": "Window buttons",
     "IGUI_HSVU_Guide_Buttons_Body": "Top right: A- and A+ change the text size, the pin keeps the window open, X closes it.\nUnpinned, the window folds up to its title bar a moment after the mouse leaves it, and opens again when the mouse comes back.\nDrag the title bar to move the window. Drag the bottom-right corner to resize it; right-click that corner for the default size. The mouse wheel scrolls long lists.\nThe size, text size and pin are remembered on this computer.",
     "IGUI_HUB_Tab": "HARMONIE",
@@ -119,5 +119,12 @@
     "IGUI_HUB_Set_Mute_Tip": "No clicks or sounds from this window.",
     "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options.",
     "IGUI_HSVU_Set_Title": "Settings - Car for Crash",
-    "IGUI_HSVU_Settings": "Settings"
+    "IGUI_HSVU_Settings": "Settings",
+    "IGUI_HUB_LWS_Name": "Life With Style: fashion and gacha items",
+    "IGUI_HUB_LWS_Desc": "Fashion pieces you keep forever (worn over your real clothes), gacha items, pets and trading.",
+    "IGUI_HUB_Reach_Missing": "That item is not there any more (someone may have taken it). Try again.",
+    "IGUI_HUB_OpenMenu": "HARMONIE: open a tab",
+    "IGUI_HUB_Set_Server": "Server rules (sandbox)",
+    "IGUI_HUB_Set_ServerAdmin": "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).",
+    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options)."
 }

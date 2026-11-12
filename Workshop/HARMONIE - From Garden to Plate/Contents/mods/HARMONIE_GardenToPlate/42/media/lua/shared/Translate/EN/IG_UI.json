@@ -255,7 +255,7 @@
     "IGUI_GTPG_GrowOnly": "Can grow",
     "IGUI_GTPG_GrowMark": "(can grow)",
     "IGUI_GTPG_Other_Grow_Title": "Grow your own fruit (Fruit Farming by leina)",
-    "IGUI_GTPG_Other_Grow_Body": "\"Fruit Farming (B42)\" by leina is built into this mod, with thanks. Now every vitamin can be farmed, not only scavenged.\n1. Collect seeds: a knife (or tweezers) and a fruit. Apple, pear, orange, lemon, lime and grapefruit give 3 seeds. Cherry, olive and grapes give 2. Avocado, mango, peach, banana and pineapple give 1. The recipes are under Farming.\n2. Plant the seeds in a dug furrow and water them, like any vanilla seed. Each crop has its own sowing months. Apple, cherry, pear and coffee stand the cold; the others need the warm months. A crop takes about 80 to 110 days to bear.\n3. Fruit trees, grape vines and coffee are perennial: after a harvest they go back a few stages and bear again.\n4. Rice: collect seeds from a bag of rice, harvest with a scythe, dry the sheaves on a drying rack, thresh them, and put 12 seeds in a bag. Coffee: seeds from chocolate-covered coffee beans; dry the pods, roast them, then grind 12 at a stone quern. Ginger and peanuts: plant the root or the nut itself.\nTick Can grow next to the search box to list only foods you can grow.",
+    "IGUI_GTPG_Other_Grow_Body": "\"Fruit Farming (B42)\" by leina is built into this mod, with thanks. Now every vitamin can be farmed, not only scavenged.\n1. Collect seeds: a knife (or tweezers) and a fruit. Apple, pear, orange, lemon, lime and grapefruit give 3 seeds. Cherry, olive and grapes give 2. Avocado, mango, peach, banana and pineapple give 1. The recipes are under Farming.\n2. Plant the seeds in a dug furrow and water them, like any vanilla seed. Each crop has its own sowing months. Apple, cherry, pear and coffee stand the cold; the others need the warm months. A crop takes about 80 to 110 days to bear.\n3. Fruit trees, grape vines and coffee are perennial: after a harvest they go back a few stages and bear again.\n4. Rice: collect seeds from a bag of rice, harvest with a scythe, dry the sheaves on a drying rack, thresh them, and put 12 seeds in a bag. Coffee: seeds from chocolate-covered coffee beans; dry the pods, roast them, then grind 12 at a stone quern. Ginger and peanuts: plant the root or the nut itself.\nTick Can grow next to the search box to list only foods you can grow.\nA fruit tree, vine or coffee plant from growth stage 3 stands firm: zombies and people walking over it no longer trample it. Seedlings and the other crops can still be trampled; a trampled plant is cleared from the plot by the game after a while.",
     "IGUI_GTPG_Other_Tips_Body": "- D is the hardest one: fish (salmon is best), eggs, cheese, butter, mushrooms.\n- B: meat, fish, beans and lentils, peanuts.\n- A: carrots, sweet potatoes, leafy greens, butter, eggs, mangoes.\n- C: bell peppers, oranges, pineapple, broccoli, brussels sprouts, rosehips.\n- K: leafy greens such as kale, spinach, dandelions, grape leaves and brussels sprouts; avocados.\n- E: olive or vegetable oil, nuts, avocado, beans, olives.\nA vegetable garden, a few fruit trees, some fishing and eggs cover all six. Fruit for winter: can it while it is in season.",
     "IGUI_GTPG_Tab_calendar": "Calendar",
     "IGUI_GTPG_Tab_calendar_Tip": "When to sow each crop, month by month. This month is marked.",
@@ -347,7 +347,7 @@
     "IGUI_GTPC_Adding": "Putting the ingredients in: %1 of %2",
     "IGUI_GTPC_Failed_ingredients": "Could not start putting the food in -- nothing has gone in yet.",
     "IGUI_GTPC_Failed_base": "Some food went in, but the dish item could not be found.",
-    "IGUI_GTPC_RetryHint": "The steps you played are kept: fix it (the dish or the food in your bag or nearby) and press Try again.",
+    "IGUI_GTPC_RetryHint": "The steps you played are kept: fix it (the dish or the food on you, in your bags or in a box or cupboard in the same room) and press Try again.",
     "IGUI_GTPC_RetryFailed": "Try again",
     "IGUI_GTPC_Done": "Done - preparation: %1",
     "IGUI_GTPC_DishNow": "%1 - calories %2, carbohydrates %3, fat %4, protein %5, hunger %6 (the game's own values)",
@@ -922,5 +922,12 @@
     "IGUI_HUB_Set_Client": "These settings are yours only (this computer). Server rules are in the sandbox options.",
     "IGUI_GTPG_Set_Title": "Settings - From Garden to Plate",
     "IGUI_GTPG_SetKey": "Key that opens the guide",
-    "IGUI_GTPC_Failed_stuck": "It got stuck while putting the food in (an action was stopped). What went in stays in the dish."
+    "IGUI_GTPC_Failed_stuck": "It got stuck while putting the food in (an action was stopped). What went in stays in the dish.",
+    "IGUI_HUB_LWS_Name": "Life With Style: fashion and gacha items",
+    "IGUI_HUB_LWS_Desc": "Fashion pieces you keep forever (worn over your real clothes), gacha items, pets and trading.",
+    "IGUI_HUB_Reach_Missing": "That item is not there any more (someone may have taken it). Try again.",
+    "IGUI_HUB_OpenMenu": "HARMONIE: open a tab",
+    "IGUI_HUB_Set_Server": "Server rules (sandbox)",
+    "IGUI_HUB_Set_ServerAdmin": "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).",
+    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options)."
 }

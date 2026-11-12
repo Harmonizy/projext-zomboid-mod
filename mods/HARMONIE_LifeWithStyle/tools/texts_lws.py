@@ -4,14 +4,14 @@ import json, os, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODS = os.path.dirname(os.path.dirname(HERE))
 DST = os.path.join(os.path.dirname(HERE), "42", "media", "lua", "shared", "Translate", "%s", "IG_UI.json")
-HUB_SRC = os.path.join(MODS, "HARMONIE_SVU3Sandbox", "42", "media", "lua", "shared", "Translate", "%s", "IG_UI.json")
+HUB_SRC = os.path.join(MODS, "_HarmonieHub", "translate", "%s.json")  # the Hub texts, master copy
 import sys
 sys.path.insert(0, HERE)
 from gen_lws import SLOT_NAMES, PETS
 from gen_gacha import TEXTS as GACHA_TEXTS
 
 T = {
- "IGUI_LWS_Title": ("Life With Style", "Life With Style - ตู้เสื้อผ้า"),
+ "IGUI_LWS_Title": ("Life With Style - fashion and gacha items", "Life With Style - แฟชั่นและไอเท็มกาชา"),
  "IGUI_LWS_Tab_dress": ("Dress up", "แต่งตัว"),
  "IGUI_LWS_Tab_collection": ("Collection", "คอลเลกชัน"),
  "IGUI_LWS_Tab_admin": ("Give", "ให้ของ"),
@@ -69,19 +69,17 @@ T = {
  "IGUI_LWS_Msg_Got": ("New fashion piece", "ได้รับชิ้นแฟชั่นใหม่"),
  "IGUI_LWS_Msg_NotAdmin": ("Only admins can do that.", "เฉพาะแอดมินเท่านั้น"),
  "IGUI_LWS_Msg_Locked": ("Fashion pieces come off only in the Life With Style window.", "ชิ้นแฟชั่นถอดได้จากหน้าต่าง Life With Style เท่านั้น"),
- "IGUI_LWS_Menu_Open": ("Life With Style (wardrobe)", "Life With Style (ตู้เสื้อผ้า)"),
+ "IGUI_LWS_Menu_Open": ("Life With Style: fashion and gacha items", "แฟชั่นและไอเท็มกาชา"),
  "IGUI_LWS_Debug_Admin": ("Life With Style: admin page", "Life With Style: หน้าแอดมิน"),
  "IGUI_LWS_Debug_GiveSet": ("Life With Style: give the whole test set to %1", "Life With Style: มอบชุดทดสอบทั้งหมดให้ %1"),
  "IGUI_ItemCat_Fashion": ("Fashion", "แฟชั่น"),
- "IGUI_HUB_LWS_Name": ("Life With Style", "Life With Style"),
- "IGUI_HUB_LWS_Desc": ("Your wardrobe: fashion pieces you keep forever, worn over your real clothes.", "ตู้เสื้อผ้าของคุณ: ชิ้นแฟชั่นที่อยู่กับคุณตลอดไป สวมทับชุดจริง"),
  "UI_options_HARMONIE_LWS_title": ("HARMONIE - Life With Style", "HARMONIE - Life With Style"),
- "UI_options_HARMONIE_LWS_key": ("Open the wardrobe", "เปิดตู้เสื้อผ้า"),
+ "UI_options_HARMONIE_LWS_key": ("Open fashion and gacha items", "เปิดหน้าต่างแฟชั่นและไอเท็มกาชา"),
  "UI_options_HARMONIE_LWS_key_tooltip": ("A key that opens or closes the Life With Style window.", "ปุ่มเปิด/ปิดหน้าต่าง Life With Style"),
  # guide
  "IGUI_LWS_Guide_What_Title": ("What is it", "คืออะไร"),
- "IGUI_LWS_Guide_What_Body": ("Fashion pieces are clothes for the look only. They never spawn in the world: the server's admins give them, or you trade them with other players. They belong to you - your account - not to your character: they never drop, can not be stolen, and stay when you die. Only Life With Style's own pieces go in the wardrobe - never items of other mods.",
-     "ชิ้นแฟชั่นคือเสื้อผ้าเพื่อความสวยงามอย่างเดียว ไม่มีเกิดในโลก ได้จากแอดมินของเซิร์ฟเวอร์ หรือแลกกับผู้เล่นคนอื่น ชิ้นแฟชั่นเป็นของคุณ (ผูกกับบัญชี) ไม่ใช่ของตัวละคร จึงไม่ดรอป ขโมยไม่ได้ และไม่หายเมื่อตาย ตู้รับเฉพาะชิ้นของ Life With Style เท่านั้น ไม่รับไอเท็มจากม็อดอื่น"),
+ "IGUI_LWS_Guide_What_Body": ("Fashion pieces are clothes for the look only. They never spawn in the world: the server's admins give them, or you trade them with other players. They belong to you - your account - not to your character: they never drop, can not be stolen, and stay when you die. Only Life With Style's own pieces go in the wardrobe - never items of other mods. Open this window: right-click anywhere > Fashion and gacha items (or HARMONIE: open a tab > Life With Style > any tab), its key (Options > Keybinds), or the HARMONIE tab of the character window.",
+     "ชิ้นแฟชั่นคือเสื้อผ้าเพื่อความสวยงามอย่างเดียว ไม่มีเกิดในโลก ได้จากแอดมินของเซิร์ฟเวอร์ หรือแลกกับผู้เล่นคนอื่น ชิ้นแฟชั่นเป็นของคุณ (ผูกกับบัญชี) ไม่ใช่ของตัวละคร จึงไม่ดรอป ขโมยไม่ได้ และไม่หายเมื่อตาย ตู้รับเฉพาะชิ้นของ Life With Style เท่านั้น ไม่รับไอเท็มจากม็อดอื่น เปิดหน้าต่างนี้: คลิกขวาที่ไหนก็ได้ > แฟชั่นและไอเท็มกาชา (หรือ HARMONIE: เปิดแท็บ > Life With Style > แท็บที่ต้องการ) กดปุ่มลัด (ตั้งค่า > ปุ่ม) หรือแท็บ HARMONIE ในหน้าต่างตัวละคร"),
  "IGUI_LWS_Guide_Dress_Title": ("Dressing up", "การแต่งตัว"),
  "IGUI_LWS_Guide_Dress_Body": ("The Dress up tab is a paper doll: 18 boxes around a figure, each with a dotted line to its place on the body, and your pieces beside it. Drag a piece onto its box to wear it (it only fits its own box), or just click it. Drag a worn piece off its box, right-click the box, or press Take off to take it off. Click a box to see only its pieces. The small-window button in the header shrinks the window to the doll and your pieces, so you can move it aside and watch your character while you dress. Pieces weigh nothing and protect nothing - your real clothes do that.",
    "แท็บแต่งตัวเป็นหุ่นกระดาษ: มี 18 ช่องรอบตัวหุ่น แต่ละช่องมีเส้นประชี้ไปยังตำแหน่งบนร่างกาย และชิ้นของคุณอยู่ข้างๆ ลากชิ้นไปวางที่ช่องของมันเพื่อสวม (ใส่ได้เฉพาะช่องของตัวเอง) หรือคลิกที่ชิ้นก็ได้ ลากชิ้นที่สวมอยู่ออกจากช่อง คลิกขวาที่ช่อง หรือกด ถอด เพื่อถอด คลิกที่ช่องเพื่อดูเฉพาะชิ้นของช่องนั้น ปุ่มย่อหน้าต่างที่หัวหน้าต่างจะย่อเหลือแค่หุ่นกับชิ้นของคุณ ย้ายไปไว้ข้างๆ แล้วดูตัวละครไปพร้อมกับแต่งตัวได้ ชิ้นแฟชั่นไม่มีน้ำหนักและไม่ป้องกันอะไร - เสื้อผ้าจริงของคุณทำหน้าที่นั้น"),
