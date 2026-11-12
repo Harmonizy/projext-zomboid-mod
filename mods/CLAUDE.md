@@ -206,6 +206,15 @@
   Medical item as generic). The wrapper logs each pill (client + server
   result with dose status) and records an unlisted medical item on the server
   with `TrackDoseOnly` (tier 0) like SP.
+- A doctor draws a patient's blood with consent (0.33.11, MP,
+  `shared/HARMONIEHomeMedic/HM_DrawBloodFrom.lua`, module HARMONIE_HM_DrawFrom):
+  right-click a player within 3 tiles -> "Draw blood (name)" (needs an empty
+  blood bag) -> server checks (alive, distance, doctor's empty bag, patient
+  >= 80% blood, known type) -> patient's Yes/No (60 s) -> doctor's timed
+  action (~13 s, perform only) -> server re-checks, takes the bag and 500 mL
+  (EHR.Blood.ModifyBloodVolume), gives the doctor a fresh bag of the PATIENT's
+  type (EHR_BloodSpoilage + EHR_DonorBloodType, like EHR's own DrawBlood).
+  Every step logged ("[DrawBlood]").
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
