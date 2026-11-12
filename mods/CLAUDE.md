@@ -197,6 +197,15 @@
   `shared/HARMONIEHomeMedic/HM_ContractRelay.lua` wraps them on an MP client to
   send `HARMONIE_HM_Contract/Request` instead; the server starts them with the
   same function (sender only, relayed ids only, 1 min per illness, logged).
+- Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
+  prints only errors by default, so nothing said a pill was taken. Tab 1's
+  ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
+  painkillers 3 h). Path: vanilla ISTakePillAction -> EHR_MedicationHook ->
+  SP writes the dose / MP `UseConsumedMedication` on the server, which
+  records ONLY items in `EHR.Medication.Database` (SP records any FirstAid /
+  Medical item as generic). The wrapper logs each pill (client + server
+  result with dose status) and records an unlisted medical item on the server
+  with `TrackDoseOnly` (tier 0) like SP.
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
