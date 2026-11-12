@@ -2329,6 +2329,36 @@ function TWACraftWindow:drawStatGrid(x, y, w)
     return y
 end
 
+-- 2026-11-12 (owner: "twa วัตถุดิบที่สร้างได้ ให้มีปุ่มกดสร้างเพื่อไปที่หน้าสร้างของ
+-- นั้นๆ"): a base / extra item that some recipe MAKES (material lump, bars,
+-- ...) gets a "Craft" button on its card; it opens that recipe (craft page).
+-- Gem-grade recipes keep their item's type (keepType) -- they make no new
+-- item, so they are not a maker.
+local makerOf
+local function recipeMaking(fullType)
+    if not fullType then return nil end
+    if not makerOf then
+        makerOf = {}
+        for _, r in ipairs(TWARecipeData and TWARecipeData.List or {}) do
+            if r.result and not r.keepType and not makerOf[r.result] then makerOf[r.result] = r end
+        end
+    end
+    return makerOf[fullType]
+end
+
+function TWACraftWindow:jumpToRecipe(recipe)
+    if not recipe then return end
+    if self.activeProcId or self.activeCenterAction then return end
+    if self.active then self:flashLocked() return end
+    TWALog("CraftUI", "Craft button: %s -> recipe %s", tostring(self.selectedRecipe and self.selectedRecipe.id), tostring(recipe.id))
+    self.selectedRecipe = recipe
+    self.resumeItem = nil
+    self.selectedProcId = nil
+    if self.searchBox then self.searchBox:setText("") end
+    if self.recipeList and self.recipeList.setSearch then self.recipeList:setSearch("") end
+    self:setTab("craft")
+end
+
 -- request 2026-09-27: reintroduced a real 2nd required base-item card
 -- (recipe.base2, tier-matched MaterialBar) -- factored the single-card draw
 -- (previously inline) into its own method so it can be called once per
@@ -2370,6 +2400,22 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey,
             end
             self.hoverTooltip = { lines = lines, x = x, y = y + CARD_H }
         end
+    end
+    -- the Craft button (an item a recipe makes; not while a recipe is under way)
+    local maker = recipeMaking(fullType)
+    if maker and maker ~= self.selectedRecipe and not self.active and not self.resumeItem then
+        local label = getText("IGUI_TWA_CraftThis")
+        local bw = getTextManager():MeasureStringX(TWAFont.small(), label) + 16
+        local bh = 16 + grow
+        local bx, by = x + w - bw - 30, y + 4
+        local mx, my = self:getMouseX(), self:getMouseY()
+        local over = mx >= bx and mx < bx + bw and my >= by and my < by + bh
+        self:drawRect(bx, by, bw, bh, over and 0.95 or 0.8, 0.30, 0.20, 0.03)
+        self:drawRectBorder(bx, by, bw, bh, 1, 1.0, 0.78, 0.2)
+        drawTextShadowed(self, label, bx + 8, by + 1, 1, 0.92, 0.7, 1, TWAFont.small())
+        self.craftLinks = self.craftLinks or {}
+        self.craftLinks[#self.craftLinks + 1] = { x = bx, y = by, w = bw, h = bh, recipe = maker, from = self.selectedRecipe }
+        if over then self.hoverTooltip = { lines = { getText("IGUI_TWA_CraftThis_Tip", baseDisplayName(fullType)) }, x = bx, y = by + bh + 2 } end
     end
     local statusKey = noteKey or (owned and "IGUI_TWA_BaseItemOwned" or "IGUI_TWA_BaseItemMissing")
     local statusText = getText(statusKey, self.baseStateText)
@@ -2871,6 +2917,7 @@ function TWACraftWindow:renderBody()
             note1 = "IGUI_TWA_BaseNeedsState"
         end
         self.baseStateText = recipe.gemFrom and getText("IGUI_TWA_GemState_" .. recipe.gemFrom) or nil
+        self.craftLinks = {}
         baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, card1Type, card1Alt, owned1, note1, count1)
         if recipe.base2 then
             baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2, count2)
@@ -3000,6 +3047,13 @@ function TWACraftWindow:onMouseDown(x, y)
     -- R69: the header (drag, volume) and the tab bar first
     if self:workbenchMouseDown(x, y) then return true end
     if self.page ~= "craft" then return true end
+    for _, l in ipairs(self.craftLinks or {}) do
+        if l.from == self.selectedRecipe and x >= l.x and x < l.x + l.w and y >= l.y and y < l.y + l.h then
+            self.craftLinks = {}
+            self:jumpToRecipe(l.recipe)
+            return true
+        end
+    end
     local r = self.baseCardRect
     if r and self.selectedRecipe == r.recipe and x >= r.x and x < r.x + r.w and y >= r.y and y < r.y + r.h then
         self:openBaseChooser(r.recipe)
