@@ -344,6 +344,15 @@ function EHR.DiseaseFlyers.UnlockDiseaseKnowledge(player, diseaseId, options)
     return true
 end
 
+-- HARMONIE: the answer to the player's own action, never dropped by the
+-- one-line-a-minute limit. (A line that starts with "(" is a syntax error
+-- in the game's Lua -- "ambiguous syntax" -- so it is a named function.)
+local function sayAction(player, text)
+    local L = EHR and EHR.Locale
+    local f = L and (L.SayAction or L.Say)
+    if f then return f(player, text) end
+end
+
 function EHR.DiseaseFlyers.GetFirstAidLevel(player)
     if player and Perks and Perks.Doctor and player.getPerkLevel then
         local ok, level = pcall(function()
@@ -500,9 +509,9 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
         end
         if not newlyLearned and player.Say then
             if isKnox and not EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then
-                (EHR.Locale.SayAction or EHR.Locale.Say)(player, "This flyer is too vague. I need a real source.")
+                sayAction(player, "This flyer is too vague. I need a real source.")
             else
-                (EHR.Locale.SayAction or EHR.Locale.Say)(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
+                sayAction(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
             end
         end
         if sendClientCommand and not isKnox then
@@ -517,9 +526,9 @@ function EHR.DiseaseFlyers.OnFlyerRead(player, item)
     end
     if not newlyLearned and player.Say then
         if isKnox and not EHR.DiseaseFlyers.KnowsDisease(player, diseaseId) then
-            (EHR.Locale.SayAction or EHR.Locale.Say)(player, "This flyer is too vague. I need a real source.")
+            sayAction(player, "This flyer is too vague. I need a real source.")
         else
-            (EHR.Locale.SayAction or EHR.Locale.Say)(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
+            sayAction(player, flyerText("UI_EHR_FlyerAlreadyKnown", "You already know about this disease."))
         end
     end
 end

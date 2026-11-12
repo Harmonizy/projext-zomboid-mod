@@ -104,6 +104,13 @@
   later menu. LWS 0.6.1-0.7.11 marked `context.lwsPetMenu` and the pet menu
   never showed again. Mark the OPTION you added (`opt.lwsPetMenu`) and scan
   `context.options` -- that list is cleared each time (LWS 0.7.12).
+- A line that STARTS with "(" after a complete statement --
+  `(A or B)(x)` -- is "ambiguous syntax (function call x new statement)" in
+  the game's Lua 5.1 parser: the whole file fails and in MP the client is
+  thrown out while connecting (HM 1.0.2 EHR_FlyerHook.lua:308, owner
+  2026-11-12). Lua 5.4/5.5 accepts it, so a lupa `load()` check missed it.
+  Check with `lupa.lua51` + `loadstring` (scratchpad loadcheck.py does now),
+  and call through a named local instead.
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).
@@ -361,6 +368,12 @@
   packet). The settings window shows only those three of MultiplierConfig --
   UIKit serverRows takes `{ ns = "...", only = { Name = true } }` (hub).
   Default 5.0 for all three (owner). A save made before keeps its 1.0.
+  XP from EVERY timed action (HM 1.0.4, owner): shared/TOC/ExpActions.lua
+  watches ISTimedActionQueue (current + getCharacterActions not empty) in
+  OnPlayerUpdate for local players -- no per-class update() wraps (most
+  actions override update without the base). MP client sums, RelayAddXp on
+  action change / every 300 ticks; SP adds at once. ExpActionsClient.lua
+  emptied (it double-counted transfer / grab). skipTOC / noExp still none.
   XP is 0.01 per action tick; level 10 = 29,350 XP. Levels only shorten
   actions (BaseTimedActionOverride: limb x2/3/4 - level/10, never < x1).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla

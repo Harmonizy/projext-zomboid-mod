@@ -36,128 +36,86 @@ local function IterateTOCXp(action, applyXp)
     end
 end
 
----CLIENT: send what an action accumulated, one packet per perk, and clear it.
----@param action ISBaseTimedAction
-local function FlushTOCXp(action)
-    ---@diagnostic disable-next-line: undefined-field
-    local acc = action.tocXpAccumulator
-    if not acc then return end
-    ---@diagnostic disable-next-line: inject-field
-    action.tocXpAccumulator = nil
+-- HARMONIE 1.0.4 (owner, 2026-11-12: "ได้ xp จากทุก action"): TOC XP comes
+-- from EVERY timed action now, not a list of ~25 classes. The original wrapped
+-- each class's update(); most actions override update() without calling the
+-- base, so a list was the only way there. Instead the player's own queue is
+-- watched once per update of each local player: while a timed action is
+-- running (ISTimedActionQueue current + the character's running actions), the
+-- amputated sides (and prosthesis) earn XP_PER_TICK each tick, as before.
+-- Single player adds it at once (HM_TOCXp.add: TOC multiplier on top of the
+-- global one). An MP client sums it and sends it to the server (RelayAddXp)
+-- when the action ends or changes, and every FLUSH_TICKS during a long one.
+-- Actions with skipTOC / noExp still give nothing.
 
-    for perkName, xp in pairs(acc) do
+local FLUSH_TICKS = 300
+local recs = {}
+
+local function hmlog(fmt, ...) if HMLog then HMLog("TOCXp", fmt, ...) end end
+
+local function relay(rec)
+    for perkName, xp in pairs(rec.xp) do
         if xp > 0 then
             sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayAddXp,
                 {perkName = perkName, xp = xp})
         end
     end
+    rec.xp = {}
+    rec.ticks = 0
 end
 
--- TODO Confirm this
----Adds TOC XP for one tick: directly via addXp() on the server and in SP, or
----accumulated for relay on a client.
----
----This used to be `if isClient() then return end`, leaving the work to the server.
----The server never does it: ISBaseTimedAction:update() is only ever ticked by the
----ISTimedActionQueue of the client that owns the character, so a dedicated server
----never calls update() on a player's timed action even though these classes exist
----server-side. The client bailed out, the server was never asked, and no XP was
----granted anywhere in MP.
----
----Clients accumulate and flush once when the action ends rather than relaying per
----tick, because update() runs every frame - a per-tick sendClientCommand would be
----roughly 120 packets for a two-second action.
----@param action ISBaseTimedAction
-local function AddTOCXp(action)
-    if isClient() then
-        IterateTOCXp(action, function(_, perkName)
-            ---@diagnostic disable-next-line: undefined-field
-            local acc = action.tocXpAccumulator
-            if not acc then
-                acc = {}
-                ---@diagnostic disable-next-line: inject-field
-                action.tocXpAccumulator = acc
-            end
-            acc[perkName] = (acc[perkName] or 0) + XP_PER_TICK
-        end)
-        return
+local function currentAction(pl)
+    local Q = ISTimedActionQueue
+    local q = Q and Q.queues and Q.queues[pl]
+    if not q then return nil end
+    local cur = q.current or (q.queue and q.queue[1])
+    if not cur then return nil end
+    -- running = the character really has an action going (not just queued)
+    if pl.getCharacterActions then
+        local ok, list = pcall(function() return pl:getCharacterActions() end)
+        if ok and list and list.isEmpty and list:isEmpty() then return nil end
     end
+    return cur
+end
 
-    IterateTOCXp(action, function(character, perkName)
-        -- HARMONIE 1.0.3: TOC's own XP multiplier on top of the global one
-        if HM_TOCXp then HM_TOCXp.add(character, perkName, XP_PER_TICK)
-        else addXp(character, Perks[perkName], XP_PER_TICK) end
+local function onPlayerUpdate(pl)
+    if not pl or not pl.isLocalPlayer or not pl:isLocalPlayer() then return end
+    local key = pl:getUsername()
+    local cur = currentAction(pl)
+    local rec = recs[key]
+    if rec and rec.action ~= cur then
+        if isClient() then relay(rec) end
+        recs[key] = nil
+        rec = nil
+    end
+    if not cur or cur.skipTOC or cur.noExp then return end
+    if not rec then
+        rec = { action = cur, xp = {}, ticks = 0 }
+        recs[key] = rec
+        if HMLogOnce then HMLogOnce("tocxp_any_" .. tostring(cur.Type), "TOCXp", "TOC XP counted for action %s", tostring(cur.Type or "?")) end
+    end
+    local shim = { character = pl, skipTOC = cur.skipTOC, noExp = cur.noExp }
+    IterateTOCXp(shim, function(character, perkName)
+        if isClient() then
+            rec.xp[perkName] = (rec.xp[perkName] or 0) + XP_PER_TICK
+        elseif HM_TOCXp then
+            HM_TOCXp.add(character, perkName, XP_PER_TICK)
+        else
+            addXp(character, Perks[perkName], XP_PER_TICK)
+        end
     end)
-end
-
--- TODO Confirm this
---* The flush hooks go on ISBaseTimedAction rather than on each wrapped subclass.
---* Every timed action ends by calling up into ISBaseTimedAction.perform / .stop, so
---* one pair of wraps covers all of them - and unlike assigning perform/stop onto
---* each subclass, it does not freeze an inherited method as an own field on 20+
---* classes and block another mod from overriding it later.
-if isClient() then
-    local og_ISBaseTimedAction_perform = ISBaseTimedAction.perform
-    ---@diagnostic disable-next-line: duplicate-set-field
-    function ISBaseTimedAction:perform()
-        FlushTOCXp(self)
-        og_ISBaseTimedAction_perform(self)
-    end
-
-    local og_ISBaseTimedAction_stop = ISBaseTimedAction.stop
-    ---@diagnostic disable-next-line: duplicate-set-field
-    function ISBaseTimedAction:stop()
-        FlushTOCXp(self)
-        og_ISBaseTimedAction_stop(self)
+    if isClient() then
+        rec.ticks = rec.ticks + 1
+        if rec.ticks >= FLUSH_TICKS then relay(rec) end
     end
 end
 
----Wraps an action class's update() to inject TOC XP each tick.
----Safely skips if the class is nil (e.g. not loaded on this side).
----@param actionClass table
-local function WrapUpdate(actionClass)
-    if not actionClass then return end
-    TOC_DEBUG.print("WrapUpdate: " .. tostring(actionClass.Type))
-
-    local og = actionClass.update
-    function actionClass:update()
-        og(self)
-        AddTOCXp(self)
-    end
+if not isServer() and Events and Events.OnPlayerUpdate then
+    Events.OnPlayerUpdate.Add(onPlayerUpdate)
+    hmlog("TOC XP from every timed action (queue watch, %s XP a tick)", tostring(XP_PER_TICK))
 end
 
---* Firearms
-WrapUpdate(ISReloadWeaponAction)
-WrapUpdate(ISInsertMagazine)
-WrapUpdate(ISLoadBulletsInMagazine)
-WrapUpdate(ISUnloadBulletsFromFirearm)
-WrapUpdate(ISUnloadBulletsFromMagazine)
-WrapUpdate(ISRackFirearm)
-WrapUpdate(ISUpgradeWeapon)
-WrapUpdate(ISRemoveWeaponUpgrade)
-
---* Building / demolition
-WrapUpdate(ISBarricadeAction)
-WrapUpdate(ISUnbarricadeAction)
-WrapUpdate(ISChopTreeAction)
-WrapUpdate(ISDismantleAction)
-WrapUpdate(ISDestroyStuffAction)
-
---* Crafting
-WrapUpdate(ISCraftAction)
-
---* Medical
-WrapUpdate(ISApplyBandage)
-WrapUpdate(ISCleanBandage)
-WrapUpdate(ISDisinfect)
-WrapUpdate(ISRemoveBullet)
-WrapUpdate(ISSplint)
-WrapUpdate(ISStitch)
-WrapUpdate(ISCleanBurn)
-WrapUpdate(ISRemovePatch)
-
---* Item handling
-WrapUpdate(ISPickUpGroundCoverItem)
-WrapUpdate(ISPickAxeGroundCoverItem)
+---Kept for callers of the old API; classes are no longer wrapped one by one.
+local function WrapUpdate(actionClass) end
 
 return { IterateTOCXp = IterateTOCXp, WrapUpdate = WrapUpdate }
