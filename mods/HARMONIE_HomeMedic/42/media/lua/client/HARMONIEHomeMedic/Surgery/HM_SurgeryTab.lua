@@ -1,8 +1,9 @@
 --[[
     HARMONIE - Home Medic : the medical window's 6th tab, "Surgery" (client)
 
-    Left: every operation (S.SURGERY_ORDER). One is open (clickable) when the
-    patient needs it -- some body part has an indication for it right now.
+    Left: every operation (S.SURGERY_ORDER). Each can be opened; it can be
+    STARTED only when the patient needs it -- some body part has an
+    indication for it right now (otherwise view only, 1.0.0).
     Right: the pre-op checklist of the picked operation (HM_SurgeryPrepUI in
     embedded mode), with the body parts it can be done on as chips. Start ->
     the server checks again -> the operating window (minigames) pops up and
@@ -53,12 +54,14 @@ local function scan(panel)
     local out = {}
     for _, sid in ipairs(S.SURGERY_ORDER) do
         local sd = S.Surgeries[sid]
-        local e = { parts = {} }
+        local e = { parts = {}, allParts = {} }
         e.unlocked, e.why = S.surgeryUnlocked(doctor, sid)
-        if not (sd.needsTOC and not S.tocAvailable()) and not sd.planned then
+        e.viewable = not (sd.needsTOC and not S.tocAvailable()) and not sd.planned
+        if e.viewable then
             for _, name in ipairs(sd.parts or PARTS) do
                 local part = S.partByName(patient, name)
                 if part then
+                    e.allParts[#e.allParts + 1] = { part = part, name = partLabel(part, name), key = name }
                     local ok, ind = pcall(S.indications, patient, part, sid, exam)
                     local usable = false
                     for _, i in ipairs(ok and ind or {}) do if not i.cool and not i.undiagnosed then usable = true end end
@@ -87,19 +90,26 @@ local function dropPrep(panel)
     end
 end
 
+-- 1.0.0 (owner, 2026-11-12: "การผ่าตัดสามารถกดดูได้ แต่ไม่สามารถกดทำได้ถ้าไม่ได้เป็น
+-- โรคที่ต้องใช้การผ่าตัดนั้นๆ"): an operation the patient does not need opens
+-- too, VIEW ONLY -- the checklist (supplies, skill, risks) on every body part
+-- it can be done on, Start off; the indication row says why
 local function select(panel, sid, partKey)
     local st = panel.hmSurg
     local info = scan(panel)[sid]
-    if not info or #info.parts == 0 then HMLog("SurgeryTab", "%s: no body part needs it now", tostring(sid)); return false end
-    local chosen = info.parts[1]
-    for _, p in ipairs(info.parts) do if p.key == partKey then chosen = p end end
-    HMLog("SurgeryTab", "selected %s on %s", tostring(sid), tostring(chosen.key))
+    if not info or not info.viewable then HMLog("SurgeryTab", "%s: not available here", tostring(sid)); return false end
+    local viewOnly = #info.parts == 0
+    local parts = viewOnly and info.allParts or info.parts
+    if #parts == 0 then HMLog("SurgeryTab", "%s: the patient has no body part for it", tostring(sid)); return false end
+    local chosen = parts[1]
+    for _, p in ipairs(parts) do if p.key == partKey then chosen = p end end
+    HMLog("SurgeryTab", "selected %s on %s%s", tostring(sid), tostring(chosen.key), viewOnly and " (view only: not needed now)" or "")
     dropPrep(panel)
     local doctor, patient, exam = parties(panel)
     local b, listW = bounds(panel)
     local px, py = b.x + listW + 14, b.y + 48
     local prep = HM_SurgeryPrepUI:new(doctor, patient, chosen.part, sid, exam, { sid },
-        { embedded = true, parts = info.parts, x = px, y = py, w = b.x + b.w - 8 - px, h = b.h - 56 })
+        { embedded = true, parts = parts, viewOnly = viewOnly, x = px, y = py, w = b.x + b.w - 8 - px, h = b.h - 56 })
     prep:initialise()
     prep:instantiate()
     panel:addChild(prep)
@@ -138,7 +148,7 @@ local function draw(panel)
         local e = info[sid] or { parts = {} }
         local needed = #e.parts > 0
         local active = st.sid == sid
-        local hov = needed and overList and inside(mx, my, x, y, w, rowH - 4)
+        local hov = e.viewable and overList and inside(mx, my, x, y, w, rowH - 4)
         local bg = active and c.accentDark or c.panelSoft
         panel:drawRect(x, y, w, rowH - 4, active and 0.95 or (hov and 0.7 or 0.4), bg.r, bg.g, bg.b)
         local bd = active and c.accent or c.borderDim
@@ -157,6 +167,7 @@ local function draw(panel)
         local state, sc
         if needed and e.unlocked then state, sc = S.T("Tab_Needed", "Needed: %1", #e.parts), c.green
         elseif needed then state, sc = S.T("Tab_NeededLocked", "Needed - locked"), c.yellow
+        elseif e.viewable then state, sc = S.T("Tab_ViewOnly", "Not needed now - view only"), c.textDim
         else state, sc = S.T("Tab_NotNeeded", "Not needed now"), c.textDim end
         panel:drawText(S.fitText(state, x + w - 8 - tx, function(t) return tw(t) end), tx, y + 6 + fh(FONT_M), sc.r, sc.g, sc.b, 1, FONT)
         if overList and inside(mx, my, x, y, w, rowH - 4) then
@@ -164,7 +175,7 @@ local function draw(panel)
         end
         -- only the shown part of a row is clickable
         local cy, ch = math.max(y, top), math.min(y + rowH - 4, top + listH) - math.max(y, top)
-        if ch > 0 then st.rows[#st.rows + 1] = { x = x, y = cy, w = w, h = ch, sid = sid, needed = needed } end
+        if ch > 0 then st.rows[#st.rows + 1] = { x = x, y = cy, w = w, h = ch, sid = sid, needed = needed, viewable = e.viewable } end
         y = y + rowH
     end
     panel:clearStencilRect()
@@ -176,7 +187,7 @@ local function draw(panel)
         panel:drawRect(x + w + 3, top + (listH - barH) * (st.scroll / maxScroll), 3, barH, 0.8, c.accent.r, c.accent.g, c.accent.b)
     end
     if not st.prep then
-        local hint = S.T("Tab_Pick", "Pick an operation on the left. It opens when the patient needs it.")
+        local hint = S.T("Tab_Pick", "Pick an operation on the left. Every one can be looked at; Start works only when the patient needs it.")
         local hx = b.x + listW + 26
         for i, l in ipairs(S.wrap(hint, b.x + b.w - hx - 20, FONT)) do
             panel:drawText(l, hx, top + 8 + (i - 1) * (fh() + 2), c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT)
@@ -223,7 +234,7 @@ EHR_HealthPanelUI.ExtraTabs.surgery = {
         local st = panel.hmSurg
         for _, r in ipairs(st and st.rows or {}) do
             if inside(x, y, r.x, r.y, r.w, r.h) then
-                if r.needed then select(panel, r.sid) end
+                if r.needed or r.viewable then select(panel, r.sid) end
                 return true
             end
         end

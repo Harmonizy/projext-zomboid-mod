@@ -163,6 +163,28 @@
   "HARMONIE_MIL_Items" ops (batteryIn/Out, consume, repair, bagIn/Out,
   swapGun); the server changes its copy and sends it (sendAdd/Remove/
   sendItemStats); the client only updates what it shows. SP unchanged.
+- Admin test button (1.0.1, owner: "ในทุกหน้าต่างและแท็บให้มีปุ่มที่แอดมินสามารถกด
+  เพื่อทดสอบ"): hub `shared/000_HARMONIE_AdminTest.lua` + `media/ui/HARMONIE_icon_test.png`
+  (tools/gen_test_icon.py). `AT.decorate(WindowClass, {mod, tab(win), rect(win),
+  player(win), ctx(win)})` draws a flask left of the header buttons (admins /
+  -debug only) and opens `AT.open(mod, tab)` = settings-window rows of the
+  tests registered with `AT.register(mod, tab | "*", {{key, fallback, run}})`.
+  World changes are server ops (`AT.serverOp` / `AT.send`): the server runs
+  them only for a sender with access level / role admin (or server -debug).
+  Built-in ops: give {items}, skill {perk, level}. Per mod: HM
+  `shared/HARMONIEHomeMedic/HM_AdminTests.lua` (hm_* ops call
+  EHR.ServerCommands.*; on someone else's window args.target = their online
+  id), TWA `client/HARMONIE_TWA_AdminTests.lua` (TWAAdminGrant.request),
+  GTP `client/HARMONIEGardenToPlate/HARMONIE_GTP_AdminTests.lua` (VitData.Set),
+  SVU `shared/HARMONIESVU3PartWear/HARMONIE_SVU3_AdminTests.lua` (svu_repair /
+  svu_wear), MIL `shared/HARMONIE_MIL_AdminTests.lua` (+ tools/ours; mil_ammo /
+  mil_parts / mil_condition on the gun in hand), LWS
+  `client/HARMONIELifeWithStyle/LWS_AdminTests.lua` (AdminGrant /
+  AdminGachaGrant). A new tab: register its tests under its tab id.
+- Surgery tab (1.0.1, owner): every operation can be OPENED (view only when
+  the patient has no indication: the prep checklist on every body part it
+  can be done on, `opts.viewOnly`, Start off); Start works only with an
+  indication (the server's S.evaluate checks again).
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 

@@ -568,7 +568,7 @@
     "IGUI_TWA_Guide_Modify_Title": "Gem sockets",
     "IGUI_TWA_Guide_Modify_Body": "1. Hold a finished weapon made in this mod in your main hand and open tab 4, or right-click the weapon and choose Modify Weapon (gems).\n2. Its grade decides how many sockets it has (F none, up to 5 for A and S; S also gets a special socket).\n3. Click a socket, then click a gem from the list under it, then press Modify Weapon.\n4. A gem in a normal socket stays for good (a new one replaces it and the old one is lost). The special socket's gem can be taken out again.",
     "IGUI_TWA_Guide_Settings_Title": "Settings",
-    "IGUI_TWA_Guide_Settings_Body": "1. The gear at the top right opens the settings: text size, window size, the pin, opening with the game's crafting window, sound volume and the zombie health display. Each change works at once.\n2. Size: you can also drag the window's bottom-right corner. Right-click that corner to go back to the size from the settings.\n3. The pin next to the gear: unpinned, the window folds up to its top bar when the mouse leaves it.\n4. The same settings are in Options > Mods > The Way To Attack; the hotkey is in Options > Keybinds.\n5. Below your own settings are the server rules (sandbox): everyone sees them, an admin can change them right there (multiplayer: sent to the server).",
+    "IGUI_TWA_Guide_Settings_Body": "1. The gear at the top right opens the settings: text size, window size, the pin, opening with the game's crafting window, sound volume and the zombie health display. Each change works at once.\n2. Size: you can also drag the window's bottom-right corner. Right-click that corner to go back to the size from the settings.\n3. The pin next to the gear: unpinned, the window folds up to its top bar when the mouse leaves it.\n4. The same settings are in Options > Mods > The Way To Attack; the hotkey is in Options > Keybinds.\n5. Below your own settings are the server rules (sandbox): everyone sees them, an admin can change them right there (multiplayer: sent to the server).\nAdmins also see a flask button in the header: tests for the tab that is open (give items, set skills, heal, illnesses...), done by the server.",
     "IGUI_TWA_Card_Filters": "Filters",
     "IGUI_TWA_Card_WeaponList": "Weapon recipes (%1)",
     "IGUI_TWA_Card_MaterialList": "Material recipes (%1)",
@@ -656,5 +656,16 @@
     "IGUI_HUB_OpenMenu": "HARMONIE: open a tab",
     "IGUI_HUB_Set_Server": "Server rules (sandbox)",
     "IGUI_HUB_Set_ServerAdmin": "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).",
-    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options)."
+    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options).",
+    "IGUI_TWA_Test_Skills": "Crafting skills to 10 (smithing, welding, carpentry, carving, tailoring)",
+    "IGUI_TWA_Test_SkillsZero": "Crafting skills to 0",
+    "IGUI_TWA_Test_Items": "Give what the picked recipe still lacks",
+    "IGUI_TWA_Test_RecipeSkills": "Skills the picked recipe asks for",
+    "IGUI_TWA_Test_Gems": "Give one of every gem",
+    "IGUI_TWA_Test_PickFirst": "Pick a recipe first.",
+    "IGUI_HUB_Test_Title": "Admin tests",
+    "IGUI_HUB_Test_Note": "Admins only. Changes are made by the server and are real: use a test character or a test server.",
+    "IGUI_HUB_Test_None": "No tests for this tab.",
+    "IGUI_HUB_Test_Run": "Run",
+    "IGUI_HUB_Test_Button": "Admin tests for this tab"
 }

@@ -79,5 +79,10 @@
     "IGUI_HUB_OpenMenu": "HARMONIE: open a tab",
     "IGUI_HUB_Set_Server": "Server rules (sandbox)",
     "IGUI_HUB_Set_ServerAdmin": "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).",
-    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options)."
+    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options).",
+    "IGUI_HUB_Test_Title": "Admin tests",
+    "IGUI_HUB_Test_Note": "Admins only. Changes are made by the server and are real: use a test character or a test server.",
+    "IGUI_HUB_Test_None": "No tests for this tab.",
+    "IGUI_HUB_Test_Run": "Run",
+    "IGUI_HUB_Test_Button": "Admin tests for this tab"
 }

@@ -175,7 +175,7 @@
     "IGUI_MIL_ToInspect": "Go to 3D inspect",
     "IGUI_MIL_GuideTitle": "How Mercenary Is Life works",
     "IGUI_MIL_Guide_Open_T": "Opening this window",
-    "IGUI_MIL_Guide_Open": "Right-click a gun > Upgrade gun (it is taken in hand and this window opens), or hold a gun and right-click > Inspect weapon, or press the Open Weapon Console key (Options > Keys), or open the HARMONIE tab of the character window (without a gun only the guide is open). The window closes when the gun leaves your hand or when you shoot. Right-click anywhere > HARMONIE: open a tab > Mercenary Is Life opens any tab directly.",
+    "IGUI_MIL_Guide_Open": "Right-click a gun > Upgrade gun (it is taken in hand and this window opens), or hold a gun and right-click > Inspect weapon, or press the Open Weapon Console key (Options > Keys), or open the HARMONIE tab of the character window (without a gun only the guide is open). The window closes when the gun leaves your hand or when you shoot. Right-click anywhere > HARMONIE: open a tab > Mercenary Is Life opens any tab directly. Admins also see a flask button in the header: tests for the tab that is open (give items, set skills, heal, illnesses...), done by the server.",
     "IGUI_MIL_Guide_View_T": "The 3D view",
     "IGUI_MIL_Guide_View": "Drag with the mouse to turn the gun, use the mouse wheel to zoom. Hold Alt while dragging to turn it around another axis. Numpad 4, 5 and 6 turn it step by step.",
     "IGUI_MIL_Guide_Parts_T": "Installing and removing parts",
@@ -242,5 +242,17 @@
     "IGUI_HUB_OpenMenu": "HARMONIE: open a tab",
     "IGUI_HUB_Set_Server": "Server rules (sandbox)",
     "IGUI_HUB_Set_ServerAdmin": "You are an admin: a change here is applied to the server at once (multiplayer: sent to the server for everyone).",
-    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options)."
+    "IGUI_HUB_Set_ServerView": "Set by the server. Only an admin can change these (here, in the HARMONIE debug menu, or in the server's sandbox options).",
+    "IGUI_MIL_Test_Guns": "Give test guns (pistol, assault rifle) with ammo",
+    "IGUI_MIL_Test_Aiming": "Aiming and Reloading to 10",
+    "IGUI_MIL_Test_Parts": "Give every part that fits the gun in hand",
+    "IGUI_MIL_Test_Repair": "Repair the gun in hand",
+    "IGUI_MIL_Test_Wear": "Wear the gun in hand to 20 percent",
+    "IGUI_MIL_Test_Ammo": "Give ammo, boxes and magazines for the gun in hand",
+    "IGUI_MIL_Test_NoGun": "Hold a gun first.",
+    "IGUI_HUB_Test_Title": "Admin tests",
+    "IGUI_HUB_Test_Note": "Admins only. Changes are made by the server and are real: use a test character or a test server.",
+    "IGUI_HUB_Test_None": "No tests for this tab.",
+    "IGUI_HUB_Test_Run": "Run",
+    "IGUI_HUB_Test_Button": "Admin tests for this tab"
 }

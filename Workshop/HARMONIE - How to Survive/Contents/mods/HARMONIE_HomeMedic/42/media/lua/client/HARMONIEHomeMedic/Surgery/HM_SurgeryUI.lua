@@ -126,6 +126,7 @@ function Prep:new(doctor, patient, bodyPart, sid, exam, list, opts)
     o.doctor, o.patient, o.bodyPart, o.exam = doctor, patient, bodyPart, exam
     o.embedded = opts.embedded == true
     o.parts = opts.parts
+    o.viewOnly = opts.viewOnly == true   -- 1.0.0: the patient does not need it -- look only
     o.partName = S.partName(bodyPart)
     o.list = list or { sid }
     o.sid = sid or o.list[1]
@@ -231,7 +232,7 @@ function Prep:reevaluate(force)
     self.rowsL = nil
     self:layout()
     local unlocked = S.surgeryUnlocked(self.doctor, self.sid)
-    self.startBtn:setEnable(self.eval.canStart and unlocked and not self.waiting)
+    self.startBtn:setEnable(self.eval.canStart and unlocked and not self.waiting and not self.viewOnly)
 end
 
 function Prep:prerender()
@@ -317,6 +318,7 @@ function Prep:prerender()
     end
 
     local status = self.status
+    if not status and self.viewOnly then status = S.T("ViewOnly", "View only: the patient has no condition this operation treats.") end
     if not status and self.eval and not self.eval.canStart then status = S.T("NotReady", "Fix the red rows to start.") end
     local fy = self.height - m.footerH + 6
     self:drawText(fit(S.T("HoverHint", "Point at a row for details."), self.width - 260), m.pad, fy, COL.dim[1], COL.dim[2], COL.dim[3], 0.8, FONT)
@@ -352,6 +354,7 @@ end
 
 function Prep:onStart()
     self:reevaluate(true)
+    if self.viewOnly then HMLog("SurgeryUI", "start %s refused: view only (the patient does not need it)", tostring(self.sid)); return end
     if not self.eval.canStart then HMLog("SurgeryUI", "start %s refused: not ready (missing supplies/conditions)", tostring(self.sid)); return end
     -- below the recommended level: say so, and start only on a second press
     if (self.eval.gap or 0) < 0 and not self.confirmUnder then
