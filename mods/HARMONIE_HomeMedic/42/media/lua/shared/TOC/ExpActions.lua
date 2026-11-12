@@ -84,7 +84,9 @@ local function AddTOCXp(action)
     end
 
     IterateTOCXp(action, function(character, perkName)
-        addXp(character, Perks[perkName], XP_PER_TICK)
+        -- HARMONIE 1.0.3: TOC's own XP multiplier on top of the global one
+        if HM_TOCXp then HM_TOCXp.add(character, perkName, XP_PER_TICK)
+        else addXp(character, Perks[perkName], XP_PER_TICK) end
     end)
 end
 

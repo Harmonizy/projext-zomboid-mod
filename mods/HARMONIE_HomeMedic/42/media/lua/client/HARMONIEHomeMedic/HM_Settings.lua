@@ -117,7 +117,9 @@ function HMSettingsUI.homeMedicRows()
             get = function() return tonumber(optGet(O.bloodVisionStrength, 1)) or 1 end, set = function(v) optSet(O.bloodVisionStrength, v) end, fmt = pct }
     end
     rows[#rows + 1] = { kind = "note", label = text("UI_HomeMedic_Set_KeysNote") }
-    return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HomeMedic", "ExtensiveHealthRework", "TOC", "MultiplierConfig" })
+    return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HomeMedic", "ExtensiveHealthRework", "TOC",
+        -- 1.0.3: only TOC's three XP multipliers of the game's shared page
+        { ns = "MultiplierConfig", only = { Side_L = true, Side_R = true, ProstFamiliarity = true } } })
 end
 
 function HMSettingsUI.openHomeMedic()
