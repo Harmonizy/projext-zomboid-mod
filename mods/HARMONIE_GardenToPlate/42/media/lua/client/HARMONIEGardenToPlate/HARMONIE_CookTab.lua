@@ -118,6 +118,11 @@ function Win:renderCook(x, y, w, h)
         return
     end
     local plans = self:cookPlans()
+    -- 1.0.4: a dish left half-made (saved by the authority) comes back here
+    if not F.run and not self.askedPending and F.askPending then
+        self.askedPending = true
+        F.askPending(self.player)
+    end
     -- a dish being made always shows its craft page
     if F.run then
         if self.cookSel ~= F.run.dish.id then self.cookSel = F.run.dish.id end
@@ -535,7 +540,7 @@ function Win:renderCookRun(x, y, w, h, run)
     -- step chips
     for i, pid in ipairs(d.procs) do
         local done = run.words[pid]
-        local cur = i == run.step and run.phase ~= "adding" and run.phase ~= "done"
+        local cur = i == run.step and run.phase ~= "finishing" and run.phase ~= "done"
         local icon = procIcon(pid)
         if cur then self:drawRect(tx - 4, yy - 2, tw2, lh + 10, 0.7, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
         if icon then self:drawTextureScaled(icon, tx, yy, lh + 6, lh + 6, done and 1 or (cur and 1 or 0.5), 1, 1, 1) end
@@ -545,9 +550,11 @@ function Win:renderCookRun(x, y, w, h, run)
         yy = yy + lh + 10
     end
     yy = yy + 4
-    -- the ingredients going in
-    if run.phase == "adding" then
-        yy = yy + self:paragraphs(T("IGUI_GTPC_Adding", tostring(run.addIdx or 0), tostring(#(run.adds or {}))), tx, yy, tw2 - 10, C.text, sf) + 6
+    -- 1.0.4: what happens to the ingredients
+    if run.phase == "taking" or run.phase == "finishing" or run.phase == "cancelling" then
+        yy = yy + self:paragraphs(T("IGUI_GTPC_Phase_" .. run.phase), tx, yy, tw2 - 10, C.text, sf) + 6
+    elseif run.phase ~= "done" and not (run.phase == "failed" and run.failReason == "take") then
+        yy = yy + self:paragraphs(T(run.resumed and "IGUI_GTPC_Resumed" or "IGUI_GTPC_Taken"), tx, yy, tw2 - 10, C.textDim, sf) + 6
     end
     if run.phase == "failed" then
         yy = yy + self:paragraphs(T("IGUI_GTPC_Failed_" .. tostring(run.failReason or "ingredients")), tx, yy, tw2 - 10, C.bad, sf) + 6
@@ -606,8 +613,10 @@ function Win:renderCookRun(x, y, w, h, run)
     if run.phase == "failed" then
         bx = bx + self:cookButton(bx, by, T("IGUI_GTPC_RetryFailed"), true, function() F.retryFailed() end) + 8
     end
-    if run.phase == "done" or run.phase == "failed" then
+    if run.phase == "done" or (run.phase == "failed" and run.failReason == "take") then
         self:cookButton(bx, by, T("IGUI_GTPC_NewDish"), true, function() F.clear(); log("cooking: back to the list") end)
+    elseif run.phase == "taking" or run.phase == "finishing" or run.phase == "cancelling" then
+        -- waiting for the server: nothing to press
     else
         -- always enabled (owner, 2026-10-24: stuck while adding, could not cancel)
         self:cookButton(bx, by, T("IGUI_GTPC_Cancel"), true, function() F.cancel("button") end)
