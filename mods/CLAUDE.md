@@ -368,6 +368,12 @@
   packet). The settings window shows only those three of MultiplierConfig --
   UIKit serverRows takes `{ ns = "...", only = { Name = true } }` (hub).
   Default 5.0 for all three (owner). A save made before keeps its 1.0.
+  XP from EVERY timed action (HM 1.0.4, owner): shared/TOC/ExpActions.lua
+  watches ISTimedActionQueue (current + getCharacterActions not empty) in
+  OnPlayerUpdate for local players -- no per-class update() wraps (most
+  actions override update without the base). MP client sums, RelayAddXp on
+  action change / every 300 ticks; SP adds at once. ExpActionsClient.lua
+  emptied (it double-counted transfer / grab). skipTOC / noExp still none.
   XP is 0.01 per action tick; level 10 = 29,350 XP. Levels only shorten
   actions (BaseTimedActionOverride: limb x2/3/4 - level/10, never < x1).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
