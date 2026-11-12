@@ -234,6 +234,14 @@
   pickers), HM_DoseReminder `hasItem`, TOC cut-limb bandage / suture needle /
   needle / thread (moved into the inventory first: `toPlayerInventory` /
   `HM_Reach.bring` = vanilla transferIfNeeded).
+  MP sync guards (0.33.13, owner: "ระวังปัญหา server ไม่ซิงก์"): a world box is
+  changed by the SERVER only -- EHR ConsumeOneDose on an MP client sends
+  RemoveItem / UpdateItemDelta for an item that is not carried
+  (`HM_Reach.clientMustNotTouch` / `isCarried`) without touching it
+  locally (`notePending`); the server looks it up itself (+2 tiles slack,
+  `SERVER_SLACK`) and, when it is gone, `HM_Reach.serverMissing` logs once
+  and sends `HARMONIE_HM_Reach/Missing` -> the client drops its cache and
+  says "not there any more" (only for its own pending box requests).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
@@ -278,6 +286,21 @@
   Audit 2026-11-10: every other tick-driven "*collapses*" / death line sits
   behind `EHR.Lethal.spare`; random symptom lines have cooldowns;
   `EHR.Environmental.CheckTreatment` is never called (dead).
+
+## From Garden to Plate (GTP) farming
+- No vanilla farming Lua in the repo; function names come from
+  PZ-Umbrella/pz-lua-stubdata (yml/server/Farming): SFarmingSystem has
+  `destroyOnWalk(luaObject, square)` (trampling), `plowFadeCheck`,
+  `removePlant`; SPlantGlobalObject has `destroyThis` (trampled state),
+  `killThis`, `dryThis`, `rottenThis`.
+- Grown fruit trees are not trampled (0.13.19, owner,
+  `server/Farming/FF_trampleGuard.lua`): FF crops with growBack (trees,
+  vines, coffee) from stage `FROM_STAGE` = 3 skip destroyOnWalk and
+  destroyThis. Seedlings, annual FF crops and vanilla crops are trampled as
+  before. Installed at OnGameBoot (SFarmingSystem loads after "FF_"); logs
+  once per tree per game day.
+- A destroyed (trampled) plant is cleared from the plot by vanilla later
+  (owner saw a trampled apple vanish, 2026-11-12) -- not ours.
 
 ## Life With Style (fashion)
 - The wardrobe is server data (global ModData "HARMONIE_LWS", by owner key

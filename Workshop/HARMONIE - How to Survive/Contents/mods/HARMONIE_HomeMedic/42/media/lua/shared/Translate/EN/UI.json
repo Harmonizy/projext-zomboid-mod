@@ -2573,6 +2573,7 @@
     "UI_HomeMedic_Sign_Ago": "%1 min ago (game time)",
     "UI_HomeMedic_Sign_NotYet": "expected, not at the threshold yet",
     "UI_HomeMedic_Sign_Observed": "present (watch the patient)",
+    "UI_HomeMedic_Reach_Missing": "That item is not there any more (someone may have taken it). Try again.",
     "UI_HomeMedic_DrawFrom_Button": "Draw Blood",
     "UI_HomeMedic_DrawFrom_ButtonTooltip": "Draw 500 mL of this patient's blood into an empty blood bag (carried, in a bag, or in a box in this room). The patient must agree and have at least 80%% blood.",
     "UI_HomeMedic_DrawFrom_Option": "Draw blood (%1)",

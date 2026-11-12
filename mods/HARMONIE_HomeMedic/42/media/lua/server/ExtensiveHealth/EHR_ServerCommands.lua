@@ -4481,6 +4481,8 @@ local function OnClientCommand(module, command, player, args)
                 log("[EHR] Server: Synced item removal for " .. player:getUsername())
                 return
             end
+            if HM_Reach and HM_Reach.serverMissing then HM_Reach.serverMissing(player, args.itemID, "RemoveItem") end
+            return
         elseif command == "UnpackCleanBandage" then
             EHR.ServerCommands.UnpackCleanBandage(player, args)
             return
@@ -4500,6 +4502,8 @@ local function OnClientCommand(module, command, player, args)
                 log("[EHR] Server: Synced item usedDelta for " .. player:getUsername())
                 return
             end
+            if HM_Reach and HM_Reach.serverMissing then HM_Reach.serverMissing(player, args.itemID, "UpdateItemDelta") end
+            return
         elseif command == "TrackMedication" and args and args.medKey then
             -- Sync medication tracking from client (for generic medical items)
             local data = player:getModData()

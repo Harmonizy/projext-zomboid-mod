@@ -2573,6 +2573,7 @@
     "UI_HomeMedic_Sign_Ago": "%1 นาทีที่แล้ว (เวลาในเกม)",
     "UI_HomeMedic_Sign_NotYet": "ควรมี แต่ยังวัดไม่ถึงเกณฑ์",
     "UI_HomeMedic_Sign_Observed": "มีอาการ (สังเกตจากตัวคนไข้)",
+    "UI_HomeMedic_Reach_Missing": "ของชิ้นนั้นไม่อยู่แล้ว (อาจมีคนหยิบไป) ลองใหม่อีกครั้ง",
     "UI_HomeMedic_DrawFrom_Button": "เจาะเลือด",
     "UI_HomeMedic_DrawFrom_ButtonTooltip": "เจาะเลือดคนไข้คนนี้ 500 mL ใส่ถุงเลือดเปล่า (ในตัว ในกระเป๋า หรือในกล่องในห้องนี้) คนไข้ต้องยินยอมและมีเลือดอย่างน้อย 80%%",
     "UI_HomeMedic_DrawFrom_Option": "เจาะเลือด (%1)",

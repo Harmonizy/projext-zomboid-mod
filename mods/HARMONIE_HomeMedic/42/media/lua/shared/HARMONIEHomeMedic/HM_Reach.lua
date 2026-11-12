@@ -31,6 +31,9 @@ R.NEAR_RANGE = 3       -- tiles: outdoors, or right next to the player
 R.ADJACENT = 1         -- indoors: any container this close counts, room or not
 R.BOX_DEPTH = 3        -- bags inside a box
 R.CACHE_MS = 500
+R.SERVER_SLACK = 2     -- the server looks 2 tiles further: its idea of where
+                       -- the player stands can lag the client's by a step
+R.MODULE = "HARMONIE_HM_Reach"
 
 local function log(fmt, ...) if HMLog then HMLog("Reach", fmt, ...) end end
 local function nameOf(p) return HMLogName and HMLogName(p) or "?" end
@@ -108,6 +111,8 @@ local function collect(player)
     local x, y, z = sq:getX(), sq:getY(), sq:getZ()
     local room = roomOf(sq)
     local range = room and R.ROOM_RANGE or R.NEAR_RANGE
+    local adjacent = R.ADJACENT
+    if isServerSide() then range = range + R.SERVER_SLACK; adjacent = adjacent + R.SERVER_SLACK end
     for dx = -range, range do
         for dy = -range, range do
             local s = cell:getGridSquare(x + dx, y + dy, z)
@@ -115,7 +120,7 @@ local function collect(player)
                 local d = math.max(math.abs(dx), math.abs(dy))
                 local ok
                 if room then
-                    ok = d <= R.ADJACENT or roomOf(s) == room
+                    ok = d <= adjacent or roomOf(s) == room
                 else
                     ok = true
                 end
@@ -230,6 +235,89 @@ function R.bring(player, item)
         return true
     end
     return false
+end
+
+-- ------------------------------------------------------------ MP sync guards
+-- Owner, 2026-11-12: "ระวังปัญหา server ไม่ซิงก์ หาวิธีรับมือไว้ด้วย".
+-- A box is a WORLD container: in MP only the server may change it. What can
+-- go wrong and what is done about it:
+--   * the client's view is stale (another player took the item, the box was
+--     emptied): the server looks the item up itself (findById) and refuses
+--     what it cannot find -> R.serverMissing tells that client, which drops
+--     its cached view and says so; nothing is consumed on either side;
+--   * the client changes the item locally and the server does not follow
+--     (ghost item / dupe): an item that is NOT carried is never changed on
+--     an MP client (EHR ConsumeOneDose sends the request only, see
+--     R.isCarried); the server changes it and replicates it to everyone
+--     (sendRemoveItemFromContainer / sendItemStats);
+--   * the server's idea of where the player stands lags a step: the server
+--     searches SERVER_SLACK tiles further;
+--   * a box whose loot was never rolled has nothing on the client: such
+--     items are simply not offered.
+
+-- is the item on the player's body / in a carried bag (not a world box)?
+function R.isCarried(player, item)
+    local inv = call(player, "getInventory")
+    local cont = call(item, "getContainer")
+    local guard = 0
+    while cont and guard < 10 do
+        if cont == inv then return true end
+        local holder = call(cont, "getContainingItem")
+        cont = holder and call(holder, "getContainer") or nil
+        guard = guard + 1
+    end
+    return false
+end
+
+-- an MP client must leave world-box items to the server
+function R.clientMustNotTouch(player, item)
+    local pureClient = isClient and isClient() and not isServerSide()
+    return pureClient and item ~= nil and not R.isCarried(player, item)
+end
+
+-- client: box items this client asked the server to change (id -> time)
+local pending = {}
+function R.notePending(itemID, what)
+    if itemID == nil then return end
+    pending[tostring(itemID)] = nowMs()
+    log("asked the server to %s box item %s (an MP client never changes a world box itself)", tostring(what or "use"), tostring(itemID))
+end
+
+local missed = {}
+-- server: a client asked for an item the server cannot find within reach
+function R.serverMissing(player, itemID, what)
+    local key = nameOf(player) .. ":" .. tostring(itemID)
+    if not missed[key] then
+        missed[key] = true
+        log("%s: item %s for %s is not on them or in a box within reach on the SERVER -- refused, client told to refresh (client view was stale)",
+            nameOf(player), tostring(itemID), tostring(what or "?"))
+    end
+    if sendServerCommand and player then
+        pcall(sendServerCommand, player, R.MODULE, "Missing", { itemID = itemID, what = what })
+    end
+end
+
+if Events and Events.OnServerCommand then
+    Events.OnServerCommand.Add(function(module, command, args)
+        if module ~= R.MODULE then return end
+        if command == "Missing" then
+            R.forget()
+            local id = tostring(args and args.itemID)
+            local asked = pending[id]
+            pending[id] = nil
+            if not asked then
+                log("server could not find item %s (%s) -- not a box request of ours, nothing said", id, tostring(args and args.what))
+                return
+            end
+            local me = getPlayer and getPlayer()
+            local text = HM_Text and HM_Text("UI_HomeMedic_Reach_Missing",
+                "That item is not there any more (someone may have taken it). Try again.")
+                or "That item is not there any more."
+            if me and EHR and EHR.Locale and EHR.Locale.SayAction then pcall(EHR.Locale.SayAction, me, text)
+            elseif me and me.Say then pcall(function() me:Say(text) end) end
+            log("server could not find item %s (%s) -- local view refreshed", tostring(args and args.itemID), tostring(args and args.what))
+        end
+    end)
 end
 
 -- one line when an item came from a box, not the inventory (rare: on use)

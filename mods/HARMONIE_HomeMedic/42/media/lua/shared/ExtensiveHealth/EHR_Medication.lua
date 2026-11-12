@@ -3503,6 +3503,23 @@ function EHR.Medication.ConsumeOneDose(player, item, inventory)
         canUseDose = drainable == true
     end
 
+    -- HARMONIE (HM_Reach): an item in a world box is changed by the SERVER
+    -- only; an MP client just asks, so a refused request leaves no ghost
+    if HM_Reach and HM_Reach.clientMustNotTouch and itemID ~= nil
+            and HM_Reach.clientMustNotTouch(player, item) then
+        local doseInfo = canUseDose and EHR.Medication.GetItemDoseInfo(item) or nil
+        if doseInfo and (doseInfo.remainingDoses or 0) <= 0 then return false, "empty" end
+        if doseInfo and doseInfo.remainingDoses > 1 then
+            local newUsed = math.max(0, math.min(1.0, (tonumber(doseInfo.currentUsesFloat) or 0) - doseInfo.useDelta))
+            if HM_Reach.notePending then HM_Reach.notePending(itemID, "drain") end
+            sendClientCommand(player, "EHR", "UpdateItemDelta", {itemID = itemID, usedDelta = newUsed})
+            return true, "dose", doseInfo.useDelta, newUsed, doseInfo.remainingDoses - 1
+        end
+        if HM_Reach.notePending then HM_Reach.notePending(itemID, "remove") end
+        sendClientCommand(player, "EHR", "RemoveItem", {itemID = itemID})
+        return true, "removed", useDelta, 1.0
+    end
+
     if canUseDose then
         local doseInfo = EHR.Medication.GetItemDoseInfo(item)
         if not doseInfo then return false, "dose_unavailable" end
