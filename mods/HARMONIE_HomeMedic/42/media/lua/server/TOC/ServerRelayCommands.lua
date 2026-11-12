@@ -97,7 +97,15 @@ end
 ---@param args {perkName : string, xp : number}
 function ServerRelayCommands.RelayAddXp(playerObj, args)
     --TOC_DEBUG.print("received Add exp," .. tostring(args.perkName) .. " . " .. tostring(args.xp))
-    addXp(playerObj, Perks[args.perkName], args.xp)
+    -- HARMONIE 1.0.3: only TOC's perks, a sane amount, TOC's multiplier on top
+    if not (args and HM_TOCXp and HM_TOCXp.PERKS[args.perkName]) then
+        if HMLogOnce then HMLogOnce("tocxp_bad_" .. tostring(args and args.perkName), "TOCXp", "relay XP for %s dropped (not a TOC perk)", tostring(args and args.perkName)) end
+        return
+    end
+    local xp = tonumber(args.xp) or 0
+    if xp <= 0 then return end
+    xp = math.min(xp, 1000) -- one action's worth (0.01 a tick)
+    HM_TOCXp.add(playerObj, args.perkName, xp)
 end
 
 --* TRAITS *--

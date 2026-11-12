@@ -351,6 +351,17 @@
   The refusal / learned / already-known lines use `EHR.Locale.SayAction`
   (the 1-line-a-minute limit dropped them: the flyer looked dead). Steps
   logged with HMLog "[Flyer]" (EHR.Log prints only errors).
+- TOC XP multipliers (HM 1.0.3, owner choice 2): sandbox
+  MultiplierConfig.Side_L / Side_R / ProstFamiliarity are the game's own
+  per-skill multipliers, read by vanilla only with GlobalToggle OFF (owner's
+  server: Global 3.0, toggle on -> they did nothing). `shared/HARMONIEHomeMedic/
+  HM_TOCXp.lua`: with the toggle on, TOC XP x the TOC value before addXp (the
+  game then adds the global): 3 x 2 = 6; toggle off -> x1 (no double). Every
+  grant: ExpActions server branch + RelayAddXp (TOC perks only, <= 1000 per
+  packet). The settings window shows only those three of MultiplierConfig --
+  UIKit serverRows takes `{ ns = "...", only = { Name = true } }` (hub).
+  XP is 0.01 per action tick; level 10 = 29,350 XP. Levels only shorten
+  actions (BaseTimedActionOverride: limb x2/3/4 - level/10, never < x1).
 - No illness on a missing limb (0.32.9, owner): TOC clears only vanilla
   wounds; `shared/HARMONIEHomeMedic/HM_AmputatedParts.lua` clears EHR's
   per-part records (wound infection parts / incubating / antisepticBlocked /
