@@ -206,6 +206,22 @@
   needed; no cut for CUT_GRACE_MS -> one cut lost every CUT_DECAY_MS; quality
   = full when done within 40% of the time limit, half at the limit; timeout
   before the last cut = Miss. Hints IGUI_GTPC_Hint_* / Tip lines say so.
+- GTP cooking takes and makes (GTP 1.0.4, owner: the flow finished but never
+  found the dish): `shared/HARMONIEGardenToPlate/HARMONIE_CookServer.lua`
+  (module HARMONIE_GTP_CookTake, authority = server / SP). Start = "take":
+  every planned ingredient AND the container are removed (inventory, bags,
+  boxes in the room -- HARMONIE_Reach.findById), each snapshotted (type, age,
+  cooked, hunger, condition, fluid, vitamins); a spice drainable loses ONE
+  use. Nutrition + vitamins summed (whole items). Kept in player modData
+  `HARMONIE_CookPending` {dish, result, items, nut, vit, units, step, words}.
+  "progress" saves each finished step; "finish" AddItem(result type) with the
+  summed hunger / kcal / carbs / fat / protein + AddVitaminsToItem, then
+  K.applyQuality + K.giveXp; "cancel" recreates every snapshot (spice use
+  back on the same shaker); death = cancel onto the body; "pending" lets a
+  reopened window carry on (CookTab asks once, `F.resumeFrom`). No vanilla
+  ISAddItemInRecipe any more; CookFlow phases: taking / game / action /
+  paused / retry / blocked / finishing / done / failed (take | make) /
+  cancelling. K.plan's preview = full values of the planned items.
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to

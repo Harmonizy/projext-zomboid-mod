@@ -612,6 +612,37 @@ function K.plan(player, dish, scan)
         p.procs[#p.procs + 1] = pp
     end
     if #p.adds == 0 then no("ingredients") end
+    -- 1.0.4: the dish is made from WHOLE ingredients (HARMONIE_CookServer
+    -- takes each item at the start and the dish gets all of it), so the
+    -- preview is every planned item's full nutrition and vitamins; a
+    -- seasoning gives one use (no nutrition counted)
+    local seen = {}
+    local pv = { cal = 0, carb = 0, fat = 0, prot = 0, hunger = 0, vit = {} }
+    for _, a in ipairs(p.adds) do
+        local it = a.item
+        if it and not seen[it] and not a.spice and isFood(it) then
+            seen[it] = true
+            local h = K.hunger(it)
+            pv.hunger = pv.hunger + h
+            pv.cal = pv.cal + (tonumber(call(it, "getCalories")) or 0)
+            pv.carb = pv.carb + (tonumber(call(it, "getCarbohydrates")) or 0)
+            pv.fat = pv.fat + (tonumber(call(it, "getLipids")) or 0)
+            pv.prot = pv.prot + (tonumber(call(it, "getProteins")) or 0)
+            local rates = HARMONIE_GTP.GetVitaminRatePerHunger and HARMONIE_GTP.GetVitaminRatePerHunger(it)
+            for vit, r in pairs(rates or {}) do pv.vit[vit] = (pv.vit[vit] or 0) + r * h * 100 end
+        end
+    end
+    if p.base and not seen[p.base] and isFood(p.base) then
+        local it = p.base
+        pv.hunger = pv.hunger + K.hunger(it)
+        pv.cal = pv.cal + (tonumber(call(it, "getCalories")) or 0)
+        pv.carb = pv.carb + (tonumber(call(it, "getCarbohydrates")) or 0)
+        pv.fat = pv.fat + (tonumber(call(it, "getLipids")) or 0)
+        pv.prot = pv.prot + (tonumber(call(it, "getProteins")) or 0)
+        local rates = HARMONIE_GTP.GetVitaminRatePerHunger and HARMONIE_GTP.GetVitaminRatePerHunger(it)
+        for vit, r in pairs(rates or {}) do pv.vit[vit] = (pv.vit[vit] or 0) + r * K.hunger(it) * 100 end
+    end
+    p.preview = pv
     return p
 end
 
