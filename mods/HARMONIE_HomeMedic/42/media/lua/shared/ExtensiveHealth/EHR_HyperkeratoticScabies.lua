@@ -665,6 +665,20 @@ function EHR.HyperkeratoticScabies.UpdatePlayer(player)
 end
 
 function EHR.HyperkeratoticScabies.OnTick()
+    -- HARMONIE 1.0.5 (owner's audit, 2026-11-13): ONE place rolls the
+    -- sitting-on-ground chance. It ran on the MP client AND on the server, so
+    -- the chance was doubled (the client's hit is started on the server by
+    -- HM_ContractRelay, the server also rolled itself). In MP only the client
+    -- rolls -- it is the side that surely sees its own sitting state -- and
+    -- the server starts the illness from its request (cooldown, checks,
+    -- sandbox). A dedicated / host server does not roll. Single player
+    -- unchanged. A client without the relay never rolls (it would write a
+    -- ghost illness the server does not know).
+    if isServer and isServer() then return end
+    if isClient and isClient() and not (HM_ContractRelay and HM_ContractRelay.clientInstalled) then
+        if HMLogOnce then HMLogOnce("scabies_norelay", "Scabies", "MP client without the contract relay -- ground scabies roll OFF here") end
+        return
+    end
     local players = {}
     if isServer and isServer() and getOnlinePlayers then
         local online = getOnlinePlayers()

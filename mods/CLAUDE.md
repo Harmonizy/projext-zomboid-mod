@@ -304,6 +304,16 @@
   `shared/HARMONIEHomeMedic/HM_ContractRelay.lua` wraps them on an MP client to
   send `HARMONIE_HM_Contract/Request` instead; the server starts them with the
   same function (sender only, relayed ids only, 1 min per illness, logged).
+- Scabies ground roll (HM 1.0.5, owner's audit): EHR_HyperkeratoticScabies
+  OnTick ran on the MP client AND the server -> chance doubled (the relay
+  already stopped client ghost copies). Now ONE roller: the MP client (sees
+  its own sitting) -> HM_ContractRelay -> server Start; a server never rolls
+  it; a client without the relay never rolls. Relay drops the request when
+  HyperkeratoticScabiesEnabled is off. Symptom cooldowns
+  (EHR_DiseaseCanTriggerSymptom) have a server Lua-memory mirror keyed
+  owner|illness|startTime|key (owner set in ApplyEffects): a cooldown wiped by
+  old modData is put back and logged ("symptom cooldown ... was lost").
+  Owner's server: DiseaseSpeed 1.0, ScabiesChanceMultiplier 1.0 (console).
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:

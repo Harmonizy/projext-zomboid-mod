@@ -1910,11 +1910,43 @@ local function EHR_DiseaseCanTriggerSymptom(disease, key, cooldownHours)
     end
 
     disease.symptomCooldowns = disease.symptomCooldowns or {}
-    if (disease.symptomCooldowns[key] or 0) > now then
+
+    -- HARMONIE 1.0.5 (owner's audit): the cooldowns live in modData, and old
+    -- data written over the live copy (another mod's client transmitModData)
+    -- wiped them -- scabies stage 2-3 then opened wounds far too often. The
+    -- server keeps its own copy in Lua memory (by player, illness start, key)
+    -- and puts a lost cooldown back.
+    local owner = EHR.Disease._symptomOwner
+    local mk = owner and (owner .. "|" .. tostring(disease.startTime) .. "|" .. tostring(key)) or nil
+    local mirror = EHR.Disease._symptomMirror
+    if not mirror then mirror = {}; EHR.Disease._symptomMirror = mirror; EHR.Disease._symptomMirrorN = 0 end
+    local saved = mk and mirror[mk] or nil
+    local cur = tonumber(disease.symptomCooldowns[key]) or 0
+    if saved and saved > cur then
+        disease.symptomCooldowns[key] = saved
+        cur = saved
+        if HMLogOnce then
+            HMLogOnce("cdlost:" .. mk, "Disease", "%s: symptom cooldown %s was lost (old data over the live one) -- put back (%.2f h left)",
+                tostring(owner), tostring(key), saved - now)
+        end
+    end
+    if cur > now then
         return false
     end
 
-    disease.symptomCooldowns[key] = now + (cooldownHours or 0.10)
+    local untilHour = now + (cooldownHours or 0.10)
+    disease.symptomCooldowns[key] = untilHour
+    if mk then
+        if not mirror[mk] then EHR.Disease._symptomMirrorN = (EHR.Disease._symptomMirrorN or 0) + 1 end
+        mirror[mk] = untilHour
+        if EHR.Disease._symptomMirrorN > 2000 then
+            local n = 0
+            for k, v in pairs(mirror) do
+                if v <= now then mirror[k] = nil else n = n + 1 end
+            end
+            EHR.Disease._symptomMirrorN = n
+        end
+    end
     return true
 end
 
@@ -3054,6 +3086,9 @@ local function EHR_DiseaseApplyTuberculosisEffects(player, disease, stage, sever
 end
 
 function EHR.Disease.ApplyEffects(player, diseaseId, disease, def)
+    -- HARMONIE 1.0.5: symptom-cooldown mirror owner (any caller)
+    local okName, uname = pcall(function() return player:getUsername() end)
+    EHR.Disease._symptomOwner = okName and uname and (tostring(uname) .. "|" .. tostring(diseaseId)) or nil
     local stats = player:getStats()
     if not stats then return end
 
@@ -6360,8 +6395,12 @@ function EHR.Disease.OnTick()
     end
 
     for _, player in ipairs(players) do
+        -- HARMONIE 1.0.5: whose symptom cooldowns are being checked (mirror)
+        local okName, uname = pcall(function() return player:getUsername() end)
+        EHR.Disease._symptomOwner = okName and uname and tostring(uname) or nil
         processPlayerTick(player)
     end
+    EHR.Disease._symptomOwner = nil
 end
 
 -- ============================================
