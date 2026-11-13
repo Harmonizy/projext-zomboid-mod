@@ -555,6 +555,17 @@ function EHR.Concussion.Start(player, source, force)
 end
 
 function EHR.Concussion.TryStart(player, source, chance)
+    -- HARMONIE 1.0.5 (owner: "มีโรคอื่นที่มีความเสี่ยงนี้อีกไหม"): falls and
+    -- vehicle crashes were rolled twice in MP -- the server's own tracking
+    -- rolled, and the client's nomination (ConcussionCandidate) rolled again
+    -- once the 0.02 h failed-roll cooldown (a few real seconds) was over. The
+    -- client is the side that surely sees those two; a dedicated server rolls
+    -- them only from its nomination.
+    if isServer and isServer() and not EHR.Concussion._fromCandidate
+            and (source == "fall" or source == "vehicle crash") then
+        if HMLogOnce then HMLogOnce("concussion_srvroll", "Concussion", "server: fall / vehicle crash concussions are rolled from the client's nomination only (one roll)") end
+        return false
+    end
     if not isValidPlayer(player) then
         debugConcussion(player, nil, "try-blocked", "invalid/dead player", true)
         return false

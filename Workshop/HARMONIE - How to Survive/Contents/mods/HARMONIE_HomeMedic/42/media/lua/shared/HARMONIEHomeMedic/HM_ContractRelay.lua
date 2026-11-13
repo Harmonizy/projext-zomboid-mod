@@ -101,6 +101,11 @@ function R.serverRequest(p, args)
     if not R.original.scabies and EHR and EHR.HyperkeratoticScabies then R.original.scabies = EHR.HyperkeratoticScabies.Start end
     if not p or (p.isDead and p:isDead()) then return end
     if hasIllness(p, id) then return end
+    -- 1.0.5: the server's sandbox decides (Start itself does not check it)
+    local sv = SandboxVars and SandboxVars.ExtensiveHealthRework or {}
+    if id == "hyperkeratotic_scabies" and sv.HyperkeratoticScabiesEnabled == false then
+        logOnce("off:" .. id, "%s asked for %s but it is off in the sandbox -- dropped", nameOf(p), id); return
+    end
     local key = nameOf(p) .. ":" .. id
     local now = nowMs()
     if last[key] and now - last[key] < R.RELAY_CD_MS then

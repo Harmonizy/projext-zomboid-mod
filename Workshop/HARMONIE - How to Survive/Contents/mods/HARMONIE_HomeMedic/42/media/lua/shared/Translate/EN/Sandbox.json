@@ -183,6 +183,8 @@
     "Sandbox_EHR_ScabiesWinterBlock_tooltip": "When enabled, scabies ground exposure cannot trigger in December, January, or February.",
     "Sandbox_EHR_ScabiesSnowBlock": "Block Scabies On Snow",
     "Sandbox_EHR_ScabiesSnowBlock_tooltip": "When enabled, scabies ground exposure cannot trigger on snow-covered tiles or during active snow cover.",
+    "Sandbox_EHR_ScabiesMaxOpenWounds": "Scabies: Max Open Wounds",
+    "Sandbox_EHR_ScabiesMaxOpenWounds_tooltip": "How many scratch wounds scabies may keep open at the same time. When this many are open, a new scratch re-opens one of them instead of making another wound. The bite at onset always counts. Default 3.",
     "Sandbox_EHR_DysenteryChanceMultiplier": "Dysentery Chance Multiplier",
     "Sandbox_EHR_DysenteryChanceMultiplier_tooltip": "Scales dysentery rolls from tainted water, toilets, rivers, lakes, and rain collectors. <LINE> 1.0 = current balance.",
     "Sandbox_EHR_CommonColdExposureMultiplier": "Common Cold Exposure Speed",
