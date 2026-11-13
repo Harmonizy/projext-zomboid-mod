@@ -665,6 +665,20 @@ function EHR.HyperkeratoticScabies.UpdatePlayer(player)
 end
 
 function EHR.HyperkeratoticScabies.OnTick()
+    -- HARMONIE 1.0.5 (owner, "หิดติดซ้ำตอนนั่งพื้น"): in MP the client AND
+    -- the server both rolled the ground check, so each 15 min had two 3%
+    -- rolls (~5.9%). The client is the side that reliably sees the sitting
+    -- state, and HM_ContractRelay already turns its Start() into a server
+    -- request, so on an MP server the ground roll is left to the clients.
+    -- Single player (no client, no server) is unchanged.
+    if isServer and isServer() and not (isClient and isClient()) then
+        if HMLogOnce then
+            HMLogOnce("scabies:serverSkip", "Scabies",
+                "ground check runs on the clients only (they ask the server via HM_ContractRelay) -- no server roll")
+        end
+        return
+    end
+
     local players = {}
     if isServer and isServer() and getOnlinePlayers then
         local online = getOnlinePlayers()

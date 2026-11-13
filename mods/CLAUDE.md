@@ -304,6 +304,10 @@
   `shared/HARMONIEHomeMedic/HM_ContractRelay.lua` wraps them on an MP client to
   send `HARMONIE_HM_Contract/Request` instead; the server starts them with the
   same function (sender only, relayed ids only, 1 min per illness, logged).
+  Scabies ground roll on the CLIENT only in MP (HM 1.0.5, owner): the server
+  rolled too, so each 15 min had two 3% rolls. `EHR.HyperkeratoticScabies.OnTick`
+  returns on a pure server (HMLogOnce "[Scabies]"); the client's roll goes
+  through the relay above. SP unchanged.
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
