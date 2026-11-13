@@ -281,6 +281,16 @@ option ExtensiveHealthRework.ScabiesSnowBlock
     translation = EHR_ScabiesSnowBlock,
 }
 
+option ExtensiveHealthRework.ScabiesMaxOpenWounds
+{
+    type = integer,
+    min = 1,
+    max = 20,
+    default = 3,
+    page = HARMONIE_HomeMedic,
+    translation = EHR_ScabiesMaxOpenWounds,
+}
+
 option ExtensiveHealthRework.DysenteryEnabled
 {
     type = boolean,

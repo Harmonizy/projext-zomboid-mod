@@ -507,13 +507,66 @@ function EHR.HyperkeratoticScabies.EnsureBitePart(player, disease)
     return true
 end
 
+-- HARMONIE 1.0.5 (owner choice 3, 2026-11-13): stage 2 / 3 scratch every 3 /
+-- 1 in-game hours (2.5 real minutes on a 1-hour day), so wounds piled up.
+-- The frequency stays; at most ScabiesMaxOpenWounds (default 3) scabies
+-- wounds are open at once. The illness remembers the parts it opened
+-- (disease.hmScabiesParts, body part index -> true); healed ones drop out.
+-- When the cap is reached, a new scratch re-opens one of its own wounds
+-- instead of making another. Logged once per player and cap.
+local function isPartScratched(part)
+    if not part then return false end
+    for _, m in ipairs({ "scratched", "isScratched" }) do
+        if type(part[m]) == "function" then
+            local ok, v = pcall(function() return part[m](part) end)
+            if ok then return v == true end
+        end
+    end
+    return false
+end
+
+local function openScabiesParts(player, disease)
+    local list = {}
+    if type(disease) ~= "table" or type(disease.hmScabiesParts) ~= "table" then return list end
+    local bodyDamage = nil
+    pcall(function() bodyDamage = player:getBodyDamage() end)
+    if not bodyDamage or not BodyPartType or not BodyPartType.FromIndex then return list end
+    for index in pairs(disease.hmScabiesParts) do
+        local i = tonumber(index)
+        local partType = i and BodyPartType.FromIndex(i) or nil
+        local part = partType and bodyDamage:getBodyPart(partType) or nil
+        if part and isPartScratched(part) then
+            list[#list + 1] = { type = partType, part = part, index = i }
+        else
+            disease.hmScabiesParts[index] = nil
+        end
+    end
+    return list
+end
+
 function EHR.HyperkeratoticScabies.ApplyScratch(player, source, disease)
     if not isValidPlayer(player) then return false end
 
-    local partType, part, index = chooseBodyPart(player)
+    local maxOpen = math.floor(getSandboxNumber("ScabiesMaxOpenWounds", 3, 1, 20))
+    local open = openScabiesParts(player, disease)
+    local partType, part, index
+    if #open >= maxOpen then
+        local pick = open[(ZombRand and ZombRand(#open) or 0) + 1]
+        partType, part, index = pick.type, pick.part, pick.index
+        if HMLogOnce then
+            HMLogOnce("scabies_cap:" .. tostring(playerName(player)) .. ":" .. tostring(maxOpen), "Scabies",
+                "%s: %d scabies wounds open (max %d) -- a new scratch re-opens one of them", tostring(playerName(player)), #open, maxOpen)
+        end
+    else
+        partType, part, index = chooseBodyPart(player)
+    end
     if not partType or not part then return false end
 
     local changed = setPartScratch(player, part, partType)
+    if type(disease) == "table" and index ~= nil then
+        disease.hmScabiesParts = type(disease.hmScabiesParts) == "table" and disease.hmScabiesParts or {}
+        disease.hmScabiesParts[tostring(index)] = true
+    end
     if disease and not tonumber(disease.scabiesBitePartIndex) then
         disease.scabiesBitePartIndex = index
         disease.scabiesBitePartName = getPartName(partType, part)
@@ -665,6 +718,20 @@ function EHR.HyperkeratoticScabies.UpdatePlayer(player)
 end
 
 function EHR.HyperkeratoticScabies.OnTick()
+    -- HARMONIE 1.0.5 (owner's audit, 2026-11-13): ONE place rolls the
+    -- sitting-on-ground chance. It ran on the MP client AND on the server, so
+    -- the chance was doubled (the client's hit is started on the server by
+    -- HM_ContractRelay, the server also rolled itself). In MP only the client
+    -- rolls -- it is the side that surely sees its own sitting state -- and
+    -- the server starts the illness from its request (cooldown, checks,
+    -- sandbox). A dedicated / host server does not roll. Single player
+    -- unchanged. A client without the relay never rolls (it would write a
+    -- ghost illness the server does not know).
+    if isServer and isServer() then return end
+    if isClient and isClient() and not (HM_ContractRelay and HM_ContractRelay.clientInstalled) then
+        if HMLogOnce then HMLogOnce("scabies_norelay", "Scabies", "MP client without the contract relay -- ground scabies roll OFF here") end
+        return
+    end
     local players = {}
     if isServer and isServer() and getOnlinePlayers then
         local online = getOnlinePlayers()

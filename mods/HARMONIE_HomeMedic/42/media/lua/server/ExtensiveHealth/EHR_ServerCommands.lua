@@ -955,7 +955,9 @@ function EHR.ServerCommands.ConcussionCandidate(player, args)
     local chance = EHR.Concussion.GetChanceForSource(source)
     if chance == nil then return false end
 
+    EHR.Concussion._fromCandidate = true -- HARMONIE 1.0.5: the one roll
     local ok, result = pcall(EHR.Concussion.TryStart, player, source, chance)
+    EHR.Concussion._fromCandidate = nil
     if not ok then
         log("[EHR Server] ConcussionCandidate failed: " .. tostring(result))
         return false
