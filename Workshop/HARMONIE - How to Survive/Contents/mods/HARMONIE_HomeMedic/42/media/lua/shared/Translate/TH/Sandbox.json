@@ -183,6 +183,8 @@
     "Sandbox_EHR_ScabiesWinterBlock_tooltip": "เมื่อเปิดใช้งาน การสัมผัสหิดจากพื้นดินจะไม่เกิดขึ้นในเดือนธันวาคม มกราคม หรือกุมภาพันธ์",
     "Sandbox_EHR_ScabiesSnowBlock": "ปิดกั้นหิดบนหิมะ",
     "Sandbox_EHR_ScabiesSnowBlock_tooltip": "เมื่อเปิดใช้งาน การสัมผัสหิดจากพื้นดินจะไม่เกิดขึ้นบนพื้นที่ปกคลุมด้วยหิมะหรือขณะมีหิมะตก",
+    "Sandbox_EHR_ScabiesMaxOpenWounds": "หิด: จำนวนแผลเปิดสูงสุด",
+    "Sandbox_EHR_ScabiesMaxOpenWounds_tooltip": "จำนวนแผลเกาจากหิดที่เปิดอยู่พร้อมกันได้มากที่สุด เมื่อครบแล้ว การเกาครั้งใหม่จะทำให้แผลเดิมแผลหนึ่งเปิดอีกครั้งแทนการเกิดแผลใหม่ แผลกัดตอนติดโรคนับรวมด้วย ค่าเริ่มต้น 3",
     "Sandbox_EHR_DysenteryChanceMultiplier": "ตัวคูณโอกาสเป็นโรคบิด",
     "Sandbox_EHR_DysenteryChanceMultiplier_tooltip": "ปรับค่าโอกาสเป็นโรคบิดจากน้ำปนเปื้อน โถส้วม แม่น้ำ ทะเลสาบ และถังรองน้ำฝน <LINE> 1.0 = ค่าสมดุลปัจจุบัน",
     "Sandbox_EHR_CommonColdExposureMultiplier": "ความเร็วการสะสมความเสี่ยงไข้หวัด",

@@ -323,6 +323,11 @@
   (server tracking + the client's ConcussionCandidate after the 0.02 h failed
   cooldown): a dedicated server now rolls those two sources only inside
   ConcussionCandidate (`EHR.Concussion._fromCandidate`).
+  Scabies wounds capped (owner choice 3): stage 2 / 3 scratch every 3 / 1
+  in-game h (2.5 real min on the owner's DayLength 3). ApplyScratch keeps
+  disease.hmScabiesParts (part index string -> true, healed ones pruned);
+  at sandbox ScabiesMaxOpenWounds (default 3, 1..20) open, a new scratch
+  re-opens one of them instead of a new wound.
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
