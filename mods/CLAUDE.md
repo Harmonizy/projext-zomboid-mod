@@ -314,6 +314,15 @@
   owner|illness|startTime|key (owner set in ApplyEffects): a cooldown wiped by
   old modData is put back and logged ("symptom cooldown ... was lost").
   Owner's server: DiseaseSpeed 1.0, ScabiesChanceMultiplier 1.0 (console).
+  Audit of every other illness (same day): server-only already --
+  EHR_Disease, CorpseSickness, Environmental (heat stroke, pneumonia),
+  BodyTemp (hypothermia), WoundInfection / sepsis; MP sent to the server --
+  transfusion (AHTR), stitch cellulitis, food / poison; insomnia runs both
+  sides but is a threshold (no roll) and the relay drops a second start;
+  delirium fixed 0.33.8. Concussion (falls / vehicle crashes) WAS rolled twice
+  (server tracking + the client's ConcussionCandidate after the 0.02 h failed
+  cooldown): a dedicated server now rolls those two sources only inside
+  ConcussionCandidate (`EHR.Concussion._fromCandidate`).
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
