@@ -230,6 +230,27 @@
   recipe MAKES (`recipeMaking`: result map, keepType gem recipes excluded)
   shows "Craft" -> `TWACraftWindow:jumpToRecipe` (craft page, search cleared;
   locked while a recipe is under way). Rects in `self.craftLinks`.
+- Guided craft mode (TWA 1.0.6, owner's HARMONIE_TWA_Guided_Mode_Redesign_TH.txt):
+  `client/HARMONIE_TWA_GuidedCraft.lua` is a VIEW over the craft tab, default
+  on (`TWAWorkbench.guided`, "guided=" in HARMONIE_TWA_Window.txt, gear-window
+  tick, bottom-right switch in both views; switching never starts / stops a
+  craft). Scene derived every frame (`guidedSceneOf`): PREPARE /
+  PREPARE_RESUME / WORK / STEP_BUSY / FINISH / BUSY (center action) / LOCKED /
+  PRACTICE -- no stored step number. Left card = header + hub banner + focus +
+  ONE primary button (notes above it), right card = the recipe's steps only
+  (click = `guidedPick`), bottom bar = back / "Manage craft..." (modal: pause =
+  onIncompleteButtonClicked, cancel asks again = onCancelButtonClicked) /
+  view switch. Every button calls the old handler; `selectedProcId` follows
+  the step shown. Suggested step: running > picked > first not done and met >
+  first not done (no fixed order -- the game has none). DescribeAll + item
+  counts cached 750 ms (`guidedData`). Step result lines come from
+  `window.lastProcResult` / `lastProcStopped`, set in tryPerformProcedure's
+  onComplete / onEnd (the only controller change). Drawn buttons live in
+  `self.guidedHits`, cleared at the top of renderBody. Helpers exported as
+  `TWACraftUI.H`. Texts IGUI_TWA_G_*. Not done yet (plan P1/P2): "Available"
+  as the default recipe filter, recipe cards "ready to start" vs "ready for
+  every step", first-time-only hints (the hub banner + its hints switch are
+  used instead), usability test.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
