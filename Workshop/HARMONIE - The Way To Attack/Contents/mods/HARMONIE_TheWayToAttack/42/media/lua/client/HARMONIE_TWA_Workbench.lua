@@ -432,6 +432,8 @@ end
 -- kept in Zomboid/Lua/HARMONIE_TWA_Window.txt (this computer only).
 W.PREFS_FILE = "HARMONIE_TWA_Window.txt"
 W.pinned = true
+-- 1.0.6: Guided craft mode (HARMONIE_TWA_GuidedCraft.lua) on by default
+W.guided = true
 
 function W.ensurePrefs()
     if W.prefsLoaded then return end
@@ -445,12 +447,13 @@ function W.ensurePrefs()
             local k, v = line:match("^%s*([%w_]+)%s*=%s*(%S+)")
             if k == "scale" then TWACraftUI.userScale = tonumber(v)
             elseif k == "text" then TWAFont.userStep = math.max(-4, math.min(4, math.floor(tonumber(v) or 0)))
-            elseif k == "pinned" then W.pinned = v ~= "0" end
+            elseif k == "pinned" then W.pinned = v ~= "0"
+            elseif k == "guided" then W.guided = v ~= "0" end
             line = reader:readLine()
         end
     end)
     pcall(function() reader:close() end)
-    TWALog("Workbench", "prefs loaded: scale %s, text step %s, pinned %s", tostring(TWACraftUI.userScale), tostring(TWAFont.userStep), tostring(W.pinned))
+    TWALog("Workbench", "prefs loaded: scale %s, text step %s, pinned %s, guided %s", tostring(TWACraftUI.userScale), tostring(TWAFont.userStep), tostring(W.pinned), tostring(W.guided))
 end
 
 function W.savePrefs()
@@ -461,6 +464,7 @@ function W.savePrefs()
         if TWACraftUI.userScale then writer:write("scale=" .. string.format("%.3f", TWACraftUI.userScale) .. "\n") end
         writer:write("text=" .. tostring(TWAFont.userStep or 0) .. "\n")
         writer:write("pinned=" .. (W.pinned and "1" or "0") .. "\n")
+        writer:write("guided=" .. (W.guided == false and "0" or "1") .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -657,6 +661,12 @@ function W.settingsRows()
                 local win = TWACraftUI.window
                 if win then win:togglePin() else W.pinned = v; W.savePrefs() end
             end },
+        { kind = "tick", label = getText("IGUI_TWA_Set_Guided"), tip = getText("IGUI_TWA_Set_Guided_Tip"),
+            get = function() return W.guided ~= false end,
+            set = function(v)
+                local win = TWACraftUI.window
+                if win and win.setGuided then win:setGuided(v) else W.guided = v and true or false; W.savePrefs() end
+            end },
         { kind = "tick", label = T("followVanillaCraft"), tip = T("followVanillaCraft_tooltip"),
             get = function() return oget("followVanillaCraft", true) == true end,
             set = function(v) oset("followVanillaCraft", v) end },
@@ -743,6 +753,8 @@ function TWACraftWindow:drawPageCards()
         local lx = self.recipeList.x - 6
         local key = self.recipeList.scope == "materials" and "IGUI_TWA_Card_MaterialList" or "IGUI_TWA_Card_WeaponList"
         self:drawCard(lx, top, self.width - 4 - lx, bottom - top, getText(key, tostring(#self.recipeList.items)))
+    elseif page == "craft" and self.selectedRecipe and self.drawGuidedCards and self:guidedOn() then
+        self:drawGuidedCards(top, bottom)
     elseif page == "craft" and not self.selectedRecipe then
         self:drawCard(4, top, self.width - 8, bottom - top, getText("IGUI_TWA_Tab_Craft"))
     elseif page == "craft" or page == "practice" then

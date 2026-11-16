@@ -2115,11 +2115,18 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
             return
         end
         local action = TWA_PerformProcedureAction:new(window.player, procId, word)
+        local completed = false
         action.onComplete = function(w)
             qualityTable[procId] = w
             doneTable[procId] = (w ~= "Miss") or nil
+            -- 1.0.6: what the guided view says after a step (UI only)
+            completed = true
+            window.lastProcResult = { procId = procId, word = w, recipeId = window.selectedRecipe and window.selectedRecipe.id, at = getTimestampMs() }
         end
         action.onEnd = function()
+            if not completed then
+                window.lastProcStopped = { procId = procId, recipeId = window.selectedRecipe and window.selectedRecipe.id, at = getTimestampMs() }
+            end
             if window.activeProcId == procId then
                 window.activeProcId = nil
                 window.activeAction = nil
@@ -2345,6 +2352,15 @@ local function recipeMaking(fullType)
     end
     return makerOf[fullType]
 end
+
+-- Guided craft mode (client/HARMONIE_TWA_GuidedCraft.lua, 1.0.6) draws with
+-- the same helpers as this window.
+TWACraftUI.H = {
+    drawTextShadowed = drawTextShadowed, wrapTextLines = wrapTextLines, drawCheckBadge = drawCheckBadge,
+    recipeName = recipeName, recipeIcon = recipeIcon, recipeStats = recipeStats, recipeMaking = recipeMaking,
+    baseDisplayName = baseDisplayName, TIER_INFO = TIER_INFO, S = S,
+    getItemScript = getItemScript, getItemTexture = getItemTexture,
+}
 
 function TWACraftWindow:jumpToRecipe(recipe)
     if not recipe then return end
@@ -2722,6 +2738,8 @@ end
 
 function TWACraftWindow:renderBody()
     ISPanel.render(self)
+    -- 1.0.6: the guided view's drawn buttons are registered again every frame
+    self.guidedHits = nil
     self:updateContinueButton()
     self:drawWorkbenchHeader()
     -- R69: the modify and guide tabs draw themselves (TWAWorkbench)
@@ -2776,6 +2794,14 @@ function TWACraftWindow:renderBody()
         self.craftGoWeapons:setVisible(true)
         self.craftGoMaterials:setVisible(true)
         self:renderCraftEmpty()
+        if self.renderGuidedChoose and self:guidedOn() then self:renderGuidedChoose() end
+        self:drawLockNotice()
+        self:drawHoverTooltip()
+        return
+    end
+    -- 1.0.6: Guided craft mode (default) -- one goal, one next action; the
+    -- same handlers underneath (HARMONIE_TWA_GuidedCraft.lua)
+    if self.renderGuided and self:guidedOn() and self:renderGuided() then
         self:drawLockNotice()
         self:drawHoverTooltip()
         return
@@ -3030,6 +3056,7 @@ function TWACraftWindow:renderBody()
     else
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     end
+    if self.drawGuidedModeToggle then self:drawGuidedModeToggle() end
     self:drawLockNotice()
 
     -- Drawn LAST, after every icon/card this frame, so the tooltip always
@@ -3047,6 +3074,8 @@ function TWACraftWindow:onMouseDown(x, y)
     -- R69: the header (drag, volume) and the tab bar first
     if self:workbenchMouseDown(x, y) then return true end
     if self.page ~= "craft" then return true end
+    -- 1.0.6: the guided view's buttons (and, in it, nothing of the old page)
+    if self.guidedMouseDown and self:guidedMouseDown(x, y) then return true end
     for _, l in ipairs(self.craftLinks or {}) do
         if l.from == self.selectedRecipe and x >= l.x and x < l.x + l.w and y >= l.y and y < l.y + l.h then
             self.craftLinks = {}
