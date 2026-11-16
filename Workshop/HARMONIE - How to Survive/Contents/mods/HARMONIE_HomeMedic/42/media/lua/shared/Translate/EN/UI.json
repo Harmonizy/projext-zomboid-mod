@@ -3072,5 +3072,17 @@
     "UI_HomeMedic_Test_Meds": "Give one of every medicine",
     "UI_HomeMedic_Test_ClearMeds": "Clear all medications in effect",
     "UI_HomeMedic_Test_Healthy": "Scenario: healthy reset",
-    "UI_HomeMedic_Test_Bleeding": "Scenario: severe blood loss"
+    "UI_HomeMedic_Test_Bleeding": "Scenario: severe blood loss",
+    "UI_HomeMedic_Diag_Btn_Medicine": "Use medicine",
+    "UI_HomeMedic_Diag_Btn_MedicineTip": "Medicines that treat this illness, found on you, in your bags and in the boxes of this room.",
+    "UI_HomeMedic_MedPick_Title": "MEDICINE FOR %1",
+    "UI_HomeMedic_MedPick_None": "No medicine that treats this illness is on you, in your bags or in the boxes of this room.",
+    "UI_HomeMedic_MedPick_NoneHint": "The Medication Handbook says which medicines treat it.",
+    "UI_HomeMedic_MedPick_Hint": "Found on you, in your bags and in the boxes of this room. Use = the same as the right-click; a box item is fetched first.",
+    "UI_HomeMedic_MedPick_Carried": "on you: %1",
+    "UI_HomeMedic_MedPick_InBox": "in a box in this room",
+    "UI_HomeMedic_MedPick_AlsoBox": "%1 more in boxes",
+    "UI_HomeMedic_MedPick_Use": "Use",
+    "UI_HomeMedic_MedPick_Handbook": "Medication Handbook",
+    "UI_HomeMedic_MedPick_Close": "Close"
 }

@@ -3072,5 +3072,17 @@
     "UI_HomeMedic_Test_Meds": "ให้ยาทุกชนิดอย่างละ 1",
     "UI_HomeMedic_Test_ClearMeds": "ล้างยาที่กำลังออกฤทธิ์ทั้งหมด",
     "UI_HomeMedic_Test_Healthy": "สถานการณ์: กลับเป็นปกติ",
-    "UI_HomeMedic_Test_Bleeding": "สถานการณ์: เสียเลือดหนัก"
+    "UI_HomeMedic_Test_Bleeding": "สถานการณ์: เสียเลือดหนัก",
+    "UI_HomeMedic_Diag_Btn_Medicine": "ใช้ยา",
+    "UI_HomeMedic_Diag_Btn_MedicineTip": "ยาที่รักษาโรคนี้ หาให้จากตัว กระเป๋า และกล่องในห้องนี้",
+    "UI_HomeMedic_MedPick_Title": "ยารักษา %1",
+    "UI_HomeMedic_MedPick_None": "ไม่มียาที่รักษาโรคนี้อยู่ในตัว ในกระเป๋า หรือในกล่องของห้องนี้",
+    "UI_HomeMedic_MedPick_NoneHint": "ดูในคู่มือยาว่ายาอะไรรักษาโรคนี้ได้",
+    "UI_HomeMedic_MedPick_Hint": "หาให้จากตัว กระเป๋า และกล่องในห้องนี้ กดใช้ = เหมือนคลิกขวาใช้ยา ยาที่อยู่ในกล่องจะเดินไปหยิบมาก่อน",
+    "UI_HomeMedic_MedPick_Carried": "อยู่ในตัว: %1",
+    "UI_HomeMedic_MedPick_InBox": "อยู่ในกล่องในห้องนี้",
+    "UI_HomeMedic_MedPick_AlsoBox": "ในกล่องอีก %1",
+    "UI_HomeMedic_MedPick_Use": "ใช้",
+    "UI_HomeMedic_MedPick_Handbook": "คู่มือยา",
+    "UI_HomeMedic_MedPick_Close": "ปิด"
 }

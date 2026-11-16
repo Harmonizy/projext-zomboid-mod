@@ -577,6 +577,14 @@ function Win:render()
         if not self.dataAt or now - self.dataAt > 2000 then self:refreshData() end
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
+        -- 2026-11-16 (UX plan UX-008): what this tab is for / why it is locked
+        local B = HARMONIE_Banner
+        if B and B.draw then
+            local locked = self:locked(self.tab)
+            local ok, used = pcall(B.draw, self, x, y, w, locked and "LOCKED" or "INFO_ONLY",
+                T(locked and "IGUI_HSVU_Next_locked" or ("IGUI_HSVU_Next_" .. tostring(self.tab))), H.small())
+            if ok and used then y, h = y + used, h - used end
+        end
         if self:locked(self.tab) then self:renderLocked(x, y, w, h)
         elseif self.tab == "vehicle" then self:renderVehicle(x, y, w, h)
         elseif self.tab == "upgrades" then self:renderUpgrades(x, y, w, h)

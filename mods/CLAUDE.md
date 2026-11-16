@@ -188,10 +188,35 @@
   mil_parts / mil_condition on the gun in hand), LWS
   `client/HARMONIELifeWithStyle/LWS_AdminTests.lua` (AdminGrant /
   AdminGachaGrant). A new tab: register its tests under its tab id.
+- Diagnose -> medicine (HM 1.0.6, owner "วินิจฉัย ให้ไปต่อที่ใช้ยาเลย ไม่ต้องหายาเอง"):
+  "Use medicine" button in the diagnosis result window (success) and on a
+  diagnosed illness's row (C.shortcuts action "medicine") ->
+  `client/HARMONIEHomeMedic/HM_MedPick.lua`: medicines whose
+  Database `treats` has the illness, found with HM_Reach.each (body, bags,
+  room boxes), carried first; CanUseMedication checked every 2 s (reason
+  shown, Use off); Use = EHR.MedicationAction.QueueUseMedication (carried) or
+  HM_Reach.bring + EHRMedicationAction (box). Someone else's window -> EHR's
+  Administer Medication (consent). Texts UI_HomeMedic_MedPick_* --
+  UI_HomeMedic_Med_* belongs to the Medication Handbook, do not reuse it.
 - Surgery tab (1.0.1, owner): every operation can be OPENED (view only when
   the patient has no indication: the prep checklist on every body part it
   can be done on, `opts.viewOnly`, Start off); Start works only with an
   indication (the server's S.evaluate checks again).
+- Next-step banner (2026-11-16, owner's UX/UI plan, Phase 1): hub UIKit
+  `HARMONIE_Banner.draw(ui, x, y, w, state, text, font)` -> height used (0
+  when off). States READY / MISSING / LOCKED / IN_PROGRESS / COMPLETE /
+  INFO_ONLY = a word chip (IGUI_HUB_State_*) + colour, max 2 lines; Thai
+  wraps on whole letters (vowel / tone marks stay on their letter, เ แ โ ใ ไ
+  go with the next, `BN.clusters`). Off switch = commonRows tick "hints"
+  (Zomboid/Lua/HARMONIE_Hub_Hints.txt, this computer). Used on top of: GTP
+  every tab (cook: pick > check > cook from F.run / plan.ready + reasons),
+  SVU every tab (locked reason; upgrades = install in the game's window),
+  MIL every tab except 3D inspect (its view covers the page), LWS every tab
+  (trade: agree states + "offer changed, both agreements taken back" for 15 s
+  when rev changes while you had agreed). Hub cards: `want` line (what you
+  come to do) + small "How it works" button -> `guideTab` (gtp overview,
+  others guide). TWA tooltips already describe Stop / Cancel / Incomplete /
+  Finish exactly; HM / TWA pages got no banner yet (absolute layouts).
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 

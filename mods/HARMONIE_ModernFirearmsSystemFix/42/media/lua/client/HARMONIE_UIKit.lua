@@ -119,6 +119,131 @@ function SB.install(cls)
     end
 end
 
+-- ================================================================ next-step banner
+-- Owner, 2026-11-16 (UX/UI plan, P0 "Next Step Banner" / "Locked state"):
+-- one line at the top of a tab that says where the player is and what to
+-- do next. The state is a word in a coloured chip (never colour alone):
+-- READY / MISSING / LOCKED / IN_PROGRESS / COMPLETE / INFO_ONLY.
+--   local used = HARMONIE_Banner.draw(ui, x, y, w, "MISSING", text, font)
+--   -- returns the height used (0 when hints are switched off)
+-- The player can switch the hints off in any of our settings windows
+-- (kept on this computer only: Zomboid/Lua/HARMONIE_Hub_Hints.txt).
+HARMONIE_Banner = HARMONIE_Banner or {}
+local BN = HARMONIE_Banner
+BN.PREFS_FILE = "HARMONIE_Hub_Hints.txt"
+BN.COL = {
+    READY = { 0.30, 0.78, 0.38 }, MISSING = { 0.95, 0.68, 0.22 }, LOCKED = { 0.92, 0.40, 0.32 },
+    IN_PROGRESS = { 0.36, 0.66, 1.00 }, COMPLETE = { 0.45, 0.88, 0.50 }, INFO_ONLY = { 0.62, 0.64, 0.72 },
+}
+local function btext(k, fb)
+    local t = getText and getText(k)
+    if not t or t == k then return fb end
+    return t
+end
+
+function BN.enabled()
+    if BN.on == nil then
+        BN.on = true
+        if getFileReader then
+            local ok, r = pcall(getFileReader, BN.PREFS_FILE, false)
+            if ok and r then
+                local line = r:readLine()
+                if line and line:find("hints=0", 1, true) then BN.on = false end
+                pcall(function() r:close() end)
+            end
+        end
+        print("[HARMONIE_Hub][Banner] next-step hints " .. (BN.on and "on" or "off"))
+    end
+    return BN.on
+end
+
+function BN.setEnabled(v)
+    BN.on = v == true
+    if getFileWriter then
+        local ok, w = pcall(getFileWriter, BN.PREFS_FILE, true, false)
+        if ok and w then
+            pcall(function() w:write(BN.on and "hints=1\n" or "hints=0\n") end)
+            pcall(function() w:close() end)
+        end
+    end
+    print("[HARMONIE_Hub][Banner] next-step hints switched " .. (BN.on and "on" or "off"))
+end
+
+-- whole UTF-8 characters, with Thai vowel / tone marks kept on the letter
+-- before them (U+0E31, U+0E34-0E3A, U+0E47-0E4E never start a piece)
+local function clusters(word)
+    local out, prevLead = {}, false
+    for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+        local b1, b2, b3 = ch:byte(1, 3)
+        local mark = b1 == 0xE0 and ((b2 == 0xB8 and (b3 == 0xB1 or (b3 >= 0xB4 and b3 <= 0xBA)))
+            or (b2 == 0xB9 and b3 >= 0x87 and b3 <= 0x8E))
+        -- a leading vowel (U+0E40-0E44: เ แ โ ใ ไ) goes with the letter after it
+        local lead = b1 == 0xE0 and b2 == 0xB9 and b3 >= 0x80 and b3 <= 0x84
+        if (mark or prevLead) and #out > 0 then out[#out] = out[#out] .. ch else out[#out + 1] = ch end
+        prevLead = lead and not mark
+    end
+    return out
+end
+BN.clusters = clusters
+
+-- wraps on spaces, and inside a long word (Thai has no spaces) on whole
+-- characters; at most maxLines, the last one ends with "..."
+function BN.wrap(s, w, font, maxLines)
+    local tm = getTextManager()
+    local function mw(t) return tm:MeasureStringX(font, t) end
+    local lines, cur = {}, ""
+    for word in tostring(s):gmatch("%S+%s*") do
+        if mw(cur .. word) <= w then
+            cur = cur .. word
+        else
+            if cur ~= "" then lines[#lines + 1] = cur; cur = "" end
+            if mw(word) <= w then
+                cur = word
+            else
+                for _, ch in ipairs(clusters(word)) do
+                    if cur ~= "" and mw(cur .. ch) > w then lines[#lines + 1] = cur; cur = ch else cur = cur .. ch end
+                end
+            end
+        end
+    end
+    if cur ~= "" then lines[#lines + 1] = cur end
+    maxLines = maxLines or 2
+    if #lines > maxLines then
+        local keep = {}
+        for i = 1, maxLines do keep[i] = lines[i] end
+        local last = keep[maxLines]
+        local chars = clusters(last)
+        while #chars > 0 and mw(table.concat(chars) .. "...") > w do chars[#chars] = nil end
+        keep[maxLines] = table.concat(chars) .. "..."
+        lines = keep
+    end
+    return lines
+end
+
+function BN.draw(ui, x, y, w, state, text, font)
+    if not ui or not text or text == "" or not BN.enabled() then return 0 end
+    if not BN.COL[state] then state = "INFO_ONLY" end
+    local col = BN.COL[state]
+    font = font or UIFont.Small
+    local tm = getTextManager()
+    local fh = tm:getFontHeight(font)
+    local chip = btext("IGUI_HUB_State_" .. state, state)
+    local cw = tm:MeasureStringX(font, chip) + 14
+    local lines = BN.wrap(text, math.max(40, w - cw - 26), font, 2)
+    local h = math.max(1, #lines) * (fh + 2) + 8
+    ui:drawRect(x, y, w, h, 0.6, 0.05, 0.05, 0.06)
+    ui:drawRect(x, y, w, h, 0.18, col[1], col[2], col[3])
+    ui:drawRect(x, y, 4, h, 0.95, col[1], col[2], col[3])
+    ui:drawRectBorder(x, y, w, h, 0.6, col[1], col[2], col[3])
+    ui:drawRect(x + 10, y + 4, cw, fh + 2, 0.9, col[1] * 0.45, col[2] * 0.45, col[3] * 0.45)
+    ui:drawRectBorder(x + 10, y + 4, cw, fh + 2, 0.9, col[1], col[2], col[3])
+    ui:drawText(chip, x + 17, y + 5, 1, 1, 1, 1, font)
+    for i, l in ipairs(lines) do
+        ui:drawText(l, x + 10 + cw + 10, y + 5 + (i - 1) * (fh + 2), 0.92, 0.92, 0.92, 1, font)
+    end
+    return h + 6
+end
+
 -- ================================================================ settings window
 -- Home Medic's windows use the game's fonts as they are
 -- 2026-10-20 fix: the functions below read HMFont.step, so the local must
@@ -554,6 +679,9 @@ function U.commonRows(o)
         rows[#rows + 1] = { kind = "button", id = "size", label = T("IGUI_HUB_Set_Size", "Window size and place"), tip = T("IGUI_HUB_Set_Size_Tip"),
             text = T("IGUI_HUB_Set_Reset", "Reset"), run = o.resetSize }
     end
+    -- 2026-11-16: the next-step hints on top of every tab (all our windows)
+    rows[#rows + 1] = { kind = "tick", id = "hints", label = T("IGUI_HUB_Set_Hints", "Show next-step hints"), tip = T("IGUI_HUB_Set_Hints_Tip"),
+        get = function() return HARMONIE_Banner.enabled() end, set = function(v) HARMONIE_Banner.setEnabled(v) end }
     if o.getPin and o.setPin then
         rows[#rows + 1] = { kind = "tick", id = "pin", label = T("IGUI_HUB_Set_Pin", "Keep the window open (pin)"), tip = T("IGUI_HUB_Set_Pin_Tip"),
             get = o.getPin, set = o.setPin }

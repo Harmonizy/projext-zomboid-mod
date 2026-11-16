@@ -22,6 +22,7 @@ require "HARMONIEHomeMedic/Surgery/HM_Surgery"
 require "HARMONIEHomeMedic/HM_Diagnosis"
 require "HARMONIEHomeMedic/HM_Stats"
 require "HARMONIEHomeMedic/HM_DiagnoseResultUI"
+require "HARMONIEHomeMedic/HM_MedPick"
 pcall(require, "HARMONIE_UIKit")
 local S = HM_Surgery
 local D = HM_Diagnosis
@@ -388,6 +389,8 @@ end
 function C.shortcuts(panel, id)
     local _, patient, exam = parties(panel)
     local out = { { label = L("Btn_Handbook", "Handbook"), action = "handbook", id = id } }
+    -- 2026-11-16 (owner): a diagnosed illness goes straight on to its medicine
+    if HM_MedPick then out[#out + 1] = { label = L("Btn_Medicine", "Use medicine"), action = "medicine", id = id, hot = true } end
     local list = S.surgeriesFor(id)
     if #list > 0 then
         local hot = S.needsSurgery(patient, id, exam) or S.isHeld(patient, id, exam)
@@ -420,6 +423,10 @@ end
 
 -- go where a button points
 function C.go(panel, b)
+    if b.action == "medicine" then
+        if HM_MedPick then HM_MedPick.open(panel, b.id) end
+        return
+    end
     if b.action == "surgery" then panel.hmSurgerySelect = { sid = b.sid, id = b.id } end
     if b.action == "handbook" then
         panel.hmBookSelect = panel.hmBookSelect or {}

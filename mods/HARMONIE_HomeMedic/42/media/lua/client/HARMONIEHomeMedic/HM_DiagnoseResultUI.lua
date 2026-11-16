@@ -99,6 +99,14 @@ function R:reveal()
     local panel = self.panel
     if r.ok then
         sfx("Good")
+        -- 2026-11-16 (owner): straight on to the medicine, no searching
+        if HM_MedPick then
+            self:addButton(L("Btn_Medicine", "Use medicine"), function(ui)
+                local id = ui.id
+                ui:close()
+                HM_MedPick.open(panel, id)
+            end, true, L("Btn_MedicineTip", "Medicines that treat this illness, found on you, in your bags and in the boxes of this room."))
+        end
         self:addButton(L("Btn_Home", "Home"), function(ui) ui:close(); panel:setActiveTab("ehr") end)
         self:addButton(L("Btn_Continue", "Keep diagnosing"), function(ui) ui:close() end)
         self:addButton(L("Btn_Handbook", "Handbook"), function(ui)
