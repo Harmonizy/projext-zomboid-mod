@@ -192,6 +192,21 @@
   the patient has no indication: the prep checklist on every body part it
   can be done on, `opts.viewOnly`, Start off); Start works only with an
   indication (the server's S.evaluate checks again).
+- Next-step banner (2026-11-16, owner's UX/UI plan, Phase 1): hub UIKit
+  `HARMONIE_Banner.draw(ui, x, y, w, state, text, font)` -> height used (0
+  when off). States READY / MISSING / LOCKED / IN_PROGRESS / COMPLETE /
+  INFO_ONLY = a word chip (IGUI_HUB_State_*) + colour, max 2 lines; Thai
+  wraps on whole letters (vowel / tone marks stay on their letter, เ แ โ ใ ไ
+  go with the next, `BN.clusters`). Off switch = commonRows tick "hints"
+  (Zomboid/Lua/HARMONIE_Hub_Hints.txt, this computer). Used on top of: GTP
+  every tab (cook: pick > check > cook from F.run / plan.ready + reasons),
+  SVU every tab (locked reason; upgrades = install in the game's window),
+  MIL every tab except 3D inspect (its view covers the page), LWS every tab
+  (trade: agree states + "offer changed, both agreements taken back" for 15 s
+  when rev changes while you had agreed). Hub cards: `want` line (what you
+  come to do) + small "How it works" button -> `guideTab` (gtp overview,
+  others guide). TWA tooltips already describe Stop / Cancel / Incomplete /
+  Finish exactly; HM / TWA pages got no banner yet (absolute layouts).
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 

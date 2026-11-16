@@ -700,6 +700,16 @@ function W:render()
     if not self.collapsed then
         local x, y = 8, W.contentTop()
         local w, h = self.width - 16, self.height - y - 8
+        -- 2026-11-16 (UX plan UX-009): why a tab is locked / what it is for.
+        -- Not on the 3D inspect tab: its 3D view covers the whole page.
+        local B = HARMONIE_Banner
+        local lockedNow = self:locked(self.tab)
+        if B and B.draw and (lockedNow or self.tab ~= "inspect") then
+            local ok, used = pcall(B.draw, self, x, y, w, lockedNow and "LOCKED" or "INFO_ONLY",
+                T(lockedNow and "IGUI_MIL_Next_locked" or ("IGUI_MIL_Next_" .. tostring(self.tab))), W.small())
+            if ok and used then y, h = y + used, h - used
+            elseif not ok then logOnce("banner", "next-step banner FAILED: %s", tostring(used)) end
+        end
         if self:locked(self.tab) then
             if self.pane and self.pane:isVisible() then self.pane:setVisible(false) end
             self:renderLocked(x, y, w, h)

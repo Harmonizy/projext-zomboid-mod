@@ -186,27 +186,27 @@ local function heldGun(p)
 end
 -- accent: each card in its mod's own window colour (owner, 2026-10-24)
 Hub.CARDS = {
-    { id = "gtp", accent = { 0.50, 0.90, 0.52 }, -- green
+    { id = "gtp", want = "IGUI_HUB_GTP_Want", guideTab = "overview", accent = { 0.50, 0.90, 0.52 }, -- green
       name = "IGUI_HUB_GTP_Name", desc = "IGUI_HUB_GTP_Desc",
       present = function() return GTPGuide ~= nil and GTPGuide.open ~= nil end,
       open = function(p) GTPGuide.open(p, nil, "cook") end },
-    { id = "twa", accent = { 1.0, 0.78, 0.2 }, -- gold
+    { id = "twa", want = "IGUI_HUB_TWA_Want", guideTab = "guide", accent = { 1.0, 0.78, 0.2 }, -- gold
       name = "IGUI_HUB_TWA_Name", desc = "IGUI_HUB_TWA_Desc",
       present = function() return TWACraftUI ~= nil and TWACraftUI.open ~= nil end,
       open = function(p) TWACraftUI.open(p) end },
-    { id = "hm", accent = { 0.3, 0.84, 1.0 }, -- sky blue
+    { id = "hm", want = "IGUI_HUB_HM_Want", guideTab = "guide", accent = { 0.3, 0.84, 1.0 }, -- sky blue
       name = "IGUI_HUB_HM_Name", desc = "IGUI_HUB_HM_Desc",
       present = function() return EHR ~= nil and EHR.UI ~= nil and EHR.UI.ShowHealthPanel ~= nil end,
       open = function(p) EHR.UI.ShowHealthPanel(p) end },
     -- owner, 2026-10-09: every window opens from here; the tabs that need a
     -- target (a vehicle, a gun in hand) are locked inside the window, and
     -- the card says so (`note`, the button stays enabled)
-    { id = "svu", accent = { 0.45, 0.68, 1.0 }, -- steel blue
+    { id = "svu", want = "IGUI_HUB_SVU_Want", guideTab = "guide", accent = { 0.45, 0.68, 1.0 }, -- steel blue
       name = "IGUI_HUB_SVU_Name", desc = "IGUI_HUB_SVU_Desc",
       present = function() return HSVU ~= nil and HSVU.open ~= nil end,
       note = function(p) if not (HSVU.nearVehicle and HSVU.nearVehicle(p)) then return "IGUI_HUB_NeedVehicle" end end,
       open = function(p) HSVU.open(p, HSVU.nearVehicle and HSVU.nearVehicle(p) or nil) end },
-    { id = "mfs", accent = { 0.92, 0.24, 0.20 }, -- red
+    { id = "mfs", want = "IGUI_HUB_MFS_Want", guideTab = "guide", accent = { 0.92, 0.24, 0.20 }, -- red
       name = "IGUI_HUB_MFS_Name", desc = "IGUI_HUB_MFS_Desc",
       present = function() return (HMLWorkbench ~= nil and HMLWorkbench.open ~= nil) or (MFSInspectFix ~= nil and MFSInspectFix.open ~= nil) end,
       note = function(p) if not heldGun(p) then return "IGUI_HUB_NeedGun" end end,
@@ -214,7 +214,7 @@ Hub.CARDS = {
           if HMLWorkbench and HMLWorkbench.open then HMLWorkbench.open(p, nil, true) else MFSInspectFix.open(p) end
       end },
     -- 2026-10-20: HARMONIE - Life With Style, the wardrobe
-    { id = "lws", accent = { 0.70, 0.49, 0.28 }, -- fashion brown
+    { id = "lws", want = "IGUI_HUB_LWS_Want", guideTab = "guide", accent = { 0.70, 0.49, 0.28 }, -- fashion brown
       name = "IGUI_HUB_LWS_Name", desc = "IGUI_HUB_LWS_Desc",
       present = function() return LWSWindow ~= nil and LWSWindow.open ~= nil end,
       open = function(p) LWSWindow.open(p, "dress") end },
@@ -411,10 +411,12 @@ function P:render()
             shown = shown + 1
             local need = card.need and p and select(2, pcall(card.need, p)) or nil
             local note = (not need) and card.note and p and select(2, pcall(card.note, p)) or nil
+            -- 2026-11-16 (UX plan UX-001): what you come here to do, first
+            local want = card.want and wrap(T(card.want), self.width - pad * 2 - 130, sf) or {}
             local desc = wrap(T(card.desc), self.width - pad * 2 - 130, sf)
             -- the warning wraps too (it ran past the card's edge before)
             local warn = (need or note) and wrap(T(need or note), self.width - pad * 2 - 130, sf) or {}
-            local h = math.max(58, 12 + th(mf) + 4 + #desc * (th(sf) + 1) + (#warn > 0 and (#warn * (th(sf) + 1) + 3) or 0) + 8)
+            local h = math.max(70, 12 + th(mf) + 4 + (#want + #desc) * (th(sf) + 1) + (#warn > 0 and (#warn * (th(sf) + 1) + 3) or 0) + 8)
             local over = mx >= pad and mx <= self.width - pad and my >= y and my <= y + h
             -- the card in its mod's colour: a tinted background, stripe, border and title
             local ac = card.accent or COL.gold
@@ -426,6 +428,7 @@ function P:render()
             self:drawRect(pad, y, 4, h, 1, ac[1], ac[2], ac[3])
             self:drawText(T(card.name), pad + 12, y + 8, ac[1], ac[2], ac[3], 1, mf)
             local ty = y + 12 + th(mf)
+            for _, l in ipairs(want) do self:drawText(l, pad + 12, ty, COL.text[1], COL.text[2], COL.text[3], 1, sf); ty = ty + th(sf) + 1 end
             for _, l in ipairs(desc) do self:drawText(l, pad + 12, ty, COL.dim[1], COL.dim[2], COL.dim[3], 1, sf); ty = ty + th(sf) + 1 end
             for _, l in ipairs(warn) do
                 self:drawText(l, pad + 12, ty + 2, COL.warn[1], COL.warn[2], COL.warn[3], need and 1 or 0.8, sf)
@@ -433,7 +436,8 @@ function P:render()
             end
             -- the open button on the right
             local bw, bh = 104, 28
-            local bx, by = self.width - pad - bw - 10, y + math.floor((h - bh) / 2)
+            local guide = card.guideTab and (card.openTab or Hub.OPEN_TAB[card.id]) and true or false
+            local bx, by = self.width - pad - bw - 10, guide and (y + 6) or (y + math.floor((h - bh) / 2))
             local enabled = not need
             local b = { x = bx, y = by, w = bw, h = bh, card = card }
             local bover = mx >= bx and mx <= bx + bw and my >= by and my <= by + bh
@@ -444,6 +448,18 @@ function P:render()
             self:drawText(label, bx + math.floor((bw - tw(sf, label)) / 2), by + math.floor((bh - th(sf)) / 2),
                 enabled and COL.text[1] or COL.dim[1], enabled and COL.text[2] or COL.dim[2], enabled and COL.text[3] or COL.dim[3], 1, sf)
             if enabled then self.buttons[#self.buttons + 1] = b end
+            -- a second, smaller button: the window's guide / help tab
+            if guide then
+                local gy, gh = by + bh + 4, 22
+                local g = { x = bx, y = gy, w = bw, h = gh, card = card, tab = card.guideTab }
+                local gover = mx >= bx and mx <= bx + bw and my >= gy and my <= gy + gh
+                self:drawRect(bx, gy, bw, gh, enabled and (gover and 0.8 or 0.5) or 0.25, bc[1], bc[2], bc[3])
+                self:drawRectBorder(bx, gy, bw, gh, enabled and 0.7 or 0.3, ac[1], ac[2], ac[3])
+                local gl = T("IGUI_HUB_Guide")
+                self:drawText(gl, bx + math.floor((bw - tw(sf, gl)) / 2), gy + math.floor((gh - th(sf)) / 2),
+                    COL.dim[1], COL.dim[2], COL.dim[3], 1, sf)
+                if enabled then self.buttons[#self.buttons + 1] = g end
+            end
             y = y + h + 8
         end
     end
@@ -458,7 +474,7 @@ function P:onMouseDown(x, y)
     for _, b in ipairs(self.buttons or {}) do
         if x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then
             pcall(function() getSoundManager():playUISound("UISelectListItem") end)
-            Hub.openCard(b.card, self:player())
+            if b.tab then Hub.openTab(b.card, self:player(), b.tab) else Hub.openCard(b.card, self:player()) end
             return true
         end
     end

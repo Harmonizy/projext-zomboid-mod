@@ -129,6 +129,29 @@ function Win:renderCook(x, y, w, h)
         self.cookPage = "craft"
     end
     local d = self.cookSel and K.DISH_BY_ID[self.cookSel]
+    -- 2026-11-16 (UX plan UX-004): where you are in "pick > check > cook"
+    -- and what happens next, from the real state (F.run, the plan)
+    if H.banner then
+        local r, bh = F.run, 0
+        if r and r.phase == "done" then
+            bh = H.banner(self, x, y, w, "COMPLETE", "IGUI_GTPC_Next_done")
+        elseif r and r.phase == "failed" then
+            bh = H.banner(self, x, y, w, "MISSING", "IGUI_GTPC_Next_failed")
+        elseif r then
+            bh = H.banner(self, x, y, w, "IN_PROGRESS", "IGUI_GTPC_Next_run")
+        elseif self.cookPage == "craft" and d then
+            local p = plans[d.id]
+            if p and p.ready then
+                bh = H.banner(self, x, y, w, "READY", "IGUI_GTPC_Next_ready")
+            else
+                local why = p and p.reasons and p.reasons[1] or "ingredients"
+                bh = H.banner(self, x, y, w, "MISSING", "IGUI_GTPC_Next_missing", T("IGUI_GTPC_Why_" .. tostring(why)))
+            end
+        else
+            bh = H.banner(self, x, y, w, "INFO_ONLY", "IGUI_GTPC_Next_browse")
+        end
+        y, h = y + bh, h - bh
+    end
     if self.cookPage == "craft" and d then return self:renderCookCraft(x, y, w, h, d, plans[d.id]) end
     self.cookPage = "browse"
     return self:renderCookBrowse(x, y, w, h, plans)

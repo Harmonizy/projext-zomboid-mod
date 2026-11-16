@@ -544,6 +544,16 @@ function Win:prerender()
     self:drawRect(4, top, self.width - 8, self.height - top - 4, C.panel[4], C.panel[1], C.panel[2], C.panel[3])
 end
 
+-- 2026-11-16 (UX plan "Next Step Banner"): one line on top of a tab -- what
+-- it is for and what to do next (hub HARMONIE_Banner; off in Settings)
+function H.banner(win, x, y, w, state, key, ...)
+    local B = HARMONIE_Banner
+    if not (B and B.draw) then return 0 end
+    local ok, used = pcall(B.draw, win, x, y, w, state, T(key, ...), H.small())
+    if not ok then HARMONIE_GTP.LogOnce("bannerfail", "Guide", "next-step banner FAILED: %s", tostring(used)); return 0 end
+    return used or 0
+end
+
 function Win:render()
     if not self.collapsed then
         self.clicks = {}
@@ -552,11 +562,15 @@ function Win:render()
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
         if self.settingsOpen then self:renderSettings(x, y, w, h)
-        elseif self.tab == "overview" then self:renderOverview(x, y, w, h)
-        elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
-        elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
         elseif self.tab == "cook" and self.renderCook then self:renderCook(x, y, w, h)
-        else self:renderOther(x, y, w, h) end
+        else
+            local bh = H.banner(self, x, y, w, "INFO_ONLY", "IGUI_GTPG_Next_" .. tostring(self.tab))
+            y, h = y + bh, h - bh
+            if self.tab == "overview" then self:renderOverview(x, y, w, h)
+            elseif self.tab == "vitamins" then self:renderVitamins(x, y, w, h)
+            elseif self.tab == "foods" then self:renderFoods(x, y, w, h)
+            else self:renderOther(x, y, w, h) end
+        end
         if self.search and self.search:getIsVisible() ~= self.searchShown then self.search:setVisible(self.searchShown) end
         local C = H.C
         local gx, gy = self.width - 16, self.height - 16
