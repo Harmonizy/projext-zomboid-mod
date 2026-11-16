@@ -543,6 +543,34 @@ function Win:render()
         self.searchShown = {}
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
+        -- 2026-11-16 (UX plan UX-010 / UX-012): what this tab is for and
+        -- what to do next; Trade says when an offer change took both
+        -- agreements back (any offer change unlocks both -- server rule)
+        local B = HARMONIE_Banner
+        if B and B.draw and not H.compact then
+            local state, key = "INFO_ONLY", "IGUI_LWS_Next_" .. tostring(self.tab)
+            if self.tab == "trade" then
+                local tr = C.trade
+                local now = getTimestampMs and getTimestampMs() or 0
+                if tr then
+                    if self.seenTradeRev and tr.rev ~= self.seenTradeRev and self.seenMyLock and not tr.myLock then
+                        self.tradeChangedAt = now
+                        log("trade offer changed (rev %s -> %s): both agreements taken back", tostring(self.seenTradeRev), tostring(tr.rev))
+                    end
+                    self.seenTradeRev, self.seenMyLock = tr.rev, tr.myLock
+                    if self.tradeChangedAt and now - self.tradeChangedAt < 15000 then state, key = "MISSING", "IGUI_LWS_Next_tradeChanged"
+                    elseif tr.myLock and tr.theirLock then state, key = "IN_PROGRESS", "IGUI_LWS_Next_tradeBoth"
+                    elseif tr.myLock then state, key = "IN_PROGRESS", "IGUI_LWS_Next_tradeWait"
+                    else key = "IGUI_LWS_Next_tradeOpen" end
+                else
+                    self.seenTradeRev, self.seenMyLock, self.tradeChangedAt = nil, nil, nil
+                    if not (isClient and isClient()) then key = "IGUI_LWS_Msg_TradeMPOnly" end
+                end
+            end
+            local ok, used = pcall(B.draw, self, x, y, w, state, T(key), H.small())
+            if ok and used then y, h = y + used, h - used
+            elseif not ok then LWS.logOnce("banner", "Window", "next-step banner FAILED: %s", tostring(used)) end
+        end
         if H.compact then self:renderCompact(x, y, w, h)
         elseif self.tab == "dress" then self:renderDress(x, y, w, h)
         elseif self.tab == "collection" then self:renderCollection(x, y, w, h)
