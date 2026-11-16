@@ -188,6 +188,16 @@
   mil_parts / mil_condition on the gun in hand), LWS
   `client/HARMONIELifeWithStyle/LWS_AdminTests.lua` (AdminGrant /
   AdminGachaGrant). A new tab: register its tests under its tab id.
+- Diagnose -> medicine (HM 1.0.6, owner "วินิจฉัย ให้ไปต่อที่ใช้ยาเลย ไม่ต้องหายาเอง"):
+  "Use medicine" button in the diagnosis result window (success) and on a
+  diagnosed illness's row (C.shortcuts action "medicine") ->
+  `client/HARMONIEHomeMedic/HM_MedPick.lua`: medicines whose
+  Database `treats` has the illness, found with HM_Reach.each (body, bags,
+  room boxes), carried first; CanUseMedication checked every 2 s (reason
+  shown, Use off); Use = EHR.MedicationAction.QueueUseMedication (carried) or
+  HM_Reach.bring + EHRMedicationAction (box). Someone else's window -> EHR's
+  Administer Medication (consent). Texts UI_HomeMedic_MedPick_* --
+  UI_HomeMedic_Med_* belongs to the Medication Handbook, do not reuse it.
 - Surgery tab (1.0.1, owner): every operation can be OPENED (view only when
   the patient has no indication: the prep checklist on every body part it
   can be done on, `opts.viewOnly`, Start off); Start works only with an
