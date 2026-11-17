@@ -261,6 +261,17 @@
   ขั้นตอนการทำมินิเกมออก"): every step goes onConfirmProcedure ->
   tryPerformProcedure -> TWAMinigame.play -> the word -> the timed action.
   Only the player's own "minigames off" setting gives Excellent (as before).
+- TWA lag fix (1.0.8, owner: "opening the craft window makes every other UI
+  lag", long-standing): TWASources.get (client) keeps a scan 1000 ms and
+  walks the items ONCE into `Multi:index()` (byType + all); count / first /
+  countEval / forEachItem read it (server: plain container calls, no cache).
+  Before, each question walked every item of every box in the room in Lua --
+  per recipe row, per base card, per frame, and for EVERY recipe on a list
+  refresh. Also: unfinished-item scan only on the recipe pages / empty craft
+  tab, every 2 s; procedure details DescribeAll kept 500 ms; the practice
+  grid's CheckEligibility per cell kept 750 ms; `S.isBookmarked` and
+  findIncomplete test hasModData() first (getModData() makes a table on
+  every item). An index over 15 ms logs "item index: N items ... took M ms".
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
