@@ -315,8 +315,11 @@
   player modData. Cook tab: ingredient = first name + an "i" (hover = every
   food that works, `slotAlternatives` / `infoMark`); the level line is one
   line with the bonus + level-ease text on an "i"; the run panel's long
-  paragraphs are one short line + "i". Chopping game: each click / Space = 2
-  cuts (`CUT_PER_CLICK`, owner "x2").
+  paragraphs are one short line + "i". Chopping game: TWICE the cuts (`CUT_MUL` 2, one
+  click = one cut; owner "หั่นเพิ่มเป็น 2 เท่า"). A cook below the dish's level
+  gets HALF the time in every minigame (CookFlow `lowMul` 0.5 into timeMul;
+  CookGames clamps timeMul to 0.25..8; the ring / rhythm games keep their
+  beat-based limit).
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
