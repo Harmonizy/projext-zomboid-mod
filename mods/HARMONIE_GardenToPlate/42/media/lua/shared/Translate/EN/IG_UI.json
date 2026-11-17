@@ -984,7 +984,7 @@
     "IGUI_HUB_Set_Hints": "Show next-step hints",
     "IGUI_HUB_Set_Hints_Tip": "The line on top of each tab that says what this page is for and what to do next. Same setting in every HARMONIE window, this computer only.",
     "IGUI_GTPC_LevelLine": "Cooking Lv %1 suggested (you: %2)",
-    "IGUI_GTPC_LevelLineHard": "Cooking Lv %1 suggested (you: %2) - harder, half the minigame time",
+    "IGUI_GTPC_LevelLineHard": "Cooking Lv %1 suggested (you: %2) - harder steps",
     "IGUI_GTPC_AltTitle": "Also works:",
     "IGUI_GTPC_TakenShort": "Ingredients in the pot - Cancel gives them back",
     "IGUI_GTPC_FailedShort_take": "Could not take the ingredients - nothing was taken",

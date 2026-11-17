@@ -162,12 +162,9 @@ function F.nextStep()
         local cur = K.cursorItem(plan, pp)
         local diff = K.difficulty(r.player, pp, r.dish)
         local ease = K.levelEase(K.level(r.player))
-        -- 1.0.8 (owner 2026-11-17): below the dish's level, half the time to beat each minigame
-        local below = K.level(r.player) < (r.dish.level or 0)
-        local lowMul = below and 0.5 or 1
-        local timeMul = ease.time * K.minigameTime() * lowMul
-        log("step %s: minigame with %s (%s), Cooking %d (dish %d): difficulty %.2f, slips x%.2f, time x%.2f (level x%.2f, sandbox x%.2f, below the dish x%.1f)", pid, cur and K.typeOf(cur) or "bare hands",
-            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.level(r.player), r.dish.level or 0, diff, ease.slip, timeMul, ease.time, K.minigameTime(), lowMul)
+        local timeMul = ease.time * K.minigameTime()
+        log("step %s: minigame with %s (%s), Cooking %d: difficulty %.2f, slips x%.2f, time x%.2f (level x%.2f, sandbox x%.2f)", pid, cur and K.typeOf(cur) or "bare hands",
+            pp.tools[1] and tostring(pp.tools[1].grade) or "no tool", K.level(r.player), diff, ease.slip, timeMul, ease.time, K.minigameTime())
         local ic = r.icons or { cursor = {} }
         local ok = Gm.play(r.player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = timeMul, icon = ic.ing,
             spice = ic.spice, base = ic.base,
