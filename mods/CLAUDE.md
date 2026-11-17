@@ -70,6 +70,16 @@
   (`EFK_Gun_Shot_Profiles.lua`; aliases at its end). `MountOn` names are
   matched exactly (`MG338_cat` is not `mg338_cat`). AmmoCheck logs guns with
   no shot sound and magazines that are not items (MIL 0.7.5).
+- An automatic gun whose CyclicRateMultiplier sits in the engine's no-bullet
+  zone (1.8 - 2.9, or 1.4 -- upstream notes in EFK_Exact_RPM.lua) swings and
+  plays its shot sound while the trigger is held but fires ONE bullet per
+  press (owner 2026-11-17, MP5). The seven that had it (MP5, Kriss Vector,
+  AN-94, EMP, Groza, QBZ-192, Minigun: script 1.8 / 1.9, RPM band cyclic 8.0)
+  are 1.75 in the scripts and 1020 RPM (cyclic 6.8) in EFK_Exact_RPM since
+  MIL 1.0.5; `shared/HARMONIE_MIL_CyclicGuard.lua` (+ tools/ours) DoParams
+  1.75 back if another mod overrides it and fixes a held gun still in the
+  zone (logged). A new automatic gun: script cyclic below 1.8 and an RPM
+  under 1076.
 - A second mod that defines the same item types and loads LATER wins: the
   owner's MP server also ran the original `ModernFirearmsSystem`, which put its
   efk: ammo types back on our guns (Requiem crashed again, 2026-10-24). MIL

@@ -2,7 +2,7 @@ module Base
 {
     item EMP_cat
     {
-        CyclicRateMultiplier = 1.9,
+        CyclicRateMultiplier = 1.75,
         ModelWeaponPart = Gunpart.XM157_cat Gunpart.XM157_cat Scope1 Scope1,
         ModelWeaponPart = Gunpart.wave_dd_slience Gunpart.wave_dd_slience Canon Canon,
         ModelWeaponPart = Gunpart.AR15_slience Gunpart.AR15_slience Canon Canon,
