@@ -217,22 +217,12 @@
   come to do) + small "How it works" button -> `guideTab` (gtp overview,
   others guide). TWA tooltips already describe Stop / Cancel / Incomplete /
   Finish exactly; HM / TWA pages got no banner yet (absolute layouts).
-- Fewer words, symbols, text on hover (owner 2026-11-17, "ทุกแท็บใช้คำให้น้อยที่สุด
-  มีแต่สัญลักษณ์ ... คำอธิบายเอาให้ขึ้นตอนเมาส์ไปชี้ ระวัง ui ทับกัน"): hub UIKit
-  `HARMONIE_Glyph.draw(ui, name, x, y, size, {r,g,b})` -- white glyphs
-  `media/ui/HARMONIE_g_<name>.png` (tools/gen_glyphs.py: warn info lock busy
-  play menu mode check cross back redo target box tool flag), tinted per use;
-  `HARMONIE_HoverTip.set(ui, text[, x, y])` -- drawn at the END of that
-  panel's render (its render is wrapped once, `ui.hmTipHooked`), so it sits
-  on top of the children; one per panel per frame; `HT.over(ui,x,y,w,h)`.
-  The banner is ONE line now: state glyph + short text, state word + the
-  whole text on hover. Done: hub + TWA (tabs = icons only, name on hover;
-  guided view below). Still to do, one mod per round: GTP, How to Survive,
-  SVU, MIL, LWS tabs (owner asked for every tab).
 - Right-click > "HARMONIE: open a tab" > each mod row shows the H in that
   mod's colour (owner 2026-11-17): `media/ui/HARMONIE_H_<card id>.png` from
   `tools/gen_h_icons.py` (recolours HARMONIE_H.png to each `Hub.CARDS`
   accent -- keep its ACCENT list in step); the gold H if a file is missing.
+  The owner turned DOWN the "symbols instead of words / text on hover" rework
+  of the same day (PR #101 kept only this) -- ask before redoing the UI text.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
@@ -271,13 +261,6 @@
   ขั้นตอนการทำมินิเกมออก"): every step goes onConfirmProcedure ->
   tryPerformProcedure -> TWAMinigame.play -> the word -> the timed action.
   Only the player's own "minigames off" setting gives Excellent (as before).
-- TWA 1.0.7 guided view: glyph + one line per item; explanations (start
-  cost, Miss cost, rules, what a status means, menu options) only on hover
-  (primary button shows a small "i" when it has more to read); a blocked
-  reason keeps ONE visible line (warn glyph) above the primary; bottom bar =
-  icon buttons (back / menu / mode); the step list = number, picture, name,
-  word, status glyph. Header, focus area and step list are clipped
-  (setStencilRect / clearStencilRect, pcall) so nothing overlaps.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"

@@ -259,19 +259,18 @@ function TWACraftWindow:drawWorkbenchFrame()
             self:drawRect(x + 3, ty + tH - 5, tabW - 6, 2, 0.75, C.accent[1], C.accent[2], C.accent[3])
         end
         local size = math.min(tH - 8, S(self, 44))
+        local label = getText(t.key)
+        local font = TWAFont.small()
+        local lw = getTextManager():MeasureStringX(font, label)
+        local fh = getTextManager():getFontHeight(font)
         local icon = texture("media/textures/TWA_UI/tab_" .. t.id .. ".png")
+        local total = size + 8 + lw
+        local ix = x + math.floor((tabW - total) / 2)
         if icon then
-            -- 1.0.7 (owner: "symbols, not words"): the icon only; its name and
-            -- what the tab is for on hover (drawTabTooltip)
-            self:drawTextureScaled(icon, x + math.floor((tabW - size) / 2), ty + math.floor((tH - size) / 2), size, size, active and 1 or 0.65, 1, 1, 1)
-        else
-            local label = getText(t.key)
-            local font = TWAFont.small()
-            local lw = getTextManager():MeasureStringX(font, label)
-            local fh = getTextManager():getFontHeight(font)
-            local tc = active and C.text or C.textDim
-            shadowText(self, label, x + math.floor((tabW - lw) / 2), ty + math.floor((tH - fh) / 2), tc[1], tc[2], tc[3], 1, font)
+            self:drawTextureScaled(icon, ix, ty + math.floor((tH - size) / 2), size, size, active and 1 or 0.65, 1, 1, 1)
         end
+        local tc = active and C.text or C.textDim
+        shadowText(self, label, ix + size + 8, ty + math.floor((tH - fh) / 2), tc[1], tc[2], tc[3], 1, font)
         self.tabBounds[#self.tabBounds + 1] = { id = t.id, x = x, y = ty, w = tabW, h = tH }
         x = x + tabW + gap
     end
@@ -315,11 +314,10 @@ function TWACraftWindow:drawTabTooltip()
     local mx, my = self:getMouseX(), self:getMouseY()
     for _, t in ipairs(self.tabBounds or {}) do
         if mx >= t.x and mx <= t.x + t.w and my >= t.y and my <= t.y + t.h then
-            local label = getText("IGUI_TWA_Tab_" .. t.id:sub(1, 1):upper() .. t.id:sub(2))
             local tip = getText("IGUI_TWA_Tab_" .. t.id:sub(1, 1):upper() .. t.id:sub(2) .. "_Tip")
-            local lines = { label }
-            if tip and tip ~= "" and not tip:find("IGUI_", 1, true) then lines[2] = tip end
-            self.hoverTooltip = { lines = lines, x = t.x + 40, y = t.y + t.h + 4 }
+            if tip and tip ~= "" and not tip:find("IGUI_", 1, true) then
+                self.hoverTooltip = { lines = { tip }, x = t.x + 40, y = t.y + t.h + 4 }
+            end
         end
     end
 end

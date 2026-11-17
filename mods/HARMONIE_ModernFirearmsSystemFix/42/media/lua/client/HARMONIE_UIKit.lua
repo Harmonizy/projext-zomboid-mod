@@ -220,86 +220,6 @@ function BN.wrap(s, w, font, maxLines)
     return lines
 end
 
--- ================================================================ glyphs + hover text
--- Owner 2026-11-17: "every tab: as few words as possible, symbols; the
--- explanation shows when the mouse points at it". White glyphs (tools/
--- gen_glyphs.py) tinted per use, and a hover text drawn at the END of the
--- panel's render -- on top of its children -- by wrapping that panel's own
--- render once (HARMONIE_HoverTip.set). One tip per panel per frame.
-HARMONIE_Glyph = HARMONIE_Glyph or {}
-local GL = HARMONIE_Glyph
-GL.cache = GL.cache or {}
-function GL.tex(name)
-    if GL.cache[name] == nil then
-        local ok, t = pcall(getTexture, "media/ui/HARMONIE_g_" .. tostring(name) .. ".png")
-        GL.cache[name] = (ok and t) or false
-        if not GL.cache[name] then print("[HARMONIE_Hub][Glyph] missing glyph " .. tostring(name)) end
-    end
-    return GL.cache[name] or nil
-end
--- c = { r, g, b } (0..1); returns true when drawn
-function GL.draw(ui, name, x, y, size, c, a)
-    local t = GL.tex(name)
-    if not t then return false end
-    c = c or { 1, 1, 1 }
-    ui:drawTextureScaled(t, x, y, size, size, a or 1, c[1], c[2], c[3])
-    return true
-end
-
-HARMONIE_HoverTip = HARMONIE_HoverTip or {}
-local HT = HARMONIE_HoverTip
-HT.MAX_W = 360
-function HT.hook(ui)
-    if not ui or ui.hmTipHooked then return end
-    ui.hmTipHooked = true
-    local orig = ui.render
-    ui.render = function(self, ...)
-        if orig then orig(self, ...) end
-        local ok, err = pcall(HT.draw, self)
-        if not ok then print("[HARMONIE_Hub][HoverTip] draw failed: " .. tostring(err)) end
-    end
-end
--- text shown next to (x, y) -- the panel's own coordinates -- this frame
-function HT.set(ui, text, x, y)
-    if not ui or not text or text == "" then return end
-    HT.hook(ui)
-    ui.hmHoverTip = { text = tostring(text), x = x or ui:getMouseX(), y = y or ui:getMouseY() }
-end
--- true when the mouse is inside the rect (panel coordinates)
-function HT.over(ui, x, y, w, h)
-    local mx, my = ui:getMouseX(), ui:getMouseY()
-    return mx >= x and mx < x + w and my >= y and my < y + h
-end
-function HT.draw(ui)
-    local tip = ui.hmHoverTip
-    ui.hmHoverTip = nil
-    if not tip then return end
-    local font = UIFont.Small
-    local tm = getTextManager()
-    local fh = tm:getFontHeight(font)
-    local maxW = math.max(120, math.min(HT.MAX_W, (ui.width or 400) - 20))
-    local lines = {}
-    for para in tostring(tip.text):gmatch("[^\n]+") do
-        for _, l in ipairs(BN.wrap(para, maxW - 16, font, 8)) do lines[#lines + 1] = l end
-    end
-    if #lines == 0 then return end
-    local w = 0
-    for _, l in ipairs(lines) do w = math.max(w, tm:MeasureStringX(font, l)) end
-    w = w + 16
-    local h = #lines * (fh + 2) + 10
-    local x, y = tip.x + 14, tip.y + 18
-    if x + w > (ui.width or x + w) - 4 then x = math.max(4, (ui.width or w) - w - 4) end
-    if y + h > (ui.height or y + h) - 4 then y = math.max(4, tip.y - h - 6) end
-    ui:drawRect(x, y, w, h, 0.96, 0.04, 0.04, 0.05)
-    ui:drawRectBorder(x, y, w, h, 0.9, 0.62, 0.62, 0.68)
-    for i, l in ipairs(lines) do
-        ui:drawText(l, x + 8, y + 5 + (i - 1) * (fh + 2), 0.95, 0.95, 0.95, 1, font)
-    end
-end
-
--- the banner (owner 2026-11-17): ONE line -- a state glyph and the short
--- text; the whole text (and the state word) on hover
-BN.GLYPH = { READY = "play", MISSING = "warn", LOCKED = "lock", IN_PROGRESS = "busy", COMPLETE = "check", INFO_ONLY = "info" }
 function BN.draw(ui, x, y, w, state, text, font)
     if not ui or not text or text == "" or not BN.enabled() then return 0 end
     if not BN.COL[state] then state = "INFO_ONLY" end
@@ -307,24 +227,19 @@ function BN.draw(ui, x, y, w, state, text, font)
     font = font or UIFont.Small
     local tm = getTextManager()
     local fh = tm:getFontHeight(font)
-    local h = fh + 8
-    local gs = fh + 2
+    local chip = btext("IGUI_HUB_State_" .. state, state)
+    local cw = tm:MeasureStringX(font, chip) + 14
+    local lines = BN.wrap(text, math.max(40, w - cw - 26), font, 2)
+    local h = math.max(1, #lines) * (fh + 2) + 8
     ui:drawRect(x, y, w, h, 0.6, 0.05, 0.05, 0.06)
-    ui:drawRect(x, y, w, h, 0.16, col[1], col[2], col[3])
-    ui:drawRect(x, y, 3, h, 0.95, col[1], col[2], col[3])
-    ui:drawRectBorder(x, y, w, h, 0.5, col[1], col[2], col[3])
-    local tx = x + 10
-    if GL.draw(ui, BN.GLYPH[state], x + 8, y + 3, gs, col) then
-        tx = x + 8 + gs + 8
-    else
-        local chip = btext("IGUI_HUB_State_" .. state, state)
-        ui:drawText(chip, tx, y + 4, col[1], col[2], col[3], 1, font)
-        tx = tx + tm:MeasureStringX(font, chip) + 10
-    end
-    local line = BN.wrap(text, math.max(30, x + w - tx - 8), font, 1)[1] or ""
-    ui:drawText(line, tx, y + 4, 0.92, 0.92, 0.92, 1, font)
-    if HT.over(ui, x, y, w, h) then
-        HT.set(ui, btext("IGUI_HUB_State_" .. state, state) .. ": " .. text)
+    ui:drawRect(x, y, w, h, 0.18, col[1], col[2], col[3])
+    ui:drawRect(x, y, 4, h, 0.95, col[1], col[2], col[3])
+    ui:drawRectBorder(x, y, w, h, 0.6, col[1], col[2], col[3])
+    ui:drawRect(x + 10, y + 4, cw, fh + 2, 0.9, col[1] * 0.45, col[2] * 0.45, col[3] * 0.45)
+    ui:drawRectBorder(x + 10, y + 4, cw, fh + 2, 0.9, col[1], col[2], col[3])
+    ui:drawText(chip, x + 17, y + 5, 1, 1, 1, 1, font)
+    for i, l in ipairs(lines) do
+        ui:drawText(l, x + 10 + cw + 10, y + 5 + (i - 1) * (fh + 2), 0.92, 0.92, 0.92, 1, font)
     end
     return h + 6
 end

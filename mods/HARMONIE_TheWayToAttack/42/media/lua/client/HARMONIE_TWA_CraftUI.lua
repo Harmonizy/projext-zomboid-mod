@@ -2793,8 +2793,8 @@ function TWACraftWindow:renderBody()
         end
         self.craftGoWeapons:setVisible(true)
         self.craftGoMaterials:setVisible(true)
-        -- 1.0.7: guided -> no sentence, the banner says it (on hover in full)
-        if self.renderGuidedChoose and self:guidedOn() then self:renderGuidedChoose() else self:renderCraftEmpty() end
+        self:renderCraftEmpty()
+        if self.renderGuidedChoose and self:guidedOn() then self:renderGuidedChoose() end
         self:drawLockNotice()
         self:drawHoverTooltip()
         return

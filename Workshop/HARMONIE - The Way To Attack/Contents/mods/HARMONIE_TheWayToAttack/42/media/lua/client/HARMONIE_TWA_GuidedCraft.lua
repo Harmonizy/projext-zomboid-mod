@@ -1,5 +1,5 @@
 --============================================================================
--- HARMONIE_TheWayToAttack -- Guided craft mode (client, TWA 1.0.6 / 1.0.7)
+-- HARMONIE_TheWayToAttack -- Guided craft mode (client, TWA 1.0.6)
 --
 -- Owner's plan HARMONIE_TWA_Guided_Mode_Redesign_TH.txt (2026-11-16): the
 -- craft tab tells a new player what they are making, what is missing and
@@ -9,19 +9,18 @@
 --     onIncompleteButtonClicked, onCancelButtonClicked, onAbortCenterAction,
 --     onPracticeProcedure, openBaseChooser, jumpToRecipe, onContinueClicked,
 --     onBackClicked) -- those check everything again; timed actions, server,
---     MINIGAMES (never skipped: "Do this step" = onConfirmProcedure ->
---     TWAMinigame.play), taking / giving back items are untouched;
+--     minigames, taking / giving back items are untouched;
 --   * the state shown is derived every frame from the window's real fields
 --     (selectedRecipe, active, resumeItem, activeProcId, activeAction,
 --     activeCenterAction, practicing) -- nothing is stored as a step number;
 --   * requirement checks (DescribeAll = what CheckEligibility checks) and
 --     the item counts are cached for CACHE_MS, never per frame;
---   * Guided <-> Advanced (the old 3-panel page) is a view switch only.
--- 1.0.7 (owner 2026-11-17: "as few words as possible, symbols, only what to
--- do now, the explanation on hover, careful nothing overlaps"): glyphs
--- (hub HARMONIE_Glyph) instead of words, every explanation in a hover text
--- (hub HARMONIE_HoverTip), one short line per item, each area clipped
--- (setStencilRect) so nothing draws over the next one.
+--   * Guided <-> Advanced (the old 3-panel page) is a view switch only
+--     (Zomboid/Lua/HARMONIE_TWA_Window.txt "guided=", the gear window, the
+--     button bottom right). No craft is started, stopped or reset by it.
+-- Scenes (derived): PREPARE / PREPARE_RESUME -> WORK (STEP_BUSY while a step
+-- runs) -> FINISH; BUSY = Start / Cancel / Incomplete / Finish running;
+-- LOCKED = another craft is under way; PRACTICE = a practice running.
 --============================================================================
 
 require "HARMONIE_TWA_CraftUI"
@@ -56,40 +55,6 @@ local C = {
     text = { 0.95, 0.93, 0.86 }, dim = { 0.70, 0.66, 0.56 }, accent = { 1.0, 0.78, 0.2 },
     ok = { 0.50, 0.90, 0.50 }, bad = { 0.98, 0.55, 0.45 }, warn = { 1.0, 0.80, 0.35 }, info = { 0.62, 0.78, 1.0 },
 }
-
--- a glyph (hub); `fallback` text when the hub's glyphs are missing
-local function glyph(win, name, x, y, size, col, fallback)
-    local GL = HARMONIE_Glyph
-    if GL and GL.draw and GL.draw(win, name, x, y, size, col or C.text) then return true end
-    if fallback then text(win, fallback, x, y + math.floor((size - fh()) / 2), col or C.text) end
-    return false
-end
--- hover text for a rect (hub HoverTip, else the window's own tooltip)
-local function hover(win, s, x, y, w, ht)
-    if not s or s == "" then return false end
-    local mx, my = win:getMouseX(), win:getMouseY()
-    if not (mx >= x and mx < x + w and my >= y and my < y + ht) then return false end
-    local HT = HARMONIE_HoverTip
-    if HT and HT.set then HT.set(win, s, mx, my) else win.hoverTooltip = { lines = { s }, x = x, y = y + ht + 2 } end
-    return true
-end
--- an area nothing may draw out of
-local function clip(win, x, y, w, ht)
-    if win.setStencilRect then pcall(win.setStencilRect, win, x, y, w, ht) end
-end
-local function unclip(win)
-    if win.clearStencilRect then pcall(win.clearStencilRect, win) end
-end
--- one short line, the whole text on hover
-local function line1(win, s, x, y, w, col, glyphName, gcol)
-    local gs = fh()
-    local tx = x
-    if glyphName then glyph(win, glyphName, x, y, gs, gcol or col); tx = x + gs + 6 end
-    local t = fit(s, x + w - tx)
-    text(win, t, tx, y, col)
-    if t ~= s then hover(win, s, x, y, w, fh() + 2) end
-    return y + fh() + 4
-end
 
 -- ---------------------------------------------------------------- mode
 function TWACraftWindow:guidedOn()
@@ -135,31 +100,25 @@ end
 
 function TWACraftWindow:drawGuidedCards(top, bottom)
     local g = self:guidedGeom()
-    -- no title words on the left (the header says what it is)
-    self:drawCard(g.cardL.x, top, g.cardL.w, bottom - top, "")
+    self:drawCard(g.cardL.x, top, g.cardL.w, bottom - top, getText("IGUI_TWA_G_Card_Focus"))
     local recipe = self.selectedRecipe
     local n, d = 0, 0
     local done = self:currentDone()
     for _, pid in ipairs(recipe and recipe.procedures or {}) do
-        if TWAProcedures.List[pid] then
-            n = n + 1
-            if done[pid] then d = d + 1 end
-        end
+        n = n + 1
+        if done[pid] then d = d + 1 end
     end
     self:drawCard(g.cardR.x, top, g.cardR.w, bottom - top, getText("IGUI_TWA_G_Card_Steps", tostring(d), tostring(n)))
 end
 
 -- ---------------------------------------------------------------- buttons
 -- drawn buttons: registered every frame in self.guidedHits (renderBody
--- clears them first, so nothing stale is ever clicked). opts.icon = a glyph
--- (alone when label is "" -- the tip then says what it does); opts.info =
--- a small "i" at the right: there is more to read on hover.
+-- clears them first, so nothing stale is ever clicked)
 local KIND = {
     primary = { 0.55, 0.30, 0.04 }, danger = { 0.55, 0.12, 0.08 }, secondary = { 0.22, 0.17, 0.06 },
 }
 function TWACraftWindow:guidedButton(id, label, x, y, w, ht, opts)
     opts = opts or {}
-    label = label or ""
     local enabled = opts.enabled ~= false
     local kind = opts.kind or "secondary"
     local mx, my = self:getMouseX(), self:getMouseY()
@@ -177,25 +136,12 @@ function TWACraftWindow:guidedButton(id, label, x, y, w, ht, opts)
         self:drawRectBorder(x, y, w, ht, over and 1 or ba, bc[1], bc[2], bc[3])
         if kind == "primary" then self:drawRectBorder(x + 1, y + 1, w - 2, ht - 2, (over and 1 or ba) * 0.5, bc[1], bc[2], bc[3]) end
     end
-    local c = enabled and C.text or { 0.6, 0.58, 0.54 }
     local f = opts.font or small()
-    local gs = math.min(ht - 8, math.max(fh(), math.floor(ht * 0.6)))
-    local infoW = opts.info and (fh() + 6) or 0
-    if label == "" and opts.icon then
-        glyph(self, opts.icon, x + math.floor((w - gs) / 2), y + math.floor((ht - gs) / 2), gs, c, "?")
-    else
-        local iconW = opts.icon and (gs + 6) or 0
-        if tw(label, f) > w - 12 - iconW - infoW and f ~= small() then f = small() end
-        local s = fit(label, w - 12 - iconW - infoW, f)
-        local total = iconW + tw(s, f)
-        local sx = x + math.floor((w - infoW - total) / 2)
-        if opts.icon then glyph(self, opts.icon, sx, y + math.floor((ht - gs) / 2), gs, c) end
-        text(self, s, sx + iconW, y + math.floor((ht - fh(f)) / 2), c, f)
-    end
-    if opts.info then glyph(self, "info", x + w - infoW, y + math.floor((ht - fh()) / 2), fh(), C.info) end
-    if over then
-        if opts.tip then hover(self, opts.tip, x, y, w, ht) end
-    end
+    if tw(label, f) > w - 12 and f ~= small() then f = small() end
+    local s = fit(label, w - 12, f)
+    local c = enabled and C.text or { 0.6, 0.58, 0.54 }
+    text(self, s, x + math.floor((w - tw(s, f)) / 2), y + math.floor((ht - fh(f)) / 2), c, f)
+    if over and opts.tip then self.hoverTooltip = { lines = { opts.tip }, x = x, y = y + ht + 2 } end
     self.guidedHits = self.guidedHits or {}
     self.guidedHits[#self.guidedHits + 1] = { id = id, x = x, y = y, w = w, h = ht, enabled = enabled, fn = opts.fn }
 end
@@ -277,18 +223,17 @@ function TWACraftWindow:guidedData()
             local typ = chosen or recipe.base
             local row = { type = typ, ok = chosen ~= nil }
             row.name = h().baseDisplayName(typ, (not chosen) and recipe.baseAlt or nil)
-            row.count = row.ok and S.countBase(self.player, recipe, chosen) or nil
-            row.status = row.ok and getText("IGUI_TWA_G_Have", tostring(row.count)) or getText("IGUI_TWA_G_Missing")
+            row.status = row.ok and getText("IGUI_TWA_G_Have", tostring(S.countBase(self.player, recipe, chosen))) or getText("IGUI_TWA_G_Missing")
             if not row.ok and recipe.gemFrom then
                 row.status = getText("IGUI_TWA_BaseNeedsState", getText("IGUI_TWA_GemState_" .. recipe.gemFrom))
             end
             if row.ok and #S.baseTypes(recipe) > 1 and #self:baseChoices(recipe) > 1 then
-                row.btn = { id = "changeBase", icon = "redo", label = getText("IGUI_TWA_G_ChangeBase"), fn = function(win) win:openBaseChooser(recipe) end }
+                row.btn = { id = "changeBase", label = getText("IGUI_TWA_G_ChangeBase"), fn = function(win) win:openBaseChooser(recipe) end }
             elseif not row.ok then
                 missing[#missing + 1] = row.name
                 local maker = h().recipeMaking(typ)
                 if maker and maker ~= recipe and not self.active then
-                    row.btn = { id = "recipeOf", icon = "tool", label = getText("IGUI_TWA_G_RecipeOf"), tip = getText("IGUI_TWA_G_RecipeOf_Tip", row.name),
+                    row.btn = { id = "recipeOf", label = getText("IGUI_TWA_G_RecipeOf"), tip = getText("IGUI_TWA_G_RecipeOf_Tip", row.name),
                         fn = function(win) win:jumpToRecipe(maker) end }
                 end
             end
@@ -303,13 +248,12 @@ function TWACraftWindow:guidedData()
             else
                 local n = TWASources.get(self.player):countEval(recipe.base2, function(it) return not S.isBookmarked(it) end)
                 row.ok = S.pickFreshItem(self.player, recipe.base2) ~= nil
-                row.count = row.ok and n or nil
                 row.status = row.ok and getText("IGUI_TWA_G_Have", tostring(n)) or getText("IGUI_TWA_G_Missing")
                 if not row.ok then
                     missing[#missing + 1] = row.name
                     local maker = h().recipeMaking(recipe.base2)
                     if maker and maker ~= recipe and not self.active and not self.resumeItem then
-                        row.btn = { id = "recipeOf2", icon = "tool", label = getText("IGUI_TWA_G_RecipeOf"), tip = getText("IGUI_TWA_G_RecipeOf_Tip", row.name),
+                        row.btn = { id = "recipeOf2", label = getText("IGUI_TWA_G_RecipeOf"), tip = getText("IGUI_TWA_G_RecipeOf_Tip", row.name),
                             fn = function(win) win:jumpToRecipe(maker) end }
                     end
                 end
@@ -386,76 +330,71 @@ function TWACraftWindow:guidedPick(pid, improve)
 end
 
 -- ---------------------------------------------------------------- drawing helpers
+-- wrapped paragraph -> new y (stops at yMax)
+function TWACraftWindow:guidedPara(s, x, y, w, col, f, yMax, maxLines)
+    f = f or small()
+    local lh = fh(f) + 2
+    for _, l in ipairs(wrap(s, w, f, maxLines or 4)) do
+        if yMax and y + lh > yMax then break end
+        text(self, l, x, y, col, f)
+        y = y + lh
+    end
+    return y
+end
+
 function TWACraftWindow:guidedBar(x, y, w, ht, frac)
     self:drawRect(x, y, w, ht, 0.9, 0.05, 0.05, 0.05)
     self:drawRect(x, y, math.floor(w * math.max(0, math.min(1, frac or 0))), ht, 1, 1, 0.7, 0.2)
     self:drawRectBorder(x, y, w, ht, 0.8, 0.5, 0.5, 0.5)
 end
 
--- a word chip (Good / Miss ...) -> its width
-function TWACraftWindow:guidedWordChip(word, x, y, tipText)
-    if not word then return 0 end
-    local wc = TWACraftState.WORD_COLOR[word] or { r = 1, g = 1, b = 1 }
-    local s = TWACraftState.wordText(word)
-    local w, ht = tw(s) + 12, fh() + 4
-    self:drawRect(x, y, w, ht, 0.9, wc.r * 0.2, wc.g * 0.2, wc.b * 0.2)
-    self:drawRectBorder(x, y, w, ht, 0.9, wc.r, wc.g, wc.b)
-    text(self, s, x + 6, y + 2, { wc.r, wc.g, wc.b })
-    if tipText then hover(self, tipText, x, y, w, ht) end
-    return w
-end
-
--- requirement lines: a tick or a warning glyph + what it is (one line each)
 function TWACraftWindow:guidedReqLines(reqs, x, y, w, yMax)
-    local lh = fh() + 4
+    local lh = fh() + 2
     if #reqs == 0 then
-        return line1(self, getText("IGUI_TWA_G_NoNeeds"), x, y, w, C.ok, "check")
+        return self:guidedPara(getText("IGUI_TWA_G_NoNeeds"), x, y, w, C.ok, small(), yMax)
     end
+    local shown = 0
     for i, r in ipairs(reqs) do
         if y + lh > yMax then
-            line1(self, getText("IGUI_TWA_G_MoreLines", tostring(#reqs - i + 1)), x, y - lh, w, C.dim)
+            text(self, getText("IGUI_TWA_G_MoreLines", tostring(#reqs - shown)), x, y - lh, C.dim)
             break
         end
-        local s = tostring(self.procLibrary:describeOne(r))
-        y = line1(self, s, x, y, w, r.met and C.text or C.bad, r.met and "check" or "warn", r.met and C.ok or C.bad)
+        local pre = getText(r.met and "IGUI_TWA_G_Prefix_Have" or "IGUI_TWA_G_Prefix_Miss")
+        local line = pre .. ": " .. tostring(self.procLibrary:describeOne(r))
+        y = self:guidedPara(line, x, y, w, r.met and C.text or C.bad, small(), yMax, 2)
+        shown = i
     end
     return y
 end
 
 -- ---------------------------------------------------------------- scenes
--- each returns { banner = {state, text}, title, titleGlyph, titleTip,
---   primary = {label, fn, enabled, kind, tip, icon}, reason = text (one
---   visible line above the primary), info = { text } (on the primary's
---   hover), draw(win, x, y, w, yMax) }
+-- each returns { banner = {state, text}, title, primary = {label, fn, enabled, kind, tip},
+--   notes = { {text, col} } (drawn above the primary, last = nearest), draw(y, yMax) }
 
 function TWACraftWindow:guidedScenePrepare(data, resume)
     local recipe = self.selectedRecipe
     local name = h().recipeName(recipe)
-    local sp = { info = {} }
-    sp.title = getText(resume and "IGUI_TWA_G_ResumeTitle" or "IGUI_TWA_G_PrepareTitle", name)
-    sp.titleGlyph = resume and "redo" or "box"
+    local sp = { notes = {} }
+    sp.title = resume and getText("IGUI_TWA_G_ResumeTitle", name) or getText("IGUI_TWA_G_PrepareTitle", name)
     if data.canStart then
         sp.banner = { "READY", getText(resume and "IGUI_TWA_G_B_Resume" or "IGUI_TWA_G_B_PrepareReady") }
-        sp.primary = { id = "start", label = getText(resume and "IGUI_TWA_G_Resume" or "IGUI_TWA_G_Start", name), kind = "primary", icon = "play",
+        sp.primary = { id = "start", label = resume and getText("IGUI_TWA_G_Resume") or getText("IGUI_TWA_G_Start", name), kind = "primary",
             tip = getText("IGUI_TWA_Tooltip_StartCraft"), fn = function(win) win:onStartButtonClicked() end }
     else
         sp.banner = { "MISSING", getText("IGUI_TWA_G_B_PrepareMissing") }
-        sp.primary = { id = "showMissing", label = getText("IGUI_TWA_G_ShowMissing"), kind = "primary", icon = "warn",
+        sp.primary = { id = "showMissing", label = getText("IGUI_TWA_G_ShowMissing"), kind = "primary",
             fn = function(win) win.guidedFlashUntil = now() + 3000 end }
-        if #(data.missing or {}) > 0 then sp.reason = getText("IGUI_TWA_G_CantStart", table.concat(data.missing, ", ")) end
+        if #(data.missing or {}) > 0 then
+            sp.notes[#sp.notes + 1] = { getText("IGUI_TWA_G_CantStart", table.concat(data.missing, ", ")), C.bad }
+        end
     end
-    sp.info[#sp.info + 1] = getText("IGUI_TWA_G_StartCost")
-    sp.info[#sp.info + 1] = getText("IGUI_TWA_G_MissCost")
+    table.insert(sp.notes, 1, { getText("IGUI_TWA_G_MissCost"), C.dim })
+    table.insert(sp.notes, 1, { getText("IGUI_TWA_G_StartCost"), C.dim })
     sp.draw = function(win, x, y, w, yMax)
-        local lh = fh() + 4
-        local gs = fh()
+        local lh = fh() + 2
         local flash = (win.guidedFlashUntil or 0) > now() and TWABlink and TWABlink.level() or nil
-        -- 1) the start items: picture, name, a tick / warning (+ how many)
-        local hy = y
-        glyph(win, "box", x, y, gs, C.accent)
-        text(win, getText("IGUI_TWA_G_GroupStart"), x + gs + 6, y, C.accent)
-        hover(win, getText("IGUI_TWA_G_GroupStart_Tip"), x, hy, w, lh)
-        y = y + lh
+        -- 1) the start items
+        text(win, getText("IGUI_TWA_G_GroupStart"), x, y, C.accent); y = y + lh + 2
         local rowH = math.max(sc(30), fh() + 12)
         for _, r in ipairs(data.rows or {}) do
             if y + rowH > yMax then break end
@@ -470,58 +409,46 @@ function TWACraftWindow:guidedScenePrepare(data, resume)
                 win:drawTextureScaled(icon, ix, y + 4, s, s, r.ok and 1 or 0.5, 1, 1, 1)
                 ix = ix + s + 6
             end
-            local right = x + w - 4
+            local btnW = 0
             if r.btn then
-                local bs = rowH - 8
-                win:guidedButton(r.btn.id, "", right - bs, y + 4, bs, bs, { icon = r.btn.icon, fn = r.btn.fn, tip = r.btn.tip or r.btn.label })
-                right = right - bs - 6
+                btnW = math.min(sc(110), tw(r.btn.label) + 16)
+                win:guidedButton(r.btn.id, r.btn.label, x + w - btnW - 4, y + 4, btnW, rowH - 8, { fn = r.btn.fn, tip = r.btn.tip })
+                btnW = btnW + 8
             end
-            local sg = math.min(rowH - 10, sc(20))
-            glyph(win, r.ok and "check" or "warn", right - sg, y + math.floor((rowH - sg) / 2), sg, r.ok and C.ok or C.bad, r.ok and "+" or "!")
-            right = right - sg - 6
-            if r.count then
-                local cs = "x" .. tostring(r.count)
-                text(win, cs, right - tw(cs), y + math.floor((rowH - fh()) / 2), C.dim)
-                right = right - tw(cs) - 6
-            end
-            text(win, fit(r.name, right - ix - 4), ix, y + math.floor((rowH - fh()) / 2), C.text)
-            hover(win, r.name .. (r.status and r.status ~= "" and (" - " .. r.status) or ""), x, y, right - x, rowH)
+            local st = r.status or ""
+            local stW = math.min(tw(st), math.floor(w * 0.45))
+            local stx = x + w - btnW - stW - 8
+            text(win, fit(r.name, stx - ix - 8), ix, y + math.floor((rowH - fh()) / 2), C.text)
+            if st ~= "" then text(win, fit(st, stW + 2), stx, y + math.floor((rowH - fh()) / 2), r.ok and C.ok or C.bad) end
             y = y + rowH + 4
         end
         y = y + 4
-        -- 2) materials the steps still need, 3) step conditions -- only what is missing
-        local groups = { { "tool", "IGUI_TWA_G_GroupConsume", data.consume or {} }, { "flag", "IGUI_TWA_G_GroupCond", data.cond or {} } }
-        for _, gr in ipairs(groups) do
+        -- 2) materials the steps use, 3) step conditions -- what is missing now
+        local groups = { { "IGUI_TWA_G_GroupConsume", data.consume or {} }, { "IGUI_TWA_G_GroupCond", data.cond or {} } }
+        for gi, gr in ipairs(groups) do
             if y + lh > yMax then break end
-            local missing = #gr[3]
-            glyph(win, gr[1], x, y, gs, C.accent)
-            text(win, getText(gr[2]), x + gs + 6, y, C.accent)
-            local mark = missing == 0 and "check" or "warn"
-            local lw2 = tw(getText(gr[2]))
-            glyph(win, mark, x + gs + 6 + lw2 + 8, y, gs, missing == 0 and C.ok or C.bad)
-            hover(win, getText(gr[2] .. "_Tip"), x, y, w, lh)
-            y = y + lh
-            for i, s in ipairs(gr[3]) do
-                if i > 3 or y + lh > yMax then
-                    line1(win, getText("IGUI_TWA_G_MoreLines", tostring(missing - i + 1)), x + gs, y, w - gs, C.dim)
-                    y = y + lh
-                    break
+            text(win, getText(gr[1]), x, y, C.accent); y = y + lh
+            if #gr[2] == 0 then
+                text(win, getText("IGUI_TWA_G_AllOk"), x + 8, y, C.ok); y = y + lh
+            else
+                local cap = gi == 1 and 3 or 4
+                for i, line in ipairs(gr[2]) do
+                    if i > cap or y + lh > yMax then
+                        text(win, getText("IGUI_TWA_G_MoreLines", tostring(#gr[2] - i + 1)), x + 8, y, C.dim); y = y + lh
+                        break
+                    end
+                    y = win:guidedPara(getText("IGUI_TWA_G_Prefix_Miss") .. ": " .. line, x + 8, y, w - 8, C.bad, small(), yMax, 2)
                 end
-                y = line1(win, s, x + gs, y, w - gs, C.bad, "warn", C.bad)
             end
             y = y + 2
         end
         if y + lh <= yMax then
-            local s = tostring(data.ready) .. " / " .. tostring(data.total)
-            glyph(win, "play", x, y, gs, data.ready == data.total and C.ok or C.warn)
-            text(win, s, x + gs + 6, y, data.ready == data.total and C.ok or C.warn)
-            hover(win, getText("IGUI_TWA_G_StepsReady", tostring(data.ready), tostring(data.total)), x, y, w, lh)
+            text(win, getText("IGUI_TWA_G_StepsReady", tostring(data.ready), tostring(data.total)), x, y, data.ready == data.total and C.ok or C.warn)
         end
     end
     return sp
 end
 
--- the last step's result -> text, colour, glyph
 function TWACraftWindow:guidedResultLine()
     local recipe = self.selectedRecipe
     local res, stop = self.lastProcResult, self.lastProcStopped
@@ -529,81 +456,88 @@ function TWACraftWindow:guidedResultLine()
     local latest
     if res and res.recipeId == recipe.id and t - res.at < G.RESULT_MS then latest = res end
     if stop and stop.recipeId == recipe.id and t - stop.at < G.RESULT_MS and (not latest or stop.at > latest.at) then
-        return getText("IGUI_TWA_G_ResultStopped", procName(stop.procId)), C.warn, "busy"
+        return getText("IGUI_TWA_G_ResultStopped", procName(stop.procId)), C.warn
     end
     if not latest then return nil end
-    if latest.word == "Miss" then return getText("IGUI_TWA_G_ResultMiss", procName(latest.procId)), C.bad, "cross" end
+    if latest.word == "Miss" then return getText("IGUI_TWA_G_ResultMiss", procName(latest.procId)), C.bad end
     local done = self:currentDone()
     local nextPid
     for _, pid in ipairs(recipe.procedures or {}) do
         if TWAProcedures.List[pid] and not done[pid] then nextPid = pid break end
     end
     local word = TWACraftState.wordText(latest.word)
-    if nextPid then return getText("IGUI_TWA_G_ResultGood", procName(latest.procId), word, procName(nextPid)), C.ok, "check" end
-    return getText("IGUI_TWA_G_ResultGoodLast", procName(latest.procId), word), C.ok, "check"
+    if nextPid then return getText("IGUI_TWA_G_ResultGood", procName(latest.procId), word, procName(nextPid)), C.ok end
+    return getText("IGUI_TWA_G_ResultGoodLast", procName(latest.procId), word), C.ok
 end
 
-local TITLE_GLYPH = { manual = "target", improve = "redo", blocked = "warn", ready = "play" }
 function TWACraftWindow:guidedSceneWork(data, pid, why)
-    local sp = { info = {} }
+    local sp = { notes = {} }
     local name = procName(pid)
     local p = data.procs[pid] or { reqs = {}, met = false }
     local done, quality = self:currentDone(), self:currentQuality()
     local isDone = done[pid] and true or false
     local key = ({ manual = "IGUI_TWA_G_WorkTitleManual", improve = "IGUI_TWA_G_WorkTitleImprove", blocked = "IGUI_TWA_G_WorkTitleBlocked" })[why] or "IGUI_TWA_G_WorkTitleRec"
-    sp.title, sp.titleGlyph, sp.titleTip = name, TITLE_GLYPH[why] or "play", getText(key, name)
+    sp.title = getText(key, name)
     sp.banner = why == "blocked" and { "MISSING", getText("IGUI_TWA_G_B_WorkBlocked") } or { "IN_PROGRESS", getText("IGUI_TWA_G_B_Work") }
     if p.met then
         sp.primary = { id = "doStep", label = getText(isDone and "IGUI_TWA_G_RedoStep" or "IGUI_TWA_G_DoStep", name), kind = "primary",
-            icon = isDone and "redo" or "play", tip = getText("IGUI_TWA_Tooltip_ConfirmProcedure"),
+            tip = getText("IGUI_TWA_Tooltip_ConfirmProcedure"),
             fn = function(win) win.selectedProcId = pid; win:onConfirmProcedure() end }
     else
-        sp.primary = { id = "cantStep", label = getText("IGUI_TWA_G_CantStep"), enabled = false, icon = "lock" }
+        sp.primary = { id = "cantStep", label = getText("IGUI_TWA_G_CantStep"), enabled = false }
         local first
         for _, r in ipairs(p.reqs) do if not r.met then first = self.procLibrary:describeOne(r) break end end
-        sp.reason = getText("IGUI_TWA_G_CantStepWhy", name, tostring(first or "?"))
+        local other = false
         for _, q in ipairs(self.selectedRecipe.procedures or {}) do
-            if q ~= pid and not done[q] and data.procs[q] and data.procs[q].met then sp.info[#sp.info + 1] = getText("IGUI_TWA_G_PickOther") break end
+            if q ~= pid and not done[q] and data.procs[q] and data.procs[q].met then other = true end
         end
+        if other then sp.notes[#sp.notes + 1] = { getText("IGUI_TWA_G_PickOther"), C.info } end
+        sp.notes[#sp.notes + 1] = { getText("IGUI_TWA_G_CantStepWhy", name, tostring(first or "?")), C.bad }
     end
-    sp.info[#sp.info + 1] = getText("IGUI_TWA_G_MissNote")
+    table.insert(sp.notes, 1, { getText("IGUI_TWA_G_MissNote"), C.dim })
     sp.draw = function(win, x, y, w, yMax)
-        local lh = fh() + 4
-        -- last result of this step: a word chip (or "not done yet" as a dim dash)
+        local lh = fh() + 2
         local word = TWACraftState.wordFor(pid, done, quality)
         if word then
-            win:guidedWordChip(word, x, y, getText("IGUI_TWA_G_LastWord", TWACraftState.wordText(word)))
+            local wc = TWACraftState.WORD_COLOR[word] or { r = 1, g = 1, b = 1 }
+            text(win, getText("IGUI_TWA_G_LastWord", TWACraftState.wordText(word)), x, y, { wc.r, wc.g, wc.b })
         else
-            text(win, "-", x, y, C.dim)
-            hover(win, getText("IGUI_TWA_G_NotDoneYet"), x, y, tw("-") + 20, lh)
+            text(win, getText("IGUI_TWA_G_NotDoneYet"), x, y, C.dim)
         end
-        -- the last result, one line (all of it on hover)
-        local rl, rc, rg = win:guidedResultLine()
+        y = y + lh + 2
+        local rl, rc = win:guidedResultLine()
         if rl then
-            local cx = x + sc(70)
-            line1(win, rl, cx, y + 2, w - (cx - x), rc, rg, rc)
+            local lines = wrap(rl, w - 16, small(), 3)
+            local bh = #lines * lh + 8
+            win:drawRect(x, y, w, bh, 0.7, rc[1] * 0.15, rc[2] * 0.15, rc[3] * 0.15)
+            win:drawRectBorder(x, y, w, bh, 0.8, rc[1], rc[2], rc[3])
+            for i, l in ipairs(lines) do text(win, l, x + 8, y + 4 + (i - 1) * lh, rc) end
+            y = y + bh + 6
         end
         if win.practiceWord and win.practiceProc == pid and now() < (win.practiceUntil or 0) then
             local pc = TWACraftState.WORD_COLOR[win.practiceWord] or { r = 1, g = 1, b = 1 }
-            y = y + lh
-            line1(win, getText("IGUI_TWA_PracticeResult", TWACraftState.wordText(win.practiceWord)), x, y, w, { pc.r, pc.g, pc.b }, "target", { pc.r, pc.g, pc.b })
+            text(win, getText("IGUI_TWA_PracticeResult", TWACraftState.wordText(win.practiceWord)), x, y, { pc.r, pc.g, pc.b })
+            y = y + lh + 2
         end
-        y = y + lh + 4
-        -- secondary actions: small icon buttons at the bottom of the area
+        -- secondary actions sit at the bottom of the focus area
         local sec = {}
         if TWACraftState.hasTried(win.player, pid) and TWAMinigame and TWAMinigame.enabled and TWAMinigame.enabled() then
-            sec[#sec + 1] = { id = "practice", icon = "target", tip = getText("IGUI_TWA_G_Practice") .. "\n" .. getText("IGUI_TWA_Tooltip_Practice"),
+            sec[#sec + 1] = { id = "practice", label = getText("IGUI_TWA_G_Practice"), tip = getText("IGUI_TWA_Tooltip_Practice"),
                 fn = function(w2) w2.selectedProcId = pid; w2:onPracticeProcedure() end }
         end
         if win.guidedImprove then
-            sec[#sec + 1] = { id = "backToFinish", icon = "flag", tip = getText("IGUI_TWA_G_BackToFinish"),
+            sec[#sec + 1] = { id = "backToFinish", label = getText("IGUI_TWA_G_BackToFinish"),
                 fn = function(w2) w2.guidedImprove, w2.guidedManual = nil, nil end }
         end
-        local bs = sc(28)
-        local reqMax = #sec > 0 and (yMax - bs - 6) or yMax
-        win:guidedReqLines(p.reqs, x, y, w, reqMax)
-        for i, b in ipairs(sec) do
-            win:guidedButton(b.id, "", x + (i - 1) * (bs + 6), yMax - bs, bs, bs, { icon = b.icon, fn = b.fn, tip = b.tip })
+        local secH = sc(26)
+        local reqMax = #sec > 0 and (yMax - secH - 8) or yMax
+        text(win, getText("IGUI_TWA_G_Needs"), x, y, C.accent); y = y + lh
+        win:guidedReqLines(p.reqs, x + 8, y, w - 8, reqMax)
+        if #sec > 0 then
+            local bw = math.floor((w - (#sec - 1) * 8) / #sec)
+            for i, b in ipairs(sec) do
+                win:guidedButton(b.id, b.label, x + (i - 1) * (bw + 8), yMax - secH, bw, secH, { fn = b.fn, tip = b.tip })
+            end
         end
     end
     return sp
@@ -611,16 +545,15 @@ end
 
 function TWACraftWindow:guidedSceneStepBusy(data)
     local pid = self.activeProcId
-    local sp = { info = {} }
-    sp.title, sp.titleGlyph, sp.titleTip = procName(pid), "busy", getText("IGUI_TWA_G_WorkTitleRec", procName(pid))
+    local sp = { notes = {} }
+    sp.title = getText("IGUI_TWA_G_WorkTitleRec", procName(pid))
     sp.banner = { "IN_PROGRESS", getText("IGUI_TWA_G_B_StepBusy") }
     if self.activeAction then
-        sp.primary = { id = "stopStep", label = getText("IGUI_TWA_G_StopStep"), kind = "danger", icon = "cross",
-            tip = getText("IGUI_TWA_Tooltip_CancelProcedure"),
+        sp.primary = { id = "stopStep", label = getText("IGUI_TWA_G_StopStep"), kind = "danger", tip = getText("IGUI_TWA_Tooltip_CancelProcedure"),
             fn = function(win) win.selectedProcId = win.activeProcId; win:onConfirmProcedure() end }
-        sp.info[#sp.info + 1] = getText("IGUI_TWA_G_StopStepNote")
+        sp.notes[#sp.notes + 1] = { getText("IGUI_TWA_G_StopStepNote"), C.dim }
     else
-        sp.primary = { id = "minigame", label = getText("IGUI_TWA_G_Minigame"), enabled = false, icon = "busy" }
+        sp.primary = { id = "minigame", label = getText("IGUI_TWA_G_Minigame"), enabled = false }
     end
     sp.draw = function(win, x, y, w, yMax)
         if win.activeAction then
@@ -628,18 +561,21 @@ function TWACraftWindow:guidedSceneStepBusy(data)
             y = y + sc(14) + 8
         end
         local p = data.procs[pid]
-        if p then win:guidedReqLines(p.reqs, x, y, w, yMax) end
+        if p then
+            text(win, getText("IGUI_TWA_G_Needs"), x, y, C.accent)
+            win:guidedReqLines(p.reqs, x + 8, y + fh() + 2, w - 8, yMax)
+        end
     end
     return sp
 end
 
 function TWACraftWindow:guidedScenePractice()
     local pid = self.activeProcId or self.selectedProcId
-    local sp = { info = {} }
-    sp.title, sp.titleGlyph, sp.titleTip = procName(pid), "target", getText("IGUI_TWA_G_Practicing", procName(pid))
+    local sp = { notes = {} }
+    sp.title = getText("IGUI_TWA_G_Practicing", procName(pid))
     sp.banner = { "INFO_ONLY", getText("IGUI_TWA_G_B_Practice") }
-    sp.primary = { id = "stopPractice", label = getText("IGUI_TWA_G_StopPractice"), kind = "danger", icon = "cross",
-        enabled = self.activeAction ~= nil, fn = function(win) win:onPracticeProcedure() end }
+    sp.primary = { id = "stopPractice", label = getText("IGUI_TWA_G_StopPractice"), kind = "danger", enabled = self.activeAction ~= nil,
+        fn = function(win) win:onPracticeProcedure() end }
     sp.draw = function(win, x, y, w, yMax)
         if win.activeAction then win:guidedBar(x, y, w, sc(14), TWACraftWindow.jobDelta(win.activeAction)) end
     end
@@ -650,43 +586,42 @@ function TWACraftWindow:guidedSceneFinish(data)
     local recipe = self.selectedRecipe
     local S = TWACraftState
     local map = self:currentMap()
-    local ok = S.canFinish(recipe, map, self.player)
+    local ok, whyNot = S.canFinish(recipe, map, self.player)
     local oWord = S.overall(recipe, map, self.player)
-    local sp = { info = {} }
-    sp.title, sp.titleGlyph = getText("IGUI_TWA_G_FinishTitle"), "flag"
-    local rule
-    if S.isMaterialRecipe(recipe) then rule = getText("IGUI_TWA_MaterialFinishRule")
-    elseif recipe.roll then rule = getText("IGUI_TWA_GemFinishRule", tostring(S.gemChance("Excellent")), tostring(S.gemChance("Good")), tostring(S.gemChance("Bad")))
-    elseif recipe.keepType then
-        rule = getText("IGUI_TWA_GemRefineRule", getText("IGUI_TWA_GemState_" .. (recipe.gemFrom or "Raw")),
-            tostring(S.gemBreakChance("Bad")), tostring(S.gemBreakChance("Good")), tostring(S.gemBreakChance("Excellent")))
-    else rule = getText("IGUI_TWA_G_GradeNote") end
-    sp.info[#sp.info + 1] = rule
+    local sp = { notes = {} }
+    sp.title = getText("IGUI_TWA_G_FinishTitle")
     if ok then
         sp.banner = { "COMPLETE", getText("IGUI_TWA_G_B_Finish") }
-        sp.primary = { id = "finish", label = getText("IGUI_TWA_G_Finish"), kind = "primary", icon = "check",
-            tip = getText("IGUI_TWA_Tooltip_Finish"), fn = function(win) win:onFinishButtonClicked() end }
+        sp.primary = { id = "finish", label = getText("IGUI_TWA_G_Finish"), kind = "primary", tip = getText("IGUI_TWA_Tooltip_Finish"),
+            fn = function(win) win:onFinishButtonClicked() end }
     else
         sp.banner = { "MISSING", getText("IGUI_TWA_G_B_FinishBlocked") }
-        sp.reason = getText("IGUI_TWA_G_FinishNo")
-        sp.primary = { id = "showImprove", label = getText("IGUI_TWA_G_ShowImprove"), kind = "primary", icon = "redo",
+        sp.primary = { id = "showImprove", label = getText("IGUI_TWA_G_ShowImprove"), kind = "primary",
             fn = function(win) win:guidedPick(win:guidedLowest(), true) end }
     end
     sp.draw = function(win, x, y, w, yMax)
-        local lh = fh() + 4
+        local lh = fh() + 2
         if oWord then
-            local cw = win:guidedWordChip(oWord, x, y, getText("IGUI_TWA_G_Overall", S.wordText(oWord)))
-            glyph(win, ok and "check" or "warn", x + cw + 8, y + 2, fh(), ok and C.ok or C.bad)
-            hover(win, getText(ok and "IGUI_TWA_G_FinishOk" or "IGUI_TWA_G_FinishNo"), x + cw + 4, y, fh() + 8, lh)
-            y = y + lh + 4
+            local oc = S.WORD_COLOR[oWord] or { r = 1, g = 1, b = 1 }
+            text(win, getText("IGUI_TWA_G_Overall", S.wordText(oWord)), x, y, { oc.r, oc.g, oc.b }, medium())
+            y = y + fh(medium()) + 4
         end
-        local gs = fh()
-        glyph(win, "info", x, y, gs, C.info)
-        hover(win, rule, x, y, gs + 4, lh)
+        y = win:guidedPara(getText(ok and "IGUI_TWA_G_FinishOk" or "IGUI_TWA_G_FinishNo"), x, y, w, ok and C.ok or C.bad, small(), yMax)
+        y = y + 4
+        local rule
+        if S.isMaterialRecipe(recipe) then rule = getText("IGUI_TWA_MaterialFinishRule")
+        elseif recipe.roll then rule = getText("IGUI_TWA_GemFinishRule", tostring(S.gemChance("Excellent")), tostring(S.gemChance("Good")), tostring(S.gemChance("Bad")))
+        elseif recipe.keepType then
+            rule = getText("IGUI_TWA_GemRefineRule", getText("IGUI_TWA_GemState_" .. (recipe.gemFrom or "Raw")),
+                tostring(S.gemBreakChance("Bad")), tostring(S.gemBreakChance("Good")), tostring(S.gemBreakChance("Excellent")))
+        else rule = getText("IGUI_TWA_G_GradeNote") end
+        y = win:guidedPara(rule, x, y, w, C.dim, small(), yMax, 4)
         if ok then
-            local bs = sc(28)
-            win:guidedButton("improve", "", x, yMax - bs, bs, bs, { icon = "redo", tip = getText("IGUI_TWA_G_Improve"),
-                fn = function(w2) w2:guidedPick(w2:guidedLowest(), true) end })
+            local bh = sc(26)
+            if y + 8 + bh <= yMax then
+                win:guidedButton("improve", getText("IGUI_TWA_G_Improve"), x, yMax - bh, w, bh,
+                    { fn = function(w2) w2:guidedPick(w2:guidedLowest(), true) end })
+            end
         end
     end
     return sp
@@ -694,10 +629,10 @@ end
 
 function TWACraftWindow:guidedSceneBusy()
     local kind = self.activeCenterKind or "finish"
-    local sp = { info = { getText("IGUI_TWA_G_StopNote") } }
-    sp.title, sp.titleGlyph = getText("IGUI_TWA_G_Busy_" .. kind), "busy"
+    local sp = { notes = { { getText("IGUI_TWA_G_StopNote"), C.dim } } }
+    sp.title = getText("IGUI_TWA_G_Busy_" .. kind)
     sp.banner = { "IN_PROGRESS", getText("IGUI_TWA_G_B_Busy") }
-    sp.primary = { id = "abort", label = getText("IGUI_TWA_G_Stop"), kind = "danger", icon = "cross", tip = getText("IGUI_TWA_Tooltip_AbortAction"),
+    sp.primary = { id = "abort", label = getText("IGUI_TWA_G_Stop"), kind = "danger", tip = getText("IGUI_TWA_Tooltip_AbortAction"),
         fn = function(win) win:onAbortCenterAction() end }
     sp.draw = function(win, x, y, w, yMax)
         win:guidedBar(x, y, w, sc(16), TWACraftWindow.jobDelta(win.activeCenterAction))
@@ -708,17 +643,18 @@ end
 function TWACraftWindow:guidedSceneLocked()
     local r = TWACraftUI.getRecipeById(self.active.recipeId)
     local name = r and h().recipeName(r) or "?"
-    local sp = { info = { getText("IGUI_TWA_G_LockedBody") } }
-    sp.title, sp.titleGlyph, sp.titleTip = name, "lock", getText("IGUI_TWA_G_LockedTitle", name)
+    local sp = { notes = {} }
+    sp.title = getText("IGUI_TWA_G_LockedTitle", name)
     sp.banner = { "LOCKED", getText("IGUI_TWA_G_B_Locked") }
-    sp.primary = { id = "backToActive", label = getText("IGUI_TWA_G_BackToActive", name), kind = "primary", icon = "back",
+    sp.primary = { id = "backToActive", label = getText("IGUI_TWA_G_BackToActive", name), kind = "primary",
         fn = function(win) win:onContinueClicked() end }
+    sp.draw = function(win, x, y, w, yMax)
+        win:guidedPara(getText("IGUI_TWA_G_LockedBody"), x, y, w, C.text, small(), yMax)
+    end
     return sp
 end
 
 -- ---------------------------------------------------------------- the step list (right)
--- each row: number, picture, name, a status glyph (+ the word when done);
--- what the status means is on hover
 function TWACraftWindow:guidedDrawSteps(g, data, rec, why)
     local recipe = self.selectedRecipe
     local pids = {}
@@ -731,81 +667,65 @@ function TWACraftWindow:guidedDrawSteps(g, data, rec, why)
     local avail = g.bottom - g.top
     local gap = 4
     local rowH = math.floor((avail - (n - 1) * gap) / n)
-    rowH = math.max(fh() + 8, math.min(sc(42), rowH))
+    rowH = math.max(fh() + 8, math.min(sc(46), rowH))
+    local two = rowH >= 2 * fh() + 8
     local done, quality = self:currentDone(), self:currentQuality()
     local active = self:isActiveRecipe()
     local clickable = active and not self.activeProcId and not self.activeCenterAction and not self.practicing
     local allDone = true
     for _, pid in ipairs(pids) do if not done[pid] then allDone = false end end
     local y = g.top
-    clip(self, x - 2, g.top - 2, w + 4, avail + 4)
+    local mx, my = self:getMouseX(), self:getMouseY()
     for i, pid in ipairs(pids) do
         if y + rowH > g.bottom then break end
         local proc = TWAProcedures.List[pid]
         local p = data.procs[pid]
         local word = TWACraftState.wordFor(pid, done, quality)
         local isRec = active and pid == rec
-        local status, col, gname
-        if self.activeProcId == pid and not self.practicing then status, col, gname = getText("IGUI_TWA_G_St_Running"), C.warn, "busy"
-        elseif word == "Miss" then status, col, gname = getText("IGUI_TWA_G_St_Miss"), C.bad, "cross"
-        elseif done[pid] then status, col, gname = getText("IGUI_TWA_G_St_Done", TWACraftState.wordText(word or "Good")), C.ok, "check"
-        elseif isRec then status, col, gname = getText(why == "manual" and "IGUI_TWA_G_St_Picked" or "IGUI_TWA_G_St_Rec"), C.accent, "play"
-        elseif p and not p.met then status, col, gname = getText("IGUI_TWA_G_St_Blocked"), C.bad, "warn"
-        else status, col, gname = getText("IGUI_TWA_G_St_Todo"), C.dim, nil end
+        local status, col
+        if self.activeProcId == pid and not self.practicing then status, col = getText("IGUI_TWA_G_St_Running"), C.warn
+        elseif word == "Miss" then status, col = getText("IGUI_TWA_G_St_Miss"), C.bad
+        elseif done[pid] then status, col = getText("IGUI_TWA_G_St_Done", TWACraftState.wordText(word or "Good")), C.ok
+        elseif isRec then status, col = getText(why == "manual" and "IGUI_TWA_G_St_Picked" or "IGUI_TWA_G_St_Rec"), C.accent
+        elseif p and not p.met then status, col = getText("IGUI_TWA_G_St_Blocked"), C.bad
+        else status, col = getText("IGUI_TWA_G_St_Todo"), C.dim end
         if isRec and done[pid] then status = status .. " - " .. getText("IGUI_TWA_G_St_Picked") end
-        local mx, my = self:getMouseX(), self:getMouseY()
-        local over = mx >= x and mx < x + w and my >= y and my < y + rowH
-        self:drawRect(x, y, w, rowH, 0.85, isRec and 0.22 or (over and clickable and 0.14 or 0.08), isRec and 0.15 or (over and clickable and 0.11 or 0.07), isRec and 0.04 or 0.05)
+        local over = clickable and mx >= x and mx < x + w and my >= y and my < y + rowH
+        self:drawRect(x, y, w, rowH, 0.85, isRec and 0.22 or (over and 0.14 or 0.08), isRec and 0.15 or (over and 0.11 or 0.07), isRec and 0.04 or 0.05)
         if isRec then
             local a = TWABlink and TWABlink.level and (0.55 + 0.45 * TWABlink.level()) or 1
             self:drawRectBorder(x, y, w, rowH, a, C.accent[1], C.accent[2], C.accent[3])
         else
             self:drawRectBorder(x, y, w, rowH, 0.5, 0.4, 0.33, 0.15)
         end
-        local is = math.min(rowH - 6, sc(30))
-        local ix = x + 4
-        text(self, tostring(i), ix, y + math.floor((rowH - fh()) / 2), C.dim)
-        ix = ix + tw("00") + 2
+        local is = math.min(rowH - 6, sc(32))
         local tex = self.procLibrary:getProcTexture(proc)
+        local ix = x + 4
+        text(self, tostring(i) .. ".", ix, y + math.floor((rowH - fh()) / 2), C.dim)
+        ix = ix + tw("00.") + 2
         if tex then
             local tint = done[pid] and 1 or 0.55
             self:drawTextureScaled(tex, ix, y + math.floor((rowH - is) / 2), is, is, 1, tint, tint, tint)
+            if done[pid] then h().drawCheckBadge(self, ix, y + math.floor((rowH - is) / 2) - 4, is + 6) end
         end
-        local right = x + w - 6
-        local gs = math.min(rowH - 8, sc(18))
-        if gname then glyph(self, gname, right - gs, y + math.floor((rowH - gs) / 2), gs, col) end
-        right = right - gs - 6
-        if done[pid] and word then
-            local ws = TWACraftState.wordText(word)
-            local wc = TWACraftState.WORD_COLOR[word] or { r = 1, g = 1, b = 1 }
-            text(self, ws, right - tw(ws), y + math.floor((rowH - fh()) / 2), { wc.r, wc.g, wc.b })
-            right = right - tw(ws) - 6
+        local tx = ix + is + 8
+        local nm = getText(proc.nameKey)
+        if two then
+            text(self, fit(nm, x + w - tx - 6), tx, y + math.floor(rowH / 2) - fh() - 1, C.text)
+            text(self, fit(status, x + w - tx - 6), tx, y + math.floor(rowH / 2) + 1, col)
+        else
+            local sw = math.min(tw(status), math.floor((x + w - tx) * 0.5))
+            text(self, fit(nm, x + w - tx - sw - 12), tx, y + math.floor((rowH - fh()) / 2), C.text)
+            text(self, fit(status, sw + 2), x + w - sw - 6, y + math.floor((rowH - fh()) / 2), col)
         end
-        local tx = ix + is + 6
-        text(self, fit(getText(proc.nameKey), right - tx), tx, y + math.floor((rowH - fh()) / 2), C.text)
-        local tipText = getText(proc.nameKey) .. ": " .. status
         if clickable then
-            tipText = tipText .. "\n" .. getText("IGUI_TWA_G_StepTip")
             self.guidedHits = self.guidedHits or {}
             self.guidedHits[#self.guidedHits + 1] = { id = "step:" .. tostring(pid), x = x, y = y, w = w, h = rowH, enabled = true,
                 fn = function(win) win:guidedPick(pid, allDone or nil) end }
+            if over then self.hoverTooltip = { lines = { getText("IGUI_TWA_G_StepTip") }, x = x, y = y + rowH + 2 } end
         end
-        hover(self, tipText, x, y, w, rowH)
         y = y + rowH + gap
     end
-    unclip(self)
-end
-
--- wrapped paragraph -> new y (stops at yMax); the manage menu uses it
-function TWACraftWindow:guidedPara(s, x, y, w, col, f, yMax, maxLines)
-    f = f or small()
-    local lh = fh(f) + 2
-    for _, l in ipairs(wrap(s, w, f, maxLines or 4)) do
-        if yMax and y + lh > yMax then break end
-        text(self, l, x, y, col, f)
-        y = y + lh
-    end
-    return y
 end
 
 -- ---------------------------------------------------------------- manage menu (modal)
@@ -835,25 +755,21 @@ function TWACraftWindow:guidedDrawMenu(g)
     end
     text(self, getText("IGUI_TWA_G_MenuTitle", r and h().recipeName(r) or "?"), x + 6, y, C.accent, medium())
     y = y + fh(medium()) + 8
-    -- 1.0.7: short buttons with a glyph; what each one does is on hover
     local opts = {
-        { id = "pause", key = "IGUI_TWA_G_MenuPause", desc = "IGUI_TWA_G_MenuPauseDesc", enabled = self:canGoIncomplete(), icon = "flag",
+        { id = "pause", key = "IGUI_TWA_G_MenuPause", desc = "IGUI_TWA_G_MenuPauseDesc", enabled = self:canGoIncomplete(),
             fn = function(win) win.guidedMenu = nil; win:onIncompleteButtonClicked() end },
-        { id = "cancelAll", key = "IGUI_TWA_G_MenuCancel", desc = "IGUI_TWA_G_MenuCancelDesc", enabled = idle, kind = "danger", icon = "cross",
+        { id = "cancelAll", key = "IGUI_TWA_G_MenuCancel", desc = "IGUI_TWA_G_MenuCancelDesc", enabled = idle, kind = "danger",
             fn = function(win) win.guidedMenu = "confirm" end },
-        { id = "menuBack", key = "IGUI_TWA_G_MenuBack", icon = "back", fn = function(win) win.guidedMenu = nil end },
+        { id = "menuBack", key = "IGUI_TWA_G_MenuBack", fn = function(win) win.guidedMenu = nil end },
     }
     for _, o in ipairs(opts) do
         if y + bh > y1 - lh * 2 then break end
-        local tip = o.desc and getText(o.desc) or nil
-        if o.enabled == false then tip = (tip and (tip .. "\n") or "") .. getText("IGUI_TWA_G_MenuDisabled") end
-        self:guidedButton(o.id, getText(o.key), x + 6, y, w - 12, bh, { fn = o.fn, enabled = o.enabled ~= false, kind = o.kind,
-            icon = o.icon, tip = tip, info = tip ~= nil })
-        y = y + bh + 6
+        self:guidedButton(o.id, getText(o.key), x + 6, y, w - 12, bh, { fn = o.fn, enabled = o.enabled ~= false, kind = o.kind })
+        y = y + bh + 4
+        if o.desc then y = self:guidedPara(getText(o.desc), x + 14, y, w - 28, C.dim, small(), y1 - lh * 2, 3) + 6 end
     end
-    local gs = fh()
-    glyph(self, "info", x + 6, y1 - gs - 6, gs, C.info)
-    hover(self, getText("IGUI_TWA_G_MenuCloseNote"), x + 6, y1 - gs - 6, gs + 4, gs + 4)
+    if not idle then y = self:guidedPara(getText("IGUI_TWA_G_MenuDisabled"), x + 6, y, w - 12, C.warn, small(), y1 - lh) end
+    self:guidedPara(getText("IGUI_TWA_G_MenuCloseNote"), x + 6, y1 - lh * 2 - 4, w - 12, C.info, small(), y1, 2)
 end
 
 -- ---------------------------------------------------------------- the page
@@ -889,10 +805,8 @@ function TWACraftWindow:renderGuided()
     local g = self:guidedGeom()
     local x, w = g.lx, g.lw
     local y = g.top
-    local lh = fh() + 4
-    clip(self, x - 2, g.top - 2, w + 4, g.bottom - g.top + 4)
-    -- header: picture, name; tier + progress as a bar (numbers on hover)
-    local ic = sc(40)
+    -- header: picture, name, tier, progress
+    local ic = sc(44)
     local stats = h().recipeStats(recipe)
     local tier = stats and stats.tier and h().TIER_INFO[stats.tier]
     self:drawRect(x, y, ic, ic, 0.6, 0, 0, 0)
@@ -900,8 +814,7 @@ function TWACraftWindow:renderGuided()
     if icon then self:drawTextureScaled(icon, x, y, ic, ic, 1, 1, 1, 1) end
     if tier then self:drawRectBorder(x, y, ic, ic, 1, tier.r, tier.g, tier.b) else self:drawRectBorder(x, y, ic, ic, 0.6, 0.5, 0.5, 0.5) end
     local hx = x + ic + 10
-    local nm = h().recipeName(recipe)
-    text(self, fit(nm, x + w - hx, medium()), hx, y, tier and { tier.r, tier.g, tier.b } or C.text, medium())
+    text(self, fit(h().recipeName(recipe), x + w - hx, medium()), hx, y, C.text, medium())
     local total, doneN = 0, 0
     local done = self:currentDone()
     for _, pid in ipairs(recipe.procedures or {}) do
@@ -911,86 +824,67 @@ function TWACraftWindow:renderGuided()
     if self:isActiveRecipe() then sub = getText("IGUI_TWA_G_Progress", tostring(doneN), tostring(total))
     elseif self.resumeItem then sub = getText("IGUI_TWA_G_PreviewProgress", tostring(doneN), tostring(total))
     else sub = getText("IGUI_TWA_G_NotStarted") end
-    if tier then sub = tier.name .. " - " .. sub end
-    local by0 = y + fh(medium()) + 6
+    if tier then sub = tier.name .. "  -  " .. sub end
+    local subY = y + fh(medium()) + 2
+    text(self, fit(sub, x + w - hx), hx, subY, tier and { tier.r, tier.g, tier.b } or C.dim)
     if self:isActiveRecipe() or self.resumeItem then
-        local ns = tostring(doneN) .. "/" .. tostring(total)
-        local bw = x + w - hx - tw(ns) - 8
-        self:guidedBar(hx, by0 + 2, bw, sc(8), total > 0 and doneN / total or 0)
-        text(self, ns, hx + bw + 6, by0 - 2, C.dim)
+        self:guidedBar(hx, y + ic - sc(8), x + w - hx, sc(8), total > 0 and doneN / total or 0)
     end
-    hover(self, nm .. "\n" .. sub, x, y, w, ic)
     y = y + ic + sc(8)
-    -- next-step banner: one line (the hub's; all of it on hover)
+    -- next-step banner (the hub's; the hints switch turns it off)
     local BN = HARMONIE_Banner
     if BN and BN.draw and sp.banner then
         y = y + BN.draw(self, x, y, w, sp.banner[1], sp.banner[2], small())
     end
-    -- the focus: one line with a glyph (what it means on hover)
+    -- title of the focus
     if sp.title then
-        local gs = fh(medium())
-        local tx = x
-        if sp.titleGlyph then glyph(self, sp.titleGlyph, x, y, gs, C.accent); tx = x + gs + 8 end
-        text(self, fit(sp.title, x + w - tx, medium()), tx, y, C.accent, medium())
-        if sp.titleTip then hover(self, sp.titleTip, x, y, w, gs + 2) end
-        y = y + gs + 8
+        y = self:guidedPara(sp.title, x, y, w, C.accent, medium(), nil, 2) + 4
     end
-    -- primary button (bottom); the reason it is off on ONE line above it;
-    -- everything else to read is on the button's hover (the small "i")
+    -- primary button + its notes (bottom of the card)
     local pbH = sc(36)
     local pbY = g.bottom - pbH - 2
-    local ny = pbY - 4
-    if sp.reason then
-        ny = pbY - lh - 2
-        line1(self, sp.reason, x, ny, w, C.bad, "warn", C.bad)
-        ny = ny - 2
+    local lh = fh() + 2
+    local noteLines = {}
+    for _, nt in ipairs(sp.notes or {}) do
+        for _, l in ipairs(wrap(nt[1], w, small(), 3)) do noteLines[#noteLines + 1] = { l, nt[2] } end
     end
+    local ny = pbY - 6 - #noteLines * lh
+    for i, nl in ipairs(noteLines) do text(self, nl[1], x, ny + (i - 1) * lh, nl[2]) end
     if sp.primary then
         local p = sp.primary
-        local tip = p.tip
-        local info = sp.info or {}
-        if #info > 0 then tip = (tip and (tip .. "\n") or "") .. table.concat(info, "\n") end
-        if not tip and p.enabled == false and sp.reason then tip = sp.reason end
-        self:guidedButton(p.id, p.label, x, pbY, w, pbH, { kind = p.kind or "primary", enabled = p.enabled ~= false, fn = p.fn,
-            tip = tip, font = medium(), icon = p.icon, info = #info > 0 })
+        self:guidedButton(p.id, p.label, x, pbY, w, pbH, { kind = p.kind or "primary", enabled = p.enabled ~= false, fn = p.fn, tip = p.tip, font = medium() })
     end
-    unclip(self)
-    -- the scene's own content between the title and the reason line, clipped
-    if sp.draw then
-        clip(self, x - 2, y - 2, w + 4, ny - y)
-        sp.draw(self, x, y, w, ny - 4)
-        unclip(self)
-    end
+    -- the scene's own content between the title and the notes
+    if sp.draw then sp.draw(self, x, y, w, ny - 6) end
     -- step list
     self:guidedDrawSteps(g, data, rec, why)
-    -- bottom bar (under the cards): icons only, what each does on hover
-    local by, bs = g.bottom + 10, sc(28)
-    self:guidedButton("back", "", 10, by, bs, bs, { icon = "back", tip = getText("IGUI_TWA_BackToRecipes"),
-        fn = function(win) win:onBackClicked() end })
+    -- bottom bar (under the cards, where the old back button was)
+    local by, bh = g.bottom + 10, sc(26)
+    local backW = sc(150)
+    self:guidedButton("back", getText("IGUI_TWA_BackToRecipes"), 10, by, backW, bh, { fn = function(win) win:onBackClicked() end })
     if self:isActiveRecipe() then
         local idle = not self.activeProcId and not self.activeCenterAction and not self.practicing
-        self:guidedButton("manage", "", 10 + bs + 8, by, bs, bs, { icon = "menu", enabled = idle,
-            tip = getText("IGUI_TWA_G_Manage") .. "\n" .. getText("IGUI_TWA_G_Manage_Tip"), fn = function(win) win.guidedMenu = "menu" end })
+        self:guidedButton("manage", getText("IGUI_TWA_G_Manage"), 10 + backW + 10, by, sc(170), bh,
+            { enabled = idle, tip = getText("IGUI_TWA_G_Manage_Tip"), fn = function(win) win.guidedMenu = "menu" end })
     end
     self:drawGuidedModeToggle(true)
     if self.guidedMenu then self:guidedDrawMenu(g) end
     return true
 end
 
--- the view switch, bottom right of the craft page (both views): a glyph
+-- the view switch, bottom right of the craft page (both views)
 function TWACraftWindow:drawGuidedModeToggle(guided)
-    local bs = sc(28)
-    local x = self.width - 10 - bs
+    local label = getText(guided and "IGUI_TWA_G_ModeAdvanced" or "IGUI_TWA_G_ModeGuided")
+    local bw = math.max(sc(150), tw(label) + 24)
+    local bh = sc(26)
+    local x = self.width - 10 - bw
     local y = self.panelBottom + 10
-    self:guidedButton(guided and "toAdvanced" or "toGuided", "", x, y, bs, bs, {
-        icon = "mode",
-        tip = getText(guided and "IGUI_TWA_G_ModeAdvanced" or "IGUI_TWA_G_ModeGuided") .. "\n" ..
-            getText(guided and "IGUI_TWA_G_ModeAdvanced_Tip" or "IGUI_TWA_G_ModeGuided_Tip"),
+    self:guidedButton(guided and "toAdvanced" or "toGuided", label, x, y, bw, bh, {
+        tip = getText(guided and "IGUI_TWA_G_ModeAdvanced_Tip" or "IGUI_TWA_G_ModeGuided_Tip"),
         fn = function(win) win:setGuided(not guided) end })
 end
 
--- tab 1 with no recipe (guided): the two big buttons stay, the banner says
--- what to do, and continue / back to the craft under way when there is one
+-- tab 1 with no recipe (guided): the hint + continue / back to the craft
 function TWACraftWindow:renderGuidedChoose()
     self.guidedHits = {}
     local w = math.min(self.width - 40, sc(560))
@@ -1003,10 +897,10 @@ function TWACraftWindow:renderGuidedChoose()
     if self.active then
         local r = TWACraftUI.getRecipeById(self.active.recipeId)
         self:guidedButton("chooseBackToActive", getText("IGUI_TWA_G_BackToActive", r and h().recipeName(r) or "?"), bx, y, bw, bh,
-            { kind = "primary", icon = "back", fn = function(win) win:onContinueClicked() end })
+            { kind = "primary", fn = function(win) win:onContinueClicked() end })
     elseif self.incompleteList and #self.incompleteList > 0 and not self.activeProcId and not self.activeCenterAction then
         self:guidedButton("chooseContinue", getText("IGUI_TWA_ContinueCraft", tostring(#self.incompleteList)), bx, y, bw, bh,
-            { icon = "redo", tip = getText("IGUI_TWA_Tooltip_ContinueCraft"), fn = function(win) win:onContinueClicked() end })
+            { tip = getText("IGUI_TWA_Tooltip_ContinueCraft"), fn = function(win) win:onContinueClicked() end })
     end
 end
 
