@@ -310,7 +310,10 @@ function Hub.onOpenMenu(playerNum, context, worldobjects, test)
         if okP and present then
             shown = shown + 1
             local modOpt = sub:addOption(T(card.name), nil, nil)
-            if icon and modOpt then modOpt.iconTexture = icon end
+            -- the H in the mod's own theme colour (owner 2026-11-17;
+            -- tools/gen_h_icons.py), the gold one if the file is missing
+            local cardIcon = tex("media/ui/HARMONIE_H_" .. card.id .. ".png") or icon
+            if cardIcon and modOpt then modOpt.iconTexture = cardIcon end
             local note = card.note and select(2, pcall(card.note, player)) or nil
             if note and modOpt then
                 local tip = ISToolTip:new(); tip:initialise(); tip:setName(T(card.name)); tip.description = T(note)
@@ -323,14 +326,14 @@ function Hub.onOpenMenu(playerNum, context, worldobjects, test)
             sub:addSubMenu(modOpt, tsub)
             if #tabs == 0 then
                 local o = tsub:addOption(T("IGUI_HUB_Open"), player, function(p) Hub.openCard(card, p) end)
-                if icon and o then o.iconTexture = icon end
+                if cardIcon and o then o.iconTexture = cardIcon end
             end
             for _, t in ipairs(tabs) do
                 local label = T(t.key)
                 if label == t.key then label = tostring(t.id) end
                 local o = tsub:addOption(label, player, function(p) Hub.openTab(card, p, t.id) end)
                 local ti = t.icon and tex(t.icon)
-                if o then o.iconTexture = ti or icon end
+                if o then o.iconTexture = ti or cardIcon end
             end
         end
     end

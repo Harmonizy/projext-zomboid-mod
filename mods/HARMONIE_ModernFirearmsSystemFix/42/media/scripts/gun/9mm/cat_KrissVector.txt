@@ -2,7 +2,7 @@ module Base
 {
     item KrissVector_cat
     {
-        CyclicRateMultiplier = 1.8,
+        CyclicRateMultiplier = 1.75,
        Tags = base:hasmetal;base:firearm,
         DisplayCategory = Weapon,
         ModelWeaponPart = Gunpart.QT_sr Gunpart.QT_sr Stock Stock,

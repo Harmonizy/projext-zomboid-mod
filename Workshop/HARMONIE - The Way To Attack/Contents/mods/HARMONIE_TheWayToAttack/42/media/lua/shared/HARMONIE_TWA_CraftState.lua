@@ -430,7 +430,10 @@ function S.clearBookmark(item)
 end
 
 function S.isBookmarked(item)
-    return item ~= nil and item:getModData().TWA_RecipeId ~= nil
+    -- 1.0.8: hasModData first -- getModData() makes a table on every item asked
+    if item == nil then return false end
+    if item.hasModData and not item:hasModData() then return false end
+    return item:getModData().TWA_RecipeId ~= nil
 end
 
 -- Item helpers ----------------------------------------------------------------
