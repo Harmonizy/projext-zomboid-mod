@@ -1137,7 +1137,16 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
     for col, id in ipairs(ids) do
         local proc = TWAProcedures.List[id]
         if proc then
-            local met = TWAProcedures.CheckEligibility(proc, getPlayer())
+            -- 1.0.8: each cell's check is kept 750 ms (it was every cell, every frame)
+            local mc = self.metCache or {}
+            self.metCache = mc
+            local e = mc[id]
+            local tnow = getTimestampMs()
+            if not e or tnow - e.at > 750 then
+                e = { at = tnow, met = TWAProcedures.CheckEligibility(proc, getPlayer()) and true or false }
+                mc[id] = e
+            end
+            local met = e.met
             -- "Done" (the checkmark) only means this exact procedure was
             -- actually performed as part of the CURRENTLY selected recipe --
             -- not merely that its requirements are currently met (bug report
@@ -1810,7 +1819,8 @@ end
 function TWACraftWindow:findIncomplete()
     local list = {}
     TWASources.get(self.player):forEachItem(function(it)
-        local id = it and it:getModData().TWA_RecipeId
+        -- 1.0.8: getModData() makes a table for every item that has none
+        local id = it and (not it.hasModData or it:hasModData()) and it:getModData().TWA_RecipeId
         if id and getRecipeById(id) then list[#list + 1] = it end
     end)
     return list
@@ -1820,10 +1830,14 @@ function TWACraftWindow:updateContinueButton()
     local btn = self.continueButton
     if not btn then return end
     local now = getTimestampMs and getTimestampMs() or 0
-    if not self.incompleteList or now - (self.incompleteScanAt or 0) >= 1000 then
+    -- 1.0.8: scanned only on the pages that show it (the recipe lists, the
+    -- craft tab with no recipe), every 2 s -- not on every page every second
+    local wanted = self.page == "browse" or (self.page == "craft" and not self.selectedRecipe)
+    if wanted and (not self.incompleteList or now - (self.incompleteScanAt or 0) >= 2000) then
         self.incompleteScanAt = now
         self.incompleteList = self:findIncomplete()
     end
+    self.incompleteList = self.incompleteList or {}
     if self.page ~= "browse" then btn:setVisible(false) return end
     -- R68: a craft already started -> this button goes back to it
     if self.active then
@@ -2500,7 +2514,14 @@ function TWACraftWindow:drawProcedureDetails()
 
     local done = self.selectedRecipe and self:currentDone()[self.selectedProcId]
     local inProgress = self.activeProcId == self.selectedProcId and self.activeAction
-    local reqs = TWAProcedures.DescribeAll(proc, self.player)
+    -- 1.0.8: checked twice a second, not every frame
+    local dc = self.procDescCache
+    local tnow = getTimestampMs()
+    if not (dc and dc.procId == self.selectedProcId and tnow - dc.at < 500) then
+        dc = { procId = self.selectedProcId, at = tnow, reqs = TWAProcedures.DescribeAll(proc, self.player) }
+        self.procDescCache = dc
+    end
+    local reqs = dc.reqs
     local met = true
     for _, r in ipairs(reqs) do if not r.met then met = false break end end
     -- "busy" also covers the minigame being up (activeProcId set, no timed

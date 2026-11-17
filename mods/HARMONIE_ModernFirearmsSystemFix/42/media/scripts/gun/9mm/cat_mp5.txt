@@ -2,7 +2,7 @@ module Base
 {
     item mp5_cat
     {
-        CyclicRateMultiplier = 1.8,
+        CyclicRateMultiplier = 1.75,
         ModelWeaponPart = Gunpart.XM157_cat Gunpart.XM157_cat Scope Scope,
         ModelWeaponPart = Gunpart.MZ_UH1 Gunpart.MZ_UH1 Scope Scope,
         ModelWeaponPart = Gunpart.MZ_HCO Gunpart.MZ_HCO Scope Scope,

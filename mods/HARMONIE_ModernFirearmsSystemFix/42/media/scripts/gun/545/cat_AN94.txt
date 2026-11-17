@@ -2,7 +2,7 @@ module Base
 {
     item AN94_cat
     {
-        CyclicRateMultiplier = 1.9,
+        CyclicRateMultiplier = 1.75,
         ModelWeaponPart = Gunpart.GP25_cat Gunpart.GP25_cat Stool Stool,
         ModelWeaponPart = Gunpart.GP25_cat_empty Gunpart.GP25_cat_empty Stool Stool,
         ModelWeaponPart = Gunpart.M14Drum_cat Gunpart.M14Drum_cat Clip Clip,

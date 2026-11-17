@@ -70,6 +70,16 @@
   (`EFK_Gun_Shot_Profiles.lua`; aliases at its end). `MountOn` names are
   matched exactly (`MG338_cat` is not `mg338_cat`). AmmoCheck logs guns with
   no shot sound and magazines that are not items (MIL 0.7.5).
+- An automatic gun whose CyclicRateMultiplier sits in the engine's no-bullet
+  zone (1.8 - 2.9, or 1.4 -- upstream notes in EFK_Exact_RPM.lua) swings and
+  plays its shot sound while the trigger is held but fires ONE bullet per
+  press (owner 2026-11-17, MP5). The seven that had it (MP5, Kriss Vector,
+  AN-94, EMP, Groza, QBZ-192, Minigun: script 1.8 / 1.9, RPM band cyclic 8.0)
+  are 1.75 in the scripts and 1020 RPM (cyclic 6.8) in EFK_Exact_RPM since
+  MIL 1.0.5; `shared/HARMONIE_MIL_CyclicGuard.lua` (+ tools/ours) DoParams
+  1.75 back if another mod overrides it and fixes a held gun still in the
+  zone (logged). A new automatic gun: script cyclic below 1.8 and an RPM
+  under 1076.
 - A second mod that defines the same item types and loads LATER wins: the
   owner's MP server also ran the original `ModernFirearmsSystem`, which put its
   efk: ammo types back on our guns (Requiem crashed again, 2026-10-24). MIL
@@ -217,6 +227,12 @@
   come to do) + small "How it works" button -> `guideTab` (gtp overview,
   others guide). TWA tooltips already describe Stop / Cancel / Incomplete /
   Finish exactly; HM / TWA pages got no banner yet (absolute layouts).
+- Right-click > "HARMONIE: open a tab" > each mod row shows the H in that
+  mod's colour (owner 2026-11-17): `media/ui/HARMONIE_H_<card id>.png` from
+  `tools/gen_h_icons.py` (recolours HARMONIE_H.png to each `Hub.CARDS`
+  accent -- keep its ACCENT list in step); the gold H if a file is missing.
+  The owner turned DOWN the "symbols instead of words / text on hover" rework
+  of the same day (PR #101 kept only this) -- ask before redoing the UI text.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
@@ -251,6 +267,21 @@
   as the default recipe filter, recipe cards "ready to start" vs "ready for
   every step", first-time-only hints (the hub banner + its hints switch are
   used instead), usability test.
+- NEVER remove or skip a TWA procedure minigame (owner 2026-11-17, "ห้ามเอา
+  ขั้นตอนการทำมินิเกมออก"): every step goes onConfirmProcedure ->
+  tryPerformProcedure -> TWAMinigame.play -> the word -> the timed action.
+  Only the player's own "minigames off" setting gives Excellent (as before).
+- TWA lag fix (1.0.8, owner: "opening the craft window makes every other UI
+  lag", long-standing): TWASources.get (client) keeps a scan 1000 ms and
+  walks the items ONCE into `Multi:index()` (byType + all); count / first /
+  countEval / forEachItem read it (server: plain container calls, no cache).
+  Before, each question walked every item of every box in the room in Lua --
+  per recipe row, per base card, per frame, and for EVERY recipe on a list
+  refresh. Also: unfinished-item scan only on the recipe pages / empty craft
+  tab, every 2 s; procedure details DescribeAll kept 500 ms; the practice
+  grid's CheckEligibility per cell kept 750 ms; `S.isBookmarked` and
+  findIncomplete test hasModData() first (getModData() makes a table on
+  every item). An index over 15 ms logs "item index: N items ... took M ms".
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"

@@ -58,13 +58,21 @@ local function nearby(player, r, conts, floor)
 end
 
 local cache = {}
+-- 1.0.8 (owner 2026-11-17: "opening the craft window makes every other UI
+-- lag, for a long time"): every count / first-item question walked every
+-- item of every box in the room in Lua -- per recipe row, per base card,
+-- per frame, and for EVERY recipe when the list refreshed. A client now
+-- keeps the scan CACHE_MS and walks the items ONCE per scan into an index
+-- by full type (`Multi:index`); the questions read the index. The server
+-- (no cache) keeps the plain container calls.
+TWASources.CACHE_MS = 1000
 
 function TWASources.get(player)
     -- The UI asks many times a frame: a client reuses the scan briefly.
     local client = not (isServer and isServer())
     local now = getTimestampMs and getTimestampMs() or 0
     local c = client and cache[player]
-    if c and now - c.at < 400 then return c.src end
+    if c and now - c.at < TWASources.CACHE_MS then return c.src end
     local conts, floor = { player:getInventory() }, {}
     nearby(player, math.max(1, math.floor(TWAConfig.num("NearbyRadius", 1))), conts, floor)
     -- 1.0.0 (owner, 2026-11-12: "หาของได้จากตัวเอง กระเป๋า และกล่องหรือตู้รอบตัว"):
@@ -78,15 +86,65 @@ function TWASources.get(player)
             if not seen[e.c] then seen[e.c] = true; conts[#conts + 1] = e.c end
         end
     end
-    local src = setmetatable({ conts = conts, floor = floor, inv = player:getInventory() }, Multi)
+    local src = setmetatable({ conts = conts, floor = floor, inv = player:getInventory(), indexable = client }, Multi)
     if client then cache[player] = { at = now, src = src } end
     return src
 end
 
 function TWASources.forget(player) cache[player] = nil end
 
+-- every item at hand, walked once: byType[fullType] = { items in reach
+-- order (the character's inventory first) }, all = every item. Client only.
+local function stillThere(it)
+    if not it then return false end
+    if it.getWorldItem and it:getWorldItem() then return true end
+    return it.getContainer and it:getContainer() ~= nil
+end
+function Multi:index()
+    if self.byType then return self.byType end
+    local t0 = getTimestampMs and getTimestampMs() or 0
+    local byType, all = {}, {}
+    local function add(it)
+        local ok, ft = pcall(it.getFullType, it)
+        if ok and ft then
+            local l = byType[ft]
+            if not l then l = {}; byType[ft] = l end
+            l[#l + 1] = it
+            all[#all + 1] = it
+        end
+    end
+    local function walk(container, depth)
+        local items = container and container:getItems()
+        if not items then return end
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            if it then
+                add(it)
+                if depth < 6 and instanceof(it, "InventoryContainer") then walk(it:getInventory(), depth + 1) end
+            end
+        end
+    end
+    for _, c in ipairs(self.conts) do walk(c, 0) end
+    for _, it in ipairs(self.floor) do add(it) end
+    self.byType, self.all = byType, all
+    local ms = (getTimestampMs and getTimestampMs() or 0) - t0
+    if ms >= 15 then
+        if TWALogOnce then
+            TWALogOnce("srcidx_" .. tostring(math.floor(#all / 500)), "Sources",
+                "item index: %d items in %d containers took %d ms", #all, #self.conts, ms)
+        end
+    end
+    return byType
+end
+
 function Multi:getFirstTypeEvalRecurse(t, pred)
     pred = pred or any
+    if self.indexable then
+        for _, it in ipairs(self:index()[t] or {}) do
+            if stillThere(it) and pred(it) then return it end
+        end
+        return nil
+    end
     for _, c in ipairs(self.conts) do
         local it = c:getFirstTypeEvalRecurse(t, pred)
         if it then return it end
@@ -98,6 +156,7 @@ function Multi:getFirstTypeEvalRecurse(t, pred)
 end
 
 function Multi:getItemCountRecurse(t)
+    if self.indexable then return #(self:index()[t] or {}) end
     local n = 0
     for _, c in ipairs(self.conts) do n = n + c:getItemCountRecurse(t) end
     for _, it in ipairs(self.floor) do if it:getFullType() == t then n = n + 1 end end
@@ -107,6 +166,10 @@ end
 --- How many items of type `t` pass `pred`.
 function Multi:countEval(t, pred)
     local n = 0
+    if self.indexable then
+        for _, it in ipairs(self:index()[t] or {}) do if pred(it) then n = n + 1 end end
+        return n
+    end
     local function walk(container)
         local items = container and container:getItems()
         if not items then return end
@@ -158,6 +221,11 @@ end
 
 -- Round 22: every item at hand (bags inside containers too, 3 deep), once.
 function Multi:forEachItem(fn)
+    if self.indexable then
+        self:index()
+        for _, it in ipairs(self.all) do fn(it) end
+        return
+    end
     local function walk(cont, depth)
         local items = cont and cont:getItems()
         if not items then return end
