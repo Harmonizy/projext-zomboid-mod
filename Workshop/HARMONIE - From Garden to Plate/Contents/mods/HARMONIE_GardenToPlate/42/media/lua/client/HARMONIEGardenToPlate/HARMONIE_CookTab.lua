@@ -297,6 +297,35 @@ function Win:renderCookBrowse(x, y, w, h, plans)
     end)
 end
 
+-- 1.0.8 (owner 2026-11-17: "too much text"; "an ingredient that can be
+-- swapped gets an i -- point at it to see what else works"): a small "i";
+-- its text shows on hover. Returns the width it took.
+local function infoMark(self, x, y, s, text)
+    local C = H.C
+    local col = C.accent
+    self:drawRect(x, y, s, s, 0.9, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRectBorder(x, y, s, s, 1, col[1], col[2], col[3])
+    local sf = H.small()
+    shadowText(self, "i", x + math.floor((s - tw(sf, "i")) / 2), y + math.floor((s - fh(sf)) / 2), col, 1, sf)
+    local mx, my = self:getMouseX(), self:getMouseY()
+    if text and mx >= x - 2 and mx < x + s + 2 and my >= y - 2 and my < y + s + 2 then
+        self.hoverTip = { text = text, x = x + s, y = y + s + 2 }
+    end
+    return s + 6
+end
+
+-- every food a slot takes, by name, and the kinds it also takes
+local function slotAlternatives(slot)
+    local names, seen = {}, {}
+    for _, t in ipairs(K.slotTypes(slot)) do
+        local n = itemName(t)
+        if not seen[n] then seen[n] = true; names[#names + 1] = n end
+    end
+    local kinds = {}
+    for _, c in ipairs(slot.cats or {}) do kinds[#kinds + 1] = T("IGUI_GTPC_Kind_" .. c) end
+    return names, kinds
+end
+
 -- a coloured status line
 local function status(self, text, x, y, ok, sf)
     local C = H.C
@@ -338,23 +367,22 @@ function Win:renderCookInfo(x, y, w, h, d, p)
     self:scrolled("cookDetail", tx, ty, tw2, btnY - ty - 6, function(yy)
         local start = yy
         yy = yy + self:paragraphs(T("IGUI_GTPC_DishDesc_" .. d.id), tx, yy, tw2 - 10, C.textDim, sf) + 6
+        -- 1.0.8: one short level line; the Excellent bonus and what the
+        -- Cooking level does in the minigames are on the "i" (hover)
+        local lvl = p and p.level or 0
+        local ease = K.levelEase(lvl)
+        local more = { T("IGUI_GTPC_LevelEase", tostring(lvl), string.format("%.0f", (1 - ease.slip) * 100),
+            string.format("%.0f", (ease.time - 1) * 100)) }
         if K.buffOfDish and K.buffOfDish(d.id) and K.buffsOn() then
             local kind = K.buffOfDish(d.id)
-            yy = yy + self:paragraphs(T("IGUI_GTPC_BuffIfExcellent", T("IGUI_GTPC_Buff_" .. kind), T("IGUI_GTPC_BuffDesc_" .. kind),
-                string.format("%.0f", K.buffHours(p and p.level or 0))), tx, yy, tw2 - 10, C.accent, sf) + 6
+            table.insert(more, 1, T("IGUI_GTPC_BuffIfExcellent", T("IGUI_GTPC_Buff_" .. kind), T("IGUI_GTPC_BuffDesc_" .. kind),
+                string.format("%.0f", K.buffHours(lvl))))
         end
-        -- suggested level (never a lock: below it the steps are harder)
-        local lvl = p and p.level or 0
-        if p and p.hard then
-            -- 0.13.17: open to everyone, every step harder below its level
-            yy = yy + self:paragraphs(T("IGUI_GTPC_HardDish", tostring(d.level or 0), tostring(lvl)), tx, yy, tw2 - 10, C.warn, sf) + 4
-        else
-            yy = yy + self:paragraphs(T("IGUI_GTPC_NeedLevel", tostring(d.level or 0), tostring(lvl)), tx, yy, tw2 - 10, C.good, sf) + 4
-        end
-        -- what the Cooking level does in the minigames
-        local ease = K.levelEase(lvl)
-        yy = yy + self:paragraphs(T("IGUI_GTPC_LevelEase", tostring(lvl), string.format("%.0f", (1 - ease.slip) * 100),
-            string.format("%.0f", (ease.time - 1) * 100)), tx, yy, tw2 - 10, C.textDim, sf) + 4
+        local lvLine = T(p and p.hard and "IGUI_GTPC_LevelLineHard" or "IGUI_GTPC_LevelLine", tostring(d.level or 0), tostring(lvl))
+        local ims = lh
+        shadowText(self, fit(lvLine, tw2 - 20 - ims, sf), tx, yy, (p and p.hard) and C.warn or C.good, 1, sf)
+        infoMark(self, tx + math.min(tw(sf, lvLine), tw2 - 20 - ims) + 6, yy, ims, table.concat(more, "  /  "))
+        yy = yy + lh + 6
         -- base
         if p and p.base then
             local what = K.typeOf(p.base)
@@ -380,7 +408,14 @@ function Win:renderCookInfo(x, y, w, h, d, p)
             local slot = sp.slot
             local icon = sp.items[1] and K.call(sp.items[1], "getTexture") or itemIcon(K.slotTypes(slot)[1])
             if icon then self:drawTextureScaled(icon, tx, yy, lh + 4, lh + 4, (sp.have > 0) and 1 or 0.4, 1, 1, 1) end
-            local label = slotLabel(slot)
+            local names, kinds = slotAlternatives(slot)
+            local label = names[1] or slotLabel(slot)
+            local alt = nil
+            if #names > 1 or #kinds > 0 then
+                local parts = { T("IGUI_GTPC_AltTitle") .. " " .. table.concat(names, ", ") }
+                if #kinds > 0 then parts[#parts + 1] = T("IGUI_GTPC_OrAny", table.concat(kinds, " / ")) end
+                alt = table.concat(parts, " ")
+            end
             local tag = slot.spice and T("IGUI_GTPC_Spice") or (slot.optional and T("IGUI_GTPC_Optional") or "")
             local count = T("IGUI_GTPC_Have", tostring(sp.have), tostring(sp.need))
             local ok = sp.have >= sp.need
@@ -390,10 +425,14 @@ function Win:renderCookInfo(x, y, w, h, d, p)
             local cxr = tx + tw2 - 14 - cw
             shadowText(self, count, cxr, yy + 2, col, 1, sf)
             local nameW = cxr - (tx + lh + 10) - 10
-            local tagW = tag ~= "" and math.min(tw(sf, tag), math.floor(nameW * 0.45)) or 0
-            local lab = fit(label, nameW - tagW - (tagW > 0 and 8 or 0), sf)
-            shadowText(self, lab, tx + lh + 10, yy + 2, C.text, 1, sf)
-            if tagW > 0 then shadowText(self, fit(tag, tagW, sf), tx + lh + 10 + tw(sf, lab) + 8, yy + 2, C.textDim, 1, sf) end
+            local imW = alt and (lh + 6) or 0
+            local tagW = tag ~= "" and math.min(tw(sf, tag), math.floor(nameW * 0.4)) or 0
+            local lab = fit(label, nameW - tagW - imW - (tagW > 0 and 8 or 0), sf)
+            local lx = tx + lh + 10
+            shadowText(self, lab, lx, yy + 2, C.text, 1, sf)
+            lx = lx + tw(sf, lab) + 6
+            if alt then lx = lx + infoMark(self, lx, yy + 2, lh, alt) end
+            if tagW > 0 then shadowText(self, fit(tag, tagW, sf), lx + 2, yy + 2, C.textDim, 1, sf) end
             yy = yy + lh + 6
             local refused = {}
             for t in pairs(sp.refused) do refused[#refused + 1] = itemName(t) end
@@ -574,15 +613,24 @@ function Win:renderCookRun(x, y, w, h, run)
     end
     yy = yy + 4
     -- 1.0.4: what happens to the ingredients
+    -- 1.0.8: one short line each; the long explanation on the "i"
+    local function shortLine(text, col, tip)
+        local im = tip and (lh + 6) or 0
+        local t = fit(text, tw2 - 14 - im, sf)
+        shadowText(self, t, tx, yy, col, 1, sf)
+        if tip then infoMark(self, tx + tw(sf, t) + 6, yy, lh, tip) end
+        yy = yy + lh + 6
+    end
     if run.phase == "taking" or run.phase == "finishing" or run.phase == "cancelling" then
-        yy = yy + self:paragraphs(T("IGUI_GTPC_Phase_" .. run.phase), tx, yy, tw2 - 10, C.text, sf) + 6
+        shortLine(T("IGUI_GTPC_Phase_" .. run.phase), C.text)
     elseif run.phase ~= "done" and not (run.phase == "failed" and run.failReason == "take") then
-        yy = yy + self:paragraphs(T(run.resumed and "IGUI_GTPC_Resumed" or "IGUI_GTPC_Taken"), tx, yy, tw2 - 10, C.textDim, sf) + 6
+        shortLine(T("IGUI_GTPC_TakenShort"), C.textDim, T(run.resumed and "IGUI_GTPC_Resumed" or "IGUI_GTPC_Taken"))
     end
     if run.phase == "failed" then
-        yy = yy + self:paragraphs(T("IGUI_GTPC_Failed_" .. tostring(run.failReason or "ingredients")), tx, yy, tw2 - 10, C.bad, sf) + 6
-        if run.failWhy then yy = yy + self:paragraphs(T("IGUI_GTPC_Why_" .. tostring(run.failWhy)), tx, yy, tw2 - 10, C.warn, sf) + 6 end
-        yy = yy + self:paragraphs(T("IGUI_GTPC_RetryHint"), tx, yy, tw2 - 10, C.textDim, sf) + 6
+        local tip = {}
+        if run.failWhy then tip[#tip + 1] = T("IGUI_GTPC_Why_" .. tostring(run.failWhy)) end
+        tip[#tip + 1] = T("IGUI_GTPC_RetryHint")
+        shortLine(T("IGUI_GTPC_FailedShort_" .. tostring(run.failReason or "take")), C.bad, table.concat(tip, "  /  "))
     end
     if run.phase == "blocked" then
         yy = yy + self:paragraphs(T("IGUI_GTPC_Why_" .. tostring(run.blockedBy or "tools")), tx, yy, tw2 - 10, C.bad, sf) + 6

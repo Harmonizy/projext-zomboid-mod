@@ -306,6 +306,17 @@
   ISAddItemInRecipe any more; CookFlow phases: taking / game / action /
   paused / retry / blocked / finishing / done / failed (take | make) /
   cancelling. K.plan's preview = full values of the planned items.
+- GTP 1.0.8 (owner, MP: "Cancel gives nothing back; every step done and it
+  still will not finish" -- "no dish pending on the server"): the pending
+  dish lived in the PLAYER's modData, which the MP client's player data
+  replaces on the server. It lives in global ModData "HARMONIE_GTP_CookPending"
+  now, key `"u:" .. username` (`S.keyOf`, `S.setPending`); an old record in
+  the player's modData is moved over once. Never keep server-owned state in
+  player modData. Cook tab: ingredient = first name + an "i" (hover = every
+  food that works, `slotAlternatives` / `infoMark`); the level line is one
+  line with the bonus + level-ease text on an "i"; the run panel's long
+  paragraphs are one short line + "i". Chopping game: each click / Space = 2
+  cuts (`CUT_PER_CLICK`, owner "x2").
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to
