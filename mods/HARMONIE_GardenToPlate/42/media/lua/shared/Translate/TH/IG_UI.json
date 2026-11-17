@@ -982,5 +982,14 @@
     "IGUI_HUB_State_COMPLETE": "สำเร็จ",
     "IGUI_HUB_State_INFO_ONLY": "ข้อมูล",
     "IGUI_HUB_Set_Hints": "แสดงคำแนะนำขั้นตอนถัดไป",
-    "IGUI_HUB_Set_Hints_Tip": "แถบบนสุดของแต่ละแท็บที่บอกว่าหน้านี้ใช้ทำอะไรและควรทำอะไรต่อ ใช้ค่าเดียวกันทุกหน้าต่าง HARMONIE เฉพาะเครื่องนี้"
+    "IGUI_HUB_Set_Hints_Tip": "แถบบนสุดของแต่ละแท็บที่บอกว่าหน้านี้ใช้ทำอะไรและควรทำอะไรต่อ ใช้ค่าเดียวกันทุกหน้าต่าง HARMONIE เฉพาะเครื่องนี้",
+    "IGUI_GTPC_LevelLine": "แนะนำทักษะทำอาหาร Lv %1 (คุณ: %2)",
+    "IGUI_GTPC_LevelLineHard": "แนะนำทักษะทำอาหาร Lv %1 (คุณ: %2) - ขั้นตอนยากขึ้น",
+    "IGUI_GTPC_AltTitle": "ใช้แทนได้:",
+    "IGUI_GTPC_TakenShort": "วัตถุดิบอยู่ในภาชนะแล้ว - กดยกเลิกได้ของคืน",
+    "IGUI_GTPC_FailedShort_take": "เอาวัตถุดิบไม่ได้ - ยังไม่ได้เอาอะไรไป",
+    "IGUI_GTPC_FailedShort_make": "ยังทำให้เสร็จไม่ได้ - วัตถุดิบยังเก็บไว้",
+    "IGUI_GTPC_FailedShort_ingredients": "เริ่มไม่ได้ - ยังไม่ได้ใส่อะไร",
+    "IGUI_GTPC_FailedShort_stuck": "ค้างระหว่างใส่วัตถุดิบ - ของที่ใส่แล้วยังอยู่",
+    "IGUI_GTPC_FailedShort_base": "หาจานอาหารไม่เจอ"
 }
