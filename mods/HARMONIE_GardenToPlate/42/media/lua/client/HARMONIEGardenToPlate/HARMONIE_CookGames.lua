@@ -138,6 +138,10 @@ function P:tol() return 1.45 - self.d end
 -- cuts needed (at the middle difficulty) for the rapid chop game
 local CUTS = { chop = 24, slice = 20, mince = 32, trim = 14, core = 12 }
 local CUT_GRACE_MS, CUT_DECAY_MS = 600, 350   -- no cut for 0.6 s: one cut lost every 0.35 s
+-- 1.0.8 (owner 2026-11-17, "หั่นเพิ่มเป็น 2 เท่า"): twice the cuts; one click /
+-- Space = one cut (the time limit grows with the cuts, as before)
+local CUT_PER_CLICK = 1
+local CUT_MUL = 2
 local RING = { knead = { 6, 1100 }, pound = { 5, 850 }, crack = { 2, 1000 }, toss = { 4, 950 } }
 local LANE = { grate = 9, zest = 6, roll = 6 }
 local CIRCLE = { stir = { 2.2, 6.0, 5200, 128 }, whisk = { 8.5, 17, 4200, 112 }, fold = { 1.2, 3.4, 4600, 112 }, grind = { 4.5, 10, 4200, 78 } }
@@ -148,7 +152,7 @@ function P:setup()
     self.limit = 14000
     if self.kind == "timing" then
         local base = CUTS[v] or CUTS.chop
-        self.need = math.max(6, math.floor(base * (0.8 + 0.5 * self.d) + 0.5))
+        self.need = math.max(6, math.floor(base * (0.8 + 0.5 * self.d) * CUT_MUL + 0.5))
         self.cuts, self.best, self.lastCut, self.decayAt, self.chopAnim = 0, 0, now(), 0, 0
         self.limit = 5000 + self.need * 170
     elseif self.kind == "ring" then
@@ -492,7 +496,7 @@ end
 function P:chopOnce()
     if self.done or self.kind ~= "timing" then return end
     local t = now()
-    self.cuts = self.cuts + 1
+    self.cuts = math.min(self.need, self.cuts + CUT_PER_CLICK)
     self.lastCut = t
     self.decayAt = t + CUT_GRACE_MS
     self.chopAnim = 1

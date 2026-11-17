@@ -105,10 +105,46 @@ local function reply(player, command, args)
     end
 end
 
-function S.pending(player)
+-- 1.0.8 (owner 2026-11-17, MP: "Cancel gives nothing back; every step
+-- done and it still cannot finish" -- the window said "no dish pending on
+-- the server"): the record lived in the PLAYER's modData, which in
+-- multiplayer the player's own client sends to the server and so wipes what
+-- the server wrote. It lives in the world's global ModData now, kept by the
+-- authority only (server / single player), one entry per player.
+S.STORE = "HARMONIE_GTP_CookPending"
+local function store()
+    if not (ModData and ModData.getOrCreate) then return nil end
+    local ok, t = pcall(ModData.getOrCreate, S.STORE)
+    return ok and t or nil
+end
+local function keyOf(player)
+    local u = call(player, "getUsername")
+    if u and u ~= "" then return "u:" .. tostring(u) end
+    return "p:" .. tostring(call(player, "getPlayerNum") or 0)
+end
+S.keyOf = keyOf
+
+function S.setPending(player, p)
+    local st = store()
+    if st then st[keyOf(player)] = p end
+    -- the old place is never used again
     local md = call(player, "getModData")
-    local p = md and md[S.KEY]
+    if md and md[S.KEY] ~= nil then md[S.KEY] = nil end
+end
+
+function S.pending(player)
+    local st = store()
+    local p = st and st[keyOf(player)]
     if type(p) == "table" and p.dish then return p end
+    -- a dish started before 1.0.8 (single player, or a server that still had it)
+    local md = call(player, "getModData")
+    local old = md and md[S.KEY]
+    if type(old) == "table" and old.dish then
+        log("%s: moved the dish being made (%s) from the player's data to the world's", nameOf(player), tostring(old.dish))
+        local copy = plainCopy(old)
+        S.setPending(player, copy)
+        return copy
+    end
     return nil
 end
 
@@ -203,11 +239,11 @@ function S.take(player, args)
             snaps[#snaps + 1] = s
         end
     end
-    local md = player:getModData()
-    md[S.KEY] = { dish = dish.id, result = resultType, items = snaps, nut = nut, vit = vit, units = units, step = 1, words = {}, at = hours() }
-    log("%s started %s: %d item(s) taken (container included), %.0f hunger, %.0f kcal, result %s",
-        nameOf(player), dish.id, #snaps, nut.hunger * 100, nut.cal, resultType)
-    reply(player, "taken", { pending = plainCopy(md[S.KEY]) })
+    local rec = { dish = dish.id, result = resultType, items = snaps, nut = nut, vit = vit, units = units, step = 1, words = {}, at = hours() }
+    S.setPending(player, rec)
+    log("%s started %s: %d item(s) taken (container included), %.0f hunger, %.0f kcal, result %s -- kept as %s in %s",
+        nameOf(player), dish.id, #snaps, nut.hunger * 100, nut.cal, resultType, keyOf(player), S.STORE)
+    reply(player, "taken", { pending = plainCopy(rec) })
 end
 
 -- ------------------------------------------------------------------ progress
@@ -252,7 +288,7 @@ function S.finish(player, args)
     local done = K.applyQuality and K.applyQuality(item, q, p.dish, player)
     if done and K.giveXp and K.dishXp then K.giveXp(player, K.dishXp(dish, q)) end
     sync(player, item)
-    player:getModData()[S.KEY] = nil
+    S.setPending(player, nil)
     log("%s made %s: %s id %s, quality %.2f (%s), %.0f hunger, %.0f kcal", nameOf(player), p.dish, tostring(p.result),
         tostring(call(item, "getID")), q, K.wordOf and K.wordOf(q) or "?", (n.hunger or 0) * 100, n.cal or 0)
     reply(player, "made", { id = call(item, "getID"), q = q, dish = p.dish, unhappy = tonumber(call(item, "getUnhappyChange")),
@@ -299,12 +335,15 @@ end
 
 function S.cancel(player, why, into)
     local p = S.pending(player)
-    if not p then return reply(player, "returned", { n = 0 }) end
+    if not p then
+        log("%s asked for the ingredients back but no dish is pending (%s) -- nothing to give", nameOf(player), keyOf(player))
+        return reply(player, "returned", { n = 0 })
+    end
     local n, lost = 0, 0
     for _, s in ipairs(p.items or {}) do
         if restore(player, s, into) then n = n + 1 else lost = lost + 1 end
     end
-    player:getModData()[S.KEY] = nil
+    S.setPending(player, nil)
     log("%s: %s cancelled (%s) -- %d item(s) given back%s", nameOf(player), p.dish, tostring(why or "button"), n,
         lost > 0 and string.format(", %d seasoning use(s) lost (shaker gone)", lost) or "")
     reply(player, "returned", { n = n })
