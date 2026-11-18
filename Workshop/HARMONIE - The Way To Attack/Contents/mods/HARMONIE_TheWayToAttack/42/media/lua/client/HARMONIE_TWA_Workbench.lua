@@ -22,8 +22,10 @@ local W = TWAWorkbench
 
 W.HEADER_H = 40
 W.TAB_H = 64
+-- 1.0.9 (owner 2026-11-18): no "Craft" tab button -- the craft page opens
+-- from a recipe (and from "back to the craft under way" above the list);
+-- setTab("craft") still shows it, with no tab lit.
 W.TABS = {
-    { id = "craft", key = "IGUI_TWA_Tab_Craft" },
     { id = "weapons", key = "IGUI_TWA_Tab_Weapons" },
     { id = "materials", key = "IGUI_TWA_Tab_Materials" },
     { id = "modify", key = "IGUI_TWA_Tab_Modify" },
