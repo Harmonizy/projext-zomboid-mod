@@ -494,18 +494,26 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
     end
 
     local top, viewH = b.y + 48, b.h - 56
-    local leftW = math.floor((b.w - 40) * 0.55)
+    -- HM 1.0.9 (owner 2026-11-18): three columns -- the signs (and first
+    -- the causes) on the left, the likely illnesses in the MIDDLE, the
+    -- findings on the right. Each column scrolls and is clipped on its own.
+    local avail = b.w - 56
+    local leftW = math.floor(avail * 0.37)
+    local midW = math.floor(avail * 0.32)
     local lx = b.x + 14
-    local rx = lx + leftW + 14
+    local cx0 = lx + leftW + 14
+    local rx = cx0 + midW + 14
     local rw = b.x + b.w - 16 - rx
     local mx, my = self:getLocalMousePosition()
     local inView = my >= top and my <= top + viewH
-    st.hits, st.tip, st.leftEdge = {}, nil, rx - 7
+    st.scrollM = st.scrollM or 0
+    st.hits, st.tip, st.leftEdge, st.midEdge = {}, nil, rx - 7, cx0 - 7
     local function hit(x, y, w, h, kind, id)
         if y + h >= top and y <= top + viewH then st.hits[#st.hits + 1] = { x = x, y = y, w = w, h = h, kind = kind, id = id } end
     end
+    local chipH = fh() + 8
 
-    -- ---- left: signs, then candidates
+    -- ---- left: causes, then signs
     self:setStencilRect(lx - 2, top, leftW + 4, viewH)
     local y = top - st.scrollL
     if not D.enabled() then
@@ -518,72 +526,84 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
     end
 
     y = y + 8
-    local chipH = fh() + 8
     local selected = 0
-    for _, g in ipairs(D.GROUPS) do
-        self:drawText(L("Group_" .. g.id, g.id), lx, y, c.accent.r, c.accent.g, c.accent.b, 1, FONT)
-        y = y + fh() + 4
-        local x = lx
-        for _, tag in ipairs(g.tags) do
-            local label = tagName(tag)
-            local w = math.min(leftW, tw(label) + 18)
-            if x > lx and x + w > lx + leftW then x = lx; y = y + chipH + 6 end
-            local on = st.tags[tag] == true
-            if on then selected = selected + 1 end
-            local hov = inView and inside(mx, my, x, y, w, chipH)
-            local bg = on and c.accentDark or c.panelSoft
-            local bd = on and c.accent or c.borderDim
-            self:drawRect(x, y, w, chipH, on and 0.95 or (hov and 0.7 or 0.45), bg.r, bg.g, bg.b)
-            self:drawRectBorder(x, y, w, chipH, on and 1 or 0.8, bd.r, bd.g, bd.b)
-            local tc = on and c.text or (hov and c.text or c.textDim)
-            self:drawText(S.fitText(label, w - 12, function(t) return tw(t) end), x + 9, y + 4, tc.r, tc.g, tc.b, 1, FONT)
-            -- where this sign is read (the player checks Body Stats themselves)
-            if hov then
-                local where = HM_Text("UI_HomeMedic_SignWhere_" .. tag, "")
-                st.tip = label .. (where ~= "" and ("\n" .. where) or "")
+    local groups = { D.CAUSE_GROUP }
+    for _, g in ipairs(D.GROUPS) do groups[#groups + 1] = g end
+    for _, g in ipairs(groups) do
+        if g and g.tags then
+            self:drawText(L("Group_" .. g.id, g.id), lx, y, c.accent.r, c.accent.g, c.accent.b, 1, FONT)
+            y = y + fh() + 4
+            local x = lx
+            for _, tag in ipairs(g.tags) do
+                local label = tagName(tag)
+                local w = math.min(leftW, tw(label) + 18)
+                if x > lx and x + w > lx + leftW then x = lx; y = y + chipH + 6 end
+                local on = st.tags[tag] == true
+                if on then selected = selected + 1 end
+                local hov = inView and inside(mx, my, x, y, w, chipH)
+                local bg = on and c.accentDark or c.panelSoft
+                local bd = on and c.accent or c.borderDim
+                self:drawRect(x, y, w, chipH, on and 0.95 or (hov and 0.7 or 0.45), bg.r, bg.g, bg.b)
+                self:drawRectBorder(x, y, w, chipH, on and 1 or 0.8, bd.r, bd.g, bd.b)
+                local tc = on and c.text or (hov and c.text or c.textDim)
+                self:drawText(S.fitText(label, w - 12, function(t) return tw(t) end), x + 9, y + 4, tc.r, tc.g, tc.b, 1, FONT)
+                if hov then
+                    -- a sign: where it is read; a cause: what it means
+                    local key = (D.CAUSE_TAG and D.CAUSE_TAG[tag]) and ("UI_HomeMedic_Diag_CauseTip_" .. tag) or ("UI_HomeMedic_SignWhere_" .. tag)
+                    local where = HM_Text(key, "")
+                    st.tip = label .. (where ~= "" and ("\n" .. where) or "")
+                end
+                hit(x, y, w, chipH, "tag", tag)
+                x = x + w + 6
             end
-            hit(x, y, w, chipH, "tag", tag)
-            x = x + w + 6
+            y = y + chipH + 12
         end
-        y = y + chipH + 12
     end
+    local contentL = y + st.scrollL - top + 8
+    self:clearStencilRect()
+    st.maxL = drawScrollbar(self, lx + leftW + 4, top, viewH, contentL, st.scrollL, "dxL", function(v) st.scrollL = v end)
+    if st.scrollL > st.maxL then st.scrollL = st.maxL end
+    self:drawRect(cx0 - 8, top, 1, viewH, 0.5, c.borderDim.r, c.borderDim.g, c.borderDim.b)
 
-    -- candidates
+    -- ---- middle: the likely illnesses
+    self:setStencilRect(cx0 - 2, top, midW + 4, viewH)
+    y = top - st.scrollM
     local head = L("Candidates", "Possible illnesses")
-    self:drawText(head, lx, y, c.text.r, c.text.g, c.text.b, 1, FONT_M)
+    self:drawText(S.fitText(head, midW - 70, function(t) return tw(t, FONT_M) end), cx0, y, c.text.r, c.text.g, c.text.b, 1, FONT_M)
     if selected > 0 then
         local clear = L("Clear", "Clear")
         local cw = tw(clear) + 16
-        local cx = lx + leftW - cw
-        local hov = inView and inside(mx, my, cx, y, cw, chipH)
-        self:drawRectBorder(cx, y, cw, chipH, hov and 1 or 0.7, c.border.r, c.border.g, c.border.b)
-        self:drawText(clear, cx + 8, y + 4, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT)
-        hit(cx, y, cw, chipH, "clear")
+        local ccx = cx0 + midW - cw
+        local hov = inView and inside(mx, my, ccx, y, cw, chipH)
+        self:drawRectBorder(ccx, y, cw, chipH, hov and 1 or 0.7, c.border.r, c.border.g, c.border.b)
+        self:drawText(clear, ccx + 8, y + 4, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT)
+        hit(ccx, y, cw, chipH, "clear")
     end
     y = y + math.max(fh(FONT_M), chipH) + 6
     if selected == 0 then
-        for _, l in ipairs(wrap(L("PickSigns", "Pick at least one sign."), leftW)) do
-            self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
+        for _, l in ipairs(wrap(L("PickSigns", "Pick at least one sign."), midW)) do
+            self:drawText(l, cx0, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
         end
     else
         local list, hits, picked = D.candidates(st.tags)
         if st.loggedPick ~= picked .. ":" .. #list then
             st.loggedPick = picked .. ":" .. #list
-            HMLog("Diagnosis", "%d signs ticked: %d possible illnesses (any sign)", picked, #list)
+            HMLog("Diagnosis", "%d signs / causes ticked: %d possible illnesses (any of them)", picked, #list)
         end
         if #list == 0 then
-            for _, l in ipairs(wrap(L("NoMatch", "No illness causes these signs."), leftW)) do
-                self:drawText(l, lx, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
+            for _, l in ipairs(wrap(L("NoMatch", "No illness causes these signs."), midW)) do
+                self:drawText(l, cx0, y, c.textDim.r, c.textDim.g, c.textDim.b, 1, FONT); y = y + fh() + 2
             end
         end
         local locked = (st.lockUntil or 0) > nowMs()
-        local rowH = fh(FONT_M) + 10
+        -- two lines a row: the name, then the matches and the button
+        local rowH = fh(FONT_M) + chipH + 14
         for _, id in ipairs(list) do
             local known = D.knows(doctor, id)
             local done = known and D.isDiagnosed(patient, id, exam) and D.isActive(D.getter(patient, exam), id, patient, exam)
-            local hov = inView and inside(mx, my, lx, y, leftW, rowH)
-            self:drawRect(lx, y, leftW, rowH - 4, hov and 0.55 or 0.35, c.panelSoft.r, c.panelSoft.g, c.panelSoft.b)
-            self:drawRectBorder(lx, y, leftW, rowH - 4, 0.7, c.borderDim.r, c.borderDim.g, c.borderDim.b)
+            local hov = inView and inside(mx, my, cx0, y, midW, rowH)
+            self:drawRect(cx0, y, midW, rowH - 4, hov and 0.55 or 0.35, c.panelSoft.r, c.panelSoft.g, c.panelSoft.b)
+            self:drawRectBorder(cx0, y, midW, rowH - 4, 0.7, c.borderDim.r, c.borderDim.g, c.borderDim.b)
             local btn, btnColor
             if done then
                 btn, btnColor = L("Done", "DIAGNOSED"), c.green
@@ -594,36 +614,34 @@ function EHR_HealthPanelUI:drawDiagnosisPanel()
             else
                 btn, btnColor = L("Diagnose", "Diagnose"), c.yellow
             end
-            local bw = tw(btn) + 16
-            local bx = lx + leftW - bw - 6
-            local by = y + math.floor((rowH - 4 - chipH) / 2)
             local name = known and diseaseName(id) or L("Unknown", "Unknown illness")
             local nc = known and c.text or c.textDim
-            -- how many of the ticked signs this illness causes (all = green)
+            self:drawText(S.fitText(name, midW - 20, function(t) return tw(t, FONT_M) end), cx0 + 10, y + 4, nc.r, nc.g, nc.b, 1, FONT_M)
             local mt = L("Matches", "%1/%2 signs", (hits and hits[id]) or 0, picked or 0)
-            local mw = tw(mt) + 10
             local full = hits and picked and hits[id] == picked
             local mc = full and c.green or c.textDim
-            self:drawText(S.fitText(name, bx - lx - 18 - mw, function(t) return tw(t, FONT_M) end), lx + 10, y + 3, nc.r, nc.g, nc.b, 1, FONT_M)
-            self:drawText(mt, bx - mw, y + 3 + math.floor((fh(FONT_M) - fh()) / 2), mc.r, mc.g, mc.b, 1, FONT)
+            local ly2 = y + fh(FONT_M) + 8
+            self:drawText(mt, cx0 + 10, ly2 + 4, mc.r, mc.g, mc.b, 1, FONT)
+            local bw = tw(btn) + 16
+            local bx = cx0 + midW - bw - 6
             local canPick = known and not done and not locked
-            local bh = canPick and inView and inside(mx, my, bx, by, bw, chipH)
+            local bh = canPick and inView and inside(mx, my, bx, ly2, bw, chipH)
             if canPick then
-                self:drawRect(bx, by, bw, chipH, bh and 0.9 or 0.6, c.accentDark.r, c.accentDark.g, c.accentDark.b)
-                self:drawRectBorder(bx, by, bw, chipH, 1, c.accent.r, c.accent.g, c.accent.b)
-                hit(bx, by, bw, chipH, "pick", id)
+                self:drawRect(bx, ly2, bw, chipH, bh and 0.9 or 0.6, c.accentDark.r, c.accentDark.g, c.accentDark.b)
+                self:drawRectBorder(bx, ly2, bw, chipH, 1, c.accent.r, c.accent.g, c.accent.b)
+                hit(bx, ly2, bw, chipH, "pick", id)
             end
-            self:drawText(btn, bx + 8, by + 4, btnColor.r, btnColor.g, btnColor.b, 1, FONT)
+            self:drawText(btn, bx + 8, ly2 + 4, btnColor.r, btnColor.g, btnColor.b, 1, FONT)
             if hov then
                 st.tip = known and ((HM_Handbook and HM_Handbook.symptoms(id)) or codex(id, "Symptoms") or "") or L("UnknownTip", "You do not know this illness yet: read its flyer or reach First Aid 8.")
             end
             y = y + rowH
         end
     end
-    local contentL = y + st.scrollL - top + 8
+    local contentM = y + st.scrollM - top + 8
     self:clearStencilRect()
-    st.maxL = drawScrollbar(self, lx + leftW + 4, top, viewH, contentL, st.scrollL, "dxL", function(v) st.scrollL = v end)
-    if st.scrollL > st.maxL then st.scrollL = st.maxL end
+    st.maxM = drawScrollbar(self, cx0 + midW + 4, top, viewH, contentM, st.scrollM, "dxM", function(v) st.scrollM = v end)
+    if st.scrollM > st.maxM then st.scrollM = st.maxM end
     self:drawRect(rx - 8, top, 1, viewH, 0.5, c.borderDim.r, c.borderDim.g, c.borderDim.b)
 
     -- ---- right: findings
@@ -656,9 +674,12 @@ function EHR_HealthPanelUI:onDiagnosisWheel(del)
     local st = self.dxState
     if not st then return false end
     local mx = self:getLocalMousePosition()
-    if mx < (st.leftEdge or 0) then
+    if mx < (st.midEdge or 0) then
         if (st.maxL or 0) <= 0 then return false end
         st.scrollL = math.max(0, math.min(st.maxL, st.scrollL + del * 40))
+    elseif mx < (st.leftEdge or 0) then
+        if (st.maxM or 0) <= 0 then return false end
+        st.scrollM = math.max(0, math.min(st.maxM, (st.scrollM or 0) + del * 40))
     else
         if (st.maxR or 0) <= 0 then return false end
         st.scrollR = math.max(0, math.min(st.maxR, st.scrollR + del * 40))

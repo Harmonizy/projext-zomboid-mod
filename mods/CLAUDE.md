@@ -295,6 +295,12 @@
   divided by that factor, once; run from applyDamage (equip, swing, game
   start for every carried crafted weapon). Toughness tiers: script
   ConditionMax > 5 / 10 / 15 / 20 as always.
+- TWA 1.0.11 (owner 2026-11-18): Finish needs only every step done -- no
+  quality gate (canFinish; sandbox MaterialNeedsGood is no longer read).
+  Advanced view: overall quality shows its average "(2.67)" and a line under
+  the step grid with the cut points (Bad < BadBelow, Good, Excellent >=
+  excellentCut incl. the crafter's skill bonus). Guided header: no progress
+  bar (it covered the sub line).
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
@@ -389,6 +395,14 @@
   EHR's own events. Cellulitis' wound counts as inflamed (sourceBodyPart).
   A new sign or illness: add it to STAGE_SIGNS and, if EHR does not do it,
   an `E.EFFECT[tag]` (the console says "no effect written for it").
+- Diagnosis tab (HM 1.0.9, owner 2026-11-18): THREE columns -- signs (left),
+  likely illnesses (MIDDLE, two-line rows), findings (right); scrollL /
+  scrollM / scrollR, each clipped. First chip group "Cause" =
+  `D.CAUSE_GROUP` (c_raw_meat, c_dirty_hands, c_dirty_water, ...) with
+  `D.CAUSES[illness]` from each illness's real EHR trigger (codex Cause
+  lines); kept OUT of D.GROUPS / STAGE_SIGNS (tab 3 and the handbook read
+  those) and only added to D.TAGSET, so D.candidates counts them like signs.
+  Hover = UI_HomeMedic_Diag_CauseTip_<tag>.
 - Prosthesis duplication (HM 1.0.8, owner 2026-11-18): B42 MP checks the
   wear / unequip actions on the client AND the server; TOC's
   ProsthesisHandler.Validate / CheckIfEquippable read getPlayer() (nil on a

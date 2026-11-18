@@ -2985,8 +2985,10 @@ function TWACraftWindow:renderBody()
         local oWord, oAvg = TWACraftState.overall(recipe, self:currentMap(), self.player)
         if oWord then
             local oc = TWACraftState.WORD_COLOR[oWord]
-            -- Word only (round 6: "คุณภาพรวมให้แสดงแค่คำ ไม่ต้องแสดงตัวเลข").
-            local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord))
+            -- 1.0.11 (owner: "in Advanced mode the quality should show its
+            -- number and how much each word needs"): the average beside the
+            -- word, the cut points on the line under the step grid.
+            local label = getText("IGUI_TWA_OverallQuality", TWACraftState.wordText(oWord)) .. string.format(" (%.2f)", oAvg or 0)
             local lw = getTextManager():MeasureStringX(TWAFont.small(), label)
             -- Round 23 ("หัวข้อคุณภาพรวมโดดเด่นกว่านี้ แต่ไม่ต้องเด่นมากเกิน"): a
             -- small badge in the word's colour behind it.
@@ -3047,6 +3049,23 @@ function TWACraftWindow:renderBody()
         end
     end
 
+    -- 1.0.11: the cut points of the overall quality (average of the step
+    -- scores: Bad 1, Good 2, Excellent 3; Miss / not done not counted), with
+    -- this crafter's skill bonus on Excellent
+    do
+        local S = TWACraftState
+        local bonus = S.excellentBonus(recipe, self.player)
+        local bad, exc = TWAConfig.num("BadBelow"), S.excellentCut(bonus)
+        local line = getText("IGUI_TWA_QualityCuts", string.format("%.2f", bad), string.format("%.2f", bad), string.format("%.2f", exc), string.format("%.2f", exc))
+        local ly = py + cell + 4 + wordH + 6
+        local lines = wrapTextLines(line, CENTER_W - 24, TWAFont.small())
+        for i, l in ipairs(lines) do
+            drawTextShadowed(self, l, centerX, ly + (i - 1) * TWAFont.grow(14), 0.7, 0.75, 0.85, 1, TWAFont.small())
+        end
+        if bonus > 0 then
+            drawTextShadowed(self, getText("IGUI_TWA_QualityBonus", string.format("%.2f", bonus)), centerX, ly + #lines * TWAFont.grow(14), 0.55, 0.85, 0.55, 1, TWAFont.small())
+        end
+    end
     self.finishButton.enable = self:allProceduresDone()
     self.incompleteButton.enable = self:canGoIncomplete()
     -- The material rule, spelled out where the Finish button is (round 7).
