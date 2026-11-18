@@ -184,55 +184,42 @@ function G.totalBonus(weapon, swap)
     return sum
 end
 
--- 1.0.9 (owner 2026-11-18: "every weapon made in TWA: twice the
--- durability"): a finished crafted weapon (it carries TWA_Grade) has its
--- script ConditionMax x CRAFT_DURABILITY. The weapon's max condition is not
--- saved by the game (it comes back from the script), so it is put back here
--- with the gems, on the same events (TWAWeaponDebug.reapply: equip, game
--- start, every swing) and once at Finish. The first time a weapon gets it,
--- the extra condition is added to its current condition (md.TWA_Durability).
--- The Toughness procedure tiers (WrapCloth / WrapLeather / StringSinew /
--- WeaveWire) were picked by script ConditionMax > 5 / 10 / 15 / 20; on the
--- crafted weapon that is > 10 / 20 / 30 / 40 now -- the same recipes keep
--- the same step, the thresholds moved with the durability.
-G.CRAFT_DURABILITY = 2
-function G.durabilityMul(item)
-    if not item or not item.setConditionMax or not item.getModData then return 1 end
-    local md = item:getModData()
-    if md.TWA_Grade and not md.TWA_Incomplete then return G.CRAFT_DURABILITY end
-    return 1
+-- Put the base damage + the gems' bonus on the weapon. No socket table at all:
+-- the weapon is left alone (never touched by this system).
+-- 1.0.10 (owner 2026-11-18: "durability back as it was, the step tiers
+-- too"): 1.0.9 gave crafted weapons x2 max condition (md.TWA_Durability).
+-- That is taken back once per weapon: the max goes back to the script's (+
+-- gems) and the current condition is divided by the same factor, so a weapon
+-- keeps the same share of its durability. The Toughness tiers never changed.
+function G.undoDurability(item, md)
+    local mul = tonumber(md.TWA_Durability) or 1
+    md.TWA_Durability = nil
+    if mul <= 1 or not (item.getCondition and item.setCondition) then return end
+    local script = item.getScriptItem and item:getScriptItem()
+    local base = (md.TWA_StatOverride or {}).ConditionMax
+    if base == nil and script and script.getConditionMax then base = script:getConditionMax() end
+    local max = base and (base + (md.TWA_Gems and (G.totalBonus(item).ConditionMax or 0) or 0)) or nil
+    if max and item.setConditionMax then item:setConditionMax(max) end
+    local before = item:getCondition()
+    local c = math.ceil(before / mul)
+    if max then c = math.min(c, max) end
+    item:setCondition(c)
+    TWALog("Socket", "%s: x%d durability taken back (condition %s -> %s, max %s)", TWALogType(item), mul, tostring(before), tostring(c), tostring(max))
 end
 
--- Put the base damage + the gems' bonus on the weapon. No socket table and
--- not a crafted weapon: the weapon is left alone (never touched by this system).
 function G.applyDamage(item)
     if not item then return end
     local md = item:getModData()
-    if md.TWA_Incomplete then return end
-    local mul = G.durabilityMul(item)
-    if not md.TWA_Gems and mul == 1 then return end
+    if md.TWA_Durability then G.undoDurability(item, md) end
+    if not md.TWA_Gems or md.TWA_Incomplete then return end
     if not (item.setMinDamage and item.setMaxDamage) then return end
     local ov = md.TWA_StatOverride or {}
     local script = item.getScriptItem and item:getScriptItem()
     local bonus = G.totalBonus(item)
-    local oldMax = item.getConditionMax and item:getConditionMax()
     for _, f in ipairs(G.FIELDS) do
         local base = ov[f.key]
-        if base == nil and script and script[f.get] then
-            base = script[f.get](script)
-            if f.key == "ConditionMax" and base then base = math.floor(base * mul + 0.5) end
-        end
+        if base == nil and script and script[f.get] then base = script[f.get](script) end
         if base ~= nil and item[f.set] then item[f.set](item, base + (bonus[f.key] or 0)) end
-    end
-    -- the first time: the extra durability is added to the current condition too
-    if mul > 1 and md.TWA_Durability ~= mul and item.getConditionMax and item.setCondition then
-        local newMax = item:getConditionMax()
-        if oldMax and newMax and newMax > oldMax then
-            item:setCondition(math.min(newMax, item:getCondition() + (newMax - oldMax)))
-        end
-        md.TWA_Durability = mul
-        TWALog("Socket", "%s: durability x%d for a crafted weapon (max condition %s -> %s, condition %s)", TWALogType(item), mul,
-            tostring(oldMax), tostring(newMax), tostring(item:getCondition()))
     end
     -- never more condition than the (possibly lowered) maximum
     if item.getCondition and item.getConditionMax and item.setCondition and item:getCondition() > item:getConditionMax() then

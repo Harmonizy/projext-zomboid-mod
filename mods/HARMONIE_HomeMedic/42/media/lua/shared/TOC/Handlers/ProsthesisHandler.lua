@@ -49,15 +49,41 @@ function ProsthesisHandler.GetGroup(item)
     return group
 end
 
+-- HM 1.0.8 (owner 2026-11-18: "taking off and putting on a prosthesis
+-- duplicates it"): in B42 multiplayer the wear / unequip actions are checked
+-- on the client AND on the server. These checks read getPlayer(), which is
+-- nil on a dedicated server, and the server's cached "highest amputated
+-- limb" can be empty -- so the server refused (or errored on) an action the
+-- client had already done, the two copies of the inventory went apart and
+-- the prosthesis showed up twice. Now the action's own character is used,
+-- the server works the value out itself when its cache is empty, the "can't
+-- equip" line is said only on the player's own game, and every wear / remove
+-- of a prosthesis is logged on both sides ([HARMONIE_HM][Prosthesis]).
+local function hmlog(fmt, ...) if HMLog then HMLog("Prosthesis", fmt, ...) end end
+local function sideName() return (isServer and isServer()) and "server" or ((isClient and isClient()) and "client" or "SP") end
+ProsthesisHandler.log = hmlog
+
+local function highestFor(username)
+    local h = username and CachedDataHandler.GetHighestAmputatedLimbs(username)
+    if (h == nil or (h.L == nil and h.R == nil)) and username and isServer and isServer() then
+        pcall(CachedDataHandler.CalculateHighestAmputatedLimbs, username)
+        h = CachedDataHandler.GetHighestAmputatedLimbs(username)
+    end
+    return h
+end
+
 ---Check if a prosthesis is equippable. It depends whether the player has a cut limb or not on that specific side. There's an exception for Upper arm, obviously
 ---@param fullType string
+---@param character IsoPlayer? the one wearing it (getPlayer() only as a last resort -- nil on a server)
 ---@return boolean
-function ProsthesisHandler.CheckIfEquippable(fullType)
+function ProsthesisHandler.CheckIfEquippable(fullType, character)
     --TOC_DEBUG.print("Current item is a prosthesis")
     local side = CommonMethods.GetSide(fullType)
     --TOC_DEBUG.print("Checking side: " .. tostring(side))
 
-    local highestAmputatedLimbs = CachedDataHandler.GetHighestAmputatedLimbs(getPlayer():getUsername())
+    local who = character or (getPlayer and getPlayer())
+    local username = who and who.getUsername and who:getUsername()
+    local highestAmputatedLimbs = highestFor(username)
 
     --TOC_DEBUG.print("highestAmputatedLimbs")
     --TOC_DEBUG.printTable(highestAmputatedLimbs)
@@ -106,16 +132,23 @@ function ProsthesisHandler.SearchAndSetupProsthesis(character, item, isEquipping
     return true
 end
 
-function ProsthesisHandler.Validate(item, isEquippable)
+function ProsthesisHandler.Validate(item, isEquippable, character)
     local isProst = ProsthesisHandler.CheckIfProst(item)
     if not isProst then return isEquippable end
 
     local fullType = item:getFullType() -- use fulltype for side
     if isEquippable then
-        isEquippable = ProsthesisHandler.CheckIfEquippable(fullType)
+        isEquippable = ProsthesisHandler.CheckIfEquippable(fullType, character)
+        if not isEquippable then
+            hmlog("%s: %s cannot be worn here (%s) -- no fitting stump on that side", tostring(character and character.getUsername and character:getUsername() or "?"), tostring(fullType), sideName())
+        end
     else
         TOC_DEBUG.print("Should say cant equip")
-        getPlayer():Say(getText("UI_Say_CantEquip"))        -- FIX not working
+        -- only on the player's own game (getPlayer() is nil on a server)
+        local who = character or (getPlayer and getPlayer())
+        if who and who.Say and not (isServer and isServer()) and (not who.isLocalPlayer or who:isLocalPlayer()) then
+            who:Say(getText("UI_Say_CantEquip"))
+        end
     end
 
     return isEquippable
@@ -132,13 +165,17 @@ local og_ISWearClothing_isValid = ISWearClothing.isValid
 function ISWearClothing:isValid()
     --TOC_DEBUG.print("ISWearClothing override")
     local isEquippable = og_ISWearClothing_isValid(self)
-    return ProsthesisHandler.Validate(self.item, isEquippable)
+    return ProsthesisHandler.Validate(self.item, isEquippable, self.character)
 end
 
 local og_ISWearClothing_complete = ISWearClothing.complete
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISWearClothing:complete()
     local result = og_ISWearClothing_complete(self)
+    if ProsthesisHandler.CheckIfProst(self.item) then
+        hmlog("%s wore %s id %s (%s, %s)", tostring(self.character and self.character:getUsername() or "?"), tostring(self.item:getFullType()),
+            tostring(self.item:getID()), sideName(), result and "done" or "NOT done")
+    end
     if result then
         ProsthesisHandler.SearchAndSetupProsthesis(self.character, self.item, true)
     end
@@ -151,9 +188,10 @@ local og_ISClothingExtraAction_isValid = OverridenMethodsArchive.Save("ISClothin
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISClothingExtraAction:isValid()
     local isEquippable = og_ISClothingExtraAction_isValid(self)
-    -- self.extra is a string, not the item
-    local testItem = instanceItem(self.extra)
-    return ProsthesisHandler.Validate(testItem, isEquippable)
+    -- self.extra is a string, not the item; made once per action (isValid
+    -- runs every tick -- it made a new item every tick)
+    self.tocExtraTest = self.tocExtraTest or instanceItem(self.extra)
+    return ProsthesisHandler.Validate(self.tocExtraTest, isEquippable, self.character)
 end
 
 local og_ISClothingExtraAction_complete = OverridenMethodsArchive.Save("ISClothingExtraAction_complete", ISClothingExtraAction.complete)
@@ -173,6 +211,10 @@ function ISUnequipAction:complete()
 
     local isProst = ProsthesisHandler.SearchAndSetupProsthesis(self.character, self.item, false)
     local result = og_ISUnequipAction_complete(self)
+    if isProst then
+        hmlog("%s took off %s id %s (%s, %s)", tostring(self.character and self.character:getUsername() or "?"), tostring(self.item:getFullType()),
+            tostring(self.item:getID()), sideName(), result == false and "NOT done" or "done")
+    end
 
     if isProst then
         -- we need to fetch the limbname associated to the prosthesis

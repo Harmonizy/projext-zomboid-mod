@@ -289,14 +289,12 @@
   the craft page opens from a recipe / "back to the craft under way";
   setTab("craft") still works. Tab "Modify" is "ติดตั้งอัญมณี" / "Socket gems"
   (tab, socket window, its right-click, guide).
-- TWA crafted weapons x2 durability (1.0.9): `TWAGemSocket.CRAFT_DURABILITY`
-  2 -- applyDamage now also runs for any finished crafted weapon (TWA_Grade)
-  and sets script ConditionMax x2 (+ gem bonus; a debug override wins); the
-  first time it adds the extra to the current condition (md.TWA_Durability).
-  Put back on equip / swing / game start (every carried crafted weapon) and
-  once at Finish. Toughness tiers (script ConditionMax >5/10/15/20) are
-  >10/20/30/40 on the crafted weapon -- recipe lists unchanged. The craft
-  page's stat grid shows the doubled value.
+- TWA crafted weapons x2 durability was 1.0.9 only; 1.0.10 took it back
+  (owner 2026-11-18): `TWAGemSocket.undoDurability` -- a weapon with
+  md.TWA_Durability gets the script max (+ gems) again and its condition
+  divided by that factor, once; run from applyDamage (equip, swing, game
+  start for every carried crafted weapon). Toughness tiers: script
+  ConditionMax > 5 / 10 / 15 / 20 as always.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
@@ -391,6 +389,17 @@
   EHR's own events. Cellulitis' wound counts as inflamed (sourceBodyPart).
   A new sign or illness: add it to STAGE_SIGNS and, if EHR does not do it,
   an `E.EFFECT[tag]` (the console says "no effect written for it").
+- Prosthesis duplication (HM 1.0.8, owner 2026-11-18): B42 MP checks the
+  wear / unequip actions on the client AND the server; TOC's
+  ProsthesisHandler.Validate / CheckIfEquippable read getPlayer() (nil on a
+  dedicated server) and the server's highest-amputated-limb cache could be
+  empty, so the server refused what the client had done -> two copies. Now
+  they take the action's character, the server runs
+  CalculateHighestAmputatedLimbs when its cache is empty, "can't equip" is
+  said only on the local game, each wear / remove of a prosthesis is logged
+  on both sides (HMLog "Prosthesis", item id + done / NOT done), and the
+  extra-action test item is made once per action, not every tick. Never use
+  getPlayer() in a shared timed-action check.
 - Delirium starts on the SERVER in MP (0.33.8): EHR's trigger (12 game h at
   >= 98% stress) is in `client/ExtensiveHealth/EHR_Delirium.lua`, so in MP the
   illness was only in the client's modData -- the server never had it,

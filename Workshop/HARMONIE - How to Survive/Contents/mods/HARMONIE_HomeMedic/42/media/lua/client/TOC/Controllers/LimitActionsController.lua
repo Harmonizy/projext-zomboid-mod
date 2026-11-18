@@ -281,7 +281,9 @@ end
 local og_ISClothingExtraAction_isValid = OverridenMethodsArchive.Save("ISClothingExtraAction_isValid", ISClothingExtraAction.isValid)
 ---@diagnostic disable-next-line: duplicate-set-field
 function ISClothingExtraAction:isValid()
-    return LimitActionsController.WrapClothingAction(self, og_ISClothingExtraAction_isValid, instanceItem(self.extra))
+    -- HM 1.0.8: one test item per action, not a new one every tick
+    self.tocExtraTest = self.tocExtraTest or instanceItem(self.extra)
+    return LimitActionsController.WrapClothingAction(self, og_ISClothingExtraAction_isValid, self.tocExtraTest)
 end
 
 

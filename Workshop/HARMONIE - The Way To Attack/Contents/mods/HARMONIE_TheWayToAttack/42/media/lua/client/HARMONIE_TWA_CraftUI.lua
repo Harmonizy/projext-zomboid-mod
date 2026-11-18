@@ -2328,10 +2328,6 @@ function TWACraftWindow:drawStatGrid(x, y, w)
         for col, cellDef in ipairs(row) do
             local v = cellDef.derive and cellDef.derive(stats) or stats[cellDef.key]
             if v ~= nil and cellDef.scale then v = TWADisplay.fmt(v) end
-            -- 1.0.9: what the crafted weapon will really have
-            if v ~= nil and cellDef.key == "conditionMax" and recipe.category ~= "Material" and TWAGemSocket then
-                v = v * (TWAGemSocket.CRAFT_DURABILITY or 1)
-            end
             if v ~= nil or cellDef.always then
                 local cx = x + (col - 1) * colW
                 local valueText = (v ~= nil) and string.format(cellDef.fmt, v)
