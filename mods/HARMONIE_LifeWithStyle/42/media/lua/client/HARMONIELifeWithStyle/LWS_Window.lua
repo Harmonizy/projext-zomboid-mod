@@ -1759,10 +1759,8 @@ local function onWorldMenu(playerNum, context, worldObjects, test)
     if test then return end
     local p = getSpecificPlayer(playerNum)
     if not p then return end
-    context:addOption(T("IGUI_LWS_Menu_Open"), p, function(pl)
-        log("world right-click: open the wardrobe")
-        H.open(pl, "dress")
-    end)
+    -- 1.0.4 (owner 2026-11-18): no "fashion and gacha items" option any more --
+    -- right-click > HARMONIE: open a tab > Life With Style does the same
     -- the pet out: the same menu as on the pet itself (LWS_PetMenu.lua)
     if LWS.PetMenu and LWS.PetMenu.build then
         local ok, err = pcall(LWS.PetMenu.build, context, p, nil)

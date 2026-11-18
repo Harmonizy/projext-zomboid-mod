@@ -282,6 +282,21 @@
   grid's CheckEligibility per cell kept 750 ms; `S.isBookmarked` and
   findIncomplete test hasModData() first (getModData() makes a table on
   every item). An index over 15 ms logs "item index: N items ... took M ms".
+- TWA 1.0.9 / LWS 1.0.5 (owner 2026-11-18): no right-click "Craft Weapon"
+  (inventory + world) and no right-click "fashion and gacha items" -- the
+  hub's HARMONIE: open a tab does it (TWA's "Continue" on an unfinished
+  weapon stays). TWA has no "Craft" tab BUTTON (W.TABS starts at weapons):
+  the craft page opens from a recipe / "back to the craft under way";
+  setTab("craft") still works. Tab "Modify" is "ติดตั้งอัญมณี" / "Socket gems"
+  (tab, socket window, its right-click, guide).
+- TWA crafted weapons x2 durability (1.0.9): `TWAGemSocket.CRAFT_DURABILITY`
+  2 -- applyDamage now also runs for any finished crafted weapon (TWA_Grade)
+  and sets script ConditionMax x2 (+ gem bonus; a debug override wins); the
+  first time it adds the extra to the current condition (md.TWA_Durability).
+  Put back on equip / swing / game start (every carried crafted weapon) and
+  once at Finish. Toughness tiers (script ConditionMax >5/10/15/20) are
+  >10/20/30/40 on the crafted weapon -- recipe lists unchanged. The craft
+  page's stat grid shows the doubled value.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"

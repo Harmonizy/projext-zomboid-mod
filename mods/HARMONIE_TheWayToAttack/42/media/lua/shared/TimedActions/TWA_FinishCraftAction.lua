@@ -168,6 +168,8 @@ function TWA_FinishCraftAction:complete()
             local word = S.overall(recipe, map, self.character) or S.LEGACY_WORD
             md.TWA_Quality = word
             md.TWA_Grade = S.rollGrade(word)
+            -- 1.0.9: the crafted weapon's doubled durability, full, before it is sent
+            if TWAGemSocket and TWAGemSocket.applyDamage then TWAGemSocket.applyDamage(newItem) end
         end
         if isServer() and sendAddItemToContainer then
             sendAddItemToContainer(inv, newItem)

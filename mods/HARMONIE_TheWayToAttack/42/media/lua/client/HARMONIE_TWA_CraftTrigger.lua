@@ -82,10 +82,8 @@ Events.OnFillInventoryObjectContextMenu.Add((HARMONIE_Ours or function(f) return
             TWACraftUI.open(player, searchName, resumeItem)
         end)
     end
-    context:addOption(getText("IGUI_TWA_ContextMenu_OpenCraftUI"), player, function()
-        TWALog("Trigger", "right-click Open craft on %s (search %s)", TWALogType(target), tostring(searchName))
-        TWACraftUI.open(player, searchName)
-    end)
+    -- 1.0.9 (owner 2026-11-18): no "Craft Weapon" option any more -- the same
+    -- as right-click > HARMONIE: open a tab > The Way To Attack
 end, "TWA"))
 
 -- Request 2026-09-27: right-clicking the ground/a workbench/any other world
@@ -94,11 +92,5 @@ end, "TWA"))
 -- request explicitly separates this case from the inventory one above). Not
 -- gated on `worldobjects` at all -- same "always available" philosophy this
 -- trigger already uses for the hotkey and the inventory option.
-Events.OnFillWorldObjectContextMenu.Add((HARMONIE_Ours or function(f) return f end)(function(playerNum, context, worldobjects, test)
-    local player = getSpecificPlayer(playerNum)
-    if not player then return end
-    context:addOption(getText("IGUI_TWA_ContextMenu_OpenCraftUI"), player, function()
-        TWALog("Trigger", "world right-click Open craft")
-        TWACraftUI.open(player)
-    end)
-end, "TWA"))
+-- 1.0.9 (owner 2026-11-18: "it repeats what is in the tab submenu"): the
+-- world right-click "Craft Weapon" is gone; HARMONIE: open a tab opens it.
