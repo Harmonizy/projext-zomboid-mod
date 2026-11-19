@@ -121,6 +121,11 @@
   2026-11-12). Lua 5.4/5.5 accepts it, so a lupa `load()` check missed it.
   Check with `lupa.lua51` + `loadstring` (scratchpad loadcheck.py does now),
   and call through a named local instead.
+- A function that calls a `local function` defined LOWER in the same file
+  calls a nil GLOBAL (Lua binds locals at compile time): "Object tried to
+  call nil" -- every frame in a tooltip (GTP 1.1.0 buildPrepLines ->
+  isPossiblyFood, 671 errors on hover in MP; fixed 1.1.1). The syntax check
+  does not see it: define helpers above their first use.
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).
