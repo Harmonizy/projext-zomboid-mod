@@ -250,8 +250,8 @@ if Events and Events.OnGameStart and getPlayer then
         local p = getPlayer()
         local item = p and p:getPrimaryHandItem()
         if item then W.reapply(item) end
-        -- 1.0.9: every crafted weapon carried (bags too) gets its doubled
-        -- durability back, not only the one in hand
+        -- every crafted weapon carried (bags too): its stats put back
+        -- (1.0.10: and 1.0.9's x2 durability taken back, TWAGemSocket.undoDurability)
         local inv = p and p:getInventory()
         local n = 0
         local function walk(c, depth)

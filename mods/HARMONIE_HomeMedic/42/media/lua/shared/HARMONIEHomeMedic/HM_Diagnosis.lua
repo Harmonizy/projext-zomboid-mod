@@ -233,6 +233,51 @@ for id, tags in pairs(D.DISEASES) do
     D.TAGSET[id] = set
 end
 
+-- ------------------------------------------------------------- causes
+-- HM 1.0.9 (owner 2026-11-18: "a new diagnosis group, the very first one:
+-- the cause -- ate raw food, did not wash hands before eating, drank
+-- unboiled water, and the others of each illness"). What the patient DID,
+-- from each illness's real trigger in EHR (the codex "Cause" lines). Not
+-- signs: kept out of D.GROUPS / STAGE_SIGNS (tab 3 and the handbook read
+-- those); they only count in D.candidates like a sign does.
+D.CAUSE_GROUP = { id = "cause", tags = {
+    "c_raw_meat", "c_spoiled_food", "c_toxic_food", "c_dirty_hands", "c_dirty_water",
+    "c_cold_wet", "c_heat", "c_exhausted", "c_corpses", "c_dirt_grass",
+    "c_dirty_wound", "c_deep_puncture", "c_rough_stitch", "c_untreated_infection",
+    "c_head_hit", "c_stress", "c_painkillers", "c_transfusion", "c_zombie_wound",
+} }
+D.CAUSES = {
+    trichinosis = { "c_raw_meat" },
+    food_poisoning = { "c_spoiled_food" },
+    toxin_poisoning = { "c_toxic_food" },
+    gastroenteritis = { "c_dirty_hands" },
+    dysentery = { "c_dirty_water" },
+    common_cold = { "c_cold_wet", "c_exhausted" },
+    pneumonia = { "c_cold_wet", "c_untreated_infection" },
+    hypothermia = { "c_cold_wet" },
+    heat_stroke = { "c_heat" },
+    corpse_sickness = { "c_corpses" },
+    tuberculosis = { "c_corpses" },
+    cadaveric_aspergillosis = { "c_corpses", "c_cold_wet" },
+    hyperkeratotic_scabies = { "c_dirt_grass" },
+    wound_infection = { "c_dirty_wound" },
+    cellulitis = { "c_rough_stitch", "c_dirty_wound" },
+    sepsis = { "c_untreated_infection", "c_dirty_wound" },
+    tetanus = { "c_deep_puncture", "c_dirty_wound" },
+    concussion = { "c_head_hit" },
+    delirium = { "c_stress" },
+    insomnia = { "c_exhausted" },
+    painkiller_addiction = { "c_painkillers" },
+    ahtr = { "c_transfusion" },
+    knox_infection = { "c_zombie_wound" },
+}
+D.CAUSE_TAG = {}
+for _, t in ipairs(D.CAUSE_GROUP.tags) do D.CAUSE_TAG[t] = true end
+for id, causes in pairs(D.CAUSES) do
+    D.TAGSET[id] = D.TAGSET[id] or {}
+    for _, t in ipairs(causes) do D.TAGSET[id][t] = true end
+end
+
 -- ------------------------------------------------------------- signs <-> readings
 -- Where each sign can be checked. at = "stats" (tab 3, read off the body:
 -- the reading shows in tab 3's Signs group), or "observe" (only seen or

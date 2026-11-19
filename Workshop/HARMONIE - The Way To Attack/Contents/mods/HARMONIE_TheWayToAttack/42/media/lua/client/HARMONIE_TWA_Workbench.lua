@@ -436,6 +436,11 @@ W.PREFS_FILE = "HARMONIE_TWA_Window.txt"
 W.pinned = true
 -- 1.0.6: Guided craft mode (HARMONIE_TWA_GuidedCraft.lua) on by default
 W.guided = true
+-- 1.0.12: "open with the vanilla crafting window" kept here (this computer),
+-- off by default. It was a ModOptions tick box that could not be unticked
+-- (oget's "a and b or d" turned false back into the default true) and does
+-- not hold reliably in MP.
+W.followVanilla = false
 
 function W.ensurePrefs()
     if W.prefsLoaded then return end
@@ -450,12 +455,13 @@ function W.ensurePrefs()
             if k == "scale" then TWACraftUI.userScale = tonumber(v)
             elseif k == "text" then TWAFont.userStep = math.max(-4, math.min(4, math.floor(tonumber(v) or 0)))
             elseif k == "pinned" then W.pinned = v ~= "0"
-            elseif k == "guided" then W.guided = v ~= "0" end
+            elseif k == "guided" then W.guided = v ~= "0"
+            elseif k == "followVanilla" then W.followVanilla = v == "1" end
             line = reader:readLine()
         end
     end)
     pcall(function() reader:close() end)
-    TWALog("Workbench", "prefs loaded: scale %s, text step %s, pinned %s, guided %s", tostring(TWACraftUI.userScale), tostring(TWAFont.userStep), tostring(W.pinned), tostring(W.guided))
+    TWALog("Workbench", "prefs loaded: scale %s, text step %s, pinned %s, guided %s, followVanilla %s", tostring(TWACraftUI.userScale), tostring(TWAFont.userStep), tostring(W.pinned), tostring(W.guided), tostring(W.followVanilla))
 end
 
 function W.savePrefs()
@@ -467,6 +473,7 @@ function W.savePrefs()
         writer:write("text=" .. tostring(TWAFont.userStep or 0) .. "\n")
         writer:write("pinned=" .. (W.pinned and "1" or "0") .. "\n")
         writer:write("guided=" .. (W.guided == false and "0" or "1") .. "\n")
+        writer:write("followVanilla=" .. (W.followVanilla == true and "1" or "0") .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -636,7 +643,12 @@ function W.settingsRows()
     W.ensurePrefs()
     local O = TWAOptions or {}
     local function T(k) return getText("UI_options_HARMONIE_TWA_" .. k) end
-    local function oget(id, d) return O.get and O.get(id, d) or d end
+    local function oget(id, d)
+        if not O.get then return d end
+        local v = O.get(id, d)
+        if v == nil then return d end
+        return v
+    end
     local function oset(id, v) if O.set then O.set(id, v) end end
     local rows = {
         { kind = "section", label = getText("IGUI_TWA_Set_Window") },
@@ -670,8 +682,13 @@ function W.settingsRows()
                 if win and win.setGuided then win:setGuided(v) else W.guided = v and true or false; W.savePrefs() end
             end },
         { kind = "tick", label = T("followVanillaCraft"), tip = T("followVanillaCraft_tooltip"),
-            get = function() return oget("followVanillaCraft", true) == true end,
-            set = function(v) oset("followVanillaCraft", v) end },
+            get = function() W.ensurePrefs(); return W.followVanilla == true end,
+            set = function(v)
+                W.ensurePrefs()
+                W.followVanilla = v and true or false
+                W.savePrefs()
+                TWALog("Workbench", "followVanilla = %s", tostring(W.followVanilla))
+            end },
         { kind = "section", label = getText("IGUI_TWA_Set_Sound") },
         { kind = "slider", label = T("volume"), tip = getText("IGUI_TWA_Set_Volume_Tip"), min = 0, max = 2, step = 0.25,
             get = W.volume, set = W.setVolume,

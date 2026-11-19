@@ -322,8 +322,8 @@
     "IGUI_TWA_ResumeItemNote": "Unfinished item - carrying on from it",
     "IGUI_TWA_Tooltip_Unfinished": "UNFINISHED - damage 0 until the craft is finished (right-click to carry on)",
     "IGUI_TWA_Stat_Type": "Type",
-    "IGUI_TWA_MaterialFinishRule": "Materials: Finish needs an overall quality of Good or Excellent - redo weak procedures first.",
-    "IGUI_TWA_Tooltip_FinishMaterial": "Finish the material. Every procedure must be done AND the overall quality must be Good or Excellent; at Bad, redo the weak procedures to raise it. The material itself carries no quality or grade.",
+    "IGUI_TWA_MaterialFinishRule": "Materials: every procedure done = Finish, at any quality (the material carries no quality).",
+    "IGUI_TWA_Tooltip_FinishMaterial": "Finish the material once every procedure is done - any overall quality, Bad included. The material itself carries no quality or grade.",
     "IGUI_TWA_MG_Suture_TakeThread": "Take the thread at the gold ring on the hole",
     "IGUI_TWA_Debug_Title": "TWA Debug - weapon stats",
     "IGUI_TWA_Debug_Menu": "TWA Debug: edit weapon stats",
@@ -797,5 +797,7 @@
     "IGUI_TWA_G_B_Finish": "Every step is done. Check the quality and collect.",
     "IGUI_TWA_G_B_FinishBlocked": "Can't collect yet: a material needs an overall quality of Good or better - redo a low step first.",
     "IGUI_TWA_G_B_Busy": "Wait for the bar, or press Stop (nothing changes).",
-    "IGUI_TWA_G_B_Locked": "One craft at a time."
+    "IGUI_TWA_G_B_Locked": "One craft at a time.",
+    "IGUI_TWA_QualityCuts": "Overall = average of the steps (Bad 1, Good 2, Excellent 3). Bad: below %1 | Good: %2 to below %3 | Excellent: %4 or more",
+    "IGUI_TWA_QualityBonus": "Your spare skill levels lower the Excellent line by %1."
 }

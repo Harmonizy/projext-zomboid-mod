@@ -131,7 +131,7 @@ if PZAPI and PZAPI.ModOptions and not O.options then
     -- R68: size of the craft window (Auto follows the screen height)
     list("uiWindowSize", "wsize_", { "Auto", "Normal", "Large", "XLarge" }, 1)
     -- R70: open / close the craft window together with the vanilla one
-    tick("followVanillaCraft", true)
+    tick("followVanillaCraft", false) -- 1.0.12: no longer read (TWAWorkbench.followVanilla)
     tick("zhpBar", true)
     tick("zhpText", true)
     tick("zhpDamage", true)

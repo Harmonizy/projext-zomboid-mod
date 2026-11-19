@@ -827,9 +827,8 @@ function TWACraftWindow:renderGuided()
     if tier then sub = tier.name .. "  -  " .. sub end
     local subY = y + fh(medium()) + 2
     text(self, fit(sub, x + w - hx), hx, subY, tier and { tier.r, tier.g, tier.b } or C.dim)
-    if self:isActiveRecipe() or self.resumeItem then
-        self:guidedBar(hx, y + ic - sc(8), x + w - hx, sc(8), total > 0 and doneN / total or 0)
-    end
+    -- 1.0.11 (owner: "the progress bar covers the words"): no bar -- the
+    -- sub line already says N / M steps
     y = y + ic + sc(8)
     -- next-step banner (the hub's; the hints switch turns it off)
     local BN = HARMONIE_Banner

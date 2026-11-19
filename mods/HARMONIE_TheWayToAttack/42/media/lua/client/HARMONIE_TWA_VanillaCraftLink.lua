@@ -7,6 +7,7 @@
 -- as pressing our X -- a started craft is put aside as unfinished, and not
 -- while a procedure is running). Options > Mods > "Open with the vanilla
 -- crafting window" switches it off.
+-- 1.0.12: that switch is now in the craft window's settings page, off by default.
 --
 -- How the vanilla window is found -- every step guarded, since other mods
 -- (Neat Crafting...) replace parts of it:
@@ -26,13 +27,13 @@ TWAVanillaLink = TWAVanillaLink or {}
 local V = TWAVanillaLink
 V.CHECK_EVERY = 10 -- ticks
 
+-- 1.0.12: the setting lives in the craft window's settings page
+-- (TWAWorkbench.followVanilla, saved in HARMONIE_TWA_Window.txt), off by default
 function V.enabled()
-    local o = TWAOptions and TWAOptions.followVanillaCraft
-    if o and o.getValue then
-        local ok, v = pcall(o.getValue, o)
-        if ok then return v and true or false end
-    end
-    return true
+    local W = TWAWorkbench
+    if not W then return false end
+    if W.ensurePrefs then pcall(W.ensurePrefs) end
+    return W.followVanilla == true
 end
 
 local function isCraftWindow(key, w)
