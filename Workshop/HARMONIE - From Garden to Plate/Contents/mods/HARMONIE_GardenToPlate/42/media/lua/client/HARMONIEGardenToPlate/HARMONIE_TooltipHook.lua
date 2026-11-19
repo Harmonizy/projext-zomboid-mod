@@ -106,7 +106,10 @@ local function txt(key, ...)
 end
 local function buildPrepLines(item)
     local R = HARMONIE_GTP.Prep
-    if not R or not item or not isPossiblyFood(item) then return nil end
+    -- 1.1.1: R.isFood (a safe instanceof); isPossiblyFood is a local defined
+    -- further down this file, so here it was a nil global -> "Object tried
+    -- to call nil" on every tooltip frame (owner's MP console 2026-11-19)
+    if not R or not item or not R.isFood or not R.isFood(item) then return nil end
     local d = R.dishOf(item)
     if d then
         local avg = tonumber(d.avg) or 0
