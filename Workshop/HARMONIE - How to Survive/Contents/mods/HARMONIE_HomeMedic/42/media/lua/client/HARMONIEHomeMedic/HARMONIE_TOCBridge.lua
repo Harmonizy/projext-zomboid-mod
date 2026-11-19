@@ -178,6 +178,13 @@ end
 -- offset -5,-13 = TOC's B42 alignment) is painted black instead.
 -- A fitted prosthesis is drawn on top.
 T.BODY_OFFSET_X, T.BODY_OFFSET_Y = -5, -13
+-- HM 1.0.10 (owner 2026-11-19, screenshot): the prosthesis picture sat up and
+-- left of the black arm. The black arm drawn from the panel's own part
+-- textures lands (+9, +7) from BODY_OFFSET (measured against TOC's ForeArm
+-- picture); +3 more down covers the hand's bottom edge. When the arm is
+-- drawn from TOC's picture at BODY_OFFSET instead, only the +3 applies.
+T.PROST_PART_DX, T.PROST_PART_DY = 9, 10
+T.PROST_TOC_DX, T.PROST_TOC_DY = 0, 3
 local LIMB_PARTS = {
     Hand_L = { "Hand_L" }, ForeArm_L = { "Hand_L", "ForeArm_L" }, UpperArm_L = { "Hand_L", "ForeArm_L", "UpperArm_L" },
     Hand_R = { "Hand_R" }, ForeArm_R = { "Hand_R", "ForeArm_R" }, UpperArm_R = { "Hand_R", "ForeArm_R", "UpperArm_R" },
@@ -243,7 +250,15 @@ function T.drawMissingLimbs(panel)
             end
             local prost = dc and dc.getIsProstEquipped and dc:getIsProstEquipped(limb)
             local ptex = prost and StaticData.HEALTH_PANEL_TEXTURES.ProstArm and StaticData.HEALTH_PANEL_TEXTURES.ProstArm[side]
-            if ptex then panel:drawTexture(ptex, T.BODY_OFFSET_X, T.BODY_OFFSET_Y, 1, 1, 1, 1) end
+            if ptex then
+                local dx, dy = T.PROST_TOC_DX, T.PROST_TOC_DY
+                if drawn then dx, dy = T.PROST_PART_DX, T.PROST_PART_DY end
+                panel:drawTexture(ptex, T.BODY_OFFSET_X + dx, T.BODY_OFFSET_Y + dy, 1, 1, 1, 1)
+                if not T.loggedProst then
+                    T.loggedProst = true
+                    HMLog("TOC", "prosthesis picture drawn at offset %d,%d (arm from %s)", dx, dy, drawn and "panel parts" or "TOC picture")
+                end
+            end
         end
     end
 end
