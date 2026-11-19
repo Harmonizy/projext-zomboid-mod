@@ -301,6 +301,13 @@
   the step grid with the cut points (Bad < BadBelow, Good, Excellent >=
   excellentCut incl. the crafter's skill bonus). Guided header: no progress
   bar (it covered the sub line).
+- TWA 1.0.12 (owner 2026-11-19): "open with the vanilla crafting window" is
+  W.followVanilla in HARMONIE_TWA_Window.txt ("followVanilla=1"), OFF by
+  default, ticked in the craft window's settings page; VanillaCraftLink
+  V.enabled() reads it. The ModOptions tick box followVanillaCraft is no longer
+  read. Root bug: settings oget was `O.get and O.get(id,d) or d`, so a false
+  value read back as the default true -- never write and/or with a boolean
+  value; oget now checks nil.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
