@@ -186,9 +186,31 @@ end
 
 -- Put the base damage + the gems' bonus on the weapon. No socket table at all:
 -- the weapon is left alone (never touched by this system).
+-- 1.0.10 (owner 2026-11-18: "durability back as it was, the step tiers
+-- too"): 1.0.9 gave crafted weapons x2 max condition (md.TWA_Durability).
+-- That is taken back once per weapon: the max goes back to the script's (+
+-- gems) and the current condition is divided by the same factor, so a weapon
+-- keeps the same share of its durability. The Toughness tiers never changed.
+function G.undoDurability(item, md)
+    local mul = tonumber(md.TWA_Durability) or 1
+    md.TWA_Durability = nil
+    if mul <= 1 or not (item.getCondition and item.setCondition) then return end
+    local script = item.getScriptItem and item:getScriptItem()
+    local base = (md.TWA_StatOverride or {}).ConditionMax
+    if base == nil and script and script.getConditionMax then base = script:getConditionMax() end
+    local max = base and (base + (md.TWA_Gems and (G.totalBonus(item).ConditionMax or 0) or 0)) or nil
+    if max and item.setConditionMax then item:setConditionMax(max) end
+    local before = item:getCondition()
+    local c = math.ceil(before / mul)
+    if max then c = math.min(c, max) end
+    item:setCondition(c)
+    TWALog("Socket", "%s: x%d durability taken back (condition %s -> %s, max %s)", TWALogType(item), mul, tostring(before), tostring(c), tostring(max))
+end
+
 function G.applyDamage(item)
     if not item then return end
     local md = item:getModData()
+    if md.TWA_Durability then G.undoDurability(item, md) end
     if not md.TWA_Gems or md.TWA_Incomplete then return end
     if not (item.setMinDamage and item.setMaxDamage) then return end
     local ov = md.TWA_StatOverride or {}

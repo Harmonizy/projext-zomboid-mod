@@ -296,10 +296,9 @@ end
 
 function S.canFinish(recipe, map, player)
     if not S.allDone(recipe, map) then return false, "notDone" end
-    if S.isMaterialRecipe(recipe) and TWAConfig.on("MaterialNeedsGood") then
-        local word = S.overall(recipe, map, player)
-        if word ~= "Good" and word ~= "Excellent" then return false, "materialQuality" end
-    end
+    -- 1.0.11 (owner 2026-11-18: "a Bad quality can still be forged"): no
+    -- quality gate any more -- every step done is enough. The sandbox
+    -- MaterialNeedsGood is no longer read (an old save may still say true).
     return true
 end
 

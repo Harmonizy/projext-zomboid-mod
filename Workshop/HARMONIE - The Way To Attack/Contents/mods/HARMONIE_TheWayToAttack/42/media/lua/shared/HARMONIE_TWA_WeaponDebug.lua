@@ -250,5 +250,22 @@ if Events and Events.OnGameStart and getPlayer then
         local p = getPlayer()
         local item = p and p:getPrimaryHandItem()
         if item then W.reapply(item) end
+        -- every crafted weapon carried (bags too): its stats put back
+        -- (1.0.10: and 1.0.9's x2 durability taken back, TWAGemSocket.undoDurability)
+        local inv = p and p:getInventory()
+        local n = 0
+        local function walk(c, depth)
+            local items = c and c:getItems()
+            if not items then return end
+            for i = 0, items:size() - 1 do
+                local it = items:get(i)
+                if it and it ~= item and instanceof(it, "HandWeapon") and (not it.hasModData or it:hasModData()) and it:getModData().TWA_Grade then
+                    W.reapply(it); n = n + 1
+                end
+                if it and depth < 3 and instanceof(it, "InventoryContainer") then walk(it:getInventory(), depth + 1) end
+            end
+        end
+        pcall(walk, inv, 0)
+        if n > 0 then TWALog("WeaponDebug", "game start: crafted weapon stats put back on %d carried weapon(s)", n) end
     end)
 end

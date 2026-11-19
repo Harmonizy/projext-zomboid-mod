@@ -282,6 +282,32 @@
   grid's CheckEligibility per cell kept 750 ms; `S.isBookmarked` and
   findIncomplete test hasModData() first (getModData() makes a table on
   every item). An index over 15 ms logs "item index: N items ... took M ms".
+- TWA 1.0.9 / LWS 1.0.5 (owner 2026-11-18): no right-click "Craft Weapon"
+  (inventory + world) and no right-click "fashion and gacha items" -- the
+  hub's HARMONIE: open a tab does it (TWA's "Continue" on an unfinished
+  weapon stays). TWA has no "Craft" tab BUTTON (W.TABS starts at weapons):
+  the craft page opens from a recipe / "back to the craft under way";
+  setTab("craft") still works. Tab "Modify" is "ติดตั้งอัญมณี" / "Socket gems"
+  (tab, socket window, its right-click, guide).
+- TWA crafted weapons x2 durability was 1.0.9 only; 1.0.10 took it back
+  (owner 2026-11-18): `TWAGemSocket.undoDurability` -- a weapon with
+  md.TWA_Durability gets the script max (+ gems) again and its condition
+  divided by that factor, once; run from applyDamage (equip, swing, game
+  start for every carried crafted weapon). Toughness tiers: script
+  ConditionMax > 5 / 10 / 15 / 20 as always.
+- TWA 1.0.11 (owner 2026-11-18): Finish needs only every step done -- no
+  quality gate (canFinish; sandbox MaterialNeedsGood is no longer read).
+  Advanced view: overall quality shows its average "(2.67)" and a line under
+  the step grid with the cut points (Bad < BadBelow, Good, Excellent >=
+  excellentCut incl. the crafter's skill bonus). Guided header: no progress
+  bar (it covered the sub line).
+- TWA 1.0.12 (owner 2026-11-19): "open with the vanilla crafting window" is
+  W.followVanilla in HARMONIE_TWA_Window.txt ("followVanilla=1"), OFF by
+  default, ticked in the craft window's settings page; VanillaCraftLink
+  V.enabled() reads it. The ModOptions tick box followVanillaCraft is no longer
+  read. Root bug: settings oget was `O.get and O.get(id,d) or d`, so a false
+  value read back as the default true -- never write and/or with a boolean
+  value; oget now checks nil.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
@@ -376,6 +402,25 @@
   EHR's own events. Cellulitis' wound counts as inflamed (sourceBodyPart).
   A new sign or illness: add it to STAGE_SIGNS and, if EHR does not do it,
   an `E.EFFECT[tag]` (the console says "no effect written for it").
+- Diagnosis tab (HM 1.0.9, owner 2026-11-18): THREE columns -- signs (left),
+  likely illnesses (MIDDLE, two-line rows), findings (right); scrollL /
+  scrollM / scrollR, each clipped. First chip group "Cause" =
+  `D.CAUSE_GROUP` (c_raw_meat, c_dirty_hands, c_dirty_water, ...) with
+  `D.CAUSES[illness]` from each illness's real EHR trigger (codex Cause
+  lines); kept OUT of D.GROUPS / STAGE_SIGNS (tab 3 and the handbook read
+  those) and only added to D.TAGSET, so D.candidates counts them like signs.
+  Hover = UI_HomeMedic_Diag_CauseTip_<tag>.
+- Prosthesis duplication (HM 1.0.8, owner 2026-11-18): B42 MP checks the
+  wear / unequip actions on the client AND the server; TOC's
+  ProsthesisHandler.Validate / CheckIfEquippable read getPlayer() (nil on a
+  dedicated server) and the server's highest-amputated-limb cache could be
+  empty, so the server refused what the client had done -> two copies. Now
+  they take the action's character, the server runs
+  CalculateHighestAmputatedLimbs when its cache is empty, "can't equip" is
+  said only on the local game, each wear / remove of a prosthesis is logged
+  on both sides (HMLog "Prosthesis", item id + done / NOT done), and the
+  extra-action test item is made once per action, not every tick. Never use
+  getPlayer() in a shared timed-action check.
 - Delirium starts on the SERVER in MP (0.33.8): EHR's trigger (12 game h at
   >= 98% stress) is in `client/ExtensiveHealth/EHR_Delirium.lua`, so in MP the
   illness was only in the client's modData -- the server never had it,
