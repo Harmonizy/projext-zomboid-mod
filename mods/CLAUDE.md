@@ -421,6 +421,12 @@
   on both sides (HMLog "Prosthesis", item id + done / NOT done), and the
   extra-action test item is made once per action, not every tick. Never use
   getPlayer() in a shared timed-action check.
+- Prosthesis picture in the medical window's body diagram (HM 1.0.10, owner
+  screenshot): TOCBridge drawMissingLimbs draws it at BODY_OFFSET +
+  (PROST_PART_DX/DY = 9, 10) when the black arm came from the panel's own
+  part textures (they land +9,+7 from BODY_OFFSET), + (0, 3) when the arm is
+  TOC's picture at BODY_OFFSET. Measured from the screenshot by fitting
+  TOC's ForeArm / ProstArm alphas. TOC's vanilla health panel is unchanged.
 - Delirium starts on the SERVER in MP (0.33.8): EHR's trigger (12 game h at
   >= 98% stress) is in `client/ExtensiveHealth/EHR_Delirium.lua`, so in MP the
   illness was only in the client's modData -- the server never had it,
