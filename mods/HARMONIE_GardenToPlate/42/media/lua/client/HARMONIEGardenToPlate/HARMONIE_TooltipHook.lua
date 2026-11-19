@@ -82,11 +82,63 @@ function HARMONIE_VitaminTooltip:renderLines(lines)
     end
 end
 
+local function newBox()
+    local b = HARMONIE_VitaminTooltip:new(0, 0, 10, 10)
+    b:initialise()
+    b:noBackground()
+    b:instantiate()
+    return b
+end
 local function createVitaminTooltip()
-    HARMONIE_VitaminTooltip.instance = HARMONIE_VitaminTooltip:new(0, 0, 10, 10)
-    HARMONIE_VitaminTooltip.instance:initialise()
-    HARMONIE_VitaminTooltip.instance:noBackground()
-    HARMONIE_VitaminTooltip.instance:instantiate()
+    HARMONIE_VitaminTooltip.instance = newBox()
+    -- GTP 1.1.0: the preparation / dish score box, above the vitamins
+    HARMONIE_VitaminTooltip.prepInstance = newBox()
+end
+
+-- ============================================
+-- GTP 1.1.0: preparation score (ingredient) / cooking score (dish)
+-- (owner: "ให้ขึ้นเหมือนหน้าต่างวิตามิน ... เป็นอีกหน้าต่างนึงที่อยู่ด้านบนวิตามิน")
+-- ============================================
+local WORD_COL = { Excellent = { 0.45, 0.92, 0.48 }, Good = { 0.62, 0.86, 1.0 }, Bad = { 1.0, 0.55, 0.35 }, Miss = { 1.0, 0.42, 0.38 } }
+local function txt(key, ...)
+    local ok, v = pcall(getText, key, ...)
+    return ok and v or key
+end
+local function buildPrepLines(item)
+    local R = HARMONIE_GTP.Prep
+    if not R or not item or not isPossiblyFood(item) then return nil end
+    local d = R.dishOf(item)
+    if d then
+        local avg = tonumber(d.avg) or 0
+        local tier = R.tierOf(avg)
+        local lines = { { text = txt("IGUI_GTPP_TipDish"), r = 1, g = 1, b = 1 } }
+        lines[#lines + 1] = { text = txt("IGUI_GTPP_TipScore", string.format("%.2f", avg), tostring(tonumber(d.n) or 0)), r = 0.85, g = 0.9, b = 0.85 }
+        if tier < 0 then
+            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBad"), r = 1.0, g = 0.45, b = 0.4 }
+        elseif tier == 0 then
+            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipNoBuff"), r = 0.7, g = 0.75, b = 0.7 }
+        else
+            local kind = HARMONIE_GTP.Cook and HARMONIE_GTP.Cook.buffKindOf and HARMONIE_GTP.Cook.buffKindOf(item, d.fam) or "hearty"
+            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBuff", txt("IGUI_GTPC_Buff_" .. kind), tostring(tier)), r = 0.45, g = 0.92, b = 0.48 }
+        end
+        return lines
+    end
+    local p = R.prepOf(item)
+    if p then
+        local c = WORD_COL[p.w] or { 0.9, 0.9, 0.9 }
+        return { { text = txt("IGUI_GTPP_TipPrep"), r = 1, g = 1, b = 1 },
+            { text = txt("IGUI_GTPP_TipPrepLine", txt("IGUI_GTPC_Proc_" .. tostring(p.p)), txt("IGUI_GTPC_Word_" .. tostring(p.w)), string.format("%+d", tonumber(p.s) or 0)), r = c[1], g = c[2], b = c[3] } }
+    end
+    if R.whyNot(item) == nil then
+        local games = R.gamesFor(item)
+        if #games == 0 then return nil end
+        local names = {}
+        for i, pid in ipairs(games) do if i <= 4 then names[#names + 1] = txt("IGUI_GTPC_Proc_" .. pid) end end
+        return { { text = txt("IGUI_GTPP_TipPrep"), r = 1, g = 1, b = 1 },
+            { text = txt("IGUI_GTPP_TipNotYet"), r = 0.75, g = 0.78, b = 0.75 },
+            { text = txt("IGUI_GTPP_TipCan", table.concat(names, ", ")), r = 0.6, g = 0.8, b = 0.65 } }
+    end
+    return nil
 end
 
 --[[
@@ -183,26 +235,42 @@ function ISToolTipInv:render()
         return
     end
 
+    local okP, prepLines = pcall(buildPrepLines, self.item)
+    if not okP then
+        if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("preptip", "Prep", "score tooltip FAILED: %s", tostring(prepLines)) end
+        prepLines = nil
+    end
     local lines = buildVitaminLines(self.item, playerCanSeeVitamins(playerObj))
-    if not lines then return end
+    if not lines and not prepLines then return end
 
     local box = HARMONIE_VitaminTooltip.instance
-    box:renderLines(lines)
+    local pbox = HARMONIE_VitaminTooltip.prepInstance
+    if lines then box:renderLines(lines) end
+    if prepLines and pbox then pbox:renderLines(prepLines) else prepLines = nil end
 
     -- 1.0.3 (owner, 2026-11-12: "หน้าต่างวิตามินตอนชี้ให้ขึ้นข้างล่างแทนทางขวาของ
     -- tooltips"): under the item tooltip, its left edges lined up; above it
-    -- when there is no room below
+    -- when there is no room below. 1.1.0: the score box sits on top of the
+    -- vitamin box (score, then vitamins), the two moving together.
     local core = getCore()
     local sw, sh = core:getScreenWidth(), core:getScreenHeight()
+    local ph = prepLines and (pbox:getHeight() + 4) or 0
+    local vh = lines and (box:getHeight() + 4) or 0
+    local total = ph + vh
     local x = self:getX()
     local y = self:getY() + self:getHeight() + 4
-    if y + box:getHeight() > sh then
-        y = self:getY() - box:getHeight() - 4
-        if y < 0 then y = math.max(0, sh - box:getHeight() - 5) end
+    if y + total > sh then
+        y = self:getY() - total
+        if y < 0 then y = math.max(0, sh - total - 5) end
     end
-    x = math.max(0, math.min(x, sw - box:getWidth() - 5))
-    box:setX(x)
-    box:setY(y)
+    if prepLines then
+        pbox:setX(math.max(0, math.min(x, sw - pbox:getWidth() - 5)))
+        pbox:setY(y)
+    end
+    if lines then
+        box:setX(math.max(0, math.min(x, sw - box:getWidth() - 5)))
+        box:setY(y + ph)
+    end
 end
 
 Events.OnGameStart.Add(createVitaminTooltip)

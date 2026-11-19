@@ -1,32 +1,26 @@
 --[[
-    HARMONIE - From Garden to Plate: buffs from dishes made at the best
-    quality (0.13.1, owner: "อยากให้อาหารให้บัฟต่างๆหากทำมาคุณภาพสูงสุด โดยบัฟอยู่
-    นานตามระดับสกิลในการทำสูตร").
+    HARMONIE - From Garden to Plate: dish buffs (GTP 1.1.0, owner
+    2026-11-19). A vanilla dish carries a score (HARMONIE_Prep.lua: the
+    average of its prepared ingredients). Eating it:
+      score < 0       a little unhappier (K.BAD_DISH_UNHAPPY x share eaten)
+      0 .. 0.49       nothing
+      0.5 / 1.0 / 1.5 buff level 1 / 2 / 3: x1 / x1.5 / x2 as strong, and
+                      x0.5 / x1 / x1.5 of K.buffHours(cook level) long
+    Kind = the dish's evolved-recipe family (stew -> hearty, salad ->
+    fresh ...), else its food type, else hearty:
+      hearty    tire more slowly, a little endurance back
+      energized endurance comes back faster
+      comfort   unhappiness and boredom melt away
+      calm      stress and panic ease off
+      fresh     a bit of endurance and good mood
+    Eating more of the same kind and level adds time, never past one whole
+    dish's worth; another buff replaces it.
 
-    A Cooking-tab dish whose preparation came out Excellent carries the cook's
-    Cooking level (HARMONIE_CookLevel, set with its quality). Eating it gives
-    the dish family's buff for (2 + that level) game hours x the sandbox
-    multiplier, times the share of the dish eaten (at least a quarter), so a
-    level 10 cook's stew lasts six times as long as a beginner's. Eating more
-    of the same buff adds time, never past one whole dish's worth; another
-    buff replaces it.
-
-      hearty    stews, roasts, pies, burgers, pizza, burritos, tacos, bread:
-                tire more slowly, a little endurance back
-      energized stir fries, pasta, rice, omelettes, sandwiches, oatmeal:
-                endurance comes back faster
-      comfort   cakes, sweet pies, muffins, pancakes, ice cream, toast:
-                unhappiness and boredom melt away
-      calm      soups and hot drinks: stress and panic ease off
-      fresh     salads and fruit salads: a bit of endurance and good mood
-
-    Where it runs: the eating (ISEatFoodAction:complete) and the effects (once
-    per game minute) run where the character's stats really live -- on this
-    machine in single player, on the server in multiplayer (the same reason
-    the vitamin effects moved there, see HARMONIE_VitaminChecker.lua). The
-    server reads the dish's quality from its own copy of the item (it wrote
-    it, K.serveQuality), so a client cannot fake a buff. The client only
-    shows it (speech line, halo text, the Cooking tab).
+    Where it runs: the eating (ISEatFoodAction:complete) and the effects
+    (once per game minute) run where stats really live -- this machine in
+    SP, the server in MP. The buff is kept in GLOBAL ModData by username
+    (never the player's modData: the MP client's copy replaces it). The
+    client only shows it (speech line, halo text, the Cooking tab).
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_CookCore"
@@ -59,10 +53,21 @@ function K.buffsOn() return K.sv("CookBuffs", true) ~= false end
 function K.buffHours(level)
     return (2 + math.max(0, tonumber(level) or 0)) * math.max(0.1, tonumber(K.sv("CookBuffHours", 1)) or 1)
 end
-function K.buffOfDish(dishId)
-    local d = K.DISH_BY_ID[tostring(dishId)]
-    return d and K.BUFF_OF_FAMILY[d.family] or nil
+-- GTP 1.1.0: the buff kind of a vanilla dish -- the evolved-recipe family
+-- kept on it (HARMONIE_Dish.fam), else what kind of food it is
+K.BUFF_OF_FOODTYPE = { Bread = "hearty", Pasta = "energized", Rice = "energized", Egg = "energized", Candy = "comfort", Sugar = "comfort",
+    Chocolate = "comfort", Fruits = "fresh", Berry = "fresh", Vegetables = "fresh", Greens = "fresh", Tea = "calm", Coffee = "calm", Cocoa = "calm",
+    Stock = "calm" }
+function K.buffKindOf(item, fam)
+    if fam and K.BUFF_OF_FAMILY[fam] then return K.BUFF_OF_FAMILY[fam] end
+    local ok, ft = pcall(function() return item:getFoodType() end)
+    if ok and ft and K.BUFF_OF_FOODTYPE[tostring(ft)] then return K.BUFF_OF_FOODTYPE[tostring(ft)] end
+    return "hearty"
 end
+-- buff level 1 / 2 / 3: how strong (x) and how long (x of K.buffHours)
+K.TIER_STRENGTH = { 1.0, 1.5, 2.0 }
+K.TIER_HOURS = { 0.5, 1.0, 1.5 }
+K.BAD_DISH_UNHAPPY = 10   -- a dish scored below 0: this much unhappier (whole dish)
 
 local function worldHours()
     local ok, h = pcall(function() return getGameTime():getWorldAgeHours() end)
@@ -74,19 +79,51 @@ local function nameOf(p)
 end
 local function authority() return not (isClient and isClient()) end
 
+-- GTP 1.1.0: the buffs live in GLOBAL ModData by username, never in the
+-- player's modData (in MP the client's copy of that replaces the server's --
+-- the same trap as the cooking "pending" record, GTP 1.0.8)
+K.BUFF_STORE = "HARMONIE_GTP_CookBuff"
+local function store()
+    if not ModData or not ModData.getOrCreate then return nil end
+    local ok, t = pcall(ModData.getOrCreate, K.BUFF_STORE)
+    return ok and t or nil
+end
+local function keyOf(player) return "u:" .. nameOf(player) end
+local function getRec(player)
+    local t = store()
+    local b = t and t[keyOf(player)]
+    -- once per character ever (the MP client may send its old copy again)
+    if b == nil and t and not t["m:" .. keyOf(player)] then
+        t["m:" .. keyOf(player)] = true
+        -- an old buff in the player's modData moves over once
+        local ok, md = pcall(function() return player:getModData() end)
+        local old = ok and md and md.HARMONIE_CookBuff
+        if type(old) == "table" and t then
+            t[keyOf(player)] = old
+            md.HARMONIE_CookBuff = nil
+            log("%s: old dish buff moved from the player's data to the world's", nameOf(player))
+            b = old
+        end
+    end
+    return type(b) == "table" and b or nil
+end
+local function setRec(player, b)
+    local t = store()
+    if t then t[keyOf(player)] = b end
+end
+
 -- the buff now on a character (authority side), or nil
 function K.activeBuff(player)
-    local ok, md = pcall(function() return player:getModData() end)
-    local b = ok and md and md.HARMONIE_CookBuff
-    if type(b) ~= "table" or not K.BUFFS[b.kind] then return nil end
+    local b = getRec(player)
+    if not b or not K.BUFFS[b.kind] then return nil end
     if worldHours() >= (tonumber(b.untilH) or 0) then return nil end
     return b
 end
 
 -- tell the player (SP: straight to the client side; MP: a server command)
-local function notify(player, what, b)
-    local args = { what = what, kind = b and b.kind, dish = b and b.dish, hoursLeft = b and math.max(0, (b.untilH or 0) - worldHours()),
-        level = b and b.level }
+local function notify(player, what, b, extra)
+    local args = { what = what, kind = b and b.kind, tier = b and b.tier, hoursLeft = b and math.max(0, (b.untilH or 0) - worldHours()),
+        level = b and b.level, avg = extra }
     if isServer and isServer() then
         if sendServerCommand then sendServerCommand(player, K.BUFF_NET, "buff", args) end
     elseif K.onBuffNotice then
@@ -95,29 +132,41 @@ local function notify(player, what, b)
 end
 K.notifyBuff = notify
 
--- an Excellent dish was eaten (authority side)
-function K.grantBuff(player, dishId, quality, cookLevel, fraction)
-    if not player or quality ~= "Excellent" then return nil end
-    if not K.buffsOn() then log("%s ate an Excellent %s: buffs are off in the sandbox", nameOf(player), tostring(dishId)); return nil end
-    local kind = K.buffOfDish(dishId)
-    if not kind then log("%s ate an Excellent %s: no buff for that dish", nameOf(player), tostring(dishId)); return nil end
-    local full = K.buffHours(cookLevel)
-    local add = full * math.max(0.25, math.min(1, tonumber(fraction) or 1))
+-- a scored dish was eaten (authority side)
+function K.grantDish(player, dish, item, fraction)
+    if not player or type(dish) ~= "table" then return nil end
+    local avg = tonumber(dish.avg) or 0
+    local R = HARMONIE_GTP.Prep
+    local tier = R and R.tierOf(avg) or 0
+    local frac = math.max(0.25, math.min(1, tonumber(fraction) or 1))
+    if tier < 0 then
+        local okS, stats = pcall(function() return player:getStats() end)
+        local stat = CharacterStat and CharacterStat.UNHAPPINESS
+        if okS and stats and stat then
+            pcall(function() stats:set(stat, math.min(100, stats:get(stat) + K.BAD_DISH_UNHAPPY * frac)) end)
+        end
+        log("%s ate a badly prepared dish (score %.2f): +%.1f unhappiness", nameOf(player), avg, K.BAD_DISH_UNHAPPY * frac)
+        notify(player, "bad", nil, avg)
+        return nil
+    end
+    if tier == 0 then log("%s ate a dish scored %.2f: no buff (needs 0.5)", nameOf(player), avg); return nil end
+    if not K.buffsOn() then log("%s ate a dish scored %.2f: buffs are off in the sandbox", nameOf(player), avg); return nil end
+    local kind = K.buffKindOf(item, dish.fam)
+    local full = K.buffHours(dish.lvl) * (K.TIER_HOURS[tier] or 1)
+    local add = full * frac
     local now = worldHours()
-    local md = player:getModData()
     local b = K.activeBuff(player)
-    if b and b.kind == kind then
+    if b and b.kind == kind and (b.tier or 1) == tier then
         -- more of the same: longer, never past one whole dish's worth
         b.untilH = math.min(math.max(b.untilH, now) + add, now + full)
-        b.dish, b.level = dishId, cookLevel
+        b.level = dish.lvl
     else
-        if b then log("%s: buff %s replaced by %s", nameOf(player), b.kind, kind) end
-        b = { kind = kind, dish = dishId, level = cookLevel, untilH = now + add }
-        md.HARMONIE_CookBuff = b
+        if b then log("%s: buff %s (level %s) replaced by %s (level %d)", nameOf(player), b.kind, tostring(b.tier), kind, tier) end
+        b = { kind = kind, tier = tier, level = dish.lvl, untilH = now + add }
     end
-    log("%s ate an Excellent %s (cook level %s, %.0f%% of it): %s for %.1f h (until hour %.1f)",
-        nameOf(player), tostring(dishId), tostring(cookLevel), (tonumber(fraction) or 1) * 100, kind, b.untilH - now, b.untilH)
-    notify(player, "on", b)
+    setRec(player, b)
+    log("%s ate a dish scored %.2f (%.0f%% of it, cook level %s): %s level %d for %.1f h", nameOf(player), avg, frac * 100, tostring(dish.lvl), kind, tier, b.untilH - now)
+    notify(player, "on", b, avg)
     return b
 end
 
@@ -132,7 +181,7 @@ local function applyBuff(player, b)
             local ok, err = pcall(function()
                 local v = stats:get(stat)
                 local hi = (e[1] == "UNHAPPINESS" or e[1] == "BOREDOM" or e[1] == "PANIC") and 100 or 1
-                local nv = math.max(0, math.min(hi, v + e[2]))
+                local nv = math.max(0, math.min(hi, v + e[2] * (K.TIER_STRENGTH[b.tier or 1] or 1)))
                 if nv ~= v then stats:set(stat, nv) end
             end)
             if not ok and not statWarned[e[1]] then statWarned[e[1]] = true; log("buff %s: could not change %s (%s)", b.kind, e[1], tostring(err)) end
@@ -144,11 +193,10 @@ local function applyBuff(player, b)
 end
 
 local function tickOne(player)
-    local ok, md = pcall(function() return player:getModData() end)
-    local b = ok and md and md.HARMONIE_CookBuff
-    if type(b) ~= "table" then return end
+    local b = getRec(player)
+    if not b then return end
     if not K.BUFFS[b.kind] or worldHours() >= (tonumber(b.untilH) or 0) then
-        md.HARMONIE_CookBuff = nil
+        setRec(player, nil)
         log("%s: buff %s wore off", nameOf(player), tostring(b.kind))
         notify(player, "off", b)
         return
@@ -182,16 +230,15 @@ if ISEatFoodAction and ISEatFoodAction.complete then
         local info
         if authority() then
             pcall(function()
-                local md = self.item and self.item:getModData()
-                if md and md.HARMONIE_CookQuality then
-                    info = { q = md.HARMONIE_CookQuality, dish = md.HARMONIE_CookDish, level = md.HARMONIE_CookLevel, frac = self.percentage }
-                end
+                local R = HARMONIE_GTP.Prep
+                local d = R and R.dishOf(self.item)
+                if d then info = { dish = d, item = self.item, frac = self.percentage } end
             end)
         end
         local result = original_complete(self)
         if info then
-            local ok, err = pcall(K.grantBuff, self.character, info.dish, info.q, info.level, info.frac)
-            if not ok then log("granting the buff FAILED: %s", tostring(err)) end
+            local ok, err = pcall(K.grantDish, self.character, info.dish, info.item, info.frac)
+            if not ok then log("granting the dish buff FAILED: %s", tostring(err)) end
         end
         return result
     end
