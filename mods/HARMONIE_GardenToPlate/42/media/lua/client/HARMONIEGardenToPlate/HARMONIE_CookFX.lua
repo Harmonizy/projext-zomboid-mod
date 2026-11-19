@@ -110,21 +110,21 @@ end
 function K.myBuffNow(player)
     if not (isClient and isClient()) then
         local b = player and K.activeBuff(player)
-        if b then return { kind = b.kind, dish = b.dish, hoursLeft = b.untilH - gameHours() } end
+        if b then return { kind = b.kind, tier = b.tier or 1, hoursLeft = b.untilH - gameHours() } end
         return nil
     end
     local b = K.myBuff
     if not b then return nil end
     local left = b.untilH - gameHours()
     if left <= 0 then return nil end
-    return { kind = b.kind, dish = b.dish, hoursLeft = left }
+    return { kind = b.kind, tier = b.tier or 1, hoursLeft = left }
 end
 
 function K.onBuffNotice(player, args)
     player = player or (getPlayer and getPlayer())
     if type(args) ~= "table" then return end
     if args.what == "on" or args.what == "now" then
-        K.myBuff = { kind = args.kind, dish = args.dish, untilH = gameHours() + (tonumber(args.hoursLeft) or 0) }
+        K.myBuff = { kind = args.kind, tier = tonumber(args.tier) or 1, untilH = gameHours() + (tonumber(args.hoursLeft) or 0) }
     elseif args.what == "off" or args.what == "none" then
         K.myBuff = nil
     end
@@ -134,11 +134,14 @@ function K.onBuffNotice(player, args)
         FX.say(player, "Buff_" .. tostring(args.kind))
         if HaloTextHelper then
             local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
-            if fn then pcall(fn, player, T("IGUI_GTPC_BuffHalo", name, string.format("%.1f", tonumber(args.hoursLeft) or 0))) end
+            if fn then pcall(fn, player, T("IGUI_GTPC_BuffHaloTier", name, tostring(tonumber(args.tier) or 1), string.format("%.1f", tonumber(args.hoursLeft) or 0))) end
         end
         FX.play("Excellent")
     elseif args.what == "off" and player then
         FX.say(player, "BuffOff")
+    elseif args.what == "bad" and player then
+        if HaloTextHelper and HaloTextHelper.addBadText then pcall(HaloTextHelper.addBadText, player, T("IGUI_GTPC_BadDishHalo")) end
+        FX.play("Bad")
     end
 end
 
@@ -157,4 +160,16 @@ if Events and Events.OnGameStart then
             log("asked the server for this character's dish buff")
         end
     end)
+end
+
+-- GTP 1.1.0: an old half-made dish's ingredients were given back
+if HARMONIE_GTP.CookRefund then
+    HARMONIE_GTP.CookRefund.onRefunded = function(args)
+        local p = getPlayer and getPlayer()
+        local n = tonumber(args and args.n) or 0
+        if p and n > 0 and HaloTextHelper then
+            local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
+            if fn then pcall(fn, p, T("IGUI_GTPP_Refunded", tostring(n))) end
+        end
+    end
 end

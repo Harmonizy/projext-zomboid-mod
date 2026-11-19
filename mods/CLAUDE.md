@@ -316,34 +316,43 @@
   needed; no cut for CUT_GRACE_MS -> one cut lost every CUT_DECAY_MS; quality
   = full when done within 40% of the time limit, half at the limit; timeout
   before the last cut = Miss. Hints IGUI_GTPC_Hint_* / Tip lines say so.
-- GTP cooking takes and makes (GTP 1.0.4, owner: the flow finished but never
-  found the dish): `shared/HARMONIEGardenToPlate/HARMONIE_CookServer.lua`
-  (module HARMONIE_GTP_CookTake, authority = server / SP). Start = "take":
-  every planned ingredient AND the container are removed (inventory, bags,
-  boxes in the room -- HARMONIE_Reach.findById), each snapshotted (type, age,
-  cooked, hunger, condition, fluid, vitamins); a spice drainable loses ONE
-  use. Nutrition + vitamins summed (whole items). Kept in player modData
-  `HARMONIE_CookPending` {dish, result, items, nut, vit, units, step, words}.
-  "progress" saves each finished step; "finish" AddItem(result type) with the
-  summed hunger / kcal / carbs / fat / protein + AddVitaminsToItem, then
-  K.applyQuality + K.giveXp; "cancel" recreates every snapshot (spice use
-  back on the same shaker); death = cancel onto the body; "pending" lets a
-  reopened window carry on (CookTab asks once, `F.resumeFrom`). No vanilla
-  ISAddItemInRecipe any more; CookFlow phases: taking / game / action /
-  paused / retry / blocked / finishing / done / failed (take | make) /
-  cancelling. K.plan's preview = full values of the planned items.
-- GTP 1.0.8 (owner, MP: "Cancel gives nothing back; every step done and it
-  still will not finish" -- "no dish pending on the server"): the pending
-  dish lived in the PLAYER's modData, which the MP client's player data
-  replaces on the server. It lives in global ModData "HARMONIE_GTP_CookPending"
-  now, key `"u:" .. username` (`S.keyOf`, `S.setPending`); an old record in
-  the player's modData is moved over once. Never keep server-owned state in
-  player modData. Cook tab: ingredient = first name + an "i" (hover = every
-  food that works, `slotAlternatives` / `infoMark`); the level line is one
-  line with the bonus + level-ease text on an "i"; the run panel's long
-  paragraphs are one short line + "i". Chopping game: TWICE the cuts (`CUT_MUL` 2, one
-  click = one cut; owner "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the
-  dish's level" was tried and taken back the same day (owner: original time).
+- GTP 1.1.0 (owner 2026-11-19, "ไม่เอาเป็นการสร้างอาหารใหม่แล้ว อยากใช้เมนูเดิมที่
+  vanilla มี"): our 99 dishes, CookFlow and CookServer (take / finish /
+  pending) are GONE. Cooking = vanilla only. GTP never had dish ITEMS (the
+  dishes made vanilla result types); its own items (home-canned produce,
+  dried fruit, sprouts, fish oil, fruit farming) stay.
+  `shared/HARMONIEGardenToPlate/HARMONIE_Prep.lua` (HARMONIE_GTP.Prep):
+  ingredient modData.HARMONIE_Prep = { w, p, s } -- ONE minigame per food,
+  Excellent +2 / Good +1 / Bad and Miss -1, none = 0; which minigames by
+  FoodType / name (R.KIND_GAMES, R.FOODTYPE_KIND; cooked / rotten / frozen /
+  spice / already prepared -> R.whyNot). Dish modData.HARMONIE_Dish =
+  { sum, n, avg, fam, lvl }: average of every non-spice food that went in (a
+  food base counts, a pot does not; a dish inside a dish counts with its
+  avg). Written ONLY where items are real: wrappers of
+  ISAddItemInRecipe:complete (R.onEvolvedAdd) and
+  ISHandcraftAction:performRecipe (R.onCraft, only when a consumed food had
+  a score), both skipped when isClient(). Prep: client minigame ->
+  HARMONIE_GTP_CookStepAction -> "prep" command; the server checks the item
+  is in that player's inventory, food, allowed game, not prepared, 800 ms
+  per player, writes + XP and sends "set" with the final tables (client
+  copies; retried 10 s if the item has not arrived). Buffs
+  (HARMONIE_CookBuffs.lua): avg < 0 -> +10 x share unhappiness; 0.5 / 1.0 /
+  1.5 -> tier 1 / 2 / 3 (strength x1 / 1.5 / 2, hours x0.5 / 1 / 1.5 of
+  (2 + cook level)); kind from fam (K.BUFF_OF_FAMILY), else FoodType, else
+  hearty. The buff record lives in GLOBAL ModData "HARMONIE_GTP_CookBuff"
+  by "u:" .. username (an old player-modData buff moves once, "m:" mark).
+  Tooltip: score box ABOVE the vitamin box (TooltipHook buildPrepLines).
+  Cooking tab pages: prep / evo (vanilla evolved recipes at hand, Add =
+  ISInventoryPaneContextMenu.onAddItemInEvoRecipe) / craft (89 Cooking
+  craftRecipes from HARMONIE_CookCraftList.lua, generated from
+  craftrecipes_index.txt; Open = ISEntityUI.OpenHandcraftWindow(p, nil,
+  nil, false, recipe)). An old half-made dish (1.0.4-1.0.8 pending record)
+  is given back once by the authority (HARMONIE_CookRefund.lua, "refunded:"
+  mark in the world's data). Vanilla Lua for reference: the owner's
+  pz_cook_lua.zip unpacked in mods/_VanillaReference_B42/raw/lua (gitignored).
+- Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
+  "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
+  tried and taken back (owner: original time).
 
 ## Names and translations
 - Display names (2026-10-09): HARMONIE_HomeMedic = "HARMONIE - How to

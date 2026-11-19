@@ -1,163 +1,63 @@
 --[[
-    HARMONIE - From Garden to Plate: the guide window's Cooking tab.
+    HARMONIE - From Garden to Plate: the guide window's Cooking tab
+    (GTP 1.1.0, owner 2026-11-19: vanilla's own menus, our minigames only
+    prepare ingredients -- HARMONIE_Prep.lua has the rules).
 
-    0.13.2 (owner: "มีสูตรอาหารที่ไม่ต้องการเลเวล ให้เห็นทุกสูตร และมี layout
-    เหมือนการสร้างอาวุธของ TWA"): every recipe is open at any Cooking level,
-    and the tab is laid out like The Way To Attack's craft window -- two
-    pages:
-      browse  left: search, what to show (all / can make now) and the dish
-              kinds; right: every recipe as a card -- its icon, name, kind
-              and suggested level, whether it can be made now, and the icons
-              of its steps.
-      craft   left: the chosen dish -- the vanilla base it starts from, its
-              ingredients (what is at hand, what vanilla refuses), a preview
-              of what it will be (vanilla calories, carbohydrates, fat,
-              protein, hunger -- vitamins only to a cook who knows
-              nutrition), and Back. Right: its steps as a checklist, the
-              chosen step's details (tools, helpers, heat, suggested level)
-              and Start. While a dish is being made the right side follows
-              it step by step, and at the end shows the real vanilla dish
-              item and how to cook it.
+    Three pages (chips at the top):
+      prep   left: the foods at hand that can be prepared (and the ones
+             already prepared, dimmed); right: the chosen food and its
+             minigames (tools found, harder without them). Start = bring it
+             into the inventory -> minigame -> a short timed action -> the
+             server writes the score.
+      evo    vanilla evolved recipes at hand (a pot with water, a pan, bread
+             slices ...): the chosen one lists every ingredient vanilla
+             accepts now with its score; Add = vanilla's own
+             ISInventoryPaneContextMenu.onAddItemInEvoRecipe.
+      craft  vanilla craftRecipes of category Cooking (89): Open = the
+             game's crafting window on that recipe. Prepared ingredients
+             carry their score into what it makes.
 ]]--
 
 require "HARMONIEGardenToPlate/HARMONIE_VitaminGuide"
-require "HARMONIEGardenToPlate/HARMONIE_CookFlow"
 require "HARMONIEGardenToPlate/HARMONIE_CookGames"
 require "HARMONIEGardenToPlate/HARMONIE_CookFX"
+require "HARMONIEGardenToPlate/HARMONIE_Prep"
+require "HARMONIEGardenToPlate/HARMONIE_CookCraftList"
 
 local H = GTPGuide
 local Win = GTPGuideWindow
 local K = HARMONIE_GTP.Cook
-local F = HARMONIE_GTP.CookFlow
+local R = HARMONIE_GTP.Prep
 local U = H.util
 local T, shadowText, fit, inside, clickable, lineH, fh, tw, texture =
     U.T, U.shadowText, U.fit, U.inside, U.clickable, U.lineH, U.fh, U.tw, U.texture
-local log = function(...) K.log(...) end
+local log = function(fmt, ...) R.log(fmt, ...) end
 
-H.COOK_FILTERS = { "all", "known", "ready" }
+H.COOK_PAGES = { "prep", "evo", "craft" }
 
--- the dish kinds, in the order the dishes list them
-function H.cookFamilies()
-    if H.cookFamList then return H.cookFamList end
-    local out, seen = {}, {}
-    for _, d in ipairs(K.DISHES) do
-        if not seen[d.family] then seen[d.family] = true; out[#out + 1] = d.family end
-    end
-    H.cookFamList = out
-    return out
+local function call(o, m, ...)
+    if not o or not o[m] then return nil end
+    local ok, v = pcall(o[m], o, ...)
+    if ok then return v end
+    return nil
 end
-
-local function dishName(d) return T("IGUI_GTPC_Dish_" .. d.id) end
-local function procName(pid) return T("IGUI_GTPC_Proc_" .. pid) end
-local function procIcon(pid) return texture(U.UI_DIR .. "cook_" .. pid .. ".png") end
-
-local function itemName(t)
-    local i = H.item(t)
-    return i and i.name or t
-end
-local function itemIcon(t)
-    local i = H.item(t)
-    return i and i.icon or nil
-end
-
-local function famIcon(d)
-    local fam = K.FAMILIES[d.family]
-    return fam and itemIcon(fam.icon) or nil
-end
-
--- a slot's label: up to three of its foods by name, and the kinds it also
--- takes ("or any vegetable")
-local function slotLabel(slot)
-    local names, seen = {}, {}
-    for _, t in ipairs(K.slotTypes(slot)) do
-        local n = itemName(t)
-        if not seen[n] then seen[n] = true; names[#names + 1] = n end
-        if #names >= 3 then break end
-    end
-    local more = #K.slotTypes(slot) > #names and " ..." or ""
-    local label = table.concat(names, " / ") .. more
-    if slot.cats and #slot.cats > 0 then
-        local kinds = {}
-        for _, c in ipairs(slot.cats) do kinds[#kinds + 1] = T("IGUI_GTPC_Kind_" .. c) end
-        label = label .. " " .. T("IGUI_GTPC_OrAny", table.concat(kinds, " / "))
-    end
-    return label
-end
-
--- a small padlock (drawn, no texture needed)
-local function padlock(self, x, y, s, col)
-    self:drawRectBorder(x + s * 0.25, y, s * 0.5, s * 0.5, 1, col[1], col[2], col[3])
-    self:drawRect(x, y + s * 0.42, s, s * 0.58, 1, col[1], col[2], col[3])
-    self:drawRect(x + s * 0.45, y + s * 0.6, s * 0.1, s * 0.22, 1, 0, 0, 0)
-end
-
--- plans are worked out at most every 1.5 s (the scan's own pace)
-function Win:cookPlans()
-    local scan = K.scan(self.player)
-    -- 0.13.5: a level up redoes them at once (the recipe locks)
-    local lvl = K.level(self.player)
-    if self.cookPlanAt == scan.at and self.cookPlanLevel == lvl and self.cookPlanList then return self.cookPlanList, scan end
-    self.cookPlanAt = scan.at
-    self.cookPlanLevel = lvl
-    local list = {}
-    for _, d in ipairs(K.DISHES) do
-        local ok, p = pcall(K.plan, self.player, d, scan)
-        if ok then list[d.id] = p else K.logOnce("planfail:" .. d.id, "plan for %s FAILED: %s", d.id, tostring(p)) end
-    end
-    self.cookPlanList = list
-    return list, scan
-end
-
-function Win:renderCook(x, y, w, h)
+local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
+local function itemName(it) return tostring(call(it, "getDisplayName") or call(it, "getName") or "?") end
+local function procName(pid) return T("IGUI_GTPC_Proc_" .. tostring(pid)) end
+local function procIcon(pid) return texture(U.UI_DIR .. "cook_" .. tostring(pid) .. ".png") end
+local function wordName(w) return T("IGUI_GTPC_Word_" .. tostring(w)) end
+local function wordCol(w)
     local C = H.C
-    if type(K.DISHES) ~= "table" or type(K.FAMILIES) ~= "table" then
-        -- never throw every frame: say it once in console.txt and on screen
-        K.logOnce("nodata", "ERROR: the cooking data did not load (K.DISHES is %s) -- the last [CookData] line in console.txt shows how far it got (5/5 = done)", type(K.DISHES))
-        local tx, ty, tw2 = self:drawCard(x, y, w, h, T("IGUI_GTPC_Card_Intro"))
-        self:paragraphs(T("IGUI_GTPC_NoData"), tx, ty, tw2 - 8, C.bad, H.small())
-        return
-    end
-    local plans = self:cookPlans()
-    -- 1.0.4: a dish left half-made (saved by the authority) comes back here
-    if not F.run and not self.askedPending and F.askPending then
-        self.askedPending = true
-        F.askPending(self.player)
-    end
-    -- a dish being made always shows its craft page
-    if F.run then
-        if self.cookSel ~= F.run.dish.id then self.cookSel = F.run.dish.id end
-        self.cookPage = "craft"
-    end
-    local d = self.cookSel and K.DISH_BY_ID[self.cookSel]
-    -- 2026-11-16 (UX plan UX-004): where you are in "pick > check > cook"
-    -- and what happens next, from the real state (F.run, the plan)
-    if H.banner then
-        local r, bh = F.run, 0
-        if r and r.phase == "done" then
-            bh = H.banner(self, x, y, w, "COMPLETE", "IGUI_GTPC_Next_done")
-        elseif r and r.phase == "failed" then
-            bh = H.banner(self, x, y, w, "MISSING", "IGUI_GTPC_Next_failed")
-        elseif r then
-            bh = H.banner(self, x, y, w, "IN_PROGRESS", "IGUI_GTPC_Next_run")
-        elseif self.cookPage == "craft" and d then
-            local p = plans[d.id]
-            if p and p.ready then
-                bh = H.banner(self, x, y, w, "READY", "IGUI_GTPC_Next_ready")
-            else
-                local why = p and p.reasons and p.reasons[1] or "ingredients"
-                bh = H.banner(self, x, y, w, "MISSING", "IGUI_GTPC_Next_missing", T("IGUI_GTPC_Why_" .. tostring(why)))
-            end
-        else
-            bh = H.banner(self, x, y, w, "INFO_ONLY", "IGUI_GTPC_Next_browse")
-        end
-        y, h = y + bh, h - bh
-    end
-    if self.cookPage == "craft" and d then return self:renderCookCraft(x, y, w, h, d, plans[d.id]) end
-    self.cookPage = "browse"
-    return self:renderCookBrowse(x, y, w, h, plans)
+    return ({ Excellent = C.good, Good = C.accent, Bad = C.warn, Miss = C.bad })[w] or C.text
+end
+local function scoreCol(s)
+    local C = H.C
+    s = tonumber(s) or 0
+    if s >= 1.5 then return C.good elseif s >= 0.5 then return C.accent elseif s < 0 then return C.bad end
+    return C.textDim
 end
 
--- a row of chips that wraps; items = { { label, on, action } }; returns the height used
+-- ------------------------------------------------------------------ widgets
 function Win:cookChips(items, x, y, wMax)
     local C = H.C
     local sf = H.small()
@@ -178,162 +78,6 @@ function Win:cookChips(items, x, y, wMax)
     return cy + lh + 6 - y
 end
 
--- ---------------------------------------------------------------- browse
-function Win:renderCookBrowse(x, y, w, h, plans)
-    local C = H.C
-    local sf = H.small()
-    local lh = lineH(sf)
-    local mx, my = self:getMouseX(), self:getMouseY()
-    local leftW = math.min(270, math.floor(w * 0.3))
-    -- filters
-    local cx, cy, cw = self:drawCard(x, y, leftW, h, T("IGUI_GTPC_Card_Filters"), texture(U.UI_DIR .. "tab_cook.png"))
-    local used = self:placeSearch(cx, cy, cw - 4, true)
-    cy = cy + used + 8
-    shadowText(self, T("IGUI_GTPC_Show"), cx, cy, C.accent, 1, sf)
-    cy = cy + lh + 2
-    local items = {}
-    for _, f in ipairs(H.COOK_FILTERS) do
-        items[#items + 1] = { label = T("IGUI_GTPC_Filter_" .. f), on = (self.cookFilter or "all") == f,
-            action = function(win) win.cookFilter = f; log("cooking filter: %s", f) end }
-    end
-    cy = cy + self:cookChips(items, cx, cy, cw - 6) + 8
-    shadowText(self, T("IGUI_GTPC_Kinds"), cx, cy, C.accent, 1, sf)
-    cy = cy + lh + 2
-    items = { { label = T("IGUI_GTPC_AllKinds"), on = self.cookFam == nil, action = function(win) win.cookFam = nil; log("cooking kind: all") end } }
-    for _, fam in ipairs(H.cookFamilies()) do
-        items[#items + 1] = { label = T("IGUI_GTPC_Family_" .. fam), on = self.cookFam == fam,
-            action = function(win) win.cookFam = fam; log("cooking kind: %s", fam) end }
-    end
-    cy = cy + self:cookChips(items, cx, cy, cw - 6) + 10
-    -- the dish buff on this character now (an Excellent dish eaten)
-    local buff = K.myBuffNow and K.myBuffNow(self.player)
-    if buff then
-        local line = T("IGUI_GTPC_BuffNow", T("IGUI_GTPC_Buff_" .. tostring(buff.kind)), string.format("%.1f", buff.hoursLeft))
-        cy = cy + self:paragraphs(line, cx, cy, cw - 8, C.good, sf) + 6
-    end
-    if cy < y + h - lh * 4 then
-        self:paragraphs(T("IGUI_GTPC_BrowseHint", tostring(K.level(self.player))), cx, cy, cw - 8, C.textDim, sf)
-    end
-    -- the recipes
-    local q = self:query()
-    local f = self.cookFilter or "all"
-    local shown = {}
-    for _, d in ipairs(K.DISHES) do
-        local p = plans[d.id]
-        local name = dishName(d)
-        if (q == "" or name:lower():find(q, 1, true)) and (f ~= "ready" or (p and p.ready)) and (f ~= "known" or not (p and p.hard))
-            and (not self.cookFam or self.cookFam == d.family) then
-            shown[#shown + 1] = d
-        end
-    end
-    local rx, rw = x + leftW + 8, w - leftW - 8
-    local lx, ly, lw, lh2 = self:drawCard(rx, y, rw, h, T("IGUI_GTPC_Card_Recipes", tostring(#shown), tostring(#K.DISHES)))
-    local rowH = math.max(54, lh * 3 + 12)
-    local boxTop, boxBottom = ly, ly + lh2
-    self:scrolled("cookList", lx, ly, lw, lh2, function(yy)
-        local start = yy
-        for _, d in ipairs(shown) do
-            local p = plans[d.id]
-            local ready = p and p.ready
-            local lock = false
-            local hard = p and p.hard
-            local r = { x = lx, y = yy, w = lw - 10, h = rowH }
-            local over = inside(r, mx, my) and inside(self.scrollBox and self.scrollBox.cookList, mx, my)
-            local stateCol = lock and C.bad or (ready and C.good or C.warn)
-            self:drawRect(r.x, r.y, r.w, r.h, over and 0.85 or 0.6, C.card[1] + 0.02, C.card[2] + 0.04, C.card[3] + 0.02)
-            self:drawRectBorder(r.x, r.y, r.w, r.h, over and 1 or 0.6, (over and C.border or C.borderDim)[1], (over and C.border or C.borderDim)[2], (over and C.border or C.borderDim)[3])
-            self:drawRect(r.x, r.y, 4, r.h, 1, stateCol[1], stateCol[2], stateCol[3])
-            local isz = rowH - 12
-            local icon = famIcon(d)
-            self:drawRect(r.x + 10, r.y + 6, isz, isz, 0.5, 0, 0, 0)
-            if icon then self:drawTextureScaled(icon, r.x + 10, r.y + 6, isz, isz, lock and 0.35 or 1, 1, 1, 1) end
-            if lock then padlock(self, r.x + 10 + isz - 14, r.y + rowH - 22, 12, C.bad) end
-            local tx = r.x + 10 + isz + 10
-            local textMax = r.x + r.w - 10 - tx
-            local l1 = fit(dishName(d), textMax, sf)
-            local l2 = fit(T("IGUI_GTPC_Family_" .. d.family) .. "  -  " .. T(hard and "IGUI_GTPC_HardShort" or "IGUI_GTPC_LevelShort", tostring(d.level or 0)), textMax, sf)
-            local l3 = fit(lock and T("IGUI_GTPC_LockedShort", tostring(d.level or 0), tostring(p.level))
-                or (ready and T("IGUI_GTPC_CanMake") or T("IGUI_GTPC_Why_" .. tostring(p and p.reasons[1] or "ingredients"))), textMax, sf)
-            local ty0 = r.y + math.floor((rowH - lh * 3) / 2)
-            shadowText(self, l1, tx, ty0, lock and C.textDim or C.text, 1, sf)
-            shadowText(self, l2, tx, ty0 + lh, hard and C.warn or C.textDim, 1, sf)
-            shadowText(self, l3, tx, ty0 + lh * 2, stateCol, 1, sf)
-            -- the steps, right-aligned after the widest line (as many as fit)
-            local widest = math.max(tw(sf, l1), tw(sf, l2), tw(sf, l3), 120)
-            local ps, gap = math.min(28, rowH - 22), 4
-            local room = r.x + r.w - 10 - (tx + widest + 14)
-            local n = math.min(#d.procs, math.floor((room + gap) / (ps + gap)))
-            if n > 0 then
-                local px = r.x + r.w - 10 - n * (ps + gap) + gap
-                local py = r.y + math.floor((rowH - ps) / 2)
-                for i = 1, n do
-                    local pid = d.procs[i]
-                    local pp = p and p.procs[i]
-                    self:drawRect(px, py, ps, ps, 0.6, 0.01, 0.04, 0.02)
-                    local bc = (pp and not pp.ok) and C.bad or C.borderDim
-                    self:drawRectBorder(px, py, ps, ps, 0.8, bc[1], bc[2], bc[3])
-                    local pic = procIcon(pid)
-                    if pic then self:drawTextureScaled(pic, px + 2, py + 2, ps - 4, ps - 4, 1, 1, 1, 1) end
-                    if i == n and n < #d.procs then shadowText(self, "+" .. tostring(#d.procs - n + 1), px + 3, py + 3, C.text, 1, sf) end
-                    px = px + ps + gap
-                end
-            end
-            r.action = function(win)
-                log("cooking: chose %s", d.id)
-                win.cookSel = d.id
-                win.cookPage = "craft"
-                win.cookStep = 1
-                win.scroll.cookDetail = 0
-            end
-            -- only cards that can be seen take clicks
-            if r.y + r.h > boxTop and r.y < boxBottom then clickable(self, r) end
-            yy = yy + rowH + 4
-        end
-        if #shown == 0 then
-            shadowText(self, T("IGUI_GTPG_NoMatch"), lx, yy, C.textDim, 1, sf)
-            yy = yy + lh
-        end
-        return yy - start
-    end)
-end
-
--- 1.0.8 (owner 2026-11-17: "too much text"; "an ingredient that can be
--- swapped gets an i -- point at it to see what else works"): a small "i";
--- its text shows on hover. Returns the width it took.
-local function infoMark(self, x, y, s, text)
-    local C = H.C
-    local col = C.accent
-    self:drawRect(x, y, s, s, 0.9, C.accentDark[1], C.accentDark[2], C.accentDark[3])
-    self:drawRectBorder(x, y, s, s, 1, col[1], col[2], col[3])
-    local sf = H.small()
-    shadowText(self, "i", x + math.floor((s - tw(sf, "i")) / 2), y + math.floor((s - fh(sf)) / 2), col, 1, sf)
-    local mx, my = self:getMouseX(), self:getMouseY()
-    if text and mx >= x - 2 and mx < x + s + 2 and my >= y - 2 and my < y + s + 2 then
-        self.hoverTip = { text = text, x = x + s, y = y + s + 2 }
-    end
-    return s + 6
-end
-
--- every food a slot takes, by name, and the kinds it also takes
-local function slotAlternatives(slot)
-    local names, seen = {}, {}
-    for _, t in ipairs(K.slotTypes(slot)) do
-        local n = itemName(t)
-        if not seen[n] then seen[n] = true; names[#names + 1] = n end
-    end
-    local kinds = {}
-    for _, c in ipairs(slot.cats or {}) do kinds[#kinds + 1] = T("IGUI_GTPC_Kind_" .. c) end
-    return names, kinds
-end
-
--- a coloured status line
-local function status(self, text, x, y, ok, sf)
-    local C = H.C
-    local col = ok == true and C.good or (ok == false and C.bad or C.warn)
-    self:drawRect(x, y + math.floor(lineH(sf) / 2) - 3, 6, 6, 1, col[1], col[2], col[3])
-    shadowText(self, text, x + 12, y, ok == false and C.bad or C.text, 1, sf)
-end
-
 function Win:cookButton(x, y, label, enabled, action, wide)
     local C = H.C
     local sf = H.small()
@@ -346,376 +90,561 @@ function Win:cookButton(x, y, label, enabled, action, wide)
     return r.w, r.h
 end
 
-local VIT_ORDER = { "A", "B", "C", "D", "E", "K" }
-
--- ---------------------------------------------------------------- craft
-function Win:renderCookCraft(x, y, w, h, d, p)
-    local leftW = math.floor(w * 0.5)
-    self:renderCookInfo(x, y, leftW, h, d, p)
-    local rx, rw = x + leftW + 8, w - leftW - 8
-    if F.run then return self:renderCookRun(rx, y, rw, h, F.run) end
-    self:renderCookSteps(rx, y, rw, h, d, p)
-end
-
--- left: the dish itself
-function Win:renderCookInfo(x, y, w, h, d, p)
+-- a small "i" whose text shows on hover; returns the width it took
+local function infoMark(self, x, y, s, text)
     local C = H.C
+    self:drawRect(x, y, s, s, 0.9, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+    self:drawRectBorder(x, y, s, s, 1, C.accent[1], C.accent[2], C.accent[3])
     local sf = H.small()
-    local lh = lineH(sf)
-    local tx, ty, tw2 = self:drawCard(x, y, w, h, dishName(d), famIcon(d))
-    local btnY = y + h - lh - 22
-    self:scrolled("cookDetail", tx, ty, tw2, btnY - ty - 6, function(yy)
-        local start = yy
-        yy = yy + self:paragraphs(T("IGUI_GTPC_DishDesc_" .. d.id), tx, yy, tw2 - 10, C.textDim, sf) + 6
-        -- 1.0.8: one short level line; the Excellent bonus and what the
-        -- Cooking level does in the minigames are on the "i" (hover)
-        local lvl = p and p.level or 0
-        local ease = K.levelEase(lvl)
-        local more = { T("IGUI_GTPC_LevelEase", tostring(lvl), string.format("%.0f", (1 - ease.slip) * 100),
-            string.format("%.0f", (ease.time - 1) * 100)) }
-        if K.buffOfDish and K.buffOfDish(d.id) and K.buffsOn() then
-            local kind = K.buffOfDish(d.id)
-            table.insert(more, 1, T("IGUI_GTPC_BuffIfExcellent", T("IGUI_GTPC_Buff_" .. kind), T("IGUI_GTPC_BuffDesc_" .. kind),
-                string.format("%.0f", K.buffHours(lvl))))
-        end
-        local lvLine = T(p and p.hard and "IGUI_GTPC_LevelLineHard" or "IGUI_GTPC_LevelLine", tostring(d.level or 0), tostring(lvl))
-        local ims = lh
-        shadowText(self, fit(lvLine, tw2 - 20 - ims, sf), tx, yy, (p and p.hard) and C.warn or C.good, 1, sf)
-        infoMark(self, tx + math.min(tw(sf, lvLine), tw2 - 20 - ims) + 6, yy, ims, table.concat(more, "  /  "))
-        yy = yy + lh + 6
-        -- base
-        if p and p.base then
-            local what = K.typeOf(p.base)
-            status(self, T(p.fam.partial and "IGUI_GTPC_BaseStarted" or "IGUI_GTPC_BaseFound", itemName(what)), tx, yy, true, sf)
-        else
-            -- vanilla's own bases for this dish (evolvedrecipes.txt)
-            local need = K.baseNeed(d.family)
-            local names, seen = {}, {}
-            for _, t in ipairs(need.types) do
-                local n = itemName(t)
-                if not seen[n] then seen[n] = true; names[#names + 1] = n end
-            end
-            local what = #names > 0 and table.concat(names, " / ") or "?"
-            if need.water then what = T("IGUI_GTPC_WithWater", what) end
-            -- like status(), but the text may wrap (several bases)
-            self:drawRect(tx, yy + math.floor(lh / 2) - 3, 6, 6, 1, C.bad[1], C.bad[2], C.bad[3])
-            yy = yy + math.max(lh, self:paragraphs(T("IGUI_GTPC_BaseNeed", what), tx + 12, yy, tw2 - 22, C.bad, sf)) - lh
-        end
-        yy = yy + lh + 6
-        -- ingredients
-        shadowText(self, T("IGUI_GTPC_Ingredients"), tx, yy, C.accent, 1, sf); yy = yy + lh + 2
-        for _, sp in ipairs(p and p.slots or {}) do
-            local slot = sp.slot
-            local icon = sp.items[1] and K.call(sp.items[1], "getTexture") or itemIcon(K.slotTypes(slot)[1])
-            if icon then self:drawTextureScaled(icon, tx, yy, lh + 4, lh + 4, (sp.have > 0) and 1 or 0.4, 1, 1, 1) end
-            local names, kinds = slotAlternatives(slot)
-            local label = names[1] or slotLabel(slot)
-            local alt = nil
-            if #names > 1 or #kinds > 0 then
-                local parts = { T("IGUI_GTPC_AltTitle") .. " " .. table.concat(names, ", ") }
-                if #kinds > 0 then parts[#parts + 1] = T("IGUI_GTPC_OrAny", table.concat(kinds, " / ")) end
-                alt = table.concat(parts, " ")
-            end
-            local tag = slot.spice and T("IGUI_GTPC_Spice") or (slot.optional and T("IGUI_GTPC_Optional") or "")
-            local count = T("IGUI_GTPC_Have", tostring(sp.have), tostring(sp.need))
-            local ok = sp.have >= sp.need
-            local col = ok and C.good or (slot.optional and C.textDim or C.bad)
-            -- the count at the right edge, the slot's name (and its tag) before it
-            local cw = tw(sf, count)
-            local cxr = tx + tw2 - 14 - cw
-            shadowText(self, count, cxr, yy + 2, col, 1, sf)
-            local nameW = cxr - (tx + lh + 10) - 10
-            local imW = alt and (lh + 6) or 0
-            local tagW = tag ~= "" and math.min(tw(sf, tag), math.floor(nameW * 0.4)) or 0
-            local lab = fit(label, nameW - tagW - imW - (tagW > 0 and 8 or 0), sf)
-            local lx = tx + lh + 10
-            shadowText(self, lab, lx, yy + 2, C.text, 1, sf)
-            lx = lx + tw(sf, lab) + 6
-            if alt then lx = lx + infoMark(self, lx, yy + 2, lh, alt) end
-            if tagW > 0 then shadowText(self, fit(tag, tagW, sf), lx + 2, yy + 2, C.textDim, 1, sf) end
-            yy = yy + lh + 6
-            local refused = {}
-            for t in pairs(sp.refused) do refused[#refused + 1] = itemName(t) end
-            if #refused > 0 then
-                table.sort(refused)
-                yy = yy + self:paragraphs(T("IGUI_GTPC_Refused", table.concat(refused, ", ")), tx + lh + 10, yy, tw2 - lh - 20, C.warn, sf) + 2
-            end
-            local raw = {}
-            for t in pairs(sp.uncooked) do raw[#raw + 1] = itemName(t) end
-            if #raw > 0 then
-                table.sort(raw)
-                yy = yy + self:paragraphs(T("IGUI_GTPC_CookFirst", table.concat(raw, ", ")), tx + lh + 10, yy, tw2 - lh - 20, C.warn, sf) + 2
-            end
-        end
-        if p and p.trimmed then yy = yy + self:paragraphs(T("IGUI_GTPC_Trimmed", tostring(p.maxItems or "?")), tx, yy, tw2 - 10, C.warn, sf) + 2 end
-        yy = yy + 6
-        -- preview
-        shadowText(self, T("IGUI_GTPC_Preview"), tx, yy, C.accent, 1, sf); yy = yy + lh + 2
-        local pv = p and p.preview
-        if pv and #p.adds > 0 then
-            local line = T("IGUI_GTPC_PreviewLine", string.format("%.0f", pv.cal), string.format("%.0f", pv.carb),
-                string.format("%.0f", pv.fat), string.format("%.0f", pv.prot), string.format("%.0f", pv.hunger * 100))
-            yy = yy + self:paragraphs(line, tx, yy, tw2 - 10, C.text, sf) + 2
-            if H.knows(self.player) then
-                local vits = {}
-                for _, v in ipairs(VIT_ORDER) do
-                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = string.format("%s %.1f %s", v, pv.vit[v], H.UNITS[v] or "") .. HARMONIE_GTP.VitaminTag(v, pv.vit[v]) end
-                end
-                yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
-            else
-                -- 2026-10-25: which vitamins, "Yes" instead of the amounts
-                local vits = {}
-                for _, v in ipairs(VIT_ORDER) do
-                    if (pv.vit[v] or 0) > 0.05 then vits[#vits + 1] = v .. " " .. HARMONIE_GTP.VitaminHasText() end
-                end
-                yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 2
-                yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewVitLocked", tostring(H.KNOW_COOKING)), tx, yy, tw2 - 10, C.textDim, sf) + 2
-            end
-            yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewNote"), tx, yy, tw2 - 10, C.textDim, sf)
-        else
-            yy = yy + self:paragraphs(T("IGUI_GTPC_PreviewNone"), tx, yy, tw2 - 10, C.textDim, sf)
-        end
-        return yy - start
-    end)
-    -- back to the recipes (not while the dish is being made)
-    if not F.run then
-        self:cookButton(tx, btnY, T("IGUI_GTPC_Back"), true, function(win)
-            win.cookPage = "browse"
-            log("cooking: back to the recipes")
-        end)
-    end
-end
-
--- right: the steps as a checklist, the chosen step's details, Start
-function Win:renderCookSteps(x, y, w, h, d, p)
-    local C = H.C
-    local sf = H.small()
-    local lh = lineH(sf)
+    shadowText(self, "i", x + math.floor((s - tw(sf, "i")) / 2), y + math.floor((s - fh(sf)) / 2), C.accent, 1, sf)
     local mx, my = self:getMouseX(), self:getMouseY()
-    local tx, ty, tw2 = self:drawCard(x, y, w, h, T("IGUI_GTPC_Steps"))
-    local btnY = y + h - lh - 22
-    local procs = p and p.procs or {}
-    self.cookStep = math.max(1, math.min(#d.procs, self.cookStep or 1))
-    local rowH = lh + 14
-    local listH = math.min(#d.procs * (rowH + 3), math.floor((btnY - ty) * 0.5))
-    self:scrolled("cookSteps", tx, ty, tw2, listH, function(yy)
-        local start = yy
-        for i, pid in ipairs(d.procs) do
-            local pp = procs[i]
-            local r = { x = tx, y = yy, w = tw2 - 10, h = rowH }
-            local sel = self.cookStep == i
-            local over = inside(r, mx, my) and inside(self.scrollBox and self.scrollBox.cookSteps, mx, my)
-            local ok = pp and pp.ok
-            local col = ok and C.good or C.bad
-            self:drawRect(r.x, r.y, r.w, r.h, sel and 0.95 or (over and 0.75 or 0.5), C.accentDark[1], C.accentDark[2], C.accentDark[3])
-            if sel then self:drawRectBorder(r.x, r.y, r.w, r.h, 1, C.accent[1], C.accent[2], C.accent[3]) end
-            self:drawRect(r.x, r.y, 3, r.h, 1, col[1], col[2], col[3])
-            local pic = procIcon(pid)
-            if pic then self:drawTextureScaled(pic, r.x + 8, r.y + 3, rowH - 6, rowH - 6, 1, 1, 1, 1) end
-            local state = not pp and "" or (pp.ok and T("IGUI_GTPC_StepReady") or T(pp.noHeat and "IGUI_GTPC_StepNoHeat" or "IGUI_GTPC_StepNoTool"))
-            local sw = tw(sf, state)
-            shadowText(self, state, r.x + r.w - 8 - sw, r.y + 7, col, 1, sf)
-            shadowText(self, fit(tostring(i) .. ". " .. procName(pid), r.w - (rowH + 16) - sw - 16, sf), r.x + rowH + 8, r.y + 7, C.text, 1, sf)
-            r.action = function(win) win.cookStep = i end
-            clickable(self, r)
-            yy = yy + rowH + 3
-        end
-        return yy - start
-    end)
-    -- the chosen step
-    local dy = ty + listH + 8
-    local pp = procs[self.cookStep]
-    local pid = d.procs[self.cookStep]
-    self:drawRect(tx, dy, tw2 - 10, btnY - dy - 8, 0.35, 0, 0, 0)
-    self:drawRectBorder(tx, dy, tw2 - 10, btnY - dy - 8, 0.6, C.borderDim[1], C.borderDim[2], C.borderDim[3])
-    local ix, iw = tx + 8, tw2 - 26
-    self:scrolled("cookStepInfo", ix, dy + 6, iw + 8, btnY - dy - 20, function(yy)
-        local start = yy
-        local big = math.min(48, lh * 3)
-        local pic = pid and procIcon(pid)
-        if pic then self:drawTextureScaled(pic, ix, yy, big, big, 1, 1, 1, 1) end
-        shadowText(self, pid and procName(pid) or "?", ix + big + 10, yy + 2, C.text, 1, H.medium())
-        -- how its minigame is played (the hint it also shows)
-        local hint = pid and T("IGUI_GTPC_Hint_" .. pid) or ""
-        if hint:find("IGUI_", 1, true) then hint = "" end
-        local used = self:paragraphs(hint, ix + big + 10, yy + lineH(H.medium()) + 4, iw - big - 10, C.textDim, sf)
-        yy = yy + math.max(big, lineH(H.medium()) + 4 + used) + 8
-        if pp then
-            -- tools (a missing one with a "bare" fallback only makes it harder)
-            for _, t in ipairs(pp.tools) do
-                if t.item then
-                    local grade = (t.grade == "ok" or t.grade == "makeshift") and (" " .. T("IGUI_GTPC_Grade_" .. t.grade)) or ""
-                    status(self, fit(tostring(K.call(t.item, "getDisplayName")) .. grade, iw - 14, sf), ix, yy, t.grade == "best" and true or nil, sf)
-                elseif t.grade == "bare" then
-                    status(self, fit(T("IGUI_GTPC_Tool_" .. t.group) .. ": " .. T("IGUI_GTPC_Grade_bare"), iw - 14, sf), ix, yy, nil, sf)
-                else
-                    status(self, fit(T("IGUI_GTPC_NoTool", T("IGUI_GTPC_Tool_" .. t.group)), iw - 14, sf), ix, yy, false, sf)
-                end
-                yy = yy + lh + 2
-            end
-            if #pp.tools == 0 then status(self, T("IGUI_GTPC_NoToolNeeded"), ix, yy, true, sf); yy = yy + lh + 2 end
-            for _, hp in ipairs(pp.help) do
-                local name = hp.item and K.call(hp.item, "getDisplayName") or T("IGUI_GTPC_Tool_" .. hp.group)
-                status(self, fit(T(hp.item and "IGUI_GTPC_Helps" or "IGUI_GTPC_WouldHelp", tostring(name)), iw - 14, sf), ix, yy, hp.item and true or nil, sf)
-                yy = yy + lh + 2
-            end
-            -- heat
-            if pp.proc and pp.proc.heat then
-                status(self, fit(T(pp.heat and "IGUI_GTPC_HeatOk" or "IGUI_GTPC_HeatNeed", tostring(K.HEAT_RANGE)), iw - 14, sf), ix, yy, pp.heat ~= nil, sf)
-                yy = yy + lh + 2
-            end
-            -- suggested level
-            local sl = (pp.proc and pp.proc.level) or 0
-            if sl > 0 then
-                status(self, fit(T(pp.levelLow and "IGUI_GTPC_StepLevelLow" or "IGUI_GTPC_StepLevelOk", tostring(sl), tostring(p.level)), iw - 14, sf), ix, yy, (not pp.levelLow) or nil, sf)
-                yy = yy + lh + 2
-            end
-        end
-        return yy - start
-    end)
-    -- start
-    local ready = p and p.ready
-    local bw = self:cookButton(tx, btnY, T("IGUI_GTPC_Start"), ready, function(win)
-        local ok, why = F.start(win.player, d)
-        if not ok then log("start refused: %s", tostring(why)) end
-    end)
-    if not ready and p then
-        local why = T("IGUI_GTPC_Why_" .. tostring(p.reasons[1] or "ingredients"))
-        shadowText(self, fit(why, tw2 - bw - 16, sf), tx + bw + 10, btnY + 6, C.warn, 1, sf)
+    if text and mx >= x - 2 and mx < x + s + 2 and my >= y - 2 and my < y + s + 2 then
+        self.hoverTip = { text = text, x = x + s, y = y + s + 2 }
     end
+    return s + 6
 end
 
-local WORD_COL
-local function wordCol(w)
+-- one item row in a list; returns the row rect
+function Win:cookItemRow(x, y, w, rowH, it, l1, l2, col2, selected, boxKey)
     local C = H.C
-    WORD_COL = WORD_COL or { Excellent = C.good, Good = C.accent, Bad = C.warn, Miss = C.bad }
-    return WORD_COL[w] or C.textDim
-end
-
-function Win:renderCookRun(x, y, w, h, run)
-    local C = H.C
-    local sf, mf = H.small(), H.medium()
+    local sf = H.small()
     local lh = lineH(sf)
-    local d = run.dish
-    local tx, ty, tw2 = self:drawCard(x, y, w, h, T("IGUI_GTPC_Making", dishName(d)), famIcon(d))
-    local yy = ty
-    -- step chips
-    for i, pid in ipairs(d.procs) do
-        local done = run.words[pid]
-        local cur = i == run.step and run.phase ~= "finishing" and run.phase ~= "done"
-        local icon = procIcon(pid)
-        if cur then self:drawRect(tx - 4, yy - 2, tw2, lh + 10, 0.7, C.accentDark[1], C.accentDark[2], C.accentDark[3]) end
-        if icon then self:drawTextureScaled(icon, tx, yy, lh + 6, lh + 6, done and 1 or (cur and 1 or 0.5), 1, 1, 1) end
-        local state = done and T("IGUI_GTPC_Word_" .. done) or (cur and T("IGUI_GTPC_Phase_" .. tostring(run.phase)) or "")
-        shadowText(self, tostring(i) .. ". " .. procName(pid), tx + lh + 12, yy + 3, cur and C.text or C.textDim, 1, sf)
-        shadowText(self, state, tx + tw2 - 170, yy + 3, done and wordCol(done) or C.warn, 1, sf)
-        yy = yy + lh + 10
+    local r = { x = x, y = y, w = w, h = rowH }
+    local over = inside(r, self:getMouseX(), self:getMouseY()) and inside(self.scrollBox and self.scrollBox[boxKey], self:getMouseX(), self:getMouseY())
+    self:drawRect(r.x, r.y, r.w, r.h, selected and 0.95 or (over and 0.8 or 0.55), C.card[1] + 0.02, C.card[2] + 0.04, C.card[3] + 0.02)
+    local bc = selected and C.accent or (over and C.border or C.borderDim)
+    self:drawRectBorder(r.x, r.y, r.w, r.h, 0.8, bc[1], bc[2], bc[3])
+    local isz = rowH - 8
+    local tex = call(it, "getTex") or call(it, "getTexture")
+    self:drawRect(r.x + 5, r.y + 4, isz, isz, 0.45, 0, 0, 0)
+    if tex then self:drawTextureScaled(tex, r.x + 5, r.y + 4, isz, isz, 1, 1, 1, 1) end
+    local tx = r.x + 5 + isz + 8
+    local maxW = r.x + r.w - 8 - tx
+    local ty = r.y + math.floor((rowH - lh * 2) / 2)
+    shadowText(self, fit(l1, maxW, sf), tx, ty, C.text, 1, sf)
+    shadowText(self, fit(l2 or "", maxW, sf), tx, ty + lh, col2 or C.textDim, 1, sf)
+    return r
+end
+
+-- an item's score line
+local function scoreLine(it)
+    local d = R.dishOf(it)
+    if d then return T("IGUI_GTPP_RowDish", string.format("%.2f", tonumber(d.avg) or 0), tostring(tonumber(d.n) or 0)), scoreCol(d.avg) end
+    local p = R.prepOf(it)
+    if p then return T("IGUI_GTPP_RowPrep", procName(p.p), wordName(p.w), string.format("%+d", tonumber(p.s) or 0)), wordCol(p.w) end
+    return T("IGUI_GTPP_RowPlain"), H.C.textDim
+end
+
+-- ------------------------------------------------------------------ the tab
+function Win:renderCook(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local page = self.cookPage
+    if page ~= "prep" and page ~= "evo" and page ~= "craft" then page = "prep"; self.cookPage = page end
+    -- the run watchdog: the queue can drop our chain (vanilla clears it when
+    -- one action turns invalid) -- never leave the tab stuck "in progress"
+    local run = self.prepRun
+    if run and run.phase ~= "game" and nowMs() - (run.at or 0) > 25000 then
+        log("preparation of %s stopped without an answer (phase %s, 25 s) -- the tab is free again", tostring(run.name), tostring(run.phase))
+        self.prepRun = nil
     end
-    yy = yy + 4
-    -- 1.0.4: what happens to the ingredients
-    -- 1.0.8: one short line each; the long explanation on the "i"
-    local function shortLine(text, col, tip)
-        local im = tip and (lh + 6) or 0
-        local t = fit(text, tw2 - 14 - im, sf)
-        shadowText(self, t, tx, yy, col, 1, sf)
-        if tip then infoMark(self, tx + tw(sf, t) + 6, yy, lh, tip) end
-        yy = yy + lh + 6
+    local bh = 0
+    if H.banner then
+        if self.prepRun then bh = H.banner(self, x, y, w, "IN_PROGRESS", "IGUI_GTPP_Next_run")
+        else bh = H.banner(self, x, y, w, "INFO_ONLY", "IGUI_GTPP_Next_" .. page) end
     end
-    if run.phase == "taking" or run.phase == "finishing" or run.phase == "cancelling" then
-        shortLine(T("IGUI_GTPC_Phase_" .. run.phase), C.text)
-    elseif run.phase ~= "done" and not (run.phase == "failed" and run.failReason == "take") then
-        shortLine(T("IGUI_GTPC_TakenShort"), C.textDim, T(run.resumed and "IGUI_GTPC_Resumed" or "IGUI_GTPC_Taken"))
+    y, h = y + bh, h - bh
+    local items = {}
+    for _, p in ipairs(H.COOK_PAGES) do
+        items[#items + 1] = { label = T("IGUI_GTPP_Page_" .. p), on = page == p, action = function(win)
+            win.cookPage = p
+            log("cooking tab page: %s", p)
+        end }
     end
-    if run.phase == "failed" then
-        local tip = {}
-        if run.failWhy then tip[#tip + 1] = T("IGUI_GTPC_Why_" .. tostring(run.failWhy)) end
-        tip[#tip + 1] = T("IGUI_GTPC_RetryHint")
-        shortLine(T("IGUI_GTPC_FailedShort_" .. tostring(run.failReason or "take")), C.bad, table.concat(tip, "  /  "))
+    local used = self:cookChips(items, x, y, w - 30)
+    -- the dish buff on this character now
+    local buff = K.myBuffNow and K.myBuffNow(self.player)
+    local helpKey = "IGUI_GTPP_Help_" .. page
+    infoMark(self, x + w - 22, y + 2, lineH(sf) + 2, T(helpKey))
+    y, h = y + used + 4, h - used - 4
+    if buff then
+        local line = T("IGUI_GTPP_BuffNow", T("IGUI_GTPC_Buff_" .. tostring(buff.kind)), tostring(buff.tier or 1), string.format("%.1f", buff.hoursLeft))
+        shadowText(self, fit(line, w, sf), x, y, C.good, 1, sf)
+        y, h = y + lineH(sf) + 4, h - lineH(sf) - 4
     end
-    if run.phase == "blocked" then
-        yy = yy + self:paragraphs(T("IGUI_GTPC_Why_" .. tostring(run.blockedBy or "tools")), tx, yy, tw2 - 10, C.bad, sf) + 6
+    if page == "prep" then return self:renderCookPrep(x, y, w, h) end
+    if page == "evo" then return self:renderCookEvo(x, y, w, h) end
+    return self:renderCookCraft(x, y, w, h)
+end
+
+-- ------------------------------------------------------------------ prepare
+-- the foods at hand (inventory, bags, the room's boxes), 1 s cache
+function Win:prepList()
+    local t = nowMs()
+    if self.prepCache and t - self.prepCache.at < 1000 then return self.prepCache end
+    local list = { at = t, open = {}, done = {} }
+    local containers = K.containers(self.player)
+    local n = 0
+    K.eachItem(containers, function(it)
+        n = n + 1
+        if n > 800 then return false end
+        if R.isFood(it) then
+            local why = R.whyNot(it)
+            if why == nil then
+                list.open[#list.open + 1] = it
+            elseif why == "done" or why == "dish" then
+                list.done[#list.done + 1] = it
+            end
+        end
+    end)
+    local function byName(a, b) return itemName(a) < itemName(b) end
+    table.sort(list.open, byName)
+    table.sort(list.done, byName)
+    self.prepCache = list
+    return list
+end
+
+function Win:renderCookPrep(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local leftW = math.floor(w * 0.45)
+    local list = self:prepList()
+    local q = self:query()
+    local shown = {}
+    for _, it in ipairs(list.open) do if q == "" or itemName(it):lower():find(q, 1, true) then shown[#shown + 1] = it end end
+    local firstDone = #shown + 1
+    for _, it in ipairs(list.done) do if q == "" or itemName(it):lower():find(q, 1, true) then shown[#shown + 1] = it end end
+    local cx, cy, cw, ch = self:drawCard(x, y, leftW, h, T("IGUI_GTPP_Card_Foods", tostring(#list.open)), texture(U.UI_DIR .. "tab_cook.png"))
+    local used = self:placeSearch(cx, cy, cw - 4, true)
+    cy, ch = cy + used + 6, ch - used - 6
+    local rowH = math.max(40, lh * 2 + 10)
+    local sel = self.prepSel
+    local selId = sel and call(sel, "getID")
+    local boxTop, boxBottom = cy, cy + ch
+    self:scrolled("prepList", cx, cy, cw, ch, function(yy)
+        local start = yy
+        for i, it in ipairs(shown) do
+            if i == firstDone and i > 1 then
+                shadowText(self, T("IGUI_GTPP_AlreadyDone"), cx, yy + 2, C.accent, 1, sf)
+                yy = yy + lh + 6
+            elseif i == firstDone then
+                shadowText(self, T("IGUI_GTPP_AlreadyDone"), cx, yy + 2, C.accent, 1, sf)
+                yy = yy + lh + 6
+            end
+            local l2, c2 = scoreLine(it)
+            if i < firstDone then
+                local games = R.gamesFor(it)
+                local names = {}
+                for j, pid in ipairs(games) do if j <= 3 then names[#names + 1] = procName(pid) end end
+                l2 = T("IGUI_GTPP_RowCan", table.concat(names, ", "))
+                if not (HARMONIE_Reach and HARMONIE_Reach.isCarried(self.player, it)) then l2 = l2 .. "  " .. T("IGUI_GTPP_InBox") end
+                c2 = C.textDim
+            end
+            local r = self:cookItemRow(cx, yy, cw - 10, rowH, it, itemName(it), l2, c2, selId ~= nil and call(it, "getID") == selId, "prepList")
+            if i < firstDone then
+                r.action = function(win)
+                    win.prepSel = it
+                    win.prepGame = nil
+                    log("prepare: chose %s", itemName(it))
+                end
+                if r.y + r.h > boxTop and r.y < boxBottom then clickable(self, r) end
+            end
+            yy = yy + rowH + 4
+        end
+        if #shown == 0 then
+            shadowText(self, T("IGUI_GTPP_NoFoods"), cx, yy, C.textDim, 1, sf)
+            yy = yy + lh
+        end
+        return yy - start
+    end)
+    local rx, rw = x + leftW + 8, w - leftW - 8
+    self:renderCookPrepDetail(rx, y, rw, h, list)
+end
+
+function Win:renderCookPrepDetail(x, y, w, h, list)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local it = self.prepSel
+    -- the chosen food must still be at hand and not prepared
+    if it then
+        local still = false
+        for _, o in ipairs(list.open) do if o == it then still = true break end end
+        if not still and not self.prepRun then self.prepSel = nil; it = nil end
     end
-    -- the finished dish (vanilla's own numbers)
-    if run.phase == "done" then
-        local item = F.resultItem()
-        local q = run.quality or 0.66
-        shadowText(self, T("IGUI_GTPC_Done", T("IGUI_GTPC_Word_" .. K.wordOf(q))), tx, yy, wordCol(K.wordOf(q)), 1, mf)
-        yy = yy + lineH(mf) + 6
-        if item then
-            local icon = K.call(item, "getTexture")
-            if icon then self:drawTextureScaled(icon, tx, yy, 48, 48, 1, 1, 1, 1) end
-            local line = T("IGUI_GTPC_DishNow", tostring(K.call(item, "getDisplayName") or "?"),
-                string.format("%.0f", tonumber(K.call(item, "getCalories")) or 0), string.format("%.0f", tonumber(K.call(item, "getCarbohydrates")) or 0),
-                string.format("%.0f", tonumber(K.call(item, "getLipids")) or 0), string.format("%.0f", tonumber(K.call(item, "getProteins")) or 0),
-                string.format("%.0f", math.abs(tonumber(K.call(item, "getHungerChange")) or 0) * 100))
-            local used = self:paragraphs(line, tx + 58, yy, tw2 - 68, C.text, sf)
-            yy = yy + math.max(52, used) + 4
-            if HARMONIE_GTP.GetVitaminProfileForItem then
-                local prof = HARMONIE_GTP.GetVitaminProfileForItem(item) or {}
-                local knows = H.knows(self.player)
-                local vits = {}
-                for _, v in ipairs(VIT_ORDER) do
-                    if (prof[v] or 0) > 0.05 then
-                        vits[#vits + 1] = knows and (string.format("%s %.1f %s", v, prof[v], H.UNITS[v] or "") .. HARMONIE_GTP.VitaminTag(v, prof[v]))
-                            or (v .. " " .. HARMONIE_GTP.VitaminHasText())
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPP_Card_Prepare"))
+    if self.prepRun then
+        local run = self.prepRun
+        shadowText(self, fit(T("IGUI_GTPP_Running", run.name, procName(run.pid)), cw - 8, sf), cx, cy, C.warn, 1, sf)
+        cy = cy + lh + 6
+        shadowText(self, fit(T("IGUI_GTPP_Phase_" .. tostring(run.phase)), cw - 8, sf), cx, cy, C.textDim, 1, sf)
+        return
+    end
+    if self.prepLast then
+        local L = self.prepLast
+        local col = L.word and wordCol(L.word) or C.bad
+        local line = L.word and T("IGUI_GTPP_LastDone", L.name, procName(L.pid), wordName(L.word), string.format("%+d", R.WORD_SCORE[L.word] or 0))
+            or T("IGUI_GTPP_LastRefused", L.name, T("IGUI_GTPP_Why_" .. tostring(L.why)))
+        cy = cy + self:paragraphs(line, cx, cy, cw - 8, col, sf) + 6
+    end
+    if not it then
+        self:paragraphs(T("IGUI_GTPP_PickFood"), cx, cy, cw - 8, C.textDim, sf)
+        return
+    end
+    -- the food
+    local isz = lh * 2 + 6
+    local tex = call(it, "getTex") or call(it, "getTexture")
+    self:drawRect(cx, cy, isz, isz, 0.45, 0, 0, 0)
+    if tex then self:drawTextureScaled(tex, cx, cy, isz, isz, 1, 1, 1, 1) end
+    shadowText(self, fit(itemName(it), cw - isz - 16, H.medium and H.medium() or sf), cx + isz + 8, cy, C.text, 1, H.medium and H.medium() or sf)
+    local games, kind = R.gamesFor(it)
+    shadowText(self, fit(T("IGUI_GTPP_Kind_" .. tostring(kind)), cw - isz - 16, sf), cx + isz + 8, cy + lh + 4, C.textDim, 1, sf)
+    cy = cy + isz + 10
+    shadowText(self, T("IGUI_GTPP_ChooseGame"), cx, cy, C.accent, 1, sf)
+    cy = cy + lh + 4
+    local scan = K.scan(self.player)
+    local rowH = lh * 2 + 12
+    for _, pid in ipairs(games) do
+        local proc = K.PROCS[pid]
+        local toolItem, grade, group = nil, "best", proc.tools and proc.tools[1]
+        if group then toolItem, grade = K.findTool(scan, group) end
+        local can = (not group) or toolItem ~= nil or grade == "bare"
+        local heatOk = not proc.heat or (scan and scan.heat ~= nil)
+        local r = { x = cx, y = cy, w = cw - 8, h = rowH }
+        local over = inside(r, self:getMouseX(), self:getMouseY())
+        local okAll = can and heatOk
+        self:drawRect(r.x, r.y, r.w, r.h, okAll and (over and 0.95 or 0.75) or 0.35, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+        self:drawRectBorder(r.x, r.y, r.w, r.h, 0.8, (okAll and C.border or C.borderDim)[1], (okAll and C.border or C.borderDim)[2], (okAll and C.border or C.borderDim)[3])
+        local ps = rowH - 8
+        local pic = procIcon(pid)
+        if pic then self:drawTextureScaled(pic, r.x + 4, r.y + 4, ps, ps, okAll and 1 or 0.4, 1, 1, 1) end
+        local tx = r.x + ps + 12
+        shadowText(self, fit(procName(pid), r.w - ps - 20, sf), tx, r.y + 4, okAll and C.text or C.textDim, 1, sf)
+        local sub
+        if not heatOk then sub = T("IGUI_GTPP_NeedHeat")
+        elseif not group then sub = T("IGUI_GTPP_NoTool")
+        elseif toolItem then sub = T("IGUI_GTPP_Tool_" .. tostring(grade), itemName(toolItem))
+        elseif grade == "bare" then sub = T("IGUI_GTPP_Tool_bare")
+        else sub = T("IGUI_GTPP_NeedTool", T("IGUI_GTPC_Tool_" .. tostring(group))) end
+        shadowText(self, fit(sub, r.w - ps - 20, sf), tx, r.y + 4 + lh, okAll and C.textDim or C.bad, 1, sf)
+        if okAll then
+            r.action = function(win) win:startPrep(it, pid, toolItem, grade, group) end
+            clickable(self, r)
+        end
+        cy = cy + rowH + 4
+        if cy > y + h - rowH then break end
+    end
+end
+
+-- Start: bring it into the inventory -> minigame -> timed action -> server
+function Win:startPrep(item, pid, toolItem, grade, group)
+    if self.prepRun then return end
+    local player = self.player
+    local Gm = HARMONIE_GTP.CookGames
+    if Gm and Gm.busy and Gm.busy() then log("prepare: a minigame is already open"); return end
+    local run = { item = item, pid = pid, name = itemName(item), phase = "bring", at = nowMs() }
+    self.prepRun = run
+    self.prepLast = nil
+    local win = self
+    local function finish(word, why)
+        if win.prepRun ~= run then return end
+        win.prepRun = nil
+        win.prepCache = nil
+        win.prepLast = { name = run.name, pid = pid, word = word, why = why }
+    end
+    local function play()
+        if win.prepRun ~= run then return end
+        if not (HARMONIE_Reach and HARMONIE_Reach.isCarried(player, item)) then
+            log("prepare: %s did not reach the inventory -- stopped", run.name)
+            finish(nil, "notCarried")
+            return
+        end
+        local function onWord(word)
+            if win.prepRun ~= run then return end
+            if not word then log("prepare: minigame for %s cancelled", run.name); finish(nil, "cancelled"); return end
+            run.phase, run.at, run.word = "action", nowMs(), word
+            local action = HARMONIE_GTP_CookStepAction:new(player, pid, word, toolItem or item)
+            action.onEnd = function(done, w)
+                if win.prepRun ~= run then return end
+                if not done then log("prepare: the action for %s was stopped", run.name); finish(nil, "stopped"); return end
+                run.phase, run.at = "server", nowMs()
+                R.request(player, item, pid, w or word)
+                if not (isClient and isClient()) then finish(w or word) end
+            end
+            ISTimedActionQueue.add(action)
+        end
+        run.phase, run.at = "game", nowMs()
+        if K.minigamesOn() and Gm and Gm.play then
+            local pp = { proc = K.PROCS[pid], tools = group and { { grade = grade, item = toolItem, group = group } } or {}, help = {} }
+            local diff = K.difficulty(player, pp, nil)
+            local ease = K.levelEase(K.level(player))
+            local proc = K.PROCS[pid]
+            local itemTex = call(item, "getTexture")
+            local toolTex = toolItem and call(toolItem, "getTexture") or nil
+            log("prepare %s with %s: difficulty %.2f, tool %s (%s)", run.name, pid, diff, toolItem and K.typeOf(toolItem) or "none", tostring(grade))
+            local ok = Gm.play(player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = ease.time * K.minigameTime(), icon = itemTex,
+                tool = toolTex, cursor = (proc.cursor == "tool") and toolTex or itemTex, bare = grade == "bare",
+                toolIsGrater = not (group == "grater" and grade ~= "best") }, onWord)
+            if not ok then log("prepare: the minigame could not open"); finish(nil, "busy") end
+        else
+            onWord("Good")
+        end
+    end
+    if HARMONIE_Reach and HARMONIE_Reach.isCarried(player, item) then
+        play()
+    else
+        log("prepare: bringing %s into the inventory first", run.name)
+        if HARMONIE_Reach and HARMONIE_Reach.bring then HARMONIE_Reach.bring(player, item)
+        elseif ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then ISInventoryPaneContextMenu.transferIfNeeded(player, item) end
+        ISTimedActionQueue.add(HARMONIE_GTP_CookWaitAction:new(player, 5, function() play() end))
+    end
+end
+
+-- the server's answer (MP): the tab shows it
+R.onSet = function(args, item)
+    local win = GTPGuide and GTPGuide.window
+    if not win or not win.prepRun or args.what ~= "prep" then return end
+    local run = win.prepRun
+    if call(run.item, "getID") == args.id then
+        win.prepRun = nil
+        win.prepCache = nil
+        win.prepLast = { name = run.name, pid = run.pid, word = args.prep and args.prep.w or run.word }
+    end
+end
+R.onRefused = function(args)
+    local win = GTPGuide and GTPGuide.window
+    if not win then return end
+    local run = win.prepRun
+    win.prepRun = nil
+    win.prepCache = nil
+    win.prepLast = { name = run and run.name or "?", pid = run and run.pid, why = args.why }
+end
+
+-- ------------------------------------------------------------------ vanilla evolved recipes
+-- every evolved recipe that something at hand can start or continue (1.5 s cache)
+function Win:evoList()
+    local t = nowMs()
+    if self.evoCache and t - self.evoCache.at < 1500 then return self.evoCache end
+    local list = { at = t, entries = {} }
+    local containers = K.containers(self.player)
+    list.containers = containers
+    local seen, n = {}, 0
+    if RecipeManager and RecipeManager.getEvolvedRecipe then
+        K.eachItem(containers, function(it)
+            n = n + 1
+            if n > 800 then return false end
+            local ok, recipes = pcall(RecipeManager.getEvolvedRecipe, it, self.player, containers, false)
+            if ok and recipes and recipes.size then
+                for i = 0, recipes:size() - 1 do
+                    local r = recipes:get(i)
+                    local key = tostring(call(r, "getName")) .. "|" .. tostring(call(it, "getFullType"))
+                    -- a dish already started is listed by itself, fresh bases once per type
+                    if R.dishOf(it) or call(r, "isResultItem", it) == true then key = key .. "|" .. tostring(call(it, "getID")) end
+                    if not seen[key] then
+                        seen[key] = true
+                        list.entries[#list.entries + 1] = { recipe = r, base = it, name = T("ContextMenu_EvolvedRecipe_" .. tostring(call(r, "getUntranslatedName"))),
+                            started = call(r, "isResultItem", it) == true }
                     end
                 end
-                yy = yy + self:paragraphs(#vits > 0 and T("IGUI_GTPC_PreviewVit", table.concat(vits, ", ")) or T("IGUI_GTPC_PreviewNoVit"), tx, yy, tw2 - 10, C.text, sf) + 4
             end
-            local cooked = K.call(item, "isCooked") == true
-            local cookable = K.call(item, "isIsCookable") == true or K.call(item, "isCookable") == true
-            if K.wordOf(q) == "Excellent" and K.buffOfDish and K.buffOfDish(d.id) and K.buffsOn() then
-                local kind = K.buffOfDish(d.id)
-                local line = T("IGUI_GTPC_BuffWillGive", T("IGUI_GTPC_Buff_" .. kind), string.format("%.0f", K.buffHours(K.level(self.player))),
-                    T("IGUI_GTPC_BuffDesc_" .. kind))
-                yy = yy + self:paragraphs(line, tx, yy, tw2 - 10, C.good, sf) + 4
-            end
-            local key = cooked and "IGUI_GTPC_Cooked" or (cookable and "IGUI_GTPC_CookIt" or "IGUI_GTPC_ReadyToEat")
-            yy = yy + self:paragraphs(T(key), tx, yy, tw2 - 10, cooked and C.good or C.warn, sf) + 6
-        end
-    end
-    -- buttons
-    local by = y + h - lh - 22
-    local bx = tx
-    if run.phase == "retry" or run.phase == "paused" or run.phase == "blocked" then
-        bx = bx + self:cookButton(bx, by, T(run.phase == "retry" and "IGUI_GTPC_Retry" or "IGUI_GTPC_Continue"), true, function() F.retry() end) + 8
-    end
-    -- 2026-10-25: a failed dish can be tried again, its steps kept
-    if run.phase == "failed" then
-        bx = bx + self:cookButton(bx, by, T("IGUI_GTPC_RetryFailed"), true, function() F.retryFailed() end) + 8
-    end
-    if run.phase == "done" or (run.phase == "failed" and run.failReason == "take") then
-        self:cookButton(bx, by, T("IGUI_GTPC_NewDish"), true, function() F.clear(); log("cooking: back to the list") end)
-    elseif run.phase == "taking" or run.phase == "finishing" or run.phase == "cancelling" then
-        -- waiting for the server: nothing to press
+        end)
     else
-        -- always enabled (owner, 2026-10-24: stuck while adding, could not cancel)
-        self:cookButton(bx, by, T("IGUI_GTPC_Cancel"), true, function() F.cancel("button") end)
+        R.logOnce("noRM", "RecipeManager.getEvolvedRecipe missing -- no vanilla evolved recipes listed")
     end
+    table.sort(list.entries, function(a, b)
+        if a.started ~= b.started then return a.started end
+        return a.name < b.name
+    end)
+    self.evoCache = list
+    return list
 end
 
-if K.onQualityDone == nil then
-    K.onQualityDone = function(args) log("cooking tab: server confirmed dish id %s", tostring(args and args.id)) end
+function Win:renderCookEvo(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local leftW = math.floor(w * 0.42)
+    local list = self:evoList()
+    local q = self:query()
+    local shown = {}
+    for _, e in ipairs(list.entries) do
+        if q == "" or e.name:lower():find(q, 1, true) or itemName(e.base):lower():find(q, 1, true) then shown[#shown + 1] = e end
+    end
+    local cx, cy, cw, ch = self:drawCard(x, y, leftW, h, T("IGUI_GTPP_Card_Evo", tostring(#list.entries)))
+    local used = self:placeSearch(cx, cy, cw - 4, true)
+    cy, ch = cy + used + 6, ch - used - 6
+    local rowH = math.max(40, lh * 2 + 10)
+    local sel = self.evoSel
+    -- keep the choice across the 1.5 s refresh (the base becomes the dish)
+    local cur
+    if sel then
+        for _, e in ipairs(list.entries) do
+            if e.base == sel.base and call(e.recipe, "getName") == call(sel.recipe, "getName") then cur = e break end
+        end
+        if not cur then
+            for _, e in ipairs(list.entries) do
+                if e.started and call(e.recipe, "getName") == call(sel.recipe, "getName") and sel.started == false then cur = e break end
+            end
+        end
+        self.evoSel = cur
+    end
+    local boxTop, boxBottom = cy, cy + ch
+    self:scrolled("evoList", cx, cy, cw, ch, function(yy)
+        local start = yy
+        for _, e in ipairs(shown) do
+            local l2, c2 = itemName(e.base), C.textDim
+            local d = R.dishOf(e.base)
+            if d then l2 = l2 .. "  " .. T("IGUI_GTPP_RowDish", string.format("%.2f", tonumber(d.avg) or 0), tostring(tonumber(d.n) or 0)); c2 = scoreCol(d.avg) end
+            local r = self:cookItemRow(cx, yy, cw - 10, rowH, e.base, e.name, l2, c2, cur == e, "evoList")
+            r.action = function(win) win.evoSel = e; win.scroll.evoIng = 0; log("vanilla dish: chose %s on %s", e.name, itemName(e.base)) end
+            if r.y + r.h > boxTop and r.y < boxBottom then clickable(self, r) end
+            yy = yy + rowH + 4
+        end
+        if #shown == 0 then
+            yy = yy + self:paragraphs(T("IGUI_GTPP_NoEvo"), cx, yy, cw - 12, C.textDim, sf)
+        end
+        return yy - start
+    end)
+    self:renderCookEvoDetail(x + leftW + 8, y, w - leftW - 8, h, cur, list)
 end
 
--- new recipes when the Cooking level goes up (client, once per level) --
--- 0.13.5: back, with the level lock
-if Events and Events.LevelPerk then
-    Events.LevelPerk.Add(function(chr, perk, level, increased)
-        if not increased or perk ~= Perks.Cooking then return end
-        if getPlayer and chr ~= getPlayer() then return end
-        if type(K.DISHES) ~= "table" then return end
-        local n, names = 0, {}
-        for _, d in ipairs(K.DISHES) do
-            if (d.level or 0) == level then n = n + 1; if #names < 3 then names[#names + 1] = T("IGUI_GTPC_Dish_" .. d.id) end end
+function Win:renderCookEvoDetail(x, y, w, h, e, list)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, e and e.name or T("IGUI_GTPP_Card_EvoPick"))
+    if not e then
+        self:paragraphs(T("IGUI_GTPP_EvoPick"), cx, cy, cw - 8, C.textDim, sf)
+        return
+    end
+    local d = R.dishOf(e.base)
+    local head = d and T("IGUI_GTPP_EvoScore", string.format("%.2f", tonumber(d.avg) or 0), tostring(tonumber(d.n) or 0)) or T("IGUI_GTPP_EvoNoScore")
+    cy = cy + self:paragraphs(itemName(e.base) .. " - " .. head, cx, cy, cw - 8, d and scoreCol(d.avg) or C.textDim, sf) + 6
+    local okI, items = pcall(function() return e.recipe:getItemsCanBeUse(self.player, e.base, list.containers) end)
+    local rows = {}
+    if okI and items and items.size then
+        local seenType = {}
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            if it and it ~= e.base then
+                -- same type and same score: shown once
+                local key = tostring(call(it, "getFullType")) .. "|" .. tostring(R.scoreOf(it))
+                if not seenType[key] then seenType[key] = true; rows[#rows + 1] = it end
+            end
         end
-        log("Cooking level %d: %d recipes now at the cook's level (%s)", level, n, table.concat(names, ", "))
-        -- 0.13.17: nothing is locked; these are now at the cook's level
-        if n > 0 and HARMONIE_GTP.CookFX then HARMONIE_GTP.CookFX.say(chr, "Unlock") end
-        if n > 0 and HaloTextHelper then
-            local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
-            local ok = fn and pcall(fn, chr, T("IGUI_GTPC_NewRecipes", tostring(n)))
-            if not ok then log("could not show the new-recipes halo text") end
+    end
+    table.sort(rows, function(a, b)
+        local sa, sb = R.scoreOf(a), R.scoreOf(b)
+        if sa ~= sb then return sa > sb end
+        return itemName(a) < itemName(b)
+    end)
+    local rowH = math.max(40, lh * 2 + 10)
+    local lvl = K.level(self.player)
+    local boxTop, boxBottom = cy, y + h - 6
+    self:scrolled("evoIng", cx, cy, cw, boxBottom - cy, function(yy)
+        local start = yy
+        for _, it in ipairs(rows) do
+            local l2, c2 = scoreLine(it)
+            local spice = call(it, "isSpice") == true
+            if spice then l2 = T("IGUI_GTPP_Spice"); c2 = C.textDim end
+            local needCooked = call(e.recipe, "needToBeCooked", it) == false
+            local frozen = call(it, "isFrozen") == true and call(e.recipe, "isAllowFrozenItem") ~= true
+            local use = ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.getRealEvolvedItemUse
+                and select(2, pcall(ISInventoryPaneContextMenu.getRealEvolvedItemUse, it, e.recipe, lvl))
+            local l1 = itemName(it) .. ((type(use) == "number") and (" (" .. tostring(use) .. ")") or "")
+            if needCooked then l2 = T("IGUI_GTPP_NeedCooked"); c2 = C.bad elseif frozen then l2 = T("IGUI_GTPP_Frozen"); c2 = C.bad end
+            local bw = tw(sf, T("IGUI_GTPP_Add")) + 24
+            local r = self:cookItemRow(cx, yy, cw - 14 - bw, rowH, it, l1, l2, c2, false, "evoIng")
+            local okAdd = not needCooked and not frozen
+            local bx, by = cx + cw - 10 - bw, yy + math.floor((rowH - (lh + 12)) / 2)
+            if by + lh + 12 > boxTop and by < boxBottom then
+                self:cookButton(bx, by, T("IGUI_GTPP_Add"), okAdd, function(win)
+                    log("vanilla dish: add %s (score %+.2f) to %s", itemName(it), R.scoreOf(it), itemName(e.base))
+                    local pn = call(win.player, "getPlayerNum") or 0
+                    local okC, err = pcall(ISInventoryPaneContextMenu.onAddItemInEvoRecipe, e.recipe, e.base, it, pn)
+                    if not okC then log("adding through vanilla FAILED: %s", tostring(err)) end
+                    win.evoCache = nil
+                end, bw)
+            end
+            yy = yy + rowH + 4
         end
+        if #rows == 0 then yy = yy + self:paragraphs(T("IGUI_GTPP_EvoNothing"), cx, yy, cw - 12, C.textDim, sf) end
+        return yy - start
     end)
 end
+
+-- ------------------------------------------------------------------ vanilla crafting recipes
+function H.cookCraftRecipes()
+    if H.cookCraftCache then return H.cookCraftCache end
+    local want = {}
+    for _, e in ipairs(K.CRAFT_LIST or {}) do want[e[1]] = e[2] or false end
+    local out = {}
+    local ok, all = pcall(function() return getScriptManager():getAllCraftRecipes() end)
+    if not ok or not all then
+        ok, all = pcall(function() return ScriptManager.instance:getAllCraftRecipes() end)
+    end
+    if ok and all and all.size then
+        for i = 0, all:size() - 1 do
+            local r = all:get(i)
+            local name = tostring(call(r, "getName") or "")
+            if want[name] ~= nil then
+                local result = want[name] or nil
+                out[#out + 1] = { recipe = r, id = name, name = tostring(call(r, "getTranslationName") or name), result = result,
+                    icon = call(r, "getIconTexture") }
+            end
+        end
+    else
+        R.logOnce("nocraft", "could not read the game's craft recipes (%s)", tostring(all))
+    end
+    table.sort(out, function(a, b) return a.name < b.name end)
+    log("vanilla Cooking craft recipes found: %d of %d listed", #out, #(K.CRAFT_LIST or {}))
+    H.cookCraftCache = out
+    return out
+end
+
+function Win:renderCookCraft(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local all = H.cookCraftRecipes()
+    local q = self:query()
+    local shown = {}
+    for _, e in ipairs(all) do if q == "" or e.name:lower():find(q, 1, true) then shown[#shown + 1] = e end end
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPP_Card_Craft", tostring(#shown), tostring(#all)))
+    local used = self:placeSearch(cx, cy, math.min(cw - 4, 420), true)
+    cy, ch = cy + used + 6, ch - used - 6
+    local rowH = math.max(36, lh + 20)
+    local boxTop, boxBottom = cy, cy + ch
+    local openLabel = T("IGUI_GTPP_OpenCraft")
+    local bw = tw(sf, openLabel) + 24
+    self:scrolled("craftList", cx, cy, cw, ch, function(yy)
+        local start = yy
+        for _, e in ipairs(shown) do
+            local r = { x = cx, y = yy, w = cw - 10, h = rowH }
+            self:drawRect(r.x, r.y, r.w, r.h, 0.55, C.card[1] + 0.02, C.card[2] + 0.04, C.card[3] + 0.02)
+            self:drawRectBorder(r.x, r.y, r.w, r.h, 0.6, C.borderDim[1], C.borderDim[2], C.borderDim[3])
+            local isz = rowH - 8
+            local icon = e.icon or (e.result and H.item(e.result) and H.item(e.result).icon)
+            if icon then self:drawTextureScaled(icon, r.x + 5, r.y + 4, isz, isz, 1, 1, 1, 1) end
+            shadowText(self, fit(e.name, r.w - isz - bw - 30, sf), r.x + isz + 14, r.y + math.floor((rowH - lh) / 2), C.text, 1, sf)
+            local by = yy + math.floor((rowH - (lh + 12)) / 2)
+            if by + lh + 12 > boxTop and by < boxBottom then
+                self:cookButton(r.x + r.w - bw - 6, by, openLabel, true, function(win)
+                    log("opening the crafting window on %s", e.id)
+                    if ISEntityUI and ISEntityUI.OpenHandcraftWindow then
+                        local okO, err = pcall(ISEntityUI.OpenHandcraftWindow, win.player, nil, nil, false, e.recipe)
+                        if not okO then log("opening the crafting window FAILED: %s", tostring(err)) end
+                    else
+                        R.logOnce("noentityui", "ISEntityUI.OpenHandcraftWindow missing -- cannot open the crafting window")
+                    end
+                end, bw)
+            end
+            yy = yy + rowH + 4
+        end
+        if #shown == 0 then shadowText(self, T("IGUI_GTPG_NoMatch"), cx, yy, C.textDim, 1, sf); yy = yy + lh end
+        return yy - start
+    end)
+end
+
+log("Cooking tab loaded (prepare / vanilla dishes / crafting recipes)")
