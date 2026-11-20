@@ -433,6 +433,39 @@
   pose changed; RenderPart: local player only, parts off only after the model
   is missing 1 s, a rebuild at most once a second; the grip watchdog uses the
   budget too. A clean cure would draw these without fake attached items.
+- TWA 1.3.0 (owner 2026-11-20, bag UX round):
+  * Tabs: the bar shows only "Weapons" / "Bags" (W.MAIN_TABS gWeapons /
+    gBags); a main tab opens a CHOOSER page (W.CHOOSER, big cards:
+    weapons / materials / modify / guide; bagitems / bagtiers / bagmod /
+    bagguide). Every page under it gets "< Back" at the left of the tab bar
+    (W.parentOf: craft / practice -> its recipe list, else the chooser).
+    setTab ids stay (hub, W.TABS); new ids bagitems / bagtiers (bag list with
+    filter BagUp / BagTier) and bagguide (guide chapter Bags). Window opens on
+    gWeapons.
+  * Add-on page (TWABagUpUI) laid out like the gem page: bags left (+ rules),
+    the bag large + one slot per tier + values base > now > with the picked
+    add-on in the centre, add-ons in a grid on the RIGHT card; hover a stat /
+    add-on / slot = what it does (IGUI_TWA_BagUpStatTip_*). Pick + button
+    "Fit add-on" / pick a filled slot + "Take out".
+  * One add-on per KIND per bag (canInstall -> IGUI_TWA_BagUp_SameKind); a bag
+    that already had two of a kind keeps them.
+  * Tooltip (TierTooltip -> TWABagUp.tooltipLines): an upgraded bag shows its
+    tier, md.TWA_BagBy (who raised it, set in finishTier) and each add-on with
+    its maker (md.TWA_BagUpBy "name;name", same order as TWA_BagUps; the
+    add-on's TWA_CraftedBy, given back on removal); an add-on item shows its
+    effect and the rule.
+  * Bag tier recipes: the craft page / guided row lists EVERY bag at hand
+    (bagCandidates, TWAPicker rows `disabled` with the reason / `info`); the
+    picked bag is kept by id (window.bagPick) and pickItems takes exactly it.
+  * Steps: BagSew1..5 are Basic / Double / Reinforced / Cross Stitch /
+    Advanced Load-Bearing Stitching (B.STITCH: thread or twine, 2 thread,
+    thread + sinew, 2 sinew, 2 aramid; any needle T1-2, metal needle T3+).
+    Each kind has its own step (B.KIND_STEP: BagPocket / BagCompress / BagPad /
+    BagRivet / BagTrim / BagLoop / BagHolster 1..5, Tailoring T); an add-on
+    recipe = BagCut + BagSew + its kind step. Recipes carry `bagKind`; the
+    bag list has a filter per kind (BagK_<kind>).
+  * "Base DPS" is "Average damage" = (min + max) / 2 (craft page, gem page);
+    the tier still uses that x attack speed.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).

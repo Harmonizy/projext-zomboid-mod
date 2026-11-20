@@ -10,8 +10,8 @@
         must be EMPTY, not worn / on the hotbar, and at tier N-1;
       * fitted with UPGRADE ITEMS crafted here (35: 7 kinds x 5 tiers). A bag
         of tier N has N slots. An item of tier T fits only a bag of tier >= T;
-        the same item twice in one bag is not allowed (the same KIND from a
-        different item is fine);
+        one item of a KIND per bag (1.3.0, owner: not the same item and not
+        the same kind);
       * an upgrade can be taken out again: it comes back with a chance by
         Tailoring level (10 % + 9 % a level, 100 % at 10), else it is lost.
 
@@ -118,23 +118,64 @@ end
 function B.upOf(fullType) return fullType and B.ITEMS[fullType] or nil end
 
 -- ------------------------------------------------------------ the steps
--- three Tailoring steps per tier (time = level x 10 + 10, every TWA step's rule)
-local THREADS = { "Base.Thread", "Base.Thread_Sinew", "Base.Thread_Aramid" }
+-- Every step of a tier-T recipe asks Tailoring T (time = T x 10 + 10, every
+-- TWA step's rule). 1.3.0 (owner 2026-11-20): the five stitches have names of
+-- their own and better thread (and a metal needle from tier 3) as the tier
+-- rises; every add-on kind has ONE step of its own (B.KIND_STEP), not shared
+-- with any other kind.
 local STRIPS = { "Base.LeatherStrips", "Base.DenimStrips", "Base.RippedSheets" }
+local ANY_NEEDLE = { { kind = "type", value = "Base.Needle" }, { kind = "type", value = "Base.Needle_Brass" },
+    { kind = "type", value = "Base.Needle_Bone" } }
+local METAL_NEEDLE = { { kind = "type", value = "Base.Needle" }, { kind = "type", value = "Base.Needle_Brass" } }
+local AWL = { { kind = "type", value = "Base.Awl" }, { kind = "type", value = "Base.Awl_Bone" }, { kind = "type", value = "Base.Awl_Stone" } }
+local CUTTER = { { kind = "type", value = "Base.Scissors" }, { kind = "tag", value = "SHARP_KNIFE" } }
+-- the stitch of each tier: thread (rarer as it goes up) and needle
+B.STITCH = {
+    { needle = ANY_NEEDLE, consumes = { { itemTypes = { "Base.Thread", "Base.Twine" }, qty = 1 } } },
+    { needle = ANY_NEEDLE, consumes = { { itemTypes = { "Base.Thread" }, qty = 2 } } },
+    { needle = METAL_NEEDLE, consumes = { { itemTypes = { "Base.Thread" }, qty = 1 }, { itemTypes = { "Base.Thread_Sinew" }, qty = 1 } } },
+    { needle = METAL_NEEDLE, consumes = { { itemTypes = { "Base.Thread_Sinew" }, qty = 2 } } },
+    { needle = METAL_NEEDLE, consumes = { { itemTypes = { "Base.Thread_Aramid" }, qty = 2 } } },
+}
+-- the step of each add-on kind: id prefix, tool, what it takes (qty grows
+-- with the tier where `grow`), minigame
+local function q(t) return math.floor((t + 1) / 2) end -- 1,1,2,2,3
+B.KIND_STEP = {
+    cap = { id = "BagPocket", icon = "RippedSheets", tool = CUTTER, sound = "TWA_Craft",
+        consumes = function(t) return { { itemTypes = { "Base.DenimStrips", "Base.RippedSheets" }, qty = q(t) } } end },
+    wr = { id = "BagCompress", icon = "LeatherStrips", tool = AWL, sound = "TWA_Wrap",
+        consumes = function(t) return { { itemTypes = { "Base.LeatherStrips" }, qty = q(t) } } end },
+    run = { id = "BagPad", icon = "RippedSheets", tool = ANY_NEEDLE, sound = "TWA_Wrap",
+        consumes = function(t) return { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips" }, qty = q(t) } } end },
+    combat = { id = "BagRivet", icon = "Nails", tool = { { kind = "type", value = "Base.Hammer" } }, sound = "TWA_Hammer",
+        consumes = function(t) return { { itemTypes = { "Base.Nails" }, qty = t + 1 } } end },
+    weight = { id = "BagTrim", icon = "Scissors", tool = CUTTER, sound = "TWA_Craft",
+        consumes = function(t) return { { itemTypes = { "Base.Glue", "Base.Woodglue", "Base.Scotchtape" }, qty = 1 } } end },
+    attachS = { id = "BagLoop", icon = "Twine", tool = AWL, sound = "TWA_Wrap",
+        consumes = function(t) return { { itemTypes = { "Base.Twine", "Base.LeatherStrips" }, qty = q(t) } } end },
+    attachL = { id = "BagHolster", icon = "Buckle", tool = AWL, sound = "TWA_Craft",
+        consumes = function(t) return { { itemTypes = { "Base.Buckle" }, qty = 1 }, { itemTypes = { "Base.LeatherStrips" }, qty = q(t) } } end },
+}
+B.KIND_ORDER = { "cap", "wr", "run", "combat", "weight", "attachS", "attachL" }
 local procIds = {}
 for t = 1, B.MAX_TIER do
     local lvl, time = "Tailoring:" .. t, t * 10 + 10
     TWAProcedures.List["BagCut" .. t] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_BagCut" .. t, icon = "Scissors",
-        tool = { { kind = "type", value = "Base.Scissors" }, { kind = "tag", value = "SHARP_KNIFE" } },
-        consumes = {}, skill = lvl, time = time, sound = "TWA_Craft" }
+        tool = CUTTER, consumes = {}, skill = lvl, time = time, sound = "TWA_Craft" }
     TWAProcedures.List["BagSew" .. t] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_BagSew" .. t, icon = "Needle",
-        tool = { kind = "type", value = "Base.Needle" },
-        consumes = { { itemTypes = THREADS, qty = 1 } }, skill = lvl, time = time, sound = "TWA_Craft" }
+        tool = B.STITCH[t].needle, consumes = B.STITCH[t].consumes, skill = lvl, time = time, sound = "TWA_Craft" }
     TWAProcedures.List["BagFit" .. t] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_BagFit" .. t, icon = "LeatherStrips",
         consumes = { { itemTypes = STRIPS, qty = 1 } }, skill = lvl, time = time, sound = "TWA_Wrap" }
     procIds[#procIds + 1] = "BagCut" .. t
     procIds[#procIds + 1] = "BagSew" .. t
     procIds[#procIds + 1] = "BagFit" .. t
+    for _, kind in ipairs(B.KIND_ORDER) do
+        local s = B.KIND_STEP[kind]
+        local id = s.id .. t
+        TWAProcedures.List[id] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_" .. id, icon = s.icon,
+            tool = s.tool, consumes = s.consumes(t), skill = lvl, time = time, sound = s.sound }
+        procIds[#procIds + 1] = id
+    end
 end
 local catAt
 for _, c in ipairs(TWAProcedures.Categories) do if c.key == "Tailoring" then catAt = c end end
@@ -157,7 +198,7 @@ for _, e in ipairs(B.ITEM_LIST) do
     for _, kk in ipairs(B.KINDS) do if kk.key == e.kind then k = kk end end
     B.RECIPES[#B.RECIPES + 1] = { id = "Make_" .. e.short, result = e.type, base = k.base, baseAlt = k.alt, base2 = B.ORE[e.tier],
         category = B.CAT_ITEM, stats = { icon = e.short, tier = B.displayTier(e.tier), dps = 0 },
-        procedures = { "BagCut" .. e.tier, "BagSew" .. e.tier }, bagUp = e.tier }
+        procedures = { "BagCut" .. e.tier, "BagSew" .. e.tier, B.KIND_STEP[e.kind].id .. e.tier }, bagUp = e.tier, bagKind = e.kind }
 end
 local alts = {}
 for i = 2, #B.BAGS do alts[#alts + 1] = B.BAGS[i] end
@@ -207,10 +248,31 @@ function B.upsOf(item)
     end
     return out
 end
-local function writeUps(item, list)
+-- 1.3.0: who made each fitted add-on (its TWA_CraftedBy), same order as
+-- the types: TWA_BagUpBy = "name;name" (a string, like TWA_BagUps)
+function B.upByOf(item)
+    local md, out = mdOf(item), {}
+    local s = md and md.TWA_BagUpBy
+    if type(s) ~= "string" or s == "" then return out end
+    for part in string.gmatch(s .. ";", "([^;]*);") do out[#out + 1] = part end
+    return out
+end
+local function writeUps(item, list, byList)
     local md = mdOf(item)
     if not md then return end
     md.TWA_BagUps = #list > 0 and table.concat(list, ";") or nil
+    if byList then
+        local clean = {}
+        for i = 1, #list do clean[i] = tostring(byList[i] or ""):gsub(";", ",") end
+        md.TWA_BagUpBy = #list > 0 and table.concat(clean, ";") or nil
+    end
+end
+-- the name stamped on what someone makes (as TWA_FinishCraftAction does)
+function B.crafterName(character)
+    local user = character and character.getUsername and character:getUsername()
+    if (isServer() or isClient()) and user and user ~= "" then return user end
+    local desc = character and character.getDescriptor and character:getDescriptor()
+    return desc and (desc:getForename() .. " " .. desc:getSurname()) or (user or "")
 end
 function B.isEmpty(bag)
     local inv = call(bag, "getInventory")
@@ -257,11 +319,14 @@ function B.base(item)
 end
 
 -- what the bag's values should be now: { cap, wr, run, combat, weight, attachS, attachL }
-function B.compute(item)
+-- `extra` (optional): one more add-on type, for the UI's preview
+function B.compute(item, extra)
     local base = B.base(item)
     if not base then return nil end
     local add = { cap = 0, wr = 0, run = 0, combat = 0, weight = 0, attachS = 0, attachL = 0 }
-    for _, t in ipairs(B.upsOf(item)) do
+    local list = B.upsOf(item)
+    if extra and B.ITEMS[extra] then list[#list + 1] = extra end
+    for _, t in ipairs(list) do
         local e = B.ITEMS[t]
         add[e.kind] = add[e.kind] + e.value
     end
@@ -336,8 +401,11 @@ function B.canInstall(bag, up)
     if e.tier > tier then return false, "IGUI_TWA_BagUp_TierLow" end
     local ups = B.upsOf(bag)
     if #ups >= tier then return false, "IGUI_TWA_BagUp_Full" end
+    -- 1.3.0 (owner): neither the same item NOR the same kind twice in a bag
     for _, t in ipairs(ups) do
         if t == e.type then return false, "IGUI_TWA_BagUp_Same" end
+        local o = B.ITEMS[t]
+        if o and o.kind == e.kind then return false, "IGUI_TWA_BagUp_SameKind" end
     end
     return true, nil
 end
@@ -378,6 +446,8 @@ function B.tierBaseOk(recipe, item)
 end
 -- why a bag of the player's does not fit a tier recipe (UI)
 function B.tierBaseWhy(recipe, item)
+    local md = mdOf(item)
+    if md and md.TWA_Incomplete then return "IGUI_TWA_BagUp_Unfinished" end
     if B.tierOf(item) ~= recipe.bagTier - 1 then return "IGUI_TWA_BagUp_WrongTier" end
     if not B.isEmpty(item) then return "IGUI_TWA_BagUp_NotEmpty" end
     if B.inUse(item) then return "IGUI_TWA_BagUp_InUse" end
@@ -396,6 +466,7 @@ function B.finishTier(character, recipe, snap, token)
     for k, v in pairs(snap.md or {}) do md[k] = v end
     md.TWA_Incomplete = nil
     md.TWA_BagTier = recipe.bagTier
+    md.TWA_BagBy = B.crafterName(character) -- 1.3.0: shown in the tooltip
     if token and token ~= "" then md.TWA_CraftToken = token end
     if snap.tex then pcall(function() local vis = bag:getVisual(); if vis and vis.setTextureChoice then vis:setTextureChoice(snap.tex) end end) end
     B.apply(bag)
@@ -419,10 +490,12 @@ function B.doInstall(player, bagId, upId)
     if not ok then log("install REFUSED for %s: %s into %s -- %s", TWALogName(player), TWALogType(up), TWALogType(bag), tostring(why)); return false, why end
     B.base(bag)
     local t = up:getFullType()
+    local by = mdOf(up) and mdOf(up).TWA_CraftedBy or ""
     TWASources.remove(up, player:getInventory())
-    local list = B.upsOf(bag)
+    local list, byList = B.upsOf(bag), B.upByOf(bag)
     list[#list + 1] = t
-    writeUps(bag, list)
+    byList[#list] = by
+    writeUps(bag, list, byList)
     B.apply(bag)
     log("%s put %s into %s (tier %d, %d/%d slots)", TWALogName(player), t, TWALogType(bag), B.tierOf(bag), #list, B.tierOf(bag))
     return true, bag
@@ -433,16 +506,21 @@ function B.doRemove(player, bagId, idx)
     if not bag then return false, "IGUI_TWA_BagUp_Gone" end
     local ok, why = B.canRemove(bag, idx)
     if not ok then log("remove REFUSED for %s: slot %s of %s -- %s", TWALogName(player), tostring(idx), TWALogType(bag), tostring(why)); return false, why end
-    local list = B.upsOf(bag)
+    local list, byList = B.upsOf(bag), B.upByOf(bag)
     idx = tonumber(idx)
+    -- the makers' list as long as the types' (an older bag has none)
+    local fixed = {}
+    for i = 1, #list do fixed[i] = byList[i] or "" end
     local t = table.remove(list, idx)
-    writeUps(bag, list)
+    local by = table.remove(fixed, idx)
+    writeUps(bag, list, fixed)
     B.apply(bag)
     local chance = B.returnChance(player)
     local back = ZombRand(100) < chance
     if back then
         local inv = player:getInventory()
         local it = inv:AddItem(t)
+        if it and by and by ~= "" then it:getModData().TWA_CraftedBy = by end
         if it and isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, it) end
     end
     log("%s took %s out of %s: %s (chance %d%%)", TWALogName(player), t, TWALogType(bag), back and "came back" or "LOST", chance)
@@ -481,6 +559,7 @@ if Events and Events.OnClientCommand then
         if ok then
             local md = a:getModData()
             sendServerCommand(player, MODULE, "bagUpSync", { id = args.bag, tier = md.TWA_BagTier, ups = md.TWA_BagUps or "",
+                upBy = md.TWA_BagUpBy or "", bagBy = md.TWA_BagBy,
                 base = md.TWA_BagBase, msg = b or "IGUI_TWA_BagUp_Done", up = c })
         else
             sendServerCommand(player, MODULE, "bagUpMsg", { msg = a or "IGUI_TWA_BagUp_Refused" })
@@ -499,6 +578,8 @@ if Events and Events.OnServerCommand then
                 local md = bag:getModData()
                 md.TWA_BagTier = args.tier
                 md.TWA_BagUps = (args.ups ~= "" and args.ups) or nil
+                md.TWA_BagUpBy = (args.upBy and args.upBy ~= "" and args.upBy) or nil
+                if args.bagBy then md.TWA_BagBy = args.bagBy end
                 if type(args.base) == "table" then md.TWA_BagBase = args.base end
                 B.apply(bag)
                 log("server sync for bag id %s: tier %s, upgrades %s", tostring(args.id), tostring(args.tier), tostring(args.ups))
