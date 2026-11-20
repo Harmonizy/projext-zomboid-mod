@@ -384,7 +384,7 @@ local CATEGORY_TABS = {
 -- (avgDamage * BaseSpeed) against FIXED thresholds, baked into
 -- TWARecipeData.Stats[x].tier. Full 8-tier scale. Legendary and Prototype
 -- swapped positions (request 2026-09-26, given as a full explicit table):
--- (1.2.3: cuts x5/8 -- Elite < 4.375, Legendary <= 5, Prototype > 5 -- TierTooltip.lua),
+-- (1.2.4: Epic < 3.5, Elite < 5, Legendary <= 6, Prototype > 6 -- TierTooltip.lua),
 -- earlier: Legendary < 10, Prototype >= 10 -- gen_
 -- craftdata.js's DPS_TIER_THRESHOLDS is the source of truth for the actual
 -- boundary; only the NAMES/colors here need to track which number each one

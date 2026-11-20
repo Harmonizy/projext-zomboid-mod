@@ -71,19 +71,16 @@ local TIER_COLOR = {
     [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.55, b = 0.15 },
     [7] = { r = 1.0, g = 0.85, b = 0.15 }, [8] = { r = 0.85, g = 0.2, b = 0.15 },
 }
--- TWA 1.2.3 (owner 2026-11-20: "our weapons' average damage at most 5, the
--- tier cuts lower, every tier keeps the same number of weapons"): our 171
--- weapons' damage x5/8 and every cut x5/8 (one set of cuts for every weapon,
--- vanilla too -- owner's choice), so each of ours keeps its tier:
---   Junk < 0.15625 <= Common < 0.3125 <= Uncommon < 0.625 <= Rare < 1.25
---   <= Epic < 2.5 <= Elite < 4.375 <= Legendary <= 5 < Prototype
--- (1.2.1 was 0.25 / 0.5 / 1 / 2 / 4 / 7 / 8). A DPS exactly on a cut counts
--- as the upper tier (EPS keeps 0.625 from reading as 0.6249999).
-local K = 5 / 8
-local DPS_TIER_THRESHOLDS = { 0.25 * K, 0.5 * K, 1 * K, 2 * K, 4 * K, 7 * K }
+-- TWA 1.2.4 (owner 2026-11-20, replaces 1.2.3's x5/8): the first four cuts
+-- as before, then Epic 2 - 3.5, Elite 3.5 - 5, Legendary 5 - 6:
+--   Junk < 0.25 <= Common < 0.5 <= Uncommon < 1 <= Rare < 2 <= Epic < 3.5
+--   <= Elite < 5 <= Legendary <= 6 < Prototype
+-- Our Epic / Elite / Legendary weapons were moved into the new bands in a
+-- straight line (same tier counts); a DPS exactly on a cut is the upper tier.
+local DPS_TIER_THRESHOLDS = { 0.25, 0.5, 1, 2, 3.5, 5 }
 local EPS = 0.000001
 TWATier = TWATier or {}
-TWATier.LEGENDARY_MAX = 5
+TWATier.LEGENDARY_MAX = 6
 TWATier.CUTS = DPS_TIER_THRESHOLDS
 local function tierFromDps(dps)
     dps = tonumber(dps) or 0

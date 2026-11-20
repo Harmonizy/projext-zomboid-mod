@@ -34,7 +34,7 @@ module HARMONIE_TheWayToAttack
     {
         ItemType = base:normal,
         DisplayCategory = Material,
-        Weight = 2.0,
+        Weight = 1.0,
         Type = Normal,
         DisplayName = Material Lump,
         /* round 10: our own icon, textures/Item_TWA_MaterialLump.png (drawn by
@@ -50,7 +50,7 @@ module HARMONIE_TheWayToAttack
     {
         ItemType = base:normal,
         DisplayCategory = Material,
-        Weight = 2.0,
+        Weight = 1.0,
         Type = Normal,
         DisplayName = Tin Bar,
         Icon = Ingot_Iron,
@@ -63,7 +63,7 @@ module HARMONIE_TheWayToAttack
     {
         ItemType = base:normal,
         DisplayCategory = Material,
-        Weight = 2.0,
+        Weight = 1.0,
         Type = Normal,
         DisplayName = Titanium Bar,
         Icon = Ingot_Copper,
@@ -76,7 +76,7 @@ module HARMONIE_TheWayToAttack
     {
         ItemType = base:normal,
         DisplayCategory = Material,
-        Weight = 2.0,
+        Weight = 1.0,
         Type = Normal,
         DisplayName = Mithril Bar,
         Icon = TWA_MaterialBar_Epic,
@@ -89,7 +89,7 @@ module HARMONIE_TheWayToAttack
     {
         ItemType = base:normal,
         DisplayCategory = Material,
-        Weight = 2.0,
+        Weight = 1.0,
         Type = Normal,
         DisplayName = Adamantium Bar,
         Icon = TWA_MaterialBar_Elite,
@@ -102,7 +102,7 @@ module HARMONIE_TheWayToAttack
     {
         ItemType = base:normal,
         DisplayCategory = Material,
-        Weight = 2.0,
+        Weight = 1.0,
         Type = Normal,
         DisplayName = Vibranium Bar,
         Icon = TWA_MaterialBar_Legendary,

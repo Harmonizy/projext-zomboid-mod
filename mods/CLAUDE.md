@@ -396,18 +396,21 @@
   staggered / on the floor / climbing, one restore per 1.5 s, and 3 restores
   within 15 s that do not hold -> stop 60 s (logged). Not proven to be the
   only source of that flood (other mods equip too).
-- TWA 1.2.3 (owner 2026-11-20, "our weapons' average damage at most 5, the
-  tier cuts lower, the same number of weapons in each tier"): all 171 of our
-  weapons' Min/MaxDamage x5/8 (rounded to 0.01; PlankSpearHandFork min 0.43
-  so it keeps its tier) in the scripts AND RecipeData Stats (dps re-baked).
-  Cuts x5/8 for EVERY weapon (owner's choice: one set, vanilla moves up):
-  Junk < 0.15625 < Common < 0.3125 < Uncommon < 0.625 < Rare < 1.25 < Epic
-  < 2.5 < Elite < 4.375 <= Legendary <= 5 < Prototype (TierTooltip, EPS so a
-  DPS on a cut is the upper tier); vanilla Stats tiers re-baked. Ours:
-  3 / 33 / 80 / 30 / 19 / 6 as before. Gems max +3 -> DPS 8 at most.
-  G.syncScriptDamage (in applyDamage): an older copy of OUR weapon without
-  gems / override gets the script damage back (logged once per type).
-  DamageShare: client caps itself at RATE_PER_SEC (a shove into a crowd).
+- TWA 1.2.4 (owner 2026-11-20; 1.2.3's x5/8 damage + cuts were taken back,
+  the stats restored from before it): cuts Junk < 0.25 < Common < 0.5 <
+  Uncommon < 1 < Rare < 2 < Epic < 3.5 < Elite < 5 <= Legendary <= 6 <
+  Prototype (TierTooltip, EPS: a DPS on a cut is the upper tier). Our Epic /
+  Elite / Legendary weapons (54) moved into the new bands in a straight line
+  (Epic 2..4 -> 2..3.5, Elite 4..7 -> 3.5..5, Legendary 7..8 -> 5..6;
+  min / max x the same factor, 0.01) -> counts unchanged 3 / 33 / 80 / 30 /
+  19 / 6; Rare's band did not move. Vanilla Stats tiers re-baked (vanilla
+  Katana DPS 8 = Prototype). Procedures and the base2 bar of a recipe are
+  FIXED lists in RecipeData (made once from durability / wear / push-back /
+  knockdown, the bar from the tier then) -- nothing reads the tier at run
+  time, and every weapon kept its tier. Gems +3 x speed -> 9 at most.
+  G.syncScriptDamage (applyDamage): an older copy of OUR weapon without gems
+  / override gets the script damage. DamageShare: the client caps itself at
+  RATE_PER_SEC. Material Lump weight 2.0 -> 1.0 (owner).
 - MIL 1.0.10 (disconnect while shoving, second pass): the console's flood is
   "EquipPacket.set get invalid arguments" -- equip / attach packets for items
   the server cannot match. MIL draws gun parts and shields with FAKE items
