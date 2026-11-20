@@ -113,16 +113,21 @@ local function buildPrepLines(item)
     local d = R.dishOf(item)
     if d then
         local avg = tonumber(d.avg) or 0
-        local tier = R.tierOf(avg)
+        local Kc = HARMONIE_GTP.Cook
+        local tier, held = R.tierOf(avg), nil
+        if Kc and Kc.dishTier then tier, held = Kc.dishTier(d, item) end
         local lines = { { text = txt("IGUI_GTPP_TipDish"), r = 1, g = 1, b = 1 } }
         lines[#lines + 1] = { text = txt("IGUI_GTPP_TipScore", string.format("%.2f", avg), tostring(tonumber(d.n) or 0)), r = 0.85, g = 0.9, b = 0.85 }
         if tier < 0 then
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBad"), r = 1.0, g = 0.45, b = 0.4 }
         elseif tier == 0 then
-            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipNoBuff"), r = 0.7, g = 0.75, b = 0.7 }
+            lines[#lines + 1] = { text = held == "rotten" and txt("IGUI_GTPP_TipRotten") or txt("IGUI_GTPP_TipNoBuff", string.format("%.1f", R.tierCut(1))), r = 0.7, g = 0.75, b = 0.7 }
         else
             local kind = HARMONIE_GTP.Cook and HARMONIE_GTP.Cook.buffKindOf and HARMONIE_GTP.Cook.buffKindOf(item, d.fam) or "hearty"
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBuff", txt("IGUI_GTPC_Buff_" .. kind), tostring(tier)), r = 0.45, g = 0.92, b = 0.48 }
+            if held == "level" then
+                lines[#lines + 1] = { text = txt("IGUI_GTPP_TipTier3Level", tostring(R.tier3Level())), r = 1.0, g = 0.82, b = 0.32 }
+            end
         end
         return lines
     end
@@ -130,7 +135,8 @@ local function buildPrepLines(item)
     if p then
         local c = WORD_COL[p.w] or { 0.9, 0.9, 0.9 }
         return { { text = txt("IGUI_GTPP_TipPrep"), r = 1, g = 1, b = 1 },
-            { text = txt("IGUI_GTPP_TipPrepLine", txt("IGUI_GTPC_Proc_" .. tostring(p.p)), txt("IGUI_GTPC_Word_" .. tostring(p.w)), string.format("%+d", tonumber(p.s) or 0)), r = c[1], g = c[2], b = c[3] } }
+            { text = txt("IGUI_GTPP_TipPrepLine", txt("IGUI_GTPC_Proc_" .. tostring(p.p)), txt("IGUI_GTPC_Word_" .. tostring(p.w)),
+                R.isRotten(item) and txt("IGUI_GTPP_RottenZero") or string.format("%+.1f", R.scoreOf(item))), r = c[1], g = c[2], b = c[3] } }
     end
     if R.whyNot(item) == nil then
         local games = R.gamesFor(item)

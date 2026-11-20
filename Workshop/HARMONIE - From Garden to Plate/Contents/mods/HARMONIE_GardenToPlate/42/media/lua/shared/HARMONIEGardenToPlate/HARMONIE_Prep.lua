@@ -43,10 +43,32 @@ local R = HARMONIE_GTP.Prep
 local K = HARMONIE_GTP.Cook
 
 R.NET = "HARMONIE_GTP_Prep"
-R.WORD_SCORE = { Excellent = 2, Good = 1, Bad = -1, Miss = -1 }
+-- defaults; the live values come from the sandbox (R.wordScore / R.tierCut,
+-- GTP 1.3.0 #42). "Off" = prepared while the sandbox had the minigames off.
+R.WORD_SCORE = { Excellent = 2, Good = 1, Bad = -0.5, Miss = -1, Off = 0 }
 R.XP_MUL = { Excellent = 1.5, Good = 1.0, Bad = 0.5, Miss = 0.25 }
 -- buff level from the dish average
 R.TIERS = { { at = 1.5, tier = 3 }, { at = 1.0, tier = 2 }, { at = 0.5, tier = 1 } }
+R.SV_SCORE = { Excellent = "CookScoreExcellent", Good = "CookScoreGood", Bad = "CookScoreBad", Miss = "CookScoreMiss" }
+R.SV_TIER = { "CookBuffTier1", "CookBuffTier2", "CookBuffTier3" }
+function R.sv(key, default)
+    local t = SandboxVars and SandboxVars.HARMONIE_GardenToPlate
+    local v = t and tonumber(t[key])
+    if v == nil then return default end
+    return v
+end
+function R.wordScore(w)
+    local def = R.WORD_SCORE[w]
+    if def == nil then return 0 end
+    local key = R.SV_SCORE[w]
+    return key and R.sv(key, def) or def
+end
+function R.tierCut(i)
+    local def = ({ 0.5, 1.0, 1.5 })[i]
+    return R.sv(R.SV_TIER[i], def)
+end
+-- buff level 3 needs a cook of at least this Cooking level (#40)
+function R.tier3Level() return R.sv("CookBuffTier3Level", 5) end
 
 local function log(fmt, ...) if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Prep", fmt, ...) end end
 local function logOnce(key, fmt, ...) if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("Prep:" .. key, "Prep", fmt, ...) end end
@@ -180,23 +202,41 @@ function R.dishOf(item)
 end
 
 -- the score an item brings into a dish
+-- GTP 1.3.0 (#9): a rotten food brings nothing any more
+function R.isRotten(item) return call(item, "isRotten") == true end
 function R.scoreOf(item)
+    if R.isRotten(item) then return 0 end
     local d = R.dishOf(item)
     if d then return tonumber(d.avg) or 0 end
     local p = R.prepOf(item)
-    if p then return tonumber(p.s) or 0 end
+    -- the word decides (so a sandbox change counts for food prepared before)
+    if p then return R.wordScore(p.w) end
     return 0
 end
 
--- does it count as one ingredient (a food that is not a spice)?
+-- GTP 1.3.0 (#5): oil, sauces, ketchup ... (vanilla MINOR_INGREDIENT) do not
+-- count, like spices
+function R.isMinor(item)
+    if not (ItemTag and ItemTag.MINOR_INGREDIENT and item and item.hasTag) then return false end
+    local ok, v = pcall(item.hasTag, item, ItemTag.MINOR_INGREDIENT)
+    return ok and v == true
+end
+-- does it count as one ingredient (a food that is not a spice or a minor one)?
 function R.counts(item)
-    return isFood(item) and call(item, "isSpice") ~= true
+    return isFood(item) and call(item, "isSpice") ~= true and not R.isMinor(item)
+end
+
+-- GTP 1.3.0 (#3 / #4): how much an item weighs in a dish = the hunger it
+-- brings (x100); never below 1
+function R.weightOf(item, hunger)
+    local h = hunger or math.abs(tonumber(call(item, "getHungChange")) or 0)
+    return math.max(1, h * 100)
 end
 
 function R.tierOf(avg)
     avg = tonumber(avg) or 0
     if avg < 0 then return -1 end
-    for _, t in ipairs(R.TIERS) do if avg >= t.at then return t.tier end end
+    for i = 3, 1, -1 do if avg >= R.tierCut(i) then return i end end
     return 0
 end
 
@@ -238,7 +278,7 @@ function R.servePrep(player, args)
     local who = nameOf(player)
     local word = tostring(args.word or "")
     local pid = tostring(args.pid or "")
-    if not R.WORD_SCORE[word] then log("prep from %s: unknown result %s -- rejected", who, word); return false, "word" end
+    if R.WORD_SCORE[word] == nil or word == "Off" then log("prep from %s: unknown result %s -- rejected", who, word); return false, "word" end
     if not K.PROCS[pid] then log("prep from %s: unknown minigame %s -- rejected", who, pid); return false, "game" end
     local t = nowMs()
     if t - (R.lastPrep[who] or 0) < 800 then log("prep from %s: too fast -- rejected", who); count("refused"); return false, "fast" end
@@ -263,11 +303,13 @@ function R.servePrep(player, args)
     R.lastPrep[who] = t
     local md = call(item, "getModData")
     if not md then log("prep from %s: %s has no modData -- nothing written", who, typeOf(item)); return false, "md" end
-    md.HARMONIE_Prep = { w = word, p = pid, s = R.WORD_SCORE[word] }
+    -- GTP 1.3.0 (#6): with the minigames off in the sandbox it counts 0 ("Off")
+    if K.minigamesOn and not K.minigamesOn() then word = "Off" end
+    md.HARMONIE_Prep = { w = word, p = pid, s = R.wordScore(word) }
     local xp = ((K.PROCS[pid] or {}).xp or 1) * (R.XP_MUL[word] or 1)
     if K.giveXp then K.giveXp(player, xp) end
     count("prep")
-    dlog("%s prepared %s (id %s) with %s: %s (%+d)", who, typeOf(item), tostring(args.id), pid, word, R.WORD_SCORE[word])
+    dlog("%s prepared %s (id %s) with %s: %s (%+.2f)", who, typeOf(item), tostring(args.id), pid, word, R.wordScore(word))
     sendSet(player, item, "prep")
     return true
 end
@@ -281,42 +323,53 @@ local function famOfRecipe(recipe)
 end
 
 -- 1) evolved recipes: one ingredient goes in (vanilla ISAddItemInRecipe)
-function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter)
+function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHungerBefore)
     if not baseAfter then return end
     local d = R.dishOf(baseBefore)
-    local sum, n
+    local sum, w, n
     if d then
+        -- (a dish from before 1.3.0 has no weight: one per ingredient)
         sum, n = tonumber(d.sum) or 0, tonumber(d.n) or 0
+        w = tonumber(d.w) or n
     else
         -- the first addition: the base counts when it is a food (bread
         -- slices, a pie crust), never when it is a pot, pan or bowl
-        sum, n = 0, 0
-        if R.counts(baseBefore) then sum, n = R.scoreOf(baseBefore), 1 end
+        sum, w, n = 0, 0, 0
+        if R.counts(baseBefore) then
+            local bw = R.weightOf(baseBefore)
+            sum, w, n = R.scoreOf(baseBefore) * bw, bw, 1
+        end
     end
-    local usedScore = 0
+    local usedScore, usedW = 0, 0
     if used and R.counts(used) then
         usedScore = R.scoreOf(used)
-        sum, n = sum + usedScore, n + 1
+        -- the part vanilla really took: hunger before - after (all of it when the item is gone)
+        local after = math.abs(tonumber(call(used, "getHungChange")) or 0)
+        local before = tonumber(usedHungerBefore) or after
+        local took = before - after
+        usedW = R.weightOf(used, (took > 0.0005) and took or before)
+        sum, w, n = sum + usedScore * usedW, w + usedW, n + 1
     end
     local md = call(baseAfter, "getModData")
     if not md then logOnce("evonomd", "dish %s has no modData -- score not kept", typeOf(baseAfter)); return end
     local lvl = K.level and K.level(character) or 0
     local fam = famOfRecipe(recipe) or (d and d.fam)
-    md.HARMONIE_Dish = { sum = sum, n = n, avg = n > 0 and (sum / n) or 0, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0) }
+    md.HARMONIE_Dish = { sum = sum, w = w, n = n, avg = w > 0 and (sum / w) or 0, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0) }
     count("add")
-    dlog("%s added %s (%+.2f) to %s: dish score %.2f over %d (%s)", nameOf(character), used and typeOf(used) or "?", usedScore, typeOf(baseAfter),
+    dlog("%s added %s (%+.2f x %.1f) to %s: dish score %.2f over %d (%s)", nameOf(character), used and typeOf(used) or "?", usedScore, usedW, typeOf(baseAfter),
         md.HARMONIE_Dish.avg, n, tostring(fam))
     sendSet(character, baseAfter, "dish")
 end
 
 -- 2) crafting-window recipes: what was used up -> what came out
 function R.onCraft(character, recipeName, consumed, created)
-    local sum, n, any, fam, lvl = 0, 0, false, nil, 0
+    local sum, w, n, any, fam, lvl = 0, 0, 0, false, nil, 0
     for i = 0, (consumed and consumed:size() or 0) - 1 do
         local it = consumed:get(i)
         if R.counts(it) then
-            n = n + 1
-            sum = sum + R.scoreOf(it)
+            local iw = R.weightOf(it)
+            n, w = n + 1, w + iw
+            sum = sum + R.scoreOf(it) * iw
             local d = R.dishOf(it)
             if d then fam = fam or d.fam; lvl = math.max(lvl, tonumber(d.lvl) or 0) end
             if d or R.prepOf(it) then any = true end
@@ -325,14 +378,14 @@ function R.onCraft(character, recipeName, consumed, created)
     -- nothing prepared went in: the result stays plain vanilla
     if not any or n == 0 then return end
     lvl = math.max(lvl, K.level and K.level(character) or 0)
-    local avg = sum / n
+    local avg = w > 0 and (sum / w) or 0
     local wrote = 0
     for i = 0, (created and created:size() or 0) - 1 do
         local out = created:get(i)
         if isFood(out) then
             local md = call(out, "getModData")
             if md then
-                md.HARMONIE_Dish = { sum = sum, n = n, avg = avg, fam = fam, lvl = lvl }
+                md.HARMONIE_Dish = { sum = sum, w = w, n = n, avg = avg, fam = fam, lvl = lvl }
                 wrote = wrote + 1
                 sendSet(character, out, "dish")
             end
@@ -351,9 +404,10 @@ local function installHooks()
         local orig = ISAddItemInRecipe.complete
         function ISAddItemInRecipe:complete()
             local before, used, recipe = self.baseItem, self.usedItem, self.recipe
+            local hBefore = used and math.abs(tonumber(call(used, "getHungChange")) or 0) or 0
             local result = orig(self)
             if not isClientSide() then
-                local ok, err = pcall(R.onEvolvedAdd, self.character, recipe, before, used, self.baseItem)
+                local ok, err = pcall(R.onEvolvedAdd, self.character, recipe, before, used, self.baseItem, hBefore)
                 if not ok then logOnce("evofail", "dish score on an evolved-recipe addition FAILED: %s", tostring(err)) end
             end
             return result
@@ -497,5 +551,5 @@ if Events and Events.EveryHours then
     end)
 end
 
-log("loaded: %d food kinds, scores Excellent %+d / Good %+d / Bad %+d / Miss %+d", (function() local c = 0 for _ in pairs(R.KIND_GAMES) do c = c + 1 end return c end)(),
-    R.WORD_SCORE.Excellent, R.WORD_SCORE.Good, R.WORD_SCORE.Bad, R.WORD_SCORE.Miss)
+log("loaded: %d food kinds, scores Excellent %+.1f / Good %+.1f / Bad %+.1f / Miss %+.1f (sandbox at load; read live)", (function() local c = 0 for _ in pairs(R.KIND_GAMES) do c = c + 1 end return c end)(),
+    R.wordScore("Excellent"), R.wordScore("Good"), R.wordScore("Bad"), R.wordScore("Miss"))

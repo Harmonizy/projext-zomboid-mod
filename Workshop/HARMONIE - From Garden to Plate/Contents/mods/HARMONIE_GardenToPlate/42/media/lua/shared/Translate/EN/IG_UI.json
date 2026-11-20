@@ -995,7 +995,7 @@
     "IGUI_GTPP_TipDish": "Cooking score",
     "IGUI_GTPP_TipScore": "Score %1 (average of %2 ingredients)",
     "IGUI_GTPP_TipBad": "Badly prepared: eating it makes you unhappier",
-    "IGUI_GTPP_TipNoBuff": "No buff (needs 0.5 or more)",
+    "IGUI_GTPP_TipNoBuff": "No buff (needs %1 or more)",
     "IGUI_GTPP_TipBuff": "Buff when eaten: %1, level %2",
     "IGUI_GTPP_TipPrep": "Preparation",
     "IGUI_GTPP_TipPrepLine": "%1: %2 (%3)",
@@ -1015,7 +1015,7 @@
     "IGUI_GTPP_Page_prep": "Prepare ingredients",
     "IGUI_GTPP_Page_evo": "Game dishes",
     "IGUI_GTPP_Page_craft": "Crafting recipes",
-    "IGUI_GTPP_Help_prep": "Every food can be prepared once with one minigame. Excellent = +2, Good = +1, Poor or Missed = -1, not prepared = 0. A dish scores the average of the foods in it (spices do not count). Score 0.5 / 1.0 / 1.5 = buff level 1 / 2 / 3 when it is eaten; below 0 makes the eater unhappier.",
+    "IGUI_GTPP_Help_prep": "Every food can be prepared once with one minigame. Default scores: Excellent +2, Good +1, Poor -0.5, Missed -1, not prepared 0 (the server's sandbox can change them). A dish scores the average of the foods in it, weighed by how much of each went in; spices, oil and sauces do not count, rotten food counts 0. Score 0.5 / 1.0 / 1.5 = buff level 1 / 2 / 3 when it is eaten (level 3 needs a cook of Cooking 5); below 0 makes the eater unhappier.",
     "IGUI_GTPP_Help_evo": "These are the game's own evolved recipes, found from what you have at hand. Add = the game's own 'add ingredient' action; the dish keeps the average score of everything added.",
     "IGUI_GTPP_Help_craft": "The game's cooking recipes from the crafting window. Prepared ingredients carry their score into the food they make.",
     "IGUI_GTPP_BuffNow": "Buff now: %1 level %2 (%3 h left)",
@@ -1090,5 +1090,9 @@
     "IGUI_GTPP_Why_full": "your inventory is full",
     "IGUI_GTPP_Why_timeout": "no answer in time -- try again",
     "IGUI_GTPP_Why_noBegin": "the server did not see the minigame start -- try again",
-    "IGUI_GTPP_Why_timing": "the result came too fast or too late -- try again"
+    "IGUI_GTPP_Why_timing": "the result came too fast or too late -- try again",
+    "IGUI_GTPP_TipRotten": "Rotten: no buff, scores 0",
+    "IGUI_GTPP_TipTier3Level": "(level 3 needs a cook of Cooking %1)",
+    "IGUI_GTPP_RottenZero": "rotten: 0",
+    "IGUI_GTPC_Word_Off": "Prepared (minigames off)"
 }

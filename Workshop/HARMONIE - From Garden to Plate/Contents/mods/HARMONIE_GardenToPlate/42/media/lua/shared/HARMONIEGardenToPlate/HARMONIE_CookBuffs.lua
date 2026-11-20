@@ -68,6 +68,26 @@ end
 K.TIER_STRENGTH = { 1.0, 1.5, 2.0 }
 K.TIER_HOURS = { 0.5, 1.0, 1.5 }
 K.BAD_DISH_UNHAPPY = 10   -- a dish scored below 0: this much unhappier (whole dish)
+-- GTP 1.3.0 (#42): every number above can be changed in the sandbox
+local function sv(key, def)
+    local t = SandboxVars and SandboxVars.HARMONIE_GardenToPlate
+    local v = t and tonumber(t[key])
+    if v == nil then return def end
+    return v
+end
+function K.tierStrength(t) return sv("CookBuffStrength" .. tostring(t), K.TIER_STRENGTH[t] or 1) end
+function K.tierHours(t) return sv("CookBuffLength" .. tostring(t), K.TIER_HOURS[t] or 1) end
+function K.badDishUnhappy() return sv("CookBadDishUnhappy", K.BAD_DISH_UNHAPPY) end
+-- GTP 1.3.0 (#40): the level a dish really gives (level 3 needs a cook of
+-- Cooking R.tier3Level(); a rotten dish gives nothing)
+function K.dishTier(dish, item)
+    local R = HARMONIE_GTP.Prep
+    if not R then return 0, nil end
+    if item and R.isRotten and R.isRotten(item) then return 0, "rotten" end
+    local tier = R.tierOf(tonumber(dish and dish.avg) or 0)
+    if tier == 3 and (tonumber(dish.lvl) or 0) < R.tier3Level() then return 2, "level" end
+    return tier, nil
+end
 
 local function worldHours()
     local ok, h = pcall(function() return getGameTime():getWorldAgeHours() end)
@@ -151,23 +171,23 @@ K.notifyBuff = notify
 function K.grantDish(player, dish, item, fraction)
     if not player or type(dish) ~= "table" then return nil end
     local avg = tonumber(dish.avg) or 0
-    local R = HARMONIE_GTP.Prep
-    local tier = R and R.tierOf(avg) or 0
+    local tier, why = K.dishTier(dish, item)
+    if why then log("%s ate a dish scored %.2f: level held at %d (%s)", nameOf(player), avg, tier, why) end
     local frac = math.max(0.25, math.min(1, tonumber(fraction) or 1))
     if tier < 0 then
         local okS, stats = pcall(function() return player:getStats() end)
         local stat = CharacterStat and CharacterStat.UNHAPPINESS
         if okS and stats and stat then
-            pcall(function() stats:set(stat, math.min(100, stats:get(stat) + K.BAD_DISH_UNHAPPY * frac)) end)
+            pcall(function() stats:set(stat, math.min(100, stats:get(stat) + K.badDishUnhappy() * frac)) end)
         end
-        log("%s ate a badly prepared dish (score %.2f): +%.1f unhappiness", nameOf(player), avg, K.BAD_DISH_UNHAPPY * frac)
+        log("%s ate a badly prepared dish (score %.2f): +%.1f unhappiness", nameOf(player), avg, K.badDishUnhappy() * frac)
         notify(player, "bad", nil, avg)
         return nil
     end
-    if tier == 0 then log("%s ate a dish scored %.2f: no buff (needs 0.5)", nameOf(player), avg); return nil end
+    if tier == 0 then log("%s ate a dish scored %.2f: no buff", nameOf(player), avg); return nil end
     if not K.buffsOn() then log("%s ate a dish scored %.2f: buffs are off in the sandbox", nameOf(player), avg); return nil end
     local kind = K.buffKindOf(item, dish.fam)
-    local full = K.buffHours(dish.lvl) * (K.TIER_HOURS[tier] or 1)
+    local full = K.buffHours(dish.lvl) * K.tierHours(tier)
     local add = full * frac
     local now = worldHours()
     local b = K.activeBuff(player)
@@ -197,7 +217,7 @@ local function applyBuff(player, b)
             local ok, err = pcall(function()
                 local v = stats:get(stat)
                 local hi = (e[1] == "UNHAPPINESS" or e[1] == "BOREDOM" or e[1] == "PANIC") and 100 or 1
-                local nv = math.max(0, math.min(hi, v + e[2] * (K.TIER_STRENGTH[b.tier or 1] or 1)))
+                local nv = math.max(0, math.min(hi, v + e[2] * K.tierStrength(b.tier or 1)))
                 if nv ~= v then stats:set(stat, nv) end
             end)
             if not ok and not statWarned[e[1]] then statWarned[e[1]] = true; log("buff %s: could not change %s (%s)", b.kind, e[1], tostring(err)) end

@@ -132,7 +132,7 @@ local function scoreLine(it)
     local d = R.dishOf(it)
     if d then return T("IGUI_GTPP_RowDish", string.format("%.2f", tonumber(d.avg) or 0), tostring(tonumber(d.n) or 0)), scoreCol(d.avg) end
     local p = R.prepOf(it)
-    if p then return T("IGUI_GTPP_RowPrep", procName(p.p), wordName(p.w), string.format("%+d", tonumber(p.s) or 0)), wordCol(p.w) end
+    if p then return T("IGUI_GTPP_RowPrep", procName(p.p), wordName(p.w), R.isRotten(it) and T("IGUI_GTPP_RottenZero") or string.format("%+.1f", R.scoreOf(it))), wordCol(p.w) end
     return T("IGUI_GTPP_RowPlain"), H.C.textDim
 end
 
@@ -299,7 +299,7 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
     if self.prepLast then
         local L = self.prepLast
         local col = L.word and wordCol(L.word) or C.bad
-        local line = L.word and T("IGUI_GTPP_LastDone", L.name, procName(L.pid), wordName(L.word), string.format("%+d", R.WORD_SCORE[L.word] or 0))
+        local line = L.word and T("IGUI_GTPP_LastDone", L.name, procName(L.pid), wordName(L.word), string.format("%+.1f", R.wordScore(L.word)))
             or T("IGUI_GTPP_LastRefused", L.name, T("IGUI_GTPP_Why_" .. tostring(L.why)))
         cy = cy + self:paragraphs(line, cx, cy, cw - 8, col, sf) + 6
     end
@@ -388,7 +388,10 @@ function Win:startPrep(item, pid, toolItem, grade, group)
                 if not done then log("prepare: the action for %s was stopped", run.name); finish(nil, "stopped"); return end
                 run.phase, run.at = "server", nowMs()
                 R.request(player, item, pid, w or word)
-                if not (isClient and isClient()) then finish(w or word) end
+                if not (isClient and isClient()) then
+                    local pr = R.prepOf(item)
+                    finish(pr and pr.w or w or word)
+                end
             end
             ISTimedActionQueue.add(action)
         end

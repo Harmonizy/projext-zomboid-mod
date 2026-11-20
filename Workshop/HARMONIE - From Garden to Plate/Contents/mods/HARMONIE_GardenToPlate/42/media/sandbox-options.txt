@@ -159,3 +159,153 @@ option HARMONIE_GardenToPlate.CookDebugLog
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_CookDebugLog,
 }
+
+option HARMONIE_GardenToPlate.CookScoreExcellent
+{
+    type = double,
+    default = 2.0,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookScoreExcellent,
+}
+
+option HARMONIE_GardenToPlate.CookScoreGood
+{
+    type = double,
+    default = 1.0,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookScoreGood,
+}
+
+option HARMONIE_GardenToPlate.CookScoreBad
+{
+    type = double,
+    default = -0.5,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookScoreBad,
+}
+
+option HARMONIE_GardenToPlate.CookScoreMiss
+{
+    type = double,
+    default = -1.0,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookScoreMiss,
+}
+
+option HARMONIE_GardenToPlate.CookBuffTier1
+{
+    type = double,
+    default = 0.5,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffTier1,
+}
+
+option HARMONIE_GardenToPlate.CookBuffTier2
+{
+    type = double,
+    default = 1.0,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffTier2,
+}
+
+option HARMONIE_GardenToPlate.CookBuffTier3
+{
+    type = double,
+    default = 1.5,
+    min = -5.0,
+    max = 5.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffTier3,
+}
+
+option HARMONIE_GardenToPlate.CookBuffTier3Level
+{
+    type = integer,
+    default = 5,
+    min = 0,
+    max = 10,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffTier3Level,
+}
+
+option HARMONIE_GardenToPlate.CookBuffStrength1
+{
+    type = double,
+    default = 1.0,
+    min = 0.0,
+    max = 10.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffStrength1,
+}
+
+option HARMONIE_GardenToPlate.CookBuffStrength2
+{
+    type = double,
+    default = 1.5,
+    min = 0.0,
+    max = 10.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffStrength2,
+}
+
+option HARMONIE_GardenToPlate.CookBuffStrength3
+{
+    type = double,
+    default = 2.0,
+    min = 0.0,
+    max = 10.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffStrength3,
+}
+
+option HARMONIE_GardenToPlate.CookBuffLength1
+{
+    type = double,
+    default = 0.5,
+    min = 0.0,
+    max = 10.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffLength1,
+}
+
+option HARMONIE_GardenToPlate.CookBuffLength2
+{
+    type = double,
+    default = 1.0,
+    min = 0.0,
+    max = 10.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffLength2,
+}
+
+option HARMONIE_GardenToPlate.CookBuffLength3
+{
+    type = double,
+    default = 1.5,
+    min = 0.0,
+    max = 10.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBuffLength3,
+}
+
+option HARMONIE_GardenToPlate.CookBadDishUnhappy
+{
+    type = double,
+    default = 10.0,
+    min = 0.0,
+    max = 100.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookBadDishUnhappy,
+}

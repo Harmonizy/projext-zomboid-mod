@@ -368,6 +368,18 @@
   summary always. Tab: watchdog 10 s (H.PREP_WATCHDOG_MS), Cancel button
   (clears the queue in bring / action), "inventory full" reason.
   Forward-local check: scratchpad fwdcheck.py (strips comments / strings).
+- GTP 1.3.0 (review round 2 -- score balance): a dish average is WEIGHED by
+  the hunger each ingredient brought (R.weightOf, x100, min 1; evolved
+  additions use hunger before - after on the used item, captured in the
+  wrapper) -> HARMONIE_Dish gets `w`; a pre-1.3 dish counts w = n.
+  MINOR_INGREDIENT foods (oil, sauces) do not count (R.isMinor, ItemTag
+  object). Rotten = score 0 and no buff (K.dishTier). Bad = -0.5. Minigames
+  off in the sandbox -> word "Off" = 0. Scores are read LIVE from the word
+  (R.wordScore), so a sandbox change counts for food prepared before.
+  Buff level 3 needs a cook of Cooking >= CookBuffTier3Level (5), else 2.
+  Sandbox (15 new): CookScoreExcellent / Good / Bad / Miss, CookBuffTier1-3,
+  CookBuffTier3Level, CookBuffStrength1-3, CookBuffLength1-3,
+  CookBadDishUnhappy.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).
