@@ -52,6 +52,7 @@ function CauterizeAction:start()
 
     -- Setup audio
     self.sound = self.character:getEmitter():playSound("Cauterization")
+    if HM_Sound then HM_Sound.adjust(self.character, self.sound, "medical") end
     local radius = 5
     addSound(self.character, self.character:getX(), self.character:getY(), self.character:getZ(), radius, radius)
 end

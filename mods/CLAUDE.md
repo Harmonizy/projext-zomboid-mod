@@ -433,6 +433,45 @@
   pose changed; RenderPart: local player only, parts off only after the model
   is missing 1 s, a rebuild at most once a second; the grip watchdog uses the
   budget too. A clean cure would draw these without fake attached items.
+- TWA 1.3.0 (owner 2026-11-20, bag UX round):
+  * Tabs: the bar shows only "Weapons" / "Bags" (W.MAIN_TABS gWeapons /
+    gBags); a main tab opens a CHOOSER page (W.CHOOSER, big cards:
+    weapons / materials / modify / guide; bagitems / bagtiers / bagmod /
+    bagguide). Every page under it gets "< Back" at the left of the tab bar
+    (W.parentOf: craft / practice -> its recipe list, else the chooser).
+    setTab ids stay (hub, W.TABS); new ids bagitems / bagtiers (bag list with
+    filter BagUp / BagTier) and bagguide (guide chapter Bags). Window opens on
+    gWeapons.
+  * Add-on page (TWABagUpUI) laid out like the gem page: bags left (+ rules),
+    the bag large + one slot per tier + values base > now > with the picked
+    add-on in the centre, add-ons in a grid on the RIGHT card; hover a stat /
+    add-on / slot = what it does (IGUI_TWA_BagUpStatTip_*). Pick + button
+    "Fit add-on" / pick a filled slot + "Take out".
+  * One add-on per KIND per bag (canInstall -> IGUI_TWA_BagUp_SameKind); a bag
+    that already had two of a kind keeps them.
+  * Tooltip (TierTooltip -> TWABagUp.tooltipLines): an upgraded bag shows its
+    tier, md.TWA_BagBy (who raised it, set in finishTier) and each add-on with
+    its maker (md.TWA_BagUpBy "name;name", same order as TWA_BagUps; the
+    add-on's TWA_CraftedBy, given back on removal); an add-on item shows its
+    effect and the rule.
+  * Bag tier recipes: the craft page / guided row lists EVERY bag at hand
+    (bagCandidates, TWAPicker rows `disabled` with the reason / `info`); the
+    picked bag is kept by id (window.bagPick) and pickItems takes exactly it.
+  * Steps: BagSew1..5 are Basic / Double / Reinforced / Cross Stitch /
+    Advanced Load-Bearing Stitching (B.STITCH: thread or twine, 2 thread,
+    thread + sinew, 2 sinew, 2 aramid; any needle T1-2, metal needle T3+).
+    Each kind has its own step (B.KIND_STEP: BagPocket / BagCompress / BagPad /
+    BagRivet / BagTrim / BagLoop / BagHolster 1..5, Tailoring T); an add-on
+    recipe = BagCut + BagSew + its kind step. Recipes carry `bagKind`; the
+    bag list has a filter per kind (BagK_<kind>).
+  * "Base DPS" is "Average damage" = (min + max) / 2 (craft page, gem page);
+    the tier still uses that x attack speed.
+- TWA 1.3.1 (owner): a bag TIER recipe is sewing (BagSew + BagFit); an
+  ADD-ON recipe is cutting: BagCut1..5 = Basic / Pattern / Precision /
+  Multi-Layer / Complex Structural Cutting (B.CUT: rag or denim + any cutter;
+  then scissors with 2 denim / 2 leather strips / small leather + 2 denim /
+  medium leather + 2 leather strips) + the kind's own step. No stitch in an
+  add-on recipe any more.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
@@ -611,6 +650,15 @@
   a dish's cook may write only when no one else's note is on it. Tooltip
   "Made by B - has a note from A" when they differ. N.told pruned every 50
   eats. R.MIN_GAME_MS 1 s -> 0.5 s (quick one-click games).
+- GTP 1.8.5 (owner): (1) the crafting window's food recipes flickered --
+  CookVanillaHooks set the duration label a SECOND time each frame (vanilla
+  prerender sets it every frame), so its text / width flipped and the window
+  re-laid out. Now the label's own setName adds the score in the same call
+  (score rounded, refreshed every 500 ms). (2) "meat not found nearby": the
+  cooking tab scan stopped after the first 800 items of any kind; now it walks
+  everything and keeps every food (H.SCAN_FOOD_MAX 3000, logged when hit) and
+  the evolved-recipe base / result items (H.EVO_BASE, from
+  evolvedrecipes_index.txt); evoList asks RecipeManager only for those.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).
@@ -738,6 +786,19 @@
   disease.hmScabiesParts (part index string -> true, healed ones pruned);
   at sandbox ScabiesMaxOpenWounds (default 3, 1..20) open, a new scratch
   re-opens one of them instead of a new wound.
+- Sound volume (HTS 1.1.0, owner: "the delirium volume -> every HTS sound"):
+  `client/HARMONIEHomeMedic/HM_SoundVolume.lua` (HM_Sound): master x group
+  (cough / pain / delirium / medical), Options -> Mods + settings window
+  (soundMaster, coughVolume, painVolume, medicalVolume, deliriumVolume ids).
+  Emitter sounds: emitter:setVolume(handle, v) right after they start
+  (HM_Sound.adjust / playOn); UI sounds (HM_Surg_*): playUISound at 100,
+  nothing at 0, else PlayWorldSound at the player + setVolume (fallback full).
+  Delirium keeps its loudness copies (level = master x delirium). Coughs /
+  sneezes in MP: the server no longer sendPlaySound's them;
+  `shared/HARMONIEHomeMedic/HM_SoundNet.lua` sends "HARMONIE_HM_Sound"/"play"
+  {id, sfx} to clients within 60 tiles, each plays it on that player
+  (getPlayerByOnlineID) at its own volume. A new HTS sound: play it through
+  HM_Sound.playOn / playUI / adjust with its group.
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:

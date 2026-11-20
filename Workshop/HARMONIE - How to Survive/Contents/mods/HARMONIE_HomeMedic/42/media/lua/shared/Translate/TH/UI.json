@@ -1877,7 +1877,7 @@
     "UI_EHR_Line_ED48363C": "กระดกยาดองรสเผ็ดร้อนเข้าไป ความร้อนวาบพลุ่งไปทั่วตัว แต่ถ้าไม่มีกองไฟกับที่กำบังจริงๆ ก็คงเอาตัวไม่รอด",
     "UI_EHR_Line_0D41BDD6": "กินยาสมุนไพรเสริมควบคู่กับยาแก้พิษบาดทะยัก หวังว่าจะช่วยให้ร่างกายสู้กับพิษบาดทะยักได้ดีขึ้นบ้าง",
     "UI_options_HARMONIE_HomeMedic_title": "HARMONIE - How to Survive",
-    "UI_options_HARMONIE_HomeMedic_deliriumVolume": "ระดับเสียงอาการเพ้อ (delirium)",
+    "UI_options_HARMONIE_HomeMedic_deliriumVolume": "เสียงอาการเพ้อ (delirium)",
     "UI_options_HARMONIE_HomeMedic_deliriumVolume_tooltip": "ความดังของเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ (100 = เท่าเดิม) ไม่มีผลต่อภาพหลอน คำพูด และการกระทำแปลกๆ",
     "UI_options_HARMONIE_HomeMedic_deliriumMute": "ปิดเสียงอาการเพ้อ",
     "UI_options_HARMONIE_HomeMedic_deliriumMute_tooltip": "ปิดเสียงหลอนจากอาการเพ้อ เฉพาะเครื่องของคุณ",
@@ -3123,5 +3123,13 @@
     "UI_HomeMedic_Diag_CauseTip_c_stress": "เครียดถึงขีดสุดค้างไว้หลายชั่วโมง (ภาวะเพ้อ)",
     "UI_HomeMedic_Diag_CauseTip_c_painkillers": "กินยาแก้ปวดบ่อย 5 ครั้งขึ้นไปใน 1 วัน หรือกินถี่เกินไป (ติดยาแก้ปวด)",
     "UI_HomeMedic_Diag_CauseTip_c_transfusion": "ได้รับเลือดที่ไม่เข้ากับร่างกาย (ปฏิกิริยาจากการถ่ายเลือด)",
-    "UI_HomeMedic_Diag_CauseTip_c_zombie_wound": "แผลจากซอมบี้ที่ติดเชื้อ (ติดเชื้อน็อกซ์)"
+    "UI_HomeMedic_Diag_CauseTip_c_zombie_wound": "แผลจากซอมบี้ที่ติดเชื้อ (ติดเชื้อน็อกซ์)",
+    "UI_options_HARMONIE_HomeMedic_soundMaster": "เสียงทั้งหมดของ How to Survive",
+    "UI_options_HARMONIE_HomeMedic_soundMaster_tooltip": "ความดังของทุกเสียงในม็อดนี้ เฉพาะเครื่องของคุณ (100 = เท่าเดิม 0 = ปิด) ค่าด้านล่างทุกอันจะคูณกับค่านี้",
+    "UI_options_HARMONIE_HomeMedic_coughVolume": "เสียงไอและจาม",
+    "UI_options_HARMONIE_HomeMedic_coughVolume_tooltip": "เสียงไอและจามจากโรค ทั้งของตัวเองและของผู้เล่นอื่นที่ได้ยิน เฉพาะเครื่องของคุณ",
+    "UI_options_HARMONIE_HomeMedic_painVolume": "เสียงร้องเจ็บ",
+    "UI_options_HARMONIE_HomeMedic_painVolume_tooltip": "เสียงร้องเมื่อตัวละครเจ็บปวด เฉพาะเครื่องของคุณ",
+    "UI_options_HARMONIE_HomeMedic_medicalVolume": "เสียงงานการแพทย์",
+    "UI_options_HARMONIE_HomeMedic_medicalVolume_tooltip": "เสียงผ่าตัดและวินิจฉัย เสียงเตือนกินยา ตัดแขน จี้แผล ล้างมือ พันแผล และอ่างแช่น้ำเย็น เฉพาะเครื่องของคุณ"
 }

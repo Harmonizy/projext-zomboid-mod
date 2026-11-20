@@ -99,9 +99,13 @@ function HMSettingsUI.homeMedicRows()
             if p.keepOnScreen then p:keepOnScreen() end
         end }
     rows[#rows + 1] = { kind = "section", label = text("UI_HomeMedic_Set_Sound", "Sound") }
-    if O.deliriumVolume then
-        rows[#rows + 1] = { kind = "slider", label = T("deliriumVolume"), tip = T("deliriumVolume_tooltip"), min = 0, max = 1.5, step = 0.25,
-            get = function() return tonumber(optGet(O.deliriumVolume, 1)) or 1 end, set = function(v) optSet(O.deliriumVolume, v) end, fmt = pct }
+    -- 1.1.0: every HTS sound (HM_SoundVolume.lua)
+    for _, k in ipairs({ "soundMaster", "coughVolume", "painVolume", "medicalVolume", "deliriumVolume" }) do
+        local opt = O[k]
+        if opt then
+            rows[#rows + 1] = { kind = "slider", label = T(k), tip = T(k .. "_tooltip"), min = 0, max = 1.5, step = 0.25,
+                get = function() return tonumber(optGet(opt, 1)) or 1 end, set = function(v) optSet(opt, v) end, fmt = pct }
+        end
     end
     if O.deliriumMuted then
         rows[#rows + 1] = { kind = "tick", label = T("deliriumMute"), tip = T("deliriumMute_tooltip"),

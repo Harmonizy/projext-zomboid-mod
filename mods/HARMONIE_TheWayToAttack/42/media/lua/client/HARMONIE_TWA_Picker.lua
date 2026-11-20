@@ -69,11 +69,15 @@ function TWAPickerList:doDrawItem(y, entry, alt)
     local font = TWAFont.small()
     local lh = TWAFont.lineH(font)
     local text = (row.marked and "> " or "") .. (row.text or "")
+    -- 1.3.0: `info` = a yellow note row, `disabled` = shown dim with its
+    -- reason in red, not pickable
+    local tc = row.info and { 1, 0.8, 0.3 } or (row.disabled and { 0.6, 0.6, 0.6 } or { 0.95, 0.95, 0.95 })
+    local sc = row.disabled and { 1, 0.5, 0.4 } or { 0.7, 0.8, 1 }
     if row.sub and row.sub ~= "" then
-        shadowText(self, text, tx, y + h / 2 - lh, 0.95, 0.95, 0.95, font)
-        shadowText(self, row.sub, tx, y + h / 2, 0.7, 0.8, 1, font)
+        shadowText(self, text, tx, y + h / 2 - lh, tc[1], tc[2], tc[3], font)
+        shadowText(self, row.sub, tx, y + h / 2, sc[1], sc[2], sc[3], font)
     else
-        shadowText(self, text, tx, y + (h - lh) / 2, 0.95, 0.95, 0.95, font)
+        shadowText(self, text, tx, y + (h - lh) / 2, tc[1], tc[2], tc[3], font)
     end
     return y + h
 end
@@ -113,6 +117,7 @@ function TWAPickerWindow:createChildren()
 end
 
 function TWAPickerWindow:pick(row)
+    if row and (row.disabled or row.info) then return end -- 1.3.0: stays open
     local owner, onPick = self.owner, self.onPick
     self:close()
     TWALog("Picker", "%s: picked %s", tostring(self.title), tostring(row and (row.text or row.value)))

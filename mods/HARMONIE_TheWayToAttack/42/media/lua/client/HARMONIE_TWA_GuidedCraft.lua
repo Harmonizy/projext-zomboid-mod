@@ -218,6 +218,22 @@ function TWACraftWindow:guidedData()
             rows[#rows + 1] = { type = it:getFullType(), name = it:getDisplayName(), ok = here,
                 status = getText(here and "IGUI_TWA_G_ResumePiece" or "IGUI_TWA_G_PieceGone") }
             if not here then missing[#missing + 1] = it:getDisplayName() end
+        elseif recipe.bagTier and self.pickedBag then
+            -- 1.3.0: the picked bag, or why none fits; "Pick a bag" lists every
+            -- bag at hand with its reason (openBagChooser)
+            local pb = self:pickedBag(recipe)
+            local row = { type = pb and pb:getFullType() or recipe.base, ok = pb ~= nil }
+            if pb then
+                row.name = pb:getDisplayName() .. " (T" .. tostring(TWABagUp.tierOf(pb)) .. ")"
+                row.status = getText("IGUI_TWA_BagTier_CanUse")
+            else
+                row.name = getText("IGUI_TWA_BagTier_NeedBag", tostring(recipe.bagTier - 1))
+                row.status = getText(#self:bagCandidates(recipe) > 0 and "IGUI_TWA_BagTier_NoneFits" or "IGUI_TWA_BagTier_NoBag")
+                missing[#missing + 1] = row.name
+            end
+            row.btn = { id = "pickBag", label = getText("IGUI_TWA_BagTier_PickBtn"), tip = getText("IGUI_TWA_BagTier_PickRule", tostring(recipe.bagTier - 1)),
+                fn = function(win) win:openBagChooser(recipe) end }
+            rows[#rows + 1] = row
         elseif recipe.base then
             local chosen = self:baseChoiceType(recipe)
             local typ = chosen or recipe.base

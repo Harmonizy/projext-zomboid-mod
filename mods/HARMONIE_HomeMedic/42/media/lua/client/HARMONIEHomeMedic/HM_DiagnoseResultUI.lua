@@ -22,7 +22,10 @@ local function fh(f) return getTextManager():getFontHeight(f or FONT) end
 local function tw(t, f) return getTextManager():MeasureStringX(f or FONT, t or "") end
 local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 local function L(key, fallback, ...) return HM_Text("UI_HomeMedic_Diag_" .. key, fallback, ...) end
-local function sfx(name) if getSoundManager then pcall(function() getSoundManager():playUISound("HM_Surg_" .. name) end) end end
+local function sfx(name)
+    if HM_Sound then HM_Sound.playUI("HM_Surg_" .. name, "medical") return end
+    if getSoundManager then pcall(function() getSoundManager():playUISound("HM_Surg_" .. name) end) end
+end
 
 R.SUSPENSE_MS = 2800
 R.TIMEOUT_MS = 9000

@@ -486,7 +486,8 @@ function TWAGemSocketUI:weaponInfo()
     i.dMin, i.dMax, i.dCond = d("MinDamage"), d("MaxDamage"), d("ConditionMax")
     i.rows = {
         -- damage shown multiplied (TWADisplay: sandbox DamageDisplayScale)
-        { "IGUI_TWA_Stat_DPS", TWADisplay.fmt(i.dps), (i.dMin ~= 0 or i.dMax ~= 0) and TWADisplay.fmt(((i.minD + i.dMin + i.maxD + i.dMax) / 2) * i.speed) },
+        -- 1.3.0: average damage (min + max) / 2, no speed
+        { "IGUI_TWA_Stat_DPS", TWADisplay.fmt((i.minD + i.maxD) / 2), (i.dMin ~= 0 or i.dMax ~= 0) and TWADisplay.fmt((i.minD + i.dMin + i.maxD + i.dMax) / 2) },
         { "IGUI_TWA_Stat_MinDamage", TWADisplay.fmt(i.minD), i.dMin ~= 0 and TWADisplay.fmt(i.minD + i.dMin) },
         { "IGUI_TWA_Stat_MaxDamage", TWADisplay.fmt(i.maxD), i.dMax ~= 0 and TWADisplay.fmt(i.maxD + i.dMax) },
         { "IGUI_TWA_Stat_Speed", string.format("%.2f", i.speed) },

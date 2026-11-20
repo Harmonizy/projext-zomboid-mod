@@ -34,6 +34,49 @@ W.TABS = {
     { id = "bagmod", key = "IGUI_TWA_Tab_BagMod" },
     { id = "guide", key = "IGUI_TWA_Tab_Guide" },
 }
+-- 1.3.0 (owner 2026-11-20: "only the weapons and the bags tab; in a tab you
+-- choose which page to go to, and don't forget a back button"): the tab bar
+-- shows these two. A main tab opens its CHOOSER page (big cards, one per
+-- page); every page under it has a "< back" button at the left of the tab
+-- bar (W.parentOf). W.TABS above stays the list of pages (the hub's "open a
+-- tab" menu and setTab ids are unchanged).
+W.MAIN_TABS = {
+    { id = "gWeapons", key = "IGUI_TWA_Tab_GWeapons", icon = "weapons" },
+    { id = "gBags", key = "IGUI_TWA_Tab_GBags", icon = "bags" },
+}
+W.CHOOSER = {
+    gWeapons = {
+        { tab = "weapons", key = "IGUI_TWA_Tab_Weapons", icon = "weapons" },
+        { tab = "materials", key = "IGUI_TWA_Tab_Materials", icon = "materials" },
+        { tab = "modify", key = "IGUI_TWA_Tab_Modify", icon = "modify" },
+        { tab = "guide", key = "IGUI_TWA_Tab_Guide", icon = "guide" },
+    },
+    gBags = {
+        { tab = "bagitems", key = "IGUI_TWA_Tab_BagItems", icon = "bags" },
+        { tab = "bagtiers", key = "IGUI_TWA_Tab_BagTiers", icon = "bags" },
+        { tab = "bagmod", key = "IGUI_TWA_Tab_BagMod", icon = "bagmod" },
+        { tab = "bagguide", key = "IGUI_TWA_Tab_BagGuide", icon = "guide" },
+    },
+}
+local BAG_TABS = { bags = true, bagitems = true, bagtiers = true, bagmod = true, bagguide = true }
+-- which main tab the open page belongs to
+function W.groupOf(win)
+    local t = win.activeTab
+    if t == "gWeapons" or t == "gBags" then return t end
+    if BAG_TABS[t] then return "gBags" end
+    if t == "craft" or win.page == "practice" or win.page == "craft" then
+        local r = win.selectedRecipe
+        if r and TWACraftUI.scopeOf(r.category) == "bags" then return "gBags" end
+    end
+    return "gWeapons"
+end
+-- where "< back" goes from the open page (nil on a chooser)
+function W.parentOf(win)
+    if win.page == "chooser" then return nil end
+    if win.page == "craft" or win.page == "practice" then return "recipes" end
+    return W.groupOf(win)
+end
+
 -- yellow theme (Home Medic's palette with the blues turned amber)
 W.C = {
     accent = { 1.0, 0.78, 0.2 },
@@ -69,7 +112,7 @@ local MATERIAL_CATS = { Material = true, Gem = true }
 function TWACraftUI.isMaterialCategory(cat) return MATERIAL_CATS[cat] == true end
 -- 1.1.0: which recipe tab a category belongs to (weapons / materials / bags)
 function TWACraftUI.scopeOf(cat)
-    if cat == "BagUp" or cat == "BagTier" then return "bags" end
+    if cat == "BagUp" or cat == "BagTier" or tostring(cat):sub(1, 5) == "BagK_" then return "bags" end
     if MATERIAL_CATS[cat] then return "materials" end
     return "weapons"
 end
@@ -206,7 +249,18 @@ end
 -- ----------------------------------------------------------------- tabs
 function TWACraftWindow:setTab(tab)
     self.activeTab = tab
-    if tab == "weapons" or tab == "materials" or tab == "bags" then
+    if tab == "gWeapons" or tab == "gBags" then
+        self.chooserGroup = tab
+        self:setPage("chooser")
+    elseif tab == "bagitems" or tab == "bagtiers" then
+        -- 1.3.0: the bag recipe list, add-ons or bag tiers
+        self.recipeList.scope = "bags"
+        self.recipeList.filterCategory = tab == "bagtiers" and "BagTier" or "BagUp"
+        self:setPage("browse")
+    elseif tab == "bagguide" then
+        for i, ch in ipairs(W.GUIDE) do if ch.key == "Bags" then self.guidePage = i end end
+        self:setPage("guide")
+    elseif tab == "weapons" or tab == "materials" or tab == "bags" then
         if self.recipeList.scope ~= tab then
             self.recipeList.scope = tab
             self.recipeList.filterCategory = "All"
@@ -268,12 +322,29 @@ function TWACraftWindow:drawWorkbenchFrame()
     self:drawRect(1, hh, self.width - 2, th, 0.92, 0.03, 0.024, 0.01)
     self:drawRect(0, hh + th - 1, self.width, 1, 0.8, C.border[1], C.border[2], C.border[3])
     local gap = 5
-    local tabs = W.visibleTabs()
-    local tabW = math.floor((self.width - 16 - gap * (#tabs - 1)) / #tabs)
+    local tabs = W.MAIN_TABS
     local x = 8
     self.tabBounds = {}
+    -- 1.3.0: "< back" at the left on every page under a chooser
+    local parent = W.parentOf(self)
+    local backW = S(self, 150)
+    if parent then
+        local ty, tH = hh + 6, th - 12
+        local hov = self:isMouseOver() and self:getMouseX() >= x and self:getMouseX() < x + backW and self:getMouseY() >= ty and self:getMouseY() < ty + tH
+        self:drawRect(x, ty, backW, tH, hov and 0.95 or 0.85, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+        self:drawRectBorder(x, ty, backW, tH, 0.9, C.accent[1], C.accent[2], C.accent[3])
+        local font = TWAFont.medium()
+        local label = getText("IGUI_TWA_Back")
+        local lw = getTextManager():MeasureStringX(font, label)
+        local fh = getTextManager():getFontHeight(font)
+        shadowText(self, label, x + math.floor((backW - lw) / 2), ty + math.floor((tH - fh) / 2), C.text[1], C.text[2], C.text[3], 1, font)
+        self.tabBounds[#self.tabBounds + 1] = { id = "__back", to = parent, x = x, y = ty, w = backW, h = tH }
+        x = x + backW + gap * 2
+    end
+    local tabW = math.floor((self.width - 8 - x - gap * (#tabs - 1)) / #tabs)
+    local group = W.groupOf(self)
     for _, t in ipairs(tabs) do
-        local active = self.activeTab == t.id
+        local active = group == t.id
         local ty, tH = hh + 6, th - 12
         local bg = active and C.accentDark or C.background
         local bd = active and C.accent or C.borderDim
@@ -288,7 +359,7 @@ function TWACraftWindow:drawWorkbenchFrame()
         local font = TWAFont.small()
         local lw = getTextManager():MeasureStringX(font, label)
         local fh = getTextManager():getFontHeight(font)
-        local icon = texture("media/textures/TWA_UI/tab_" .. t.id .. ".png")
+        local icon = texture("media/textures/TWA_UI/tab_" .. (t.icon or t.id) .. ".png")
         local total = size + 8 + lw
         local ix = x + math.floor((tabW - total) / 2)
         if icon then
@@ -339,11 +410,53 @@ function TWACraftWindow:drawTabTooltip()
     local mx, my = self:getMouseX(), self:getMouseY()
     for _, t in ipairs(self.tabBounds or {}) do
         if mx >= t.x and mx <= t.x + t.w and my >= t.y and my <= t.y + t.h then
-            local tip = getText("IGUI_TWA_Tab_" .. t.id:sub(1, 1):upper() .. t.id:sub(2) .. "_Tip")
+            local tip = t.id == "__back" and getText("IGUI_TWA_Back_Tip")
+                or getText("IGUI_TWA_Tab_" .. t.id:sub(1, 1):upper() .. t.id:sub(2) .. "_Tip")
             if tip and tip ~= "" and not tip:find("IGUI_", 1, true) then
                 self.hoverTooltip = { lines = { tip }, x = t.x + 40, y = t.y + t.h + 4 }
             end
         end
+    end
+end
+
+-- 1.3.0: a main tab's page chooser -- one big card per page (2 x 2)
+function TWACraftWindow:renderChooser()
+    local C = W.C
+    local list = W.CHOOSER[self.chooserGroup or "gWeapons"] or {}
+    local top, bottom = self.contentTop + S(self, 8), self.panelBottom - S(self, 8)
+    local left, right = 16, self.width - 16
+    local gap = S(self, 14)
+    local cols = 2
+    local rows = math.ceil(#list / cols)
+    local cw = math.floor((right - left - gap * (cols - 1)) / cols)
+    local ch = math.floor((bottom - top - gap * (rows - 1)) / math.max(1, rows))
+    local mx, my = self:getMouseX(), self:getMouseY()
+    local tm = getTextManager()
+    local big, small = TWAFont.medium(), TWAFont.small()
+    local bigH, smallH = tm:getFontHeight(big), tm:getFontHeight(small)
+    self.chooserHits = {}
+    for i, e in ipairs(list) do
+        local cx = left + ((i - 1) % cols) * (cw + gap)
+        local cy = top + math.floor((i - 1) / cols) * (ch + gap)
+        local hov = mx >= cx and mx < cx + cw and my >= cy and my < cy + ch
+        self:drawRect(cx, cy, cw, ch, hov and 0.95 or 0.85, hov and C.accentDark[1] or C.background[1], hov and C.accentDark[2] or C.background[2], hov and C.accentDark[3] or C.background[3])
+        self:drawRectBorder(cx, cy, cw, ch, hov and 1 or 0.7, (hov and C.accent or C.borderDim)[1], (hov and C.accent or C.borderDim)[2], (hov and C.accent or C.borderDim)[3])
+        local size = math.min(ch - 20, S(self, 72))
+        local icon = texture("media/textures/TWA_UI/tab_" .. e.icon .. ".png")
+        local ix = cx + 14
+        if icon then self:drawTextureScaled(icon, ix, cy + math.floor((ch - size) / 2), size, size, 1, 1, 1, 1) end
+        local tx = ix + size + 16
+        local tw = cx + cw - 12 - tx
+        local desc = wrap(getText("IGUI_TWA_Choose_" .. e.tab), tw, small)
+        local maxLines = math.max(0, math.floor((ch - bigH - 20) / (smallH + 2)))
+        local n = math.min(#desc, maxLines)
+        local blockH = bigH + 6 + n * (smallH + 2)
+        local ty = cy + math.floor((ch - blockH) / 2)
+        shadowText(self, TWACraftUI.fitText(getText(e.key), tw, big), tx, ty, C.accent[1], C.accent[2], C.accent[3], 1, big)
+        for l = 1, n do
+            shadowText(self, desc[l], tx, ty + bigH + 6 + (l - 1) * (smallH + 2), C.text[1], C.text[2], C.text[3], 1, small)
+        end
+        self.chooserHits[#self.chooserHits + 1] = { x = cx, y = cy, w = cw, h = ch, tab = e.tab }
     end
 end
 
@@ -817,6 +930,8 @@ function TWACraftWindow:drawPageCards()
         self:drawCard(4, top, self.width - 8, bottom - top, title)
     elseif page == "bagmod" then
         self:drawCard(4, top, self.width - 8, bottom - top, getText("IGUI_TWA_Card_BagMod"))
+    elseif page == "chooser" then
+        self:drawCard(4, top, self.width - 8, bottom - top, getText("IGUI_TWA_Choose_Title"))
     elseif page == "guide" then
         local gw = S(self, 220)
         self:drawCard(4, top, gw + 12, bottom - top, getText("IGUI_TWA_Card_Chapters"))
@@ -844,11 +959,24 @@ function TWACraftWindow:workbenchMouseDown(x, y)
     for _, t in ipairs(self.tabBounds or {}) do
         if x >= t.x and x <= t.x + t.w and y >= t.y and y <= t.y + t.h then
             getSoundManager():playUISound("UISelectListItem")
+            if t.id == "__back" then
+                if t.to == "recipes" then self:onBackClicked() else self:setTab(t.to) end
+                return true
+            end
             if t.id == "craft" and self.active then
                 self.selectedRecipe = TWACraftUI.getRecipeById(self.active.recipeId) or self.selectedRecipe
             end
             self:setTab(t.id)
             return true
+        end
+    end
+    if self.page == "chooser" then
+        for _, h in ipairs(self.chooserHits or {}) do
+            if x >= h.x and x < h.x + h.w and y >= h.y and y < h.y + h.h then
+                getSoundManager():playUISound("UISelectListItem")
+                self:setTab(h.tab)
+                return true
+            end
         end
     end
     if y < S(self, W.HEADER_H) then

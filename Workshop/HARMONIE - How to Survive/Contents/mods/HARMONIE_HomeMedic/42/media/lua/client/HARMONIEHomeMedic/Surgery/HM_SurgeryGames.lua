@@ -74,6 +74,7 @@ function G.sfx(name, minGapMs)
     local t = nowMs()
     if minGapMs and G.lastSound[name] and t - G.lastSound[name] < minGapMs then return end
     G.lastSound[name] = t
+    if HM_Sound then HM_Sound.playUI("HM_Surg_" .. name, "medical") return end
     if getSoundManager then pcall(function() getSoundManager():playUISound("HM_Surg_" .. name) end) end
 end
 
