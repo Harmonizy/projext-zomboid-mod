@@ -410,6 +410,20 @@
   4 recipes per frame, kept per scan gen; filters ready / known / all.
   Tooltip boxes are measured, placed, THEN drawn (were one frame late).
   Mock UI test: scratchpad test_tab.py renders every page.
+- GTP 1.6.0 (review round 5 -- vanilla UI), `client/.../HARMONIE_CookVanillaHooks.lua`
+  (display only): ISInventoryPaneContextMenu.addItemInEvoRecipe wrapped --
+  the option it just added (opt.param2 == the item) gets "[+2.0]"; the
+  crafting window's ISWidgetHandCraftControl:prerender appends "Dish score:
+  X" to durationLabel (inputs = logic:getRecipeData():getAllInputItems(),
+  same weighting as R.onCraft, recomputed every 500 ms); right-click a food
+  -> "Prepare (Garden to Plate) >" its minigames (opens the tab, startPrep;
+  no tool = notAvailable + tooltip) or "Wash off and redo"; MoodleFramework
+  moodle "DishBuff" (good 1-3 = buff level, value 0.65 / 0.75 / 0.85, 0.5 =
+  hidden; setDescription gives kind + hours; icon tools/gen_dishbuff_icon.py
+  -> media/ui/DishBuff.png + Moodles/128/). #8 machines (coffee machine,
+  toaster: ISStartCraftProcessorAction) finish in Java with no Lua callback
+  -- not hooked; only 3 of the 89 Cooking recipes, coffee has no preparable
+  input.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

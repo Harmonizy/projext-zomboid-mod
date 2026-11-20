@@ -1119,5 +1119,10 @@
     "IGUI_GTPP_CraftReady": "ทำได้ตอนนี้",
     "IGUI_GTPP_CraftMissing": "ขาดของบางอย่าง เปิดดูได้ว่าขาดอะไร",
     "IGUI_GTPP_CraftChecking": "กำลังเช็ก...",
-    "IGUI_GTPP_CraftNoneReady": "ตอนนี้ยังไม่มีสูตรไหนที่ทำได้จากของที่มี"
+    "IGUI_GTPP_CraftNoneReady": "ตอนนี้ยังไม่มีสูตรไหนที่ทำได้จากของที่มี",
+    "IGUI_GTPP_MenuTag": "[%1]",
+    "IGUI_GTPP_CraftScore": "คะแนนจาน: %1",
+    "IGUI_GTPP_MenuPrepare": "เตรียมวัตถุดิบ (Garden to Plate)",
+    "IGUI_GTPP_MenuRedo": "ล้างแล้วทำใหม่ (Garden to Plate)",
+    "IGUI_GTPP_MoodleDesc": "อาหารที่เตรียมดี: %1 ระดับ %2 เหลืออีกประมาณ %3 ชั่วโมงในเกม"
 }

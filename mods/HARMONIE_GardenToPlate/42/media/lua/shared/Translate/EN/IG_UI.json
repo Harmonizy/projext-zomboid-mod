@@ -1119,5 +1119,10 @@
     "IGUI_GTPP_CraftReady": "Can make now",
     "IGUI_GTPP_CraftMissing": "Something is missing -- open it to see what",
     "IGUI_GTPP_CraftChecking": "Checking...",
-    "IGUI_GTPP_CraftNoneReady": "Nothing can be made with what is at hand right now."
+    "IGUI_GTPP_CraftNoneReady": "Nothing can be made with what is at hand right now.",
+    "IGUI_GTPP_MenuTag": "[%1]",
+    "IGUI_GTPP_CraftScore": "Dish score: %1",
+    "IGUI_GTPP_MenuPrepare": "Prepare (Garden to Plate)",
+    "IGUI_GTPP_MenuRedo": "Wash off and redo (Garden to Plate)",
+    "IGUI_GTPP_MoodleDesc": "A well prepared dish: %1, level %2. About %3 game hours left."
 }
