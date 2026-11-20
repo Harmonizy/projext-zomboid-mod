@@ -55,6 +55,18 @@ end
 
 HARMONIE_VitaminTooltip = ISPanel:derive("HARMONIE_VitaminTooltip")
 
+-- GTP 1.5.0 (#24): the size only (so the box can be placed BEFORE it is
+-- drawn -- drawing first and moving after showed it one frame late)
+function HARMONIE_VitaminTooltip:measureLines(lines)
+    local font = UIFont.Small
+    local tm = getTextManager()
+    local fontHeight = tm:getFontHeight(font)
+    local maxWidth = 0
+    for _, line in ipairs(lines) do maxWidth = math.max(maxWidth, tm:MeasureStringX(font, line.text)) end
+    self:setWidth(maxWidth + 16)
+    self:setHeight(#lines * (fontHeight + 4) + 16)
+end
+
 function HARMONIE_VitaminTooltip:renderLines(lines)
     local font = UIFont.Small
     local textManager = getTextManager()
@@ -113,16 +125,32 @@ local function buildPrepLines(item)
     local d = R.dishOf(item)
     if d then
         local avg = tonumber(d.avg) or 0
-        local tier = R.tierOf(avg)
+        local Kc = HARMONIE_GTP.Cook
+        local tier, held = R.tierOf(avg), nil
+        if Kc and Kc.dishTier then tier, held = Kc.dishTier(d, item) end
         local lines = { { text = txt("IGUI_GTPP_TipDish"), r = 1, g = 1, b = 1 } }
         lines[#lines + 1] = { text = txt("IGUI_GTPP_TipScore", string.format("%.2f", avg), tostring(tonumber(d.n) or 0)), r = 0.85, g = 0.9, b = 0.85 }
+        -- GTP 1.7.0 (#38): many kinds of food in one dish
+        if (tonumber(d.bonus) or 0) > 0 then
+            local nk = 0
+            for _ in pairs(type(d.kinds) == "table" and d.kinds or {}) do nk = nk + 1 end
+            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipVariety", string.format("%+.2f", d.bonus), tostring(nk)), r = 0.62, g = 0.86, b = 1.0 }
+        end
+        -- GTP 1.8.0: who cooked it, and whether the cook left a note
+        if d.chef then
+            local hasNote = type(d.note) == "table" and type(d.note.t) == "string" and d.note.t ~= ""
+            lines[#lines + 1] = { text = txt(hasNote and "IGUI_GTPN_TipChefNote" or "IGUI_GTPN_TipChef", tostring(d.chef)), r = 0.95, g = 0.88, b = 0.7 }
+        end
         if tier < 0 then
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBad"), r = 1.0, g = 0.45, b = 0.4 }
         elseif tier == 0 then
-            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipNoBuff"), r = 0.7, g = 0.75, b = 0.7 }
+            lines[#lines + 1] = { text = held == "rotten" and txt("IGUI_GTPP_TipRotten") or txt("IGUI_GTPP_TipNoBuff", string.format("%.1f", R.tierCut(1))), r = 0.7, g = 0.75, b = 0.7 }
         else
             local kind = HARMONIE_GTP.Cook and HARMONIE_GTP.Cook.buffKindOf and HARMONIE_GTP.Cook.buffKindOf(item, d.fam) or "hearty"
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBuff", txt("IGUI_GTPC_Buff_" .. kind), tostring(tier)), r = 0.45, g = 0.92, b = 0.48 }
+            if held == "level" then
+                lines[#lines + 1] = { text = txt("IGUI_GTPP_TipTier3Level", tostring(R.tier3Level())), r = 1.0, g = 0.82, b = 0.32 }
+            end
         end
         return lines
     end
@@ -130,8 +158,12 @@ local function buildPrepLines(item)
     if p then
         local c = WORD_COL[p.w] or { 0.9, 0.9, 0.9 }
         return { { text = txt("IGUI_GTPP_TipPrep"), r = 1, g = 1, b = 1 },
-            { text = txt("IGUI_GTPP_TipPrepLine", txt("IGUI_GTPC_Proc_" .. tostring(p.p)), txt("IGUI_GTPC_Word_" .. tostring(p.w)), string.format("%+d", tonumber(p.s) or 0)), r = c[1], g = c[2], b = c[3] } }
+            { text = txt("IGUI_GTPP_TipPrepLine", txt("IGUI_GTPC_Proc_" .. tostring(p.p)), txt("IGUI_GTPC_Word_" .. tostring(p.w)),
+                R.isRotten(item) and txt("IGUI_GTPP_RottenZero") or string.format("%+.1f", R.scoreOf(item))), r = c[1], g = c[2], b = c[3] } }
     end
+    -- GTP 1.7.0 (#25): the player can switch this box off (Settings)
+    if GTPGuide and GTPGuide.ensurePrefs then GTPGuide.ensurePrefs() end
+    if GTPGuide and GTPGuide.tipUnprepared == false then return nil end
     if R.whyNot(item) == nil then
         local games = R.gamesFor(item)
         if #games == 0 then return nil end
@@ -248,8 +280,8 @@ function ISToolTipInv:render()
 
     local box = HARMONIE_VitaminTooltip.instance
     local pbox = HARMONIE_VitaminTooltip.prepInstance
-    if lines then box:renderLines(lines) end
-    if prepLines and pbox then pbox:renderLines(prepLines) else prepLines = nil end
+    if lines then box:measureLines(lines) end
+    if prepLines and pbox then pbox:measureLines(prepLines) else prepLines = nil end
 
     -- 1.0.3 (owner, 2026-11-12: "หน้าต่างวิตามินตอนชี้ให้ขึ้นข้างล่างแทนทางขวาของ
     -- tooltips"): under the item tooltip, its left edges lined up; above it
@@ -274,6 +306,9 @@ function ISToolTipInv:render()
         box:setX(math.max(0, math.min(x, sw - box:getWidth() - 5)))
         box:setY(y + ph)
     end
+    -- placed: now draw them where they are
+    if prepLines then pbox:renderLines(prepLines) end
+    if lines then box:renderLines(lines) end
 end
 
 Events.OnGameStart.Add(createVitaminTooltip)

@@ -147,7 +147,18 @@ end
 
 if Events and Events.OnServerCommand then
     Events.OnServerCommand.Add(function(module, command, args)
-        if module ~= K.BUFF_NET or command ~= "buff" then return end
+        if module ~= K.BUFF_NET then return end
+        if command == "chef" then
+            -- GTP 1.7.0 (#39): someone enjoyed a dish this player cooked
+            local p = getPlayer and getPlayer()
+            log("chef notice: %s enjoyed your dish (level %s)", tostring(args and args.eater), tostring(args and args.tier))
+            if p and HaloTextHelper then
+                local fn = HaloTextHelper.addGoodText or HaloTextHelper.addText
+                if fn then pcall(fn, p, T("IGUI_GTPP_ChefHalo", tostring(args and args.eater or "?"))) end
+            end
+            return
+        end
+        if command ~= "buff" then return end
         K.onBuffNotice(getPlayer and getPlayer(), args)
     end)
 end

@@ -42,6 +42,12 @@ AT.register("gtp", "cook", {
         AT.give(p, { { "Base.Carrots", 3 }, { "Base.Potato", 3 }, { "Base.Onion", 2 }, { "Base.Cabbage", 1 }, { "Base.Steak", 2 },
             { "Base.Egg", 4 }, { "Base.Salt", 1 }, { "Base.Butter", 1 } })
     end),
+    -- GTP 1.7.0 (#37): the prepared-ingredient / dish-score system
+    T("PrepAll", "Set every unprepared food in my inventory to Excellent", function(p) AT.send(p, "gtp_prepAll", {}) end),
+    T("Buff1", "Give me a level 1 dish buff", function(p) AT.send(p, "gtp_buff", { tier = 1 }) end),
+    T("Buff3", "Give me a level 3 dish buff", function(p) AT.send(p, "gtp_buff", { tier = 3 }) end),
+    T("ClearBuff", "Remove my dish buff", function(p) AT.send(p, "gtp_clearBuff", {}) end),
+    T("Practice", "Open the Prepare page", function(p) if GTPGuide and GTPGuide.open then GTPGuide.open(p, nil, "cook"); if GTPGuide.window then GTPGuide.window.cookPage = "prep" end end end),
 })
 AT.register("gtp", "foods", {
     T("VitFoods", "Give a food rich in each vitamin", function(p)

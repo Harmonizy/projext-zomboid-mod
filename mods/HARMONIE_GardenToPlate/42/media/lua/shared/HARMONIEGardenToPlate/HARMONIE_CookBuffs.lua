@@ -68,6 +68,26 @@ end
 K.TIER_STRENGTH = { 1.0, 1.5, 2.0 }
 K.TIER_HOURS = { 0.5, 1.0, 1.5 }
 K.BAD_DISH_UNHAPPY = 10   -- a dish scored below 0: this much unhappier (whole dish)
+-- GTP 1.3.0 (#42): every number above can be changed in the sandbox
+local function sv(key, def)
+    local t = SandboxVars and SandboxVars.HARMONIE_GardenToPlate
+    local v = t and tonumber(t[key])
+    if v == nil then return def end
+    return v
+end
+function K.tierStrength(t) return sv("CookBuffStrength" .. tostring(t), K.TIER_STRENGTH[t] or 1) end
+function K.tierHours(t) return sv("CookBuffLength" .. tostring(t), K.TIER_HOURS[t] or 1) end
+function K.badDishUnhappy() return sv("CookBadDishUnhappy", K.BAD_DISH_UNHAPPY) end
+-- GTP 1.3.0 (#40): the level a dish really gives (level 3 needs a cook of
+-- Cooking R.tier3Level(); a rotten dish gives nothing)
+function K.dishTier(dish, item)
+    local R = HARMONIE_GTP.Prep
+    if not R then return 0, nil end
+    if item and R.isRotten and R.isRotten(item) then return 0, "rotten" end
+    local tier = R.tierOf(tonumber(dish and dish.avg) or 0)
+    if tier == 3 and (tonumber(dish.lvl) or 0) < R.tier3Level() then return 2, "level" end
+    return tier, nil
+end
 
 local function worldHours()
     local ok, h = pcall(function() return getGameTime():getWorldAgeHours() end)
@@ -89,6 +109,13 @@ local function store()
     return ok and t or nil
 end
 local function keyOf(player) return "u:" .. nameOf(player) end
+-- GTP 1.2.0: hours this CHARACTER has lived -- a buff kept for the same
+-- username but written before a newer character was born is not theirs
+local function lived(player)
+    local ok, h = pcall(function() return player:getHoursSurvived() end)
+    return ok and tonumber(h) or nil
+end
+K.livedHours = lived
 local function getRec(player)
     local t = store()
     local b = t and t[keyOf(player)]
@@ -105,7 +132,15 @@ local function getRec(player)
             b = old
         end
     end
-    return type(b) == "table" and b or nil
+    if type(b) ~= "table" then return nil end
+    local hs = lived(player)
+    if b.hs and hs and hs + 0.1 < b.hs then
+        -- the record was written later in a life than this character has lived: a new character
+        if t then t[keyOf(player)] = nil end
+        log("%s: a dish buff of an earlier character was found -- removed (new character)", nameOf(player))
+        return nil
+    end
+    return b
 end
 local function setRec(player, b)
     local t = store()
@@ -132,27 +167,51 @@ local function notify(player, what, b, extra)
 end
 K.notifyBuff = notify
 
+-- GTP 1.7.0 (#39): the cook of a good dish eaten by SOMEONE ELSE gets
+-- Cooking XP (sandbox CookChefXP per buff level, x share eaten) and a notice
+local function onlinePlayer(username)
+    if not username then return nil end
+    local list = getOnlinePlayers and getOnlinePlayers()
+    for i = 0, (list and list:size() or 0) - 1 do
+        local p = list:get(i)
+        if p and nameOf(p) == username then return p end
+    end
+    return nil
+end
+function K.rewardChef(eater, dish, tier, frac)
+    local chefName = dish and dish.chef
+    if not chefName or chefName == nameOf(eater) or (tonumber(tier) or 0) < 1 or not K.buffsOn() then return nil end
+    local chef = onlinePlayer(chefName)
+    if not chef then log("%s ate %s's dish -- the cook is not online, no XP", nameOf(eater), tostring(chefName)); return nil end
+    local xp = sv("CookChefXP", 5) * tier * (frac or 1)
+    if K.giveXp then K.giveXp(chef, xp) end
+    log("%s enjoyed %s's dish (level %d): +%.1f Cooking XP to the cook", nameOf(eater), chefName, tier, xp)
+    -- GTP 1.8.0: the notice goes with the "who ate whose food" one
+    -- (HARMONIE_CookNotes.lua N.onEaten), not a separate "chef" command
+    return xp
+end
+
 -- a scored dish was eaten (authority side)
 function K.grantDish(player, dish, item, fraction)
     if not player or type(dish) ~= "table" then return nil end
     local avg = tonumber(dish.avg) or 0
-    local R = HARMONIE_GTP.Prep
-    local tier = R and R.tierOf(avg) or 0
+    local tier, why = K.dishTier(dish, item)
+    if why then log("%s ate a dish scored %.2f: level held at %d (%s)", nameOf(player), avg, tier, why) end
     local frac = math.max(0.25, math.min(1, tonumber(fraction) or 1))
     if tier < 0 then
         local okS, stats = pcall(function() return player:getStats() end)
         local stat = CharacterStat and CharacterStat.UNHAPPINESS
         if okS and stats and stat then
-            pcall(function() stats:set(stat, math.min(100, stats:get(stat) + K.BAD_DISH_UNHAPPY * frac)) end)
+            pcall(function() stats:set(stat, math.min(100, stats:get(stat) + K.badDishUnhappy() * frac)) end)
         end
-        log("%s ate a badly prepared dish (score %.2f): +%.1f unhappiness", nameOf(player), avg, K.BAD_DISH_UNHAPPY * frac)
+        log("%s ate a badly prepared dish (score %.2f): +%.1f unhappiness", nameOf(player), avg, K.badDishUnhappy() * frac)
         notify(player, "bad", nil, avg)
         return nil
     end
-    if tier == 0 then log("%s ate a dish scored %.2f: no buff (needs 0.5)", nameOf(player), avg); return nil end
+    if tier == 0 then log("%s ate a dish scored %.2f: no buff", nameOf(player), avg); return nil end
     if not K.buffsOn() then log("%s ate a dish scored %.2f: buffs are off in the sandbox", nameOf(player), avg); return nil end
     local kind = K.buffKindOf(item, dish.fam)
-    local full = K.buffHours(dish.lvl) * (K.TIER_HOURS[tier] or 1)
+    local full = K.buffHours(dish.lvl) * K.tierHours(tier)
     local add = full * frac
     local now = worldHours()
     local b = K.activeBuff(player)
@@ -164,6 +223,7 @@ function K.grantDish(player, dish, item, fraction)
         if b then log("%s: buff %s (level %s) replaced by %s (level %d)", nameOf(player), b.kind, tostring(b.tier), kind, tier) end
         b = { kind = kind, tier = tier, level = dish.lvl, untilH = now + add }
     end
+    b.hs = lived(player)
     setRec(player, b)
     log("%s ate a dish scored %.2f (%.0f%% of it, cook level %s): %s level %d for %.1f h", nameOf(player), avg, frac * 100, tostring(dish.lvl), kind, tier, b.untilH - now)
     notify(player, "on", b, avg)
@@ -181,7 +241,7 @@ local function applyBuff(player, b)
             local ok, err = pcall(function()
                 local v = stats:get(stat)
                 local hi = (e[1] == "UNHAPPINESS" or e[1] == "BOREDOM" or e[1] == "PANIC") and 100 or 1
-                local nv = math.max(0, math.min(hi, v + e[2] * (K.TIER_STRENGTH[b.tier or 1] or 1)))
+                local nv = math.max(0, math.min(hi, v + e[2] * K.tierStrength(b.tier or 1)))
                 if nv ~= v then stats:set(stat, nv) end
             end)
             if not ok and not statWarned[e[1]] then statWarned[e[1]] = true; log("buff %s: could not change %s (%s)", b.kind, e[1], tostring(err)) end
@@ -220,6 +280,36 @@ local function everyMinute()
     end
 end
 K.tickBuffs = everyMinute
+
+-- GTP 1.2.0: a character's death ends its buff (authority side)
+function K.clearBuff(player, why)
+    if not player or not authority() then return end
+    local t = store()
+    if t and t[keyOf(player)] then
+        t[keyOf(player)] = nil
+        log("%s: dish buff removed (%s)", nameOf(player), tostring(why))
+    end
+end
+if Events and Events.OnPlayerDeath then
+    Events.OnPlayerDeath.Add(function(player) pcall(K.clearBuff, player, "death") end)
+end
+
+-- GTP 1.2.0: records of buffs that ended more than a week (game time) ago
+-- are removed once a game day (players who never came back)
+K.BUFF_KEEP_HOURS = 24 * 7
+function K.pruneBuffs()
+    if not authority() then return 0 end
+    local t = store()
+    if not t then return 0 end
+    local now, gone = worldHours(), {}
+    for k, b in pairs(t) do
+        if type(b) == "table" and k:sub(1, 2) == "u:" and (tonumber(b.untilH) or 0) < now - K.BUFF_KEEP_HOURS then gone[#gone + 1] = k end
+    end
+    for _, k in ipairs(gone) do t[k] = nil end
+    if #gone > 0 then log("removed %d old dish-buff record(s) (ended over %d game hours ago)", #gone, K.BUFF_KEEP_HOURS) end
+    return #gone
+end
+if Events and Events.EveryDays then Events.EveryDays.Add(function() pcall(K.pruneBuffs) end) end
 if Events and Events.EveryOneMinute then Events.EveryOneMinute.Add(everyMinute) end
 
 -- the eating, where it really happens (SP, or the MP server)
@@ -239,6 +329,17 @@ if ISEatFoodAction and ISEatFoodAction.complete then
         if info then
             local ok, err = pcall(K.grantDish, self.character, info.dish, info.item, info.frac)
             if not ok then log("granting the dish buff FAILED: %s", tostring(err)) end
+            -- #39 + GTP 1.8.0: the cook's XP, then "who ate whose food" to both
+            local okX, xp = pcall(function()
+                local tier = K.dishTier(info.dish, info.item)
+                return K.rewardChef(self.character, info.dish, tier, math.max(0.25, math.min(1, tonumber(info.frac) or 1)))
+            end)
+            if not okX then log("chef XP FAILED: %s", tostring(xp)); xp = nil end
+            local N = HARMONIE_GTP.CookNotes
+            if N and N.onEaten then
+                local okN, errN = pcall(N.onEaten, self.character, info.dish, info.item, xp)
+                if not okN then log("eat notice FAILED: %s", tostring(errN)) end
+            end
         end
         return result
     end

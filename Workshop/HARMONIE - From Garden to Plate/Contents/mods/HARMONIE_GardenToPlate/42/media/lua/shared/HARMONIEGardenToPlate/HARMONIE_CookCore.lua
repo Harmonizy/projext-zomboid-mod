@@ -45,7 +45,6 @@ function K.sv(key, default)
     return v
 end
 function K.minigamesOn() return K.sv("CookMinigames", true) ~= false end
-function K.qualityScale() return math.max(0, tonumber(K.sv("CookQualityEffect", 1)) or 1) end
 function K.xpScale() return math.max(0, tonumber(K.sv("CookXPMultiplier", 1)) or 1) end
 
 function K.level(player)
