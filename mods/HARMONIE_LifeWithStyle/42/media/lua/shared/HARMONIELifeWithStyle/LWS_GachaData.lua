@@ -79,10 +79,10 @@ LWS.GACHA_ITEMS = {
     { id = "RunnerCapsule", cat = "capsule", icon = "Item_LWSG_RunnerCapsule", use = { buff = "RunnerCapsule" } },
     { id = "GuardianCapsule", cat = "capsule", icon = "Item_LWSG_GuardianCapsule", use = { buff = "GuardianCapsule" } },
     { id = "MiniCompoundV", cat = "capsule", icon = "Item_LWSG_MiniCompoundV", use = { buff = "MiniCompoundV" } },
-    { id = "NewDawnLeftRing", cat = "set", icon = "Item_LWSG_NewDawnLeftRing", use = { set = 0.01 } },
-    { id = "NewDawnRightRing", cat = "set", icon = "Item_LWSG_NewDawnRightRing", use = { set = 0.01 } },
-    { id = "NewDawnNecklace", cat = "set", icon = "Item_LWSG_NewDawnNecklace", use = { set = 0.01 } },
-    { id = "NewDawnGloves", cat = "set", icon = "Item_LWSG_NewDawnGloves", use = { set = 0.02 } },
+    { id = "NewDawnLeftRing", cat = "set", icon = "Item_LWSG_NewDawnLeftRing", use = { set = 0.05 } },
+    { id = "NewDawnRightRing", cat = "set", icon = "Item_LWSG_NewDawnRightRing", use = { set = 0.05 } },
+    { id = "NewDawnNecklace", cat = "set", icon = "Item_LWSG_NewDawnNecklace", use = { set = 0.05 } },
+    { id = "NewDawnGloves", cat = "set", icon = "Item_LWSG_NewDawnGloves", use = { set = 0.05 } },
     { id = "TrainingManualI_Aiming", cat = "training", icon = "Item_LWSG_TrainingManualI", use = { buff = "TrainingI_Aiming" } },
     { id = "TrainingManualII_Aiming", cat = "training", icon = "Item_LWSG_TrainingManualII", use = { buff = "TrainingII_Aiming" } },
     { id = "SurvivalJourneyI_Aiming", cat = "journey", icon = "Item_LWSG_SurvivalJourneyI", use = { perk = "Aiming", flatXP = 20 } },
@@ -164,7 +164,7 @@ LWS.GACHA_ITEMS = {
     { id = "SurvivalJourneyI_PlantScavenging", cat = "journey", icon = "Item_LWSG_SurvivalJourneyI", use = { perk = "PlantScavenging", flatXP = 20 } },
     { id = "SurvivalJourneyII_PlantScavenging", cat = "journey", icon = "Item_LWSG_SurvivalJourneyII", use = { perk = "PlantScavenging", flatXP = 50 } },
 }
-LWS.GACHA_SET_FULL_BONUS = 0.05
+LWS.GACHA_SET_FULL_BONUS = 0.1
 LWS.GACHA_SKILLS = { "Aiming", "Reloading", "Axe", "Blunt", "SmallBlunt", "LongBlade", "SmallBlade", "Spear", "Maintenance", "Woodwork", "Cooking", "Farming", "Doctor", "Electricity", "Mechanics", "MetalWelding", "Tailoring", "Fishing", "Trapping", "PlantScavenging" }
 LWS.GACHA_ITEM = {}
 for _, g in ipairs(LWS.GACHA_ITEMS) do LWS.GACHA_ITEM[g.id] = g end

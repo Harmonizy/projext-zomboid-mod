@@ -118,12 +118,14 @@ item("GuardianCapsule", "capsule", "GuardianCapsule", {"buff": "GuardianCapsule"
 item("MiniCompoundV", "capsule", "MiniCompoundV", {"buff": "MiniCompoundV"}, "Mini Compound-V", "มินิ คอมพาวด์-วี",
      "Every capsule at once: damage +10%, endurance loss -10%, critical +5%, swing delay -10%, tiredness gain -10%, run speed +5%, effective max HP +10%, protection +5. " + CAPS,
      "ทุกแคปซูลรวมกัน: ความเสียหาย +10% เสียความอดทน -10% คริติคอล +5% ดีเลย์เหวี่ยง -10% เหนื่อยช้าลง 10% วิ่งเร็ว +5% พลังชีวิตสูงสุด +10% การป้องกัน +5 " + CAPS_TH)
-SET = "New Dawn set: equip pieces for XP on every skill (left ring +1%, right ring +1%, necklace +1%, gloves +2%; all four: +5% more, x1.10 in all)."
-SET_TH = "ชุด New Dawn: สวมชิ้นส่วนเพื่อเพิ่ม XP ทุกทักษะ (แหวนซ้าย +1% แหวนขวา +1% สร้อย +1% ถุงมือ +2% ครบ 4 ชิ้น: เพิ่มอีก +5% รวมเป็น x1.10)"
-item("NewDawnLeftRing", "set", "NewDawnLeftRing", {"set": 0.01}, "New Dawn Left Ring", "แหวนซ้าย New Dawn", SET, SET_TH)
-item("NewDawnRightRing", "set", "NewDawnRightRing", {"set": 0.01}, "New Dawn Right Ring", "แหวนขวา New Dawn", SET, SET_TH)
-item("NewDawnNecklace", "set", "NewDawnNecklace", {"set": 0.01}, "New Dawn Necklace", "สร้อยคอ New Dawn", SET, SET_TH)
-item("NewDawnGloves", "set", "NewDawnGloves", {"set": 0.02}, "New Dawn Gloves", "ถุงมือ New Dawn", SET, SET_TH)
+# 1.1.2 (owner 2026-11-20): every piece +5 percent, all four = 30 percent
+# (4 x 5 + a 10 percent set bonus)
+SET = "New Dawn set: equip pieces in the Gacha tab for more XP on every skill (each piece +5 percent; all four: +10 percent more, 30 percent in all)."
+SET_TH = "ชุด New Dawn: กดสวมในแท็บกาชาเพื่อเพิ่ม XP ทุกทักษะ (ชิ้นละ +5 เปอร์เซ็นต์ ครบ 4 ชิ้น: เพิ่มอีก +10 เปอร์เซ็นต์ รวมเป็น 30 เปอร์เซ็นต์)"
+item("NewDawnLeftRing", "set", "NewDawnLeftRing", {"set": 0.05}, "New Dawn Left Ring", "แหวนซ้าย New Dawn", SET, SET_TH)
+item("NewDawnRightRing", "set", "NewDawnRightRing", {"set": 0.05}, "New Dawn Right Ring", "แหวนขวา New Dawn", SET, SET_TH)
+item("NewDawnNecklace", "set", "NewDawnNecklace", {"set": 0.05}, "New Dawn Necklace", "สร้อยคอ New Dawn", SET, SET_TH)
+item("NewDawnGloves", "set", "NewDawnGloves", {"set": 0.05}, "New Dawn Gloves", "ถุงมือ New Dawn", SET, SET_TH)
 for p, en, th in SKILLS:
     item("TrainingManualI_" + p, "training", "TrainingManualI", {"buff": "TrainingI_" + p}, "Training Manual I - " + en, "คู่มือฝึก I - " + th,
          "%s XP +20%%, 30 minutes. One training manual at a time." % en, "XP %s +20%% นาน 30 นาที ใช้คู่มือฝึกได้ทีละเล่ม" % th)
@@ -134,7 +136,7 @@ for p, en, th in SKILLS:
     item("SurvivalJourneyII_" + p, "journey", "SurvivalJourneyII", {"perk": p, "flatXP": 50}, "Survival Journey II - " + en, "บันทึกการเอาชีวิตรอด II - " + th,
          "+50 %s XP at once (flat: no book or buff multiplies it)." % en, "XP %s +50 ทันที (ค่าคงที่ ไม่มีหนังสือหรือบัฟคูณ)" % th)
 
-SET_FULL_BONUS = 0.05
+SET_FULL_BONUS = 0.10  # 1.1.2: 4 x 5% + 10% = 30% with the whole set
 
 
 def lua(v):

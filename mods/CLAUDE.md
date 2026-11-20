@@ -472,17 +472,15 @@
   then scissors with 2 denim / 2 leather strips / small leather + 2 denim /
   medium leather + 2 leather strips) + the kind's own step. No stitch in an
   add-on recipe any more.
-- TWA 1.3.2 (owner: an add-on that holds a flashlight like vanilla's ALICE
-  belt): 8th kind "light" (ติดไฟฉาย), items TWA_BagUp_FlashlightClip /
-  WebbingLightLoop / MolleLightMount / TacticalLightHarness /
-  ReinforcedLightRig (+tier slots), step BagLightMount1..5 (screwdriver,
-  screws t+1 + strips), filter BagK_light. Slots TWABagW1..10 copy vanilla's
-  WebbingRight / WebbingLeft (vanilla ISHotbarAttachDefinition: attachments
-  Knife / Walkie / Webbing; Bag_ALICE_BeltSus provides SmallBeltLeft/Right +
-  WebbingRight/Left; only FlashLight_AngleHead(_Army) has AttachmentType =
-  Webbing -- Torch / HandTorch have no AttachmentType at all). The owner's
-  vanilla hotbar Lua + item scripts are in mods/_VanillaReference_B42/raw/hotbar
-  (gitignored).
+- TWA 1.3.2 (owner: hold a flashlight like vanilla's ALICE belt -- first a
+  separate 8th kind, then "merge it into the small slot"): no new kind. The
+  small slot TWABagS1..10 = vanilla SmallBeltLeft/Right attachments + the
+  ones of WebbingLeft/Right it lacks ("Webbing" = FlashLight_AngleHead(_Army),
+  model place "Webbing Left/Right Walkie"). Vanilla facts (owner's zip in
+  mods/_VanillaReference_B42/raw/hotbar, gitignored): Bag_ALICE_BeltSus
+  provides SmallBeltLeft;SmallBeltRight;WebbingRight;WebbingLeft; Torch /
+  HandTorch have NO AttachmentType (no slot holds them). The console line
+  "hotbar: ... small slot takes: ..." lists the kinds.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
@@ -670,6 +668,11 @@
   everything and keeps every food (H.SCAN_FOOD_MAX 3000, logged when hit) and
   the evolved-recipe base / result items (H.EVO_BASE, from
   evolvedrecipes_index.txt); evoList asks RecipeManager only for those.
+- GTP 1.8.6 (owner's console): the cooking tab's game-dish page called
+  vanilla getRealEvolvedItemUse for NON-food ingredients -> "Object tried to
+  call nil" (getHungerChange) every frame, logged even in pcall; now only for
+  instanceof Food. The vitamin wrapper of ISAddItemInRecipe:complete is fully
+  pcall'd (before and after) so it can never leave the action unfinished.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).
@@ -810,6 +813,10 @@
   {id, sfx} to clients within 60 tiles, each plays it on that player
   (getPlayerByOnlineID) at its own volume. A new HTS sound: play it through
   HM_Sound.playOn / playUI / adjust with its group.
+- Long timed actions (HTS 1.1.1, owner: "the bar over the head takes 20 s+
+  after adding food"): TOC's adjustMaxTime override logs "[ActionTime]" once
+  a minute per action type whose final time >= 900: asked / after the game /
+  after TOC (the cut-limb multiplier x2-x4 only applies with an amputation).
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
@@ -1045,6 +1052,12 @@
   the server grants each new roll id (gacha item or pet piece) and writes
   `RWZ_GachaDeliveryReceipts.txt`; seen ids live in `HARMONIE_LWS`.discordGacha.
   Its owner key is `"u:" .. username` -- keep `LWS.ownerKey` in step with it.
+- New Dawn set (LWS 1.1.2, owner): each piece +5 percent XP on every skill,
+  all four +10 percent more = 30 percent (gen_gacha.py use.set 0.05 x4,
+  SET_FULL_BONUS 0.10). The pieces are gacha COUNTS, not items or fashion:
+  "equipped" in the Gacha tab (o.gachaSet, server), the client XP hook
+  multiplies (GC.finalAward ... * (1 + setBonus)); taking one off, trading
+  it away or using it up ends its share.
 - Give tab (tab id "admin", 0.7.1): `LWS.isAdmin` = -debug or the access level
   (`LWS.hasAdminAccess`); single player without -debug is NOT an admin. A MP
   client's own -debug shows the tab but the server trusts only the access level
