@@ -914,6 +914,12 @@
   `media/textures/Item_X.png` (the window's `texture()` does, 0.7.2).
 - Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
   shown only in frames that ask for them (`hideUnusedSearch`).
+- LWS 1.1.1 (owner 2026-11-20, "the old vanilla test pieces confuse people"):
+  the 25 "Test_*" pieces made from vanilla clothes are removed (gen_lws.py
+  CATALOG = []). LWS has no fashion pieces of its own; they come from add-ons
+  (LWS.addPieces -- HARMONIE_LWS_Tomb). LWS.CATALOG still holds the 16 pets.
+  Wardrobe entries of the old pieces are pruned at load (catalog check);
+  worn copies have no script any more and the game / sweep drops them.
 - LWS 1.1.0 (owner 2026-11-20, Tomb's Wardrobe into the gacha): add-ons add
   pieces with `LWS.addPieces(list, source)` ({ id, slot, icon, icons, tex,
   src }; item scripts in OUR module so isOurPiece passes; `LWS.PIECE_BY_SRC`

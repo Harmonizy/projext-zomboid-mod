@@ -9,7 +9,7 @@ One source for the fashion slots and the catalog. Writes:
   42/media/lua/shared/HARMONIELifeWithStyle/LWS_Data.lua   slots, what each hides, the catalog
   42/media/lua/shared/Translate/{EN,TH}/ItemName.json      the pieces' names
 The pieces weigh nothing and protect nothing: only the picture.
-Phase 1 test pieces reuse vanilla clothing models (ClothingItem = the vanilla one).
+Pieces of our own: none (1.1.1); add-ons add theirs with LWS.addPieces.
 """
 import json, os
 
@@ -59,33 +59,12 @@ SLOT_NAMES = {  # EN, TH
 }
 
 # id (our item), slot, vanilla ClothingItem, icon, EN name, TH name
-CATALOG = [
-    ("Test_BunnyEarsWhite", "hat", "Hat_BunnyEarsWhite", "RabbitearsWhite", "Bunny Ears (white)", "หูกระต่าย (ขาว)"),
-    ("Test_Bandana", "hat", "Hat_Bandana", "BandanaBlack", "Bandana", "ผ้าโพกหัว"),
-    ("Test_BalaclavaOpen", "mask", "Hat_BalaclavaFace", "BalaclavaOpen", "Open Balaclava", "โม่งเปิดหน้า"),
-    ("Test_MaskDevil", "mask", "Hat_HalloweenMaskDevil", "Mask_Devil", "Devil Mask", "หน้ากากปีศาจ"),
-    ("Test_Aviators", "eyes", "Glasses_Aviators", "GlassesAviator", "Aviator Glasses", "แว่นนักบิน"),
-    ("Test_EarringsGold", "ears", "Earring_LoopLrg_Gold_Both", "Earring_LoopLrg_Gold", "Gold Hoop Earrings", "ต่างหูห่วงทอง"),
-    ("Test_ScarfWhite", "neck", "Scarf_White", "ScarfGeneric", "White Scarf", "ผ้าพันคอสีขาว"),
-    ("Test_DogTags", "neck", "Necklace_DogTag", "Necklace_Dogtags", "Dog Tags", "ป้ายทหาร"),
-    ("Test_SweaterWhite", "top", "Jumper_RoundNeck", "SweaterWhite", "Round-neck Sweater", "เสื้อสเวตเตอร์คอกลม"),
-    ("Test_TshirtUrban", "top", "Tshirt_CamoUrban", "TShirt_CamoGrey", "Urban Camo T-shirt", "เสื้อยืดลายพราง"),
-    ("Test_VarsityJacket", "outer", "Jacket_Varsity", "JacketVarsity_KY", "Varsity Jacket", "แจ็กเก็ตวาร์ซิตี้"),
-    ("Test_ApronBlack", "outer", "Apron_Black", "ApronBlack", "Black Apron", "ผ้ากันเปื้อนสีดำ"),
-    ("Test_LongDress", "full", "Dress_Long", "DressLongWhite", "Long Dress", "ชุดเดรสยาว"),
-    ("Test_PrisonSuit", "full", "Boilersuit_Prisoner", "JumpsuitPrisonOrange", "Prisoner Jumpsuit", "ชุดนักโทษ"),
-    ("Test_LeatherPants", "bottom", "Trousers_LeatherBlack", "Trousers_Leather", "Leather Pants", "กางเกงหนัง"),
-    ("Test_DeerSkirt", "bottom", "Skirt_Knees_DeerHide", "SkirtKnee_Deerhide", "Deer Hide Skirt", "กระโปรงหนังกวาง"),
-    ("Test_FingerlessBlack", "hands", "Gloves_FingerlessLeatherGloves_Black", "GlovesFingerless_Black", "Fingerless Leather Gloves", "ถุงมือหนังตัดนิ้ว"),
-    ("Test_HikingBoots", "shoes", "Shoes_HikingBoots", "BootsHiking", "Hiking Boots", "รองเท้าเดินป่า"),
-    ("Test_GoldBangle", "wrist", "Bracelet_BangleLeftGold", "Bracelet_Bangle", "Gold Bangle", "กำไลทอง"),
-    ("Test_RubyRing", "rings", "Ring_Right_RingFinger_GoldRuby", "Ring_GoldRuby", "Gold Ruby Ring", "แหวนทองทับทิม"),
-    ("Test_Belt", "waist", "Belt", "Belt", "Leather Belt", "เข็มขัดหนัง"),
-    ("Test_SchoolBag", "back", "Bag_SchoolBag", "Backpack_Black", "Small Backpack (look only)", "กระเป๋าเป้ใบเล็ก (แค่ภาพ)"),
-    ("Test_LipsRed", "makeup", "MakeUp_LipsRed", "LWS_Makeup", "Red Lipstick", "ลิปสติกสีแดง"),
-    ("Test_SpiffoTail", "tail", "SpiffoTail", "SpiffoTail", "Spiffo Tail", "หางสปิฟโฟ"),
-    ("Test_BunnyEarsBlack", "extra", "Hat_BunnyEarsBlack", "RabbitearsBlack", "Bunny Ears (black, special)", "หูกระต่าย (ดำ ช่องพิเศษ)"),
-]
+# 1.1.1 (owner 2026-11-20: "the old vanilla test pieces confuse people, take
+# them out"): no fashion pieces of our own any more -- the 25 "Test_*" pieces
+# made from vanilla clothes are gone. Fashion comes from add-ons
+# (LWS.addPieces, e.g. HARMONIE_LWS_Tomb). Old wardrobe entries are pruned at
+# load (not in the catalog). Row: (id, slot, ClothingItem, icon, EN, TH).
+CATALOG = []
 
 
 # pets (owner, 2026-10-23): Companion Dogs' dogs and its "CD: Cats" add-on's cats,

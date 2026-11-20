@@ -76,7 +76,7 @@ T = {
  "IGUI_LWS_Test_Gacha1": ("Give yourself one of every gacha item", "ให้ไอเท็มกาชาทุกชนิดอย่างละ 1 กับตัวเอง"),
  "IGUI_LWS_Test_Gacha5": ("Give yourself five of every gacha item", "ให้ไอเท็มกาชาทุกชนิดอย่างละ 5 กับตัวเอง"),
  "IGUI_LWS_Debug_Admin": ("Life With Style: admin page", "Life With Style: หน้าแอดมิน"),
- "IGUI_LWS_Debug_GiveSet": ("Life With Style: give the whole test set to %1", "Life With Style: มอบชุดทดสอบทั้งหมดให้ %1"),
+ "IGUI_LWS_Debug_GiveSet": ("Life With Style: give every fashion piece to %1", "Life With Style: มอบชิ้นแฟชั่นทุกชิ้นให้ %1"),
  "IGUI_ItemCat_Fashion": ("Fashion", "แฟชั่น"),
  "UI_options_HARMONIE_LWS_title": ("HARMONIE - Life With Style", "HARMONIE - Life With Style"),
  "UI_options_HARMONIE_LWS_key": ("Open fashion and gacha items", "เปิดหน้าต่างแฟชั่นและไอเท็มกาชา"),

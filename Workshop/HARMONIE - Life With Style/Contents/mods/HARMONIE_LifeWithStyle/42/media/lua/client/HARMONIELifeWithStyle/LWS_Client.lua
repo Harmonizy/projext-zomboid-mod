@@ -395,7 +395,7 @@ local function debugMenu(add, player, target)
     if key then
         add(LWS.T("IGUI_LWS_Debug_GiveSet", LWS.name(who)), function()
             for _, c in ipairs(LWS.CATALOG) do C.send("AdminGrant", { owner = key, piece = c.id }) end
-            log("debug: gave the whole test set (%d pieces) to %s", #LWS.CATALOG, LWS.name(who))
+            log("debug: gave every fashion piece (%d pieces) to %s", #LWS.CATALOG, LWS.name(who))
         end)
     end
 end
