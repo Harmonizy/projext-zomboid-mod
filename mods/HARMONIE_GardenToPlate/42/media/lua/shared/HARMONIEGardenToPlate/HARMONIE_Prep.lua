@@ -443,6 +443,34 @@ local function finishDish(t)
 end
 R.finishDish = finishDish
 
+-- the dish score after one more ingredient (display only: the Cooking tab
+-- and the right-click recipe menu). d = the base's dish record or nil; use
+-- = vanilla's evolved use of the ingredient (hunger points) or nil
+function R.previewDish(d, base, it, use)
+    local sum, wt
+    local kinds = {}
+    local function add(x)
+        local xd = R.dishOf(x)
+        if xd and type(xd.kinds) == "table" then for k in pairs(xd.kinds) do kinds[k] = true end return end
+        local k = R.kindOf(x)
+        if k then kinds[k] = true end
+    end
+    if d then
+        sum = tonumber(d.sum) or 0
+        wt = tonumber(d.w) or tonumber(d.n) or 0
+        for k in pairs(type(d.kinds) == "table" and d.kinds or {}) do kinds[k] = true end
+    else
+        sum, wt = 0, 0
+        if R.counts(base) then local bw = R.weightOf(base); sum, wt = R.scoreOf(base) * bw, bw; add(base) end
+    end
+    if R.counts(it) then
+        local iw = math.max(1, tonumber(use) or R.weightOf(it))
+        sum, wt = sum + R.scoreOf(it) * iw, wt + iw
+        add(it)
+    end
+    return finishDish({ sum = sum, w = wt, kinds = kinds }).avg
+end
+
 -- 1) evolved recipes: one ingredient goes in (vanilla ISAddItemInRecipe)
 function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHungerBefore)
     if not baseAfter then return end

@@ -144,17 +144,35 @@ function GTPNotePaper:createChildren()
         if self.entry.setMultipleLine then pcall(self.entry.setMultipleLine, self.entry, true) end
         if self.entry.setMaxLines then pcall(self.entry.setMaxLines, self.entry, N.MAX_LINES) end
         if self.entry.setMaxTextLength then pcall(self.entry.setMaxTextLength, self.entry, N.MAX_CHARS) end
-        self.entry.backgroundColor = { r = 1, g = 1, b = 1, a = 0.35 }
+        -- GTP 1.8.1: dark ink (the box's default text is white: unreadable on paper)
+        local okInk = pcall(function() self.entry.javaObject:setTextColor(ColorInfo.new(0.08, 0.08, 0.1, 1)) end)
+        if okInk then
+            self.entry.backgroundColor = { r = 1, g = 1, b = 1, a = 0.55 }
+        else
+            self.entry.backgroundColor = { r = INK.r, g = INK.g, b = INK.b, a = 0.9 }
+            log("note box: no setTextColor -- dark box instead")
+        end
         self.entry.borderColor = { r = INK.r, g = INK.g, b = INK.b, a = 0.5 }
+        -- Esc in the box closes the sheet too
+        local win = self
+        self.entry.onOtherKey = function(_, key) if key == Keyboard.KEY_ESCAPE then win:onCloseClick() end end
         self:addChild(self.entry)
         self.saveBtn = ISButton:new(self.width - bw * 3 - 28, by, bw, bh, T("IGUI_GTPN_Save"), self, GTPNotePaper.onSaveClick)
         self.removeBtn = ISButton:new(self.width - bw * 2 - 18, by, bw, bh, T("IGUI_GTPN_Remove"), self, GTPNotePaper.onRemoveClick)
         self.closeBtn = ISButton:new(self.width - bw - 8, by, bw, bh, T("IGUI_GTPN_Cancel"), self, GTPNotePaper.onCloseClick)
         if not self.note then self.removeBtn = nil end
     end
-    for _, b in ipairs({ self.eatBtn, self.saveBtn, self.removeBtn, self.closeBtn }) do
-        if b then b:initialise(); b:instantiate(); self:addChild(b) end
+    -- an "x" in the paper's corner, in both modes
+    self.xBtn = ISButton:new(self.width - 40, 14, 22, 22, "X", self, GTPNotePaper.onCloseClick)
+    -- GTP 1.8.1: NOT ipairs over a list with nil holes -- it stopped at the
+    -- first missing button, so the write sheet had no buttons at all (owner:
+    -- "can't close the note")
+    local added = 0
+    for _, k in ipairs({ "eatBtn", "saveBtn", "removeBtn", "closeBtn", "xBtn" }) do
+        local b = self[k]
+        if b then b:initialise(); b:instantiate(); self:addChild(b); added = added + 1 end
     end
+    log("note sheet (%s): %d buttons", tostring(self.mode), added)
 end
 
 function GTPNotePaper:prerender()
@@ -209,16 +227,19 @@ function GTPNotePaper:onCloseClick()
     self:finish()
 end
 function GTPNotePaper:onSaveClick()
-    local text = N.clean(self.entry and self.entry:getText() or "")
-    if text == "" then return self:onRemoveClick() end
-    N.request(self.player, self.item, text)
-    log("note saved on %s (%d letters)", itemName(self.item), N.len(text))
+    local raw = self.entry and self.entry:getText() or ""
     self:finish()
+    local ok, err = pcall(function()
+        local text = N.clean(raw)
+        N.request(self.player, self.item, text)
+        log("note %s on %s (%d letters)", text == "" and "removed" or "saved", itemName(self.item), N.len(text))
+    end)
+    if not ok then log("saving the note FAILED: %s", tostring(err)) end
 end
 function GTPNotePaper:onRemoveClick()
-    N.request(self.player, self.item, "")
-    log("note removed from %s", itemName(self.item))
     self:finish()
+    local ok, err = pcall(N.request, self.player, self.item, "")
+    log("note removed from %s%s", itemName(self.item), ok and "" or (" -- FAILED: " .. tostring(err)))
 end
 function GTPNotePaper:onKeyRelease(key)
     if key == Keyboard.KEY_ESCAPE then self:onCloseClick(); return true end
