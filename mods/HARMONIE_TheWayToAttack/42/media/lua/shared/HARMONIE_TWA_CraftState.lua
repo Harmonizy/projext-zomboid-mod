@@ -496,6 +496,58 @@ function S.pickFreshItem(character, fullType)
     end)
 end
 
+-- 1.2.1 (owner 2026-11-20: "everything that used ONE Oridecon / Elunium /
+-- Bradium takes x20"): how many of the supplementary item (base2) a recipe
+-- uses up. The three ores -> sandbox OreCost (default 20); anything else 1.
+-- Start takes them all (the chosen one + qty-1 more of the type), Cancel
+-- gives them all back (snapshot field `n`), Incomplete keeps them in the
+-- unfinished item (TWA_OrigBase2.n).
+S.ORES = {
+    ["HARMONIE_TheWayToAttack.TWA_Oridecon"] = true,
+    ["HARMONIE_TheWayToAttack.TWA_Elunium"] = true,
+    ["HARMONIE_TheWayToAttack.TWA_Bradium"] = true,
+}
+function S.base2Qty(recipe)
+    if not recipe or not recipe.base2 then return 0 end
+    if recipe.base2Qty then return recipe.base2Qty end
+    if S.ORES[recipe.base2] then return math.max(1, math.floor(TWAConfig.num("OreCost", 1))) end
+    return 1
+end
+local function freeBase2(it) return not S.isBookmarked(it) end
+function S.base2Count(character, recipe)
+    if not character or not recipe or not recipe.base2 then return 0 end
+    return TWASources.get(character):countEval(recipe.base2, freeBase2) or 0
+end
+function S.base2Ok(character, recipe)
+    return S.base2Count(character, recipe) >= S.base2Qty(recipe)
+end
+-- authority side: take qty-1 more of the type besides `first` (already
+-- chosen). Checks the count first: nothing is taken unless all are there.
+function S.takeExtraBase2(character, recipe, first)
+    local need = S.base2Qty(recipe) - 1
+    if need <= 0 then return true end
+    if S.base2Count(character, recipe) < need + 1 then return false end
+    local taken = 0
+    for _ = 1, need do
+        local it = TWASources.get(character):getFirstTypeEvalRecurse(recipe.base2, function(x)
+            return x ~= first and freeBase2(x)
+        end)
+        if not it or not TWASources.remove(it, character:getInventory()) then break end
+        taken = taken + 1
+    end
+    if taken < need then
+        log("took only %d of %d extra %s for %s -- giving them back", taken, need, tostring(recipe.base2), TWALogName(character))
+        local inv = character:getInventory()
+        for _ = 1, taken do
+            local it = inv:AddItem(recipe.base2)
+            if it and isServer() and sendAddItemToContainer then sendAddItemToContainer(inv, it) end
+        end
+        return false
+    end
+    log("%s: %d x %s taken for %s", TWALogName(character), need + 1, tostring(recipe.base2), tostring(recipe.id))
+    return true
+end
+
 -- Active craft (request 2026-09-28: "ทำให้ไม่สามารถทำได้หลายสูตรพร้อมกัน
 -- เมื่อเลือกสูตรใดไปแล้ว ให้หักวัตถุดิบตั้งต้นและชิ้นงานเสริมไปทันที และไม่
 -- สามารถเปลี่ยนไปทำสูตรอื่นได้จนกว่าจะกดยกเลิก การปิดหน้าต่างก่อนจะเสร็จจะถือ
@@ -717,6 +769,13 @@ function S.giveBack(character, kind, recipeId)
     if recipe.base2 and kind == "cancel" then
         local it, inv = addToInventory(character, act.base2, recipe.base2)
         send(inv, it)
+        -- 1.2.1: the rest of the ores taken at Start
+        local n = math.max(1, math.floor(tonumber(act.base2 and act.base2.n) or 1))
+        for _ = 2, n do
+            local extra = inv:AddItem((act.base2 and act.base2.type) or recipe.base2)
+            send(inv, extra)
+        end
+        if n > 1 then log("cancel: %d x %s given back", n, tostring(recipe.base2)) end
     end
     return true
 end

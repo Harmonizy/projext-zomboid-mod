@@ -364,6 +364,33 @@
     the original; a signature check every 2 s forces a refresh when attach
     upgrades change. No vanilla code is copied (repo is public).
     UNVERIFIED in MP: whether the server accepts an attach to our slot types.
+- TWA 1.2.1 (owner 2026-11-20):
+  * No crafted weapon above the vanilla Katana's DPS 8 (8-8, speed 1):
+    master_forged x5 7.5-10.1 -> 7-9, apoc_tactical_longsword 8-9 -> 7.5-8.5
+    (scripts TWA_weapons_r23 / MWP1 + RecipeData Stats). Grade does not
+    change damage; gems (+0.0..0.5 each) can still lift a weapon past 8.
+  * Tiers (TierTooltip tierFromDps, exported TWATier.fromDps): Junk < 0.25
+    < Common < 0.5 < Uncommon < 1 < Rare < 2 < Epic < 4 < Elite < 7 <=
+    Legendary <= 8 < Prototype. Only Elite / Legendary moved (were < 8 / < 10)
+    so every baked Stats tier stays right.
+  * Zombie drops (`shared/HARMONIE_TWA_ZombieDrop.lua`, server / SP,
+    OnZombieDead -> zombie inventory): TWA_MaterialLump ZombieDropLump 0.5 %,
+    TWA_Gemstone ZombieDropGemstone 0.25 % (sandbox, logged with a total).
+  * Ore cost: a recipe whose base2 is Oridecon / Elunium / Bradium takes
+    sandbox OreCost (20) of it: S.base2Qty / base2Count / base2Ok /
+    takeExtraBase2 (CraftState). Start checks the whole count, takes the
+    chosen one + qty-1 more; snapshot base2.n; Cancel gives n back;
+    Incomplete keeps n in TWA_OrigBase2. UI cards "Have: 5 / need 20"
+    (IGUI_TWA_HaveNeed), guided row, list availability, AdminGrant gives the
+    missing number.
+- MIL 1.0.9 (owner 2026-11-20, a player thrown out twice while shoving
+  zombies; console: ~110 "EquipPacket.set get invalid arguments" in the 7 s
+  before, one every 2 frames): MFSTwoHandGripFix's watchdog put the weapon
+  back in an emptied off-hand every 3 frames with no limit -- each is an
+  equip packet. Now guns only (isRanged), never while shoving / attacking /
+  staggered / on the floor / climbing, one restore per 1.5 s, and 3 restores
+  within 15 s that do not hold -> stop 60 s (logged). Not proven to be the
+  only source of that flood (other mods equip too).
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).

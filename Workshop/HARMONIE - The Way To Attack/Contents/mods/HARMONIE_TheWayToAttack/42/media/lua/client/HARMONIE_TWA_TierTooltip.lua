@@ -61,9 +61,7 @@ require "HARMONIE_TWA_Display"
 
 -- Full 8-tier fixed-DPS scale -- SAME thresholds gen_craftdata.js bakes for
 -- non-weapon items, ported to Lua so weapon tier can be computed live here
--- too (see tierFromDps below). Legendary and Prototype swapped positions
--- (request 2026-09-26, full explicit table): Legendary is now DPS < 10,
--- Prototype is now the unbounded top tier DPS >= 10.
+-- too (see tierFromDps below). Thresholds: see the 1.2.1 note below.
 local TIER_NAMES = {
     [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
     [6] = "Elite", [7] = "Legendary", [8] = "Prototype",
@@ -73,13 +71,24 @@ local TIER_COLOR = {
     [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.55, b = 0.15 },
     [7] = { r = 1.0, g = 0.85, b = 0.15 }, [8] = { r = 0.85, g = 0.2, b = 0.15 },
 }
-local DPS_TIER_THRESHOLDS = { 0.25, 0.5, 1, 2, 4, 8, 10 }
+-- TWA 1.2.1 (owner 2026-11-20: "Prototype = DPS above 8, move the tiers below
+-- to fit"; no crafted weapon goes above the vanilla Katana's DPS 8):
+--   Junk < 0.25 <= Common < 0.5 <= Uncommon < 1 <= Rare < 2 <= Epic < 4
+--   <= Elite < 7 <= Legendary <= 8 < Prototype
+-- (only Elite / Legendary moved: Legendary was 8..10, Prototype >= 10).
+-- Every crafted weapon keeps its tier; gems can lift one past 8 = Prototype.
+local DPS_TIER_THRESHOLDS = { 0.25, 0.5, 1, 2, 4, 7 }
+TWATier = TWATier or {}
+TWATier.LEGENDARY_MAX = 8
 local function tierFromDps(dps)
+    dps = tonumber(dps) or 0
     for i, threshold in ipairs(DPS_TIER_THRESHOLDS) do
         if dps < threshold then return i end
     end
-    return #DPS_TIER_THRESHOLDS + 1
+    if dps <= TWATier.LEGENDARY_MAX + 0.000001 then return 7 end
+    return 8
 end
+TWATier.fromDps = tierFromDps
 
 -- Full weapon stat grid for the NON-weapon (static, fullType-keyed) path
 -- only -- same 2-column layout and same translation keys HARMONIE_TWA_

@@ -44,6 +44,8 @@ function TWA_StartCraftAction:isValid()
     if (self.recipe.base or self.baseItem) and not base then return false end
     -- R69: an unfinished item that carries its supplementary item needs none
     if self.recipe.base2 and not S.carriedBase2(base, self.recipe) and not S.resolveItem(self.character, self.base2Item) then return false end
+    -- 1.2.1: every ore the recipe needs (OreCost)
+    if self.recipe.base2 and not S.carriedBase2(base, self.recipe) and not S.base2Ok(self.character, self.recipe) then return false end
     return true
 end
 
@@ -108,8 +110,18 @@ function TWA_StartCraftAction:complete()
     -- Round 19: a fresh base must really fit the recipe (its type, and for
     -- gem refining the gem's state) -- the client's choice is checked here.
     if recipe.base and base and base:getModData().TWA_RecipeId ~= recipe.id and not S.baseOk(recipe, base) then return false end
+    -- 1.2.1: the whole ore cost must be there before anything is taken
+    if base2 and not S.base2Ok(self.character, recipe) then
+        TWALog("Craft", "start REFUSED for %s: %s needs %d x %s, has %d", TWALogName(self.character), tostring(recipe.id),
+            S.base2Qty(recipe), tostring(recipe.base2), S.base2Count(self.character, recipe))
+        return false
+    end
     local map = S.bookmarkMap(base, recipe.id)
     local baseSnap, base2Snap = S.snapshotItem(base), carried or S.snapshotItem(base2)
+    if base2 and base2Snap then
+        if not S.takeExtraBase2(self.character, recipe, base2) then return false end
+        base2Snap.n = S.base2Qty(recipe)
+    end
     if base then S.removeItem(self.character, base) end
     if base2 then S.removeItem(self.character, base2) end
     S.beginActive(self.character, recipe.id, map, baseSnap, base2Snap)

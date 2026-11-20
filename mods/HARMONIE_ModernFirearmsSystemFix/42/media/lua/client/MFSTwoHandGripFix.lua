@@ -56,7 +56,7 @@
 MFSTwoHandGripFix = MFSTwoHandGripFix or {}
 local Fix = MFSTwoHandGripFix
 
-Fix.VERSION = "1.1.0"
+Fix.VERSION = "1.2.0"
 Fix.ENABLED = true
 -- Set true to print one line each time the grip is restored.
 Fix.DEBUG = false
@@ -71,6 +71,26 @@ Fix.ARM_WINDOW_MS = 600
 Fix.armUntil = 0
 
 local badTicks = 0
+
+-- 1.2.0 (MIL 1.0.9, owner 2026-11-20: a player was thrown out of the server
+-- twice while shoving zombies; the console shows ~110 "EquipPacket.set get
+-- invalid arguments" in the 7 s before -- one equip every 2 frames). Every
+-- setSecondaryHandItem is an equip packet. When something keeps emptying the
+-- off-hand (a stagger / shove, TOC with a hand missing, the server refusing
+-- the equip) the old watchdog put the weapon back every 3 frames FOREVER.
+-- Now: firearms only (the MFS part-attach bug it was written for), never
+-- while shoving / attacking / staggered / on the floor, at most one restore
+-- per RESTORE_GAP_MS, and when a restore does not hold (GIVE_UP_AFTER
+-- restores within GIVE_UP_WINDOW_MS) it stops for GIVE_UP_MS and logs why.
+Fix.RESTORE_GAP_MS = 1500
+Fix.GIVE_UP_AFTER = 3
+Fix.GIVE_UP_WINDOW_MS = 15000
+Fix.GIVE_UP_MS = 60000
+local recent, pausedUntil, restoredTotal = {}, 0, 0
+local function log(fmt, ...)
+    local ok, msg = pcall(string.format, fmt, ...)
+    print("[HARMONIE_MFSFix][GripFix] " .. (ok and msg or tostring(fmt)))
+end
 
 local function safe(fn, fallback)
     local ok, v = pcall(fn)
@@ -102,12 +122,24 @@ function Fix.brokenGrip(player)
     if not safe(function() return weapon:isTwoHandWeapon() end, false) then
         return nil
     end
+    -- 1.2.0: guns only -- a two-handed melee weapon is never ours to fix
+    if not safe(function() return weapon:isRanged() end, false) then
+        return nil
+    end
     -- ONLY when the off-hand is genuinely empty. If the player is holding
     -- something else we leave it alone - that is their business, not ours.
     if safe(function() return player:getSecondaryHandItem() end, nil) ~= nil then
         return nil
     end
     return weapon
+end
+
+-- 1.2.0: the moments the game itself frees a hand -- never fight them
+local function busyBody(player)
+    local function is(m) return safe(function() return player[m] and player[m](player) end, false) == true end
+    return is("isDoShove") or is("isAttacking") or is("isPerformingAnAction") or is("isKnockedDown")
+        or is("isOnFloor") or is("isSitOnGround") or is("isClimbing")
+        or safe(function() local r = player:getHitReaction(); return r ~= nil and r ~= "" end, false)
 end
 
 function Fix.restore(player, why)
@@ -118,11 +150,39 @@ function Fix.restore(player, why)
     if not weapon then
         return false
     end
+    if busyBody(player) then
+        return false
+    end
+    local now = safe(function() return getTimestampMs() end, 0)
+    if now < pausedUntil then
+        return false
+    end
+    local last = recent[#recent]
+    if last and now - last < Fix.RESTORE_GAP_MS then
+        return false
+    end
+    -- keep only the restores inside the window
+    local keep = {}
+    for _, t in ipairs(recent) do if now - t < Fix.GIVE_UP_WINDOW_MS then keep[#keep + 1] = t end end
+    recent = keep
+    if #recent >= Fix.GIVE_UP_AFTER then
+        pausedUntil = now + Fix.GIVE_UP_MS
+        recent = {}
+        log("the off-hand keeps emptying (%d restores in %d s did not hold) on %s -- stopped for %d s so no equip flood",
+            Fix.GIVE_UP_AFTER, Fix.GIVE_UP_WINDOW_MS / 1000, tostring(safe(function() return weapon:getFullType() end, "?")), Fix.GIVE_UP_MS / 1000)
+        return false
+    end
+    recent[#recent + 1] = now
     local ok = pcall(function()
         -- Exactly what ISEquipWeaponAction with twoHands=true does: the SAME
         -- item occupies both hands.
         player:setSecondaryHandItem(weapon)
     end)
+    restoredTotal = restoredTotal + 1
+    if ok and (restoredTotal <= 3 or restoredTotal % 50 == 0) then
+        log("two-handed grip restored (%s) on %s -- %d this session", tostring(why),
+            tostring(safe(function() return weapon:getFullType() end, "?")), restoredTotal)
+    end
     if ok and Fix.DEBUG then
         print("[MFS] TwoHandGripFix restored two-handed grip (" .. tostring(why) .. ") on "
               .. tostring(weapon:getType()))
