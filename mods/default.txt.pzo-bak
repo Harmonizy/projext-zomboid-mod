@@ -1,0 +1,11 @@
+VERSION = 1,
+
+mods
+{
+    mod = ThaiB42,
+    mod = ThaiMediaB42,
+}
+
+maps
+{
+}
