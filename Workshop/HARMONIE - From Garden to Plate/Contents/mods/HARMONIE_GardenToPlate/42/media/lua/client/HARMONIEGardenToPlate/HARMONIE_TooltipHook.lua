@@ -139,7 +139,14 @@ local function buildPrepLines(item)
         -- GTP 1.8.0: who cooked it, and whether the cook left a note
         if d.chef then
             local hasNote = type(d.note) == "table" and type(d.note.t) == "string" and d.note.t ~= ""
-            lines[#lines + 1] = { text = txt(hasNote and "IGUI_GTPN_TipChefNote" or "IGUI_GTPN_TipChef", tostring(d.chef)), r = 0.95, g = 0.88, b = 0.7 }
+            local text
+            if hasNote and d.note.by and d.note.by ~= d.chef then
+                -- someone else added last: the note is still its writer's
+                text = txt("IGUI_GTPN_TipChefNoteBy", tostring(d.chef), tostring(d.note.by))
+            else
+                text = txt(hasNote and "IGUI_GTPN_TipChefNote" or "IGUI_GTPN_TipChef", tostring(d.chef))
+            end
+            lines[#lines + 1] = { text = text, r = 0.95, g = 0.88, b = 0.7 }
         end
         if tier < 0 then
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBad"), r = 1.0, g = 0.45, b = 0.4 }

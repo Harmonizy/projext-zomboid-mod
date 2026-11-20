@@ -491,6 +491,13 @@
   3 s wash for "redo" -- both gone (result / redo sent at once; only a
   5-tick wait after bringing an item from a box). Server minimum after
   "begin" 2.5 s -> 1 s (R.MIN_GAME_MS). CookStepAction stays defined (unused).
+- GTP 1.8.3 (owner: "someone who is not the cook must not write over the
+  cook's note"): a note belongs to its WRITER (note.by). It now stays on the
+  dish whoever adds to it or crafts from it (bowls keep the note); only the
+  writer may change / remove it (N.canWrite + server "notWriter" refusal);
+  a dish's cook may write only when no one else's note is on it. Tooltip
+  "Made by B - has a note from A" when they differ. N.told pruned every 50
+  eats. R.MIN_GAME_MS 1 s -> 0.5 s (quick one-click games).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

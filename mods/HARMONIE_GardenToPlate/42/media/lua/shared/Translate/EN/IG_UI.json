@@ -767,5 +767,7 @@
     "IGUI_GTPP_Card_Practice": "Practice minigames",
     "IGUI_GTPP_PracticeIntro": "Practice only: no food is used, nothing is scored or counted. Prepare real food on the Prepare page.",
     "IGUI_GTPP_StartGame": "Start",
-    "IGUI_GTPP_MenuTagDish": "[%1 -> dish %2]"
+    "IGUI_GTPP_MenuTagDish": "[%1 -> dish %2]",
+    "IGUI_GTPN_TipChefNoteBy": "Made by %1 - has a note from %2",
+    "IGUI_GTPN_Refused_notWriter": "This note belongs to the cook who wrote it"
 }
