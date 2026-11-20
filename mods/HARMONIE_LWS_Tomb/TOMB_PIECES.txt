@@ -182,3 +182,29 @@ Tomb_PleatedSkirt_MidWaist_Short	TombAlternative.PleatedSkirt_MidWaist_Short	bot
 Tomb_PleatedSkirt_LowWaist_Long	TombAlternative.PleatedSkirt_LowWaist_Long	bottom	10	Low waist Pleated Skirt - Long	กระโปรงพลีทยาวเอวต่ำ
 Tomb_PleatedSkirt_LowWaist_Mid	TombAlternative.PleatedSkirt_LowWaist_Mid	bottom	10	Low waist Pleated Skirt	กระโปรงพลีทเอวต่ำ
 Tomb_PleatedSkirt_LowWaist_Short	TombAlternative.PleatedSkirt_LowWaist_Short	bottom	10	Low waist Pleated Skirt - Short	กระโปรงพลีทสั้นเอวต่ำ
+Tomb_Bag_Small_Loose	TombAlternative.Bag_Small_Loose	back	8	Small Goth Bag	กระเป๋าโกธิคใบเล็ก
+Tomb_Bag_Small_Tight	TombAlternative.Bag_Small_Tight	back	8	Small Goth Bag	กระเป๋าโกธิคใบเล็ก
+Tomb_Bag_Small_Satchel_Loose	TombAlternative.Bag_Small_Satchel_Loose	back	8	Small Goth Satchel	กระเป๋าสะพายโกธิคใบเล็ก
+Tomb_Bag_Small_Satchel_Tight	TombAlternative.Bag_Small_Satchel_Tight	back	8	Small Goth Satchel	กระเป๋าสะพายโกธิคใบเล็ก
+Tomb_Bag_Coffin_Loose	TombAlternative.Bag_Coffin_Loose	back	8	Coffin Backpack	กระเป๋าเป้ทรงโลงศพ
+Tomb_Bag_Coffin_Tight	TombAlternative.Bag_Coffin_Tight	back	8	Coffin Backpack	กระเป๋าเป้ทรงโลงศพ
+Tomb_Bag_Coffin_Satchel_Loose	TombAlternative.Bag_Coffin_Satchel_Loose	back	8	Coffin Satchel	กระเป๋าสะพายทรงโลงศพ
+Tomb_Bag_Coffin_Satchel_Tight	TombAlternative.Bag_Coffin_Satchel_Tight	back	8	Coffin Satchel	กระเป๋าสะพายทรงโลงศพ
+Tomb_Bag_Goth_Loose	TombAlternative.Bag_Goth_Loose	back	8	Goth Backpack	กระเป๋าเป้โกธิค
+Tomb_Bag_Goth_Tight	TombAlternative.Bag_Goth_Tight	back	8	Goth Backpack	กระเป๋าเป้โกธิค
+Tomb_Bag_L_Loose	TombAlternative.Bag_L_Loose	back	8	Large Goth Backpack	กระเป๋าเป้โกธิคขนาดใหญ่
+Tomb_Bag_L_Tight	TombAlternative.Bag_L_Tight	back	8	Large Goth Backpack	กระเป๋าเป้โกธิคขนาดใหญ่
+Tomb_Bag_XLCoffin_Tight	TombAlternative.Bag_XLCoffin_Tight	back	10	XL Coffin Backpack	กระเป๋าเป้ทรงโลงศพ XL
+Tomb_Bag_XLCoffin_Loose	TombAlternative.Bag_XLCoffin_Loose	back	10	XL Coffin Backpack	กระเป๋าเป้ทรงโลงศพ XL
+Tomb_Bag_Duffel_Tight	TombAlternative.Bag_Duffel_Tight	back	8	Goth Duffel Bag	กระเป๋าดัฟเฟิลโกธิค
+Tomb_Bag_Duffel_Loose	TombAlternative.Bag_Duffel_Loose	back	8	Goth Duffel Bag	กระเป๋าดัฟเฟิลโกธิค
+Tomb_Bag_Duffel_Satchel_Tight	TombAlternative.Bag_Duffel_Satchel_Tight	back	8	Goth Duffel Bag- Low Slung	กระเป๋าดัฟเฟิลโกธิค - สะพายต่ำ
+Tomb_Bag_Duffel_Satchel_Loose	TombAlternative.Bag_Duffel_Satchel_Loose	back	8	Goth Duffel Bag- Low Slung	กระเป๋าดัฟเฟิลโกธิค - สะพายต่ำ
+Tomb_Goth_ChestRig_Tight	TombAlternative.Goth_ChestRig_Tight	outer	2	Goth Chest Rig	เชสต์ริกโกธิค
+Tomb_Goth_ChestRig_Loose	TombAlternative.Goth_ChestRig_Loose	outer	2	Goth Chest Rig	เชสต์ริกโกธิค
+Tomb_Goth_ChestRigFull_Tight	TombAlternative.Goth_ChestRigFull_Tight	outer	2	Goth Chest Rig - Full	เชสต์ริกโกธิค - แบบเต็ม
+Tomb_Goth_ChestRigFull_Loose	TombAlternative.Goth_ChestRigFull_Loose	outer	2	Goth Chest Rig - Full	เชสต์ริกโกธิค - แบบเต็ม
+Tomb_Goth_Fanny_Front_Tight	TombAlternative.Goth_Fanny_Front_Tight	waist	2	Goth Fanny Pack	กระเป๋าคาดเอวโกธิค
+Tomb_Goth_Fanny_Front_Loose	TombAlternative.Goth_Fanny_Front_Loose	waist	2	Goth Fanny Pack	กระเป๋าคาดเอวโกธิค
+Tomb_Goth_Fanny_Back_Tight	TombAlternative.Goth_Fanny_Back_Tight	waist	2	Goth Fanny Pack (Back)	กระเป๋าคาดเอวโกธิค (ด้านหลัง)
+Tomb_Goth_Fanny_Back_Loose	TombAlternative.Goth_Fanny_Back_Loose	waist	2	Goth Fanny Pack (Back)	กระเป๋าคาดเอวโกธิค (ด้านหลัง)

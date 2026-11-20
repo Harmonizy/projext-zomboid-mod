@@ -3,9 +3,10 @@
     player carries becomes the Life With Style piece made from it, in that
     player's wardrobe (owner 2026-11-20, choice "c"). Server / SP only, every
     10 s for each player: body, worn and bags (any depth). The colour it had
-    (its texture choice) is kept. Tomb's bags are left alone: they are real
-    containers, crafted in The Way To Attack. A Tomb item with no piece is left
-    alone too (logged once per type).
+    (its texture choice) is kept. Tomb's bags are fashion too (owner, second
+    plan) but a bag converts only when it is EMPTY -- otherwise the player is
+    told to empty it first (once a minute), nothing inside is ever lost. A
+    Tomb item with no piece is left alone (logged once per type).
 ]]--
 
 require "HARMONIELWSTomb/LWST_Data"
@@ -29,8 +30,8 @@ local function collect(inv, out, depth)
     for i = 0, (items and items:size() or 0) - 1 do
         local it = items:get(i)
         local t = tostring(call(it, "getFullType") or "")
-        if LWST.isTomb and LWST.isTomb(t) and not (LWST.BAG and LWST.BAG[t]) then
-            out[#out + 1] = { inv = inv, item = it, type = t }
+        if LWST.isTomb and LWST.isTomb(t) then
+            out[#out + 1] = { inv = inv, item = it, type = t, bag = LWST.BAG and LWST.BAG[t] or false }
         end
         local sub = call(it, "getInventory")
         if sub then collect(sub, out, depth + 1) end
@@ -48,6 +49,25 @@ function LWST.convertPlayer(player)
     local o = LWS.Server.owner(key, true)
     local n = 0
     for _, f in ipairs(found) do
+        -- a bag with something in it waits until it is empty
+        if f.bag then
+            local sub = call(f.item, "getInventory")
+            local items = sub and call(sub, "getItems")
+            if items and items:size() > 0 then
+                local nowMs = getTimestampMs and getTimestampMs() or 0
+                LWST.toldFull = LWST.toldFull or {}
+                local k = LWS.name(player) .. "|" .. f.type
+                if nowMs - (LWST.toldFull[k] or 0) > 60000 then
+                    LWST.toldFull[k] = nowMs
+                    log("%s carries %s with %d item(s) inside -- waits until it is empty", LWS.name(player), f.type, items:size())
+                    LWS.toClient(player, "Msg", { key = "IGUI_LWST_EmptyBag", arg = LWS.pieceName(LWS.PIECE_BY_SRC[f.type] or ""), text = true })
+                end
+                f.skip = true
+            end
+        end
+        if f.skip then
+            -- nothing
+        else
         local pid = LWS.PIECE_BY_SRC and LWS.PIECE_BY_SRC[f.type]
         if not pid or not LWS.PIECE[pid] then
             if not noPiece[f.type] then noPiece[f.type] = true; log("%s has %s, which has no fashion piece -- left alone", LWS.name(player), f.type) end
@@ -68,6 +88,7 @@ function LWST.convertPlayer(player)
             n = n + 1
             log("%s: real %s (colour %d) -> wardrobe piece %s #%s", LWS.name(player), f.type, tex + 1, pid, uid)
             LWS.toClient(player, "Msg", { key = "IGUI_LWST_Converted", arg = LWS.pieceName(pid), text = true })
+        end
         end
     end
     if n > 0 then

@@ -1,8 +1,8 @@
 name=HARMONIE - Life With Style: Tomb's Wardrobe
 id=HARMONIE_LWS_Tomb
-description=Add-on for HARMONIE - Life With Style. The clothes of Tomb's Wardrobe - Alternative become Life With Style fashion pieces (181 pieces, every colour can be picked in the wardrobe): gacha / admin rewards that belong to the player's account, never drop, weigh nothing and protect nothing. Nothing of Tomb's Wardrobe turns up in the world any more: its loot rows and zombie outfits are removed. A real Tomb's Wardrobe clothing item a player carries becomes the matching wardrobe piece. Tomb's bags are not fashion: The Way To Attack crafts them. Load it AFTER Tomb's Wardrobe - Alternative. Needs Tomb's Player Body and Tomb's Wardrobe - Alternative (Tomb's Player Body - Compatibility recommended). English and Thai.
+description=Add-on for HARMONIE - Life With Style. The clothes and bags of Tomb's Wardrobe - Alternative become Life With Style fashion pieces (207 pieces, every colour can be picked in the wardrobe): gacha / admin rewards that belong to the player's account, never drop, weigh nothing and protect nothing. Nothing of Tomb's Wardrobe turns up in the world any more: its loot rows and zombie outfits are removed. A real Tomb's Wardrobe item a player carries becomes the matching wardrobe piece (a bag only once it is empty -- nothing inside is lost). Real carrying is vanilla bags, which The Way To Attack can upgrade. Load it AFTER Tomb's Wardrobe - Alternative. Needs Tomb's Player Body and Tomb's Wardrobe - Alternative (Tomb's Player Body - Compatibility recommended). English and Thai.
 poster=poster.png
 icon=icon.png
 require=HARMONIE_LifeWithStyle,TombBody,TombWardrobeALT
-modversion=1.0.0
+modversion=1.1.0
 versionMin=42.0.0

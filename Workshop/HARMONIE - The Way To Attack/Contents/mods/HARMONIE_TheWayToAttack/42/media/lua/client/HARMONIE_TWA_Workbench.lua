@@ -28,9 +28,10 @@ W.TAB_H = 64
 W.TABS = {
     { id = "weapons", key = "IGUI_TWA_Tab_Weapons" },
     { id = "materials", key = "IGUI_TWA_Tab_Materials" },
-    -- 1.1.0: Tomb's Wardrobe bags (drawn only when its mod is loaded)
-    { id = "bags", key = "IGUI_TWA_Tab_Bags", when = function() return TWABags and TWABags.anyAvailable() end },
+    -- 1.2.0: bag upgrade items and bag tiers (recipes), and fitting them
+    { id = "bags", key = "IGUI_TWA_Tab_Bags" },
     { id = "modify", key = "IGUI_TWA_Tab_Modify" },
+    { id = "bagmod", key = "IGUI_TWA_Tab_BagMod" },
     { id = "guide", key = "IGUI_TWA_Tab_Guide" },
 }
 -- yellow theme (Home Medic's palette with the blues turned amber)
@@ -60,6 +61,7 @@ W.GUIDE = {
     { key = "Pause", pic = "guide_pause" },
     { key = "Practice", pic = "guide_practice" },
     { key = "Modify", pic = "guide_modify" },
+    { key = "Bags" },
     { key = "Settings", pic = "guide_settings" },
 }
 
@@ -67,7 +69,7 @@ local MATERIAL_CATS = { Material = true, Gem = true }
 function TWACraftUI.isMaterialCategory(cat) return MATERIAL_CATS[cat] == true end
 -- 1.1.0: which recipe tab a category belongs to (weapons / materials / bags)
 function TWACraftUI.scopeOf(cat)
-    if cat == "Bag" then return "bags" end
+    if cat == "BagUp" or cat == "BagTier" then return "bags" end
     if MATERIAL_CATS[cat] then return "materials" end
     return "weapons"
 end
@@ -166,6 +168,11 @@ function TWACraftWindow:createWorkbenchChildren(contentTop, panelBottom)
     -- in the card; no parts button
     self.gemPanel = TWAGemSocketUI.embed(self, 10, contentTop, w - 20, panelBottom - contentTop, self.player)
     self.pageWidgets.modify = { self.gemPanel }
+    -- 1.2.0: tab "modify bag"
+    if TWABagUpUI then
+        self.bagUpPanel = TWABagUpUI.embed(self, 10, contentTop, w - 20, panelBottom - contentTop, self.player)
+        self.pageWidgets.bagmod = { self.bagUpPanel }
+    end
 
     -- tab 5: one button per chapter, previous / next
     self.guideButtons = {}
@@ -356,7 +363,9 @@ end
 
 -- tabs 4 and 5
 function TWACraftWindow:renderWorkbenchPage()
-    if self.page == "modify" then self:renderModify() else self:renderGuide() end
+    if self.page == "modify" then self:renderModify()
+    elseif self.page == "bagmod" then return
+    else self:renderGuide() end
 end
 
 function TWACraftWindow:heldWeapon()
@@ -806,6 +815,8 @@ function TWACraftWindow:drawPageCards()
         local title = getText("IGUI_TWA_Card_GemSockets")
         if wpn then title = title .. ": " .. wpn:getDisplayName() end
         self:drawCard(4, top, self.width - 8, bottom - top, title)
+    elseif page == "bagmod" then
+        self:drawCard(4, top, self.width - 8, bottom - top, getText("IGUI_TWA_Card_BagMod"))
     elseif page == "guide" then
         local gw = S(self, 220)
         self:drawCard(4, top, gw + 12, bottom - top, getText("IGUI_TWA_Card_Chapters"))

@@ -376,7 +376,8 @@ local CATEGORY_TABS = {
     { key = "Spear", label = "Spear" },
     { key = "Material", label = "Material" },
     { key = "Gem", label = "Gem" }, -- round 16: the Gemstone recipe
-    { key = "Bag", labelKey = "IGUI_TWA_FilterBag" }, -- 1.1.0: Tomb's Wardrobe bags
+    { key = "BagUp", labelKey = "IGUI_TWA_FilterBagUp" },     -- 1.2.0: bag upgrade items
+    { key = "BagTier", labelKey = "IGUI_TWA_FilterBagTier" }, -- 1.2.0: bag tiers
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
@@ -648,8 +649,6 @@ function TWARecipeScrollList:matches(recipe)
     if self.scope ~= TWACraftUI.scopeOf(recipe.category) then
         return false
     end
-    -- 1.1.0: a bag recipe whose bag does not exist (Tomb's Wardrobe not loaded)
-    if TWABags and not TWABags.available(recipe) then return false end
     if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and self.filterCategory ~= "Favorites"
             and recipe.category ~= self.filterCategory then
         return false
@@ -1997,6 +1996,8 @@ function TWACraftWindow:startCenterAction(kind)
             window:endActive()
             -- Round 19: gem refining -- watch for the result (a break opens
             -- the short shatter window).
+            -- 1.2.0: bag recipes have no grade to reveal
+            if recipe.bagTier or recipe.bagUp then return end
             if recipe.keepType and TWAGemBreak then TWAGemBreak.watch(window.player, token) return end
             if TWAConfig.on("GradeReveal") then
                 -- Round 16: the Gemstone recipe has its own show (the roll).
@@ -2770,7 +2771,7 @@ function TWACraftWindow:renderBody()
     self:updateContinueButton()
     self:drawWorkbenchHeader()
     -- R69: the modify and guide tabs draw themselves (TWAWorkbench)
-    if self.page == "modify" or self.page == "guide" then
+    if self.page == "modify" or self.page == "guide" or self.page == "bagmod" then
         self:renderWorkbenchPage()
         self:drawLockNotice()
         self:drawHoverTooltip()
@@ -2880,7 +2881,7 @@ function TWACraftWindow:renderBody()
     -- the base-item card/procedure grid just start higher up instead.
     local statTop = centerY + TWAFont.grow(S(26), TWAFont.medium()) + TWAFont.lineH() + S(4)
     local statY = statTop
-    if recipe.category ~= "Material" and not recipe.roll and not recipe.keepType then
+    if recipe.category ~= "Material" and not recipe.roll and not recipe.keepType and not recipe.bagUp then
         statY = self:drawStatGrid(centerX + ICON + 12, statTop, CENTER_W - ICON - 20)
     end
 
@@ -3092,6 +3093,10 @@ function TWACraftWindow:renderBody()
         local note = getText("IGUI_TWA_GemFinishRule", tostring(S.gemChance("Excellent")), tostring(S.gemChance("Good")), tostring(S.gemChance("Bad")))
         self:drawNoteAboveButtons(note, centerX)
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishGem"))
+    elseif (recipe.bagTier or recipe.bagUp) and TWABagUp then
+        -- 1.2.0: what the bag recipe needs / gives
+        self:drawNoteAboveButtons(TWABagUp.recipeNote(recipe), centerX)
+        self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     elseif recipe.keepType then
         -- Round 19: gem refining -- the state needed and the break chances.
         local S = TWACraftState

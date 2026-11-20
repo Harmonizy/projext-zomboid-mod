@@ -323,19 +323,50 @@
   read. Root bug: settings oget was `O.get and O.get(id,d) or d`, so a false
   value read back as the default true -- never write and/or with a boolean
   value; oget now checks nil.
-- TWA 1.1.0 (owner 2026-11-20): tab "bags" = the 9 Tomb's Wardrobe bags
-  (`shared/HARMONIE_TWA_TombBags.lua`, TWABags): one recipe per bag family,
-  result its "_Loose" type (Tomb's right-click switches tight / satchel),
-  category "Bag", raw materials (leather hides / denim / leather strips +
-  Buckle or Tarp), steps SewBag (new, suture minigame, Needle + thread,
-  Tailoring 2, category "Tailoring") + WrapCloth / WrapLeather / StringSinew.
-  Quality -> weight reduction +5 / 0 / -5 (md.TWA_BagWR, no TWA_Grade); an
-  unfinished bag has capacity 0 (md.TWA_BagEmpty); both are put back on
-  carried bags every 30 s (TWABags.maintain -- an item's own capacity /
-  weight reduction is not saved). Recipes hidden and the tab not drawn when
-  the result script is missing (TWABags.available, W.TABS entry `when`,
-  W.visibleTabs; the hub's fromTabs honours `when`). Recipe tabs are scopes
-  weapons / materials / bags via `TWACraftUI.scopeOf(category)`.
+- TWA 1.2.0 (owner 2026-11-20, replaces 1.1.0's Tomb bag crafting -- Tomb's
+  bags are LWS fashion now): BAG UPGRADES, `shared/HARMONIE_TWA_BagUpgrade.lua`
+  (TWABagUp) + `client/HARMONIE_TWA_BagUpgradeUI.lua` (tab "bagmod" + hotbar).
+  * 86 wearable vanilla bags (B.BAGS, from container.txt: back, satchel,
+    webbing, fanny, ammo strap, shoulder holster). md.TWA_BagTier 0..5,
+    md.TWA_BagUps = "type;type" (a STRING -- no table holes), md.TWA_BagBase =
+    the bag's first values (captured once, never again).
+  * Recipes (tab "bags", categories BagUp / BagTier, scopeOf -> "bags"): 35
+    items TWA_BagUp_* (7 kinds x 5 tiers: cap +1..5, wr +2..10, run / combat
+    +0.005..0.025, weight -0.1..0.5, attachS / attachL +1 hotbar slot), steps
+    BagCutN + BagSewN; 5 tier recipes Make_BagTierN (keepType + bagTier,
+    steps BagSewN + BagFitN). Every step of tier N = Tailoring N (owner: same
+    ceiling as forging, Blacksmith 1..5), time N*10+10, minigames incision /
+    suture / wrap (client Minigame.lua loop). T3/T4/T5 base2 = Oridecon /
+    Elunium / Bradium (same order as Epic / Elite / Legendary bars).
+  * Tier recipe base must be the bag at tier N-1, EMPTY, not worn / not on the
+    hotbar, not unfinished (CraftState.baseOk -> TWABagUp.tierBaseOk; Start
+    removes the base, so items inside would be lost). Finish ->
+    TWABagUp.finishTier (same type, md copied, tier N, colour restored from
+    snapshotItem's new `tex`); no break, no grade reveal. Unfinished bag ->
+    capacity 0 (apply sees md.TWA_Incomplete).
+  * Rules: item tier <= bag tier; slots = tier; the same item type once per
+    bag (same kind from another item is fine); removing a capacity item is
+    refused while the contents would not fit; removal returns the item with
+    10 + 9 x Tailoring percent (100 at 10), else lost. Caps: cap 50, wr 95,
+    run / combat 1.00, weight >= 0.1.
+  * MP: client "bagUp" {op install|remove}, server re-checks everything,
+    answers "bagUpSync" (md) / "bagUpMsg" (reason key). The game does not
+    save an item's own capacity / WR / speeds -> TWABagUp.apply on server and
+    clients every 5 s, after each change, in a wrapped
+    ISInventoryTransferAction.isValid (bags in boxes / on the floor) and on
+    OnRefreshInventoryWindowContainers. Setters are tested before use; the
+    admin test "BagUpProbe" logs which exist (UNVERIFIED in game:
+    setRunSpeedModifier / setCombatSpeedModifier on InventoryContainer).
+  * Hotbar: our own slot types TWABagS1..10 / TWABagL1..10 (attachments
+    COPIED at runtime from SmallBeltLeft/Right, HolsterRight/Left). Wrapped
+    ISHotbar:haveThisSlot answers yes for the slots worn bags give (so
+    refresh does not drop them), ISHotbar:refresh adds the missing ones after
+    the original; a signature check every 2 s forces a refresh when attach
+    upgrades change. No vanilla code is copied (repo is public).
+    UNVERIFIED in MP: whether the server accepts an attach to our slot types.
+- TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
+  weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
+  entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"
@@ -905,8 +936,10 @@
   from ZombiesZoneDefinition at boot, a dying zombie loses any Tomb item.
   LWST_Convert (server / SP, every 10 s): a real Tomb CLOTHING item a player
   carries (any bag depth) becomes that player's wardrobe piece with its colour
-  (owner choice); Tomb's 26 bags (9 families, Loose/Tight/Satchel switched by
-  Tomb's own right-click) stay real -- The Way To Attack crafts them. Tomb's
+  (owner choice). 1.1.0: Tomb's 26 bags are fashion pieces too (207 pieces;
+  slot from CanBeEquipped: back / satchel / duffel / coffin -> "back", fanny
+  -> waist, webbing -> outer); a real bag converts only when EMPTY, else the
+  player is told (IGUI_LWST_EmptyBag, once a minute). Tomb's
   code uses a global `TWA` table and `twa:` body locations: unrelated to our
   The Way To Attack (we never use either); its log prefix is "[TWA]".
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the

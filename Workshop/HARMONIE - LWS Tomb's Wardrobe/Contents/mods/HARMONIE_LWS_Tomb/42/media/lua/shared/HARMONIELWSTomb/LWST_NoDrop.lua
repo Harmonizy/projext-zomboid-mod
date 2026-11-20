@@ -1,7 +1,7 @@
 --[[
     HARMONIE - LWS: Tomb's Wardrobe -- nothing of Tomb's Wardrobe turns up in
-    the world (owner 2026-11-20: its clothes are gacha fashion, its bags are
-    crafted in The Way To Attack).
+    the world (owner 2026-11-20: its clothes and bags are gacha fashion; real
+    carrying is vanilla bags, upgraded in The Way To Attack).
 
     Tomb's mod puts its items in the world two ways; both are taken out here:
       * loot: TombWardrobe_ProceduralDistributions.lua adds TombAlternative.*

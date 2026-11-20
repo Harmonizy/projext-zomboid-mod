@@ -1,3 +1,4 @@
 {
-    "IGUI_LWST_Converted": "Tomb's Wardrobe clothes moved to your wardrobe: %1"
+    "IGUI_LWST_Converted": "Tomb's Wardrobe clothes moved to your wardrobe: %1",
+    "IGUI_LWST_EmptyBag": "Empty this Tomb's Wardrobe bag to move it to your wardrobe: %1"
 }
