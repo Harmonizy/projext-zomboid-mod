@@ -411,6 +411,14 @@
   G.syncScriptDamage (applyDamage): an older copy of OUR weapon without gems
   / override gets the script damage. DamageShare: the client caps itself at
   RATE_PER_SEC. Material Lump weight 2.0 -> 1.0 (owner).
+- TWA 1.2.5: Material Lump stack 5 under Inventory Tetris (the owner's
+  server runs it; vanilla has no stack limit) --
+  `shared/HARMONIE_TWA_TetrisCompat.lua` calls
+  TetrisItemData.registerItemDefinitions({ [type] = { width = 1, height = 1,
+  maxStackSize = 5 } }) at load and OnGameBoot, ONLY when that function
+  exists. The API shape is from memory (the mod's source was not readable):
+  the console says registered / not loaded / no such function (and lists
+  TetrisItemData's functions) -- check it on the server.
 - MIL 1.0.10 (disconnect while shoving, second pass): the console's flood is
   "EquipPacket.set get invalid arguments" -- equip / attach packets for items
   the server cannot match. MIL draws gun parts and shields with FAKE items
