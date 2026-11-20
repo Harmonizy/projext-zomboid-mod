@@ -171,14 +171,38 @@ end
 
 -- whole UTF-8 characters, with Thai vowel / tone marks kept on the letter
 -- before them (U+0E31, U+0E34-0E3A, U+0E47-0E4E never start a piece)
+-- Hub 2026-11-20: in the game (Kahlua) a string is a Java string -- a Thai
+-- letter is ONE char with its code point (~3600) -- and a UTF-8 byte
+-- pattern never matches it, so the old gmatch DROPPED every Thai letter of a
+-- word wider than the line. Plain Lua (tests) sees UTF-8 bytes. Both are
+-- read here: a code above 255 is one character, a UTF-8 lead byte takes its
+-- tail; the Thai code point decides mark / leading vowel.
+local function nextChar(s, i)
+    local b = s:byte(i) or 0
+    if b > 255 then return s:sub(i, i), b, i + 1 end
+    if b >= 194 and b <= 244 then
+        local len = b >= 240 and 4 or (b >= 224 and 3 or 2)
+        local cp = b % (len == 2 and 32 or (len == 3 and 16 or 8))
+        for k = 1, len - 1 do
+            local c = s:byte(i + k)
+            if not c or c < 128 or c > 191 then return s:sub(i, i), b, i + 1 end
+            cp = cp * 64 + (c - 128)
+        end
+        return s:sub(i, i + len - 1), cp, i + len
+    end
+    return s:sub(i, i), b, i + 1
+end
+BN.nextChar = nextChar
 local function clusters(word)
     local out, prevLead = {}, false
-    for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
-        local b1, b2, b3 = ch:byte(1, 3)
-        local mark = b1 == 0xE0 and ((b2 == 0xB8 and (b3 == 0xB1 or (b3 >= 0xB4 and b3 <= 0xBA)))
-            or (b2 == 0xB9 and b3 >= 0x87 and b3 <= 0x8E))
+    word = tostring(word or "")
+    local i = 1
+    while i <= #word do
+        local ch, cp, ni = nextChar(word, i)
+        i = ni
+        local mark = cp == 0x0E31 or (cp >= 0x0E34 and cp <= 0x0E3A) or (cp >= 0x0E47 and cp <= 0x0E4E)
         -- a leading vowel (U+0E40-0E44: เ แ โ ใ ไ) goes with the letter after it
-        local lead = b1 == 0xE0 and b2 == 0xB9 and b3 >= 0x80 and b3 <= 0x84
+        local lead = cp >= 0x0E40 and cp <= 0x0E44
         if (mark or prevLead) and #out > 0 then out[#out] = out[#out] .. ch else out[#out + 1] = ch end
         prevLead = lead and not mark
     end

@@ -33,7 +33,9 @@ local T, shadowText, fit, inside, clickable, lineH, fh, tw, texture =
     U.T, U.shadowText, U.fit, U.inside, U.clickable, U.lineH, U.fh, U.tw, U.texture
 local log = function(fmt, ...) R.log(fmt, ...) end
 
-H.COOK_PAGES = { "prep", "evo", "craft" }
+-- GTP 1.8.1: practice has its own page (owner: a Practice button on every
+-- minigame row looked like the button that does it)
+H.COOK_PAGES = { "prep", "evo", "craft", "practice" }
 H.PREP_WATCHDOG_MS = 10000
 
 -- GTP 1.4.0 (#15): this player's minigame record, kept on this computer
@@ -246,7 +248,7 @@ function Win:renderCook(x, y, w, h)
     local C = H.C
     local sf = H.small()
     local page = self.cookPage
-    if page ~= "prep" and page ~= "evo" and page ~= "craft" then page = "prep"; self.cookPage = page end
+    if page ~= "prep" and page ~= "evo" and page ~= "craft" and page ~= "practice" then page = "prep"; self.cookPage = page end
     -- the run watchdog: the queue can drop our chain (vanilla clears it when
     -- one action turns invalid) -- never leave the tab stuck "in progress"
     local run = self.prepRun
@@ -282,6 +284,7 @@ function Win:renderCook(x, y, w, h)
     end
     if page == "prep" then return self:renderCookPrep(x, y, w, h) end
     if page == "evo" then return self:renderCookEvo(x, y, w, h) end
+    if page == "practice" then return self:renderCookPractice(x, y, w, h) end
     return self:renderCookCraft(x, y, w, h)
 end
 
@@ -517,7 +520,7 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
     local scan = K.scan(self.player)
     local rowH = lh * 2 + 12
     local boxTop, boxBottom = cy, y + h - 6
-    local pl = T("IGUI_GTPP_Practice")
+    local pl = T("IGUI_GTPP_StartGame")
     local pw = tw(sf, pl) + 20
     self:scrolled("prepGames", cx, cy, cw, boxBottom - cy, function(yy)
         local start = yy
@@ -549,13 +552,82 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
             if stat then sub = sub .. "  ·  " .. stat end
             shadowText(self, fit(sub, r.w - ps - 30 - pw, sf), tx, r.y + 4 + lh, okAll and C.textDim or C.bad, 1, sf)
             if okAll and visible then
-                -- the practice button first: the first click area that holds the mouse wins
-                self:cookButton(r.x + r.w - pw - 6, r.y + math.floor((rowH - (lh + 12)) / 2), pl, true, function(win) win:startPractice(pid, toolItem, grade, tgroup) end, pw)
-                r.action = function(win)
+                -- GTP 1.8.1: the row and its "Start" button both start the real one
+                local function go(win)
                     local chain = (win.prepChain and group and #group.items > 1) and group.key or nil
                     win:startPrep(it, pid, toolItem, grade, tgroup, chain)
                 end
+                self:cookButton(r.x + r.w - pw - 6, r.y + math.floor((rowH - (lh + 12)) / 2), pl, true, go, pw)
+                r.action = go
                 clickable(self, r)
+            end
+            yy = yy + rowH + 4
+        end
+        return yy - start
+    end)
+end
+
+-- GTP 1.8.1: practice page -- every minigame any food can take, each with
+-- its tool line, the player's record and a Practice button (no food used,
+-- nothing scored or sent)
+function H.practiceGames()
+    if H.practiceList then return H.practiceList end
+    local used = {}
+    for _, list in pairs(R.KIND_GAMES or {}) do for _, g in ipairs(list) do used[g] = true end end
+    for _, rule in ipairs(R.GAME_RULES or {}) do for _, g in ipairs(rule.games or {}) do used[g] = true end end
+    local out = {}
+    for _, pid in ipairs(K.PROC_ORDER or {}) do if used[pid] and K.PROCS[pid] then out[#out + 1] = pid end end
+    H.practiceList = out
+    log("practice page: %d minigames", #out)
+    return out
+end
+
+function Win:renderCookPractice(x, y, w, h)
+    local C = H.C
+    local sf = H.small()
+    local lh = lineH(sf)
+    local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPP_Card_Practice"))
+    cy = cy + self:paragraphs(T("IGUI_GTPP_PracticeIntro"), cx, cy, cw - 8, C.textDim, sf) + 6
+    if self.prepLast and self.prepLast.practice then
+        local L = self.prepLast
+        local line = L.word and T("IGUI_GTPP_LastPractice", procName(L.pid), wordName(L.word)) or T("IGUI_GTPP_LastPracticeCancel")
+        shadowText(self, fit(line, cw - 8, sf), cx, cy, L.word and wordCol(L.word) or C.textDim, 1, sf)
+        cy = cy + lh + 6
+    end
+    local scan = K.scan(self.player)
+    local rowH = lh * 2 + 12
+    local boxTop, boxBottom = cy, y + h - 6
+    local pl = T("IGUI_GTPP_Practice")
+    local pw = tw(sf, pl) + 20
+    local busy = self.prepRun ~= nil
+    self:scrolled("practiceGames", cx, cy, cw, boxBottom - cy, function(yy)
+        local start = yy
+        for _, pid in ipairs(H.practiceGames()) do
+            local proc = K.PROCS[pid]
+            local toolItem, grade, tgroup = nil, "best", proc.tools and proc.tools[1]
+            if tgroup then toolItem, grade = K.findTool(scan, tgroup) end
+            local can = (not tgroup) or toolItem ~= nil or grade == "bare"
+            local r = { x = cx, y = yy, w = cw - 14, h = rowH }
+            local visible = r.y + r.h > boxTop and r.y < boxBottom
+            self:drawRect(r.x, r.y, r.w, r.h, can and 0.6 or 0.3, C.accentDark[1], C.accentDark[2], C.accentDark[3])
+            local bc = can and C.border or C.borderDim
+            self:drawRectBorder(r.x, r.y, r.w, r.h, 0.8, bc[1], bc[2], bc[3])
+            local ps = rowH - 8
+            local pic = procIcon(pid)
+            if pic then self:drawTextureScaled(pic, r.x + 4, r.y + 4, ps, ps, can and 1 or 0.4, 1, 1, 1) end
+            local tx = r.x + ps + 12
+            shadowText(self, fit(procName(pid), r.w - ps - 30 - pw, sf), tx, r.y + 4, can and C.text or C.textDim, 1, sf)
+            local sub
+            if not tgroup then sub = T("IGUI_GTPP_NoTool")
+            elseif toolItem then sub = T("IGUI_GTPP_Tool_" .. tostring(grade), itemName(toolItem))
+            elseif grade == "bare" then sub = T("IGUI_GTPP_Tool_bare")
+            else sub = T("IGUI_GTPP_NeedTool", T("IGUI_GTPC_Tool_" .. tostring(tgroup))) end
+            local stat = H.prepStatLine(pid)
+            if stat then sub = sub .. "  ·  " .. stat end
+            shadowText(self, fit(sub, r.w - ps - 30 - pw, sf), tx, r.y + 4 + lh, can and C.textDim or C.bad, 1, sf)
+            if visible then
+                self:cookButton(r.x + r.w - pw - 6, r.y + math.floor((rowH - (lh + 12)) / 2), pl, can and not busy,
+                    function(win) win:startPractice(pid, toolItem, grade, tgroup) end, pw)
             end
             yy = yy + rowH + 4
         end
@@ -776,9 +848,18 @@ function Win:evoList()
     else
         R.logOnce("noRM", "RecipeManager.getEvolvedRecipe missing -- no vanilla evolved recipes listed")
     end
-    -- a base the player carries first
+    -- GTP 1.8.1 (owner): a cooking pot first for soup / stew (vanilla also
+    -- allows a bucket, last); then a base the player carries
+    local function baseRank(it)
+        local t = tostring(call(it, "getFullType") or "")
+        if t:find("Bucket", 1, true) then return 3 end
+        if t:find("Pot", 1, true) then return t:find("Forged", 1, true) and 1 or 0 end
+        return 2
+    end
     for _, e in ipairs(list.entries) do
         table.sort(e.options, function(a, b)
+            local ra, rb = baseRank(a.base), baseRank(b.base)
+            if ra ~= rb then return ra < rb end
             local ca = HARMONIE_Reach and HARMONIE_Reach.isCarried(self.player, a.base) or false
             local cb = HARMONIE_Reach and HARMONIE_Reach.isCarried(self.player, b.base) or false
             if ca ~= cb then return ca end
@@ -898,31 +979,8 @@ function H.addFavorite(name, types)
     return true
 end
 
-local function previewScore(d, base, it, use)
-    local sum, wt
-    local kinds = {}
-    local function addKind(x)
-        local xd = R.dishOf(x)
-        if xd and type(xd.kinds) == "table" then for k in pairs(xd.kinds) do kinds[k] = true end return end
-        local k = R.kindOf(x)
-        if k then kinds[k] = true end
-    end
-    if d then
-        sum = tonumber(d.sum) or 0
-        wt = tonumber(d.w) or tonumber(d.n) or 0
-        for k in pairs(type(d.kinds) == "table" and d.kinds or {}) do kinds[k] = true end
-    else
-        sum, wt = 0, 0
-        if R.counts(base) then local bw = R.weightOf(base); sum, wt = R.scoreOf(base) * bw, bw; addKind(base) end
-    end
-    if R.counts(it) then
-        local iw = math.max(1, tonumber(use) or R.weightOf(it))
-        sum, wt = sum + R.scoreOf(it) * iw, wt + iw
-        addKind(it)
-    end
-    -- same rule as the server's (with the variety bonus, #38)
-    return R.finishDish({ sum = sum, w = wt, kinds = kinds }).avg
-end
+-- GTP 1.8.1: shared with the right-click recipe menu (R.previewDish)
+local function previewScore(d, base, it, use) return R.previewDish(d, base, it, use) end
 
 function Win:renderCookEvoDetail(x, y, w, h, e, list)
     local C = H.C
