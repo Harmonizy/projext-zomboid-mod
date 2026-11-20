@@ -3,7 +3,8 @@
 
     The KnoxCoin Discord bot writes RWZ_GachaDeliveryInbox.txt into this server's
     Lua folder over SFTP (the same link as the other RWZ bridges). One line per roll:
-        <roll id> TAB <PZ username, %XX encoded> TAB gacha|pet TAB <gacha item id | pet piece id>
+        <roll id> TAB <PZ username, %XX encoded> TAB gacha|pet|piece TAB <gacha item id | pet piece id |
+        fashion piece id or the full type it was made from, optional #colour (1.1.0)>
     Every 10 s the server grants each roll id it has not seen before and remembers
     the id in the same ModData ("HARMONIE_LWS".discordGacha) as the wardrobe itself:
       * a resent inbox never gives twice;
@@ -67,6 +68,28 @@ local function grant(user, kind, target)
         if player and LWS.Gacha then
             LWS.toClient(player, "GachaState", LWS.Gacha.stateOf(o))
             LWS.toClient(player, "Msg", { key = "IGUI_LWSG_Msg_Got", arg = LWS.T("IGUI_LWSG_Name_" .. target), text = true })
+        end
+        return true
+    elseif kind == "piece" then
+        -- 1.1.0: a fashion piece (e.g. an add-on's Tomb piece). target = our
+        -- piece id or the other mod's full type it was made from
+        -- (TombAlternative.LeatherJacket), optional "#n" = colour n (1-based)
+        local id, colour = target:match("^(.-)#(%d+)$")
+        id = id or target
+        id = LWS.PIECE_BY_SRC[id] or id
+        local piece = LWS.PIECE[id]
+        if not piece or piece.pet or not LWS.isOurPiece(id) then return false, "not a fashion piece" end
+        local tex = colour and (tonumber(colour) - 1) or 0
+        if tex < 0 or tex >= LWS.texCount(id) then return false, "no such colour" end
+        local o = LWS.Server.owner(key, true)
+        local uid = tostring(o.nextId)
+        o.nextId = o.nextId + 1
+        local gt = getGameTime and getGameTime()
+        o.items[uid] = { p = id, at = gt and math.floor(gt:getWorldAgeHours()) or 0, by = "Discord Gacha", tex = tex > 0 and tex or nil }
+        local player = LWS.Server.onlineByKey(key)
+        if player then
+            LWS.Server.sendState(player, o)
+            LWS.toClient(player, "Msg", { key = "IGUI_LWS_Msg_Got", arg = id })
         end
         return true
     elseif kind == "pet" then

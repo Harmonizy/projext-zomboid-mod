@@ -870,6 +870,32 @@
   `media/textures/Item_X.png` (the window's `texture()` does, 0.7.2).
 - Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
   shown only in frames that ask for them (`hideUnusedSearch`).
+- LWS 1.1.0 (owner 2026-11-20, Tomb's Wardrobe into the gacha): add-ons add
+  pieces with `LWS.addPieces(list, source)` ({ id, slot, icon, icons, tex,
+  src }; item scripts in OUR module so isOurPiece passes; `LWS.PIECE_BY_SRC`
+  maps the other mod's full type -> piece). Colours: a piece with tex > 1
+  keeps o.items[uid].tex (0-based); the worn item carries md.LWS_tex and
+  `LWS.applyTex` sets its visual texture choice (server when made, client
+  when worn); "SetTex" {uid, tex} command; the dress page shows "< Colour n /
+  N >" for the worn piece; ensure re-makes the item when the colour changed;
+  trade keeps tex. Discord bridge kind `piece` (piece id or source type,
+  optional "#n" colour, 1-based). WorldGuard twins are Base-module only, so
+  an add-on piece never turns into the other mod's real item.
+- Add-on HARMONIE_LWS_Tomb 1.0.0 (`mods/HARMONIE_LWS_Tomb`, require
+  HARMONIE_LifeWithStyle, TombBody, TombWardrobeALT): 181 pieces "Tomb_<Type>"
+  from Tomb's Wardrobe - Alternative (Workshop 3616536783) clothes, generated
+  by `tools/gen_lws_tomb.py <Tomb 42.20/media>` (SLOT_OF maps Tomb's body
+  locations; names from Tomb's EN/TH ItemName; TOMB_PIECES.txt = the list for
+  the bot). Nothing of Tomb's mod is copied (ClothingItem / icon names only);
+  the extracted mod is NOT in the repo. LWST_NoDrop: TombAlternative.* loot rows
+  removed on OnPostDistributionMerge, Tombwardrobe_* zombie outfits removed
+  from ZombiesZoneDefinition at boot, a dying zombie loses any Tomb item.
+  LWST_Convert (server / SP, every 10 s): a real Tomb CLOTHING item a player
+  carries (any bag depth) becomes that player's wardrobe piece with its colour
+  (owner choice); Tomb's 26 bags (9 families, Loose/Tight/Satchel switched by
+  Tomb's own right-click) stay real -- The Way To Attack crafts them. Tomb's
+  code uses a global `TWA` table and `twa:` body locations: unrelated to our
+  The Way To Attack (we never use either); its log prefix is "[TWA]".
 - Trading (`server/.../LWS_Trade.lua`): server sessions, both agree on the
   same revision, the server re-checks and swaps; any offer change unlocks
   both. Sandbox page HARMONIE_LifeWithStyle (TradeEnabled, TradeMaxDistance).

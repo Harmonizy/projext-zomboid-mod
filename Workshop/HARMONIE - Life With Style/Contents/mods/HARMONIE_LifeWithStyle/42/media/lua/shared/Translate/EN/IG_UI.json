@@ -103,6 +103,7 @@
     "IGUI_LWS_ShowOn": "Real clothes: shown",
     "IGUI_LWS_ShowOff": "Real clothes: hidden",
     "IGUI_LWS_TakeOff": "Take off",
+    "IGUI_LWS_Colour": "Colour %1 / %2",
     "IGUI_LWS_HideNote": "While a piece is worn here, your real clothes of this slot are not drawn (they still protect and keep you warm). Nothing pokes through.",
     "IGUI_LWS_ShowNote": "Your real clothes of this slot are drawn too, under the piece.",
     "IGUI_LWS_HidesNothing": "This slot hides nothing: the piece is drawn over everything.",

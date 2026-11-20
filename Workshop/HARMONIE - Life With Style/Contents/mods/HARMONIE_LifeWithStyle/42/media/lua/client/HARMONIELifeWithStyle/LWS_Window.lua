@@ -98,10 +98,10 @@ local function texture(path)
     end
     return tex[path] or nil
 end
-local function pieceIcon(pieceId)
-    local c = LWS.PIECE[pieceId]
-    if not c then return nil end
-    return texture("Item_" .. c.icon) or texture("media/textures/Item_" .. c.icon .. ".png")
+local function pieceIcon(pieceId, tex)
+    local icon = LWS.iconOf(pieceId, tex)
+    if not icon then return nil end
+    return texture("Item_" .. icon) or texture("media/textures/Item_" .. icon .. ".png")
 end
 
 -- ----------------------------------------------------------------- text
@@ -342,7 +342,7 @@ function Win:tile(x, y, e, opts)
     local bd = opts.worn and c.accent or c.borderDim
     self:drawRectBorder(x, y, w, h, 1, bd[1], bd[2], bd[3])
     if opts.worn then self:drawRectBorder(x + 1, y + 1, w - 2, h - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
-    local icon = opts.icon and texture(opts.icon) or (e.p and pieceIcon(e.p))
+    local icon = opts.icon and texture(opts.icon) or (e.p and pieceIcon(e.p, e.tex))
     local isz = opts.isz or 56
     if icon then self:drawTextureScaled(icon, x + math.floor((w - isz) / 2), y + 10, isz, isz, opts.dim and 0.3 or 1, 1, 1, 1) end
     local font = H.small()
@@ -632,7 +632,7 @@ function Win:slotBox(slot, x, y, B, dragSlot)
     if target or active then self:drawRectBorder(x + 1, y + 1, B - 2, B - 2, 1, c.accent[1], c.accent[2], c.accent[3]) end
     if target and over then self:drawRectBorder(x + 2, y + 2, B - 4, B - 4, 1, c.accent[1], c.accent[2], c.accent[3]) end
     local sf = H.small()
-    local icon = worn and pieceIcon(worn.p)
+    local icon = worn and pieceIcon(worn.p, worn.tex)
     if icon then
         self:drawTextureScaled(icon, x + 4, y + 4, B - 8, B - 8, 1, 1, 1, 1)
     else
@@ -767,6 +767,14 @@ function Win:wardrobe(x, y, w, h, size)
         local showing = C.state.show and C.state.show[self.slot] == true
         btn("show", T(showing and "IGUI_LWS_ShowOn" or "IGUI_LWS_ShowOff"), showing, worn ~= nil and #(LWS.SLOT[self.slot] and LWS.SLOT[self.slot].hides or {}) > 0)
         btn("takeoff", T("IGUI_LWS_TakeOff"), false, worn ~= nil)
+        -- 1.1.0: a piece with several colours: < colour n / N >
+        local nTex = worn and LWS.texCount(worn.p) or 1
+        if nTex > 1 then
+            local cur = (tonumber(worn.tex) or 0) + 1
+            btn("tex:prev", "<", false, true)
+            btn("tex:none", T("IGUI_LWS_Colour", tostring(cur), tostring(nTex)), false, false)
+            btn("tex:next", ">", false, true)
+        end
         gy = by + bh + 6
     end
     -- the hint at the bottom
@@ -1472,6 +1480,15 @@ function Win:onButton(id)
         C.setShow(self.slot, on)
     elseif id == "takeoff" then
         C.takeOff(self.slot)
+    elseif id == "tex:prev" or id == "tex:next" then
+        local worn = C.wornIn(self.slot)
+        local n = worn and LWS.texCount(worn.p) or 1
+        if worn and n > 1 then
+            local cur = tonumber(worn.tex) or 0
+            local nxt = (cur + (id == "tex:next" and 1 or -1)) % n
+            worn.tex = nxt   -- shown at once; the server's State confirms
+            C.setTex(worn.uid, nxt)
+        end
     elseif id:sub(1, 4) == "ask:" then
         C.tradeAsk(id:sub(5))
     elseif id:sub(1, 7) == "accept:" then
