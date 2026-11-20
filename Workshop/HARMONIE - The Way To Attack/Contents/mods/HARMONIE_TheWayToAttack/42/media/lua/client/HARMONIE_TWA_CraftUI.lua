@@ -384,8 +384,8 @@ local CATEGORY_TABS = {
 -- (avgDamage * BaseSpeed) against FIXED thresholds, baked into
 -- TWARecipeData.Stats[x].tier. Full 8-tier scale. Legendary and Prototype
 -- swapped positions (request 2026-09-26, given as a full explicit table):
--- Legendary is now DPS < 10 (was Prototype's old slot), Prototype is now
--- the unbounded top tier DPS >= 10 (was Legendary's old slot) -- gen_
+-- (1.2.4: Epic < 3.5, Elite < 5, Legendary <= 6, Prototype > 6 -- TierTooltip.lua),
+-- earlier: Legendary < 10, Prototype >= 10 -- gen_
 -- craftdata.js's DPS_TIER_THRESHOLDS is the source of truth for the actual
 -- boundary; only the NAMES/colors here need to track which number each one
 -- is attached to. TIER_INFO below keeps all 8 (still used for the recipe-
@@ -517,7 +517,7 @@ ownsBaseNow = function(recipe, player)
         if TWACraftState.countBase(player, recipe, t) >= 1 then hasBase = true break end
     end
     if not hasBase then return false end
-    if recipe.base2 and inv:getItemCountRecurse(recipe.base2) < 1 then return false end
+    if recipe.base2 and inv:getItemCountRecurse(recipe.base2) < TWACraftState.base2Qty(recipe) then return false end
     return true
 end
 
@@ -1743,6 +1743,8 @@ function TWACraftWindow:pickItems()
     if recipe.base2 and not S.carriedBase2(base, recipe) then
         base2 = S.pickFreshItem(self.player, recipe.base2)
         if not base2 then return false end
+        -- 1.2.1: the whole ore cost (OreCost)
+        if not S.base2Ok(self.player, recipe) then return false end
     end
     return true, base, base2
 end
@@ -2401,7 +2403,7 @@ end
 -- (previously inline) into its own method so it can be called once per
 -- slot instead of duplicating the 8 draw calls.
 -- `noteKey` (optional) replaces the owned/missing status line.
-function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey, count)
+function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey, count, need)
     local grow = TWAFont.grow(0) -- R67: room for bigger text
     local CARD_H = 40 + 2 * grow
     self:drawRect(x, y, w, CARD_H, 0.85, 0.08, 0.08, 0.09)
@@ -2421,9 +2423,11 @@ function TWACraftWindow:drawBaseCard(x, y, w, fullType, altType, owned, noteKey,
     end
     drawTextShadowed(self, baseDisplayName(fullType, altType), tx, y + 5, 0.9, 0.9, 0.9, 1, TWAFont.small())
     if count then
-        local ct = getText("IGUI_TWA_HaveCount", tostring(count))
+        -- 1.2.1: "Have 5 / need 20" when a recipe takes more than one
+        local enough = count >= (need or 1)
+        local ct = (need and need > 1) and getText("IGUI_TWA_HaveNeed", tostring(count), tostring(need)) or getText("IGUI_TWA_HaveCount", tostring(count))
         local cw = getTextManager():MeasureStringX(TWAFont.small(), ct)
-        drawTextShadowed(self, ct, x + w - 30 - cw, y + 21 + grow, count > 0 and 0.75 or 0.95, count > 0 and 0.85 or 0.5, count > 0 and 1 or 0.45, 1, TWAFont.small())
+        drawTextShadowed(self, ct, x + w - 30 - cw, y + 21 + grow, enough and 0.75 or 0.95, enough and 0.85 or 0.5, enough and 1 or 0.45, 1, TWAFont.small())
     end
     -- A list of accepted types ("any stone"): hovering the card lists them.
     if type(altType) == "table" then
@@ -2952,7 +2956,7 @@ function TWACraftWindow:renderBody()
                     note1 = "IGUI_TWA_BaseOnlyBookmarked"
                 end
             end
-            owned2 = recipe.base2 ~= nil and S.pickFreshItem(self.player, recipe.base2) ~= nil
+            owned2 = recipe.base2 ~= nil and S.pickFreshItem(self.player, recipe.base2) ~= nil and S.base2Ok(self.player, recipe)
             -- Request 2026-09-28: "เปลี่ยนคำว่าชิ้นงานตั้งต้นอันที่สองเป็น
             -- ชิ้นงานเสริม".
             note2 = owned2 and "IGUI_TWA_ExtraItemOwned" or "IGUI_TWA_ExtraItemMissing"
@@ -2974,7 +2978,7 @@ function TWACraftWindow:renderBody()
         self.craftLinks = {}
         baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, card1Type, card1Alt, owned1, note1, count1)
         if recipe.base2 then
-            baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2, count2)
+            baseY = self:drawBaseCard(centerX, baseY, CENTER_W - 16, recipe.base2, nil, owned2, note2, count2, S.base2Qty(recipe))
         end
     end
 

@@ -672,8 +672,8 @@ module HARMONIE_TheWayToAttack
 		Icon			=	GardenBrushCutter,		
 	
 		Weight		=	3.0,
-        MinDamage	=	1.6,
-        MaxDamage	=	3.2,			
+        MinDamage	=	1.55,
+        MaxDamage	=	3.1,			
 		MinRange	=	0.74,
 		MaxRange	=	1.42,		
         BaseSpeed	=	0.95,		

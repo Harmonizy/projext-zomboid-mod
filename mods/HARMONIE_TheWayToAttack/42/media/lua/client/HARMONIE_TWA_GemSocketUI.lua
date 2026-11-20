@@ -473,7 +473,9 @@ function TWAGemSocketUI:weaponInfo()
     i.minD, i.maxD = wpn:getMinDamage(), wpn:getMaxDamage()
     i.speed = lf(wpn, "getBaseSpeed", (stats and stats.baseSpeed) or 1.0)
     i.dps = ((i.minD + i.maxD) / 2) * i.speed
-    i.tier = T and T.tierFromDps(i.dps) or nil
+    -- 1.2.2: the tier ignores the gems (G.tierDamage)
+    local tMin, tMax = G.tierDamage(wpn)
+    i.tier = T and T.tierFromDps(((tMin + tMax) / 2) * i.speed) or nil
     i.tierName = (T and i.tier and T.TIER_NAMES[i.tier]) or ""
     i.tierCol = (T and i.tier and T.TIER_COLOR[i.tier]) or WHITE
     i.type = T and T.weaponTypeText(wpn, stats) or ""

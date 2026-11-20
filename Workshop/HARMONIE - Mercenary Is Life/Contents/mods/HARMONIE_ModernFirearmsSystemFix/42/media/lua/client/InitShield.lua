@@ -7,8 +7,26 @@ ShieldFunction.ShieldItem["Base.ArmorShieldBody"] = "BodyShield"
 local Localtiongroup = AttachedLocations.getGroup("Human")
 local isfemale = "MaleBody"
 local lastBoneandtype = nil
+-- MIL 1.0.10 (see 000_HARMONIE_MIL_NetGuard.lua): this ran on EVERY player
+-- update and attached a NEW fake item each time -- a packet per frame. Now it
+-- attaches only when the shield, its place or its pose changed (or the fake
+-- item is gone), and through the shared budget.
+local lastKey = nil
+local function poseKey(ShieldItem, AttachetName, boneandtype, posTable, rotateTable)
+    return table.concat({ tostring(ShieldItem), tostring(AttachetName), tostring(boneandtype),
+        tostring(posTable.x), tostring(posTable.y), tostring(posTable.z),
+        tostring(rotateTable.x), tostring(rotateTable.y), tostring(rotateTable.z) }, "|")
+end
 function ShieldFunction.updateShield(ShieldItem, AttachetName, boneandtype, posTable, rotateTable)
     local player = getPlayer()
+    local key = poseKey(ShieldItem, AttachetName, boneandtype, posTable, rotateTable)
+    local current = player:getAttachedItem(AttachetName)
+    if key == lastKey and current then
+        return
+    end
+    if MILNetGuard and not MILNetGuard.allow("shield") then
+        return
+    end
     if player:isFemale() then
         isfemale = "FemaleBody"
     else
@@ -33,6 +51,7 @@ function ShieldFunction.updateShield(ShieldItem, AttachetName, boneandtype, posT
 
     item:setWeaponSprite(ShieldItem)
     player:setAttachedItem(AttachetName, item)
+    lastKey = key
     if lastBoneandtype ~= AttachetName then
         if model:getAttachmentById(lastBoneandtype) then
             local AttachMentitem = player:getAttachedItem(lastBoneandtype)
@@ -82,9 +101,16 @@ function ShieldFunction.CheckIfShield(player)
 end
 
 function ShieldFunction.LocaltionSetFunction(player)
+    -- MIL 1.0.10: OnPlayerUpdate can be another player's -- only our own
+    if MILNetGuard and not MILNetGuard.isLocal(player) then
+        return
+    end
     local Shield, Type = ShieldFunction.CheckIfShield(player)
     if not Type then
-        ShieldFunction.RemoveAllAttachMentSprite()
+        if lastKey then
+            lastKey = nil
+            ShieldFunction.RemoveAllAttachMentSprite()
+        end
         return
     end
     if Type == "HandShield" then

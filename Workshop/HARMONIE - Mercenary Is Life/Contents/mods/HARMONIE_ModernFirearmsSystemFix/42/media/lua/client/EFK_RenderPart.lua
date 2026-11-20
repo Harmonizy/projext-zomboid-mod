@@ -93,8 +93,25 @@ local function rotate_point(a, b, c, alpha, beta, gamma)
 end
 AWCWF_Attach.group = AttachedLocations.getGroup("Human")
 
+-- MIL 1.0.10 (see 000_HARMONIE_MIL_NetGuard.lua): every remove / attach of
+-- these fake part items is a packet in MP. They ran from OnPlayerUpdate with
+-- no limit: the held gun's model can be missing for a frame (a shove, an
+-- animation change) and the parts were removed and attached again frame
+-- after frame. Now: our own player only; the parts come off only after the
+-- model has been missing MISSING_MS; a rebuild at most every REBUILD_MS in
+-- MP (forced ones too) and only when the shared budget has room for all of it.
+AWCWF_Attach.MISSING_MS = 1000
+AWCWF_Attach.REBUILD_MS = 1000
+AWCWF_Attach.missingSince = nil
+AWCWF_Attach.lastRebuild = 0
+local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
+local function countKeys(t) local n = 0 for _ in pairs(t) do n = n + 1 end return n end
+
 function AWCWF_Attach.Apply_Effect(player, weapon, froceUpdate)
     if not instanceof(player, 'IsoPlayer') then
+        return
+    end
+    if MILNetGuard and not MILNetGuard.isLocal(player) then
         return
     end
     if not player then
@@ -233,14 +250,31 @@ function AWCWF_Attach.Apply_Effect(player, weapon, froceUpdate)
 
     end
     if handweapon and not AWCWF_AdditionalParts.GetWeaponModelInstance(player, handweapon) then
+        local t = nowMs()
+        AWCWF_Attach.missingSince = AWCWF_Attach.missingSince or t
+        if t - AWCWF_Attach.missingSince < AWCWF_Attach.MISSING_MS then
+            return
+        end
+        local gone = {}
         for i, v in pairs(LocalAttachItems) do
-            if v:getModData().ishandweapon then
-                player:removeAttachedItem(v);
-            end
+            if v:getModData().ishandweapon then gone[#gone + 1] = v end
+        end
+        if #gone > 0 and (not MILNetGuard or MILNetGuard.allow("renderpart-off", #gone)) then
+            for _, v in ipairs(gone) do player:removeAttachedItem(v) end
         end
         return
     end
+    AWCWF_Attach.missingSince = nil
     if not AWCWF_Attach.CompareTwoList(LocalAttachItems, LocationList) or froceUpdate then
+        local t = nowMs()
+        if isClient() and t - AWCWF_Attach.lastRebuild < AWCWF_Attach.REBUILD_MS then
+            return
+        end
+        local calls = countKeys(LocalAttachItems) + countKeys(LocationList)
+        if MILNetGuard and calls > 0 and not MILNetGuard.allow("renderpart", calls) then
+            return
+        end
+        AWCWF_Attach.lastRebuild = t
         for boneandtype, v in pairs(LocalAttachItems) do
             player:removeAttachedItem(v);
         end

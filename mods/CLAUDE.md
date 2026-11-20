@@ -364,6 +364,75 @@
     the original; a signature check every 2 s forces a refresh when attach
     upgrades change. No vanilla code is copied (repo is public).
     UNVERIFIED in MP: whether the server accepts an attach to our slot types.
+- TWA 1.2.1 (owner 2026-11-20):
+  * No crafted weapon above the vanilla Katana's DPS 8 (8-8, speed 1):
+    master_forged x5 7.5-10.1 -> 7-9, apoc_tactical_longsword 8-9 -> 7.5-8.5
+    (scripts TWA_weapons_r23 / MWP1 + RecipeData Stats). Grade does not
+    change damage; gems (+0.0..0.5 each) can still lift a weapon past 8.
+  * Tiers (TierTooltip tierFromDps, exported TWATier.fromDps): Junk < 0.25
+    < Common < 0.5 < Uncommon < 1 < Rare < 2 < Epic < 4 < Elite < 7 <=
+    Legendary <= 8 < Prototype. Only Elite / Legendary moved (were < 8 / < 10)
+    so every baked Stats tier stays right.
+  * Zombie drops (`shared/HARMONIE_TWA_ZombieDrop.lua`, server / SP,
+    OnZombieDead -> zombie inventory): TWA_MaterialLump ZombieDropLump 5 %,
+    TWA_Gemstone ZombieDropGemstone 2.5 % (1.2.2, owner; sandbox, logged).
+  * 1.2.2: gems never change the TIER -- TWAGemSocket.tierDamage(item) = live
+    damage minus the gems' bonus; TierTooltip and the socket page judge the
+    tier on it (the damage / DPS shown stay the real ones). Gem max: S grade
+    5 + 1 special sockets x Pure +0.5 = +3 min and max -> DPS + 3 x speed
+    (Legendary 8 -> 11).
+  * Ore cost: a recipe whose base2 is Oridecon / Elunium / Bradium takes
+    sandbox OreCost (20) of it: S.base2Qty / base2Count / base2Ok /
+    takeExtraBase2 (CraftState). Start checks the whole count, takes the
+    chosen one + qty-1 more; snapshot base2.n; Cancel gives n back;
+    Incomplete keeps n in TWA_OrigBase2. UI cards "Have: 5 / need 20"
+    (IGUI_TWA_HaveNeed), guided row, list availability, AdminGrant gives the
+    missing number.
+- MIL 1.0.9 (owner 2026-11-20, a player thrown out twice while shoving
+  zombies; console: ~110 "EquipPacket.set get invalid arguments" in the 7 s
+  before, one every 2 frames): MFSTwoHandGripFix's watchdog put the weapon
+  back in an emptied off-hand every 3 frames with no limit -- each is an
+  equip packet. Now guns only (isRanged), never while shoving / attacking /
+  staggered / on the floor / climbing, one restore per 1.5 s, and 3 restores
+  within 15 s that do not hold -> stop 60 s (logged). Not proven to be the
+  only source of that flood (other mods equip too).
+- TWA 1.2.4 (owner 2026-11-20; 1.2.3's x5/8 damage + cuts were taken back,
+  the stats restored from before it): cuts Junk < 0.25 < Common < 0.5 <
+  Uncommon < 1 < Rare < 2 < Epic < 3.5 < Elite < 5 <= Legendary <= 6 <
+  Prototype (TierTooltip, EPS: a DPS on a cut is the upper tier). Our Epic /
+  Elite / Legendary weapons (54) moved into the new bands in a straight line
+  (Epic 2..4 -> 2..3.5, Elite 4..7 -> 3.5..5, Legendary 7..8 -> 5..6;
+  min / max x the same factor, 0.01) -> counts unchanged 3 / 33 / 80 / 30 /
+  19 / 6; Rare's band did not move. Vanilla Stats tiers re-baked (vanilla
+  Katana DPS 8 = Prototype). Procedures and the base2 bar of a recipe are
+  FIXED lists in RecipeData (made once from durability / wear / push-back /
+  knockdown, the bar from the tier then) -- nothing reads the tier at run
+  time, and every weapon kept its tier. Gems +3 x speed -> 9 at most.
+  G.syncScriptDamage (applyDamage): an older copy of OUR weapon without gems
+  / override gets the script damage. DamageShare: the client caps itself at
+  RATE_PER_SEC. Material Lump weight 2.0 -> 1.0 (owner).
+- TWA 1.2.5: Material Lump stack 5 under Inventory Tetris (the owner's
+  server runs it; vanilla has no stack limit) --
+  `shared/HARMONIE_TWA_TetrisCompat.lua` calls
+  TetrisItemData.registerItemDefinitions({ [type] = { width = 1, height = 1,
+  maxStackSize = 5 } }) at load and OnGameBoot, ONLY when that function
+  exists. The API shape is from memory (the mod's source was not readable):
+  the console says registered / not loaded / no such function (and lists
+  TetrisItemData's functions) -- check it on the server.
+- MIL 1.0.10 (disconnect while shoving, second pass): the console's flood is
+  "EquipPacket.set get invalid arguments" -- equip / attach packets for items
+  the server cannot match. MIL draws gun parts and shields with FAKE items
+  attached to the body (EFK_RenderPart TempNilItem, InitShield
+  RenderPartItem), from OnPlayerUpdate: InitShield attached a new one EVERY
+  update (and for every other player's update too); RenderPart removed and
+  re-attached the parts whenever the gun model was missing for a frame (it
+  flickers in a shove). Now `client/000_HARMONIE_MIL_NetGuard.lua`
+  (MILNetGuard.allow(tag, n): 6 calls a second for all of ours in MP, one
+  bigger batch allowed first in a second, held-back counts logged once a
+  minute; isLocal(player)); InitShield attaches only when shield / place /
+  pose changed; RenderPart: local player only, parts off only after the model
+  is missing 1 s, a rebuild at most once a second; the grip watchdog uses the
+  budget too. A clean cure would draw these without fake attached items.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
@@ -914,6 +983,12 @@
   `media/textures/Item_X.png` (the window's `texture()` does, 0.7.2).
 - Search boxes (`Win:searchBox(key, ...)`): the window's only child widgets,
   shown only in frames that ask for them (`hideUnusedSearch`).
+- LWS 1.1.1 (owner 2026-11-20, "the old vanilla test pieces confuse people"):
+  the 25 "Test_*" pieces made from vanilla clothes are removed (gen_lws.py
+  CATALOG = []). LWS has no fashion pieces of its own; they come from add-ons
+  (LWS.addPieces -- HARMONIE_LWS_Tomb). LWS.CATALOG still holds the 16 pets.
+  Wardrobe entries of the old pieces are pruned at load (catalog check);
+  worn copies have no script any more and the game / sweep drops them.
 - LWS 1.1.0 (owner 2026-11-20, Tomb's Wardrobe into the gacha): add-ons add
   pieces with `LWS.addPieces(list, source)` ({ id, slot, icon, icons, tex,
   src }; item scripts in OUR module so isOurPiece passes; `LWS.PIECE_BY_SRC`
