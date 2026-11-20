@@ -1104,5 +1104,20 @@
     "IGUI_GTPP_LastRedone": "%1 washed off -- prepare it again",
     "IGUI_GTPP_LastPractice": "Practice %1: %2 (no score, not counted)",
     "IGUI_GTPP_LastPracticeCancel": "Practice stopped",
-    "IGUI_GTPP_Why_noRedo": "it can only be washed off once, after a Poor or Missed result"
+    "IGUI_GTPP_Why_noRedo": "it can only be washed off once, after a Poor or Missed result",
+    "IGUI_GTPP_RowCount": "%1 x%2",
+    "IGUI_GTPP_ChainLeft": "Repeat: %1 more after this one",
+    "IGUI_GTPP_ChainAll": "Repeat for all %1, one after another",
+    "IGUI_GTPP_EvoBases": "%1 bases at hand",
+    "IGUI_GTPP_AddBest": "Add the best: %1 (dish becomes %2)",
+    "IGUI_GTPP_After": "-> dish %1",
+    "IGUI_GTPP_Minor": "Minor ingredient (not counted in the score)",
+    "IGUI_GTPP_CraftFilter_ready": "Can make now",
+    "IGUI_GTPP_CraftFilter_known": "Known",
+    "IGUI_GTPP_CraftFilter_all": "All",
+    "IGUI_GTPP_CraftUnknown": "Not learned yet",
+    "IGUI_GTPP_CraftReady": "Can make now",
+    "IGUI_GTPP_CraftMissing": "Something is missing -- open it to see what",
+    "IGUI_GTPP_CraftChecking": "Checking...",
+    "IGUI_GTPP_CraftNoneReady": "Nothing can be made with what is at hand right now."
 }

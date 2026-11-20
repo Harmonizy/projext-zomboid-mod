@@ -55,6 +55,18 @@ end
 
 HARMONIE_VitaminTooltip = ISPanel:derive("HARMONIE_VitaminTooltip")
 
+-- GTP 1.5.0 (#24): the size only (so the box can be placed BEFORE it is
+-- drawn -- drawing first and moving after showed it one frame late)
+function HARMONIE_VitaminTooltip:measureLines(lines)
+    local font = UIFont.Small
+    local tm = getTextManager()
+    local fontHeight = tm:getFontHeight(font)
+    local maxWidth = 0
+    for _, line in ipairs(lines) do maxWidth = math.max(maxWidth, tm:MeasureStringX(font, line.text)) end
+    self:setWidth(maxWidth + 16)
+    self:setHeight(#lines * (fontHeight + 4) + 16)
+end
+
 function HARMONIE_VitaminTooltip:renderLines(lines)
     local font = UIFont.Small
     local textManager = getTextManager()
@@ -254,8 +266,8 @@ function ISToolTipInv:render()
 
     local box = HARMONIE_VitaminTooltip.instance
     local pbox = HARMONIE_VitaminTooltip.prepInstance
-    if lines then box:renderLines(lines) end
-    if prepLines and pbox then pbox:renderLines(prepLines) else prepLines = nil end
+    if lines then box:measureLines(lines) end
+    if prepLines and pbox then pbox:measureLines(prepLines) else prepLines = nil end
 
     -- 1.0.3 (owner, 2026-11-12: "หน้าต่างวิตามินตอนชี้ให้ขึ้นข้างล่างแทนทางขวาของ
     -- tooltips"): under the item tooltip, its left edges lined up; above it
@@ -280,6 +292,9 @@ function ISToolTipInv:render()
         box:setX(math.max(0, math.min(x, sw - box:getWidth() - 5)))
         box:setY(y + ph)
     end
+    -- placed: now draw them where they are
+    if prepLines then pbox:renderLines(prepLines) end
+    if lines then box:renderLines(lines) end
 end
 
 Events.OnGameStart.Add(createVitaminTooltip)

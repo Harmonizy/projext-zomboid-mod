@@ -393,6 +393,23 @@
   (this computer). R.hardness(item) is added to the difficulty (meat /
   poultry +0.08, whole fish +0.12, fillet +0.06, herb / bean / grain -0.05,
   over 1 kg +0.05).
+- GTP 1.5.0 (review round 4 -- tab layout): ONE shared scan
+  (Win:cookScan: a per-container item-count signature checked every 500 ms,
+  full walk only when it changed or every 5 s; prepList / evoList derive from
+  it by scan `gen`, `prepDirty` / `evoDirty` force a rebuild). Prep list
+  groups the same type ("Carrot x20", carried first); "repeat for all" runs
+  the same minigame on each one (Win:continueChain after every success).
+  Minigame rows scroll ("prepGames"); the Practice button is registered
+  BEFORE the row (first click area wins). Hover a row -> one vanilla
+  ISToolTipInv per window (Win:updateCookTip after render; hidden on close
+  and by an OnTick check). Game dishes: fresh bases of the same dish are one
+  row with base chips; after the first Add the selection follows the new
+  started dish (evoFollow); each ingredient shows "-> dish X" (previewScore,
+  weight = vanilla use) and "Add the best". Craft page: unlearned hidden by
+  default (isRecipeKnown(r, true)), "can make now" from one HandcraftLogic,
+  4 recipes per frame, kept per scan gen; filters ready / known / all.
+  Tooltip boxes are measured, placed, THEN drawn (were one frame late).
+  Mock UI test: scratchpad test_tab.py renders every page.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

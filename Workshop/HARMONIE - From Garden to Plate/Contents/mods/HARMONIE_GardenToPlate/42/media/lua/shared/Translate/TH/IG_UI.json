@@ -1104,5 +1104,20 @@
     "IGUI_GTPP_LastRedone": "ล้าง %1 แล้ว เตรียมใหม่ได้เลย",
     "IGUI_GTPP_LastPractice": "ฝึก %1: %2 (ไม่มีคะแนน ไม่นับสถิติ)",
     "IGUI_GTPP_LastPracticeCancel": "หยุดฝึกแล้ว",
-    "IGUI_GTPP_Why_noRedo": "ล้างได้ครั้งเดียว และเฉพาะผลแย่หรือพลาด"
+    "IGUI_GTPP_Why_noRedo": "ล้างได้ครั้งเดียว และเฉพาะผลแย่หรือพลาด",
+    "IGUI_GTPP_RowCount": "%1 x%2",
+    "IGUI_GTPP_ChainLeft": "ทำต่อ: เหลืออีก %1 ชิ้นหลังชิ้นนี้",
+    "IGUI_GTPP_ChainAll": "ทำต่อให้ครบทั้ง %1 ชิ้น ทีละชิ้น",
+    "IGUI_GTPP_EvoBases": "มีของตั้งต้น %1 อย่าง",
+    "IGUI_GTPP_AddBest": "ใส่ของดีที่สุด: %1 (จานจะเป็น %2)",
+    "IGUI_GTPP_After": "-> จาน %1",
+    "IGUI_GTPP_Minor": "ส่วนผสมรอง (ไม่นับคะแนน)",
+    "IGUI_GTPP_CraftFilter_ready": "ทำได้ตอนนี้",
+    "IGUI_GTPP_CraftFilter_known": "ที่รู้สูตร",
+    "IGUI_GTPP_CraftFilter_all": "ทั้งหมด",
+    "IGUI_GTPP_CraftUnknown": "ยังไม่ได้เรียนสูตร",
+    "IGUI_GTPP_CraftReady": "ทำได้ตอนนี้",
+    "IGUI_GTPP_CraftMissing": "ขาดของบางอย่าง เปิดดูได้ว่าขาดอะไร",
+    "IGUI_GTPP_CraftChecking": "กำลังเช็ก...",
+    "IGUI_GTPP_CraftNoneReady": "ตอนนี้ยังไม่มีสูตรไหนที่ทำได้จากของที่มี"
 }
