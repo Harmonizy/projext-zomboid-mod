@@ -167,6 +167,31 @@ local function notify(player, what, b, extra)
 end
 K.notifyBuff = notify
 
+-- GTP 1.7.0 (#39): the cook of a good dish eaten by SOMEONE ELSE gets
+-- Cooking XP (sandbox CookChefXP per buff level, x share eaten) and a notice
+local function onlinePlayer(username)
+    if not username then return nil end
+    local list = getOnlinePlayers and getOnlinePlayers()
+    for i = 0, (list and list:size() or 0) - 1 do
+        local p = list:get(i)
+        if p and nameOf(p) == username then return p end
+    end
+    return nil
+end
+function K.rewardChef(eater, dish, tier, frac)
+    local chefName = dish and dish.chef
+    if not chefName or chefName == nameOf(eater) or (tonumber(tier) or 0) < 1 then return false end
+    local chef = onlinePlayer(chefName)
+    if not chef then log("%s ate %s's dish -- the cook is not online, no XP", nameOf(eater), tostring(chefName)); return false end
+    local xp = sv("CookChefXP", 5) * tier * (frac or 1)
+    if K.giveXp then K.giveXp(chef, xp) end
+    log("%s enjoyed %s's dish (level %d): +%.1f Cooking XP to the cook", nameOf(eater), chefName, tier, xp)
+    if isServer and isServer() and sendServerCommand then
+        pcall(sendServerCommand, chef, K.BUFF_NET, "chef", { eater = nameOf(eater), tier = tier })
+    end
+    return true
+end
+
 -- a scored dish was eaten (authority side)
 function K.grantDish(player, dish, item, fraction)
     if not player or type(dish) ~= "table" then return nil end
@@ -203,6 +228,7 @@ function K.grantDish(player, dish, item, fraction)
     setRec(player, b)
     log("%s ate a dish scored %.2f (%.0f%% of it, cook level %s): %s level %d for %.1f h", nameOf(player), avg, frac * 100, tostring(dish.lvl), kind, tier, b.untilH - now)
     notify(player, "on", b, avg)
+    pcall(K.rewardChef, player, dish, tier, frac)
     return b
 end
 

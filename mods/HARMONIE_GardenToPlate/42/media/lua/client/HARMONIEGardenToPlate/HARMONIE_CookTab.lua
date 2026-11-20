@@ -847,20 +847,81 @@ function Win:renderCookEvo(x, y, w, h)
 end
 
 -- what the dish would score after adding `it` (#20)
+-- GTP 1.7.0 (#41): favorite dishes -- the ingredient types of a dish made
+-- before (vanilla keeps them on the dish: getExtraItems), on this computer
+-- (Zomboid/Lua/HARMONIE_GTP_Favorites.txt: "dish name|Base.A,Base.B,...")
+H.FAV_FILE, H.FAV_MAX = "HARMONIE_GTP_Favorites.txt", 30
+function H.favorites()
+    if H.favList then return H.favList end
+    local list = {}
+    H.favList = list
+    if not getFileReader then return list end
+    local ok, r = pcall(getFileReader, H.FAV_FILE, true)
+    if not ok or not r then return list end
+    pcall(function()
+        local line = r:readLine()
+        while line do
+            local name, types = line:match("^(.-)|(.+)$")
+            if name and types then
+                local t = {}
+                for ty in types:gmatch("[^,]+") do t[#t + 1] = ty end
+                if #t > 0 then list[#list + 1] = { name = name, types = t } end
+            end
+            line = r:readLine()
+        end
+    end)
+    pcall(function() r:close() end)
+    return list
+end
+function H.saveFavorites()
+    if not getFileWriter then return end
+    local ok, w = pcall(getFileWriter, H.FAV_FILE, true, false)
+    if not ok or not w then return end
+    pcall(function()
+        for _, f in ipairs(H.favorites()) do w:write(f.name .. "|" .. table.concat(f.types, ",") .. "\n") end
+    end)
+    pcall(function() w:close() end)
+end
+local function extraTypes(base)
+    local out = {}
+    local ex = call(base, "getExtraItems")
+    for i = 0, (ex and ex.size and ex:size() or 0) - 1 do out[#out + 1] = tostring(ex:get(i)) end
+    return out
+end
+function H.addFavorite(name, types)
+    local list = H.favorites()
+    local sig = table.concat(types, ",")
+    for _, f in ipairs(list) do if f.name == name and table.concat(f.types, ",") == sig then return false end end
+    table.insert(list, 1, { name = name, types = types })
+    while #list > H.FAV_MAX do table.remove(list) end
+    H.saveFavorites()
+    return true
+end
+
 local function previewScore(d, base, it, use)
     local sum, wt
+    local kinds = {}
+    local function addKind(x)
+        local xd = R.dishOf(x)
+        if xd and type(xd.kinds) == "table" then for k in pairs(xd.kinds) do kinds[k] = true end return end
+        local k = R.kindOf(x)
+        if k then kinds[k] = true end
+    end
     if d then
         sum = tonumber(d.sum) or 0
         wt = tonumber(d.w) or tonumber(d.n) or 0
+        for k in pairs(type(d.kinds) == "table" and d.kinds or {}) do kinds[k] = true end
     else
         sum, wt = 0, 0
-        if R.counts(base) then local bw = R.weightOf(base); sum, wt = R.scoreOf(base) * bw, bw end
+        if R.counts(base) then local bw = R.weightOf(base); sum, wt = R.scoreOf(base) * bw, bw; addKind(base) end
     end
     if R.counts(it) then
         local iw = math.max(1, tonumber(use) or R.weightOf(it))
         sum, wt = sum + R.scoreOf(it) * iw, wt + iw
+        addKind(it)
     end
-    return wt > 0 and (sum / wt) or 0
+    -- same rule as the server's (with the variety bonus, #38)
+    return R.finishDish({ sum = sum, w = wt, kinds = kinds }).avg
 end
 
 function Win:renderCookEvoDetail(x, y, w, h, e, list)
@@ -920,6 +981,47 @@ function Win:renderCookEvoDetail(x, y, w, h, e, list)
         if not okC then log("adding through vanilla FAILED: %s", tostring(err)) end
         if not e.started then win.evoFollow = e.name end
         win.evoDirty = true
+    end
+    -- #41: remember this dish / make a favorite again, one ingredient per click
+    local have = extraTypes(opt.base)
+    if e.started and #have > 0 then
+        self:cookButton(cx, cy, T("IGUI_GTPP_FavSave"), true, function(win)
+            if H.addFavorite(e.name, have) then log("favorite saved: %s (%s)", e.name, table.concat(have, ", ")) end
+            win.favSaved = e.name
+        end)
+        if self.favSaved == e.name then shadowText(self, T("IGUI_GTPP_FavSaved"), cx + tw(sf, T("IGUI_GTPP_FavSave")) + 40, cy + 6, C.good, 1, sf) end
+        cy = cy + lh + 18
+    end
+    local shownFav = 0
+    for fi, fav in ipairs(H.favorites()) do
+        if fav.name == e.name and shownFav < 3 then
+            shownFav = shownFav + 1
+            -- what is still missing from the favorite (counting repeats)
+            local left = {}
+            for _, ty in ipairs(fav.types) do left[#left + 1] = ty end
+            for _, ty in ipairs(have) do
+                for i, l in ipairs(left) do if l == ty then table.remove(left, i) break end end
+            end
+            local nextRow
+            for _, ty in ipairs(left) do
+                for _, row in ipairs(rows) do
+                    if row.ok and tostring(call(row.it, "getFullType")) == ty then nextRow = row break end
+                end
+                if nextRow then break end
+            end
+            local names = {}
+            for _, ty in ipairs(fav.types) do local i = H.item(ty); names[#names + 1] = i and i.name or (ty:match("%.(.+)$") or ty) end
+            local line = T("IGUI_GTPP_FavLine", table.concat(names, ", "))
+            local label = (#left == 0) and T("IGUI_GTPP_FavDone") or (nextRow and T("IGUI_GTPP_FavNext", itemName(nextRow.it)) or T("IGUI_GTPP_FavMissing"))
+            local bw2 = tw(sf, label) + 30
+            shadowText(self, fit(line, cw - bw2 - 40, sf), cx, cy + 6, C.accent, 1, sf)
+            self:cookButton(cx + cw - bw2 - 30, cy, label, nextRow ~= nil and #left > 0, function(win) if nextRow then add(win, nextRow) end end, bw2)
+            local xr = { x = cx + cw - 22, y = cy + 4, w = 16, h = lh }
+            shadowText(self, "x", xr.x + 4, xr.y, C.bad, 1, sf)
+            xr.action = function(win) table.remove(H.favorites(), fi); H.saveFavorites(); log("favorite removed: %s", fav.name) end
+            clickable(self, xr)
+            cy = cy + lh + 18
+        end
     end
     -- #20: one click for the best prepared food that can go in
     local best

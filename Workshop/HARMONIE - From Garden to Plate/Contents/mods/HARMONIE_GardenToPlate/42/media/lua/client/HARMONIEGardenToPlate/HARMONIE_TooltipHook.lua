@@ -130,6 +130,12 @@ local function buildPrepLines(item)
         if Kc and Kc.dishTier then tier, held = Kc.dishTier(d, item) end
         local lines = { { text = txt("IGUI_GTPP_TipDish"), r = 1, g = 1, b = 1 } }
         lines[#lines + 1] = { text = txt("IGUI_GTPP_TipScore", string.format("%.2f", avg), tostring(tonumber(d.n) or 0)), r = 0.85, g = 0.9, b = 0.85 }
+        -- GTP 1.7.0 (#38): many kinds of food in one dish
+        if (tonumber(d.bonus) or 0) > 0 then
+            local nk = 0
+            for _ in pairs(type(d.kinds) == "table" and d.kinds or {}) do nk = nk + 1 end
+            lines[#lines + 1] = { text = txt("IGUI_GTPP_TipVariety", string.format("%+.2f", d.bonus), tostring(nk)), r = 0.62, g = 0.86, b = 1.0 }
+        end
         if tier < 0 then
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBad"), r = 1.0, g = 0.45, b = 0.4 }
         elseif tier == 0 then
@@ -150,6 +156,9 @@ local function buildPrepLines(item)
             { text = txt("IGUI_GTPP_TipPrepLine", txt("IGUI_GTPC_Proc_" .. tostring(p.p)), txt("IGUI_GTPC_Word_" .. tostring(p.w)),
                 R.isRotten(item) and txt("IGUI_GTPP_RottenZero") or string.format("%+.1f", R.scoreOf(item))), r = c[1], g = c[2], b = c[3] } }
     end
+    -- GTP 1.7.0 (#25): the player can switch this box off (Settings)
+    if GTPGuide and GTPGuide.ensurePrefs then GTPGuide.ensurePrefs() end
+    if GTPGuide and GTPGuide.tipUnprepared == false then return nil end
     if R.whyNot(item) == nil then
         local games = R.gamesFor(item)
         if #games == 0 then return nil end

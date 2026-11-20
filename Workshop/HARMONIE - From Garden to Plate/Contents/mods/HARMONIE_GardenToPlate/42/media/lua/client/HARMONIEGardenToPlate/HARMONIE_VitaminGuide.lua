@@ -76,7 +76,8 @@ H.TABS = { "cook", "overview", "vitamins", "foods", "other" }
 H.NEAR_TILES = 3 -- how close another survivor must be to check them
 H.UNITS = { A = "mcg", B = "mg", C = "mg", D = "mcg", E = "mg", K = "mcg" }
 -- 2026-10-08: "Grow" first -- Fruit Farming (B42) by leina is built in
-H.OTHER = { "Grow", "Sun", "Dried", "Sprouts", "FishOil", "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
+-- GTP 1.7.0 (#27): "Prep" = the prepared-ingredient / dish-score guide
+H.OTHER = { "Prep", "Grow", "Sun", "Dried", "Sprouts", "FishOil", "Pills", "Canning", "Cooking", "Fresh", "NotTracked", "Tips" }
 
 -- green (Home Medic's palette turned leaf green)
 H.C = {
@@ -295,7 +296,8 @@ function H.ensurePrefs()
             elseif k == "h" then H.prefH = tonumber(v)
             elseif k == "text" then H.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
             elseif k == "pinned" then H.pinned = v ~= "0"
-            elseif k == "sound" then H.soundPct = math.max(0, math.min(150, math.floor(tonumber(v) or 100))) end
+            elseif k == "sound" then H.soundPct = math.max(0, math.min(150, math.floor(tonumber(v) or 100)))
+            elseif k == "tipprep" then H.tipUnprepared = v ~= "0" end
             line = reader:readLine()
         end
     end)
@@ -314,6 +316,7 @@ function H.savePrefs()
         writer:write("text=" .. tostring(H.textStep) .. "\n")
         writer:write("pinned=" .. (H.pinned and "1" or "0") .. "\n")
         writer:write("sound=" .. tostring(H.soundPct or 100) .. "\n")
+        writer:write("tipprep=" .. (H.tipUnprepared == false and "0" or "1") .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -843,6 +846,7 @@ local OTHER_ITEMS = {
     FishOil = { "HARMONIEGardenToPlate.FishLiverOil" },
     Pills = { "Base.PillsVitamins" },
     Canning = { "Base.TinCanEmpty", "Base.Carrots", "Base.Salt" },
+    Prep = { "Base.Carrots", "Base.KitchenKnife" },
     Cooking = { "Base.PotOfStew", "Base.Pot" },
     Fresh = { "Base.Carrots" },
     NotTracked = { "Base.Milk", "Base.CandyPackage" },
@@ -1282,6 +1286,10 @@ function H.openSettings()
             run = function() H.capturing = false; H.setKey(0) end }
         rows[#rows + 1] = { kind = "tick", id = "follow", label = T("IGUI_GTPG_OptFollow"), tip = T("IGUI_GTPG_OptFollow_tt"),
             get = function() return H.followEnabled() end, set = function(v) if v ~= H.followEnabled() then H.setFollow(v) end end }
+        -- GTP 1.7.0 (#25): the "not prepared yet (0)" box on every food's tooltip
+        rows[#rows + 1] = { kind = "tick", id = "tipprep", label = T("IGUI_GTPP_OptTipUnprepared"), tip = T("IGUI_GTPP_OptTipUnprepared_tt"),
+            get = function() return H.tipUnprepared ~= false end,
+            set = function(v) H.tipUnprepared = v and true or false; H.savePrefs(); log("tooltip box for unprepared food: %s", tostring(H.tipUnprepared)) end }
         return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HARMONIE_GardenToPlate" })
     end, {
         bg = C.background, header = C.header, row = C.card, rowHover = { 0.06, 0.18, 0.08 },

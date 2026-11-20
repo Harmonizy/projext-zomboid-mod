@@ -20,8 +20,6 @@
     "Sandbox_HARMONIE_SunVitaminDMaxPerDay_tooltip": "The most vitamin D Reserve sunlight can give in one game day. The default 3 is under the daily decay, so food is still needed.",
     "Sandbox_HARMONIE_CookMinigames": "Cooking tab: preparation minigames",
     "Sandbox_HARMONIE_CookMinigames_tooltip": "Preparing an ingredient in the Cooking tab is a short minigame. Off: preparing still works but scores 0.",
-    "Sandbox_HARMONIE_CookQualityEffect": "Cooking tab: quality effect (no longer used)",
-    "Sandbox_HARMONIE_CookQualityEffect_tooltip": "No longer used since GTP 1.1.0: a dish's score now gives buffs instead.",
     "Sandbox_HARMONIE_CookXPMultiplier": "Cooking tab: Cooking XP multiplier",
     "Sandbox_HARMONIE_CookXPMultiplier_tooltip": "Cooking XP from preparing ingredients in the Cooking tab, times this.",
     "Sandbox_HARMONIE_CookBuffs": "Cooking tab: buffs from well prepared dishes",
@@ -63,5 +61,9 @@
     "Sandbox_HARMONIE_CookBuffLength3": "Cooking tab: buff level 3 length",
     "Sandbox_HARMONIE_CookBuffLength3_tooltip": "How long buff level 3 lasts, times (2 + the cook's Cooking level) game hours (default 1.5).",
     "Sandbox_HARMONIE_CookBadDishUnhappy": "Cooking tab: unhappiness from a badly prepared dish",
-    "Sandbox_HARMONIE_CookBadDishUnhappy_tooltip": "A dish scoring below 0 adds this much unhappiness when all of it is eaten (default 10)."
+    "Sandbox_HARMONIE_CookBadDishUnhappy_tooltip": "A dish scoring below 0 adds this much unhappiness when all of it is eaten (default 10).",
+    "Sandbox_HARMONIE_CookVarietyBonus": "Cooking tab: variety bonus step",
+    "Sandbox_HARMONIE_CookVarietyBonus_tooltip": "A dish with 3 kinds of food (vegetable, meat, herb, fruit...) gets this added to its score, 4 or more kinds twice this (default 0.25). Not for a dish whose own average is below 0.",
+    "Sandbox_HARMONIE_CookChefXP": "Cooking tab: cook's XP when others eat",
+    "Sandbox_HARMONIE_CookChefXP_tooltip": "When another player eats a dish that gives a buff, its cook gets this much Cooking XP per buff level, times the share eaten (default 5)."
 }

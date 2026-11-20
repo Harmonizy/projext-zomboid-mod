@@ -413,11 +413,43 @@ local function famOfRecipe(recipe)
     return ok and f or nil
 end
 
+-- GTP 1.7.0 (#38): a dish with many kinds of food (vegetable, meat, herb...)
+-- gets a bonus on top of its average: +1 step at 3 kinds, +2 steps at 4 or
+-- more (step = sandbox CookVarietyBonus, default 0.25); never for a dish
+-- whose own average is below 0
+function R.varietyBonus(kinds)
+    local n = 0
+    for _ in pairs(kinds or {}) do n = n + 1 end
+    local step = R.sv("CookVarietyBonus", 0.25)
+    if n >= 4 then return step * 2, n end
+    if n >= 3 then return step, n end
+    return 0, n
+end
+local function addKind(kinds, item)
+    local d = R.dishOf(item)
+    if d and type(d.kinds) == "table" then
+        for k in pairs(d.kinds) do kinds[k] = true end
+        return
+    end
+    local k = R.kindOf(item)
+    if k then kinds[k] = true end
+end
+local function finishDish(t)
+    local base = t.w > 0 and (t.sum / t.w) or 0
+    local bonus = 0
+    if base >= 0 then bonus = R.varietyBonus(t.kinds) end
+    t.base, t.bonus, t.avg = base, bonus, base + bonus
+    return t
+end
+R.finishDish = finishDish
+
 -- 1) evolved recipes: one ingredient goes in (vanilla ISAddItemInRecipe)
 function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHungerBefore)
     if not baseAfter then return end
     local d = R.dishOf(baseBefore)
     local sum, w, n
+    local kinds = {}
+    if d and type(d.kinds) == "table" then for k in pairs(d.kinds) do kinds[k] = true end end
     if d then
         -- (a dish from before 1.3.0 has no weight: one per ingredient)
         sum, n = tonumber(d.sum) or 0, tonumber(d.n) or 0
@@ -429,6 +461,7 @@ function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHung
         if R.counts(baseBefore) then
             local bw = R.weightOf(baseBefore)
             sum, w, n = R.scoreOf(baseBefore) * bw, bw, 1
+            addKind(kinds, baseBefore)
         end
     end
     local usedScore, usedW = 0, 0
@@ -440,12 +473,15 @@ function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHung
         local took = before - after
         usedW = R.weightOf(used, (took > 0.0005) and took or before)
         sum, w, n = sum + usedScore * usedW, w + usedW, n + 1
+        addKind(kinds, used)
     end
     local md = call(baseAfter, "getModData")
     if not md then logOnce("evonomd", "dish %s has no modData -- score not kept", typeOf(baseAfter)); return end
     local lvl = K.level and K.level(character) or 0
     local fam = famOfRecipe(recipe) or (d and d.fam)
-    md.HARMONIE_Dish = { sum = sum, w = w, n = n, avg = w > 0 and (sum / w) or 0, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0) }
+    -- #39: the cook (the last one who added) gets a little XP when others eat it
+    md.HARMONIE_Dish = finishDish({ sum = sum, w = w, n = n, kinds = kinds, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0),
+        chef = nameOf(character) })
     count("add")
     dlog("%s added %s (%+.2f x %.1f) to %s: dish score %.2f over %d (%s)", nameOf(character), used and typeOf(used) or "?", usedScore, usedW, typeOf(baseAfter),
         md.HARMONIE_Dish.avg, n, tostring(fam))
@@ -455,12 +491,14 @@ end
 -- 2) crafting-window recipes: what was used up -> what came out
 function R.onCraft(character, recipeName, consumed, created)
     local sum, w, n, any, fam, lvl = 0, 0, 0, false, nil, 0
+    local kinds = {}
     for i = 0, (consumed and consumed:size() or 0) - 1 do
         local it = consumed:get(i)
         if R.counts(it) then
             local iw = R.weightOf(it)
             n, w = n + 1, w + iw
             sum = sum + R.scoreOf(it) * iw
+            addKind(kinds, it)
             local d = R.dishOf(it)
             if d then fam = fam or d.fam; lvl = math.max(lvl, tonumber(d.lvl) or 0) end
             if d or R.prepOf(it) then any = true end
@@ -469,14 +507,16 @@ function R.onCraft(character, recipeName, consumed, created)
     -- nothing prepared went in: the result stays plain vanilla
     if not any or n == 0 then return end
     lvl = math.max(lvl, K.level and K.level(character) or 0)
-    local avg = w > 0 and (sum / w) or 0
+    local proto = finishDish({ sum = sum, w = w, n = n, kinds = kinds, fam = fam, lvl = 0 })
+    local avg = proto.avg
     local wrote = 0
     for i = 0, (created and created:size() or 0) - 1 do
         local out = created:get(i)
         if isFood(out) then
             local md = call(out, "getModData")
             if md then
-                md.HARMONIE_Dish = { sum = sum, w = w, n = n, avg = avg, fam = fam, lvl = lvl }
+                md.HARMONIE_Dish = { sum = sum, w = w, n = n, base = proto.base, bonus = proto.bonus, avg = avg, kinds = kinds, fam = fam, lvl = lvl,
+                    chef = nameOf(character) }
                 wrote = wrote + 1
                 sendSet(character, out, "dish")
             end
@@ -649,6 +689,39 @@ function R.request(player, item, pid, word)
     local ok, why = R.servePrep(player, args)
     if not ok and R.onRefused then pcall(R.onRefused, { id = args.id, why = why }) end
     return ok
+end
+
+-- GTP 1.7.0 (#37): admin test ops (the hub's flask button; the server runs
+-- them only for an admin -- HARMONIE_AdminTest checks that)
+local AT = HARMONIE_AdminTest
+if AT and AT.serverOp then
+    AT.serverOp("gtp_prepAll", function(player, args)
+        local inv = call(player, "getInventory")
+        local items = inv and call(inv, "getItems")
+        local n = 0
+        for i = 0, (items and items:size() or 0) - 1 do
+            local it = items:get(i)
+            if R.whyNot(it) == nil then
+                local games = R.gamesFor(it)
+                local md = call(it, "getModData")
+                if md and games[1] then
+                    md.HARMONIE_Prep = { w = "Excellent", p = games[1], s = R.wordScore("Excellent") }
+                    sendSet(player, it, "prep")
+                    n = n + 1
+                end
+            end
+        end
+        log("admin test: %d food(s) in %s's inventory set to Excellent", n, nameOf(player))
+    end)
+    AT.serverOp("gtp_buff", function(player, args)
+        local tier = math.max(1, math.min(3, tonumber(type(args) == "table" and args.tier) or 3))
+        local avg = ({ 0.6, 1.1, 2.0 })[tier]
+        if K.grantDish then K.grantDish(player, { avg = avg, fam = "stew", lvl = 10 }, nil, 1) end
+        log("admin test: %s given a level %d dish buff", nameOf(player), tier)
+    end)
+    AT.serverOp("gtp_clearBuff", function(player)
+        if K.clearBuff then K.clearBuff(player, "admin test") end
+    end)
 end
 
 if Events and Events.EveryHours then

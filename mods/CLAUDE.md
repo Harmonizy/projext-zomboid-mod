@@ -424,6 +424,26 @@
   toaster: ISStartCraftProcessorAction) finish in Java with no Lua callback
   -- not hooked; only 3 of the 89 Cooking recipes, coffee has no preparable
   input.
+- GTP 1.7.0 (review round 6 -- words, guide, extras): Settings tick
+  "tipprep" (H.tipUnprepared, HARMONIE_GTP_Guide.txt) hides the "not
+  prepared yet" tooltip box. Hub GTP card text updated (master
+  _HarmonieHub/translate + install.sh -> every mod's IG_UI, patch bumps).
+  Guide "Other" tab page "Prep" (first). Thai result words unified:
+  ยอดเยี่ยม / ดี / แย่ / พลาด (Word_Bad was พอใช้). 407 unused IGUI_GTPC_ keys
+  removed (old dishes / flow; kept: literals in code + run-time prefixes
+  such as IGUI_GTPC_Say_ / _Proc_ / _Word_ / _Tool_ / _Buff_) and the
+  CookQualityEffect sandbox option. Admin tests (cook tab): server ops
+  gtp_prepAll / gtp_buff {tier} / gtp_clearBuff in HARMONIE_Prep.lua.
+  Variety bonus (#38): HARMONIE_Dish.kinds (R.kindOf of each ingredient,
+  a dish inside merges its kinds); 3 kinds +CookVarietyBonus (0.25), 4+ x2,
+  only when the base average >= 0 -> fields base / bonus / avg
+  (R.finishDish; the tab preview uses it too). Chef XP (#39): dish.chef =
+  the last adder / crafter; K.rewardChef gives CookChefXP x level x share
+  to an ONLINE cook when someone else eats a buff dish ("chef" notice ->
+  halo). Favorites (#41): Zomboid/Lua/HARMONIE_GTP_Favorites.txt
+  ("dish|types"), saved from a started dish's getExtraItems(); "Add next"
+  adds the next missing type, one per click (vanilla replaces the base
+  item after each addition, so a queued chain would point at a stale base).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

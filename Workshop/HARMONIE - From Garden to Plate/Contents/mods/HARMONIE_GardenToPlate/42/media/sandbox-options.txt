@@ -104,15 +104,6 @@ option HARMONIE_GardenToPlate.CookMinigames
     translation = HARMONIE_CookMinigames,
 }
 
-option HARMONIE_GardenToPlate.CookQualityEffect
-{
-    type = double,
-    default = 1.0,
-    min = 0.0,
-    max = 3.0,
-    page = HARMONIE_GardenToPlate,
-    translation = HARMONIE_CookQualityEffect,
-}
 
 option HARMONIE_GardenToPlate.CookXPMultiplier
 {
@@ -308,4 +299,24 @@ option HARMONIE_GardenToPlate.CookBadDishUnhappy
     max = 100.0,
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_CookBadDishUnhappy,
+}
+
+option HARMONIE_GardenToPlate.CookVarietyBonus
+{
+    type = double,
+    default = 0.25,
+    min = 0.0,
+    max = 2.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookVarietyBonus,
+}
+
+option HARMONIE_GardenToPlate.CookChefXP
+{
+    type = double,
+    default = 5.0,
+    min = 0.0,
+    max = 100.0,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookChefXP,
 }
