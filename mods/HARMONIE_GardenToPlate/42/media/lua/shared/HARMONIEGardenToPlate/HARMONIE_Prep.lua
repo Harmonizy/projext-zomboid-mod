@@ -480,8 +480,10 @@ function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHung
     local lvl = K.level and K.level(character) or 0
     local fam = famOfRecipe(recipe) or (d and d.fam)
     -- #39: the cook (the last one who added) gets a little XP when others eat it
+    -- GTP 1.8.0: the cook's note stays while the same cook goes on
+    local note = (d and d.chef == nameOf(character) and type(d.note) == "table") and d.note or nil
     md.HARMONIE_Dish = finishDish({ sum = sum, w = w, n = n, kinds = kinds, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0),
-        chef = nameOf(character) })
+        chef = nameOf(character), note = note })
     count("add")
     dlog("%s added %s (%+.2f x %.1f) to %s: dish score %.2f over %d (%s)", nameOf(character), used and typeOf(used) or "?", usedScore, usedW, typeOf(baseAfter),
         md.HARMONIE_Dish.avg, n, tostring(fam))
@@ -491,7 +493,7 @@ end
 -- 2) crafting-window recipes: what was used up -> what came out
 function R.onCraft(character, recipeName, consumed, created)
     local sum, w, n, any, fam, lvl = 0, 0, 0, false, nil, 0
-    local kinds = {}
+    local kinds, note = {}, nil
     for i = 0, (consumed and consumed:size() or 0) - 1 do
         local it = consumed:get(i)
         if R.counts(it) then
@@ -501,6 +503,8 @@ function R.onCraft(character, recipeName, consumed, created)
             addKind(kinds, it)
             local d = R.dishOf(it)
             if d then fam = fam or d.fam; lvl = math.max(lvl, tonumber(d.lvl) or 0) end
+            -- GTP 1.8.0: the crafter's own note on a dish that went in comes along
+            if d and type(d.note) == "table" and d.note.by == nameOf(character) then note = note or d.note end
             if d or R.prepOf(it) then any = true end
         end
     end
@@ -516,7 +520,7 @@ function R.onCraft(character, recipeName, consumed, created)
             local md = call(out, "getModData")
             if md then
                 md.HARMONIE_Dish = { sum = sum, w = w, n = n, base = proto.base, bonus = proto.bonus, avg = avg, kinds = kinds, fam = fam, lvl = lvl,
-                    chef = nameOf(character) }
+                    chef = nameOf(character), note = note }
                 wrote = wrote + 1
                 sendSet(character, out, "dish")
             end

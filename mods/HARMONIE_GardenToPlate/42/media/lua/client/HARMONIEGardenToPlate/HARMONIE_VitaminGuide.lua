@@ -297,7 +297,9 @@ function H.ensurePrefs()
             elseif k == "text" then H.textStep = math.max(0, math.min(2, math.floor(tonumber(v) or 0)))
             elseif k == "pinned" then H.pinned = v ~= "0"
             elseif k == "sound" then H.soundPct = math.max(0, math.min(150, math.floor(tonumber(v) or 100)))
-            elseif k == "tipprep" then H.tipUnprepared = v ~= "0" end
+            elseif k == "tipprep" then H.tipUnprepared = v ~= "0"
+            elseif k == "noteshow" then H.noteShow = v ~= "0"
+            elseif k == "eatnotice" then H.eatNotice = v ~= "0" end
             line = reader:readLine()
         end
     end)
@@ -317,6 +319,8 @@ function H.savePrefs()
         writer:write("pinned=" .. (H.pinned and "1" or "0") .. "\n")
         writer:write("sound=" .. tostring(H.soundPct or 100) .. "\n")
         writer:write("tipprep=" .. (H.tipUnprepared == false and "0" or "1") .. "\n")
+        writer:write("noteshow=" .. (H.noteShow == false and "0" or "1") .. "\n")
+        writer:write("eatnotice=" .. (H.eatNotice == false and "0" or "1") .. "\n")
     end)
     pcall(function() writer:close() end)
 end
@@ -1290,6 +1294,13 @@ function H.openSettings()
         rows[#rows + 1] = { kind = "tick", id = "tipprep", label = T("IGUI_GTPP_OptTipUnprepared"), tip = T("IGUI_GTPP_OptTipUnprepared_tt"),
             get = function() return H.tipUnprepared ~= false end,
             set = function(v) H.tipUnprepared = v and true or false; H.savePrefs(); log("tooltip box for unprepared food: %s", tostring(H.tipUnprepared)) end }
+        -- GTP 1.8.0: the cook's note before eating / who ate whose food (this player only)
+        rows[#rows + 1] = { kind = "tick", id = "noteshow", label = T("IGUI_GTPN_OptShow"), tip = T("IGUI_GTPN_OptShow_tt"),
+            get = function() return H.noteShow ~= false end,
+            set = function(v) H.noteShow = v and true or false; H.savePrefs(); log("cook's notes before eating: %s", tostring(H.noteShow)) end }
+        rows[#rows + 1] = { kind = "tick", id = "eatnotice", label = T("IGUI_GTPN_OptNotice"), tip = T("IGUI_GTPN_OptNotice_tt"),
+            get = function() return H.eatNotice ~= false end,
+            set = function(v) H.eatNotice = v and true or false; H.savePrefs(); log("who-ate-whose-food notices: %s", tostring(H.eatNotice)) end }
         return (HARMONIE_SettingsUI.addServerRows or function(r) return r end)(rows, { "HARMONIE_GardenToPlate" })
     end, {
         bg = C.background, header = C.header, row = C.card, rowHover = { 0.06, 0.18, 0.08 },

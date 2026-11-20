@@ -180,16 +180,15 @@ local function onlinePlayer(username)
 end
 function K.rewardChef(eater, dish, tier, frac)
     local chefName = dish and dish.chef
-    if not chefName or chefName == nameOf(eater) or (tonumber(tier) or 0) < 1 then return false end
+    if not chefName or chefName == nameOf(eater) or (tonumber(tier) or 0) < 1 or not K.buffsOn() then return nil end
     local chef = onlinePlayer(chefName)
-    if not chef then log("%s ate %s's dish -- the cook is not online, no XP", nameOf(eater), tostring(chefName)); return false end
+    if not chef then log("%s ate %s's dish -- the cook is not online, no XP", nameOf(eater), tostring(chefName)); return nil end
     local xp = sv("CookChefXP", 5) * tier * (frac or 1)
     if K.giveXp then K.giveXp(chef, xp) end
     log("%s enjoyed %s's dish (level %d): +%.1f Cooking XP to the cook", nameOf(eater), chefName, tier, xp)
-    if isServer and isServer() and sendServerCommand then
-        pcall(sendServerCommand, chef, K.BUFF_NET, "chef", { eater = nameOf(eater), tier = tier })
-    end
-    return true
+    -- GTP 1.8.0: the notice goes with the "who ate whose food" one
+    -- (HARMONIE_CookNotes.lua N.onEaten), not a separate "chef" command
+    return xp
 end
 
 -- a scored dish was eaten (authority side)
@@ -228,7 +227,6 @@ function K.grantDish(player, dish, item, fraction)
     setRec(player, b)
     log("%s ate a dish scored %.2f (%.0f%% of it, cook level %s): %s level %d for %.1f h", nameOf(player), avg, frac * 100, tostring(dish.lvl), kind, tier, b.untilH - now)
     notify(player, "on", b, avg)
-    pcall(K.rewardChef, player, dish, tier, frac)
     return b
 end
 
@@ -331,6 +329,17 @@ if ISEatFoodAction and ISEatFoodAction.complete then
         if info then
             local ok, err = pcall(K.grantDish, self.character, info.dish, info.item, info.frac)
             if not ok then log("granting the dish buff FAILED: %s", tostring(err)) end
+            -- #39 + GTP 1.8.0: the cook's XP, then "who ate whose food" to both
+            local okX, xp = pcall(function()
+                local tier = K.dishTier(info.dish, info.item)
+                return K.rewardChef(self.character, info.dish, tier, math.max(0.25, math.min(1, tonumber(info.frac) or 1)))
+            end)
+            if not okX then log("chef XP FAILED: %s", tostring(xp)); xp = nil end
+            local N = HARMONIE_GTP.CookNotes
+            if N and N.onEaten then
+                local okN, errN = pcall(N.onEaten, self.character, info.dish, info.item, xp)
+                if not okN then log("eat notice FAILED: %s", tostring(errN)) end
+            end
         end
         return result
     end

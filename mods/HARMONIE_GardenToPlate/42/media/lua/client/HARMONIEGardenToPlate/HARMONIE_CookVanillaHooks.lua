@@ -129,6 +129,16 @@ local function onInventoryMenu(playerNum, context, items)
     local player = getSpecificPlayer and getSpecificPlayer(playerNum)
     local it = firstItem(items)
     if not player or not it or not R.isFood(it) then return end
+    -- GTP 1.8.0: the cook's note (write: the dish's cook; read: anyone else)
+    local N, NU = HARMONIE_GTP.CookNotes, HARMONIE_GTP.CookNoteUI
+    if N and NU and R.dishOf(it) then
+        local note = N.noteOf(it)
+        if N.canWrite(player, it) then
+            context:addOption(note and T("IGUI_GTPN_MenuEdit") or T("IGUI_GTPN_MenuWrite"), player, function(p) NU.openWrite(p, it) end)
+        elseif note then
+            context:addOption(T("IGUI_GTPN_MenuRead", tostring(note.by)), player, function(p) NU.openRead(p, it, nil) end)
+        end
+    end
     if R.canRedo(it) then
         context:addOption(T("IGUI_GTPP_MenuRedo"), player, function(p)
             log("right-click: wash off %s", tostring(call(it, "getFullType")))

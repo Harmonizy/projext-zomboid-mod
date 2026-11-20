@@ -136,6 +136,11 @@ local function buildPrepLines(item)
             for _ in pairs(type(d.kinds) == "table" and d.kinds or {}) do nk = nk + 1 end
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipVariety", string.format("%+.2f", d.bonus), tostring(nk)), r = 0.62, g = 0.86, b = 1.0 }
         end
+        -- GTP 1.8.0: who cooked it, and whether the cook left a note
+        if d.chef then
+            local hasNote = type(d.note) == "table" and type(d.note.t) == "string" and d.note.t ~= ""
+            lines[#lines + 1] = { text = txt(hasNote and "IGUI_GTPN_TipChefNote" or "IGUI_GTPN_TipChef", tostring(d.chef)), r = 0.95, g = 0.88, b = 0.7 }
+        end
         if tier < 0 then
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBad"), r = 1.0, g = 0.45, b = 0.4 }
         elseif tier == 0 then

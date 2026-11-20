@@ -984,12 +984,25 @@ function Win:renderCookEvoDetail(x, y, w, h, e, list)
     end
     -- #41: remember this dish / make a favorite again, one ingredient per click
     local have = extraTypes(opt.base)
-    if e.started and #have > 0 then
-        self:cookButton(cx, cy, T("IGUI_GTPP_FavSave"), true, function(win)
-            if H.addFavorite(e.name, have) then log("favorite saved: %s (%s)", e.name, table.concat(have, ", ")) end
-            win.favSaved = e.name
-        end)
-        if self.favSaved == e.name then shadowText(self, T("IGUI_GTPP_FavSaved"), cx + tw(sf, T("IGUI_GTPP_FavSave")) + 40, cy + 6, C.good, 1, sf) end
+    -- GTP 1.8.0: the cook writes a note for whoever eats it
+    local NU, Nn = HARMONIE_GTP.CookNoteUI, HARMONIE_GTP.CookNotes
+    local canNote = e.started and NU and Nn and Nn.canWrite(self.player, opt.base)
+    if e.started and (#have > 0 or canNote) then
+        local bx = cx
+        if #have > 0 then
+            bx = bx + self:cookButton(bx, cy, T("IGUI_GTPP_FavSave"), true, function(win)
+                if H.addFavorite(e.name, have) then log("favorite saved: %s (%s)", e.name, table.concat(have, ", ")) end
+                win.favSaved = e.name
+            end) + 8
+        end
+        if canNote then
+            local label = Nn.noteOf(opt.base) and T("IGUI_GTPN_MenuEdit") or T("IGUI_GTPN_MenuWrite")
+            bx = bx + self:cookButton(bx, cy, label, true, function(win)
+                log("tab: write a note on %s", itemName(opt.base))
+                NU.openWrite(win.player, opt.base)
+            end) + 8
+        end
+        if self.favSaved == e.name then shadowText(self, T("IGUI_GTPP_FavSaved"), bx + 4, cy + 6, C.good, 1, sf) end
         cy = cy + lh + 18
     end
     local shownFav = 0

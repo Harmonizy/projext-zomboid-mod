@@ -444,6 +444,25 @@
   ("dish|types"), saved from a started dish's getExtraItems(); "Add next"
   adds the next missing type, one per click (vanilla replaces the base
   item after each addition, so a queued chain would point at a stale base).
+- GTP 1.8.0 cook's notes (owner 2026-11-20, paper picture):
+  `shared/.../HARMONIE_CookNotes.lua` (N, net "HARMONIE_GTP_Note") +
+  `client/.../HARMONIE_CookNoteUI.lua` (GTPNotePaper). Note = dish
+  modData.HARMONIE_Dish.note { t, by, id }, written by the authority only
+  ("note" {id, text}: item within reach incl. room boxes, dish.chef == sender,
+  N.clean: no control chars, <= 4 lines, <= 120 UTF-8 letters, 1.5 s rate;
+  empty = remove; back to the client with R.sendSet what "note"). Kept while
+  the SAME cook adds / crafts on (Prep onEvolvedAdd / onCraft), dropped when
+  another cook adds. Eating: ISInventoryPaneContextMenu.eatItem wrapped --
+  a note shows on paper first (not to its writer, not with a gamepad, not
+  when ticked away: Zomboid/Lua/HARMONIE_GTP_NotesHidden.txt, 300 kept), Eat
+  calls the original with the same args. Eat wrapper (CookBuffs): K.rewardChef
+  now RETURNS the XP (no "chef" command); N.onEaten sends "ateOf" to the eater
+  and "likedBy" {eater, xp} to an online cook, once per eater + item per 10
+  real min -> halo text. Settings ticks noteshow / eatnotice (guide prefs,
+  this player). Right-click a dish: write / change (cook) or read (others);
+  Cooking tab dish page button; tooltip "Made by X (- has a note)". Paper:
+  tools/gen_note_paper.py -> media/ui/GTP_NotePaper.png (owner may save their
+  own picture over it).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).
