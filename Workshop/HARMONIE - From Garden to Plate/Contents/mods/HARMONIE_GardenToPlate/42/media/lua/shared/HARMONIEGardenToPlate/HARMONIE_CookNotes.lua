@@ -105,10 +105,16 @@ function N.noteOf(item)
     if type(n) == "table" and type(n.t) == "string" and n.t ~= "" then return n end
     return nil
 end
--- only the dish's cook writes on it
+-- only the dish's cook writes on it, and a note already there belongs to its
+-- writer: nobody else may change or remove it (GTP 1.8.3, owner: "someone
+-- who is not the cook must not write over the cook's note")
 function N.canWrite(player, item)
     local d = R.dishOf(item)
-    return d ~= nil and d.chef ~= nil and d.chef == nameOf(player)
+    if not (d and d.chef) then return false end
+    local me = nameOf(player)
+    local n = type(d.note) == "table" and d.note or nil
+    if n and n.by and n.by ~= me then return false end
+    return d.chef == me or (n ~= nil and n.by == me)
 end
 
 local function findItem(player, id)
@@ -136,7 +142,13 @@ function N.serveNote(player, args)
     local md = call(item, "getModData")
     local d = md and md.HARMONIE_Dish
     if type(d) ~= "table" then log("note from %s on %s: not a scored dish -- rejected", who, typeOf(item)); return false, "noDish" end
-    if d.chef ~= who then log("note from %s on %s: the cook is %s -- rejected", who, typeOf(item), tostring(d.chef)); return false, "notChef" end
+    local cur = type(d.note) == "table" and d.note or nil
+    if cur and cur.by and cur.by ~= who then
+        log("note from %s on %s: the note is %s's -- rejected", who, typeOf(item), tostring(cur.by)); return false, "notWriter"
+    end
+    if d.chef ~= who and not (cur and cur.by == who) then
+        log("note from %s on %s: the cook is %s -- rejected", who, typeOf(item), tostring(d.chef)); return false, "notChef"
+    end
     N.last[who] = t
     local text = N.clean(args.text)
     if text == "" then
@@ -169,6 +181,13 @@ function N.onEaten(eater, dish, item, xp)
     local t = nowMs()
     if N.told[key] and t - N.told[key] < N.EAT_NOTICE_MS then return false end
     N.told[key] = t
+    -- GTP 1.8.3: forget old entries now and then (a server runs for days)
+    N.toldCount = (N.toldCount or 0) + 1
+    if N.toldCount % 50 == 0 then
+        local gone = {}
+        for k, at in pairs(N.told) do if t - at >= N.EAT_NOTICE_MS then gone[#gone + 1] = k end end
+        for _, k in ipairs(gone) do N.told[k] = nil end
+    end
     log("%s ate food made by %s%s", who, chef, xp and string.format(" (+%.1f Cooking XP to the cook)", xp) or "")
     if isServerSide() and sendServerCommand then
         pcall(sendServerCommand, eater, N.NET, "ateOf", { chef = chef })

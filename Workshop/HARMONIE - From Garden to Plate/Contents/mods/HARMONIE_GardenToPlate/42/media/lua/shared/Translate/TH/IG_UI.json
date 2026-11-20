@@ -767,5 +767,7 @@
     "IGUI_GTPP_Card_Practice": "ฝึกมินิเกม",
     "IGUI_GTPP_PracticeIntro": "ฝึกอย่างเดียว ไม่ใช้วัตถุดิบ ไม่ได้คะแนน และไม่นับสถิติ ถ้าจะเตรียมวัตถุดิบจริงให้ไปที่หน้าเตรียมวัตถุดิบ",
     "IGUI_GTPP_StartGame": "เริ่มทำ",
-    "IGUI_GTPP_MenuTagDish": "[%1 -> จาน %2]"
+    "IGUI_GTPP_MenuTagDish": "[%1 -> จาน %2]",
+    "IGUI_GTPN_TipChefNoteBy": "ทำโดย %1 - มีโน้ตจาก %2",
+    "IGUI_GTPN_Refused_notWriter": "โน้ตนี้เป็นของคนที่เขียนไว้ แก้หรือลบได้เฉพาะคนเขียน"
 }
