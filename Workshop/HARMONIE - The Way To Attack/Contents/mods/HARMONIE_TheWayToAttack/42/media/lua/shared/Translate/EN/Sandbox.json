@@ -67,7 +67,7 @@
     "Sandbox_HARMONIE_TWA_GemBreakBad": "Gem refining: break chance at Bad (percent)",
     "Sandbox_HARMONIE_TWA_GemBreakBad_tooltip": "Finishing a gem-refining recipe (Refined to Pure) at an overall Bad breaks the gem this often; it is lost.",
     "Sandbox_HARMONIE_TWA_ZombieDropLump": "Zombie drop: Material Lump (percent per zombie)",
-    "Sandbox_HARMONIE_TWA_ZombieDropLump_tooltip": "The chance that a killed zombie carries one Material Lump. Kept low on purpose: enough to know they exist, not a supply.",
+    "Sandbox_HARMONIE_TWA_ZombieDropLump_tooltip": "The chance that a killed zombie carries one Material Lump. Default 5 (owner 2026-11-20).",
     "Sandbox_HARMONIE_TWA_ZombieDropGemstone": "Zombie drop: Gemstone (percent per zombie)",
     "Sandbox_HARMONIE_TWA_ZombieDropGemstone_tooltip": "The chance that a killed zombie carries one Gemstone (half the Material Lump's by default).",
     "Sandbox_HARMONIE_TWA_OreCost": "Oridecon / Elunium / Bradium needed per recipe",

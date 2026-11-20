@@ -207,6 +207,21 @@ function G.undoDurability(item, md)
     TWALog("Socket", "%s: x%d durability taken back (condition %s -> %s, max %s)", TWALogType(item), mul, tostring(before), tostring(c), tostring(max))
 end
 
+-- 1.2.2 (owner 2026-11-20: "the gems' damage must not change the tier"):
+-- the damage a weapon's TIER is judged on -- the live damage minus what its
+-- gems add (TierTooltip and the socket page use it; the DPS shown with gems
+-- stays the real one).
+function G.tierDamage(item)
+    local minD, maxD = item:getMinDamage(), item:getMaxDamage()
+    local md = item.hasModData and item:hasModData() and item:getModData() or nil
+    if md and md.TWA_Gems and not md.TWA_Incomplete then
+        local b = G.totalBonus(item)
+        minD = minD - (b.MinDamage or 0)
+        maxD = maxD - (b.MaxDamage or 0)
+    end
+    return minD, maxD
+end
+
 function G.applyDamage(item)
     if not item then return end
     local md = item:getModData()

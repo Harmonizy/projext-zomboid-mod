@@ -5,9 +5,9 @@
 
     Server / single player only: when a zombie dies, one roll each, put in
     its inventory before the corpse is made (the corpse keeps it). Chances
-    are sandbox (percent per zombie): ZombieDropLump 0.5, ZombieDropGemstone
-    0.25 -- about 1 lump in 200 kills, 1 Gemstone in 400. Every drop is
-    logged with the running total.
+    are sandbox (percent per zombie): ZombieDropLump 5, ZombieDropGemstone
+    2.5 (owner, second ask: "lump 5, gemstone 2.5") -- about 1 lump in 20
+    kills, 1 Gemstone in 40. Every drop is logged with the running total.
 ]]--
 
 require "HARMONIE_TWA_Config"

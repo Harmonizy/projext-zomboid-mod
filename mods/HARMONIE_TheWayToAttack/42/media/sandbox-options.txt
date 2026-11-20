@@ -297,7 +297,7 @@ option HARMONIE_TheWayToAttack.ZombieDropLump
     type = double,
     min = 0,
     max = 100,
-    default = 0.5,
+    default = 5.0,
     page = HARMONIE_TheWayToAttack,
     translation = HARMONIE_TWA_ZombieDropLump,
 }
@@ -307,7 +307,7 @@ option HARMONIE_TheWayToAttack.ZombieDropGemstone
     type = double,
     min = 0,
     max = 100,
-    default = 0.25,
+    default = 2.5,
     page = HARMONIE_TheWayToAttack,
     translation = HARMONIE_TWA_ZombieDropGemstone,
 }

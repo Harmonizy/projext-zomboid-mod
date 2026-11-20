@@ -374,8 +374,13 @@
     Legendary <= 8 < Prototype. Only Elite / Legendary moved (were < 8 / < 10)
     so every baked Stats tier stays right.
   * Zombie drops (`shared/HARMONIE_TWA_ZombieDrop.lua`, server / SP,
-    OnZombieDead -> zombie inventory): TWA_MaterialLump ZombieDropLump 0.5 %,
-    TWA_Gemstone ZombieDropGemstone 0.25 % (sandbox, logged with a total).
+    OnZombieDead -> zombie inventory): TWA_MaterialLump ZombieDropLump 5 %,
+    TWA_Gemstone ZombieDropGemstone 2.5 % (1.2.2, owner; sandbox, logged).
+  * 1.2.2: gems never change the TIER -- TWAGemSocket.tierDamage(item) = live
+    damage minus the gems' bonus; TierTooltip and the socket page judge the
+    tier on it (the damage / DPS shown stay the real ones). Gem max: S grade
+    5 + 1 special sockets x Pure +0.5 = +3 min and max -> DPS + 3 x speed
+    (Legendary 8 -> 11).
   * Ore cost: a recipe whose base2 is Oridecon / Elunium / Bradium takes
     sandbox OreCost (20) of it: S.base2Qty / base2Count / base2Ok /
     takeExtraBase2 (CraftState). Start checks the whole count, takes the

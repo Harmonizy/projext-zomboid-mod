@@ -67,7 +67,7 @@
     "Sandbox_HARMONIE_TWA_GemBreakBad": "ขัดเกลาอัญมณี: โอกาสแตกเมื่อคุณภาพรวม แย่ (เปอร์เซ็นต์)",
     "Sandbox_HARMONIE_TWA_GemBreakBad_tooltip": "เมื่อกดเสร็จสิ้นสูตรขัดเกลาอัญมณี (ขัดเกลาถึงบริสุทธิ์) ที่คุณภาพรวม แย่ อัญมณีจะแตกและหายไปตามโอกาสนี้",
     "Sandbox_HARMONIE_TWA_ZombieDropLump": "ซอมบี้ดรอป: ก้อนวัตถุดิบ (เปอร์เซ็นต์ต่อตัว)",
-    "Sandbox_HARMONIE_TWA_ZombieDropLump_tooltip": "โอกาสที่ซอมบี้ที่ตายมีก้อนวัตถุดิบ 1 ก้อน ตั้งไว้ต่ำโดยตั้งใจ แค่ให้รู้ว่ามีของนี้อยู่ ไม่ใช่แหล่งหาของ",
+    "Sandbox_HARMONIE_TWA_ZombieDropLump_tooltip": "โอกาสที่ซอมบี้ที่ตายมีก้อนวัตถุดิบ 1 ก้อน ค่าเริ่มต้น 5",
     "Sandbox_HARMONIE_TWA_ZombieDropGemstone": "ซอมบี้ดรอป: หินมณี (เปอร์เซ็นต์ต่อตัว)",
     "Sandbox_HARMONIE_TWA_ZombieDropGemstone_tooltip": "โอกาสที่ซอมบี้ที่ตายมีหินมณี 1 ก้อน (ค่าเริ่มต้นครึ่งหนึ่งของก้อนวัตถุดิบ)",
     "Sandbox_HARMONIE_TWA_OreCost": "จำนวนโอริเดคอน / เอลูเนียม / บราเดียม ที่สูตรใช้",

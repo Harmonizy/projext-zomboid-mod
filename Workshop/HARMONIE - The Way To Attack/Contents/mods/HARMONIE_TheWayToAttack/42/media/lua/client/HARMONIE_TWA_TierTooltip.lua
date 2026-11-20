@@ -273,7 +273,10 @@ function ISToolTipInv:render()
         local pushBackMod = liveOrFallback(item, "getPushBackMod", (stats and stats.pushBackMod) or 0)
         local subCategory = liveOrFallback(item, "getSubCategory", stats and stats.subCategory)
         local dps = ((minD + maxD) / 2) * baseSpeed
-        local tier = tierFromDps(dps)
+        -- 1.2.2: the tier comes from the damage WITHOUT the gems
+        local tMin, tMax = minD, maxD
+        if TWAGemSocket and TWAGemSocket.tierDamage then tMin, tMax = TWAGemSocket.tierDamage(item) end
+        local tier = tierFromDps(((tMin + tMax) / 2) * baseSpeed)
         local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
         -- R72 ("ใน tooltip อาวุธ เอาหัวข้อ ประเภท และ DPS ออก"): the tier
         -- name only (the DPS still picks the tier), no Type / DPS cells
