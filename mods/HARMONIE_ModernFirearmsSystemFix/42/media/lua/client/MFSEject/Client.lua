@@ -16,6 +16,14 @@ function MFSEject.onWeaponSwing(player, weapon)
     end
 
     if isClient() then
+        -- MIL 1.0.11: at most 4 casing requests a second (full auto sent one
+        -- per shot; the server limits too)
+        local t = getTimestampMs and getTimestampMs() or 0
+        MFSEject.sendWin = MFSEject.sendWin or { start = 0, n = 0 }
+        local w = MFSEject.sendWin
+        if t - w.start >= 1000 then w.start, w.n = t, 0 end
+        if w.n >= 4 then return end
+        w.n = w.n + 1
         sendClientCommand("MFSEject", "spawnCasing", {
             weaponId = weapon:getID(),
         })

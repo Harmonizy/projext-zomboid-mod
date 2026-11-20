@@ -181,7 +181,7 @@ local function defaults()
     return out
 end
 
-local function sync(character)
+local function sendSync(character)
     if not (isClient() and sendClientCommand) then return end
     local me = getPlayer and getPlayer() or character
     local store
@@ -209,6 +209,36 @@ local function sync(character)
     args.data = plainCopy(store)
     sendClientCommand(me, VitData.NET, "sync", args)
 end
+
+-- GTP 1.8.7 (owner: "find anything that sends too fast -- players get
+-- kicked"): every Set / Add / flag change used to send the WHOLE store at
+-- once -- eating one food that has 10 vitamins sent 10 packets in the same
+-- frame. Now a change only marks the character; at most one send per
+-- character every SYNC_GAP_MS carries the latest store.
+VitData.SYNC_GAP_MS = 1000
+local syncPending, syncNextAt, syncSent, syncAsked = {}, 0, 0, 0
+local function sync(character)
+    if not (isClient() and sendClientCommand) or not character then return end
+    syncAsked = syncAsked + 1
+    syncPending[character] = true
+end
+local function flushSync()
+    local t = getTimestampMs and getTimestampMs() or 0
+    if t < syncNextAt then return end
+    syncNextAt = t + VitData.SYNC_GAP_MS
+    local any = false
+    for chr in pairs(syncPending) do
+        any = true
+        syncPending[chr] = nil
+        local ok, err = pcall(sendSync, chr)
+        if ok then syncSent = syncSent + 1 else logOnce("syncfail", "vitamin sync FAILED: %s", tostring(err)) end
+    end
+    if any and syncAsked >= 50 then
+        log("vitamin syncs: %d changes sent as %d packets", syncAsked, syncSent)
+        syncAsked, syncSent = 0, 0
+    end
+end
+if Events and Events.OnTick then Events.OnTick.Add(flushSync) end
 
 local function ensureStore(character)
     if isRemote(character) then

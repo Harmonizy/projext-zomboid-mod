@@ -164,7 +164,7 @@ LWS.GACHA_ITEMS = {
     { id = "SurvivalJourneyI_PlantScavenging", cat = "journey", icon = "Item_LWSG_SurvivalJourneyI", use = { perk = "PlantScavenging", flatXP = 20 } },
     { id = "SurvivalJourneyII_PlantScavenging", cat = "journey", icon = "Item_LWSG_SurvivalJourneyII", use = { perk = "PlantScavenging", flatXP = 50 } },
 }
-LWS.GACHA_SET_FULL_BONUS = 0.1
+LWS.GACHA_SET_FULL_BONUS = 0.3
 LWS.GACHA_SKILLS = { "Aiming", "Reloading", "Axe", "Blunt", "SmallBlunt", "LongBlade", "SmallBlade", "Spear", "Maintenance", "Woodwork", "Cooking", "Farming", "Doctor", "Electricity", "Mechanics", "MetalWelding", "Tailoring", "Fishing", "Trapping", "PlantScavenging" }
 LWS.GACHA_ITEM = {}
 for _, g in ipairs(LWS.GACHA_ITEMS) do LWS.GACHA_ITEM[g.id] = g end

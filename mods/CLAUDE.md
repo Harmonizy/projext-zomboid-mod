@@ -251,6 +251,24 @@
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
+- Packet meter (Hub 5, 2026-11-20, owner: "anything that sends too fast or
+  can loop -- players get kicked"): `shared/000_HARMONIE_NetMeter.lua` wraps
+  sendClientCommand / sendServerCommand ONCE (global flag) and only COUNTS by
+  module/command: "[HARMONIE_Hub][NetMeter] client: X/Y sent 20 times within
+  1 s" (once per 30 s per command) + a 10-minute top-5 when one went over 300.
+  Counts other people's mods too. The audit that day fixed: MIL casings
+  (world items added / moved / removed per shot -> CASING_PER_SEC 4 per
+  player, CASING_MAX_ACTIVE 16, client sends <= 4 a second, impact sound
+  only to the shooter, no broadcast), GTP vitamin sync (whole store sent on
+  EVERY Set/Add -> one send per character per second, VitData.SYNC_GAP_MS),
+  HTS full medical-state sync (EHR.SafeTransmitModData on the server marks
+  and sends once per 250 ms per player, EHR.SYNC_COALESCE_MS). Checked and
+  fine: TWA damage numbers (8 a second both sides), LWS sweep (10 s, sends
+  only on change), pet anim (on change), EHR RequestSync (on events), MIL
+  NetGuard (1.0.10), per-frame logs (all Once / state-change).
+- New Dawn set: LWS 1.1.3 (owner): all four = +30 percent MORE -> 50 percent
+  in all (SET_FULL_BONUS 0.30).
+
 ## The Way To Attack (TWA)
 - Rare ores (2026-11-12, owner swapped them, TWA 1.0.2): Oridecon (โอริเดคอน)
   is the LOWER one -- base2 of the Epic bar and of Make_GemFine; Bradium

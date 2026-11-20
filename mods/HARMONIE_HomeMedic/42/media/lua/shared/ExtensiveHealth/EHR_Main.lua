@@ -608,11 +608,38 @@ function EHR.SyncEHRModDataToClient(player, opts)
     return true
 end
 
+-- HTS 1.1.2 (owner: "find anything that sends too fast"): 20-odd places ask
+-- for the player's whole medical state to be sent; several can fire in the
+-- same tick (a cure, a stage change, a flyer...) and each sent the full
+-- packet. On the server it is now marked and sent ONCE per SYNC_COALESCE_MS
+-- per player with the latest state.
+EHR.SYNC_COALESCE_MS = 250
+local syncPending, syncFlushAt, syncAsked, syncSent = {}, 0, 0, 0
+local function flushPendingSyncs()
+    local t = getTimestampMs and getTimestampMs() or 0
+    if t < syncFlushAt then return end
+    syncFlushAt = t + EHR.SYNC_COALESCE_MS
+    for p in pairs(syncPending) do
+        syncPending[p] = nil
+        local ok = pcall(EHR.SyncEHRModDataToClient, p)
+        if ok then syncSent = syncSent + 1 end
+    end
+    if syncAsked >= 200 then
+        if HMLog then HMLog("Sync", "medical state: %d requests sent as %d packets", syncAsked, syncSent) end
+        syncAsked, syncSent = 0, 0
+    end
+end
+if Events and Events.OnTick then Events.OnTick.Add(function()
+    if isServer and isServer() then flushPendingSyncs() end
+end) end
+
 function EHR.SafeTransmitModData(player)
     if not player then return false end
 
     if isServer and isServer() then
-        return EHR.SyncEHRModDataToClient(player)
+        syncAsked = syncAsked + 1
+        syncPending[player] = true
+        return true
     end
 
     -- In SP/client contexts the local player modData is already available.

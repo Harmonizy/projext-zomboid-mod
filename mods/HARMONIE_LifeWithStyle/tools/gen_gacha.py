@@ -118,10 +118,10 @@ item("GuardianCapsule", "capsule", "GuardianCapsule", {"buff": "GuardianCapsule"
 item("MiniCompoundV", "capsule", "MiniCompoundV", {"buff": "MiniCompoundV"}, "Mini Compound-V", "มินิ คอมพาวด์-วี",
      "Every capsule at once: damage +10%, endurance loss -10%, critical +5%, swing delay -10%, tiredness gain -10%, run speed +5%, effective max HP +10%, protection +5. " + CAPS,
      "ทุกแคปซูลรวมกัน: ความเสียหาย +10% เสียความอดทน -10% คริติคอล +5% ดีเลย์เหวี่ยง -10% เหนื่อยช้าลง 10% วิ่งเร็ว +5% พลังชีวิตสูงสุด +10% การป้องกัน +5 " + CAPS_TH)
-# 1.1.2 (owner 2026-11-20): every piece +5 percent, all four = 30 percent
-# (4 x 5 + a 10 percent set bonus)
-SET = "New Dawn set: equip pieces in the Gacha tab for more XP on every skill (each piece +5 percent; all four: +10 percent more, 30 percent in all)."
-SET_TH = "ชุด New Dawn: กดสวมในแท็บกาชาเพื่อเพิ่ม XP ทุกทักษะ (ชิ้นละ +5 เปอร์เซ็นต์ ครบ 4 ชิ้น: เพิ่มอีก +10 เปอร์เซ็นต์ รวมเป็น 30 เปอร์เซ็นต์)"
+# 1.1.2 / 1.1.3 (owner 2026-11-20): every piece +5 percent, all four = 50
+# percent (4 x 5 + a 30 percent set bonus)
+SET = "New Dawn set: equip pieces in the Gacha tab for more XP on every skill (each piece +5 percent; all four: +30 percent more, 50 percent in all)."
+SET_TH = "ชุด New Dawn: กดสวมในแท็บกาชาเพื่อเพิ่ม XP ทุกทักษะ (ชิ้นละ +5 เปอร์เซ็นต์ ครบ 4 ชิ้น: เพิ่มอีก +30 เปอร์เซ็นต์ รวมเป็น 50 เปอร์เซ็นต์)"
 item("NewDawnLeftRing", "set", "NewDawnLeftRing", {"set": 0.05}, "New Dawn Left Ring", "แหวนซ้าย New Dawn", SET, SET_TH)
 item("NewDawnRightRing", "set", "NewDawnRightRing", {"set": 0.05}, "New Dawn Right Ring", "แหวนขวา New Dawn", SET, SET_TH)
 item("NewDawnNecklace", "set", "NewDawnNecklace", {"set": 0.05}, "New Dawn Necklace", "สร้อยคอ New Dawn", SET, SET_TH)
@@ -136,7 +136,7 @@ for p, en, th in SKILLS:
     item("SurvivalJourneyII_" + p, "journey", "SurvivalJourneyII", {"perk": p, "flatXP": 50}, "Survival Journey II - " + en, "บันทึกการเอาชีวิตรอด II - " + th,
          "+50 %s XP at once (flat: no book or buff multiplies it)." % en, "XP %s +50 ทันที (ค่าคงที่ ไม่มีหนังสือหรือบัฟคูณ)" % th)
 
-SET_FULL_BONUS = 0.10  # 1.1.2: 4 x 5% + 10% = 30% with the whole set
+SET_FULL_BONUS = 0.30  # 1.1.3 (owner): 4 x 5% + 30% = 50% with the whole set
 
 
 def lua(v):

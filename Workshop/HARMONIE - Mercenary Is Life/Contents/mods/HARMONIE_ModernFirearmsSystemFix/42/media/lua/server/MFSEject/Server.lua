@@ -273,10 +273,10 @@ function MFSEject.playCasingImpactSound(casing, square)
     local soundName = params.prefix .. tostring(idx)
 
     if isServer() then
+        -- MIL 1.0.11: only the shooter hears it (it was sent to EVERY player
+        -- on the server when the casing had no owner)
         if casing.player then
             sendServerCommand(casing.player, "MFSEject", "playCasingImpactSound", { sound = soundName })
-        else
-            sendServerCommand("MFSEject", "playCasingImpactSound", { sound = soundName })
         end
         return
     end
@@ -681,8 +681,42 @@ function MFSEject.doSpawnCasing(player, weapon, params, racking, optionalItem, i
     )
 end
 
+-- MIL 1.0.11 (owner: "find anything that sends too fast -- players get
+-- kicked"): every casing is a WORLD ITEM the server adds, moves (remove +
+-- add on each new square) and removes -- each of those reaches every client
+-- near it. A full-auto burst made hundreds of those packets. Now at most
+-- CASING_PER_SEC casings per player a second and CASING_MAX_ACTIVE flying at
+-- once (the rest are simply not made); what is skipped is counted and
+-- logged once a minute.
+MFSEject.CASING_PER_SEC = 4
+MFSEject.CASING_MAX_ACTIVE = 16
+local casingWin, casingSkipped, casingReportAt = {}, 0, 0
+function MFSEject.casingAllowed(player)
+    local t = getTimestampMs and getTimestampMs() or 0
+    local ok = true
+    if #MFSEject.activeCasings >= MFSEject.CASING_MAX_ACTIVE then
+        ok = false
+    else
+        local key = tostring(player.getOnlineID and player:getOnlineID() or player)
+        local w = casingWin[key]
+        if not w or t - w.start >= 1000 then w = { start = t, n = 0 }; casingWin[key] = w end
+        if w.n >= MFSEject.CASING_PER_SEC then ok = false else w.n = w.n + 1 end
+    end
+    if not ok then
+        casingSkipped = casingSkipped + 1
+        if t - casingReportAt >= 60000 then
+            casingReportAt = t
+            print(string.format("[HARMONIE_MFSFix][Casings] %d casing(s) not made in the last minute (limit %d a second per player, %d flying)",
+                casingSkipped, MFSEject.CASING_PER_SEC, MFSEject.CASING_MAX_ACTIVE))
+            casingSkipped = 0
+        end
+    end
+    return ok
+end
+
 function MFSEject.spawnCasing(player, weapon)
     if not player or player:isDead() then return end
+    if not MFSEject.casingAllowed(player) then return end
     if not weapon or not weapon:isRanged() or weapon:isMelee() then return end
     if weapon:isRackAfterShoot()
         or weapon:isManuallyRemoveSpentRounds() then
@@ -699,6 +733,7 @@ end
 
 function MFSEject.rackCasing(player, weapon, racking)
     if not player or player:isDead() then return end
+    if not MFSEject.casingAllowed(player) then return end
     if not weapon or not weapon:isRanged() or weapon:isMelee() then return end
 
     local params = MFSEject.WeaponEjectionPortParams[weapon:getFullType()] or
