@@ -323,6 +323,19 @@
   read. Root bug: settings oget was `O.get and O.get(id,d) or d`, so a false
   value read back as the default true -- never write and/or with a boolean
   value; oget now checks nil.
+- TWA 1.1.0 (owner 2026-11-20): tab "bags" = the 9 Tomb's Wardrobe bags
+  (`shared/HARMONIE_TWA_TombBags.lua`, TWABags): one recipe per bag family,
+  result its "_Loose" type (Tomb's right-click switches tight / satchel),
+  category "Bag", raw materials (leather hides / denim / leather strips +
+  Buckle or Tarp), steps SewBag (new, suture minigame, Needle + thread,
+  Tailoring 2, category "Tailoring") + WrapCloth / WrapLeather / StringSinew.
+  Quality -> weight reduction +5 / 0 / -5 (md.TWA_BagWR, no TWA_Grade); an
+  unfinished bag has capacity 0 (md.TWA_BagEmpty); both are put back on
+  carried bags every 30 s (TWABags.maintain -- an item's own capacity /
+  weight reduction is not saved). Recipes hidden and the tab not drawn when
+  the result script is missing (TWABags.available, W.TABS entry `when`,
+  W.visibleTabs; the hub's fromTabs honours `when`). Recipe tabs are scopes
+  weapons / materials / bags via `TWACraftUI.scopeOf(category)`.
 - GTP vitamin tooltip box sits UNDER the item tooltip (above it when no room),
   GTP 1.0.2 (HARMONIE_TooltipHook.lua).
 - GTP cutting minigame = rapid chop (GTP 1.0.3, owner "หั่นรัวๆ"): kind "timing"

@@ -35,6 +35,7 @@ local recipeTests = {
 AT.register("twa", "craft", recipeTests)
 AT.register("twa", "weapons", recipeTests)
 AT.register("twa", "materials", recipeTests)
+AT.register("twa", "bags", recipeTests)   -- 1.1.0: Tomb's Wardrobe bags
 AT.register("twa", "modify", {
     T("Gems", "Give one of every gem", function(p)
         local list = {}

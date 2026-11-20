@@ -376,6 +376,7 @@ local CATEGORY_TABS = {
     { key = "Spear", label = "Spear" },
     { key = "Material", label = "Material" },
     { key = "Gem", label = "Gem" }, -- round 16: the Gemstone recipe
+    { key = "Bag", labelKey = "IGUI_TWA_FilterBag" }, -- 1.1.0: Tomb's Wardrobe bags
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
@@ -644,9 +645,11 @@ end
 
 function TWARecipeScrollList:matches(recipe)
     -- R69: tab 2 lists weapons, tab 3 materials (Material + Gem)
-    if (self.scope == "materials") ~= TWACraftUI.isMaterialCategory(recipe.category) then
+    if self.scope ~= TWACraftUI.scopeOf(recipe.category) then
         return false
     end
+    -- 1.1.0: a bag recipe whose bag does not exist (Tomb's Wardrobe not loaded)
+    if TWABags and not TWABags.available(recipe) then return false end
     if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and self.filterCategory ~= "Favorites"
             and recipe.category ~= self.filterCategory then
         return false
@@ -1275,10 +1278,10 @@ function TWACraftWindow:createChildren()
     -- material recipes, Material + Gem (tab 3); setPage shows the set of
     -- the open tab.
     self.filterButtons = {}
-    self.filterButtonsByScope = { weapons = {}, materials = {} }
+    self.filterButtonsByScope = { weapons = {}, materials = {}, bags = {} }
     self.categoryRowY = contentTop
     local rowEnd = contentTop + captionH
-    for _, scope in ipairs({ "weapons", "materials" }) do
+    for _, scope in ipairs({ "weapons", "materials", "bags" }) do
         local fx, fy = leftX, contentTop + captionH
         for _, tab in ipairs(CATEGORY_TABS) do
             if TWACraftUI.tabInScope(tab.key, scope) then
@@ -1646,7 +1649,7 @@ function TWACraftWindow:onBackClicked()
         return
     end
     local r = self.selectedRecipe
-    self:setTab((r and TWACraftUI.isMaterialCategory(r.category)) and "materials" or "weapons")
+    self:setTab(r and TWACraftUI.scopeOf(r.category) or "weapons")
 end
 
 function TWACraftWindow:onPracticePageClicked()
@@ -2047,19 +2050,22 @@ function TWACraftWindow:applySearch(text)
     -- recipes" for a smelting procedure), show the other
     local scope = list.scope
     if text and text ~= "" and #list.items == 0 then
-        local other = scope == "materials" and "weapons" or "materials"
         -- (as that tab would show it: its category filter starts at All)
         local cat = list.filterCategory
-        list.scope, list.filterCategory = other, "All"
         local found = false
-        for _, recipe in ipairs(TWARecipeData.List) do
-            if list:matches(recipe) then found = true break end
+        for _, other in ipairs({ "weapons", "materials", "bags" }) do
+            if other ~= scope and not found then
+                list.scope, list.filterCategory = other, "All"
+                for _, recipe in ipairs(TWARecipeData.List) do
+                    if list:matches(recipe) then found = other break end
+                end
+            end
         end
         list.scope, list.filterCategory = scope, cat
-        if found then scope = other end
+        if found then scope = found end
     end
     if self.page ~= "browse" or scope ~= list.scope then
-        self:setTab(scope == "materials" and "materials" or "weapons")
+        self:setTab(scope)
     end
 end
 

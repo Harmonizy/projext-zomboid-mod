@@ -28,6 +28,8 @@ W.TAB_H = 64
 W.TABS = {
     { id = "weapons", key = "IGUI_TWA_Tab_Weapons" },
     { id = "materials", key = "IGUI_TWA_Tab_Materials" },
+    -- 1.1.0: Tomb's Wardrobe bags (drawn only when its mod is loaded)
+    { id = "bags", key = "IGUI_TWA_Tab_Bags", when = function() return TWABags and TWABags.anyAvailable() end },
     { id = "modify", key = "IGUI_TWA_Tab_Modify" },
     { id = "guide", key = "IGUI_TWA_Tab_Guide" },
 }
@@ -63,11 +65,24 @@ W.GUIDE = {
 
 local MATERIAL_CATS = { Material = true, Gem = true }
 function TWACraftUI.isMaterialCategory(cat) return MATERIAL_CATS[cat] == true end
+-- 1.1.0: which recipe tab a category belongs to (weapons / materials / bags)
+function TWACraftUI.scopeOf(cat)
+    if cat == "Bag" then return "bags" end
+    if MATERIAL_CATS[cat] then return "materials" end
+    return "weapons"
+end
+-- the tabs drawn now (a tab with `when` only when it says so)
+function W.visibleTabs()
+    local out = {}
+    for _, t in ipairs(W.TABS) do
+        if not t.when or t.when() then out[#out + 1] = t end
+    end
+    return out
+end
 -- which category filter tabs a recipe tab shows
 function TWACraftUI.tabInScope(key, scope)
     if key == "All" or key == "Favorites" or key == "Available" then return true end
-    if scope == "materials" then return MATERIAL_CATS[key] == true end
-    return not MATERIAL_CATS[key]
+    return TWACraftUI.scopeOf(key) == scope
 end
 
 function W.topHeight(S) return S(W.HEADER_H) + S(W.TAB_H) end
@@ -184,7 +199,7 @@ end
 -- ----------------------------------------------------------------- tabs
 function TWACraftWindow:setTab(tab)
     self.activeTab = tab
-    if tab == "weapons" or tab == "materials" then
+    if tab == "weapons" or tab == "materials" or tab == "bags" then
         if self.recipeList.scope ~= tab then
             self.recipeList.scope = tab
             self.recipeList.filterCategory = "All"
@@ -246,10 +261,11 @@ function TWACraftWindow:drawWorkbenchFrame()
     self:drawRect(1, hh, self.width - 2, th, 0.92, 0.03, 0.024, 0.01)
     self:drawRect(0, hh + th - 1, self.width, 1, 0.8, C.border[1], C.border[2], C.border[3])
     local gap = 5
-    local tabW = math.floor((self.width - 16 - gap * (#W.TABS - 1)) / #W.TABS)
+    local tabs = W.visibleTabs()
+    local tabW = math.floor((self.width - 16 - gap * (#tabs - 1)) / #tabs)
     local x = 8
     self.tabBounds = {}
-    for _, t in ipairs(W.TABS) do
+    for _, t in ipairs(tabs) do
         local active = self.activeTab == t.id
         local ty, tH = hh + 6, th - 12
         local bg = active and C.accentDark or C.background
@@ -770,7 +786,8 @@ function TWACraftWindow:drawPageCards()
         local lw = self.recipeList.x - 10 - 6
         self:drawCard(4, top, lw + 4, bottom - top, getText("IGUI_TWA_Card_Filters"))
         local lx = self.recipeList.x - 6
-        local key = self.recipeList.scope == "materials" and "IGUI_TWA_Card_MaterialList" or "IGUI_TWA_Card_WeaponList"
+        local key = self.recipeList.scope == "materials" and "IGUI_TWA_Card_MaterialList"
+            or (self.recipeList.scope == "bags" and "IGUI_TWA_Card_BagList" or "IGUI_TWA_Card_WeaponList")
         self:drawCard(lx, top, self.width - 4 - lx, bottom - top, getText(key, tostring(#self.recipeList.items)))
     elseif page == "craft" and self.selectedRecipe and self.drawGuidedCards and self:guidedOn() then
         self:drawGuidedCards(top, bottom)

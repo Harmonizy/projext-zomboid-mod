@@ -234,7 +234,9 @@ end
 local function fromTabs(list, iconDir)
     local out = {}
     for _, t in ipairs(type(list) == "table" and list or {}) do
-        if type(t) == "table" and t.id then out[#out + 1] = { id = t.id, key = t.key, icon = iconDir .. "tab_" .. t.id .. ".png" } end
+        -- a tab with `when` (TWA's Tomb bags) only when it says so
+        local shown = type(t) == "table" and t.id and (type(t.when) ~= "function" or t.when() == true)
+        if shown then out[#out + 1] = { id = t.id, key = t.key, icon = iconDir .. "tab_" .. t.id .. ".png" } end
     end
     return out
 end

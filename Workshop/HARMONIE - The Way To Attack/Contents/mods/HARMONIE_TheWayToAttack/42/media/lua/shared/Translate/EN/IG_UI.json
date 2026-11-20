@@ -799,5 +799,11 @@
     "IGUI_TWA_G_B_Busy": "Wait for the bar, or press Stop (nothing changes).",
     "IGUI_TWA_G_B_Locked": "One craft at a time.",
     "IGUI_TWA_QualityCuts": "Overall = average of the steps (Bad 1, Good 2, Excellent 3). Bad: below %1 | Good: %2 to below %3 | Excellent: %4 or more",
-    "IGUI_TWA_QualityBonus": "Your spare skill levels lower the Excellent line by %1."
+    "IGUI_TWA_QualityBonus": "Your spare skill levels lower the Excellent line by %1.",
+    "IGUI_TWA_Tab_Bags": "Bag recipes",
+    "IGUI_TWA_Tab_Bags_Tip": "Tomb's Wardrobe bags, sewn from leather and cloth. Click one to open its craft page.",
+    "IGUI_TWA_Card_BagList": "Bag recipes (%1)",
+    "IGUI_TWA_FilterBag": "Bag",
+    "IGUI_TWA_Proc_SewBag": "Sew the bag",
+    "IGUI_TWA_ProcCat_Tailoring": "Tailoring"
 }

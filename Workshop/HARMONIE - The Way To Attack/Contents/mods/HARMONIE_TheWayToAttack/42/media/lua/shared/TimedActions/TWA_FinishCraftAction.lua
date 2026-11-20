@@ -164,7 +164,10 @@ function TWA_FinishCraftAction:complete()
             md.TWA_RollChance = S.gemChance(rollWord)
             TWALog("Craft", "gemstone roll: quality=%s gemChance=%s -> %s", tostring(rollWord), tostring(md.TWA_RollChance), TWALogType(newItem))
         end
-        if not S.isMaterialRecipe(recipe) and not rolled then
+        if TWABags and TWABags.isBagRecipe(recipe) then
+            -- 1.1.0: a bag -- the quality changes its weight reduction, no grade
+            TWABags.applyQuality(newItem, S.overall(recipe, map, self.character) or S.LEGACY_WORD)
+        elseif not S.isMaterialRecipe(recipe) and not rolled then
             local word = S.overall(recipe, map, self.character) or S.LEGACY_WORD
             md.TWA_Quality = word
             md.TWA_Grade = S.rollGrade(word)

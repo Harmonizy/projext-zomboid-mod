@@ -137,6 +137,8 @@ TWAMinigame.GAME_FOR = {
     WrapCloth              = { "TWAWrapGame", "cloth" },
     WrapLeather            = { "TWAWrapGame", "leather" },
     StringSinew            = { "TWASutureGame" },
+    -- 1.1.0: Tomb's Wardrobe bags
+    SewBag                 = { "TWASutureGame" },
     WeaveWire              = { "TWAWrapGame", "wire" },
     -- Wear resistance
     CoatMud                = { "TWACoatGame", "mud" },

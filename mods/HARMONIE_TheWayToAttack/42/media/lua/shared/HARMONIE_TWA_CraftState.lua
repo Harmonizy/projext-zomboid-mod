@@ -657,6 +657,8 @@ end
 -- the original base item's snapshot (TWA_OrigBase) for a later Cancel.
 function S.applyIncomplete(item)
     if not item or not item:getModData().TWA_Incomplete then return end
+    -- 1.1.0: an unfinished bag holds nothing (whatever the sandbox says)
+    if TWABags and TWABags.applyIncomplete(item) then return end
     if not TWAConfig.on("IncompleteZeroDamage") then return end
     if item.setMinDamage then item:setMinDamage(0) end
     if item.setMaxDamage then item:setMaxDamage(0) end
