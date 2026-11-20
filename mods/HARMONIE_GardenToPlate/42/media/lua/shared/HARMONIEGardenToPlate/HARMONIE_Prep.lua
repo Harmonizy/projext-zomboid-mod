@@ -316,7 +316,10 @@ local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 -- GTP 1.2.0 (anti-cheat): the client says "begin" when the minigame opens;
 -- the result is taken only for that item and minigame, no sooner than
 -- R.MIN_GAME_MS after it and no later than R.MAX_GAME_MS
-R.MIN_GAME_MS, R.MAX_GAME_MS = 2500, 300000
+-- GTP 1.8.2: the 3-6 s step action after the minigame is gone, so a quick
+-- game really can answer fast; 1.8.3: 0.5 s (a one-click egg crack can
+-- finish in under 1 s -- the server must not refuse an honest result)
+R.MIN_GAME_MS, R.MAX_GAME_MS = 500, 300000
 R.begun = {}   -- username -> { id, pid, at }
 function R.serveBegin(player, args)
     args = type(args) == "table" and args or {}
@@ -508,8 +511,9 @@ function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter, usedHung
     local lvl = K.level and K.level(character) or 0
     local fam = famOfRecipe(recipe) or (d and d.fam)
     -- #39: the cook (the last one who added) gets a little XP when others eat it
-    -- GTP 1.8.0: the cook's note stays while the same cook goes on
-    local note = (d and d.chef == nameOf(character) and type(d.note) == "table") and d.note or nil
+    -- GTP 1.8.3: the note stays with the dish whoever adds to it; it keeps
+    -- its writer (note.by), and only that writer may change it (CookNotes)
+    local note = (d and type(d.note) == "table") and d.note or nil
     md.HARMONIE_Dish = finishDish({ sum = sum, w = w, n = n, kinds = kinds, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0),
         chef = nameOf(character), note = note })
     count("add")
@@ -531,8 +535,9 @@ function R.onCraft(character, recipeName, consumed, created)
             addKind(kinds, it)
             local d = R.dishOf(it)
             if d then fam = fam or d.fam; lvl = math.max(lvl, tonumber(d.lvl) or 0) end
-            -- GTP 1.8.0: the crafter's own note on a dish that went in comes along
-            if d and type(d.note) == "table" and d.note.by == nameOf(character) then note = note or d.note end
+            -- GTP 1.8.3: a note on a dish that went in comes along (bowls of
+            -- soup keep the cook's note), whoever crafts
+            if d and type(d.note) == "table" then note = note or d.note end
             if d or R.prepOf(it) then any = true end
         end
     end
