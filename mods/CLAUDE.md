@@ -380,6 +380,19 @@
   Sandbox (15 new): CookScoreExcellent / Good / Bad / Miss, CookBuffTier1-3,
   CookBuffTier3Level, CookBuffStrength1-3, CookBuffLength1-3,
   CookBadDishUnhappy.
+- GTP 1.4.0 (review round 3 -- minigames): R.GAME_RULES pick the games per
+  food (first rule whose kind + name words / FoodType / whole-fish hits;
+  else the kind's list): citrus peel/slice/zest, berries + grapes + cherries
+  wash only, leafy veg wash/chop/slice, minced meat none (whyNot noGame),
+  cured meat slice. R.WHOLE_FISH = the 21 vanilla base:uncutfish types (they
+  have no FoodType: kindOf checks them first) -> scale + trim; fillets
+  trim + slice. Redo (#14): a Poor / Missed food can be washed off ONCE
+  ("redo" command, md.HARMONIE_PrepRedo; a short wash action, no water used).
+  Practice button per minigame: same game, no food, nothing sent, not
+  counted. Record per minigame in Zomboid/Lua/HARMONIE_GTP_PrepStats.txt
+  (this computer). R.hardness(item) is added to the difficulty (meat /
+  poultry +0.08, whole fish +0.12, fillet +0.06, herb / bean / grain -0.05,
+  over 1 kg +0.05).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

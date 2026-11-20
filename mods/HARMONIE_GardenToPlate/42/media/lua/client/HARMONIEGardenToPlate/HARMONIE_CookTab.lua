@@ -36,6 +36,49 @@ local log = function(fmt, ...) R.log(fmt, ...) end
 H.COOK_PAGES = { "prep", "evo", "craft" }
 H.PREP_WATCHDOG_MS = 10000
 
+-- GTP 1.4.0 (#15): this player's minigame record, kept on this computer
+-- (Zomboid/Lua/HARMONIE_GTP_PrepStats.txt: "pid excellent good bad miss")
+H.PREP_STATS_FILE = "HARMONIE_GTP_PrepStats.txt"
+function H.prepStats()
+    if H.prepStatsT then return H.prepStatsT end
+    local t = {}
+    H.prepStatsT = t
+    if not getFileReader then return t end
+    local ok, r = pcall(getFileReader, H.PREP_STATS_FILE, true)
+    if not ok or not r then return t end
+    pcall(function()
+        local line = r:readLine()
+        while line do
+            local pid, a, b, c, d = line:match("^(%w+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)")
+            if pid then t[pid] = { Excellent = tonumber(a), Good = tonumber(b), Bad = tonumber(c), Miss = tonumber(d) } end
+            line = r:readLine()
+        end
+    end)
+    pcall(function() r:close() end)
+    return t
+end
+function H.recordPrepStat(pid, word)
+    local t = H.prepStats()
+    local e = t[pid] or { Excellent = 0, Good = 0, Bad = 0, Miss = 0 }
+    t[pid] = e
+    if e[word] == nil then return end
+    e[word] = e[word] + 1
+    if not getFileWriter then return end
+    local ok, w = pcall(getFileWriter, H.PREP_STATS_FILE, true, false)
+    if not ok or not w then return end
+    pcall(function()
+        for k, v in pairs(t) do w:write(string.format("%s %d %d %d %d\n", k, v.Excellent, v.Good, v.Bad, v.Miss)) end
+    end)
+    pcall(function() w:close() end)
+end
+function H.prepStatLine(pid)
+    local e = H.prepStats()[pid]
+    if not e then return nil end
+    local n = e.Excellent + e.Good + e.Bad + e.Miss
+    if n == 0 then return nil end
+    return T("IGUI_GTPP_StatLine", tostring(n), tostring(math.floor(e.Excellent * 100 / n + 0.5)))
+end
+
 local function call(o, m, ...)
     if not o or not o[m] then return nil end
     local ok, v = pcall(o[m], o, ...)
@@ -236,6 +279,7 @@ function Win:renderCookPrep(x, y, w, h)
                 yy = yy + lh + 6
             end
             local l2, c2 = scoreLine(it)
+            if i >= firstDone and R.canRedo(it) then l2 = l2 .. "  " .. T("IGUI_GTPP_CanRedo") end
             if i < firstDone then
                 local games = R.gamesFor(it)
                 local names = {}
@@ -245,7 +289,8 @@ function Win:renderCookPrep(x, y, w, h)
                 c2 = C.textDim
             end
             local r = self:cookItemRow(cx, yy, cw - 10, rowH, it, itemName(it), l2, c2, selId ~= nil and call(it, "getID") == selId, "prepList")
-            if i < firstDone then
+            -- GTP 1.4.0 (#14): a Poor / Missed one can be chosen to wash it off once
+            if i < firstDone or R.canRedo(it) then
                 r.action = function(win)
                     win.prepSel = it
                     win.prepGame = nil
@@ -274,6 +319,7 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
     if it then
         local still = false
         for _, o in ipairs(list.open) do if o == it then still = true break end end
+        if not still and R.canRedo(it) then still = true end
         if not still and not self.prepRun then self.prepSel = nil; it = nil end
     end
     local cx, cy, cw, ch = self:drawCard(x, y, w, h, T("IGUI_GTPP_Card_Prepare"))
@@ -299,8 +345,11 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
     if self.prepLast then
         local L = self.prepLast
         local col = L.word and wordCol(L.word) or C.bad
-        local line = L.word and T("IGUI_GTPP_LastDone", L.name, procName(L.pid), wordName(L.word), string.format("%+.1f", R.wordScore(L.word)))
-            or T("IGUI_GTPP_LastRefused", L.name, T("IGUI_GTPP_Why_" .. tostring(L.why)))
+        local line
+        if L.redone then line = T("IGUI_GTPP_LastRedone", L.name); col = C.accent
+        elseif L.practice then line = L.word and T("IGUI_GTPP_LastPractice", procName(L.pid), wordName(L.word)) or T("IGUI_GTPP_LastPracticeCancel")
+        elseif L.word then line = T("IGUI_GTPP_LastDone", L.name, procName(L.pid), wordName(L.word), string.format("%+.1f", R.wordScore(L.word)))
+        else line = T("IGUI_GTPP_LastRefused", L.name, T("IGUI_GTPP_Why_" .. tostring(L.why))) end
         cy = cy + self:paragraphs(line, cx, cy, cw - 8, col, sf) + 6
     end
     if not it then
@@ -316,6 +365,14 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
     local games, kind = R.gamesFor(it)
     shadowText(self, fit(T("IGUI_GTPP_Kind_" .. tostring(kind)), cw - isz - 16, sf), cx + isz + 8, cy + lh + 4, C.textDim, 1, sf)
     cy = cy + isz + 10
+    if R.canRedo(it) then
+        local l2, c2 = scoreLine(it)
+        shadowText(self, fit(l2, cw - 8, sf), cx, cy, c2, 1, sf)
+        cy = cy + lh + 6
+        cy = cy + self:paragraphs(T("IGUI_GTPP_RedoHint"), cx, cy, cw - 8, C.textDim, sf) + 8
+        self:cookButton(cx, cy, T("IGUI_GTPP_Redo"), true, function(win) win:startRedo(it) end)
+        return
+    end
     shadowText(self, T("IGUI_GTPP_ChooseGame"), cx, cy, C.accent, 1, sf)
     cy = cy + lh + 4
     local scan = K.scan(self.player)
@@ -342,8 +399,13 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
         elseif toolItem then sub = T("IGUI_GTPP_Tool_" .. tostring(grade), itemName(toolItem))
         elseif grade == "bare" then sub = T("IGUI_GTPP_Tool_bare")
         else sub = T("IGUI_GTPP_NeedTool", T("IGUI_GTPC_Tool_" .. tostring(group))) end
-        shadowText(self, fit(sub, r.w - ps - 20, sf), tx, r.y + 4 + lh, okAll and C.textDim or C.bad, 1, sf)
+        local stat = H.prepStatLine(pid)
+        if stat then sub = sub .. "  ·  " .. stat end
+        local pl = T("IGUI_GTPP_Practice")
+        local pw = tw(sf, pl) + 20
+        shadowText(self, fit(sub, r.w - ps - 30 - pw, sf), tx, r.y + 4 + lh, okAll and C.textDim or C.bad, 1, sf)
         if okAll then
+            self:cookButton(r.x + r.w - pw - 6, r.y + math.floor((rowH - (lh + 12)) / 2), pl, true, function(win) win:startPractice(pid, toolItem, grade, group) end, pw)
             r.action = function(win) win:startPrep(it, pid, toolItem, grade, group) end
             clickable(self, r)
         end
@@ -381,6 +443,7 @@ function Win:startPrep(item, pid, toolItem, grade, group)
         local function onWord(word)
             if win.prepRun ~= run then return end
             if not word then log("prepare: minigame for %s cancelled", run.name); finish(nil, "cancelled"); return end
+            if K.minigamesOn() then H.recordPrepStat(pid, word) end
             run.phase, run.at, run.word = "action", nowMs(), word
             local action = HARMONIE_GTP_CookStepAction:new(player, pid, word, toolItem or item)
             action.onEnd = function(done, w)
@@ -400,12 +463,14 @@ function Win:startPrep(item, pid, toolItem, grade, group)
         R.begin(player, item, pid)
         if K.minigamesOn() and Gm and Gm.play then
             local pp = { proc = K.PROCS[pid], tools = group and { { grade = grade, item = toolItem, group = group } } or {}, help = {} }
-            local diff = K.difficulty(player, pp, nil)
+            -- GTP 1.4.0 (#16): the food itself makes it harder or easier
+            local hard = R.hardness(item)
+            local diff = math.max(0.05, math.min(1, K.difficulty(player, pp, nil) + hard))
             local ease = K.levelEase(K.level(player))
             local proc = K.PROCS[pid]
             local itemTex = call(item, "getTexture")
             local toolTex = toolItem and call(toolItem, "getTexture") or nil
-            log("prepare %s with %s: difficulty %.2f, tool %s (%s)", run.name, pid, diff, toolItem and K.typeOf(toolItem) or "none", tostring(grade))
+            log("prepare %s with %s: difficulty %.2f (food %+.2f), tool %s (%s)", run.name, pid, diff, hard, toolItem and K.typeOf(toolItem) or "none", tostring(grade))
             local ok = Gm.play(player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = ease.time * K.minigameTime(), icon = itemTex,
                 tool = toolTex, cursor = (proc.cursor == "tool") and toolTex or itemTex, bare = grade == "bare",
                 toolIsGrater = not (group == "grater" and grade ~= "best") }, onWord)
@@ -424,10 +489,60 @@ function Win:startPrep(item, pid, toolItem, grade, group)
     end
 end
 
+-- GTP 1.4.0 (#15): practice -- the same minigame with no food, no score,
+-- no XP, nothing sent to the server, not counted in the record
+function Win:startPractice(pid, toolItem, grade, group)
+    local Gm = HARMONIE_GTP.CookGames
+    if self.prepRun or not (Gm and Gm.play) or (Gm.busy and Gm.busy()) then return end
+    local player = self.player
+    local pp = { proc = K.PROCS[pid], tools = group and { { grade = grade, item = toolItem, group = group } } or {}, help = {} }
+    local diff = K.difficulty(player, pp, nil)
+    local ease = K.levelEase(K.level(player))
+    local toolTex = toolItem and call(toolItem, "getTexture") or nil
+    local win = self
+    log("practice minigame %s (difficulty %.2f)", pid, diff)
+    Gm.play(player, pid, { difficulty = diff, slipMul = ease.slip, timeMul = ease.time * K.minigameTime(), tool = toolTex,
+        cursor = toolTex, bare = grade == "bare", toolIsGrater = not (group == "grater" and grade ~= "best") }, function(word)
+        win.prepLast = { practice = true, pid = pid, word = word, name = T("IGUI_GTPP_PracticeName") }
+        log("practice minigame %s: %s", pid, tostring(word))
+    end)
+end
+
+-- GTP 1.4.0 (#14): wash off a Poor / Missed preparation (once per food)
+function Win:startRedo(item)
+    if self.prepRun then return end
+    local player = self.player
+    if not (HARMONIE_Reach and HARMONIE_Reach.isCarried(player, item)) then
+        if HARMONIE_Reach and HARMONIE_Reach.bring then HARMONIE_Reach.bring(player, item) end
+    end
+    local run = { item = item, pid = "wash", name = itemName(item), phase = "action", at = nowMs(), redo = true }
+    self.prepRun = run
+    self.prepLast = nil
+    local win = self
+    local action = HARMONIE_GTP_CookStepAction:new(player, "wash", "Good", item)
+    action.onEnd = function(done)
+        if win.prepRun ~= run then return end
+        if not done then win.prepRun = nil; win.prepLast = { name = run.name, why = "stopped" }; return end
+        run.phase, run.at = "server", nowMs()
+        log("prepare: washing off the preparation of %s", run.name)
+        R.requestRedo(player, item)
+    end
+    ISTimedActionQueue.add(action)
+end
+
 -- the server's answer (MP): the tab shows it
 R.onSet = function(args, item)
     local win = GTPGuide and GTPGuide.window
-    if not win or not win.prepRun or args.what ~= "prep" then return end
+    if not win or not win.prepRun then return end
+    if args.what == "redo" and win.prepRun.redo and call(win.prepRun.item, "getID") == args.id then
+        local run = win.prepRun
+        win.prepRun = nil
+        win.prepCache = nil
+        win.prepLast = { name = run.name, redone = true }
+        win.prepSel = run.item
+        return
+    end
+    if args.what ~= "prep" then return end
     local run = win.prepRun
     if call(run.item, "getID") == args.id then
         win.prepRun = nil

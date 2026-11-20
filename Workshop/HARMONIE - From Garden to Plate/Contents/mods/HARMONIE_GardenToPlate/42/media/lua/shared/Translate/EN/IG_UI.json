@@ -1094,5 +1094,15 @@
     "IGUI_GTPP_TipRotten": "Rotten: no buff, scores 0",
     "IGUI_GTPP_TipTier3Level": "(level 3 needs a cook of Cooking %1)",
     "IGUI_GTPP_RottenZero": "rotten: 0",
-    "IGUI_GTPC_Word_Off": "Prepared (minigames off)"
+    "IGUI_GTPC_Word_Off": "Prepared (minigames off)",
+    "IGUI_GTPP_StatLine": "your record: %1 tries, Excellent %2 percent of the time",
+    "IGUI_GTPP_CanRedo": "(can be washed off once)",
+    "IGUI_GTPP_RedoHint": "This one came out Poor or Missed. You can wash it off once and prepare it again (takes a moment). The second result stays.",
+    "IGUI_GTPP_Redo": "Wash off and redo",
+    "IGUI_GTPP_Practice": "Practice",
+    "IGUI_GTPP_PracticeName": "Practice",
+    "IGUI_GTPP_LastRedone": "%1 washed off -- prepare it again",
+    "IGUI_GTPP_LastPractice": "Practice %1: %2 (no score, not counted)",
+    "IGUI_GTPP_LastPracticeCancel": "Practice stopped",
+    "IGUI_GTPP_Why_noRedo": "it can only be washed off once, after a Poor or Missed result"
 }

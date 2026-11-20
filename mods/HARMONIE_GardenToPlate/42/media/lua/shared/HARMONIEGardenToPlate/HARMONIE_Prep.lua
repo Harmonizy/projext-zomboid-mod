@@ -142,6 +142,8 @@ R.NAME_KIND = {
 function R.kindOf(item)
     if not isFood(item) then return nil end
     local t = typeOf(item)
+    -- every vanilla whole fish (tag base:uncutfish), whatever its name
+    if R.WHOLE_FISH and R.WHOLE_FISH[t] then return "fish" end
     local short = t:match("%.(.+)$") or t
     for _, e in ipairs(R.NAME_KIND) do
         if e[2] == "dough" and short:find(e[1], 1, true) then return "dough" end
@@ -166,13 +168,64 @@ function R.whyNot(item)
     if call(item, "isBurnt") == true then return "burnt" end
     if call(item, "isRotten") == true then return "rotten" end
     if call(item, "isFrozen") == true then return "frozen" end
-    if not R.kindOf(item) then return "noGame" end
+    if not R.kindOf(item) or #R.gamesFor(item) == 0 then return "noGame" end
     return nil
+end
+
+-- GTP 1.4.0 (#11 / #12): finer than the kind -- what THIS food can really
+-- take. First rule whose kind matches and whose words (lower-case parts of
+-- the type name) hit wins; no rule = the kind's whole list.
+-- Whole fish = vanilla tag base:uncutfish (from tags_index.txt).
+R.WHOLE_FISH = { ["Base.AligatorGar"] = true, ["Base.BlackCrappie"] = true, ["Base.BlueCatfish"] = true, ["Base.Bluegill"] = true, ["Base.ChannelCatfish"] = true, ["Base.FlatheadCatfish"] = true, ["Base.FreshwaterDrum"] = true, ["Base.GreenSunfish"] = true, ["Base.LargemouthBass"] = true, ["Base.Muskellunge"] = true, ["Base.Paddlefish"] = true, ["Base.RedearSunfish"] = true, ["Base.Salmon"] = true, ["Base.Sauger"] = true, ["Base.SmallmouthBass"] = true, ["Base.SpottedBass"] = true, ["Base.StripedBass"] = true, ["Base.Walleye"] = true, ["Base.WhiteBass"] = true, ["Base.WhiteCrappie"] = true, ["Base.YellowPerch"] = true }
+R.GAME_RULES = {
+    { kind = "veg", words = { "lettuce", "cabbage", "kale", "spinach", "greens", "dandelion", "nettle", "chard", "brussel", "broccoli", "cauliflower" }, games = { "wash", "chop", "slice" } },
+    { kind = "veg", words = { "potato", "carrot", "turnip", "radish", "daikon", "beet", "ginger", "parsnip" }, games = { "wash", "peel", "chop", "slice", "grate", "mash" } },
+    { kind = "veg", words = { "onion", "garlic", "leek", "shallot", "chive" }, games = { "peel", "chop", "slice" } },
+    { kind = "veg", words = { "tomato", "pepper", "cucumber", "zucchini", "eggplant", "pumpkin", "squash", "melon" }, games = { "wash", "core", "chop", "slice" } },
+    { kind = "veg", words = { "corn" }, games = { "wash", "peel" } },
+    { kind = "veg", words = { "pea", "bean", "soy" }, games = { "wash" } },
+    { kind = "veg", games = { "wash", "chop", "slice" } },
+    { kind = "fruit", words = { "orange", "lemon", "lime", "grapefruit", "tangerine", "citrus" }, games = { "peel", "slice", "zest" } },
+    { kind = "fruit", words = { "banana" }, games = { "peel", "slice", "mash" } },
+    { kind = "fruit", words = { "apple", "pear", "peach", "mango", "pineapple", "avocado", "apricot", "plum" }, games = { "wash", "peel", "core", "slice" } },
+    { kind = "fruit", foodtype = "Berry", games = { "wash" } },
+    { kind = "fruit", words = { "grape", "cherry", "strewberrie", "strawberr", "berry" }, games = { "wash" } },
+    { kind = "fruit", games = { "wash", "slice" } },
+    { kind = "herb", foodtype = "HotPepper", games = { "wash", "chop", "slice" } },
+    { kind = "meat", words = { "minced" }, games = {} },
+    { kind = "meat", words = { "sausage", "bacon", "ham", "salami", "baloney", "pepperoni" }, games = { "slice" } },
+    { kind = "poultry", words = { "fillet", "breast", "wing", "leg" }, games = { "trim", "pound", "slice" } },
+    { kind = "poultry", games = { "trim", "slice" } },
+    { kind = "fish", whole = true, games = { "scale", "trim" } },
+    { kind = "fish", words = { "shrimp", "crayfish", "lobster", "squid", "oyster", "mussel", "clam", "crab" }, games = { "wash", "trim" } },
+    { kind = "fish", words = { "roe", "caviar" }, games = { "wash" } },
+    { kind = "fish", games = { "trim", "slice" } },
+    { kind = "bean", foodtype = "Nut", games = { "grind" } },
+    { kind = "bean", foodtype = "Seed", games = { "grind" } },
+    { kind = "bean", words = { "open", "refried", "tofu" }, games = { "mash" } },
+    { kind = "grain", words = { "pasta", "noodle", "macaroni", "spaghetti" }, games = { "measure" } },
+}
+
+local function ruleFits(r, item, k, lowShort, ft)
+    if r.kind ~= k then return false end
+    if r.whole then return R.WHOLE_FISH[typeOf(item)] == true end
+    if r.foodtype then return ft == r.foodtype end
+    if not r.words then return true end
+    for _, w in ipairs(r.words) do if lowShort:find(w, 1, true) then return true end end
+    return false
 end
 
 function R.gamesFor(item)
     local k = R.kindOf(item)
     local list = k and R.KIND_GAMES[k] or {}
+    if k then
+        local t = typeOf(item)
+        local lowShort = (t:match("%.(.+)$") or t):lower()
+        local ft = tostring(call(item, "getFoodType") or "")
+        for _, r in ipairs(R.GAME_RULES) do
+            if ruleFits(r, item, k, lowShort, ft) then list = r.games break end
+        end
+    end
     local out = {}
     for _, pid in ipairs(list) do if K.PROCS[pid] then out[#out + 1] = pid end end
     return out, k
@@ -314,6 +367,44 @@ function R.servePrep(player, args)
     return true
 end
 
+-- GTP 1.4.0 (#14): a Poor or Missed preparation can be washed off ONCE
+-- and prepared again
+function R.canRedo(item)
+    local p = R.prepOf(item)
+    if not p or (p.w ~= "Bad" and p.w ~= "Miss") then return false end
+    local md = mdOf(item)
+    return not (md and md.HARMONIE_PrepRedo)
+end
+function R.serveRedo(player, args)
+    args = type(args) == "table" and args or {}
+    local who = nameOf(player)
+    local t = nowMs()
+    if t - (R.lastPrep[who] or 0) < 800 then log("redo from %s: too fast -- rejected", who); count("refused"); return false, "fast" end
+    local item = findById(player, args.id)
+    if not item then log("redo from %s: item id %s not in their inventory -- rejected", who, tostring(args.id)); count("refused"); return false, "missing" end
+    if not R.canRedo(item) then log("redo from %s on %s: not a Poor / Missed preparation, or already redone -- rejected", who, typeOf(item)); count("refused"); return false, "noRedo" end
+    R.lastPrep[who] = t
+    local md = call(item, "getModData")
+    md.HARMONIE_Prep = nil
+    md.HARMONIE_PrepRedo = true
+    dlog("%s washed off the preparation of %s (id %s) -- can prepare it again once", who, typeOf(item), tostring(args.id))
+    sendSet(player, item, "redo")
+    return true
+end
+
+-- GTP 1.4.0 (#16): some foods are harder to work than others (added to the
+-- minigame difficulty, 0..1 scale)
+function R.hardness(item)
+    local k = R.kindOf(item)
+    local h = 0
+    if k == "meat" or k == "poultry" then h = h + 0.08 end
+    if k == "fish" then h = h + (R.WHOLE_FISH[typeOf(item)] and 0.12 or 0.06) end
+    if k == "herb" or k == "bean" or k == "grain" or k == "flour" then h = h - 0.05 end
+    local okW, wgt = pcall(function() return item:getActualWeight() end)
+    if okW and tonumber(wgt) and tonumber(wgt) > 1.0 then h = h + 0.05 end
+    return h
+end
+
 -- ------------------------------------------------------------ dish scores
 -- the evolved-recipe family of a vanilla recipe object (for the buff kind)
 local function famOfRecipe(recipe)
@@ -449,7 +540,12 @@ if Events and Events.OnGameStart then Events.OnGameStart.Add(installHooks) end
 if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
         if module ~= R.NET or not player then return end
-        if command == "begin" then
+        if command == "redo" then
+            local ok, why = R.serveRedo(player, args)
+            if not ok and sendServerCommand then
+                pcall(sendServerCommand, player, R.NET, "refused", { id = type(args) == "table" and args.id or nil, why = why })
+            end
+        elseif command == "begin" then
             R.serveBegin(player, args)
         elseif command == "prep" then
             local ok, why = R.servePrep(player, args)
@@ -477,7 +573,10 @@ local function applySet(args)
     if not item then return false end
     local md = call(item, "getModData")
     if not md then return true end
-    if args.prep then md.HARMONIE_Prep = args.prep end
+    if args.what == "redo" then
+        md.HARMONIE_Prep = nil
+        md.HARMONIE_PrepRedo = true
+    elseif args.prep then md.HARMONIE_Prep = args.prep end
     if args.dish then md.HARMONIE_Dish = args.dish end
     if R.onSet then pcall(R.onSet, args, item) end
     return true
@@ -518,6 +617,19 @@ if Events and Events.OnTick then
         end
         R.pendingSets = keep
     end)
+end
+
+-- client side: wash off a Poor / Missed preparation (SP: done at once)
+function R.requestRedo(player, item)
+    local args = { id = call(item, "getID") }
+    if isClientSide() then
+        sendClientCommand(player, R.NET, "redo", args)
+        return true
+    end
+    local ok, why = R.serveRedo(player, args)
+    if not ok and R.onRefused then pcall(R.onRefused, { id = args.id, why = why }) end
+    if ok and R.onSet then pcall(R.onSet, { id = args.id, what = "redo" }, item) end
+    return ok
 end
 
 -- client side: the minigame opens (SP: noted at once)

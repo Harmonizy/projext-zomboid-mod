@@ -1094,5 +1094,15 @@
     "IGUI_GTPP_TipRotten": "เน่าแล้ว: ไม่ได้บัฟ คะแนนเป็น 0",
     "IGUI_GTPP_TipTier3Level": "(ระดับ 3 ต้องให้คนทำมีเลเวลทำอาหาร %1)",
     "IGUI_GTPP_RottenZero": "เน่า: 0",
-    "IGUI_GTPC_Word_Off": "เตรียมแล้ว (ปิดมินิเกม)"
+    "IGUI_GTPC_Word_Off": "เตรียมแล้ว (ปิดมินิเกม)",
+    "IGUI_GTPP_StatLine": "สถิติของคุณ: %1 ครั้ง เยี่ยม %2 เปอร์เซ็นต์",
+    "IGUI_GTPP_CanRedo": "(ล้างแล้วทำใหม่ได้ 1 ครั้ง)",
+    "IGUI_GTPP_RedoHint": "ชิ้นนี้ได้ผลแย่หรือพลาด ล้างแล้วเตรียมใหม่ได้ 1 ครั้ง (ใช้เวลาสักครู่) ผลครั้งที่สองจะเป็นผลสุดท้าย",
+    "IGUI_GTPP_Redo": "ล้างแล้วทำใหม่",
+    "IGUI_GTPP_Practice": "ฝึก",
+    "IGUI_GTPP_PracticeName": "ฝึก",
+    "IGUI_GTPP_LastRedone": "ล้าง %1 แล้ว เตรียมใหม่ได้เลย",
+    "IGUI_GTPP_LastPractice": "ฝึก %1: %2 (ไม่มีคะแนน ไม่นับสถิติ)",
+    "IGUI_GTPP_LastPracticeCancel": "หยุดฝึกแล้ว",
+    "IGUI_GTPP_Why_noRedo": "ล้างได้ครั้งเดียว และเฉพาะผลแย่หรือพลาด"
 }
