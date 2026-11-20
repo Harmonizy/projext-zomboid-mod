@@ -879,5 +879,6 @@
     "IGUI_TWA_Test_BagUpItems": "Give one of every bag upgrade item",
     "IGUI_TWA_Test_BagUpBag": "Give an ALICE pack (to upgrade)",
     "IGUI_TWA_Test_BagUpProbe": "Log which bag setters this game has (console.txt)",
-    "IGUI_TWA_Test_Logged": "Written to console.txt"
+    "IGUI_TWA_Test_Logged": "Written to console.txt",
+    "IGUI_TWA_HaveNeed": "Have: %1 / need %2"
 }

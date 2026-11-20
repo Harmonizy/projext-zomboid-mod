@@ -121,7 +121,9 @@ function A.missingItems(player, recipe)
     end
     if recipe.base2 then
         local types = type(recipe.base2) == "table" and recipe.base2 or { recipe.base2 }
-        if countIn(src, types) < 1 then want(firstExisting(types), 1) end
+        local need = S.base2Qty and S.base2Qty(recipe) or 1
+        local have = countIn(src, types)
+        if have < need then want(firstExisting(types), need - have) end
     end
     -- tools: one of each kind, materials: added up over the procedures
     local toolSeen, need = {}, {}

@@ -247,8 +247,14 @@ function TWACraftWindow:guidedData()
                 row.ok, row.status = true, getText("IGUI_TWA_G_InPiece")
             else
                 local n = TWASources.get(self.player):countEval(recipe.base2, function(it) return not S.isBookmarked(it) end)
-                row.ok = S.pickFreshItem(self.player, recipe.base2) ~= nil
-                row.status = row.ok and getText("IGUI_TWA_G_Have", tostring(n)) or getText("IGUI_TWA_G_Missing")
+                local need = S.base2Qty(recipe)
+                row.ok = S.pickFreshItem(self.player, recipe.base2) ~= nil and n >= need
+                -- 1.2.1: "5 / 20" when the recipe takes more than one (ores)
+                if need > 1 then
+                    row.status = getText("IGUI_TWA_HaveNeed", tostring(n), tostring(need))
+                else
+                    row.status = row.ok and getText("IGUI_TWA_G_Have", tostring(n)) or getText("IGUI_TWA_G_Missing")
+                end
                 if not row.ok then
                     missing[#missing + 1] = row.name
                     local maker = h().recipeMaking(recipe.base2)

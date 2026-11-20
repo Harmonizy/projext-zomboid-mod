@@ -879,5 +879,6 @@
     "IGUI_TWA_Test_BagUpItems": "ให้ของอัปเกรดกระเป๋าอย่างละ 1 ชิ้น",
     "IGUI_TWA_Test_BagUpBag": "ให้กระเป๋า ALICE (ไว้ทดลองอัป)",
     "IGUI_TWA_Test_BagUpProbe": "บันทึกว่าเกมมีฟังก์ชันตั้งค่ากระเป๋าอะไรบ้าง (console.txt)",
-    "IGUI_TWA_Test_Logged": "บันทึกลง console.txt แล้ว"
+    "IGUI_TWA_Test_Logged": "บันทึกลง console.txt แล้ว",
+    "IGUI_TWA_HaveNeed": "มีอยู่ %1 / ต้องใช้ %2"
 }

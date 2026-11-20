@@ -61,9 +61,7 @@ require "HARMONIE_TWA_Display"
 
 -- Full 8-tier fixed-DPS scale -- SAME thresholds gen_craftdata.js bakes for
 -- non-weapon items, ported to Lua so weapon tier can be computed live here
--- too (see tierFromDps below). Legendary and Prototype swapped positions
--- (request 2026-09-26, full explicit table): Legendary is now DPS < 10,
--- Prototype is now the unbounded top tier DPS >= 10.
+-- too (see tierFromDps below). Thresholds: see the 1.2.1 note below.
 local TIER_NAMES = {
     [1] = "Junk", [2] = "Common", [3] = "Uncommon", [4] = "Rare", [5] = "Epic",
     [6] = "Elite", [7] = "Legendary", [8] = "Prototype",
@@ -73,13 +71,26 @@ local TIER_COLOR = {
     [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.55, b = 0.15 },
     [7] = { r = 1.0, g = 0.85, b = 0.15 }, [8] = { r = 0.85, g = 0.2, b = 0.15 },
 }
-local DPS_TIER_THRESHOLDS = { 0.25, 0.5, 1, 2, 4, 8, 10 }
+-- TWA 1.2.4 (owner 2026-11-20, replaces 1.2.3's x5/8): the first four cuts
+-- as before, then Epic 2 - 3.5, Elite 3.5 - 5, Legendary 5 - 6:
+--   Junk < 0.25 <= Common < 0.5 <= Uncommon < 1 <= Rare < 2 <= Epic < 3.5
+--   <= Elite < 5 <= Legendary <= 6 < Prototype
+-- Our Epic / Elite / Legendary weapons were moved into the new bands in a
+-- straight line (same tier counts); a DPS exactly on a cut is the upper tier.
+local DPS_TIER_THRESHOLDS = { 0.25, 0.5, 1, 2, 3.5, 5 }
+local EPS = 0.000001
+TWATier = TWATier or {}
+TWATier.LEGENDARY_MAX = 6
+TWATier.CUTS = DPS_TIER_THRESHOLDS
 local function tierFromDps(dps)
+    dps = tonumber(dps) or 0
     for i, threshold in ipairs(DPS_TIER_THRESHOLDS) do
-        if dps < threshold then return i end
+        if dps < threshold - EPS then return i end
     end
-    return #DPS_TIER_THRESHOLDS + 1
+    if dps <= TWATier.LEGENDARY_MAX + EPS then return 7 end
+    return 8
 end
+TWATier.fromDps = tierFromDps
 
 -- Full weapon stat grid for the NON-weapon (static, fullType-keyed) path
 -- only -- same 2-column layout and same translation keys HARMONIE_TWA_
@@ -264,7 +275,10 @@ function ISToolTipInv:render()
         local pushBackMod = liveOrFallback(item, "getPushBackMod", (stats and stats.pushBackMod) or 0)
         local subCategory = liveOrFallback(item, "getSubCategory", stats and stats.subCategory)
         local dps = ((minD + maxD) / 2) * baseSpeed
-        local tier = tierFromDps(dps)
+        -- 1.2.2: the tier comes from the damage WITHOUT the gems
+        local tMin, tMax = minD, maxD
+        if TWAGemSocket and TWAGemSocket.tierDamage then tMin, tMax = TWAGemSocket.tierDamage(item) end
+        local tier = tierFromDps(((tMin + tMax) / 2) * baseSpeed)
         local c = TIER_COLOR[tier] or { r = 1, g = 1, b = 1 }
         -- R72 ("ใน tooltip อาวุธ เอาหัวข้อ ประเภท และ DPS ออก"): the tier
         -- name only (the DPS still picks the tier), no Type / DPS cells

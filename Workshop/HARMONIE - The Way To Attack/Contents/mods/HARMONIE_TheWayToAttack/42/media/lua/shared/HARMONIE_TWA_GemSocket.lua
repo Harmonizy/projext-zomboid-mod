@@ -207,11 +207,58 @@ function G.undoDurability(item, md)
     TWALog("Socket", "%s: x%d durability taken back (condition %s -> %s, max %s)", TWALogType(item), mul, tostring(before), tostring(c), tostring(max))
 end
 
+-- 1.2.2 (owner 2026-11-20: "the gems' damage must not change the tier"):
+-- the damage a weapon's TIER is judged on -- the live damage minus what its
+-- gems add (TierTooltip and the socket page use it; the DPS shown with gems
+-- stays the real one).
+function G.tierDamage(item)
+    local minD, maxD = item:getMinDamage(), item:getMaxDamage()
+    local md = item.hasModData and item:hasModData() and item:getModData() or nil
+    if md and md.TWA_Gems and not md.TWA_Incomplete then
+        local b = G.totalBonus(item)
+        minD = minD - (b.MinDamage or 0)
+        maxD = maxD - (b.MaxDamage or 0)
+    end
+    return minD, maxD
+end
+
+-- 1.2.3 (damage x5/8 rebalance): a weapon of OURS made before keeps the old
+-- damage on the item if the game saved it -> back to the script's (or the
+-- admin override's) value. Only our item types; only when it differs; one
+-- log line per type.
+local synced = {}
+local OUR_PREFIX = "HARMONIE_TheWayToAttack."
+function G.syncScriptDamage(item, md)
+    local ok, ft = pcall(function() return item:getFullType() end)
+    if not ok or type(ft) ~= "string" or ft:sub(1, #OUR_PREFIX) ~= OUR_PREFIX then return end
+    if not (item.setMinDamage and item.setMaxDamage) then return end
+    local ov = md.TWA_StatOverride or {}
+    local script = item.getScriptItem and item:getScriptItem()
+    if not script then return end
+    local changed = false
+    for _, f in ipairs(G.FIELDS) do
+        if f.key ~= "ConditionMax" then
+            local base = ov[f.key]
+            if base == nil and script[f.get] then base = script[f.get](script) end
+            local now = item[f.get] and item[f.get](item)
+            if base ~= nil and now ~= nil and math.abs(now - base) > 0.0001 then
+                item[f.set](item, base)
+                changed = true
+            end
+        end
+    end
+    if changed and not synced[ft] then
+        synced[ft] = true
+        TWALog("Socket", "%s carried old damage -- set to the current %s-%s", ft, tostring(item:getMinDamage()), tostring(item:getMaxDamage()))
+    end
+end
+
 function G.applyDamage(item)
     if not item then return end
     local md = item:getModData()
     if md.TWA_Durability then G.undoDurability(item, md) end
-    if not md.TWA_Gems or md.TWA_Incomplete then return end
+    if md.TWA_Incomplete then return end
+    if not md.TWA_Gems then G.syncScriptDamage(item, md) return end
     if not (item.setMinDamage and item.setMaxDamage) then return end
     local ov = md.TWA_StatOverride or {}
     local script = item.getScriptItem and item:getScriptItem()
