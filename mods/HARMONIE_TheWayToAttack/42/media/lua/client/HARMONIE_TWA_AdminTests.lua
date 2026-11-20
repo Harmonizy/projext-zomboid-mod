@@ -35,6 +35,27 @@ local recipeTests = {
 AT.register("twa", "craft", recipeTests)
 AT.register("twa", "weapons", recipeTests)
 AT.register("twa", "materials", recipeTests)
+AT.register("twa", "bags", recipeTests)   -- 1.2.0: bag upgrade items / tiers
+AT.register("twa", "bagmod", {
+    T("BagUpItems", "Give one of every bag upgrade item", function(p)
+        local list = {}
+        for _, e in ipairs(TWABagUp and TWABagUp.ITEM_LIST or {}) do list[#list + 1] = { e.type, 1 } end
+        AT.give(p, list)
+    end),
+    T("BagUpBag", "Give an ALICE pack (to upgrade)", function(p) AT.give(p, { { "Base.Bag_ALICEpack", 1 } }) end),
+    T("BagUpProbe", "Log which bag setters this game has (console.txt)", function(p)
+        local B = TWABagUp
+        local bag = B and TWABagUpUI and TWACraftUI.window and TWACraftUI.window.bagUpPanel and TWACraftUI.window.bagUpPanel.bag
+        local have, miss = B.probe(bag)
+        TWALog("AdminTests", "bag setters on %s: have %s | missing %s", bag and TWALogType(bag) or "(no bag picked)", table.concat(have, ", "), table.concat(miss, ", "))
+        if bag then
+            local v = B.compute(bag)
+            TWALog("AdminTests", "bag %s tier %d ups [%s] -> cap %s wr %s run %s combat %s weight %s attach %s/%s", TWALogType(bag), B.tierOf(bag),
+                table.concat(B.upsOf(bag), ", "), tostring(v.cap), tostring(v.wr), tostring(v.run), tostring(v.combat), tostring(v.weight), tostring(v.attachS), tostring(v.attachL))
+        end
+        p:Say(AT.T("IGUI_TWA_Test_Logged", "Written to console.txt"))
+    end),
+})
 AT.register("twa", "modify", {
     T("Gems", "Give one of every gem", function(p)
         local list = {}

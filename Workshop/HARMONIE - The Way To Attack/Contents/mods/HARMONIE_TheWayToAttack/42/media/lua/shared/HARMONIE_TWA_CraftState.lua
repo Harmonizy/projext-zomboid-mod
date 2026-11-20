@@ -96,8 +96,12 @@ end
 -- stone spear's "any stone" ("หอกหินให้ใช้วัตถุดิบตั้งต้นเป็นหินอะไรก็ได้").
 -- Types this game version doesn't have are left out (base itself always
 -- stays, so a recipe never ends up with an empty slot).
+local baseTypesCache = {}
 function S.baseTypes(recipe)
     if not recipe or not recipe.base then return {} end
+    -- 1.2.0: cached per recipe (a bag tier recipe lists 86 bags; the UI asks every frame)
+    local c = baseTypesCache[recipe]
+    if c then return c end
     local out = { recipe.base }
     local alts = recipe.baseAlt
     if type(alts) == "string" then alts = { alts } end
@@ -105,6 +109,7 @@ function S.baseTypes(recipe)
     for _, t in ipairs(alts or {}) do
         if not sm or sm:getItem(t) then out[#out + 1] = t end
     end
+    if sm and recipe.id then baseTypesCache[recipe] = out end
     return out
 end
 
@@ -193,6 +198,8 @@ function S.baseOk(recipe, item)
     for _, bt in ipairs(S.baseTypes(recipe)) do if bt == t then okType = true break end end
     if not okType then return false end
     if recipe.gemFrom and S.gemState(item) ~= recipe.gemFrom then return false end
+    -- 1.2.0: a bag tier recipe -- the bag one tier below, empty, not worn
+    if recipe.bagTier and not (TWABagUp and TWABagUp.tierBaseOk(recipe, item)) then return false end
     return true
 end
 
@@ -568,6 +575,10 @@ function S.snapshotItem(item)
     if imd.TWA_Incomplete then return copyPlain(imd.TWA_OrigBase, 0) end
     local snap = { type = item:getFullType() }
     if item.getCondition then snap.cond = item:getCondition() end
+    -- 1.2.0: a bag's colour (texture choice) comes back with it
+    if instanceof(item, "InventoryContainer") and item.getVisual then
+        pcall(function() local v = item:getVisual(); if v and v.getTextureChoice then snap.tex = v:getTextureChoice() end end)
+    end
     local md = {}
     for k, v in pairs(item:getModData()) do
         if not BOOKMARK_KEYS[k] then md[k] = copyPlain(v, 0) end
@@ -657,6 +668,8 @@ end
 -- the original base item's snapshot (TWA_OrigBase) for a later Cancel.
 function S.applyIncomplete(item)
     if not item or not item:getModData().TWA_Incomplete then return end
+    -- 1.2.0: an unfinished bag (tier recipe) holds nothing until finished
+    if TWABagUp and TWABagUp.isBag(item) then TWABagUp.apply(item) return end
     if not TWAConfig.on("IncompleteZeroDamage") then return end
     if item.setMinDamage then item:setMinDamage(0) end
     if item.setMaxDamage then item:setMaxDamage(0) end

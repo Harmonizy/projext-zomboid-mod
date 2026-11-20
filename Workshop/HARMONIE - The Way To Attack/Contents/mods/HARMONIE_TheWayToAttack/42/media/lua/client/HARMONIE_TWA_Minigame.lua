@@ -155,6 +155,12 @@ TWAMinigame.GAME_FOR = {
     GemFineCutting         = { "TWAFacetGame", "fine" },
     GemQualityControl      = { "TWAPurifyGame", "purify" },   -- round 20: Gem Purification
 }
+-- 1.2.0: the bag upgrade steps (Tailoring 1..5), each with its minigame
+for t = 1, 5 do
+    TWAMinigame.GAME_FOR["BagCut" .. t] = { "TWAIncisionGame", "carve" }
+    TWAMinigame.GAME_FOR["BagSew" .. t] = { "TWASutureGame" }
+    TWAMinigame.GAME_FOR["BagFit" .. t] = { "TWAWrapGame", "leather" }
+end
 
 --- Returns false (and does not call onResult) only when busy; the caller
 --- then just doesn't start the procedure. `recipe` (optional) lets a game

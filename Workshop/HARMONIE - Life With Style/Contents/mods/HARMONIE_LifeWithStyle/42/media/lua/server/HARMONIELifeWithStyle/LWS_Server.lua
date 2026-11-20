@@ -73,7 +73,7 @@ end
 function S.stateOf(o)
     local items = {}
     for uid, e in pairs(o and o.items or {}) do
-        if LWS.PIECE[e.p] then items[#items + 1] = { uid = uid, p = e.p, at = e.at } end
+        if LWS.PIECE[e.p] then items[#items + 1] = { uid = uid, p = e.p, at = e.at, tex = e.tex } end
     end
     table.sort(items, function(a, b) return (tonumber(a.uid) or 0) < (tonumber(b.uid) or 0) end)
     local worn, show = {}, {}
@@ -98,14 +98,17 @@ function S.ensure(player, why)
     if not player or (player.isDead and player:isDead()) then return end
     local key = LWS.ownerKey(player)
     local o = S.owner(key, false)
-    local want = {}
+    local want, wantTex = {}, {}
     if o then
         clean(o)
         for slot, uid in pairs(o.worn) do
             local e = o.items[uid]
             -- the pet slot makes no item (LWS_Pets.lua makes the animal)
             if e and not (LWS.SLOT[slot] and LWS.SLOT[slot].body == false) then
-                want[LWS.carrierType(e.p, o.show[slot] == true)] = slot
+                local t = LWS.carrierType(e.p, o.show[slot] == true)
+                want[t] = slot
+                -- 1.1.0: the colour picked (only pieces with several)
+                if LWS.texCount(e.p) > 1 then wantTex[t] = math.max(0, math.min(LWS.texCount(e.p) - 1, tonumber(e.tex) or 0)) end
             end
         end
     end
@@ -119,15 +122,16 @@ function S.ensure(player, why)
         if LWS.isFashion(item) then
             local t = LWS.typeOf(item)
             local mine = item:getModData().LWS_owner
-            if want[t] and not have[t] and (mine == nil or mine == key) then
+            local texOk = wantTex[t] == nil or tonumber(item:getModData().LWS_tex) == wantTex[t]
+            if want[t] and not have[t] and (mine == nil or mine == key) and texOk then
                 have[t] = item
             else
                 removeItem(player, inv, item)
                 removed = removed + 1
-                log("%s: removed %s (%s)", LWS.name(player), t, mine ~= key and "not theirs" or "not worn in the wardrobe")
+                log("%s: removed %s (%s)", LWS.name(player), t, (want[t] and not texOk) and "colour changed" or (mine ~= key and "not theirs" or "not worn in the wardrobe"))
                 -- no owner mark = it came from the world (a zombie's clothes,
                 -- LWS_WorldGuard.lua): the player gets the real vanilla item
-                local tw = mine == nil and LWS.WorldGuard and LWS.WorldGuard.twinOf(t)
+                local tw = mine == nil and not want[t] and LWS.WorldGuard and LWS.WorldGuard.twinOf(t)
                 if tw then
                     local real = inv:AddItem(tw)
                     if real and isServer and isServer() and sendAddItemToContainer then pcall(sendAddItemToContainer, inv, real) end
@@ -163,6 +167,7 @@ function S.ensure(player, why)
             item = inv:AddItem(t)
             if item then
                 item:getModData().LWS_owner = key
+                if wantTex[t] then item:getModData().LWS_tex = wantTex[t]; LWS.applyTex(item, "made") end
                 if isServer and isServer() and sendAddItemToContainer then pcall(sendAddItemToContainer, inv, item) end
                 added = added + 1
             else
@@ -290,6 +295,22 @@ function S.handle(player, command, args)
         log("%s wears %s in %s", LWS.name(player), tostring(e.p), slot)
         S.sendState(player, o)
         S.ensure(player, "wear")
+    elseif command == "SetTex" then
+        -- 1.1.0: the colour of a piece with several (0-based texture choice)
+        local o = S.owner(key, true)
+        local uid = tostring(args.uid or "")
+        local e = o.items[uid]
+        local n = e and LWS.texCount(e.p) or 1
+        local tex = math.floor(tonumber(args.tex) or -1)
+        if not e or n < 2 or tex < 0 or tex >= n then
+            log("REJECTED SetTex from %s: piece #%s colour %s", LWS.name(player), uid, tostring(args.tex))
+            S.sendState(player, o)
+            return
+        end
+        e.tex = tex
+        log("%s: %s (#%s) colour %d of %d", LWS.name(player), tostring(e.p), uid, tex + 1, n)
+        S.sendState(player, o)
+        S.ensure(player, "colour")
     elseif command == "TakeOff" then
         local o = S.owner(key, true)
         local slot = tostring(args.slot or "")

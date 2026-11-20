@@ -35,6 +35,7 @@ T = {
  "IGUI_LWS_ShowOn": ("Real clothes: shown", "ชุดจริง: แสดง"),
  "IGUI_LWS_ShowOff": ("Real clothes: hidden", "ชุดจริง: ซ่อน"),
  "IGUI_LWS_TakeOff": ("Take off", "ถอด"),
+ "IGUI_LWS_Colour": ("Colour %1 / %2", "สี %1 / %2"),
  "IGUI_LWS_HideNote": ("While a piece is worn here, your real clothes of this slot are not drawn (they still protect and keep you warm). Nothing pokes through.",
                        "ระหว่างที่สวมชิ้นแฟชั่นในช่องนี้ ชุดจริงของช่องนี้จะไม่ถูกวาด (แต่ยังป้องกันและให้ความอบอุ่นตามปกติ) จึงไม่มีอะไรทะลุออกมา"),
  "IGUI_LWS_ShowNote": ("Your real clothes of this slot are drawn too, under the piece.", "ชุดจริงของช่องนี้จะถูกวาดด้วย อยู่ใต้ชิ้นแฟชั่น"),

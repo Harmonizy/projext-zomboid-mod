@@ -119,6 +119,10 @@ function TWA_FinishCraftAction:complete()
     S.clearActive(self.character)
 
     local inv = self.character:getInventory()
+    -- 1.2.0: a bag tier recipe gives the same bag back, one tier up (no break)
+    if recipe.bagTier and TWABagUp then
+        return TWABagUp.finishTier(self.character, recipe, act.base, self.token) ~= nil
+    end
     -- Round 19: a gem-refining recipe gives back THE SAME gem one state up
     -- -- unless it breaks (chance by the overall quality).
     if recipe.keepType then
@@ -164,7 +168,10 @@ function TWA_FinishCraftAction:complete()
             md.TWA_RollChance = S.gemChance(rollWord)
             TWALog("Craft", "gemstone roll: quality=%s gemChance=%s -> %s", tostring(rollWord), tostring(md.TWA_RollChance), TWALogType(newItem))
         end
-        if not S.isMaterialRecipe(recipe) and not rolled then
+        if recipe.bagUp then
+            -- 1.2.0: a bag upgrade item -- its quality is noted, no grade
+            md.TWA_Quality = S.overall(recipe, map, self.character) or S.LEGACY_WORD
+        elseif not S.isMaterialRecipe(recipe) and not rolled then
             local word = S.overall(recipe, map, self.character) or S.LEGACY_WORD
             md.TWA_Quality = word
             md.TWA_Grade = S.rollGrade(word)

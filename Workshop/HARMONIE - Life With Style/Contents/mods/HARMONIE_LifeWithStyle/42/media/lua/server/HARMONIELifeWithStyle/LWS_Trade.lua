@@ -172,7 +172,7 @@ local function swap(s)
             for slot, wuid in pairs(from.worn) do if wuid == uid then from.worn[slot] = nil end end
             local newUid = tostring(to.nextId)
             to.nextId = to.nextId + 1
-            to.items[newUid] = { p = e.p, at = e.at, by = e.by, from = s.names[fromKey] or fromKey }
+            to.items[newUid] = { p = e.p, at = e.at, by = e.by, tex = e.tex, from = s.names[fromKey] or fromKey }
             moved = moved + 1
             log("trade #%d: %s (%s #%s) -> %s #%s", s.id, tostring(e.p), tostring(s.names[fromKey]), tostring(uid), tostring(s.names[toKey]), newUid)
         end
