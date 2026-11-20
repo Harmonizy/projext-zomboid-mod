@@ -355,6 +355,114 @@
   is given back once by the authority (HARMONIE_CookRefund.lua, "refunded:"
   mark in the world's data). Vanilla Lua for reference: the owner's
   pz_cook_lua.zip unpacked in mods/_VanillaReference_B42/raw/lua (gitignored).
+- GTP 1.2.0 (owner's 42-point review, round 1 of 6 -- MP safety): buff
+  cleared on death (K.clearBuff, OnPlayerDeath) and a record written later
+  in a life than the character has lived (`b.hs` vs getHoursSurvived) is a
+  new character's -> removed; records ended > 7 game days ago pruned daily
+  (K.pruneBuffs). Anti-cheat: client sends "begin" {id, pid} when the
+  minigame opens (R.begin); "prep" is taken only for that id + pid, 2.5 s to
+  5 min after it (no minimum with sandbox CookMinigames off) -- refusals
+  noBegin / timing. The client's "set" copy also looks in the room's boxes
+  (HARMONIE_Reach.findById): a pot is put back on the stove after an
+  addition. Per-event Prep logs only with sandbox CookDebugLog; an hourly
+  summary always. Tab: watchdog 10 s (H.PREP_WATCHDOG_MS), Cancel button
+  (clears the queue in bring / action), "inventory full" reason.
+  Forward-local check: scratchpad fwdcheck.py (strips comments / strings).
+- GTP 1.3.0 (review round 2 -- score balance): a dish average is WEIGHED by
+  the hunger each ingredient brought (R.weightOf, x100, min 1; evolved
+  additions use hunger before - after on the used item, captured in the
+  wrapper) -> HARMONIE_Dish gets `w`; a pre-1.3 dish counts w = n.
+  MINOR_INGREDIENT foods (oil, sauces) do not count (R.isMinor, ItemTag
+  object). Rotten = score 0 and no buff (K.dishTier). Bad = -0.5. Minigames
+  off in the sandbox -> word "Off" = 0. Scores are read LIVE from the word
+  (R.wordScore), so a sandbox change counts for food prepared before.
+  Buff level 3 needs a cook of Cooking >= CookBuffTier3Level (5), else 2.
+  Sandbox (15 new): CookScoreExcellent / Good / Bad / Miss, CookBuffTier1-3,
+  CookBuffTier3Level, CookBuffStrength1-3, CookBuffLength1-3,
+  CookBadDishUnhappy.
+- GTP 1.4.0 (review round 3 -- minigames): R.GAME_RULES pick the games per
+  food (first rule whose kind + name words / FoodType / whole-fish hits;
+  else the kind's list): citrus peel/slice/zest, berries + grapes + cherries
+  wash only, leafy veg wash/chop/slice, minced meat none (whyNot noGame),
+  cured meat slice. R.WHOLE_FISH = the 21 vanilla base:uncutfish types (they
+  have no FoodType: kindOf checks them first) -> scale + trim; fillets
+  trim + slice. Redo (#14): a Poor / Missed food can be washed off ONCE
+  ("redo" command, md.HARMONIE_PrepRedo; a short wash action, no water used).
+  Practice button per minigame: same game, no food, nothing sent, not
+  counted. Record per minigame in Zomboid/Lua/HARMONIE_GTP_PrepStats.txt
+  (this computer). R.hardness(item) is added to the difficulty (meat /
+  poultry +0.08, whole fish +0.12, fillet +0.06, herb / bean / grain -0.05,
+  over 1 kg +0.05).
+- GTP 1.5.0 (review round 4 -- tab layout): ONE shared scan
+  (Win:cookScan: a per-container item-count signature checked every 500 ms,
+  full walk only when it changed or every 5 s; prepList / evoList derive from
+  it by scan `gen`, `prepDirty` / `evoDirty` force a rebuild). Prep list
+  groups the same type ("Carrot x20", carried first); "repeat for all" runs
+  the same minigame on each one (Win:continueChain after every success).
+  Minigame rows scroll ("prepGames"); the Practice button is registered
+  BEFORE the row (first click area wins). Hover a row -> one vanilla
+  ISToolTipInv per window (Win:updateCookTip after render; hidden on close
+  and by an OnTick check). Game dishes: fresh bases of the same dish are one
+  row with base chips; after the first Add the selection follows the new
+  started dish (evoFollow); each ingredient shows "-> dish X" (previewScore,
+  weight = vanilla use) and "Add the best". Craft page: unlearned hidden by
+  default (isRecipeKnown(r, true)), "can make now" from one HandcraftLogic,
+  4 recipes per frame, kept per scan gen; filters ready / known / all.
+  Tooltip boxes are measured, placed, THEN drawn (were one frame late).
+  Mock UI test: scratchpad test_tab.py renders every page.
+- GTP 1.6.0 (review round 5 -- vanilla UI), `client/.../HARMONIE_CookVanillaHooks.lua`
+  (display only): ISInventoryPaneContextMenu.addItemInEvoRecipe wrapped --
+  the option it just added (opt.param2 == the item) gets "[+2.0]"; the
+  crafting window's ISWidgetHandCraftControl:prerender appends "Dish score:
+  X" to durationLabel (inputs = logic:getRecipeData():getAllInputItems(),
+  same weighting as R.onCraft, recomputed every 500 ms); right-click a food
+  -> "Prepare (Garden to Plate) >" its minigames (opens the tab, startPrep;
+  no tool = notAvailable + tooltip) or "Wash off and redo"; MoodleFramework
+  moodle "DishBuff" (good 1-3 = buff level, value 0.65 / 0.75 / 0.85, 0.5 =
+  hidden; setDescription gives kind + hours; icon tools/gen_dishbuff_icon.py
+  -> media/ui/DishBuff.png + Moodles/128/). #8 machines (coffee machine,
+  toaster: ISStartCraftProcessorAction) finish in Java with no Lua callback
+  -- not hooked; only 3 of the 89 Cooking recipes, coffee has no preparable
+  input.
+- GTP 1.7.0 (review round 6 -- words, guide, extras): Settings tick
+  "tipprep" (H.tipUnprepared, HARMONIE_GTP_Guide.txt) hides the "not
+  prepared yet" tooltip box. Hub GTP card text updated (master
+  _HarmonieHub/translate + install.sh -> every mod's IG_UI, patch bumps).
+  Guide "Other" tab page "Prep" (first). Thai result words unified:
+  ยอดเยี่ยม / ดี / แย่ / พลาด (Word_Bad was พอใช้). 407 unused IGUI_GTPC_ keys
+  removed (old dishes / flow; kept: literals in code + run-time prefixes
+  such as IGUI_GTPC_Say_ / _Proc_ / _Word_ / _Tool_ / _Buff_) and the
+  CookQualityEffect sandbox option. Admin tests (cook tab): server ops
+  gtp_prepAll / gtp_buff {tier} / gtp_clearBuff in HARMONIE_Prep.lua.
+  Variety bonus (#38): HARMONIE_Dish.kinds (R.kindOf of each ingredient,
+  a dish inside merges its kinds); 3 kinds +CookVarietyBonus (0.25), 4+ x2,
+  only when the base average >= 0 -> fields base / bonus / avg
+  (R.finishDish; the tab preview uses it too). Chef XP (#39): dish.chef =
+  the last adder / crafter; K.rewardChef gives CookChefXP x level x share
+  to an ONLINE cook when someone else eats a buff dish ("chef" notice ->
+  halo). Favorites (#41): Zomboid/Lua/HARMONIE_GTP_Favorites.txt
+  ("dish|types"), saved from a started dish's getExtraItems(); "Add next"
+  adds the next missing type, one per click (vanilla replaces the base
+  item after each addition, so a queued chain would point at a stale base).
+- GTP 1.8.0 cook's notes (owner 2026-11-20, paper picture):
+  `shared/.../HARMONIE_CookNotes.lua` (N, net "HARMONIE_GTP_Note") +
+  `client/.../HARMONIE_CookNoteUI.lua` (GTPNotePaper). Note = dish
+  modData.HARMONIE_Dish.note { t, by, id }, written by the authority only
+  ("note" {id, text}: item within reach incl. room boxes, dish.chef == sender,
+  N.clean: no control chars, <= 4 lines, <= 120 UTF-8 letters, 1.5 s rate;
+  empty = remove; back to the client with R.sendSet what "note"). Kept while
+  the SAME cook adds / crafts on (Prep onEvolvedAdd / onCraft), dropped when
+  another cook adds. Eating: ISInventoryPaneContextMenu.eatItem wrapped --
+  a note shows on paper first (not to its writer, not with a gamepad, not
+  when ticked away: Zomboid/Lua/HARMONIE_GTP_NotesHidden.txt, 300 kept), Eat
+  calls the original with the same args. Eat wrapper (CookBuffs): K.rewardChef
+  now RETURNS the XP (no "chef" command); N.onEaten sends "ateOf" to the eater
+  and "likedBy" {eater, xp} to an online cook, once per eater + item per 10
+  real min -> halo text. Settings ticks noteshow / eatnotice (guide prefs,
+  this player). Right-click a dish: write / change (cook) or read (others);
+  Cooking tab dish page button; tooltip "Made by X (- has a note)". Paper:
+  tools/gen_note_paper.py -> media/ui/GTP_NotePaper.png (owner may save their
+  own picture over it).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

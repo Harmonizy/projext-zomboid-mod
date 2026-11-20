@@ -46,5 +46,11 @@
     "Moodles_VitaminK_Bad_lvl3": "Vitamin K: Critical",
     "Moodles_VitaminK_Bad_desc_lvl3": "You're generally run down from Vitamin K deficiency (overall health capped 10 lower) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it.",
     "Moodles_VitaminK_Bad_lvl4": "Vitamin K: Critical",
-    "Moodles_VitaminK_Bad_desc_lvl4": "You're generally run down from Vitamin K deficiency (overall health capped 10 lower) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it."
+    "Moodles_VitaminK_Bad_desc_lvl4": "You're generally run down from Vitamin K deficiency (overall health capped 10 lower) -- recovery and healing are slower. Eat Vitamin K-rich food until your reserve reaches Sufficient to clear it.",
+    "Moodles_DishBuff_Good_lvl1": "Well fed",
+    "Moodles_DishBuff_Good_desc_lvl1": "A well prepared dish keeps helping you (buff level 1). See the Cooking tab for the kind and time left.",
+    "Moodles_DishBuff_Good_lvl2": "Very well fed",
+    "Moodles_DishBuff_Good_desc_lvl2": "A well prepared dish keeps helping you (buff level 2). See the Cooking tab for the kind and time left.",
+    "Moodles_DishBuff_Good_lvl3": "Feast",
+    "Moodles_DishBuff_Good_desc_lvl3": "A well prepared dish keeps helping you (buff level 3). See the Cooking tab for the kind and time left."
 }
