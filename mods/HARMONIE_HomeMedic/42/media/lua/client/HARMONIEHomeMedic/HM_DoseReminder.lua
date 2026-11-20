@@ -117,7 +117,8 @@ function R.show(player, status)
     o:addToUIManager()
     if o.setAlwaysOnTop then o:setAlwaysOnTop(true) end
     R.open[num] = o
-    if getSoundManager then pcall(function() getSoundManager():playUISound("HM_Surg_Beep") end) end
+    if HM_Sound then HM_Sound.playUI("HM_Surg_Beep", "medical")
+    elseif getSoundManager then pcall(function() getSoundManager():playUISound("HM_Surg_Beep") end) end
     return o
 end
 

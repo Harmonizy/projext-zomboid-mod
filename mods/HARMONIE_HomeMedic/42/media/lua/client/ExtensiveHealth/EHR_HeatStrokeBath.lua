@@ -303,7 +303,7 @@ function EHRHeatStrokeColdBathAction:start()
         )
 
         pcall(function() self:setActionAnim("Bob_Tub_Enter") end)
-        pcall(function() self.character:getEmitter():playSound("Tub_Splash1") end)
+        pcall(function() local h = self.character:getEmitter():playSound("Tub_Splash1"); if HM_Sound then HM_Sound.adjust(self.character, h, "medical") end end)
     else
         pcall(function() self:setActionAnim("Loot") end)
     end
@@ -363,7 +363,7 @@ function EHRHeatStrokeColdBathAction:perform()
 
     if self.useLifestyleAnim and self.startX and self.startY then
         EHR_HeatStrokeBathSetPlayerPosition(self.character, self.startX, self.startY)
-        pcall(function() self.character:getEmitter():playSound("Tub_End") end)
+        pcall(function() local h = self.character:getEmitter():playSound("Tub_End"); if HM_Sound then HM_Sound.adjust(self.character, h, "medical") end end)
     end
 
     if self.character.Say then

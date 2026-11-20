@@ -236,6 +236,7 @@ function EHRWashHandsAction:animEvent(event, parameter)
     if event == "PlayWashSound" then
         self:stopSound()
         self.sound = self.character:playSound("WashYourself")
+        if HM_Sound then HM_Sound.adjust(self.character, self.sound, "medical") end
     end
 end
 

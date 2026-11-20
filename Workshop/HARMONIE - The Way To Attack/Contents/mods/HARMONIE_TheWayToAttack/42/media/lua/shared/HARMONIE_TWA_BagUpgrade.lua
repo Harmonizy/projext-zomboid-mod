@@ -15,6 +15,8 @@
       * an upgrade can be taken out again: it comes back with a chance by
         Tailoring level (10 % + 9 % a level, 100 % at 10), else it is lost.
 
+    Steps (1.3.1, owner): a bag TIER recipe is sewing (stitch + fit); an
+    add-on recipe is cutting (the tier's cut + the kind's own step).
     Skill: every step of a tier-T recipe asks Tailoring T (owner: "the ceiling
     is the same as the weapon forging steps" = Blacksmith 1..5). Tier 3 / 4 /
     5 recipes (items and bag tiers) take Oridecon / Elunium / Bradium as their
@@ -137,6 +139,17 @@ B.STITCH = {
     { needle = METAL_NEEDLE, consumes = { { itemTypes = { "Base.Thread_Sinew" }, qty = 2 } } },
     { needle = METAL_NEEDLE, consumes = { { itemTypes = { "Base.Thread_Aramid" }, qty = 2 } } },
 }
+-- 1.3.1 (owner): the five CUTS of the add-on recipes, rarer material as
+-- the tier rises -- Basic / Pattern / Precision / Multi-Layer / Complex
+-- Structural Cutting; tier 1 any cutter, then scissors
+local SCISSORS = { { kind = "type", value = "Base.Scissors" } }
+B.CUT = {
+    { tool = CUTTER, consumes = { { itemTypes = { "Base.RippedSheets", "Base.DenimStrips" }, qty = 1 } } },
+    { tool = SCISSORS, consumes = { { itemTypes = { "Base.DenimStrips" }, qty = 2 } } },
+    { tool = SCISSORS, consumes = { { itemTypes = { "Base.LeatherStrips" }, qty = 2 } } },
+    { tool = SCISSORS, consumes = { { itemTypes = { "Base.Leather_Crude_Small_Tan" }, qty = 1 }, { itemTypes = { "Base.DenimStrips" }, qty = 2 } } },
+    { tool = SCISSORS, consumes = { { itemTypes = { "Base.Leather_Crude_Medium_Tan" }, qty = 1 }, { itemTypes = { "Base.LeatherStrips" }, qty = 2 } } },
+}
 -- the step of each add-on kind: id prefix, tool, what it takes (qty grows
 -- with the tier where `grow`), minigame
 local function q(t) return math.floor((t + 1) / 2) end -- 1,1,2,2,3
@@ -161,7 +174,7 @@ local procIds = {}
 for t = 1, B.MAX_TIER do
     local lvl, time = "Tailoring:" .. t, t * 10 + 10
     TWAProcedures.List["BagCut" .. t] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_BagCut" .. t, icon = "Scissors",
-        tool = CUTTER, consumes = {}, skill = lvl, time = time, sound = "TWA_Craft" }
+        tool = B.CUT[t].tool, consumes = B.CUT[t].consumes, skill = lvl, time = time, sound = "TWA_Craft" }
     TWAProcedures.List["BagSew" .. t] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_BagSew" .. t, icon = "Needle",
         tool = B.STITCH[t].needle, consumes = B.STITCH[t].consumes, skill = lvl, time = time, sound = "TWA_Craft" }
     TWAProcedures.List["BagFit" .. t] = { category = "Tailoring", nameKey = "IGUI_TWA_Proc_BagFit" .. t, icon = "LeatherStrips",
@@ -198,7 +211,7 @@ for _, e in ipairs(B.ITEM_LIST) do
     for _, kk in ipairs(B.KINDS) do if kk.key == e.kind then k = kk end end
     B.RECIPES[#B.RECIPES + 1] = { id = "Make_" .. e.short, result = e.type, base = k.base, baseAlt = k.alt, base2 = B.ORE[e.tier],
         category = B.CAT_ITEM, stats = { icon = e.short, tier = B.displayTier(e.tier), dps = 0 },
-        procedures = { "BagCut" .. e.tier, "BagSew" .. e.tier, B.KIND_STEP[e.kind].id .. e.tier }, bagUp = e.tier, bagKind = e.kind }
+        procedures = { "BagCut" .. e.tier, B.KIND_STEP[e.kind].id .. e.tier }, bagUp = e.tier, bagKind = e.kind }
 end
 local alts = {}
 for i = 2, #B.BAGS do alts[#alts + 1] = B.BAGS[i] end

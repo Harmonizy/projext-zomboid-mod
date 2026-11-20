@@ -441,6 +441,7 @@ if EHR_ApplyBandagePackAction then
             self.pack:setJobDelta(0.0)
         end
         self.sound = self.character:playSound("FirstAidApplyBandage")
+        if HM_Sound then HM_Sound.adjust(self.character, self.sound, "medical") end
         if self.bodyPart and (self.bodyPart.HasInjury and self.bodyPart:HasInjury()) and self.otherPlayer and self.otherPlayer.playerVoiceSound then
             self.sound2 = self.otherPlayer:playerVoiceSound("ApplyBandage")
         end
