@@ -172,6 +172,9 @@ function Fix.restore(player, why)
             Fix.GIVE_UP_AFTER, Fix.GIVE_UP_WINDOW_MS / 1000, tostring(safe(function() return weapon:getFullType() end, "?")), Fix.GIVE_UP_MS / 1000)
         return false
     end
+    if MILNetGuard and not MILNetGuard.allow("grip") then
+        return false
+    end
     recent[#recent + 1] = now
     local ok = pcall(function()
         -- Exactly what ISEquipWeaponAction with twoHands=true does: the SAME

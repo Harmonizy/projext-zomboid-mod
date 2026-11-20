@@ -71,21 +71,26 @@ local TIER_COLOR = {
     [4] = { r = 1.0, g = 0.45, b = 0.75 }, [5] = { r = 0.65, g = 0.3, b = 0.95 }, [6] = { r = 1.0, g = 0.55, b = 0.15 },
     [7] = { r = 1.0, g = 0.85, b = 0.15 }, [8] = { r = 0.85, g = 0.2, b = 0.15 },
 }
--- TWA 1.2.1 (owner 2026-11-20: "Prototype = DPS above 8, move the tiers below
--- to fit"; no crafted weapon goes above the vanilla Katana's DPS 8):
---   Junk < 0.25 <= Common < 0.5 <= Uncommon < 1 <= Rare < 2 <= Epic < 4
---   <= Elite < 7 <= Legendary <= 8 < Prototype
--- (only Elite / Legendary moved: Legendary was 8..10, Prototype >= 10).
--- Every crafted weapon keeps its tier; gems can lift one past 8 = Prototype.
-local DPS_TIER_THRESHOLDS = { 0.25, 0.5, 1, 2, 4, 7 }
+-- TWA 1.2.3 (owner 2026-11-20: "our weapons' average damage at most 5, the
+-- tier cuts lower, every tier keeps the same number of weapons"): our 171
+-- weapons' damage x5/8 and every cut x5/8 (one set of cuts for every weapon,
+-- vanilla too -- owner's choice), so each of ours keeps its tier:
+--   Junk < 0.15625 <= Common < 0.3125 <= Uncommon < 0.625 <= Rare < 1.25
+--   <= Epic < 2.5 <= Elite < 4.375 <= Legendary <= 5 < Prototype
+-- (1.2.1 was 0.25 / 0.5 / 1 / 2 / 4 / 7 / 8). A DPS exactly on a cut counts
+-- as the upper tier (EPS keeps 0.625 from reading as 0.6249999).
+local K = 5 / 8
+local DPS_TIER_THRESHOLDS = { 0.25 * K, 0.5 * K, 1 * K, 2 * K, 4 * K, 7 * K }
+local EPS = 0.000001
 TWATier = TWATier or {}
-TWATier.LEGENDARY_MAX = 8
+TWATier.LEGENDARY_MAX = 5
+TWATier.CUTS = DPS_TIER_THRESHOLDS
 local function tierFromDps(dps)
     dps = tonumber(dps) or 0
     for i, threshold in ipairs(DPS_TIER_THRESHOLDS) do
-        if dps < threshold then return i end
+        if dps < threshold - EPS then return i end
     end
-    if dps <= TWATier.LEGENDARY_MAX + 0.000001 then return 7 end
+    if dps <= TWATier.LEGENDARY_MAX + EPS then return 7 end
     return 8
 end
 TWATier.fromDps = tierFromDps

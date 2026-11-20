@@ -46,6 +46,16 @@ function S.send(zed, amount, crit)
     if not (isClient and isClient()) or not TWAConfig.on("ShareDamageNumbers") or not TWAConfig.on("DamageNumbers") then return end
     local me = getSpecificPlayer and getSpecificPlayer(0)
     if not me or not zed then return end
+    -- 1.2.3: the client keeps the same per-second cap the server enforces --
+    -- a shove into a crowd can hit many zombies at once, and every extra
+    -- message would only be dropped by the server anyway
+    local now = getTimestampMs and getTimestampMs() or 0
+    if not S.sendWin or now - S.sendWin >= 1000 then S.sendWin, S.sendN = now, 0 end
+    S.sendN = (S.sendN or 0) + 1
+    if S.sendN > S.RATE_PER_SEC then
+        TWALogOnce("dmgsendcap", "Damage", "more than %d damage numbers in a second -- the rest not sent (repeats not logged)", S.RATE_PER_SEC)
+        return
+    end
     TWALogOnce("dmgsend", "Damage", "sharing my damage numbers with nearby players (first hit; later ones not logged)")
     sendClientCommand(me, S.NET, S.CMD, {
         id = call(zed, "getOnlineID"),

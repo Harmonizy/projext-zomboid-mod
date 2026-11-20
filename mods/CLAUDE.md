@@ -396,6 +396,32 @@
   staggered / on the floor / climbing, one restore per 1.5 s, and 3 restores
   within 15 s that do not hold -> stop 60 s (logged). Not proven to be the
   only source of that flood (other mods equip too).
+- TWA 1.2.3 (owner 2026-11-20, "our weapons' average damage at most 5, the
+  tier cuts lower, the same number of weapons in each tier"): all 171 of our
+  weapons' Min/MaxDamage x5/8 (rounded to 0.01; PlankSpearHandFork min 0.43
+  so it keeps its tier) in the scripts AND RecipeData Stats (dps re-baked).
+  Cuts x5/8 for EVERY weapon (owner's choice: one set, vanilla moves up):
+  Junk < 0.15625 < Common < 0.3125 < Uncommon < 0.625 < Rare < 1.25 < Epic
+  < 2.5 < Elite < 4.375 <= Legendary <= 5 < Prototype (TierTooltip, EPS so a
+  DPS on a cut is the upper tier); vanilla Stats tiers re-baked. Ours:
+  3 / 33 / 80 / 30 / 19 / 6 as before. Gems max +3 -> DPS 8 at most.
+  G.syncScriptDamage (in applyDamage): an older copy of OUR weapon without
+  gems / override gets the script damage back (logged once per type).
+  DamageShare: client caps itself at RATE_PER_SEC (a shove into a crowd).
+- MIL 1.0.10 (disconnect while shoving, second pass): the console's flood is
+  "EquipPacket.set get invalid arguments" -- equip / attach packets for items
+  the server cannot match. MIL draws gun parts and shields with FAKE items
+  attached to the body (EFK_RenderPart TempNilItem, InitShield
+  RenderPartItem), from OnPlayerUpdate: InitShield attached a new one EVERY
+  update (and for every other player's update too); RenderPart removed and
+  re-attached the parts whenever the gun model was missing for a frame (it
+  flickers in a shove). Now `client/000_HARMONIE_MIL_NetGuard.lua`
+  (MILNetGuard.allow(tag, n): 6 calls a second for all of ours in MP, one
+  bigger batch allowed first in a second, held-back counts logged once a
+  minute; isLocal(player)); InitShield attaches only when shield / place /
+  pose changed; RenderPart: local player only, parts off only after the model
+  is missing 1 s, a rebuild at most once a second; the grip watchdog uses the
+  budget too. A clean cure would draw these without fake attached items.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
