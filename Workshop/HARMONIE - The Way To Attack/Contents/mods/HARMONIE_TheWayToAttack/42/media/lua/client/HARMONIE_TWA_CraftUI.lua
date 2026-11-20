@@ -386,6 +386,7 @@ local CATEGORY_TABS = {
     { key = "BagK_weight", labelKey = "IGUI_TWA_FilterBagK_weight" },
     { key = "BagK_attachS", labelKey = "IGUI_TWA_FilterBagK_attachS" },
     { key = "BagK_attachL", labelKey = "IGUI_TWA_FilterBagK_attachL" },
+    { key = "BagK_light", labelKey = "IGUI_TWA_FilterBagK_light" }, -- 1.3.2
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS

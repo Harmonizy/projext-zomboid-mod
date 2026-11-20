@@ -322,4 +322,48 @@ module HARMONIE_TheWayToAttack
         Icon = TWA_BagUp_FieldRepairKit,
     }
 
+    item TWA_BagUp_FlashlightClip
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.2,
+        DisplayName = Flashlight Clip,
+        Icon = TWA_BagUp_FlashlightClip,
+    }
+
+    item TWA_BagUp_WebbingLightLoop
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.3,
+        DisplayName = Webbing Light Loop,
+        Icon = TWA_BagUp_WebbingLightLoop,
+    }
+
+    item TWA_BagUp_MolleLightMount
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.4,
+        DisplayName = MOLLE Light Mount,
+        Icon = TWA_BagUp_MolleLightMount,
+    }
+
+    item TWA_BagUp_TacticalLightHarness
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.5,
+        DisplayName = Tactical Light Harness,
+        Icon = TWA_BagUp_TacticalLightHarness,
+    }
+
+    item TWA_BagUp_ReinforcedLightRig
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.6,
+        DisplayName = Reinforced Light Rig,
+        Icon = TWA_BagUp_ReinforcedLightRig,
+    }
 }

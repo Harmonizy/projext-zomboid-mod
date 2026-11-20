@@ -12,7 +12,8 @@
     (TWABagUp). B.tooltipLines feeds the item tooltip (TierTooltip).
 
     Hotbar: an "attach" upgrade adds a slot of our own type (TWABagS1..10 =
-    a belt slot, TWABagL1..10 = a holster slot; their attachment tables are
+    a belt slot, TWABagL1..10 = a holster slot, TWABagW1..10 = a flashlight
+    slot copied from vanilla's ALICE webbing, 1.3.2; their attachment tables are
     COPIED at runtime from the game's own belt / holster definitions). The
     game's ISHotbar:refresh drops every slot no worn item provides, so
     ISHotbar:haveThisSlot answers "yes" for the slots worn bags give, and the
@@ -59,7 +60,7 @@ B.typeName = typeName
 function B.effectText(fullType)
     local e = B.ITEMS[fullType]
     if not e then return "" end
-    local fmt = { cap = "+%d", wr = "+%d", run = "+%.3f", combat = "+%.3f", weight = "-%.1f", attachS = "+%d", attachL = "+%d" }
+    local fmt = { cap = "+%d", wr = "+%d", run = "+%.3f", combat = "+%.3f", weight = "-%.1f", attachS = "+%d", attachL = "+%d", light = "+%d" }
     return getText("IGUI_TWA_BagUpKind_" .. e.kind, string.format(fmt[e.kind], e.value))
 end
 function B.recipeNote(recipe)
@@ -215,8 +216,8 @@ local function inside(mx, my, x, y, w, h) return mx >= x and mx < x + w and my >
 -- the value of a stat row as text: { base, now, preview }
 local function statText(st, base, now, prev)
     if st.key == "attach" then
-        local function a(v) return v and string.format("%d / %d", v.attachS, v.attachL) or "-" end
-        return "0 / 0", a(now), a(prev)
+        local function a(v) return v and string.format("%d / %d / %d", v.attachS, v.attachL, v.light or 0) or "-" end
+        return "0 / 0 / 0", a(now), a(prev)
     end
     return string.format(st.fmt, base[st.key] or 0), string.format(st.fmt, now[st.key] or 0), prev and string.format(st.fmt, prev[st.key] or 0) or nil
 end
@@ -537,14 +538,25 @@ local function makeDefs()
     for _, d in ipairs(ISHotbarAttachDefinition) do src[d.type] = d end
     local sL, sR, hR, hL = src.SmallBeltLeft, src.SmallBeltRight, src.HolsterRight, src.HolsterLeft
     if not (sL and sR and hR and hL) then log("hotbar: the game's belt / holster slots not found -- no extra slots"); return false end
+    -- 1.3.2: the flashlight slot = vanilla's ALICE webbing slot (its
+    -- attachments: angle-head flashlights "Webbing", knives, walkie-talkies)
+    local wR, wL = src.WebbingRight, src.WebbingLeft
     for i = 1, U.SLOT_MAX do
         local s = (i % 2 == 1) and sL or sR
         local h = (i % 2 == 1) and hR or hL
         table.insert(ISHotbarAttachDefinition, { type = "TWABagS" .. i, name = getText("IGUI_TWA_BagSlotS"), animset = s.animset, attachments = copyTable(s.attachments) })
         table.insert(ISHotbarAttachDefinition, { type = "TWABagL" .. i, name = getText("IGUI_TWA_BagSlotL"), animset = h.animset, attachments = copyTable(h.attachments) })
+        local w = (i % 2 == 1) and wR or wL
+        if w then
+            table.insert(ISHotbarAttachDefinition, { type = "TWABagW" .. i, name = getText("IGUI_TWA_BagSlotW"), animset = w.animset, attachments = copyTable(w.attachments) })
+        end
     end
     defsMade = true
-    log("hotbar: %d extra slot types made (belt / holster copies)", U.SLOT_MAX * 2)
+    local kinds = {}
+    for k in pairs((wR and wR.attachments) or {}) do kinds[#kinds + 1] = tostring(k) end
+    table.sort(kinds)
+    log("hotbar: %d extra slot types made (belt / holster%s copies); flashlight slot takes: %s", U.SLOT_MAX * (wR and 3 or 2),
+        wR and " / webbing" or "", wR and table.concat(kinds, ", ") or "NOTHING -- the game's WebbingRight slot was not found")
     return true
 end
 
@@ -553,7 +565,7 @@ function U.extraSlots(chr)
     local out, sig = {}, ""
     if not chr then return out, sig end
     local worn = chr:getWornItems()
-    local nS, nL = 0, 0
+    local nS, nL, nW = 0, 0, 0
     for i = 0, (worn and worn:size() or 0) - 1 do
         local it = worn:getItemByIndex(i)
         if it and B.isBag(it) and not chr:isHandItem(it) then
@@ -561,18 +573,20 @@ function U.extraSlots(chr)
             if v then
                 for _ = 1, v.attachS do if nS < U.SLOT_MAX then nS = nS + 1; out["TWABagS" .. nS] = it end end
                 for _ = 1, v.attachL do if nL < U.SLOT_MAX then nL = nL + 1; out["TWABagL" .. nL] = it end end
+                for _ = 1, (v.light or 0) do if nW < U.SLOT_MAX then nW = nW + 1; out["TWABagW" .. nW] = it end end
             end
         end
     end
-    return out, nS .. "/" .. nL
+    return out, nS .. "/" .. nL .. "/" .. nW
 end
 
 local function addMissing(hb)
     local extra = hb.twaExtra
     if not extra then return end
     local added = 0
-    for i = 1, U.SLOT_MAX * 2 do
-        local t = (i <= U.SLOT_MAX) and ("TWABagS" .. i) or ("TWABagL" .. (i - U.SLOT_MAX))
+    for i = 1, U.SLOT_MAX * 3 do
+        local g = math.floor((i - 1) / U.SLOT_MAX)
+        local t = ({ "TWABagS", "TWABagL", "TWABagW" })[g + 1] .. (i - g * U.SLOT_MAX)
         local bag = extra[t]
         if bag and not hb:haveThisSlot(t) then
             local def = hb:getSlotDef(t)

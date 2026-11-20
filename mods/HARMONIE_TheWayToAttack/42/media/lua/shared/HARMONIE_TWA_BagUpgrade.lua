@@ -8,7 +8,7 @@
       * raised one TIER at a time, 0 -> 5, by the "Bag tier N" recipes
         (keepType: the same bag comes back with md.TWA_BagTier = N). The bag
         must be EMPTY, not worn / on the hotbar, and at tier N-1;
-      * fitted with UPGRADE ITEMS crafted here (35: 7 kinds x 5 tiers). A bag
+      * fitted with UPGRADE ITEMS crafted here (40: 8 kinds x 5 tiers since 1.3.2). A bag
         of tier N has N slots. An item of tier T fits only a bag of tier >= T;
         one item of a KIND per bag (1.3.0, owner: not the same item and not
         the same kind);
@@ -31,6 +31,7 @@
       weight  the bag's own weight -0.1..-0.5 (stays >= 0.1)
       attachS one more SMALL hotbar slot (belt kind)
       attachL one more LARGE hotbar slot (holster kind)
+      light   one more FLASHLIGHT slot (vanilla ALICE webbing kind), 1.3.2
 
     The game does NOT save an item's own capacity / weight reduction / speed:
     the bag keeps its upgrades in ModData (TWA_BagTier, TWA_BagUps =
@@ -90,7 +91,7 @@ for i, t in ipairs(B.BAGS) do
     B.BAG[B.BAGS[i]] = true
 end
 
--- ------------------------------------------------------------ the 35 items
+-- ------------------------------------------------------------ the 40 items
 -- base = the raw material every tier of the kind starts from
 B.KINDS = {
     { key = "cap", step = 1, base = "Base.DenimStripsBundle", alt = { "Base.LeatherStripsBundle" },
@@ -107,8 +108,14 @@ B.KINDS = {
         names = { "NylonWebbing", "StitchingAwl", "SteelRivets", "ParachuteHarness", "SalvagedPackFrame" } },
     { key = "attachL", step = 1, base = "Base.Tarp", alt = { "Base.FabricRoll_DenimBlack" },
         names = { "CargoNet", "MolleWebbingPanel", "HeavyDutyZipper", "WaterproofDryBag", "FieldRepairKit" } },
+    -- 1.3.2 (owner: "one that holds a flashlight like vanilla's ALICE belt"):
+    -- a WEBBING slot (copied from vanilla's WebbingRight / WebbingLeft: the
+    -- angle-head flashlights, knives and walkie-talkies hang there)
+    { key = "light", step = 1, base = "Base.LeatherStripsBundle", alt = { "Base.DenimStripsBundle" },
+        names = { "FlashlightClip", "WebbingLightLoop", "MolleLightMount", "TacticalLightHarness", "ReinforcedLightRig" } },
 }
 B.ITEMS, B.ITEM_LIST = {}, {}
+-- (1.3.2: 8 kinds x 5 tiers = 40 items)
 for _, k in ipairs(B.KINDS) do
     for t = 1, B.MAX_TIER do
         local short = "TWA_BagUp_" .. k.names[t]
@@ -168,8 +175,10 @@ B.KIND_STEP = {
         consumes = function(t) return { { itemTypes = { "Base.Twine", "Base.LeatherStrips" }, qty = q(t) } } end },
     attachL = { id = "BagHolster", icon = "Buckle", tool = AWL, sound = "TWA_Craft",
         consumes = function(t) return { { itemTypes = { "Base.Buckle" }, qty = 1 }, { itemTypes = { "Base.LeatherStrips" }, qty = q(t) } } end },
+    light = { id = "BagLightMount", icon = "Screws", tool = { { kind = "type", value = "Base.Screwdriver" } }, sound = "TWA_Craft",
+        consumes = function(t) return { { itemTypes = { "Base.Screws" }, qty = t + 1 }, { itemTypes = { "Base.LeatherStrips", "Base.DenimStrips" }, qty = q(t) } } end },
 }
-B.KIND_ORDER = { "cap", "wr", "run", "combat", "weight", "attachS", "attachL" }
+B.KIND_ORDER = { "cap", "wr", "run", "combat", "weight", "attachS", "attachL", "light" }
 local procIds = {}
 for t = 1, B.MAX_TIER do
     local lvl, time = "Tailoring:" .. t, t * 10 + 10
@@ -331,12 +340,12 @@ function B.base(item)
     return md.TWA_BagBase
 end
 
--- what the bag's values should be now: { cap, wr, run, combat, weight, attachS, attachL }
+-- what the bag's values should be now: { cap, wr, run, combat, weight, attachS, attachL, light }
 -- `extra` (optional): one more add-on type, for the UI's preview
 function B.compute(item, extra)
     local base = B.base(item)
     if not base then return nil end
-    local add = { cap = 0, wr = 0, run = 0, combat = 0, weight = 0, attachS = 0, attachL = 0 }
+    local add = { cap = 0, wr = 0, run = 0, combat = 0, weight = 0, attachS = 0, attachL = 0, light = 0 }
     local list = B.upsOf(item)
     if extra and B.ITEMS[extra] then list[#list + 1] = extra end
     for _, t in ipairs(list) do
@@ -349,7 +358,7 @@ function B.compute(item, extra)
         run = math.max(tonumber(base.run) or 1, math.min(B.CAP.run, (tonumber(base.run) or 1) + add.run)),
         combat = math.max(tonumber(base.combat) or 1, math.min(B.CAP.combat, (tonumber(base.combat) or 1) + add.combat)),
         weight = math.min(tonumber(base.weight) or 0, math.max(B.CAP.weight, (tonumber(base.weight) or 0) - add.weight)),
-        attachS = add.attachS, attachL = add.attachL,
+        attachS = add.attachS, attachL = add.attachL, light = add.light,
     }
     -- an unfinished bag (a tier recipe stopped half-way) holds nothing
     local md = mdOf(item)

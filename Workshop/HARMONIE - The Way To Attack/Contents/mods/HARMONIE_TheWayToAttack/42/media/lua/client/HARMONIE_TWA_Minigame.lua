@@ -168,6 +168,7 @@ for t = 1, 5 do
     TWAMinigame.GAME_FOR["BagTrim" .. t] = { "TWAIncisionGame", "carve" }
     TWAMinigame.GAME_FOR["BagLoop" .. t] = { "TWASutureGame" }
     TWAMinigame.GAME_FOR["BagHolster" .. t] = { "TWAExtractGame", "drive" }
+    TWAMinigame.GAME_FOR["BagLightMount" .. t] = { "TWAWrapGame", "screw" } -- 1.3.2
 end
 
 --- Returns false (and does not call onResult) only when busy; the caller

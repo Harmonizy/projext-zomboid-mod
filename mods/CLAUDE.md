@@ -472,6 +472,17 @@
   then scissors with 2 denim / 2 leather strips / small leather + 2 denim /
   medium leather + 2 leather strips) + the kind's own step. No stitch in an
   add-on recipe any more.
+- TWA 1.3.2 (owner: an add-on that holds a flashlight like vanilla's ALICE
+  belt): 8th kind "light" (ติดไฟฉาย), items TWA_BagUp_FlashlightClip /
+  WebbingLightLoop / MolleLightMount / TacticalLightHarness /
+  ReinforcedLightRig (+tier slots), step BagLightMount1..5 (screwdriver,
+  screws t+1 + strips), filter BagK_light. Slots TWABagW1..10 copy vanilla's
+  WebbingRight / WebbingLeft (vanilla ISHotbarAttachDefinition: attachments
+  Knife / Walkie / Webbing; Bag_ALICE_BeltSus provides SmallBeltLeft/Right +
+  WebbingRight/Left; only FlashLight_AngleHead(_Army) has AttachmentType =
+  Webbing -- Torch / HandTorch have no AttachmentType at all). The owner's
+  vanilla hotbar Lua + item scripts are in mods/_VanillaReference_B42/raw/hotbar
+  (gitignored).
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
