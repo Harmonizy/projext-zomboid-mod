@@ -2,7 +2,7 @@
     HARMONIE - Home Medic : the one Options -> Mods page for everything the
     player sets for themselves (saved on their own machine only):
       * the health-panel keys and switches (EHR_KeybindManager.lua)
-      * delirium sound volume + mute   (HARMONIE_DeliriumAudio.lua)
+      * the volume of every HTS sound (HM_SoundVolume.lua) + delirium mute
       * blood-loss vision on/off + strength (HARMONIE_BloodVision.lua)
     Since 0.5.0 these share the keybind page (id "ExtensiveHealthRework", so
     saved keys carry over) instead of a second page of their own; the four
@@ -12,6 +12,7 @@
 require "ExtensiveHealth/EHR_KeybindManager"
 require "HARMONIEHomeMedic/HARMONIE_DeliriumAudio"
 require "HARMONIEHomeMedic/HARMONIE_BloodVision"
+require "HARMONIEHomeMedic/HM_SoundVolume"
 
 HARMONIE_HomeMedic_Options = HARMONIE_HomeMedic_Options or {}
 local O = HARMONIE_HomeMedic_Options
@@ -34,8 +35,18 @@ if PZAPI and PZAPI.ModOptions and not O.page then
     local function add(kind, optId, ...)
         return O.page:getOption(optId) or O.page[kind](O.page, optId, ...)
     end
+    -- 1.1.0 (owner): every HTS sound has a volume (HM_SoundVolume.lua);
+    -- the delirium slider stays (same id) and is one of the groups
+    O.soundMaster = add("addSlider", "soundMaster", T("soundMaster"), 0, 1.5, 0.25, 1, T("soundMaster_tooltip"))
+    hook(O.soundMaster, HM_Sound.setMaster)
+    O.coughVolume = add("addSlider", "coughVolume", T("coughVolume"), 0, 1.5, 0.25, 1, T("coughVolume_tooltip"))
+    hook(O.coughVolume, function(v) HM_Sound.setGroup("cough", v) end)
+    O.painVolume = add("addSlider", "painVolume", T("painVolume"), 0, 1.5, 0.25, 1, T("painVolume_tooltip"))
+    hook(O.painVolume, function(v) HM_Sound.setGroup("pain", v) end)
+    O.medicalVolume = add("addSlider", "medicalVolume", T("medicalVolume"), 0, 1.5, 0.25, 1, T("medicalVolume_tooltip"))
+    hook(O.medicalVolume, function(v) HM_Sound.setGroup("medical", v) end)
     O.deliriumVolume = add("addSlider", "deliriumVolume", T("deliriumVolume"), 0, 1.5, 0.25, 1, T("deliriumVolume_tooltip"))
-    hook(O.deliriumVolume, A.setVolume)
+    hook(O.deliriumVolume, function(v) HM_Sound.setGroup("delirium", v) end)
     O.deliriumMuted = add("addTickBox", "deliriumMuted", T("deliriumMute"), false, T("deliriumMute_tooltip"))
     hook(O.deliriumMuted, A.setMuted)
     O.bloodVision = add("addTickBox", "bloodVision", T("bloodVision"), true, T("bloodVision_tooltip"))
@@ -53,9 +64,14 @@ end
 
 function O.readSaved()
     local function val(opt) return opt and opt.getValue and opt:getValue() end
-    if O.deliriumVolume then A.volume = tonumber(val(O.deliriumVolume)) or 1 end
     if O.deliriumMuted then A.muted = val(O.deliriumMuted) == true end
-    A.apply()
+    local S = HM_Sound
+    if O.soundMaster then S.master = tonumber(val(O.soundMaster)) or 1 end
+    if O.coughVolume then S.group.cough = tonumber(val(O.coughVolume)) or 1 end
+    if O.painVolume then S.group.pain = tonumber(val(O.painVolume)) or 1 end
+    if O.medicalVolume then S.group.medical = tonumber(val(O.medicalVolume)) or 1 end
+    if O.deliriumVolume then S.group.delirium = tonumber(val(O.deliriumVolume)) or 1 end
+    S.apply() -- sets the delirium level (master x delirium) and applies it
     if O.bloodVision then V.enabled = val(O.bloodVision) ~= false end
     if O.bloodVisionStrength then V.strength = tonumber(val(O.bloodVisionStrength)) or 1 end
     HMLog("Options", "saved options: delirium volume %s muted %s, blood vision %s strength %s, page %s",

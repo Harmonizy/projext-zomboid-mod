@@ -440,6 +440,25 @@ function ISToolTipInv:render()
             self:drawText(l.text, 6, xry, l.color.r, l.color.g, l.color.b, 1, font)
             xry = xry + rowH
         end
+        y = y + xh
+    end
+
+    -- 1.3.0 (owner: "a finished bag upgrade shows under the vanilla tooltip
+    -- who made it, its tier and its add-ons"): an upgraded bag, and an add-on
+    -- item (what it does, which bag tier it needs) -- TWABagUp.tooltipLines
+    local bagLines = TWABagUp and TWABagUp.tooltipLines and TWABagUp.tooltipLines(item)
+    if bagLines and #bagLines > 0 then
+        bagLines = wrapAll(bagLines, self.width - 12, font)
+        local xh = rowH * #bagLines + 4
+        self:setHeight(self.height + xh)
+        self:drawRect(2, y, self.width - 4, xh - 2, 0.85, 0.05, 0.04, 0.02)
+        self:drawRectBorder(2, y, self.width - 4, xh - 2, 0.7, 0.85, 0.64, 0.18)
+        local xry = y + 3
+        for _, l in ipairs(bagLines) do
+            self:drawText(l.text, 6, xry, l.color.r, l.color.g, l.color.b, 1, font)
+            xry = xry + rowH
+        end
+        y = y + xh
     end
 end
 

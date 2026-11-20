@@ -396,7 +396,8 @@ function EHR.PainSounds.PlayPainSound(player, woundType, forcePainLevel)
         local soundName = sounds[ZombRand(#sounds) + 1]
         -- Use pcall in case sound doesn't exist
         pcall(function()
-            player:playSound(soundName)
+            -- HTS 1.1.0: at the player's pain volume (HM_SoundVolume.lua)
+            if HM_Sound then HM_Sound.playOn(player, soundName, "pain") else player:playSound(soundName) end
         end)
     end
 
@@ -596,7 +597,8 @@ function EHR.PainSounds.ForcePainSound(player, painLevel)
         local sounds = vanillaSounds[painLevel]
         local soundName = sounds[ZombRand(#sounds) + 1]
         pcall(function()
-            player:playSound(soundName)
+            -- HTS 1.1.0: at the player's pain volume (HM_SoundVolume.lua)
+            if HM_Sound then HM_Sound.playOn(player, soundName, "pain") else player:playSound(soundName) end
         end)
     end
 

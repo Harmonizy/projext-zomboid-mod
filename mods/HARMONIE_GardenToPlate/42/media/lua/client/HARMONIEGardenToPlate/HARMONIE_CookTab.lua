@@ -293,6 +293,10 @@ end
 -- cheap signature (how many items each container holds) is checked every
 -- 500 ms; the full walk runs only when it changed, or every 5 s.
 H.SCAN_SIG_MS, H.SCAN_MAX_MS = 500, 5000
+H.SCAN_FOOD_MAX = 3000
+-- the BaseItem and ResultItem of every vanilla evolved recipe (from
+-- evolvedrecipes_index.txt): what can start or continue a dish
+H.EVO_BASE = { ["Base.BagelPlain"] = true, ["Base.BagelPoppy"] = true, ["Base.BagelSesame"] = true, ["Base.Baguette"] = true, ["Base.BaguetteSandwich"] = true, ["Base.BakingTray_Muffin"] = true, ["Base.BakingTray_Muffin_Recipe"] = true, ["Base.Bowl"] = true, ["Base.BreadDough"] = true, ["Base.BreadSlices"] = true, ["Base.Bucket"] = true, ["Base.BucketEmpty"] = true, ["Base.BucketOfSoup"] = true, ["Base.BucketOfStew"] = true, ["Base.BunsHamburger_single"] = true, ["Base.Burger"] = true, ["Base.BurgerRecipe"] = true, ["Base.Burrito"] = true, ["Base.BurritoRecipe"] = true, ["Base.CakePrep"] = true, ["Base.CakeRaw"] = true, ["Base.CeramicTeacup"] = true, ["Base.Chum"] = true, ["Base.ClayBowl"] = true, ["Base.ClayMug"] = true, ["Base.ConeIcecream"] = true, ["Base.ConeIcecreamToppings"] = true, ["Base.CopperCup"] = true, ["Base.FruitSalad"] = true, ["Base.FruitSaladClay"] = true, ["Base.GlassTumbler"] = true, ["Base.GoldCup"] = true, ["Base.GriddlePanFriedVegetables"] = true, ["Base.GridlePan"] = true, ["Base.HotDrink"] = true, ["Base.HotDrinkClay"] = true, ["Base.HotDrinkCopper"] = true, ["Base.HotDrinkGold"] = true, ["Base.HotDrinkMetal"] = true, ["Base.HotDrinkSilver"] = true, ["Base.HotDrinkSpiffo"] = true, ["Base.HotDrinkTea"] = true, ["Base.HotDrinkTeaCeramic"] = true, ["Base.HotDrinkTumbler"] = true, ["Base.HotDrinkWhite"] = true, ["Base.Hotdog"] = true, ["Base.MetalCup"] = true, ["Base.MugSpiffo"] = true, ["Base.MugWhite"] = true, ["Base.Mugl"] = true, ["Base.Oatmeal"] = true, ["Base.OmeletteRecipe"] = true, ["Base.OmeletteRecipeForged"] = true, ["Base.Pan"] = true, ["Base.PanForged"] = true, ["Base.PanFriedVegetables"] = true, ["Base.PanFriedVegetables2"] = true, ["Base.PanFriedVegetablesForged"] = true, ["Base.Pancakes"] = true, ["Base.PancakesRecipe"] = true, ["Base.PastaPan"] = true, ["Base.PastaPanCopper"] = true, ["Base.PastaPot"] = true, ["Base.PastaPotForged"] = true, ["Base.PiePrep"] = true, ["Base.PieWholeRaw"] = true, ["Base.PieWholeRawSweet"] = true, ["Base.PizzaRecipe"] = true, ["Base.PizzaWhole"] = true, ["Base.Pot"] = true, ["Base.PotForged"] = true, ["Base.PotForgedSoupRecipe"] = true, ["Base.PotForgedStew"] = true, ["Base.PotOfSoup"] = true, ["Base.PotOfSoupRecipe"] = true, ["Base.PotOfStew"] = true, ["Base.RicePan"] = true, ["Base.RicePanCopper"] = true, ["Base.RicePot"] = true, ["Base.RicePotForged"] = true, ["Base.RoastingPan"] = true, ["Base.Salad"] = true, ["Base.SaladClay"] = true, ["Base.Sandwich"] = true, ["Base.SilverCup"] = true, ["Base.Taco"] = true, ["Base.TacoRecipe"] = true, ["Base.TacoShell"] = true, ["Base.Teacup"] = true, ["Base.Toast"] = true, ["Base.Tortilla"] = true, ["Base.Waffles"] = true, ["Base.WafflesRecipe"] = true, ["Base.WaterPotForgedPasta"] = true, ["Base.WaterPotForgedRice"] = true, ["Base.WaterPotPasta"] = true, ["Base.WaterPotRice"] = true, ["Base.WaterSaucepanPasta"] = true, ["Base.WaterSaucepanPastaCopper"] = true, ["Base.WaterSaucepanRice"] = true, ["Base.WaterSaucepanRiceCopper"] = true }
 local function containerSig(containers)
     local parts, n = {}, containers and containers.size and containers:size() or 0
     for i = 0, n - 1 do
@@ -311,12 +315,25 @@ function Win:cookScan(force)
     if sc and not force and sig == sc.sig and t - sc.at < H.SCAN_MAX_MS then sc.checked = t; return sc end
     local t0 = t
     sc = { at = t, checked = t, sig = sig, containers = containers, items = {}, gen = (sc and sc.gen or 0) + 1 }
-    local n = 0
+    -- GTP 1.8.5 (owner: "meat is not found any more, even right next to
+    -- me"): the walk stopped after the first 800 items of ANY kind, so in a
+    -- full base the food further down the list (a fridge after the shelves)
+    -- was never seen. Now only what the pages use is kept -- every food (up
+    -- to H.SCAN_FOOD_MAX) and the vanilla evolved-recipe base items (pots,
+    -- buckets, bread...) -- and the walk goes on to the end.
+    local n, nFood = 0, 0
     K.eachItem(containers, function(it)
         n = n + 1
-        if n > 800 then return false end
-        sc.items[#sc.items + 1] = it
+        if R.isFood(it) then
+            nFood = nFood + 1
+            if nFood <= H.SCAN_FOOD_MAX then sc.items[#sc.items + 1] = it end
+        elseif H.EVO_BASE[tostring(call(it, "getFullType"))] then
+            sc.items[#sc.items + 1] = it
+        end
     end)
+    if nFood > H.SCAN_FOOD_MAX then
+        R.logOnce("scancap", "Cooking tab scan: %d foods at hand, only the first %d listed", nFood, H.SCAN_FOOD_MAX)
+    end
     local took = nowMs() - t0
     if took > 15 then R.logOnce("scanslow:" .. tostring(math.floor(took / 10)), "Cooking tab scan: %d items took %d ms", #sc.items, took) end
     self.cookScanData = sc
@@ -816,7 +833,11 @@ function Win:evoList()
     local fresh, seen = {}, {}
     if RecipeManager and RecipeManager.getEvolvedRecipe then
         for _, it in ipairs(sc.items) do
-            local ok, recipes = pcall(RecipeManager.getEvolvedRecipe, it, self.player, sc.containers, false)
+            -- 1.8.5: only a recipe's base item (or a dish already started) can
+            -- start / continue one -- not every food of the (now longer) scan
+            local can = H.EVO_BASE[tostring(call(it, "getFullType"))] or R.dishOf(it) ~= nil
+            local ok, recipes = false, nil
+            if can then ok, recipes = pcall(RecipeManager.getEvolvedRecipe, it, self.player, sc.containers, false) end
             if ok and recipes and recipes.size then
                 for i = 0, recipes:size() - 1 do
                     local r = recipes:get(i)

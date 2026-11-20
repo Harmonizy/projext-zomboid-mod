@@ -160,6 +160,14 @@ for t = 1, 5 do
     TWAMinigame.GAME_FOR["BagCut" .. t] = { "TWAIncisionGame", "carve" }
     TWAMinigame.GAME_FOR["BagSew" .. t] = { "TWASutureGame" }
     TWAMinigame.GAME_FOR["BagFit" .. t] = { "TWAWrapGame", "leather" }
+    -- 1.3.0: one step of its own per add-on kind
+    TWAMinigame.GAME_FOR["BagPocket" .. t] = { "TWAIncisionGame", "carve" }
+    TWAMinigame.GAME_FOR["BagCompress" .. t] = { "TWAWrapGame", "leather" }
+    TWAMinigame.GAME_FOR["BagPad" .. t] = { "TWAWrapGame", "cloth" }
+    TWAMinigame.GAME_FOR["BagRivet" .. t] = { "TWAStrikeGame", "rivet" }
+    TWAMinigame.GAME_FOR["BagTrim" .. t] = { "TWAIncisionGame", "carve" }
+    TWAMinigame.GAME_FOR["BagLoop" .. t] = { "TWASutureGame" }
+    TWAMinigame.GAME_FOR["BagHolster" .. t] = { "TWAExtractGame", "drive" }
 end
 
 --- Returns false (and does not call onResult) only when busy; the caller

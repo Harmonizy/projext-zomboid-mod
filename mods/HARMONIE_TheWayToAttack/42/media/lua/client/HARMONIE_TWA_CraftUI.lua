@@ -378,6 +378,14 @@ local CATEGORY_TABS = {
     { key = "Gem", label = "Gem" }, -- round 16: the Gemstone recipe
     { key = "BagUp", labelKey = "IGUI_TWA_FilterBagUp" },     -- 1.2.0: bag upgrade items
     { key = "BagTier", labelKey = "IGUI_TWA_FilterBagTier" }, -- 1.2.0: bag tiers
+    -- 1.3.0 (owner): one filter per add-on kind (recipe.bagKind)
+    { key = "BagK_cap", labelKey = "IGUI_TWA_FilterBagK_cap" },
+    { key = "BagK_wr", labelKey = "IGUI_TWA_FilterBagK_wr" },
+    { key = "BagK_run", labelKey = "IGUI_TWA_FilterBagK_run" },
+    { key = "BagK_combat", labelKey = "IGUI_TWA_FilterBagK_combat" },
+    { key = "BagK_weight", labelKey = "IGUI_TWA_FilterBagK_weight" },
+    { key = "BagK_attachS", labelKey = "IGUI_TWA_FilterBagK_attachS" },
+    { key = "BagK_attachL", labelKey = "IGUI_TWA_FilterBagK_attachL" },
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
@@ -649,8 +657,10 @@ function TWARecipeScrollList:matches(recipe)
     if self.scope ~= TWACraftUI.scopeOf(recipe.category) then
         return false
     end
-    if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and self.filterCategory ~= "Favorites"
-            and recipe.category ~= self.filterCategory then
+    local fc = self.filterCategory
+    if fc:sub(1, 5) == "BagK_" then
+        if recipe.bagKind ~= fc:sub(6) then return false end
+    elseif fc ~= "All" and fc ~= "Available" and fc ~= "Favorites" and recipe.category ~= fc then
         return false
     end
     if self.filterCategory == "Favorites" and not TWAFavorites.isFav(recipe.id) then
@@ -1238,7 +1248,7 @@ function TWACraftWindow:new(x, y, player)
     o.moveWithMouse = true
     o.backgroundColor = { r = 0, g = 0, b = 0, a = 0 }
     o.borderColor = { r = 0, g = 0, b = 0, a = 0 }
-    o.activeTab = "weapons"
+    o.activeTab = "gWeapons" -- 1.3.0: opens on the weapons tab's chooser
     o.title = getText("IGUI_TWA_CraftWindowTitle")
     return o
 end
@@ -1648,7 +1658,10 @@ function TWACraftWindow:onBackClicked()
         return
     end
     local r = self.selectedRecipe
-    self:setTab(r and TWACraftUI.scopeOf(r.category) or "weapons")
+    local scope = r and TWACraftUI.scopeOf(r.category) or "weapons"
+    -- 1.3.0: a bag recipe goes back to its own list (add-ons / bag tiers)
+    if scope == "bags" then scope = r.bagTier and "bagtiers" or "bagitems" end
+    self:setTab(scope)
 end
 
 function TWACraftWindow:onPracticePageClicked()
@@ -1726,10 +1739,12 @@ function TWACraftWindow:pickItems()
         base = S.findItem(self.player, self.resumeItem)
         if not base then return false end
     elseif recipe.base then
+        -- 1.3.0: a bag tier recipe -- the very bag the player picked
+        if recipe.bagTier then base = self:pickedBag(recipe) end
         -- Round 19: the base the player chose (any base type the recipe
         -- takes), else the first that fits.
         local chosen = self:baseChoiceType(recipe)
-        if chosen then base = S.pickBase(self.player, recipe, chosen) end
+        if chosen and not base then base = S.pickBase(self.player, recipe, chosen) end
         if not base then
             for _, t in ipairs(S.baseTypes(recipe)) do
                 base = S.pickBase(self.player, recipe, t)
@@ -1770,8 +1785,74 @@ function TWACraftWindow:baseChoiceType(recipe)
     return choices[1] and choices[1].type or nil
 end
 
+-- 1.3.0 (owner: "picking the bag to upgrade is not clear; nobody knows it
+-- must be empty"): a bag tier recipe lists EVERY wearable vanilla bag at hand,
+-- the ones that cannot be used dim with the reason (has items inside / wrong
+-- tier / worn or on the hotbar / unfinished); the picked one is kept by id.
+function TWACraftWindow:bagCandidates(recipe)
+    local now = getTimestampMs()
+    local c = self.bagCandCache
+    if c and c.id == recipe.id and now < c.untilMs then return c.list end
+    local out = {}
+    local B = TWABagUp
+    if not B then return out end
+    self.bagCandCache = { id = recipe.id, untilMs = now + 500, list = out }
+    TWASources.get(self.player):forEachItem(function(it)
+        if B.isBag(it) then
+            local ok = TWACraftState.baseOk(recipe, it)
+            local why = nil
+            if not ok then
+                why = B.tierBaseWhy(recipe, it)
+                if not why and it:getModData().TWA_Incomplete then why = "IGUI_TWA_BagUp_Unfinished" end
+                if not why and TWACraftState.isBookmarked(it) then why = "IGUI_TWA_BagUp_Unfinished" end
+            end
+            out[#out + 1] = { item = it, ok = ok, why = why }
+        end
+    end)
+    table.sort(out, function(a, b)
+        if a.ok ~= b.ok then return a.ok end
+        return a.item:getID() < b.item:getID()
+    end)
+    return out
+end
+function TWACraftWindow:pickedBag(recipe)
+    self.bagPick = self.bagPick or {}
+    local id = self.bagPick[recipe.id]
+    local it = id and TWASources.get(self.player):findById(id)
+    if it and TWACraftState.baseOk(recipe, it) then return it end
+    for _, c in ipairs(self:bagCandidates(recipe)) do
+        if c.ok then return c.item end
+    end
+    return nil
+end
+function TWACraftWindow:openBagChooser(recipe)
+    local list = self:bagCandidates(recipe)
+    local picked = self:pickedBag(recipe)
+    local rows = { { text = getText("IGUI_TWA_BagTier_PickRule", tostring(recipe.bagTier - 1)), info = true } }
+    for _, c in ipairs(list) do
+        local it = c.item
+        local tier = TWABagUp.tierOf(it)
+        rows[#rows + 1] = {
+            text = it:getDisplayName() .. "  (T" .. tostring(tier) .. ")",
+            sub = c.ok and getText("IGUI_TWA_BagTier_CanUse") or getText(c.why or "IGUI_TWA_BagUp_Refused"),
+            icon = it:getTex(),
+            marked = it == picked,
+            disabled = not c.ok,
+            value = it:getID(),
+        }
+    end
+    if #list == 0 then rows[#rows + 1] = { text = getText("IGUI_TWA_BagUp_NoBags"), info = true } end
+    local window = self
+    TWAPicker.open(getText("IGUI_TWA_BagTier_PickTitle", tostring(recipe.bagTier)), rows, function(id)
+        window.bagPick = window.bagPick or {}
+        window.bagPick[recipe.id] = id
+        TWALog("CraftUI", "bag picked for %s: id %s", tostring(recipe.id), tostring(id))
+    end, self)
+end
+
 -- R67c: a draggable, scrolling window (TWAPicker) instead of a pop-up menu.
 function TWACraftWindow:openBaseChooser(recipe)
+    if recipe.bagTier then return self:openBagChooser(recipe) end
     local choices = self:baseChoices(recipe)
     if #choices == 0 then return end
     local current = self:baseChoiceType(recipe)
@@ -2289,7 +2370,13 @@ local HANDEDNESS_LABELS = { [true] = "IGUI_TWA_Stat_TwoHanded", [false] = "IGUI_
 -- system) -- flag if you actually wanted it dropped.
 local STAT_GRID = {
     -- `scale`: damage shown multiplied (TWADisplay: sandbox DamageDisplayScale)
-    { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%s", always = true, scale = true } },
+    -- 1.3.0 (owner): "Base DPS" -> "Average damage" = (min + max) / 2, no
+    -- speed (the tier still uses that x attack speed, TierTooltip)
+    { { key = "dps", labelKey = "IGUI_TWA_Stat_DPS", fmt = "%s", always = true, scale = true,
+        derive = function(s)
+            if s.minDamage and s.maxDamage then return (s.minDamage + s.maxDamage) / 2 end
+            return s.dps
+        end } },
     { { key = "minDamage", labelKey = "IGUI_TWA_Stat_MinDamage", fmt = "%s", scale = true },
       { key = "maxDamage", labelKey = "IGUI_TWA_Stat_MaxDamage", fmt = "%s", scale = true } },
     -- `always = true` (request 2026-09-26: "always show attack speed") --
@@ -2775,6 +2862,13 @@ function TWACraftWindow:renderBody()
     self:updateContinueButton()
     self:drawWorkbenchHeader()
     -- R69: the modify and guide tabs draw themselves (TWAWorkbench)
+    -- 1.3.0: a main tab's page chooser (TWAWorkbench)
+    if self.page == "chooser" then
+        self:renderChooser()
+        self:drawLockNotice()
+        self:drawHoverTooltip()
+        return
+    end
     if self.page == "modify" or self.page == "guide" or self.page == "bagmod" then
         self:renderWorkbenchPage()
         self:drawLockNotice()
@@ -2967,9 +3061,22 @@ function TWACraftWindow:renderBody()
         end
         local card1Type, card1Alt = recipe.base, recipe.baseAlt
         if chosen then card1Type = chosen end
+        -- 1.3.0: a bag tier recipe -- the picked bag, and why none fits
+        local bagChoosable = false
+        if recipe.bagTier and not self:isActiveRecipe() and not self.resumeItem then
+            local pb = self:pickedBag(recipe)
+            bagChoosable = true
+            if pb then
+                card1Type, card1Alt, owned1, count1 = pb:getFullType(), nil, true, nil
+                note1 = "IGUI_TWA_BagTier_ClickToChange"
+            else
+                owned1, count1 = false, nil
+                note1 = #self:bagCandidates(recipe) > 0 and "IGUI_TWA_BagTier_NoneFits" or "IGUI_TWA_BagTier_NoBag"
+            end
+        end
         if self.resumeItem and not self:isActiveRecipe() then card1Type, card1Alt = self.resumeItem:getFullType(), nil end
         -- the base card can be clicked to choose (not once started / resuming)
-        local choosable = not self:isActiveRecipe() and not self.resumeItem and #self:baseChoices(recipe) > 0 and #S.baseTypes(recipe) > 1
+        local choosable = bagChoosable or (not self:isActiveRecipe() and not self.resumeItem and #self:baseChoices(recipe) > 0 and #S.baseTypes(recipe) > 1)
         self.baseCardRect = choosable and { x = centerX, y = baseY, w = CENTER_W - 16, h = 40, recipe = recipe } or nil
         if recipe.gemFrom and not owned1 and not self:isActiveRecipe() then
             note1 = "IGUI_TWA_BaseNeedsState"

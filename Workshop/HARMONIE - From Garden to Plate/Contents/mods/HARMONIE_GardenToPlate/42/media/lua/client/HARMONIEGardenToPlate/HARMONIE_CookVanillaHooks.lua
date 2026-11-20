@@ -99,22 +99,41 @@ local function hookCraftWindow()
     if not (C and C.prerender) or C.gtpScoreShown then return end
     C.gtpScoreShown = true
     local orig = C.prerender
+    -- GTP 1.8.5 (owner: "the food tab of the crafting window flickers"):
+    -- vanilla's prerender sets the duration label's text EVERY frame; this
+    -- hook then set it a second time with the score added, so the label's
+    -- text and width flipped twice a frame and the window kept laying itself
+    -- out again -- only on food recipes, the ones with a score. Now the
+    -- label's own setName adds the score in the same call: one stable text a
+    -- frame, changed only when the score does (worked out every 500 ms).
+    local function wrapLabel(ctl)
+        local lbl = ctl.durationLabel
+        if not lbl or lbl.gtpWrapped then return end
+        lbl.gtpWrapped = true
+        local origSet = lbl.setName
+        lbl.setName = function(l, name, ...)
+            local sc = ctl.gtpScore
+            if sc and type(name) == "string" then
+                name = name .. "   " .. T("IGUI_GTPP_CraftScore", string.format("%.2f", sc))
+            end
+            return origSet(l, name, ...)
+        end
+        log("crafting window: score added inside the duration label (no flicker)")
+    end
     function C:prerender(...)
-        local r = orig(self, ...)
         local ok, err = pcall(function()
             if not (self.durationLabel and self.logic) then return end
+            wrapLabel(self)
             local t = nowMs()
             if not self.gtpScoreAt or t - self.gtpScoreAt > 500 then
                 self.gtpScoreAt = t
-                self.gtpScore = craftPreview(self.logic)
-            end
-            if self.gtpScore then
-                local base = self.durationLabel.name or ""
-                self.durationLabel:setName(base .. "   " .. T("IGUI_GTPP_CraftScore", string.format("%.2f", self.gtpScore)))
+                local sc = craftPreview(self.logic)
+                -- rounded, so a tiny change does not change the text
+                self.gtpScore = sc and math.floor(sc * 100 + 0.5) / 100 or nil
             end
         end)
         if not ok then logOnce("craftscore", "score in the crafting window FAILED: %s", tostring(err)) end
-        return r
+        return orig(self, ...)
     end
     log("crafting window shows the score from prepared ingredients")
 end

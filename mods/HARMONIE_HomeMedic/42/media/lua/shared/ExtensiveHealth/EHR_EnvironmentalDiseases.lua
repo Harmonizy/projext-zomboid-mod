@@ -3506,7 +3506,11 @@ end
 local function EHR_EnvironmentalPlayRespiratorySound(player, sfx)
     if not player or not sfx or sfx == "" then return end
     pcall(function()
-        if isServer and isServer() and sendPlaySound then
+        -- HTS 1.1.0: through HM_SoundNet -- the server asks each nearby client
+        -- to play it at that player's own volume (HM_SoundVolume.lua)
+        if HM_SoundNet and HM_SoundNet.play then
+            HM_SoundNet.play(player, sfx, "cough")
+        elseif isServer and isServer() and sendPlaySound then
             -- The server's dummy character emitter does not broadcast playSound.
             -- Use the same character-bound packet as vanilla timed actions.
             sendPlaySound(sfx, false, player)
