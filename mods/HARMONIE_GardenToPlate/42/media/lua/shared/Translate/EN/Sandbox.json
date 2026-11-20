@@ -31,5 +31,7 @@
     "Sandbox_HARMONIE_CookMinigameTime": "Cooking tab: minigame time multiplier",
     "Sandbox_HARMONIE_CookMinigameTime_tooltip": "How long each cooking minigame lasts before it times out, times this (2.0 = twice the base time). A higher Cooking level adds more on top.",
     "Sandbox_HARMONIE_FoodVitaminMultiplier": "Vitamins from food (multiplier)",
-    "Sandbox_HARMONIE_FoodVitaminMultiplier_tooltip": "Every vitamin gained by eating is multiplied by this. 1 = the food's real amount, 5 = five times as much (default). Sunlight and vitamin pills are not affected."
+    "Sandbox_HARMONIE_FoodVitaminMultiplier_tooltip": "Every vitamin gained by eating is multiplied by this. 1 = the food's real amount, 5 = five times as much (default). Sunlight and vitamin pills are not affected.",
+    "Sandbox_HARMONIE_CookDebugLog": "Cooking tab: detailed log",
+    "Sandbox_HARMONIE_CookDebugLog_tooltip": "Write one console line for every ingredient prepared and every scored dish addition or craft. Off: one summary line per game hour (refused requests are always logged)."
 }

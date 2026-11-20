@@ -1085,5 +1085,10 @@
     "IGUI_GTPP_EvoNothing": "Nothing at hand can go into this dish.",
     "IGUI_GTPP_Card_Craft": "Cooking recipes (%1 of %2)",
     "IGUI_GTPP_OpenCraft": "Open",
-    "IGUI_GTPP_Refunded": "%1 ingredient(s) of an old half-made dish given back"
+    "IGUI_GTPP_Refunded": "%1 ingredient(s) of an old half-made dish given back",
+    "IGUI_GTPP_Cancel": "Cancel",
+    "IGUI_GTPP_Why_full": "your inventory is full",
+    "IGUI_GTPP_Why_timeout": "no answer in time -- try again",
+    "IGUI_GTPP_Why_noBegin": "the server did not see the minigame start -- try again",
+    "IGUI_GTPP_Why_timing": "the result came too fast or too late -- try again"
 }

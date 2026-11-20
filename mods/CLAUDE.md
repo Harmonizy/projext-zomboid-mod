@@ -355,6 +355,19 @@
   is given back once by the authority (HARMONIE_CookRefund.lua, "refunded:"
   mark in the world's data). Vanilla Lua for reference: the owner's
   pz_cook_lua.zip unpacked in mods/_VanillaReference_B42/raw/lua (gitignored).
+- GTP 1.2.0 (owner's 42-point review, round 1 of 6 -- MP safety): buff
+  cleared on death (K.clearBuff, OnPlayerDeath) and a record written later
+  in a life than the character has lived (`b.hs` vs getHoursSurvived) is a
+  new character's -> removed; records ended > 7 game days ago pruned daily
+  (K.pruneBuffs). Anti-cheat: client sends "begin" {id, pid} when the
+  minigame opens (R.begin); "prep" is taken only for that id + pid, 2.5 s to
+  5 min after it (no minimum with sandbox CookMinigames off) -- refusals
+  noBegin / timing. The client's "set" copy also looks in the room's boxes
+  (HARMONIE_Reach.findById): a pot is put back on the stove after an
+  addition. Per-event Prep logs only with sandbox CookDebugLog; an hourly
+  summary always. Tab: watchdog 10 s (H.PREP_WATCHDOG_MS), Cancel button
+  (clears the queue in bring / action), "inventory full" reason.
+  Forward-local check: scratchpad fwdcheck.py (strips comments / strings).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

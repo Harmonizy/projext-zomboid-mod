@@ -1085,5 +1085,10 @@
     "IGUI_GTPP_EvoNothing": "ไม่มีของที่ใส่ในจานนี้ได้",
     "IGUI_GTPP_Card_Craft": "สูตรทำอาหาร (%1 จาก %2)",
     "IGUI_GTPP_OpenCraft": "เปิด",
-    "IGUI_GTPP_Refunded": "คืนวัตถุดิบของจานที่ค้างจากระบบเก่า %1 ชิ้น"
+    "IGUI_GTPP_Refunded": "คืนวัตถุดิบของจานที่ค้างจากระบบเก่า %1 ชิ้น",
+    "IGUI_GTPP_Cancel": "ยกเลิก",
+    "IGUI_GTPP_Why_full": "ของในตัวเต็ม",
+    "IGUI_GTPP_Why_timeout": "ไม่มีการตอบกลับทันเวลา ลองใหม่",
+    "IGUI_GTPP_Why_noBegin": "server ไม่เห็นว่าเริ่มมินิเกม ลองใหม่",
+    "IGUI_GTPP_Why_timing": "ผลมาเร็วหรือช้าเกินไป ลองใหม่"
 }

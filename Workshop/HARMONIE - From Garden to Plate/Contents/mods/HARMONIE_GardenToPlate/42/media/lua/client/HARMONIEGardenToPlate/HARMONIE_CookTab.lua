@@ -34,6 +34,7 @@ local T, shadowText, fit, inside, clickable, lineH, fh, tw, texture =
 local log = function(fmt, ...) R.log(fmt, ...) end
 
 H.COOK_PAGES = { "prep", "evo", "craft" }
+H.PREP_WATCHDOG_MS = 10000
 
 local function call(o, m, ...)
     if not o or not o[m] then return nil end
@@ -144,9 +145,11 @@ function Win:renderCook(x, y, w, h)
     -- the run watchdog: the queue can drop our chain (vanilla clears it when
     -- one action turns invalid) -- never leave the tab stuck "in progress"
     local run = self.prepRun
-    if run and run.phase ~= "game" and nowMs() - (run.at or 0) > 25000 then
-        log("preparation of %s stopped without an answer (phase %s, 25 s) -- the tab is free again", tostring(run.name), tostring(run.phase))
+    -- GTP 1.2.0: 10 s (was 25), and the panel has a Cancel button
+    if run and run.phase ~= "game" and nowMs() - (run.at or 0) > H.PREP_WATCHDOG_MS then
+        log("preparation of %s stopped without an answer (phase %s, %d s) -- the tab is free again", tostring(run.name), tostring(run.phase), H.PREP_WATCHDOG_MS / 1000)
         self.prepRun = nil
+        self.prepLast = { name = run.name, pid = run.pid, why = "timeout" }
     end
     local bh = 0
     if H.banner then
@@ -279,6 +282,18 @@ function Win:renderCookPrepDetail(x, y, w, h, list)
         shadowText(self, fit(T("IGUI_GTPP_Running", run.name, procName(run.pid)), cw - 8, sf), cx, cy, C.warn, 1, sf)
         cy = cy + lh + 6
         shadowText(self, fit(T("IGUI_GTPP_Phase_" .. tostring(run.phase)), cw - 8, sf), cx, cy, C.textDim, 1, sf)
+        cy = cy + lh + 10
+        if run.phase ~= "game" then
+            self:cookButton(cx, cy, T("IGUI_GTPP_Cancel"), true, function(win)
+                log("preparation of %s cancelled by the player (phase %s)", tostring(run.name), tostring(run.phase))
+                if run.phase == "bring" or run.phase == "action" then
+                    pcall(ISTimedActionQueue.clear, win.player)
+                end
+                win.prepRun = nil
+                win.prepCache = nil
+                win.prepLast = { name = run.name, pid = run.pid, why = "cancelled" }
+            end)
+        end
         return
     end
     if self.prepLast then
@@ -356,8 +371,11 @@ function Win:startPrep(item, pid, toolItem, grade, group)
     local function play()
         if win.prepRun ~= run then return end
         if not (HARMONIE_Reach and HARMONIE_Reach.isCarried(player, item)) then
-            log("prepare: %s did not reach the inventory -- stopped", run.name)
-            finish(nil, "notCarried")
+            -- GTP 1.2.0: say why -- usually a full inventory
+            local inv = call(player, "getInventory")
+            local full = inv and inv.hasRoomFor and call(inv, "hasRoomFor", player, item) == false
+            log("prepare: %s did not reach the inventory (%s) -- stopped", run.name, full and "inventory full" or "not moved")
+            finish(nil, full and "full" or "notCarried")
             return
         end
         local function onWord(word)
@@ -375,6 +393,8 @@ function Win:startPrep(item, pid, toolItem, grade, group)
             ISTimedActionQueue.add(action)
         end
         run.phase, run.at = "game", nowMs()
+        -- GTP 1.2.0: the server notes when the minigame began (anti-cheat)
+        R.begin(player, item, pid)
         if K.minigamesOn() and Gm and Gm.play then
             local pp = { proc = K.PROCS[pid], tools = group and { { grade = grade, item = toolItem, group = group } } or {}, help = {} }
             local diff = K.difficulty(player, pp, nil)

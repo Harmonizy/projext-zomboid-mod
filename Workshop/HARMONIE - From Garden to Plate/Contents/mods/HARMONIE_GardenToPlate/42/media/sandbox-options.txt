@@ -151,3 +151,11 @@ option HARMONIE_GardenToPlate.CookMinigameTime
     page = HARMONIE_GardenToPlate,
     translation = HARMONIE_CookMinigameTime,
 }
+
+option HARMONIE_GardenToPlate.CookDebugLog
+{
+    type = boolean,
+    default = false,
+    page = HARMONIE_GardenToPlate,
+    translation = HARMONIE_CookDebugLog,
+}

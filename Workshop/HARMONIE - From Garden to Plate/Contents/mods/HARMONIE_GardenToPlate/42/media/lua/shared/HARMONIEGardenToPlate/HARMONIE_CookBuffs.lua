@@ -89,6 +89,13 @@ local function store()
     return ok and t or nil
 end
 local function keyOf(player) return "u:" .. nameOf(player) end
+-- GTP 1.2.0: hours this CHARACTER has lived -- a buff kept for the same
+-- username but written before a newer character was born is not theirs
+local function lived(player)
+    local ok, h = pcall(function() return player:getHoursSurvived() end)
+    return ok and tonumber(h) or nil
+end
+K.livedHours = lived
 local function getRec(player)
     local t = store()
     local b = t and t[keyOf(player)]
@@ -105,7 +112,15 @@ local function getRec(player)
             b = old
         end
     end
-    return type(b) == "table" and b or nil
+    if type(b) ~= "table" then return nil end
+    local hs = lived(player)
+    if b.hs and hs and hs + 0.1 < b.hs then
+        -- the record was written later in a life than this character has lived: a new character
+        if t then t[keyOf(player)] = nil end
+        log("%s: a dish buff of an earlier character was found -- removed (new character)", nameOf(player))
+        return nil
+    end
+    return b
 end
 local function setRec(player, b)
     local t = store()
@@ -164,6 +179,7 @@ function K.grantDish(player, dish, item, fraction)
         if b then log("%s: buff %s (level %s) replaced by %s (level %d)", nameOf(player), b.kind, tostring(b.tier), kind, tier) end
         b = { kind = kind, tier = tier, level = dish.lvl, untilH = now + add }
     end
+    b.hs = lived(player)
     setRec(player, b)
     log("%s ate a dish scored %.2f (%.0f%% of it, cook level %s): %s level %d for %.1f h", nameOf(player), avg, frac * 100, tostring(dish.lvl), kind, tier, b.untilH - now)
     notify(player, "on", b, avg)
@@ -220,6 +236,36 @@ local function everyMinute()
     end
 end
 K.tickBuffs = everyMinute
+
+-- GTP 1.2.0: a character's death ends its buff (authority side)
+function K.clearBuff(player, why)
+    if not player or not authority() then return end
+    local t = store()
+    if t and t[keyOf(player)] then
+        t[keyOf(player)] = nil
+        log("%s: dish buff removed (%s)", nameOf(player), tostring(why))
+    end
+end
+if Events and Events.OnPlayerDeath then
+    Events.OnPlayerDeath.Add(function(player) pcall(K.clearBuff, player, "death") end)
+end
+
+-- GTP 1.2.0: records of buffs that ended more than a week (game time) ago
+-- are removed once a game day (players who never came back)
+K.BUFF_KEEP_HOURS = 24 * 7
+function K.pruneBuffs()
+    if not authority() then return 0 end
+    local t = store()
+    if not t then return 0 end
+    local now, gone = worldHours(), {}
+    for k, b in pairs(t) do
+        if type(b) == "table" and k:sub(1, 2) == "u:" and (tonumber(b.untilH) or 0) < now - K.BUFF_KEEP_HOURS then gone[#gone + 1] = k end
+    end
+    for _, k in ipairs(gone) do t[k] = nil end
+    if #gone > 0 then log("removed %d old dish-buff record(s) (ended over %d game hours ago)", #gone, K.BUFF_KEEP_HOURS) end
+    return #gone
+end
+if Events and Events.EveryDays then Events.EveryDays.Add(function() pcall(K.pruneBuffs) end) end
 if Events and Events.EveryOneMinute then Events.EveryOneMinute.Add(everyMinute) end
 
 -- the eating, where it really happens (SP, or the MP server)

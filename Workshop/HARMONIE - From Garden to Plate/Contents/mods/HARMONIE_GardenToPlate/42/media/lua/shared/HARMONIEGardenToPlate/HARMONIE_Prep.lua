@@ -51,6 +51,16 @@ R.TIERS = { { at = 1.5, tier = 3 }, { at = 1.0, tier = 2 }, { at = 0.5, tier = 1
 local function log(fmt, ...) if HARMONIE_GTP.Log then HARMONIE_GTP.Log("Prep", fmt, ...) end end
 local function logOnce(key, fmt, ...) if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("Prep:" .. key, "Prep", fmt, ...) end end
 R.log, R.logOnce = log, logOnce
+-- GTP 1.2.0: one line per event only with sandbox CookDebugLog on; an
+-- hourly summary always (owner's rule: log, but never flood a busy server)
+function R.debugOn()
+    local t = SandboxVars and SandboxVars.HARMONIE_GardenToPlate
+    return t ~= nil and t.CookDebugLog == true
+end
+local function dlog(fmt, ...) if R.debugOn() then log(fmt, ...) end end
+R.dlog = dlog
+R.tally = R.tally or { prep = 0, add = 0, craft = 0, refused = 0 }
+local function count(k) R.tally[k] = (R.tally[k] or 0) + 1 end
 
 local function call(o, m, ...)
     if not o or not o[m] then return nil end
@@ -210,6 +220,18 @@ R.sendSet = sendSet
 R.lastPrep = {}   -- username -> ms (one prep per 800 ms)
 local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 
+-- GTP 1.2.0 (anti-cheat): the client says "begin" when the minigame opens;
+-- the result is taken only for that item and minigame, no sooner than
+-- R.MIN_GAME_MS after it and no later than R.MAX_GAME_MS
+R.MIN_GAME_MS, R.MAX_GAME_MS = 2500, 300000
+R.begun = {}   -- username -> { id, pid, at }
+function R.serveBegin(player, args)
+    args = type(args) == "table" and args or {}
+    R.begun[nameOf(player)] = { id = tonumber(args.id), pid = tostring(args.pid or ""), at = nowMs() }
+    dlog("%s began minigame %s on item id %s", nameOf(player), tostring(args.pid), tostring(args.id))
+    return true
+end
+
 -- one minigame result on one item (SP directly, MP server from "prep")
 function R.servePrep(player, args)
     args = type(args) == "table" and args or {}
@@ -219,7 +241,20 @@ function R.servePrep(player, args)
     if not R.WORD_SCORE[word] then log("prep from %s: unknown result %s -- rejected", who, word); return false, "word" end
     if not K.PROCS[pid] then log("prep from %s: unknown minigame %s -- rejected", who, pid); return false, "game" end
     local t = nowMs()
-    if t - (R.lastPrep[who] or 0) < 800 then log("prep from %s: too fast -- rejected", who); return false, "fast" end
+    if t - (R.lastPrep[who] or 0) < 800 then log("prep from %s: too fast -- rejected", who); count("refused"); return false, "fast" end
+    local b = R.begun[who]
+    if not b or b.id ~= tonumber(args.id) or b.pid ~= pid then
+        log("prep from %s: no minigame was started for item id %s with %s -- rejected", who, tostring(args.id), pid); count("refused")
+        return false, "noBegin"
+    end
+    -- no minimum when the sandbox turned the minigames off (only the short action is left)
+    local minMs = (K.minigamesOn == nil or K.minigamesOn()) and R.MIN_GAME_MS or 0
+    if t - b.at < minMs or t - b.at > R.MAX_GAME_MS then
+        log("prep from %s: result %d ms after the minigame began (allowed %d - %d) -- rejected", who, t - b.at, minMs, R.MAX_GAME_MS); count("refused")
+        R.begun[who] = nil
+        return false, "timing"
+    end
+    R.begun[who] = nil
     local item = findById(player, args.id)
     if not item then log("prep from %s: item id %s not in their inventory -- rejected", who, tostring(args.id)); return false, "missing" end
     local why = R.whyNot(item)
@@ -231,7 +266,8 @@ function R.servePrep(player, args)
     md.HARMONIE_Prep = { w = word, p = pid, s = R.WORD_SCORE[word] }
     local xp = ((K.PROCS[pid] or {}).xp or 1) * (R.XP_MUL[word] or 1)
     if K.giveXp then K.giveXp(player, xp) end
-    log("%s prepared %s (id %s) with %s: %s (%+d)", who, typeOf(item), tostring(args.id), pid, word, R.WORD_SCORE[word])
+    count("prep")
+    dlog("%s prepared %s (id %s) with %s: %s (%+d)", who, typeOf(item), tostring(args.id), pid, word, R.WORD_SCORE[word])
     sendSet(player, item, "prep")
     return true
 end
@@ -267,7 +303,8 @@ function R.onEvolvedAdd(character, recipe, baseBefore, used, baseAfter)
     local lvl = K.level and K.level(character) or 0
     local fam = famOfRecipe(recipe) or (d and d.fam)
     md.HARMONIE_Dish = { sum = sum, n = n, avg = n > 0 and (sum / n) or 0, fam = fam, lvl = math.max(lvl, tonumber(d and d.lvl) or 0) }
-    log("%s added %s (%+.2f) to %s: dish score %.2f over %d (%s)", nameOf(character), used and typeOf(used) or "?", usedScore, typeOf(baseAfter),
+    count("add")
+    dlog("%s added %s (%+.2f) to %s: dish score %.2f over %d (%s)", nameOf(character), used and typeOf(used) or "?", usedScore, typeOf(baseAfter),
         md.HARMONIE_Dish.avg, n, tostring(fam))
     sendSet(character, baseAfter, "dish")
 end
@@ -301,7 +338,8 @@ function R.onCraft(character, recipeName, consumed, created)
             end
         end
     end
-    log("%s crafted %s: dish score %.2f over %d ingredients -> %d food result(s)", nameOf(character), tostring(recipeName), avg, n, wrote)
+    count("craft")
+    dlog("%s crafted %s: dish score %.2f over %d ingredients -> %d food result(s)", nameOf(character), tostring(recipeName), avg, n, wrote)
 end
 
 -- ------------------------------------------------------------ vanilla hooks
@@ -357,7 +395,9 @@ if Events and Events.OnGameStart then Events.OnGameStart.Add(installHooks) end
 if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
         if module ~= R.NET or not player then return end
-        if command == "prep" then
+        if command == "begin" then
+            R.serveBegin(player, args)
+        elseif command == "prep" then
             local ok, why = R.servePrep(player, args)
             if not ok and sendServerCommand then
                 pcall(sendServerCommand, player, R.NET, "refused", { id = type(args) == "table" and args.id or nil, why = why })
@@ -373,6 +413,13 @@ R.pendingSets = {}
 local function applySet(args)
     local p = getPlayer and getPlayer()
     local item = p and findById(p, args.id)
+    -- GTP 1.2.0: a pot put back on the stove, a result dropped on the floor
+    -- box: look in the room's containers too (HARMONIE_Reach)
+    if not item and p and HARMONIE_Reach and HARMONIE_Reach.findById then
+        if HARMONIE_Reach.forget then HARMONIE_Reach.forget(p) end
+        local ok, it = pcall(HARMONIE_Reach.findById, p, tonumber(args.id))
+        if ok then item = it end
+    end
     if not item then return false end
     local md = call(item, "getModData")
     if not md then return true end
@@ -419,6 +466,12 @@ if Events and Events.OnTick then
     end)
 end
 
+-- client side: the minigame opens (SP: noted at once)
+function R.begin(player, item, pid)
+    local args = { id = call(item, "getID"), pid = pid }
+    if isClientSide() then sendClientCommand(player, R.NET, "begin", args) else R.serveBegin(player, args) end
+end
+
 -- client side: ask for one preparation (SP: done at once)
 function R.request(player, item, pid, word)
     local args = { id = call(item, "getID"), pid = pid, word = word }
@@ -430,6 +483,18 @@ function R.request(player, item, pid, word)
     local ok, why = R.servePrep(player, args)
     if not ok and R.onRefused then pcall(R.onRefused, { id = args.id, why = why }) end
     return ok
+end
+
+if Events and Events.EveryHours then
+    Events.EveryHours.Add(function()
+        if isClientSide() then return end
+        local c = R.tally
+        if (c.prep + c.add + c.craft + c.refused) > 0 then
+            log("last game hour: %d ingredient(s) prepared, %d scored addition(s), %d scored craft(s), %d request(s) refused (each one: sandbox CookDebugLog)",
+                c.prep, c.add, c.craft, c.refused)
+        end
+        R.tally = { prep = 0, add = 0, craft = 0, refused = 0 }
+    end)
 end
 
 log("loaded: %d food kinds, scores Excellent %+d / Good %+d / Bad %+d / Miss %+d", (function() local c = 0 for _ in pairs(R.KIND_GAMES) do c = c + 1 end return c end)(),
