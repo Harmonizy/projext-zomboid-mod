@@ -47,7 +47,7 @@ AT.register("gtp", "cook", {
     T("Buff1", "Give me a level 1 dish buff", function(p) AT.send(p, "gtp_buff", { tier = 1 }) end),
     T("Buff3", "Give me a level 3 dish buff", function(p) AT.send(p, "gtp_buff", { tier = 3 }) end),
     T("ClearBuff", "Remove my dish buff", function(p) AT.send(p, "gtp_clearBuff", {}) end),
-    T("Practice", "Open the Prepare page", function(p) if GTPGuide and GTPGuide.open then GTPGuide.open(p, nil, "cook"); if GTPGuide.window then GTPGuide.window.cookPage = "prep" end end end),
+    T("Practice", "Open the Practice page", function(p) if GTPGuide and GTPGuide.open then GTPGuide.open(p, nil, "cook"); if GTPGuide.window then GTPGuide.window.cookPage = "practice" end end end),
 })
 AT.register("gtp", "foods", {
     T("VitFoods", "Give a food rich in each vitamin", function(p)

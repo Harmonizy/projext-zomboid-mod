@@ -126,6 +126,16 @@
   call nil" -- every frame in a tooltip (GTP 1.1.0 buildPrepLines ->
   isPossiblyFood, 671 errors on hover in MP; fixed 1.1.1). The syntax check
   does not see it: define helpers above their first use.
+- In the game a Lua string is a JAVA string: a Thai letter is ONE char and
+  `s:byte(i)` gives its code point (~3600). UTF-8 byte patterns such as
+  `"[\194-\244][\128-\191]*"` never match it -- plain Lua / lupa tests see
+  bytes and pass. GTP 1.8.0's note counter did not count Thai, the hub's
+  BN.clusters dropped every Thai letter of a word wider than the line. Walk
+  characters with a code > 255 = one char, else a UTF-8 lead byte + tail
+  (hub `HARMONIE_Banner.nextChar`, GTP `CookNotes.chars`, HM_Surgery charLen).
+- `ipairs({ a, b, c })` stops at the first nil: GTP 1.8.0's note window added
+  its buttons that way and got NONE in write mode (owner: "can't close").
+  Loop over a list of names / keys instead.
 - A Lua syntax error kills the whole file with one console line and no other
   sign (HM_Settings.lua, 2026-10-10 to 10-23: settings rows gone). Before a
   release, load every changed .lua once (lupa `load()` is enough).
@@ -463,6 +473,17 @@
   Cooking tab dish page button; tooltip "Made by X (- has a note)". Paper:
   tools/gen_note_paper.py -> media/ui/GTP_NotePaper.png (owner may save their
   own picture over it).
+- GTP 1.8.1 (owner's test of 1.8.0): note window buttons fixed (ipairs
+  trap above) + an "X" + Esc in the box; Thai counted (CookNotes.chars);
+  write box text dark (javaObject:setTextColor, dark box fallback, like LWS
+  search). Practice has its OWN page "practice" (H.COOK_PAGES 4th,
+  Win:renderCookPractice, H.practiceGames = every game in KIND_GAMES /
+  GAME_RULES, K.PROC_ORDER order) -- the Prepare page rows have a "Start"
+  button instead (owner: a Practice button on every row read as "do it").
+  Right-click recipe menu tags EVERY counting food "[+0.0 -> dish 1.25]"
+  (R.previewDish, shared with the tab; use = getRealEvolvedItemUse). Game
+  dishes list a pot first, the forged pot next, a bucket last (vanilla has
+  SoupBucket / StewBucket recipes, so buckets stay).
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).

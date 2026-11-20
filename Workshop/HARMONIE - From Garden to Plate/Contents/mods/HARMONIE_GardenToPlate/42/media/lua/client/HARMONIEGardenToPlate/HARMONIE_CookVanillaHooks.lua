@@ -33,13 +33,23 @@ local function T(key, ...)
 end
 local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 
--- a short score tag for an item, or nil when it has none
-local function scoreTag(it)
-    if not it or not R.isFood(it) then return nil end
-    if R.dishOf(it) or R.prepOf(it) then
-        return T("IGUI_GTPP_MenuTag", string.format("%+.1f", R.scoreOf(it)))
+-- a short score tag for an ingredient going into a dish: its own score and
+-- the dish score after it (GTP 1.8.1: every food that counts, prepared or
+-- not -- owner: "show the quality number" in vanilla's add-ingredient menu);
+-- nil for spices / oil / sauces (they do not count)
+local function scoreTag(it, baseItem, evorecipe, player)
+    if not it or not R.isFood(it) or not R.counts(it) then return nil end
+    local use
+    local M = ISInventoryPaneContextMenu
+    if M and M.getRealEvolvedItemUse and evorecipe then
+        local okU, u = pcall(M.getRealEvolvedItemUse, it, evorecipe, K.level and K.level(getSpecificPlayer and getSpecificPlayer(player or 0)) or 0)
+        if okU and type(u) == "number" then use = u end
     end
-    return nil
+    local okD, after = pcall(R.previewDish, baseItem and R.dishOf(baseItem), baseItem, it, use)
+    if okD and type(after) == "number" then
+        return T("IGUI_GTPP_MenuTagDish", string.format("%+.1f", R.scoreOf(it)), string.format("%.2f", after))
+    end
+    return T("IGUI_GTPP_MenuTag", string.format("%+.1f", R.scoreOf(it)))
 end
 
 -- ------------------------------------------------------------ #30 evolved-recipe menu
@@ -51,7 +61,7 @@ local function hookEvoMenu()
     M.addItemInEvoRecipe = function(subMenu, baseItem, evoItem, extraInfo, evorecipe, player, ...)
         local r = orig(subMenu, baseItem, evoItem, extraInfo, evorecipe, player, ...)
         local ok, err = pcall(function()
-            local tag = scoreTag(evoItem)
+            local tag = scoreTag(evoItem, baseItem, evorecipe, player)
             if not tag or not subMenu or not subMenu.options then return end
             local n = subMenu.numOptions and (subMenu.numOptions - 1) or #subMenu.options
             local opt = subMenu.options[n]

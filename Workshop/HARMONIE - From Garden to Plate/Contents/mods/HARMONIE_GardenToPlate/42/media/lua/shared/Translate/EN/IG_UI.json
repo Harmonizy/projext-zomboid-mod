@@ -724,7 +724,7 @@
     "IGUI_GTP_Test_Buff1": "Give me a level 1 dish buff",
     "IGUI_GTP_Test_Buff3": "Give me a level 3 dish buff",
     "IGUI_GTP_Test_ClearBuff": "Remove my dish buff",
-    "IGUI_GTP_Test_Practice": "Open the Prepare page",
+    "IGUI_GTP_Test_Practice": "Open the Practice page",
     "IGUI_GTPP_OptTipUnprepared": "Show 'not prepared yet' on food tooltips",
     "IGUI_GTPP_OptTipUnprepared_tt": "The small box above the vitamins that says a food can still be prepared. Prepared food and dishes always show their score.",
     "IGUI_GTPP_ChefHalo": "%1 enjoyed your cooking",
@@ -760,5 +760,12 @@
     "IGUI_GTPN_Refused_fast": "Wait a moment before writing again",
     "IGUI_GTPN_Refused_missing": "The dish is not within reach",
     "IGUI_GTPN_Refused_noDish": "Only a dish with a score can carry a note",
-    "IGUI_GTPN_Refused_notChef": "Only the cook of this dish can write on it"
+    "IGUI_GTPN_Refused_notChef": "Only the cook of this dish can write on it",
+    "IGUI_GTPP_Page_practice": "Practice",
+    "IGUI_GTPP_Next_practice": "Practice any minigame here. No food is used and nothing is scored.",
+    "IGUI_GTPP_Help_practice": "Practice plays the same minigame as preparing, with the tool you have. It uses no food, gives no score and no XP, and is not counted in your record. To prepare a real ingredient, use the Prepare page.",
+    "IGUI_GTPP_Card_Practice": "Practice minigames",
+    "IGUI_GTPP_PracticeIntro": "Practice only: no food is used, nothing is scored or counted. Prepare real food on the Prepare page.",
+    "IGUI_GTPP_StartGame": "Start",
+    "IGUI_GTPP_MenuTagDish": "[%1 -> dish %2]"
 }

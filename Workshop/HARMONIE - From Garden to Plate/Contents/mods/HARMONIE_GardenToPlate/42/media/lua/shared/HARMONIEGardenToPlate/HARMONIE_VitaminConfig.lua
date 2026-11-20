@@ -102,7 +102,9 @@ function HARMONIE_GTP.Log(tag, fmt, ...)
     local ok, msg = pcall(string.format, tostring(fmt), ...)
     if not ok then
         local parts = { tostring(fmt) }
-        for _, v in ipairs({ ... }) do parts[#parts + 1] = tostring(v) end
+        -- every argument, nil ones too (ipairs would stop at the first nil)
+        local n, args = select("#", ...), { ... }
+        for i = 1, n do parts[#parts + 1] = tostring(args[i]) end
         msg = table.concat(parts, " ")
     end
     print("[HARMONIE_GTP][" .. tostring(tag) .. "][" .. side() .. "] " .. msg)

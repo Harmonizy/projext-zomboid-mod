@@ -50,12 +50,30 @@ local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 local function isClientSide() return isClient and isClient() end
 local function isServerSide() return isServer and isServer() end
 
--- whole UTF-8 characters
+-- whole characters. GTP 1.8.1: in the game (Kahlua) a string is a Java
+-- string -- a Thai letter is ONE char whose code is about 3600 -- so a
+-- UTF-8 byte pattern never matches it (Thai typed in the note was not
+-- counted, owner 2026-11-20). Plain Lua (tests) sees UTF-8 bytes. Both work:
+-- a code above 255 is one character; a UTF-8 lead byte takes its tail.
 local function chars(s)
-    local out = {}
-    for ch in tostring(s or ""):gmatch("[%z\1-\127\194-\244][\128-\191]*") do out[#out + 1] = ch end
+    s = tostring(s or "")
+    local out, i, n = {}, 1, #s
+    while i <= n do
+        local b = s:byte(i) or 0
+        local len = 1
+        if b >= 194 and b <= 244 then
+            len = b >= 240 and 4 or (b >= 224 and 3 or 2)
+            for k = 1, len - 1 do
+                local c = s:byte(i + k)
+                if not c or c < 128 or c > 191 then len = 1; break end
+            end
+        end
+        out[#out + 1] = s:sub(i, i + len - 1)
+        i = i + len
+    end
     return out
 end
+N.chars = chars
 function N.len(s) return #chars(s) end
 
 -- what may be stored: no control characters (a new line is kept), at most
