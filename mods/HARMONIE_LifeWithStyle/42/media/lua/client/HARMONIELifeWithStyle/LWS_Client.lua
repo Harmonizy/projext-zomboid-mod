@@ -109,6 +109,7 @@ function C.dressNow()
         local item = inv:FindAndReturn(t)
         if item then
             LWS.plainClothes(item, "wear")
+            LWS.applyTex(item, "wear")
             if not p:isEquippedClothing(item) then
                 local ok, err = pcall(function() p:setWornItem(item:getBodyLocation(), item) end)
                 if ok then changed = true else log("could not wear %s: %s", t, tostring(err)) end
@@ -234,6 +235,7 @@ function C.send(command, args)
     LWS.toServer(p, command, args)
 end
 function C.wear(slot, uid) log("wear %s in %s", tostring(uid), tostring(slot)); C.send("Wear", { slot = slot, uid = uid }) end
+function C.setTex(uid, tex) log("colour of #%s -> %s", tostring(uid), tostring(tex)); C.send("SetTex", { uid = uid, tex = tex }) end
 function C.takeOff(slot) log("take off %s", tostring(slot)); C.send("TakeOff", { slot = slot }) end
 function C.setShow(slot, on) log("%s: show real clothes %s", tostring(slot), tostring(on)); C.send("Show", { slot = slot, on = on == true }) end
 

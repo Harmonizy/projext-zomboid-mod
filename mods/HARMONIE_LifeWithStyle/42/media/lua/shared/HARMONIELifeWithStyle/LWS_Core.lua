@@ -63,6 +63,59 @@ LWS.SLOT = {}
 for i, s in ipairs(LWS.SLOTS) do s.order = i; LWS.SLOT[s.id] = s end
 LWS.PIECE = {}
 for _, c in ipairs(LWS.CATALOG) do LWS.PIECE[c.id] = c end
+-- another mod's full type -> our piece (an add-on's pieces made from it)
+LWS.PIECE_BY_SRC = LWS.PIECE_BY_SRC or {}
+
+-- 1.1.0: an ADD-ON adds pieces of its own (HARMONIE_LWS_Tomb). Each entry is
+-- { id, slot, icon, icons = { per colour }, tex = colours, src = "Module.Type" };
+-- its item scripts are in OUR module (HARMONIE_LWS), so LWS.isOurPiece passes
+-- and nothing else changes: wardrobe, trade, admin Give, gacha all read the
+-- catalog. A piece whose slot does not exist, or a second entry with the same
+-- id, is skipped and logged.
+function LWS.addPieces(list, source)
+    local added, skipped = 0, 0
+    for _, c in ipairs(type(list) == "table" and list or {}) do
+        if type(c) == "table" and c.id and LWS.SLOT[c.slot] and not LWS.PIECE[c.id] and LWS.SLOT[c.slot].body ~= false then
+            LWS.CATALOG[#LWS.CATALOG + 1] = c
+            LWS.PIECE[c.id] = c
+            if c.src then LWS.PIECE_BY_SRC[c.src] = c.id end
+            added = added + 1
+        else
+            skipped = skipped + 1
+        end
+    end
+    LWS.log("Core", "add-on %s: %d piece(s) added, %d skipped (catalog now %d)", tostring(source), added, skipped, #LWS.CATALOG)
+    return added
+end
+
+-- 1.1.0: colours. A piece made from a clothing item with several textures
+-- keeps the colour the owner picked (o.items[uid].tex, 0-based); the worn
+-- item carries it in modData.LWS_tex and its visual uses that texture.
+function LWS.texCount(pieceId)
+    local c = LWS.PIECE[tostring(pieceId)]
+    return math.max(1, math.floor(tonumber(c and c.tex) or 1))
+end
+function LWS.iconOf(pieceId, tex)
+    local c = LWS.PIECE[tostring(pieceId)]
+    if not c then return nil end
+    local i = (tonumber(tex) or 0) + 1
+    return (type(c.icons) == "table" and c.icons[i]) or c.icon
+end
+function LWS.applyTex(item, where)
+    if not item then return false end
+    local md = item.getModData and item:getModData()
+    local tex = md and tonumber(md.LWS_tex)
+    if not tex then return false end
+    local ok, err = pcall(function()
+        local v = item.getVisual and item:getVisual()
+        if not v or not v.setTextureChoice then return end
+        if v.getTextureChoice and v:getTextureChoice() == tex then return end
+        v:setTextureChoice(tex)
+        if item.synchWithVisual then item:synchWithVisual() end
+    end)
+    if not ok then LWS.logOnce("applytex", "Core", "colour of %s could not be set (%s): %s", LWS.typeOf(item), tostring(where), tostring(err)) end
+    return ok
+end
 
 -- the worn item of a piece: <module>.<id> hides the vanilla clothes, <id>_Over shows them
 function LWS.carrierType(pieceId, showReal)

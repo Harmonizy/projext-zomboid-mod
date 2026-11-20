@@ -376,6 +376,8 @@ local CATEGORY_TABS = {
     { key = "Spear", label = "Spear" },
     { key = "Material", label = "Material" },
     { key = "Gem", label = "Gem" }, -- round 16: the Gemstone recipe
+    { key = "BagUp", labelKey = "IGUI_TWA_FilterBagUp" },     -- 1.2.0: bag upgrade items
+    { key = "BagTier", labelKey = "IGUI_TWA_FilterBagTier" }, -- 1.2.0: bag tiers
 }
 
 -- Rarity tiers (request 2026-09-26): computed at generation time from DPS
@@ -644,7 +646,7 @@ end
 
 function TWARecipeScrollList:matches(recipe)
     -- R69: tab 2 lists weapons, tab 3 materials (Material + Gem)
-    if (self.scope == "materials") ~= TWACraftUI.isMaterialCategory(recipe.category) then
+    if self.scope ~= TWACraftUI.scopeOf(recipe.category) then
         return false
     end
     if self.filterCategory ~= "All" and self.filterCategory ~= "Available" and self.filterCategory ~= "Favorites"
@@ -1275,10 +1277,10 @@ function TWACraftWindow:createChildren()
     -- material recipes, Material + Gem (tab 3); setPage shows the set of
     -- the open tab.
     self.filterButtons = {}
-    self.filterButtonsByScope = { weapons = {}, materials = {} }
+    self.filterButtonsByScope = { weapons = {}, materials = {}, bags = {} }
     self.categoryRowY = contentTop
     local rowEnd = contentTop + captionH
-    for _, scope in ipairs({ "weapons", "materials" }) do
+    for _, scope in ipairs({ "weapons", "materials", "bags" }) do
         local fx, fy = leftX, contentTop + captionH
         for _, tab in ipairs(CATEGORY_TABS) do
             if TWACraftUI.tabInScope(tab.key, scope) then
@@ -1646,7 +1648,7 @@ function TWACraftWindow:onBackClicked()
         return
     end
     local r = self.selectedRecipe
-    self:setTab((r and TWACraftUI.isMaterialCategory(r.category)) and "materials" or "weapons")
+    self:setTab(r and TWACraftUI.scopeOf(r.category) or "weapons")
 end
 
 function TWACraftWindow:onPracticePageClicked()
@@ -1994,6 +1996,8 @@ function TWACraftWindow:startCenterAction(kind)
             window:endActive()
             -- Round 19: gem refining -- watch for the result (a break opens
             -- the short shatter window).
+            -- 1.2.0: bag recipes have no grade to reveal
+            if recipe.bagTier or recipe.bagUp then return end
             if recipe.keepType and TWAGemBreak then TWAGemBreak.watch(window.player, token) return end
             if TWAConfig.on("GradeReveal") then
                 -- Round 16: the Gemstone recipe has its own show (the roll).
@@ -2047,19 +2051,22 @@ function TWACraftWindow:applySearch(text)
     -- recipes" for a smelting procedure), show the other
     local scope = list.scope
     if text and text ~= "" and #list.items == 0 then
-        local other = scope == "materials" and "weapons" or "materials"
         -- (as that tab would show it: its category filter starts at All)
         local cat = list.filterCategory
-        list.scope, list.filterCategory = other, "All"
         local found = false
-        for _, recipe in ipairs(TWARecipeData.List) do
-            if list:matches(recipe) then found = true break end
+        for _, other in ipairs({ "weapons", "materials", "bags" }) do
+            if other ~= scope and not found then
+                list.scope, list.filterCategory = other, "All"
+                for _, recipe in ipairs(TWARecipeData.List) do
+                    if list:matches(recipe) then found = other break end
+                end
+            end
         end
         list.scope, list.filterCategory = scope, cat
-        if found then scope = other end
+        if found then scope = found end
     end
     if self.page ~= "browse" or scope ~= list.scope then
-        self:setTab(scope == "materials" and "materials" or "weapons")
+        self:setTab(scope)
     end
 end
 
@@ -2764,7 +2771,7 @@ function TWACraftWindow:renderBody()
     self:updateContinueButton()
     self:drawWorkbenchHeader()
     -- R69: the modify and guide tabs draw themselves (TWAWorkbench)
-    if self.page == "modify" or self.page == "guide" then
+    if self.page == "modify" or self.page == "guide" or self.page == "bagmod" then
         self:renderWorkbenchPage()
         self:drawLockNotice()
         self:drawHoverTooltip()
@@ -2874,7 +2881,7 @@ function TWACraftWindow:renderBody()
     -- the base-item card/procedure grid just start higher up instead.
     local statTop = centerY + TWAFont.grow(S(26), TWAFont.medium()) + TWAFont.lineH() + S(4)
     local statY = statTop
-    if recipe.category ~= "Material" and not recipe.roll and not recipe.keepType then
+    if recipe.category ~= "Material" and not recipe.roll and not recipe.keepType and not recipe.bagUp then
         statY = self:drawStatGrid(centerX + ICON + 12, statTop, CENTER_W - ICON - 20)
     end
 
@@ -3086,6 +3093,10 @@ function TWACraftWindow:renderBody()
         local note = getText("IGUI_TWA_GemFinishRule", tostring(S.gemChance("Excellent")), tostring(S.gemChance("Good")), tostring(S.gemChance("Bad")))
         self:drawNoteAboveButtons(note, centerX)
         self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_FinishGem"))
+    elseif (recipe.bagTier or recipe.bagUp) and TWABagUp then
+        -- 1.2.0: what the bag recipe needs / gives
+        self:drawNoteAboveButtons(TWABagUp.recipeNote(recipe), centerX)
+        self.finishButton:setTooltip(getText("IGUI_TWA_Tooltip_Finish"))
     elseif recipe.keepType then
         -- Round 19: gem refining -- the state needed and the break chances.
         local S = TWACraftState
