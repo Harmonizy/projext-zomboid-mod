@@ -670,19 +670,16 @@ function Win:startPrep(item, pid, toolItem, grade, group, chainKey)
             if win.prepRun ~= run then return end
             if not word then log("prepare: minigame for %s cancelled", run.name); finish(nil, "cancelled"); return end
             if K.minigamesOn() then H.recordPrepStat(pid, word) end
-            run.phase, run.at, run.word = "action", nowMs(), word
-            local action = HARMONIE_GTP_CookStepAction:new(player, pid, word, toolItem or item)
-            action.onEnd = function(done, w)
-                if win.prepRun ~= run then return end
-                if not done then log("prepare: the action for %s was stopped", run.name); finish(nil, "stopped"); return end
-                run.phase, run.at = "server", nowMs()
-                R.request(player, item, pid, w or word)
-                if not (isClient and isClient()) then
-                    local pr = R.prepOf(item)
-                    finish(pr and pr.w or w or word)
-                end
+            -- GTP 1.8.2 (owner: "anything of ours that makes cooking longer
+            -- than vanilla -- take it out"): no extra 3-6 s timed action after
+            -- the minigame any more; the result goes to the server at once
+            run.word = word
+            run.phase, run.at = "server", nowMs()
+            R.request(player, item, pid, word)
+            if not (isClient and isClient()) then
+                local pr = R.prepOf(item)
+                finish(pr and pr.w or word)
             end
-            ISTimedActionQueue.add(action)
         end
         run.phase, run.at = "game", nowMs()
         -- GTP 1.2.0: the server notes when the minigame began (anti-cheat)
@@ -755,22 +752,24 @@ end
 function Win:startRedo(item)
     if self.prepRun then return end
     local player = self.player
-    if not (HARMONIE_Reach and HARMONIE_Reach.isCarried(player, item)) then
-        if HARMONIE_Reach and HARMONIE_Reach.bring then HARMONIE_Reach.bring(player, item) end
-    end
     local run = { item = item, pid = "wash", name = itemName(item), phase = "action", at = nowMs(), redo = true }
     self.prepRun = run
     self.prepLast = nil
     local win = self
-    local action = HARMONIE_GTP_CookStepAction:new(player, "wash", "Good", item)
-    action.onEnd = function(done)
+    -- GTP 1.8.2: no 3 s wash action any more (owner: nothing of ours may add
+    -- time) -- asked at once, or right after the item reaches the inventory
+    local function ask()
         if win.prepRun ~= run then return end
-        if not done then win.prepRun = nil; win.prepLast = { name = run.name, why = "stopped" }; return end
         run.phase, run.at = "server", nowMs()
         log("prepare: washing off the preparation of %s", run.name)
         R.requestRedo(player, item)
     end
-    ISTimedActionQueue.add(action)
+    if HARMONIE_Reach and HARMONIE_Reach.isCarried(player, item) then
+        ask()
+    else
+        if HARMONIE_Reach and HARMONIE_Reach.bring then HARMONIE_Reach.bring(player, item) end
+        ISTimedActionQueue.add(HARMONIE_GTP_CookWaitAction:new(player, 5, ask))
+    end
 end
 
 -- the server's answer (MP): the tab shows it
