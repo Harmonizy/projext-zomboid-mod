@@ -316,7 +316,9 @@ local function nowMs() return getTimestampMs and getTimestampMs() or 0 end
 -- GTP 1.2.0 (anti-cheat): the client says "begin" when the minigame opens;
 -- the result is taken only for that item and minigame, no sooner than
 -- R.MIN_GAME_MS after it and no later than R.MAX_GAME_MS
-R.MIN_GAME_MS, R.MAX_GAME_MS = 2500, 300000
+-- GTP 1.8.2: 1 s minimum (the 3-6 s step action after the minigame is gone,
+-- so a quick wash really can answer in under 2.5 s)
+R.MIN_GAME_MS, R.MAX_GAME_MS = 1000, 300000
 R.begun = {}   -- username -> { id, pid, at }
 function R.serveBegin(player, args)
     args = type(args) == "table" and args or {}
