@@ -8,13 +8,32 @@ local StaticData = require("TOC/StaticData")
 local og_ISBaseTimedAction_adjustMaxTime = ISBaseTimedAction.adjustMaxTime
 --- Adjust time
 ---@diagnostic disable-next-line: duplicate-set-field
+-- HTS 1.1.1 (owner: "after adding food or doing anything the bar over the
+-- head takes more than 20 s"): every action that ends up long is logged
+-- once a minute per kind -- the time asked, after the game's own changes,
+-- and after TOC's cut-limb multiplier -- so console.txt shows who made it long.
+local longSeen = {}
+local function logLong(self, asked, vanilla, final)
+    if not final or final < 900 then return end
+    local kind = tostring(self.Type or "?")
+    local now = getTimestampMs and getTimestampMs() or 0
+    if longSeen[kind] and now - longSeen[kind] < 60000 then return end
+    longSeen[kind] = now
+    if HMLog then
+        HMLog("ActionTime", "%s: asked %s, after the game %s, after TOC %s%s", kind, tostring(asked), tostring(vanilla), tostring(final),
+            final > (vanilla or 0) and " (cut-limb multiplier)" or "")
+    end
+end
+
 function ISBaseTimedAction:adjustMaxTime(maxTime)
     local time = og_ISBaseTimedAction_adjustMaxTime(self, maxTime)
+    local vanillaTime = time
     --TOC_DEBUG.print("Running override for adjustMaxTime")
     -- Exceptions handling, if we find that parameter then we just use the original time
 
     if self.skipTOC then
         --TOC_DEBUG.print("Should skip TOC stuff")
+        pcall(logLong, self, maxTime, vanillaTime, time)
         return time
     end
 
@@ -50,6 +69,7 @@ function ISBaseTimedAction:adjustMaxTime(maxTime)
 
     end
 
+    pcall(logLong, self, maxTime, vanillaTime, time)
     return time
 end
 

@@ -537,14 +537,34 @@ local function makeDefs()
     for _, d in ipairs(ISHotbarAttachDefinition) do src[d.type] = d end
     local sL, sR, hR, hL = src.SmallBeltLeft, src.SmallBeltRight, src.HolsterRight, src.HolsterLeft
     if not (sL and sR and hR and hL) then log("hotbar: the game's belt / holster slots not found -- no extra slots"); return false end
+    -- 1.3.2 (owner: "a flashlight like vanilla's ALICE belt", then "put it in
+    -- the small slot"): the SMALL slot also takes what vanilla's ALICE webbing
+    -- slot takes (WebbingLeft / WebbingRight: "Webbing" = the angle-head
+    -- flashlights), hung at the webbing's own model place
+    local wL, wR = src.WebbingLeft, src.WebbingRight
+    local function smallAttach(belt, webbing)
+        local a = copyTable(belt.attachments)
+        for k, v in pairs((webbing and webbing.attachments) or {}) do
+            if a[k] == nil then a[k] = v end
+        end
+        return a
+    end
     for i = 1, U.SLOT_MAX do
         local s = (i % 2 == 1) and sL or sR
+        local w = (i % 2 == 1) and wL or wR
         local h = (i % 2 == 1) and hR or hL
-        table.insert(ISHotbarAttachDefinition, { type = "TWABagS" .. i, name = getText("IGUI_TWA_BagSlotS"), animset = s.animset, attachments = copyTable(s.attachments) })
+        table.insert(ISHotbarAttachDefinition, { type = "TWABagS" .. i, name = getText("IGUI_TWA_BagSlotS"), animset = s.animset, attachments = smallAttach(s, w) })
         table.insert(ISHotbarAttachDefinition, { type = "TWABagL" .. i, name = getText("IGUI_TWA_BagSlotL"), animset = h.animset, attachments = copyTable(h.attachments) })
     end
     defsMade = true
-    log("hotbar: %d extra slot types made (belt / holster copies)", U.SLOT_MAX * 2)
+    local function kinds(t)
+        local out = {}
+        for k in pairs(t or {}) do out[#out + 1] = tostring(k) end
+        table.sort(out)
+        return table.concat(out, ", ")
+    end
+    log("hotbar: %d extra slot types made; small slot takes: %s%s; large slot takes: %s", U.SLOT_MAX * 2,
+        kinds(smallAttach(sL, wL)), wL and "" or " (the game's WebbingLeft slot NOT found -- no flashlight)", kinds(hR.attachments))
     return true
 end
 

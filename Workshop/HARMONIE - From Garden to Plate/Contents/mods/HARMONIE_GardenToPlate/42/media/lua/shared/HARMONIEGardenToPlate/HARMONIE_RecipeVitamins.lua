@@ -179,92 +179,110 @@ end
         first addition.
 ]]--
 local original_ISAddItemInRecipe_complete = ISAddItemInRecipe.complete
-function ISAddItemInRecipe:complete()
-    local usedItem = self.usedItem
-    local hungerBefore = getItemHunger(usedItem)
-    local usedRates = hungerBefore and HARMONIE_GTP.GetVitaminRatePerHunger(usedItem)
-
-    local oldBaseItem = self.baseItem
-    local oldBaseId = oldBaseItem and oldBaseItem.getID and oldBaseItem:getID()
-    local oldVitamins, oldHunger = snapshotVitaminTotal(oldBaseItem)
-    local baseUnitsBefore = hungerUnitsOf(oldBaseItem)
-    -- the base's own content, when the dish has no running total yet
-    local seedProfile, seedUnits
-    if hungerBefore and not oldVitamins and not oldHunger and baseUnitsBefore > 0 then
-        seedUnits = baseUnitsBefore
-        seedProfile = {}
-        local baseRates = HARMONIE_GTP.GetVitaminRatePerHunger(oldBaseItem)
-        for vit, r in pairs(baseRates or {}) do seedProfile[vit] = r * baseUnitsBefore end
+-- GTP 1.8.6: the vitamin bookkeeping can never stop the action. Before,
+-- an error in it (before or after the game's own complete) left the timed
+-- action unfinished -- in MP the client's bar then hangs until it times out.
+-- Now the game's complete() always runs once, and ours is in a pcall.
+local function vitaminsBefore(self)
+    local st = {}
+    st.usedItem = self.usedItem
+    st.hungerBefore = getItemHunger(st.usedItem)
+    st.usedRates = st.hungerBefore and HARMONIE_GTP.GetVitaminRatePerHunger(st.usedItem)
+    st.oldBaseItem = self.baseItem
+    st.oldBaseId = st.oldBaseItem and st.oldBaseItem.getID and st.oldBaseItem:getID()
+    st.oldVitamins, st.oldHunger = snapshotVitaminTotal(st.oldBaseItem)
+    st.baseUnitsBefore = hungerUnitsOf(st.oldBaseItem)
+    if st.hungerBefore and not st.oldVitamins and not st.oldHunger and st.baseUnitsBefore > 0 then
+        st.seedUnits = st.baseUnitsBefore
+        st.seedProfile = {}
+        local baseRates = HARMONIE_GTP.GetVitaminRatePerHunger(st.oldBaseItem)
+        for vit, r in pairs(baseRates or {}) do st.seedProfile[vit] = r * st.baseUnitsBefore end
     end
+    return st
+end
 
+function ISAddItemInRecipe:complete()
+    local okB, st = pcall(vitaminsBefore, self)
+    if not okB then
+        log("vitamins: reading the ingredient FAILED (the addition still happens): %s", tostring(st))
+        st = nil
+    end
     local result = original_ISAddItemInRecipe_complete(self)
+    if st then
+        local okA, err = pcall(function()
+            local usedItem, hungerBefore, usedRates = st.usedItem, st.hungerBefore, st.usedRates
+            local oldBaseItem, oldBaseId, oldVitamins, oldHunger = st.oldBaseItem, st.oldBaseId, st.oldVitamins, st.oldHunger
+            local baseUnitsBefore, seedProfile, seedUnits = st.baseUnitsBefore, st.seedProfile, st.seedUnits
 
-    if hungerBefore then
-        -- hunger THIS addition took out of the ingredient (all of it when
-        -- it is gone, else the drop vanilla made)
-        local lost = math.abs(hungerBefore * 100)
-        local stillHere = usedItem and self.character:getInventory():contains(usedItem)
-        if stillHere then
-            local hungerAfter = getItemHunger(usedItem)
-            if hungerAfter then lost = math.abs((hungerBefore - hungerAfter) * 100) end
-        end
+            if hungerBefore then
+                -- hunger THIS addition took out of the ingredient (all of it when
+                -- it is gone, else the drop vanilla made)
+                local lost = math.abs(hungerBefore * 100)
+                local stillHere = usedItem and self.character:getInventory():contains(usedItem)
+                if stillHere then
+                    local hungerAfter = getItemHunger(usedItem)
+                    if hungerAfter then lost = math.abs((hungerBefore - hungerAfter) * 100) end
+                end
 
-        -- Defensive re-seed: self.recipe:addItem() is a native call, and
-        -- there is no confirmed guarantee it always mutates baseItem in
-        -- place rather than handing back a different item instance once
-        -- the dish changes name/type (an empty pot becoming a named
-        -- Stew). If that happens, the running total recorded on the OLD
-        -- object is carried over here instead of being dropped.
-        local newBaseId = self.baseItem and self.baseItem.getID and self.baseItem:getID()
-        if oldVitamins and self.baseItem ~= oldBaseItem then
-            local _, currentHunger = snapshotVitaminTotal(self.baseItem)
-            if not currentHunger then
-                log("baseItem identity changed while adding an ingredient (id %s -> %s) -- the running vitamin total is carried over",
-                    tostring(oldBaseId), tostring(newBaseId))
-                HARMONIE_GTP.AddVitaminsToItem(self.baseItem, oldVitamins, oldHunger)
-            end
-        end
-        if seedUnits then HARMONIE_GTP.AddVitaminsToItem(self.baseItem, seedProfile, seedUnits) end
+                -- Defensive re-seed: self.recipe:addItem() is a native call, and
+                -- there is no confirmed guarantee it always mutates baseItem in
+                -- place rather than handing back a different item instance once
+                -- the dish changes name/type (an empty pot becoming a named
+                -- Stew). If that happens, the running total recorded on the OLD
+                -- object is carried over here instead of being dropped.
+                local newBaseId = self.baseItem and self.baseItem.getID and self.baseItem:getID()
+                if oldVitamins and self.baseItem ~= oldBaseItem then
+                    local _, currentHunger = snapshotVitaminTotal(self.baseItem)
+                    if not currentHunger then
+                        log("baseItem identity changed while adding an ingredient (id %s -> %s) -- the running vitamin total is carried over",
+                            tostring(oldBaseId), tostring(newBaseId))
+                        HARMONIE_GTP.AddVitaminsToItem(self.baseItem, oldVitamins, oldHunger)
+                    end
+                end
+                if seedUnits then HARMONIE_GTP.AddVitaminsToItem(self.baseItem, seedProfile, seedUnits) end
 
-        -- hunger the dish GOT from this addition (vanilla gives the dish
-        -- the full portion while a skilled cook uses less of the ingredient)
-        local given = hungerUnitsOf(self.baseItem) - baseUnitsBefore
-        if given < 0.001 then given = 0 end
-        local vitUnits = given > 0 and given or lost
-        local scaled = {}
-        for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-            if usedRates and usedRates[vit] then scaled[vit] = usedRates[vit] * vitUnits end
-        end
-        HARMONIE_GTP.AddVitaminsToItem(self.baseItem, scaled, given)
+                -- hunger the dish GOT from this addition (vanilla gives the dish
+                -- the full portion while a skilled cook uses less of the ingredient)
+                local given = hungerUnitsOf(self.baseItem) - baseUnitsBefore
+                if given < 0.001 then given = 0 end
+                local vitUnits = given > 0 and given or lost
+                local scaled = {}
+                for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+                    if usedRates and usedRates[vit] then scaled[vit] = usedRates[vit] * vitUnits end
+                end
+                HARMONIE_GTP.AddVitaminsToItem(self.baseItem, scaled, given)
 
-        -- always on (one line per addition, the action's own pace):
-        -- proves from console.txt alone that the total keeps adding up
-        do
-            local finalVitamins, finalUnits = snapshotVitaminTotal(self.baseItem)
-            local parts = {}
-            for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
-                if finalVitamins and finalVitamins[vit] then
-                    parts[#parts + 1] = string.format("%s=%.1f", vit, finalVitamins[vit])
+                -- always on (one line per addition, the action's own pace):
+                -- proves from console.txt alone that the total keeps adding up
+                do
+                    local finalVitamins, finalUnits = snapshotVitaminTotal(self.baseItem)
+                    local parts = {}
+                    for _, vit in ipairs(HARMONIE_GTP.Vitamins) do
+                        if finalVitamins and finalVitamins[vit] then
+                            parts[#parts + 1] = string.format("%s=%.1f", vit, finalVitamins[vit])
+                        end
+                    end
+                    log("added %s into %s (id %s): gave %.1f hunger, used %.1f, %s; dish now %.1f hunger {%s}%s",
+                        typeName(usedItem), typeName(self.baseItem), tostring(newBaseId), given, lost,
+                        usedRates and "has vitamins" or "no vitamins", tonumber(finalUnits) or 0, table.concat(parts, ", "),
+                        seedUnits and string.format(" (base brought %.1f hunger)", seedUnits) or "")
+                end
+
+                -- Plain ModData changes on a contained item don't reach other
+                -- clients on their own. sendItemStats (what vanilla's own complete()
+                -- calls right after recipe:addItem) ran BEFORE our ModData was
+                -- set, so it is sent again now, plus the ModData itself where the
+                -- game has the call for it (B42 syncItemModData).
+                if isServer() then
+                    sendItemStats(self.baseItem)
+                    if syncItemModData then
+                        local who, item = self.character, self.baseItem
+                        pcall(function() syncItemModData(who, item) end)
+                    end
                 end
             end
-            log("added %s into %s (id %s): gave %.1f hunger, used %.1f, %s; dish now %.1f hunger {%s}%s",
-                typeName(usedItem), typeName(self.baseItem), tostring(newBaseId), given, lost,
-                usedRates and "has vitamins" or "no vitamins", tonumber(finalUnits) or 0, table.concat(parts, ", "),
-                seedUnits and string.format(" (base brought %.1f hunger)", seedUnits) or "")
-        end
-
-        -- Plain ModData changes on a contained item don't reach other
-        -- clients on their own. sendItemStats (what vanilla's own complete()
-        -- calls right after recipe:addItem) ran BEFORE our ModData was
-        -- set, so it is sent again now, plus the ModData itself where the
-        -- game has the call for it (B42 syncItemModData).
-        if isServer() then
-            sendItemStats(self.baseItem)
-            if syncItemModData then
-                local who, item = self.character, self.baseItem
-                pcall(function() syncItemModData(who, item) end)
-            end
-        end
+        end)
+        if not okA then log("vitamins: adding to the dish FAILED (the addition itself is done): %s", tostring(err)) end
     end
     return result
 end

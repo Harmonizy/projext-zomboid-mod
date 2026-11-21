@@ -1038,7 +1038,12 @@ function Win:renderCookEvoDetail(x, y, w, h, e, list)
                     seenType[key] = true
                     local needCooked = call(opt.recipe, "needToBeCooked", it) == false
                     local frozen = call(it, "isFrozen") == true and call(opt.recipe, "isAllowFrozenItem") ~= true
-                    local use = ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.getRealEvolvedItemUse
+                    -- 1.8.6 (owner's console: 75 x "Object tried to call nil in
+                    -- getRealEvolvedItemUse"): vanilla calls getHungerChange on the
+                    -- item -- only Food has it, and the error is logged even in a
+                    -- pcall. Ask only for food.
+                    local isFoodItem = instanceof(it, "Food") and it.getHungerChange ~= nil
+                    local use = isFoodItem and ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.getRealEvolvedItemUse
                         and select(2, pcall(ISInventoryPaneContextMenu.getRealEvolvedItemUse, it, opt.recipe, lvl))
                     use = type(use) == "number" and use or nil
                     rows[#rows + 1] = { it = it, ok = not needCooked and not frozen, needCooked = needCooked, frozen = frozen, use = use,
