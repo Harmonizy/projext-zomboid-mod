@@ -271,7 +271,22 @@ function Win:renderCook(x, y, w, h)
             log("cooking tab page: %s", p)
         end }
     end
-    local used = self:cookChips(items, x, y, w - 30)
+    -- the Refresh button (lists never update by themselves, GTP 1.9.0)
+    local sfB = H.small()
+    local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or T("IGUI_HUB_Refresh")
+    local rbw = tw(sfB, rLabel) + 24
+    local rbx = x + w - 30 - rbw
+    self:cookButton(rbx, y - 3, rLabel, true, function(win)
+        log("Refresh pressed (page %s)", tostring(win.cookPage))
+        H.lookAgain("Refresh button")
+    end, rbw)
+    do
+        local mx, my = self:getMouseX(), self:getMouseY()
+        if HARMONIE_Refresh and mx >= rbx and mx < rbx + rbw and my >= y - 3 and my < y + lineH(sfB) + 9 then
+            self.hoverTip = { text = HARMONIE_Refresh.tip(), x = rbx, y = y + lineH(sfB) + 12 }
+        end
+    end
+    local used = self:cookChips(items, x, y, w - 40 - rbw)
     -- the dish buff on this character now
     local buff = K.myBuffNow and K.myBuffNow(self.player)
     local helpKey = "IGUI_GTPP_Help_" .. page
@@ -289,10 +304,21 @@ function Win:renderCook(x, y, w, h)
 end
 
 -- ------------------------------------------------------------------ prepare
--- GTP 1.5.0 (#10): ONE walk over what is at hand, shared by the pages. A
--- cheap signature (how many items each container holds) is checked every
--- 500 ms; the full walk runs only when it changed, or every 5 s.
-H.SCAN_SIG_MS, H.SCAN_MAX_MS = 500, 5000
+-- GTP 1.5.0 (#10): ONE walk over what is at hand, shared by the pages.
+-- GTP 1.9.0 (owner 2026-11-21: "the recipes keep refreshing as if searching
+-- -- a refresh button, nothing automatic"): the walk runs ONLY when the
+-- window opens, when the Refresh button is pressed, or after one of the
+-- tab's own actions finished (HARMONIE_Refresh scope "GTP"). The old 500 ms
+-- signature / 5 s re-walk reset the craft page's "can make" marks and
+-- re-sorted every list again and again.
+local function refreshGen() return HARMONIE_Refresh and HARMONIE_Refresh.gen("GTP") or 0 end
+function H.lookAgain(why)
+    if HARMONIE_Refresh then HARMONIE_Refresh.bump("GTP", why) end
+end
+function H.lookAgainAfter(player, why)
+    if HARMONIE_Refresh and HARMONIE_Refresh.afterActions then HARMONIE_Refresh.afterActions("GTP", player, why)
+    else H.lookAgain(why) end
+end
 H.SCAN_FOOD_MAX = 3000
 -- the BaseItem and ResultItem of every vanilla evolved recipe (from
 -- evolvedrecipes_index.txt): what can start or continue a dish
@@ -309,12 +335,12 @@ end
 function Win:cookScan(force)
     local t = nowMs()
     local sc = self.cookScanData
-    if sc and not force and t - sc.checked < H.SCAN_SIG_MS then return sc end
+    local rg = refreshGen()
+    if sc and not force and sc.refreshGen == rg then return sc end
     local containers = K.containers(self.player)
     local sig = containerSig(containers)
-    if sc and not force and sig == sc.sig and t - sc.at < H.SCAN_MAX_MS then sc.checked = t; return sc end
     local t0 = t
-    sc = { at = t, checked = t, sig = sig, containers = containers, items = {}, gen = (sc and sc.gen or 0) + 1 }
+    sc = { at = t, checked = t, sig = sig, containers = containers, items = {}, gen = (sc and sc.gen or 0) + 1, refreshGen = rg }
     -- GTP 1.8.5 (owner: "meat is not found any more, even right next to
     -- me"): the walk stopped after the first 800 items of ANY kind, so in a
     -- full base the food further down the list (a fridge after the shelves)
@@ -335,6 +361,7 @@ function Win:cookScan(force)
         R.logOnce("scancap", "Cooking tab scan: %d foods at hand, only the first %d listed", nFood, H.SCAN_FOOD_MAX)
     end
     local took = nowMs() - t0
+    log("Cooking tab: looked at what is at hand -- %d items, %d kept (%d ms, refresh #%d)", n, #sc.items, took, rg)
     if took > 15 then R.logOnce("scanslow:" .. tostring(math.floor(took / 10)), "Cooking tab scan: %d items took %d ms", #sc.items, took) end
     self.cookScanData = sc
     return sc
@@ -665,6 +692,7 @@ function Win:startPrep(item, pid, toolItem, grade, group, chainKey)
     end
     self.prepRun = run
     self.prepLast = nil
+    H.lookAgainAfter(self.player, "prepare " .. tostring(run.name))
     local win = self
     local function finish(word, why)
         if win.prepRun ~= run then return end
@@ -772,6 +800,7 @@ function Win:startRedo(item)
     local run = { item = item, pid = "wash", name = itemName(item), phase = "action", at = nowMs(), redo = true }
     self.prepRun = run
     self.prepLast = nil
+    H.lookAgainAfter(self.player, "prepare " .. tostring(run.name))
     local win = self
     -- GTP 1.8.2: no 3 s wash action any more (owner: nothing of ours may add
     -- time) -- asked at once, or right after the item reaches the inventory
@@ -1064,6 +1093,7 @@ function Win:renderCookEvoDetail(x, y, w, h, e, list)
         if not okC then log("adding through vanilla FAILED: %s", tostring(err)) end
         if not e.started then win.evoFollow = e.name end
         win.evoDirty = true
+        H.lookAgainAfter(win.player, "add to a dish")
     end
     -- #41: remember this dish / make a favorite again, one ingredient per click
     local have = extraTypes(opt.base)

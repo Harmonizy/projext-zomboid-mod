@@ -165,9 +165,9 @@ end
 
 function UI:prerender()
     ISPanel.prerender(self)
-    -- the medicines move (used, taken by someone): look again every 2 s
-    local now = getTimestampMs and getTimestampMs() or 0
-    if now - (self.refreshedAt or 0) > 2000 then self:refresh() end
+    -- HTS 1.2.0 (owner 2026-11-21: lists refresh by a button, never by
+    -- themselves): no 2 s re-read -- the Refresh button below (Use checks
+    -- the medicine again anyway)
     self.hits = {}
     local w = self.width
     self:drawRect(0, 0, w, 34, 0.95, 0.03, 0.052, 0.08)
@@ -217,6 +217,9 @@ function UI:prerender()
     local hw = math.max(150, tw(L("Handbook", "Medication Handbook")) + 30)
     local by = self.height - bh - 12
     button(self, "handbook", L("Handbook", "Medication Handbook"), w - 14 - cw - 8 - hw, by, hw, bh, true)
+    local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or getText("IGUI_HUB_Refresh")
+    local rw = math.max(90, tw(rLabel) + 30)
+    button(self, "refresh", rLabel, 14, by, rw, bh, true)
     button(self, "close", L("Close", "Close"), w - 14 - cw, by, cw, bh, true)
 end
 
@@ -225,6 +228,10 @@ function UI:onMouseDown(x, y)
         if x >= h.x and x <= h.x + h.w and y >= h.y and y <= h.y + h.h then
             pcall(function() getSoundManager():playUISound("UISelectListItem") end)
             if h.key == "close" then self:close()
+            elseif h.key == "refresh" then
+                log("Refresh pressed (medicine for %s)", tostring(self.id))
+                if HARMONIE_Refresh then HARMONIE_Refresh.bump("HM", "medicine list Refresh") end
+                self:refresh()
             elseif h.key == "handbook" then
                 local panel = self.panel
                 self:close()

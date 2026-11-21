@@ -769,5 +769,7 @@
     "IGUI_GTPP_StartGame": "Start",
     "IGUI_GTPP_MenuTagDish": "[%1 -> dish %2]",
     "IGUI_GTPN_TipChefNoteBy": "Made by %1 - has a note from %2",
-    "IGUI_GTPN_Refused_notWriter": "This note belongs to the cook who wrote it"
+    "IGUI_GTPN_Refused_notWriter": "This note belongs to the cook who wrote it",
+    "IGUI_HUB_Refresh": "Refresh",
+    "IGUI_HUB_Refresh_Tip": "Look again at what is at hand. The list does not update by itself: press this after you move or pick up items."
 }

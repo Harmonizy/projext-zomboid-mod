@@ -168,5 +168,7 @@
     "IGUI_HUB_State_COMPLETE": "Done",
     "IGUI_HUB_State_INFO_ONLY": "Info",
     "IGUI_HUB_Set_Hints": "Show next-step hints",
-    "IGUI_HUB_Set_Hints_Tip": "The line on top of each tab that says what this page is for and what to do next. Same setting in every HARMONIE window, this computer only."
+    "IGUI_HUB_Set_Hints_Tip": "The line on top of each tab that says what this page is for and what to do next. Same setting in every HARMONIE window, this computer only.",
+    "IGUI_HUB_Refresh": "Refresh",
+    "IGUI_HUB_Refresh_Tip": "Look again at what is at hand. The list does not update by itself: press this after you move or pick up items."
 }

@@ -537,5 +537,7 @@
     "IGUI_LWS_Slot_makeup": "แต่งหน้า",
     "IGUI_LWS_Slot_tail": "หาง",
     "IGUI_LWS_Slot_extra": "ของพิเศษ",
-    "IGUI_LWS_Slot_pet": "สัตว์เลี้ยง"
+    "IGUI_LWS_Slot_pet": "สัตว์เลี้ยง",
+    "IGUI_HUB_Refresh": "รีเฟรช",
+    "IGUI_HUB_Refresh_Tip": "ค้นหาของที่มีอยู่ใหม่อีกครั้ง รายการนี้ไม่อัปเดตเอง กดหลังจากย้ายหรือหยิบของ"
 }
