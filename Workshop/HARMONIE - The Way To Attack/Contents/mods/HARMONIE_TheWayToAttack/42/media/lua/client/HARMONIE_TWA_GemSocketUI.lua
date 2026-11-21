@@ -203,8 +203,10 @@ function TWAGemSocketUI:weaponOk()
     local wpn = self.weapon
     if not wpn or not G.canUse(wpn) then return false end
     -- round 22: in the bags, a container nearby or on the floor
-    if (self.nextCheck or 0) > self.elapsed then return self.lastOk end
-    self.nextCheck = self.elapsed + 500
+    -- 1.4.0: checked again only when the TWA refresh generation changes
+    local g = HARMONIE_Refresh and HARMONIE_Refresh.gen("TWA") or 0
+    if self.okGen == g and self.lastOk ~= nil then return self.lastOk end
+    self.okGen = g
     self.lastOk = TWASources.get(self.player):findById(wpn:getID()) ~= nil
     return self.lastOk
 end
@@ -216,7 +218,8 @@ end
 local STATE_ORDER = {}
 for i, st in ipairs(TWACraftState.GEM_STATES) do STATE_ORDER[st] = i end
 function TWAGemSocketUI:ownedGems()
-    if self.gemCache and (self.gemCacheAt or 0) > self.elapsed then return self.gemCache end
+    local gGen = HARMONIE_Refresh and HARMONIE_Refresh.gen("TWA") or 0
+    if self.gemCache and self.gemCacheGen == gGen then return self.gemCache end
     local groups, list = {}, {}
     local order = {}
     for i, t in ipairs(G.gemTypes()) do order[t] = i end
@@ -243,7 +246,7 @@ function TWAGemSocketUI:ownedGems()
         if ta ~= tb then return ta > tb end
         return a.name < b.name
     end)
-    self.gemCache, self.gemCacheAt = list, self.elapsed + 300
+    self.gemCache, self.gemCacheAt, self.gemCacheGen = list, self.elapsed + 300, gGen
     return list
 end
 

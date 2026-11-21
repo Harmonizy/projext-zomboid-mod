@@ -144,6 +144,13 @@ function Prep:createChildren()
     self.startBtn:initialise(); self:addChild(self.startBtn)
     self.closeBtn = ISButton:new(0, 0, 100, bh, S.T("Close", "Close"), self, Prep.close)
     self.closeBtn:initialise(); self:addChild(self.closeBtn)
+    -- HTS 1.2.0 (owner 2026-11-21: lists refresh by a button, never by
+    -- themselves): the checklist is looked at again only with this button,
+    -- a tab / part change or Start (Start always checks again first)
+    local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or getText("IGUI_HUB_Refresh")
+    self.refreshBtn = ISButton:new(0, 0, getTextManager():MeasureStringX(UIFont.Small, rLabel) + 24, bh, rLabel, self, Prep.onRefresh)
+    if HARMONIE_Refresh then self.refreshBtn.tooltip = HARMONIE_Refresh.tip() end
+    self.refreshBtn:initialise(); self:addChild(self.refreshBtn)
     if self.embedded then self.closeBtn:setVisible(false) end
 end
 
@@ -221,12 +228,21 @@ function Prep:layout()
     local by = self.height - self.startBtn.height - 10
     self.startBtn:setX(self.width - (self.embedded and 132 or 238)); self.startBtn:setY(by)
     self.closeBtn:setX(self.width - 112); self.closeBtn:setY(by)
+    if self.refreshBtn then self.refreshBtn:setX(self.startBtn.x - self.refreshBtn.width - 8); self.refreshBtn:setY(by) end
     self.m = m
+end
+
+function Prep:onRefresh()
+    HMLog("Surgery", "Refresh pressed (%s)", tostring(self.sid))
+    if HARMONIE_Refresh then HARMONIE_Refresh.bump("HM", "surgery checklist Refresh") end
+    self:reevaluate(true)
 end
 
 function Prep:reevaluate(force)
     local t = nowMs()
-    if not force and t - self.lastEval < 800 then return end
+    local g = HARMONIE_Refresh and HARMONIE_Refresh.gen("HM") or 0
+    if not force and self.evalGen == g and self.eval then return end
+    self.evalGen = g
     self.lastEval = t
     self.eval = S.evaluate(self.doctor, self.patient, self.bodyPart, self.sid, self.exam)
     self.rowsL = nil

@@ -769,5 +769,7 @@
     "IGUI_GTPP_StartGame": "เริ่มทำ",
     "IGUI_GTPP_MenuTagDish": "[%1 -> จาน %2]",
     "IGUI_GTPN_TipChefNoteBy": "ทำโดย %1 - มีโน้ตจาก %2",
-    "IGUI_GTPN_Refused_notWriter": "โน้ตนี้เป็นของคนที่เขียนไว้ แก้หรือลบได้เฉพาะคนเขียน"
+    "IGUI_GTPN_Refused_notWriter": "โน้ตนี้เป็นของคนที่เขียนไว้ แก้หรือลบได้เฉพาะคนเขียน",
+    "IGUI_HUB_Refresh": "รีเฟรช",
+    "IGUI_HUB_Refresh_Tip": "ค้นหาของที่มีอยู่ใหม่อีกครั้ง รายการนี้ไม่อัปเดตเอง กดหลังจากย้ายหรือหยิบของ"
 }

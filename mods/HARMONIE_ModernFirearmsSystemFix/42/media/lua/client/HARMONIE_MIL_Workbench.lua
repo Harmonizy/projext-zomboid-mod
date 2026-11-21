@@ -189,6 +189,24 @@ function W.partsFor(player, weapon, slot)
     return found
 end
 
+-- MIL 1.1.0: the shared refresh generation (HARMONIE_Refresh scope "MIL")
+function W.gen() return HARMONIE_Refresh and HARMONIE_Refresh.gen("MIL") or 0 end
+function W.lookAgain(why) if HARMONIE_Refresh then HARMONIE_Refresh.bump("MIL", why) end end
+function W.lookAgainAfter(player, why)
+    if HARMONIE_Refresh and HARMONIE_Refresh.afterActions then HARMONIE_Refresh.afterActions("MIL", player, why)
+    else W.lookAgain(why) end
+end
+-- what is fitted on the gun now (its own slots, cheap)
+function W.partSig(weapon)
+    if not weapon then return "-" end
+    local parts = {}
+    for _, slot in ipairs(W.slots()) do
+        local p = call(weapon, "getWeaponPart", slot)
+        parts[#parts + 1] = p and tostring(call(p, "getFullType")) or "."
+    end
+    return table.concat(parts, ",")
+end
+
 -- every slot: { slot, part (or nil), fits = n }
 function W.partRows(player, weapon)
     local rows = {}
@@ -830,21 +848,33 @@ function W:removePart(slot, part)
         ISTimedActionQueue.add(ISRemoveWeaponUpgrade:new(self.player, self.weapon, part:getPartType(), 1))
     end)
     log("remove %s from %s: %s", itemName(part), slot, ok and "queued" or ("FAILED: " .. tostring(err)))
-    self.partCache = nil
+    W.lookAgainAfter(self.player, "remove " .. tostring(slot))
 end
 
 -- ----------------------------------------------------------------- tab 3: parts
 function W:renderParts(x, y, w, h)
     local C = W.C
     local sf = W.small()
-    -- the part lists scan containers: refresh twice a second, not every frame
-    local now = getTimestampMs and getTimestampMs() or 0
-    if not self.partCache or now - (self.partCacheAt or 0) > 500 then
+    -- MIL 1.1.0 (owner 2026-11-21: lists refresh by a button, never by
+    -- themselves): the part lists scan containers only when the MIL refresh
+    -- generation changes (Refresh button, a part removed / fitted here) or
+    -- the gun's own fitted parts changed (read from the gun, no container walk)
+    local g = W.gen()
+    local sig = W.partSig(self.weapon)
+    if not self.partCache or self.partCacheGen ~= g or self.partCacheSig ~= sig then
         self.partCache = W.partRows(self.player, self.weapon)
-        self.partCacheAt = now
+        self.partCacheGen, self.partCacheSig = g, sig
+        log("parts tab: looked at what is at hand (refresh #%d)", g)
     end
     local note = wrap(T("IGUI_MIL_PartsNote"), w - 24, sf)
     local top = y - self.scroll
+    -- the Refresh button, right of the how-to card's title
+    local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or T("IGUI_HUB_Refresh")
+    local rbw = tw(sf, rLabel) + 28
+    self:button(x + w - rbw - 8, top + 4, rbw, 24, rLabel, function()
+        log("Refresh pressed (parts tab)")
+        W.lookAgain("Refresh button")
+    end)
     local nx, ny = self:drawCard(x, top, w, W.CARD_T + 16 + #note * lineH(sf), T("IGUI_MIL_PartsHowTitle"))
     for _, l in ipairs(note) do shadowText(self, l, nx, ny, C.textDim, 1, sf); ny = ny + lineH(sf) end
     top = top + W.CARD_T + 26 + #note * lineH(sf)

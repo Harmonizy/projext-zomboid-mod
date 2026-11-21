@@ -190,6 +190,17 @@ function TWACraftWindow:createWorkbenchChildren(contentTop, panelBottom)
     self.settingsBtn:setTooltip(getText("IGUI_TWA_Set_Title"))
     self.settingsBtn:initialise()
     self:addChild(self.settingsBtn)
+    -- 1.4.0 (owner: lists refresh by a button, never by themselves): Refresh
+    -- looks again at what is at hand for every page of this window
+    local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or getText("IGUI_HUB_Refresh")
+    local rw = getTextManager():MeasureStringX(TWAFont.small(), rLabel) + S(self, 20)
+    self.refreshBtn = TWANeatButton:new(self.settingsBtn.x - rw - 6, hy, rw, cs, rLabel, self, function(win)
+        TWALog("Workbench", "Refresh pressed (page %s)", tostring(win.page))
+        TWACraftUI.lookAgain("Refresh button")
+    end)
+    if HARMONIE_Refresh then self.refreshBtn:setTooltip(HARMONIE_Refresh.tip()) end
+    self.refreshBtn:initialise()
+    self:addChild(self.refreshBtn)
     self:refreshHeaderButtons()
 
     -- tab 1 without a recipe: to tab 2 / tab 3
@@ -299,7 +310,7 @@ function TWACraftWindow:volumeRect()
     local h = S(self, W.HEADER_H)
     local sw = S(self, 150)
     -- room right of the bar for "100%" / "Muted" before the header buttons
-    local left = self.settingsBtn or self.closeX
+    local left = self.refreshBtn or self.settingsBtn or self.closeX
     local x = left and (left.x - sw - S(self, 76)) or (self.width - sw - 100)
     return x, math.floor(h / 2) - 4, sw, 8
 end
@@ -668,7 +679,7 @@ function TWACraftWindow:togglePin()
     W.savePrefs()
 end
 
-local HEADER_KEEP = { "closeX", "pinBtn", "settingsBtn" }
+local HEADER_KEEP = { "closeX", "pinBtn", "settingsBtn", "refreshBtn" }
 function TWACraftWindow:wbCollapse()
     if self.wbCollapsed then return end
     local keep = {}

@@ -135,18 +135,21 @@ function U.embed(parent, x, y, w, h, player)
         o.msg = key and getText(key, upType and typeName(upType) or "") or nil
         o.msgOk = ok
         o.msgUntil = getTimestampMs() + 5000
-        o.nextScan = 0
+        o.scanGen = nil
+        if TWACraftUI and TWACraftUI.lookAgain then TWACraftUI.lookAgain("bag add-on " .. tostring(ok and "done" or "refused")) end
         o.pick, o.selSlot = nil, nil
         U.refreshHotbars()
     end
     return o
 end
 
--- what is at hand (scanned twice a second); add-ons grouped by type
+-- what is at hand; add-ons grouped by type. 1.4.0: looked at again only when
+-- the TWA refresh generation changes (Refresh button, window opened, an
+-- add-on fitted / taken out) -- not twice a second
 function U:scan()
-    local now = getTimestampMs()
-    if self.nextScan and now < self.nextScan then return end
-    self.nextScan = now + 500
+    local g = HARMONIE_Refresh and HARMONIE_Refresh.gen("TWA") or 0
+    if self.scanGen == g and self.bags then return end
+    self.scanGen = g
     local bags, groups, ups = {}, {}, {}
     local src = TWASources.get(self.player)
     if src.index then src:index() end

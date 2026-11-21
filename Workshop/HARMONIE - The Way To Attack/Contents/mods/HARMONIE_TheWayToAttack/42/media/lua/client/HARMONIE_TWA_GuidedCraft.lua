@@ -172,8 +172,10 @@ function TWACraftWindow:guidedData()
         tostring(self.resumeItem), tostring(self.activeProcId), tostring(self.activeCenterKind), tostring(self.practicing) }, "|")
     local c = self.guidedCache
     local t = now()
-    if c and c.key == key and t - c.at < G.CACHE_MS then return c end
-    c = { key = key, at = t, procs = {}, ready = 0, total = 0 }
+    -- 1.4.0: kept until the TWA refresh generation changes (no timed re-check)
+    local g = HARMONIE_Refresh and HARMONIE_Refresh.gen("TWA") or 0
+    if c and c.key == key and c.gen == g then return c end
+    c = { key = key, at = t, gen = g, procs = {}, ready = 0, total = 0 }
     self.guidedCache = c
     if not recipe then return c end
     local S = TWACraftState

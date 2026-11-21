@@ -505,14 +505,26 @@ end
 -- Round 25: the recipe list asks for every visible row every frame, and
 -- each answer walks the bags and the containers nearby -- remember it for
 -- half a second per recipe.
+-- 1.4.0 (owner 2026-11-21, "lists keep refreshing as if searching -- a
+-- refresh button, nothing automatic"): every list answer here is kept until
+-- the TWA refresh generation changes (Refresh button in the header, the
+-- window opening, or one of our actions finishing) -- HARMONIE_Refresh.
+local function twaGen() return HARMONIE_Refresh and HARMONIE_Refresh.gen("TWA") or 0 end
+TWACraftUI = TWACraftUI or {}
+TWACraftUI.gen = twaGen
+function TWACraftUI.lookAgain(why) if HARMONIE_Refresh then HARMONIE_Refresh.bump("TWA", why) end end
+function TWACraftUI.lookAgainAfter(player, why)
+    if HARMONIE_Refresh and HARMONIE_Refresh.afterActions then HARMONIE_Refresh.afterActions("TWA", player, why)
+    else TWACraftUI.lookAgain(why) end
+end
 local ownsCache = {}
 local ownsBaseNow
 local function ownsBase(recipe, player)
-    local now = getTimestampMs and getTimestampMs() or 0
+    local g = twaGen()
     local c = ownsCache[recipe]
-    if c and c.player == player and now - c.at < 500 then return c.ok end
+    if c and c.player == player and c.gen == g then return c.ok end
     local ok = ownsBaseNow(recipe, player)
-    ownsCache[recipe] = { at = now, ok = ok, player = player }
+    ownsCache[recipe] = { gen = g, ok = ok, player = player }
     return ok
 end
 
@@ -1149,13 +1161,14 @@ function TWAProcScrollList:doDrawItem(y, entry, alt)
     for col, id in ipairs(ids) do
         local proc = TWAProcedures.List[id]
         if proc then
-            -- 1.0.8: each cell's check is kept 750 ms (it was every cell, every frame)
+            -- 1.0.8: each cell's check is kept (it was every cell, every frame);
+            -- 1.4.0: until the refresh generation changes, not 750 ms
             local mc = self.metCache or {}
             self.metCache = mc
             local e = mc[id]
-            local tnow = getTimestampMs()
-            if not e or tnow - e.at > 750 then
-                e = { at = tnow, met = TWAProcedures.CheckEligibility(proc, getPlayer()) and true or false }
+            local g = twaGen()
+            if not e or e.gen ~= g then
+                e = { gen = g, met = TWAProcedures.CheckEligibility(proc, getPlayer()) and true or false }
                 mc[id] = e
             end
             local met = e.met
@@ -1790,13 +1803,13 @@ end
 -- the ones that cannot be used dim with the reason (has items inside / wrong
 -- tier / worn or on the hotbar / unfinished); the picked one is kept by id.
 function TWACraftWindow:bagCandidates(recipe)
-    local now = getTimestampMs()
+    local g = twaGen()
     local c = self.bagCandCache
-    if c and c.id == recipe.id and now < c.untilMs then return c.list end
+    if c and c.id == recipe.id and c.gen == g then return c.list end
     local out = {}
     local B = TWABagUp
     if not B then return out end
-    self.bagCandCache = { id = recipe.id, untilMs = now + 500, list = out }
+    self.bagCandCache = { id = recipe.id, gen = g, list = out }
     TWASources.get(self.player):forEachItem(function(it)
         if B.isBag(it) then
             local ok = TWACraftState.baseOk(recipe, it)
@@ -1918,8 +1931,9 @@ function TWACraftWindow:updateContinueButton()
     -- 1.0.8: scanned only on the pages that show it (the recipe lists, the
     -- craft tab with no recipe), every 2 s -- not on every page every second
     local wanted = self.page == "browse" or (self.page == "craft" and not self.selectedRecipe)
-    if wanted and (not self.incompleteList or now - (self.incompleteScanAt or 0) >= 2000) then
+    if wanted and (not self.incompleteList or self.incompleteGen ~= twaGen()) then
         self.incompleteScanAt = now
+        self.incompleteGen = twaGen()
         self.incompleteList = self:findIncomplete()
     end
     self.incompleteList = self.incompleteList or {}
@@ -2096,6 +2110,7 @@ function TWACraftWindow:startCenterAction(kind)
     self.activeCenterKind = kind
     self.activeCenterAction = action
     ISTimedActionQueue.add(action)
+    TWACraftUI.lookAgainAfter(self.player, "craft " .. tostring(kind))
 end
 
 -- Only ever called from inside an action's own perform() -- never on a
@@ -2238,6 +2253,7 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
         end
         window.activeAction = action
         ISTimedActionQueue.add(action)
+        TWACraftUI.lookAgainAfter(window.player, "step " .. tostring(procId))
     end
 
     -- Material recipes play the minigame too (request 2026-09-28: "ทุกอันใน
@@ -2306,6 +2322,7 @@ function TWACraftWindow:onPracticeProcedure()
         window.activeProcId = procId
         window.activeAction = action
         ISTimedActionQueue.add(action)
+        TWACraftUI.lookAgainAfter(window.player, "step " .. tostring(procId))
     end, self.selectedRecipe)
     if not ok then
         self.practicing = false
@@ -2612,11 +2629,11 @@ function TWACraftWindow:drawProcedureDetails()
 
     local done = self.selectedRecipe and self:currentDone()[self.selectedProcId]
     local inProgress = self.activeProcId == self.selectedProcId and self.activeAction
-    -- 1.0.8: checked twice a second, not every frame
+    -- 1.0.8: not every frame; 1.4.0: kept until the refresh generation changes
     local dc = self.procDescCache
-    local tnow = getTimestampMs()
-    if not (dc and dc.procId == self.selectedProcId and tnow - dc.at < 500) then
-        dc = { procId = self.selectedProcId, at = tnow, reqs = TWAProcedures.DescribeAll(proc, self.player) }
+    local g = twaGen()
+    if not (dc and dc.procId == self.selectedProcId and dc.gen == g) then
+        dc = { procId = self.selectedProcId, gen = g, reqs = TWAProcedures.DescribeAll(proc, self.player) }
         self.procDescCache = dc
     end
     local reqs = dc.reqs
@@ -3292,6 +3309,8 @@ function TWACraftUI.open(player, searchText, resumeItem)
         return
     end
 
+    -- 1.4.0: each opening looks at what is at hand once
+    TWACraftUI.lookAgain("window opened")
     -- R68: the window's size for this screen / the player's choice
     applyLayout(TWACraftUI.layoutScale())
     local core = getCore()
