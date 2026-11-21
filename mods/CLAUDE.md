@@ -251,6 +251,15 @@
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
+- RULE for any wrapper of a Java-exposed global (sendServerCommand,
+  sendClientCommand, ...): forward with varargs `function(...) return
+  orig(...) end`, NEVER a fixed list like (a1, a2, a3, a4). Java picks the
+  overload by the exact argument count, and a padded nil makes a 3-argument
+  call (String, String, table, nil) -> "No implementation found for function:
+  sendServerCommand" and the packet is NOT sent. Hub 5.1 (GTP 1.8.8, TWA
+  1.3.4, HTS 1.1.3, SVU 1.0.9, MIL 1.0.12, LWS 1.1.4, 2026-11-21) fixed this
+  in the packet meter after it broke other mods' server commands (Waterpipes,
+  Blackout Predators, RealWorldZ Vehicle Ownership in the owner's console).
 - Packet meter (Hub 5, 2026-11-20, owner: "anything that sends too fast or
   can loop -- players get kicked"): `shared/000_HARMONIE_NetMeter.lua` wraps
   sendClientCommand / sendServerCommand ONCE (global flag) and only COUNTS by

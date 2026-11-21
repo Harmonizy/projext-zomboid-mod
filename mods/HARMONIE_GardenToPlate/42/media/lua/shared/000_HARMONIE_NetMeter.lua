@@ -62,22 +62,28 @@ function N.count(a1, a2, a3)
     end
 end
 
+-- Hub 5.1 fix: the wrapper MUST forward exactly the arguments it was given
+-- (varargs). The first version always passed 4, so a 3-argument call such as
+-- sendServerCommand("Module", "Cmd", args) reached Java as
+-- (String, String, table, nil) and found no matching overload ("No
+-- implementation found for function: sendServerCommand") -- the packet was
+-- never sent, for every mod on the server.
 if not HARMONIE_NetMeterInstalled then
     HARMONIE_NetMeterInstalled = true
     local wrapped = {}
     if type(sendClientCommand) == "function" then
         local orig = sendClientCommand
-        sendClientCommand = function(a1, a2, a3, a4)
-            pcall(N.count, a1, a2, a3)
-            return orig(a1, a2, a3, a4)
+        sendClientCommand = function(...)
+            pcall(N.count, ...)
+            return orig(...)
         end
         wrapped[#wrapped + 1] = "sendClientCommand"
     end
     if type(sendServerCommand) == "function" then
         local orig = sendServerCommand
-        sendServerCommand = function(a1, a2, a3, a4)
-            pcall(N.count, a1, a2, a3)
-            return orig(a1, a2, a3, a4)
+        sendServerCommand = function(...)
+            pcall(N.count, ...)
+            return orig(...)
         end
         wrapped[#wrapped + 1] = "sendServerCommand"
     end
