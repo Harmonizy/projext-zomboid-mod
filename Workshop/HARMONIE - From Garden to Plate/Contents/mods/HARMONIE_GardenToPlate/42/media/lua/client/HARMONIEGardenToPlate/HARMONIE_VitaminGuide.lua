@@ -1627,6 +1627,8 @@ function H.open(player, beside, tab)
         win.settingsOpen = false
     end
     if not H.isOpen() then
+        -- GTP 1.9.0: each opening looks at what is at hand once (lists do not refresh by themselves)
+        if H.lookAgain then H.lookAgain("window opened") end
         win:addToUIManager()
         win.inManager = true
         win:setVisible(true)

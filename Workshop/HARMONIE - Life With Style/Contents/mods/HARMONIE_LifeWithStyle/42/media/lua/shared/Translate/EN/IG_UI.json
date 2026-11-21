@@ -537,5 +537,7 @@
     "IGUI_LWS_Slot_makeup": "Make-up",
     "IGUI_LWS_Slot_tail": "Tail",
     "IGUI_LWS_Slot_extra": "Special",
-    "IGUI_LWS_Slot_pet": "Pet"
+    "IGUI_LWS_Slot_pet": "Pet",
+    "IGUI_HUB_Refresh": "Refresh",
+    "IGUI_HUB_Refresh_Tip": "Look again at what is at hand. The list does not update by itself: press this after you move or pick up items."
 }

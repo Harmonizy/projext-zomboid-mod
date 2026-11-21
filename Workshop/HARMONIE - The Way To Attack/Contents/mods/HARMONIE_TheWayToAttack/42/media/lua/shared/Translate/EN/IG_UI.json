@@ -975,5 +975,7 @@
     "IGUI_TWA_BagTier_NoneFits": "No bag can be used yet: click to see why (empty it / take it off / wrong tier)",
     "IGUI_TWA_BagTier_NoBag": "No wearable vanilla bag at hand",
     "IGUI_TWA_BagTier_NeedBag": "An empty tier %1 bag",
-    "IGUI_TWA_BagTier_PickBtn": "Pick a bag"
+    "IGUI_TWA_BagTier_PickBtn": "Pick a bag",
+    "IGUI_HUB_Refresh": "Refresh",
+    "IGUI_HUB_Refresh_Tip": "Look again at what is at hand. The list does not update by itself: press this after you move or pick up items."
 }

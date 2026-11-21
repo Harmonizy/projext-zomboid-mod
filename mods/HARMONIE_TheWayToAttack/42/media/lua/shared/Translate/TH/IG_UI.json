@@ -975,5 +975,7 @@
     "IGUI_TWA_BagTier_NoneFits": "ยังไม่มีกระเป๋าที่ใช้ได้ คลิกเพื่อดูเหตุผล (ต้องเอาของออก / ถอดออก / tier ไม่ตรง)",
     "IGUI_TWA_BagTier_NoBag": "ไม่มีกระเป๋า vanilla ที่สวมได้อยู่ใกล้ตัว",
     "IGUI_TWA_BagTier_NeedBag": "กระเป๋า tier %1 ที่ว่างเปล่า",
-    "IGUI_TWA_BagTier_PickBtn": "เลือกกระเป๋า"
+    "IGUI_TWA_BagTier_PickBtn": "เลือกกระเป๋า",
+    "IGUI_HUB_Refresh": "รีเฟรช",
+    "IGUI_HUB_Refresh_Tip": "ค้นหาของที่มีอยู่ใหม่อีกครั้ง รายการนี้ไม่อัปเดตเอง กดหลังจากย้ายหรือหยิบของ"
 }

@@ -392,8 +392,13 @@ function Win:setVehicle(vehicle)
     self:refreshData()
 end
 
+-- SVU 1.1.0 (owner 2026-11-21: lists refresh by a button, never by
+-- themselves): the rows are read when the window opens / the car changes and
+-- when Refresh (header) is pressed -- no 2 s re-read
+function H.gen() return HARMONIE_Refresh and HARMONIE_Refresh.gen("SVU") or 0 end
 function Win:refreshData()
     self.dataAt = getTimestampMs and getTimestampMs() or 0
+    self.dataGen = H.gen()
     self.carName = H.scriptName(self.vehicle)
     self.rows = self.vehicle and H.upgradeRows(self.vehicle, self.player) or {}
     self.tiers = H.tierInfo(self.carName)
@@ -452,6 +457,10 @@ function Win:headerButtons()
         b[#b + 1] = { id = id, x = x, y = y, w = s, h = s }
         x = x - s - 6
     end
+    -- SVU 1.1.0: Refresh (a word, left of the icons)
+    local label = HARMONIE_Refresh and HARMONIE_Refresh.label() or T("IGUI_HUB_Refresh")
+    local rw = getTextManager():MeasureStringX(H.small(), label) + 16
+    b[#b + 1] = { id = "refresh", x = x + s - rw, y = y, w = rw, h = s, label = label }
     return b
 end
 
@@ -503,22 +512,30 @@ function Win:prerender()
     end
     local title = T("IGUI_HSVU_Title")
     if self.carName then title = title .. " - " .. H.carName(self.carName) end
-    shadowText(self, fit(title, self.width - ix - 186, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
+    local hbs = self:headerButtons()
+    local leftmost = hbs[#hbs] and hbs[#hbs].x or (self.width - 186)
+    shadowText(self, fit(title, leftmost - ix - 10, font), ix, math.floor((hh - fh(font)) / 2), C.accent, 1, font)
     -- header buttons
     self.hoverTip = nil
     local mx, my = self:getMouseX(), self:getMouseY()
-    for _, b in ipairs(self:headerButtons()) do
+    for _, b in ipairs(hbs) do
         local over = inside(b, mx, my)
         local tint = b.id == "close" and { 0.95, 0.4, 0.35 } or C.accent
         self:drawRect(b.x, b.y, b.w, b.h, over and 0.95 or 0.75, 0.04, 0.08, 0.2)
         self:drawRectBorder(b.x, b.y, b.w, b.h, over and 1 or 0.7, tint[1], tint[2], tint[3])
         local name = b.id == "pin" and (H.pinned and "pin_on" or "pin_off") or ("icon_" .. b.id)
-        local icon = b.id == "settings" and HARMONIE_SettingsUI.gearIcon() or texture(UI_DIR .. name .. ".png")
+        local icon = b.id ~= "refresh" and (b.id == "settings" and HARMONIE_SettingsUI.gearIcon() or texture(UI_DIR .. name .. ".png")) or nil
+        if b.label then
+            local sf = H.small()
+            shadowText(self, b.label, b.x + math.floor((b.w - getTextManager():MeasureStringX(sf, b.label)) / 2), b.y + math.floor((b.h - fh(sf)) / 2), C.text, 1, sf)
+        end
         local disabled = (b.id == "plus" and H.textStep >= 2) or (b.id == "minus" and H.textStep <= 0)
         if icon then
             self:drawTextureScaled(icon, b.x + 3, b.y + 3, b.w - 6, b.h - 6, disabled and 0.35 or 1, 1, 1, 1)
         end
-        if over then
+        if over and b.id == "refresh" then
+            self.hoverTip = { text = HARMONIE_Refresh and HARMONIE_Refresh.tip() or "", x = b.x - 40, y = b.y + b.h + 4 }
+        elseif over then
             local key = ({ close = "IGUI_HSVU_Close", pin = H.pinned and "IGUI_HSVU_Unpin" or "IGUI_HSVU_Pin",
                 plus = "IGUI_HSVU_TextBigger", minus = "IGUI_HSVU_TextSmaller", settings = "IGUI_HSVU_Settings" })[b.id]
             self.hoverTip = { text = T(key), x = b.x - 40, y = b.y + b.h + 4 }
@@ -573,8 +590,7 @@ end
 function Win:render()
     if not self.collapsed then
         self.scrollBox = {}
-        local now = getTimestampMs and getTimestampMs() or 0
-        if not self.dataAt or now - self.dataAt > 2000 then self:refreshData() end
+        if not self.dataAt or self.dataGen ~= H.gen() then self:refreshData() end
         local x, y = 8, self:contentTop()
         local w, h = self.width - 16, self.height - y - 8
         -- 2026-11-16 (UX plan UX-008): what this tab is for / why it is locked
@@ -934,6 +950,10 @@ function Win:onMouseDown(x, y)
                 elseif b.id == "pin" then self:togglePin()
                 elseif b.id == "plus" then H.stepText(1)
                 elseif b.id == "settings" then H.openSettings()
+                elseif b.id == "refresh" then
+                    log("Refresh pressed (tab %s)", tostring(self.tab))
+                    if HARMONIE_Refresh then HARMONIE_Refresh.bump("SVU", "Refresh button") end
+                    self:refreshData()
                 elseif b.id == "minus" then H.stepText(-1) end
                 return true
             end

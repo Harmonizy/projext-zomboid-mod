@@ -251,6 +251,27 @@
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
+- Lists refresh by a BUTTON, never by themselves (owner 2026-11-21: "the
+  recipes in the GTP tab keep refreshing as if searching -- a refresh button,
+  nothing automatic, in every mod"). Hub `client/HARMONIE_Refresh.lua`:
+  `HARMONIE_Refresh.gen(scope)` / `bump(scope, why)` / `afterActions(scope,
+  player, why)` (one bump when that player's action queue has been empty
+  for SETTLE_MS 1 s -- MP item changes arrive after the action) / `label()` /
+  `tip()`; texts IGUI_HUB_Refresh(_Tip). A list scan keeps its result while
+  `gen(scope)` is the same -- NO time-based re-scan. Scope goes up only on
+  the window opening, its Refresh button, or one of OUR actions there.
+  GTP 1.9.0 cooking tab (cookScan; button right of the page chips; prepare /
+  add-to-dish -> afterActions), TWA 1.4.0 (header "Refresh" left of the gear;
+  ownsBase, practice-cell CheckEligibility, procedure DescribeAll, bag
+  candidates, unfinished-item scan, guidedData, bag add-on page scan, gem
+  socket weaponOk / ownedGems; craft start / cancel / incomplete / finish and
+  every step -> afterActions; TWASources' own 1 s cache stays for the
+  actions), MIL 1.1.0 parts tab (also rescans when the gun's fitted parts
+  change -- read from the gun), SVU 1.1.0 (header "Refresh"; rows read on
+  open / car change / Refresh, no 2 s), HTS 1.2.0 surgery checklist (button
+  left of Start; Start checks again) and medicine picker (no 2 s). Left as
+  they are: state that is not a search of items (HTS diagnosis findings,
+  surgery-tab indications, vitamin panel layout, LWS -- server data).
 - RULE for any wrapper of a Java-exposed global (sendServerCommand,
   sendClientCommand, ...): forward with varargs `function(...) return
   orig(...) end`, NEVER a fixed list like (a1, a2, a3, a4). Java picks the
