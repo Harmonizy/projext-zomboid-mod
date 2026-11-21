@@ -1293,7 +1293,8 @@ function EHR.Blood.ApplyHemodilutionDeath(player, salineRatio)
     if EHR.Lethal and not EHR.Lethal.allowed() then
         local bd = player:getBodyDamage()
         local cur = bd and bd:getOverallBodyHealth() or 100
-        if bd then bd:setOverallBodyHealth(math.max(EHR.Lethal.floor(), math.min(cur, cur - 2))) end
+        -- HTS 1.2.1: never RAISE health (it may be under the floor from a vanilla wound)
+        if bd and cur > EHR.Lethal.floor() then bd:setOverallBodyHealth(math.max(EHR.Lethal.floor(), cur - 2)) end
         if cur - 2 < EHR.Lethal.floor() then EHR.Lethal.spare(player, "Hemodilution - brain oxygen deprivation from excess IV saline") end
         return
     end

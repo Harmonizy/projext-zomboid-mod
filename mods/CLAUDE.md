@@ -865,6 +865,20 @@
   after adding food"): TOC's adjustMaxTime override logs "[ActionTime]" once
   a minute per action type whose final time >= 900: asked / after the game /
   after TOC (the cut-limb multiplier x2-x4 only applies with an amputation).
+- NEVER raise health the base game took (HTS 1.2.1, owner 2026-11-21: "a
+  neck scratch never takes HP below 30 -- do not touch vanilla wounds").
+  HM_NonLethal `spare()` used to SET health back to the floor every time it
+  skipped one of OUR kills -- EHR's blood loss check runs every second while
+  EHR blood < 20 %, and a vanilla bleeding wound drains EHR blood, so a neck
+  scratch could never take HP under the floor (owner's server: 30). Now
+  spare() only skips our kill. The safety net (N.guard) counts only OUR
+  illnesses (active EHR illness / sepsis; low blood, food sickness and
+  poison no longer) and stands aside while a vanilla damage source is on the
+  character (any body part bleeding / scratched / cut / deep wound / bitten /
+  bullet / glass / burn, food sickness, poison, hunger or thirst > 0.6). The
+  saline (hemodilution) path no longer lifts health either. Our own damage
+  paths still clamp at the floor (EHR_Disease / Sepsis / Environmental /
+  overdose cap) -- they only LOWER health, never raise it.
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
