@@ -295,11 +295,7 @@ function T.prosthesisOptions(context, player, bodyPart)
     local side = limb:sub(-1)
     local okH, highest = pcall(Cached.GetHighestAmputatedLimbs, username)
     if not okH or type(highest) ~= "table" or highest[side] ~= limb then return false end
-    if string.find(limb, "UpperArm") then
-        local o = context:addOption(text("UI_HomeMedic_Prost_NoUpper", "Prosthesis: not possible above the elbow"), nil, nil)
-        o.notAvailable = true
-        return true
-    end
+    -- HM 1.2.3 (owner 2026-11-22): the upper arm takes a prosthesis too
     if dc:getIsProstEquipped(limb) then
         local worn = player:getWornItems()
         for i = 0, (worn and worn:size() or 0) - 1 do
@@ -312,23 +308,34 @@ function T.prosthesisOptions(context, player, bodyPart)
         end
         return false
     end
+    -- HM 1.2.3 (owner: "any prosthesis on any arm"): a prosthesis of EITHER
+    -- side is listed; one made for the other side is worn through vanilla's
+    -- clothing extra action (the item's own "install on the other arm"
+    -- option, which swaps it to this side's type).
     local found = {}
     local items = player:getInventory():getAllEvalRecurse(function(it) return Prost.CheckIfProst(it) end)
     for i = 0, (items and items:size() or 0) - 1 do
-        local it = items:get(i)
-        if sideOf(it:getFullType()) == side then found[#found + 1] = it end
+        found[#found + 1] = items:get(i)
     end
     if #found == 0 then
-        local o = context:addOption(text("UI_HomeMedic_Prost_None", "Fit prosthesis (none for this side in your bags)"), nil, nil)
+        local o = context:addOption(text("UI_HomeMedic_Prost_None", "Fit prosthesis (none in your bags)"), nil, nil)
         o.notAvailable = true
         return true
     end
     for _, it in ipairs(found) do
+        local fullType = it:getFullType()
+        local same = sideOf(fullType) == side
+        local target = same and fullType or (fullType:gsub("_[LR]$", "_" .. side))
         context:addOption(text("UI_HomeMedic_Prost_Fit", "Fit prosthesis") .. ": " .. it:getDisplayName(), player, function(p)
             if ISInventoryPaneContextMenu and ISInventoryPaneContextMenu.transferIfNeeded then
                 ISInventoryPaneContextMenu.transferIfNeeded(p, it)
             end
-            ISTimedActionQueue.add(ISWearClothing:new(p, it, 50))
+            if same then
+                ISTimedActionQueue.add(ISWearClothing:new(p, it, 50))
+            else
+                if HMLog then HMLog("Prosthesis", "fitting %s on the %s arm as %s (other side's item)", tostring(fullType), side, tostring(target)) end
+                ISTimedActionQueue.add(ISClothingExtraAction:new(p, it, target))
+            end
         end)
     end
     return true

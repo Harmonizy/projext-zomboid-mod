@@ -183,7 +183,7 @@ function TWACraftWindow:guidedData()
     local seenC, seenK = {}, {}
     c.consume, c.cond = {}, {}
     for _, pid in ipairs(recipe.procedures or {}) do
-        local proc = TWAProcedures.List[pid]
+        local proc = TWAProcedures.ForRecipe(TWAProcedures.List[pid], recipe)
         if proc then
             c.total = c.total + 1
             local ok, reqs = pcall(TWAProcedures.DescribeAll, proc, self.player)

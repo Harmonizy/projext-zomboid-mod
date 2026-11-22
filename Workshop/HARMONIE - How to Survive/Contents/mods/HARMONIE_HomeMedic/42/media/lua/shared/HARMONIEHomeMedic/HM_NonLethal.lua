@@ -29,10 +29,22 @@
       EHR.Lethal.clampHealth(player, target) -> the target, raised to the floor
 
     Safety net (server in MP, the game itself in SP, once a second): while
-    the character is ill (an active illness, food sickness, poison or low
-    blood) and NOT carrying the zombie infection, a SLOW slide under the
-    floor is stopped there. A sudden drop (a fight) is left alone, and the
-    zombie infection (Knox, vanilla) still kills as in the base game.
+    the character has one of OUR illnesses (an active EHR illness or sepsis)
+    and NOT carrying the zombie infection, a SLOW slide under the floor is
+    stopped there. A sudden drop (a fight) is left alone, and the zombie
+    infection (Knox, vanilla) still kills as in the base game.
+
+    HTS 1.2.1 (owner 2026-11-21: "a scratch on the neck never takes HP below
+    30 -- we must not touch vanilla wounds"): we NEVER raise health that the
+    game took away.
+      * spare() only skips OUR kill; it no longer lifts health to the floor
+        (it did, every second, while EHR's blood volume -- drained by a
+        vanilla bleeding wound -- was under 20 %: a neck scratch could never
+        take HP under the floor).
+      * the safety net stands aside while any vanilla damage source is on
+        the character (a wound on any body part, food sickness, poison,
+        starving or thirst) and no longer counts low blood as an illness
+        of ours (vanilla bleeding is what drains it).
 ]]--
 
 EHR = EHR or {}
@@ -122,19 +134,15 @@ N.lastSpare = N.lastSpare or {}
 function N.spare(player, cause)
     if not player or N.allowed() then return false end
     local f = N.floor()
-    -- health lives on the server in MP: a remote client only skips the kill
-    if not remoteClient() then
-        local cur = overall(player)
-        if cur == nil or cur < f then setOverall(player, f) end
-        pcall(function() if player:getHealth() < 0.05 then player:setHealth(0.05) end end)
-    end
+    -- HTS 1.2.1: only OUR kill is skipped -- health is never raised here
+    -- (vanilla wounds keep doing what they do)
     local who = nameOf(player)
     local now = getTimestampMs and getTimestampMs() or 0
     local key = who .. "|" .. tostring(cause)
     -- console.txt: once a minute per cause and player (the kill sites can run every tick)
     if not N.lastSpare[key] or now - N.lastSpare[key] > 60000 then
         N.lastSpare[key] = now
-        print("[EHR DEATH PREVENTED] Player: " .. who .. " | Cause: " .. tostring(cause) .. " | health held at " .. tostring(f))
+        print("[EHR DEATH PREVENTED] Player: " .. who .. " | Cause: " .. tostring(cause) .. " | our kill skipped, health left as it is (" .. tostring(overall(player)) .. ", floor " .. tostring(f) .. ")")
         if player.Say and player.isLocalPlayer and player:isLocalPlayer() then pcall(function() player:Say("*collapses*") end) end
     end
     return true
@@ -152,26 +160,49 @@ local function isEmpty(t)
     return true
 end
 
+-- one of OUR illnesses (EHR): what this safety net is for
 local function isIll(player)
     local md = player.getModData and player:getModData()
     if md then
         local d = md.EHR_Disease and md.EHR_Disease.active
         if type(d) == "table" and not isEmpty(d) then return true end
-        local b = md.EHR_Blood
-        if type(b) == "table" and tonumber(b.maxVolume) and tonumber(b.currentVolume)
-                and b.currentVolume < b.maxVolume * 0.6 then return true end
         if type(md.EHR_Sepsis) == "table" and (tonumber(md.EHR_Sepsis.stage) or 0) > 0 then return true end
     end
-    if CharacterStat then
-        local ok, ill = pcall(function()
-            local st = player:getStats()
-            local s = CharacterStat.FOOD_SICKNESS and tonumber(st:get(CharacterStat.FOOD_SICKNESS)) or 0
-            local p = CharacterStat.POISON and tonumber(st:get(CharacterStat.POISON)) or 0
-            return s > 0.05 or p > 0.05
-        end)
-        if ok and ill then return true end
-    end
     return false
+end
+
+-- HTS 1.2.1: a vanilla damage source is on the character -> what it does is
+-- the base game's business; returns its name (for the log) or nil
+local PART_CHECKS = { "bleeding", "scratched", "isCut", "deepWounded", "bitten", "haveBullet", "haveGlass" }
+local function vanillaHurting(player)
+    local bd = player.getBodyDamage and player:getBodyDamage()
+    local parts = bd and bd.getBodyParts and bd:getBodyParts()
+    for i = 0, (parts and parts:size() or 0) - 1 do
+        local part = parts:get(i)
+        for _, m in ipairs(PART_CHECKS) do
+            if part[m] then
+                local ok, v = pcall(part[m], part)
+                if ok and v == true then return "wound (" .. m .. ")" end
+            end
+        end
+        if part.getBurnTime then
+            local ok, v = pcall(part.getBurnTime, part)
+            if ok and (tonumber(v) or 0) > 0 then return "wound (burn)" end
+        end
+    end
+    if CharacterStat then
+        local ok, why = pcall(function()
+            local st = player:getStats()
+            local function g(k) return CharacterStat[k] and tonumber(st:get(CharacterStat[k])) or 0 end
+            if g("FOOD_SICKNESS") > 0.05 then return "food sickness" end
+            if g("POISON") > 0.05 then return "poison" end
+            if g("HUNGER") > 0.6 then return "hunger" end
+            if g("THIRST") > 0.6 then return "thirst" end
+            return nil
+        end)
+        if ok and why then return why end
+    end
+    return nil
 end
 
 N.seen = N.seen or {}
@@ -194,6 +225,11 @@ function N.guard(player)
         return
     end
     if not isIll(player) then return end
+    local vanilla = vanillaHurting(player)
+    if vanilla then
+        logOnce("vanilla:" .. who .. ":" .. vanilla, "%s: health under %d with a vanilla %s -- left to the base game", who, f, vanilla)
+        return
+    end
     setOverall(player, f)
     N.seen[who] = f
     logOnce("held:" .. who, "%s: illness took health under %d -- held there (sandbox LethalConditions is off)", who, f)

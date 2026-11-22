@@ -248,6 +248,13 @@
   accent -- keep its ACCENT list in step); the gold H if a file is missing.
   The owner turned DOWN the "symbols instead of words / text on hover" rework
   of the same day (PR #101 kept only this) -- ask before redoing the UI text.
+- Every right-click option of ours wears its MOD's coloured H (Hub 5.2,
+  owner 2026-11-22): HubBoot `B.iconFor(tag)` maps the HARMONIE_Ours tag to
+  the card picture (B.TAG_CARD: GTP gtp, TWA twa, HM hm, SVU svu, MFS / MIL
+  mfs, LWS lws -> media/ui/HARMONIE_H_<id>.png); HUB and "debug" keep the
+  gold H, a missing picture falls back to it. The option-pool hook clears
+  any of our H pictures (`B.isOurIcon`) from a reused option. A new mod tag:
+  add it to B.TAG_CARD.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
@@ -300,11 +307,23 @@
   in all (SET_FULL_BONUS 0.30).
 
 ## The Way To Attack (TWA)
-- Rare ores (2026-11-12, owner swapped them, TWA 1.0.2): Oridecon (โอริเดคอน)
-  is the LOWER one -- base2 of the Epic bar and of Make_GemFine; Bradium
-  (บราเดียม) the HIGHER one -- Legendary bar and Make_GemPure; Elunium stays
-  on the Elite bar. Hand-edited in HARMONIE_TWA_RecipeData.lua (its generator
-  is not in the repo; tools/gen_new_weapons.py only inserts weapon recipes).
+- Rare ores (TWA 1.5.0, owner 2026-11-22: "epic คือ อีลู elite คือโอริ
+  legendary คือบราเดียม"): Elunium (อีลูเนียม) = EPIC (Epic bar, Make_GemFine,
+  bag tier 3 / add-ons tier 3), Oridecon (โอริเดคอน) = ELITE (Elite bar,
+  Make_GemRadiant, bag tier 4), Bradium (บราเดียม) = LEGENDARY (Legendary bar,
+  Make_GemPure, bag tier 5). Hand-edited in HARMONIE_TWA_RecipeData.lua (its
+  generator is not in the repo) + TWABagUp B.ORE.
+- Forge by rarity (TWA 1.5.0, owner): a step with forgeTier asks for the
+  forge of the RECIPE's tier, not its own -- `TWAProcedures.ForRecipe(proc,
+  recipe)` (cached copy, logged once): Junk..Rare none, Epic Primitive (1),
+  Elite Forge (2), Legendary / Prototype Advanced (3), "or better"
+  (FORGE_BY_TIER). Used by tryPerformProcedure, the step details, the guided
+  view and TWA_PerformProcedureAction (4th arg recipeId). Practice keeps the
+  step's own forgeTier. A recipe with no stats tier keeps it too.
+- One gem of each TYPE per weapon (TWA 1.5.0, owner): `TWAGemSocket.dupeKey`
+  -- doInsert refuses (server), the socket page dims those gems and the
+  button says IGUI_TWA_Socket_SameType. The same socket may still take a
+  better gem of the same type.
 - Craft button (TWA 1.0.3, owner): a base / extra item card whose item some
   recipe MAKES (`recipeMaking`: result map, keepType gem recipes excluded)
   shows "Craft" -> `TWACraftWindow:jumpToRecipe` (craft page, search cleared;
@@ -721,6 +740,11 @@
   call nil" (getHungerChange) every frame, logged even in pcall; now only for
   instanceof Food. The vitamin wrapper of ISAddItemInRecipe:complete is fully
   pcall'd (before and after) so it can never leave the action unfinished.
+- GTP 1.9.1 (owner: "no idea what each food buff does"): IGUI_GTPC_BuffDesc_<kind>
+  words, `K.buffEffectLine(kind, tier)` ("What it does: ... (strength xN)")
+  under the dish tooltip's buff line, under the Cooking tab's "Buff now" and
+  in the moodle; `K.buffListText()` (all five + family list + level
+  strengths) added to every Cooking page's "i" help.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).
@@ -865,6 +889,56 @@
   after adding food"): TOC's adjustMaxTime override logs "[ActionTime]" once
   a minute per action type whose final time >= 900: asked / after the game /
   after TOC (the cut-limb multiplier x2-x4 only applies with an amputation).
+- NEVER raise health the base game took (HTS 1.2.1, owner 2026-11-21: "a
+  neck scratch never takes HP below 30 -- do not touch vanilla wounds").
+  HM_NonLethal `spare()` used to SET health back to the floor every time it
+  skipped one of OUR kills -- EHR's blood loss check runs every second while
+  EHR blood < 20 %, and a vanilla bleeding wound drains EHR blood, so a neck
+  scratch could never take HP under the floor (owner's server: 30). Now
+  spare() only skips our kill. The safety net (N.guard) counts only OUR
+  illnesses (active EHR illness / sepsis; low blood, food sickness and
+  poison no longer) and stands aside while a vanilla damage source is on the
+  character (any body part bleeding / scratched / cut / deep wound / bitten /
+  bullet / glass / burn, food sickness, poison, hunger or thirst > 0.6). The
+  saline (hemodilution) path no longer lifts health either. Our own damage
+  paths still clamp at the floor (EHR_Disease / Sepsis / Environmental /
+  overdose cap) -- they only LOWER health, never raise it.
+- A diagnosed illness shows stage / severity / progress / treatment at any
+  Doctor level (HTS 1.2.2, owner: "why ??? after a diagnosis"): EHR showed
+  them only from Doctor 4 / 6. HM_DiagnosisPanel's getDiseaseDisplayInfo
+  wrapper (health panel rows) and EHR_MedicalMonitorUI (hmDiagnosed) turn
+  them on for a gated illness the Diagnosis tab diagnosed (Knox and rows with
+  their own detail text -- delirium, concussion -- unchanged).
+- Right-click with many players (HTS 1.2.3 / GTP 1.9.2, owner 2026-11-22):
+  ONE "Examine Health" (ตรวจสุขภาพ) entry with a submenu -- yourself (medical
+  monitor) then each player nearby (EHR_MPExamination;
+  `EHR.MPExamination.HealthMenu(context)` makes / finds it, Draw blood adds
+  its "Draw blood (name)" rows there), and ONE "Check Nutrition"
+  (ตรวจโภชนาการ, IGUI_HARMONIE_AssessMenu) with the names (GTP Hotkeys). The
+  hub's "HARMONIE: open a tab" stays as it was.
+- Prostheses (HTS 1.2.3, owner): names say the side (แขนเทียม (ซ้าย) / (ขวา));
+  any stump takes one, the UPPER ARM too (ProsthesisHandler.CheckIfEquippable
+  no longer refuses UpperArm; group Top_L/R covers every arm part); a
+  prosthesis of the other side is worn through vanilla's clothing extra
+  action (the item's own "Install prosthesis on right / left arm" option) --
+  the health panel's body-part menu lists both sides and uses
+  ISClothingExtraAction for the other one; wearing the wrong side says which
+  option to use (UI_Say_ProstUseRight / Left). Amputation tab art has
+  UpperArm_prost (tools/gen_amputation_art.py). A prosthesis on an unhealed
+  stump CAN bleed (TOC TryRandomBleed after each action, chance from the
+  cicatrization time left): the bleed lands on the part ABOVE the stump
+  (Hand -> ForeArm, ForeArm -> UpperArm, UpperArm -> Torso_Upper), which is
+  not a missing limb, so HealArea never clears it -- now logged
+  ("[Prosthesis] ... bleeding").
+- TOC amputee traits (HTS 1.2.3, owner: "the trait takes the arm but nothing
+  knows it is cut"): the client asked for the trait cut ONCE when its data
+  arrived. Now ServerDataController.Initialize also applies it
+  (ApplyTraitAmputation: hasTrait on the server, no damage, healed stump,
+  skipped when already cut); RelayApplyTraitAmputation no longer throws on a
+  missing instance; FinalizeAmputationAction carries patientUsername (the
+  client wrote its cache under a nil key); [TOCTrait] logs the steps and every
+  trait of the character once per login (an amputation trait of ANOTHER mod
+  hides the arm but tells TOC nothing -- find it there).
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:

@@ -1128,6 +1128,49 @@ end
 -- the CLIENT sees around it (light level, loaded world squares) -- already
 -- checked there before the action was ever queued -- so the server only
 -- re-checks what it actually owns: tools, materials and skill.
+-- 2026-11-22 (owner: "common uncommon rare ทำให้กรรมวิธีไม่ต้องใช้เตาตีเหล็ก
+-- epic ใช้เตาดั้งเดิมขึ้นไป elite ใช้เตาธรรมดาขึ้นไป และ legendary ใช้ชั้นสูง
+-- ขึ้นไป"): a step that needs a forge asks for the forge of the RECIPE's
+-- rarity, not its own fixed forgeTier. Rarity = the recipe's stats tier
+-- (1 Junk, 2 Common, 3 Uncommon, 4 Rare, 5 Epic, 6 Elite, 7 Legendary,
+-- 8 Prototype): up to Rare no forge, Epic a Primitive Forge (1), Elite a
+-- Forge (2), Legendary and up an Advanced Forge (3), each "or better".
+-- A step with no forgeTier never gets one. A recipe with no tier keeps the
+-- step's own forgeTier. Practice (no recipe) keeps the step's own too.
+TWAProcedures.FORGE_BY_TIER = { [5] = 1, [6] = 2, [7] = 3, [8] = 3 }
+function TWAProcedures.recipeTier(recipe)
+    if type(recipe) ~= "table" then return nil end
+    local st = recipe.stats or (TWARecipeData and TWARecipeData.Stats and TWARecipeData.Stats[recipe.result])
+    return st and tonumber(st.tier) or nil
+end
+-- the forge tier a forge step needs in this recipe: number, false = none,
+-- nil = no rarity known (use the step's own)
+function TWAProcedures.recipeForgeTier(recipe)
+    local t = TWAProcedures.recipeTier(recipe)
+    if not t then return nil end
+    return TWAProcedures.FORGE_BY_TIER[t] or false
+end
+local forRecipeCache = {}
+function TWAProcedures.ForRecipe(proc, recipe)
+    if type(proc) ~= "table" or not proc.forgeTier or type(recipe) ~= "table" then return proc end
+    local want = TWAProcedures.recipeForgeTier(recipe)
+    if want == nil or want == proc.forgeTier then return proc end
+    local byProc = forRecipeCache[proc]
+    if not byProc then byProc = {}; forRecipeCache[proc] = byProc end
+    local key = want or 0
+    local c = byProc[key]
+    if not c then
+        c = {}
+        for k, v in pairs(proc) do c[k] = v end
+        c.forgeTier = want or nil
+        c.forgeFromRecipe = true
+        byProc[key] = c
+        TWALog("Forge", "step %s in a tier %s recipe (%s): forge %s instead of %s", tostring(proc.nameKey), tostring(TWAProcedures.recipeTier(recipe)),
+            tostring(recipe.id), want and tostring(want) or "none", tostring(proc.forgeTier))
+    end
+    return c
+end
+
 function TWAProcedures.CheckEligibility(proc, player, serverSide)
     local missing = {}
 

@@ -293,7 +293,7 @@ function AmputationHandler:execute(damagePlayer)
         local cache = CachedDataHandler.GetAll(patientUsername)
 
         sendServerCommand(self.patientPl, CommandsData.modules.TOC_RELAY, CommandsData.client.Relay.FinalizeAmputationAction,
-        {cache = cache, limbName = self.limbName, damagePlayer = damagePlayer})
+        {cache = cache, limbName = self.limbName, damagePlayer = damagePlayer, patientUsername = patientUsername})   -- HM 1.2.3: the client keys its cache by it
 
         if self.patientPl ~= self.surgeonPl then
             dcInst:apply(self.surgeonPl)

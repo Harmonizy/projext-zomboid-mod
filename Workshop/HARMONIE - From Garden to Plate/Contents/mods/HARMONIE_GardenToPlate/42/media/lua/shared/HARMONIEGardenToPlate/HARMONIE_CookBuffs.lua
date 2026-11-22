@@ -48,6 +48,29 @@ K.BUFF_OF_FAMILY = {
     salad = "fresh", fruitsalad = "fresh",
 }
 K.BUFF_NET = "HARMONIE_GTP_CookBuff"
+-- GTP 1.9.1 (owner 2026-11-22: "ไม่รู้ว่าบัฟแต่ละบัฟทำอะไร"): what each buff
+-- does, in words (IGUI_GTPC_BuffDesc_<kind>), and how strong a level is
+-- (sandbox CookBuffStrength1-3) -- shown in the dish tooltip, the Cooking
+-- tab, the moodle and the tab's help mark.
+function K.buffDesc(kind)
+    if not getText then return tostring(kind) end
+    return getText("IGUI_GTPC_BuffDesc_" .. tostring(kind))
+end
+function K.buffEffectLine(kind, tier)
+    if not getText then return tostring(kind) end
+    local st = K.tierStrength and K.tierStrength(tonumber(tier) or 1) or 1
+    return getText("IGUI_GTPP_BuffEffect", K.buffDesc(kind), string.format("%.1f", st))
+end
+function K.buffListText()
+    if not getText then return "" end
+    local out = { getText("IGUI_GTPP_BuffListTitle") }
+    for _, kind in ipairs({ "hearty", "energized", "comfort", "calm", "fresh" }) do
+        out[#out + 1] = "- " .. getText("IGUI_GTPC_Buff_" .. kind) .. ": " .. K.buffDesc(kind)
+    end
+    out[#out + 1] = getText("IGUI_GTPP_BuffListLevels", string.format("%.1f", K.tierStrength and K.tierStrength(1) or 1),
+        string.format("%.1f", K.tierStrength and K.tierStrength(2) or 1.5), string.format("%.1f", K.tierStrength and K.tierStrength(3) or 2))
+    return table.concat(out, "\n")
+end
 
 function K.buffsOn() return K.sv("CookBuffs", true) ~= false end
 function K.buffHours(level)
