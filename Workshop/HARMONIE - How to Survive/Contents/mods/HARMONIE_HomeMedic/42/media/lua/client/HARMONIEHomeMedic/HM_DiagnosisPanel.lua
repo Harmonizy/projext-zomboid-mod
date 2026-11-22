@@ -842,6 +842,23 @@ local function install()
             local id = D.normalize(type(disease) == "table" and disease.isKnox and "knox_infection" or diseaseId)
             local _, patient, exam = parties(self)
             if D.gated(id) and not D.isDiagnosed(patient, id, exam) then return unknownInfo(self, info, id) end
+            -- 2026-11-22 (owner: "why ??? for stage and severity when it is
+            -- diagnosed"): a diagnosed illness shows its name, stage, severity,
+            -- progress and treatment whatever the Doctor level (EHR: stage and
+            -- severity from Doctor 4, progress from 6). Rows with their own
+            -- detail (Knox, delirium, concussion) keep it.
+            if D.enabled() and D.gated(id) and not (type(disease) == "table" and disease.isKnox) and not info.detailText then
+                local copy = {}
+                for k, v in pairs(info) do copy[k] = v end
+                if not copy.canIdentify then
+                    copy.canIdentify = true
+                    copy.displayName, copy.sortName = copy.realName, copy.realName
+                end
+                copy.showStageSeverity = true
+                if not copy.hideProgressBar then copy.showProgress = true end
+                copy.showTreatmentStatus = true
+                info = copy
+            end
             if info.statusText then return info end
             if S.isHeld(self.player, id, exam) then
                 local copy = {}

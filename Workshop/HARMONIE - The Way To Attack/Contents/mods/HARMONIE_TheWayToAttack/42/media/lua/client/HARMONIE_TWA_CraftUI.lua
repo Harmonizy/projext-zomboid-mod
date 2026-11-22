@@ -2200,6 +2200,8 @@ end
 -- cancelled/interrupted (walking away, etc.), so a cancelled attempt never
 -- permanently blocks starting another one.
 function TWACraftWindow:tryPerformProcedure(procId, proc)
+    -- 2026-11-22: a forge step asks for the forge of THIS recipe's rarity
+    proc = TWAProcedures.ForRecipe(proc, self.selectedRecipe)
     -- Only on the started craft (request 2026-09-28, one craft at a time).
     if not self:isActiveRecipe() then TWALog("CraftUI", "step %s refused: no active craft for this recipe", tostring(procId)); return end
     if self.activeProcId or self.activeCenterAction then TWALog("CraftUI", "step %s refused: something is already running", tostring(procId)); return end
@@ -2233,7 +2235,7 @@ function TWACraftWindow:tryPerformProcedure(procId, proc)
             window.activeProcId = nil
             return
         end
-        local action = TWA_PerformProcedureAction:new(window.player, procId, word)
+        local action = TWA_PerformProcedureAction:new(window.player, procId, word, window.selectedRecipe and window.selectedRecipe.id)
         local completed = false
         action.onComplete = function(w)
             qualityTable[procId] = w
@@ -2598,6 +2600,8 @@ function TWACraftWindow:drawProcedureDetails()
 
     local proc = self.selectedProcId and TWAProcedures.List[self.selectedProcId]
     local practicePage = self.page == "practice"
+    -- 2026-11-22: on a recipe the forge follows the recipe's rarity
+    if proc and not practicePage then proc = TWAProcedures.ForRecipe(proc, self.selectedRecipe) end
     if not proc then
         drawTextShadowed(self, getText("IGUI_TWA_SelectProcedureFirst"), x + 10, y + 10, 0.7, 0.7, 0.7, 1, TWAFont.small())
         self.procConfirmButton:setVisible(false)
@@ -2632,8 +2636,8 @@ function TWACraftWindow:drawProcedureDetails()
     -- 1.0.8: not every frame; 1.4.0: kept until the refresh generation changes
     local dc = self.procDescCache
     local g = twaGen()
-    if not (dc and dc.procId == self.selectedProcId and dc.gen == g) then
-        dc = { procId = self.selectedProcId, gen = g, reqs = TWAProcedures.DescribeAll(proc, self.player) }
+    if not (dc and dc.procId == self.selectedProcId and dc.proc == proc and dc.gen == g) then
+        dc = { procId = self.selectedProcId, proc = proc, gen = g, reqs = TWAProcedures.DescribeAll(proc, self.player) }
         self.procDescCache = dc
     end
     local reqs = dc.reqs

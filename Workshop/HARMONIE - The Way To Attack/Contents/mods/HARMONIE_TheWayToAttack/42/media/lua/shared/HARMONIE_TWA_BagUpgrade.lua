@@ -19,7 +19,7 @@
     add-on recipe is cutting (the tier's cut + the kind's own step).
     Skill: every step of a tier-T recipe asks Tailoring T (owner: "the ceiling
     is the same as the weapon forging steps" = Blacksmith 1..5). Tier 3 / 4 /
-    5 recipes (items and bag tiers) take Oridecon / Elunium / Bradium as their
+    5 recipes (items and bag tiers) take Elunium / Oridecon / Bradium as their
     second item -- the same ores, same order, as the Epic / Elite / Legendary
     bars.
 
@@ -59,7 +59,8 @@ local log = function(fmt, ...) if TWALog then TWALog("BagUp", fmt, ...) end end
 
 B.MAX_TIER = 5
 B.CAT_ITEM, B.CAT_TIER = "BagUp", "BagTier"
-B.ORE = { [3] = IT .. "TWA_Oridecon", [4] = IT .. "TWA_Elunium", [5] = IT .. "TWA_Bradium" }
+-- 2026-11-22 (owner): Epic = Elunium, Elite = Oridecon, Legendary = Bradium
+B.ORE = { [3] = IT .. "TWA_Elunium", [4] = IT .. "TWA_Oridecon", [5] = IT .. "TWA_Bradium" }
 B.CAP = { cap = 50, wr = 95, run = 1.0, combat = 1.0, weight = 0.1 }
 -- the colour strip / tier name of the crafting list: T1..T5 -> Uncommon..Legendary
 function B.displayTier(t) return (tonumber(t) or 1) + 2 end
