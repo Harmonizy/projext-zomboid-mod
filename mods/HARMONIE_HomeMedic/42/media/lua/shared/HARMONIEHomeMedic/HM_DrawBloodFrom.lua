@@ -317,32 +317,55 @@ function DB.onServerCommand(module, command, args)
 end
 
 -- right-click a player within range
+-- an empty blood bag CARRIED (inventory, bags included) -- the right-click
+-- entry shows only then (owner 2026-11-22)
+function DB.carriedEmptyBag(p)
+    local inv = call(p, "getInventory")
+    if not inv then return nil end
+    for _, ft in ipairs(DB.EMPTY_BAGS) do
+        local it = inv.getFirstTypeRecurse and call(inv, "getFirstTypeRecurse", ft) or call(inv, "getFirstType", ft)
+        if it then return it end
+    end
+    return nil
+end
+
+-- HTS 1.2.5 (owner 2026-11-22: "draw blood out of the health check -- its
+-- own entry, shown when you carry an empty blood bag"): ONE "Draw Blood"
+-- entry, the players nearby in its submenu (too far = greyed with why).
 local function onMenu(playerNum, context, worldobjects, test)
     if not (isClient and isClient()) then return end
+    if test then return end
     local me = getSpecificPlayer(playerNum)
-    if not me or not (EHR and EHR.MPExamination and EHR.MPExamination.GetContextPlayerCandidates) then return end
-    local ok, list = pcall(EHR.MPExamination.GetContextPlayerCandidates, me, worldobjects)
-    if not ok or type(list) ~= "table" then return end
-    for _, p in ipairs(list) do
-        if p ~= me and alive(p) and distance(me, p) <= DB.RANGE + 0.5 then
-            if test then return true end
-            local name = call(p, "getDisplayName") or call(p, "getUsername") or "?"
-            local hasBag = DB.findEmptyBag(me) ~= nil
-            -- 2026-11-22 (owner: the right-click was too long with many people):
-            -- inside the one "Examine Health" submenu when it exists
-            local menu = (EHR.MPExamination.HealthMenu and EHR.MPExamination.HealthMenu(context)) or context
-            local opt = menu:addOption(L("Option", "Draw blood (%1)", name), me, function() DB.ask(me, p) end)
-            local tip = ISToolTip:new()
-            tip:initialise()
-            tip.description = L("Tooltip", "Draw %1 mL of this patient's blood into an empty blood bag. The patient must agree, have at least 80%% blood and stay close until it is done.",
-                tostring(DB.AMOUNT))
-            if not hasBag then
-                opt.notAvailable = true
-                tip.description = tip.description .. " <LINE> <RGB:1,0.3,0.3> " .. L("No_NoBag", "You need an empty blood bag.")
-            end
-            opt.toolTip = tip
-        end
+    if not me or not DB.carriedEmptyBag(me) then return end
+    local list
+    if EHR and EHR.MPExamination and EHR.MPExamination.NearbyPlayers then
+        local ok, l = pcall(EHR.MPExamination.NearbyPlayers, me, worldobjects)
+        list = ok and l or nil
     end
+    if type(list) ~= "table" then
+        local ok, l = pcall(EHR.MPExamination.GetContextPlayerCandidates, me, worldobjects)
+        list = ok and l or {}
+    end
+    local people = {}
+    for _, p in ipairs(list) do if p ~= me and alive(p) then people[#people + 1] = p end end
+    if #people == 0 then return end
+    local parent = context:addOption(L("Menu", "Draw Blood"), nil, nil)
+    local sub = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, sub)
+    for _, p in ipairs(people) do
+        local name = call(p, "getDisplayName") or call(p, "getUsername") or "?"
+        local opt = sub:addOption(name, me, function() DB.ask(me, p) end)
+        local tip = ISToolTip:new()
+        tip:initialise()
+        tip.description = L("Tooltip", "Draw %1 mL of this patient's blood into an empty blood bag. The patient must agree, have at least 80%% blood and stay close until it is done.",
+            tostring(DB.AMOUNT))
+        if distance(me, p) > DB.RANGE + 0.5 then
+            opt.notAvailable = true
+            tip.description = tip.description .. " <LINE> <RGB:1,0.3,0.3> " .. L("TooFar", "Come closer (within %1 tiles).", tostring(DB.RANGE))
+        end
+        opt.toolTip = tip
+    end
+    if HMLogOnce then HMLogOnce("drawMenuN" .. tostring(math.min(#people, 5)), "DrawBlood", "draw blood right-click: %d player(s) listed (once per count up to 5)", #people) end
 end
 
 if Events then

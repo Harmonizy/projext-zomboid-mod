@@ -910,12 +910,16 @@
   them on for a gated illness the Diagnosis tab diagnosed (Knox and rows with
   their own detail text -- delirium, concussion -- unchanged).
 - Right-click with many players (HTS 1.2.3 / GTP 1.9.2, owner 2026-11-22):
-  ONE "Examine Health" (ตรวจสุขภาพ) entry with a submenu -- yourself (medical
-  monitor) then each player nearby (EHR_MPExamination;
-  `EHR.MPExamination.HealthMenu(context)` makes / finds it, Draw blood adds
-  its "Draw blood (name)" rows there), and ONE "Check Nutrition"
-  (ตรวจโภชนาการ, IGUI_HARMONIE_AssessMenu) with the names (GTP Hotkeys). The
-  hub's "HARMONIE: open a tab" stays as it was.
+  ONE "Check Nutrition" (ตรวจโภชนาการ, IGUI_HARMONIE_AssessMenu) with the
+  names (GTP Hotkeys). HTS 1.2.5 (owner: "the health check does not show as
+  reliably -- always there, with a check-myself entry; draw blood its own
+  entry when an empty bag is carried"): "Examine Health" (ตรวจสุขภาพ) is on
+  EVERY right-click (SP too), first row "Check my own health"
+  (UI_EHR_Context_ExamineSelf), then `EHR.MPExamination.NearbyPlayers`
+  (clicked + online within LIST_RANGE 8, nearest first; beyond
+  EXAMINE_RANGE 3 greyed "Too far"). "Draw Blood" (เจาะเลือด) is a separate
+  entry only while DB.carriedEmptyBag (inventory + bags), same names, beyond
+  DB.RANGE greyed. The hub's "HARMONIE: open a tab" stays as it was.
 - Prostheses (HTS 1.2.3, owner): names say the side (แขนเทียม (ซ้าย) / (ขวา));
   any stump takes one, the UPPER ARM too (ProsthesisHandler.CheckIfEquippable
   no longer refuses UpperArm; group Top_L/R covers every arm part); a
