@@ -144,7 +144,9 @@ function Hub.hookPool()
         local o = orig(self, ...)
         if type(o) == "table" and o.harmonie then
             o.harmonie = nil
-            if Boot.icon and o.iconTexture == Boot.icon() then o.iconTexture = nil end
+            if Boot.isOurIcon then
+                if Boot.isOurIcon(o.iconTexture) then o.iconTexture = nil end
+            elseif Boot.icon and o.iconTexture == Boot.icon() then o.iconTexture = nil end
         end
         return o
     end

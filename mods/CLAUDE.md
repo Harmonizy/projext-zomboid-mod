@@ -248,6 +248,13 @@
   accent -- keep its ACCENT list in step); the gold H if a file is missing.
   The owner turned DOWN the "symbols instead of words / text on hover" rework
   of the same day (PR #101 kept only this) -- ask before redoing the UI text.
+- Every right-click option of ours wears its MOD's coloured H (Hub 5.2,
+  owner 2026-11-22): HubBoot `B.iconFor(tag)` maps the HARMONIE_Ours tag to
+  the card picture (B.TAG_CARD: GTP gtp, TWA twa, HM hm, SVU svu, MFS / MIL
+  mfs, LWS lws -> media/ui/HARMONIE_H_<id>.png); HUB and "debug" keep the
+  gold H, a missing picture falls back to it. The option-pool hook clears
+  any of our H pictures (`B.isOurIcon`) from a reused option. A new mod tag:
+  add it to B.TAG_CARD.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 

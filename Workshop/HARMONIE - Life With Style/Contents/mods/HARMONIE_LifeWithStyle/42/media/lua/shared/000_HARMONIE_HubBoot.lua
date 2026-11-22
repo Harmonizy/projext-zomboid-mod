@@ -17,7 +17,7 @@
 
 HARMONIE_HubBoot = HARMONIE_HubBoot or {}
 local B = HARMONIE_HubBoot
-B.VERSION = 1
+B.VERSION = 2
 
 function B.icon()
     if B.tex == nil then
@@ -28,12 +28,39 @@ function B.icon()
     return B.tex or nil
 end
 
+-- Hub 5.2 (owner 2026-11-22: "each mod's right-click options in that mod's
+-- colour"): the handler's tag picks the H of its mod -- the same pictures as
+-- the "HARMONIE: open a tab" rows (media/ui/HARMONIE_H_<card id>.png, from
+-- tools/gen_h_icons.py, the Hub.CARDS accents). The hub's own options (HUB)
+-- and the debug menu keep the gold H; a missing picture falls back to it.
+B.TAG_CARD = { GTP = "gtp", TWA = "twa", HM = "hm", SVU = "svu", MFS = "mfs", MIL = "mfs", LWS = "lws" }
+B.tagTex = B.tagTex or {}
+function B.iconFor(tag)
+    local card = tag and B.TAG_CARD[tag]
+    if not card then return B.icon() end
+    local t = B.tagTex[card]
+    if t == nil then
+        local ok, tx = pcall(function() return getTexture("media/ui/HARMONIE_H_" .. card .. ".png") end)
+        t = (ok and tx) or false
+        B.tagTex[card] = t
+        if not t then print("[HARMONIE_Hub] media/ui/HARMONIE_H_" .. card .. ".png did not load -- " .. tostring(tag) .. " options keep the gold H") end
+    end
+    return t or B.icon()
+end
+-- true for the gold H and every mod-coloured H we hand out
+function B.isOurIcon(tex)
+    if tex == nil or tex == false then return false end
+    if tex == B.icon() then return true end
+    for _, t in pairs(B.tagTex) do if t and t == tex then return true end end
+    return false
+end
+
 -- every option of `context` added since `before` (a set of the options
 -- that were there) is ours: mark it, give it the H
 function B.markNew(context, before, tag)
     local opts = type(context) == "table" and context.options
     if type(opts) ~= "table" then return 0 end
-    local icon = B.icon()
+    local icon = B.iconFor(tag)
     local n = 0
     for _, o in ipairs(opts) do
         if type(o) == "table" and not before[o] then
