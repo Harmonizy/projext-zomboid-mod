@@ -232,6 +232,7 @@ local function updateMoodle(player)
     pcall(m.setValue, m, tier and LEVEL_VALUE[tier] or 0.5)
     if tier and m.setDescription then
         local text = T("IGUI_GTPP_MoodleDesc", T("IGUI_GTPC_Buff_" .. tostring(b.kind)), tostring(tier), string.format("%.1f", b.hoursLeft or 0))
+        if K.buffEffectLine then text = text .. " " .. K.buffEffectLine(b.kind, tier) end
         pcall(m.setDescription, m, 1, tier, text)
     end
 end

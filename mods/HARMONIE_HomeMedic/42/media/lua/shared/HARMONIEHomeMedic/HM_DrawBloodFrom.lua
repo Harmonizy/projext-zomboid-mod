@@ -328,7 +328,10 @@ local function onMenu(playerNum, context, worldobjects, test)
             if test then return true end
             local name = call(p, "getDisplayName") or call(p, "getUsername") or "?"
             local hasBag = DB.findEmptyBag(me) ~= nil
-            local opt = context:addOption(L("Option", "Draw blood (%1)", name), me, function() DB.ask(me, p) end)
+            -- 2026-11-22 (owner: the right-click was too long with many people):
+            -- inside the one "Examine Health" submenu when it exists
+            local menu = (EHR.MPExamination.HealthMenu and EHR.MPExamination.HealthMenu(context)) or context
+            local opt = menu:addOption(L("Option", "Draw blood (%1)", name), me, function() DB.ask(me, p) end)
             local tip = ISToolTip:new()
             tip:initialise()
             tip.description = L("Tooltip", "Draw %1 mL of this patient's blood into an empty blood bag. The patient must agree, have at least 80%% blood and stay close until it is done.",

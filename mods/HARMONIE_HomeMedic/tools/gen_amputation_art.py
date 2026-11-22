@@ -7,7 +7,8 @@ Writes 42/media/textures/HARMONIE_HomeMedic/:
   * amp/arm_<L|R>_<state>.png -- one arm hanging down, 96x224, for each
     state the tab shows: none (whole arm), Hand, ForeArm, UpperArm (cut there:
     the part below is a faint outline, the stump a red cap), Hand_prost,
-    ForeArm_prost (the missing part as a steel prosthesis). R is L mirrored.
+    ForeArm_prost, UpperArm_prost (the missing part as a steel prosthesis;
+    HM 1.2.3: the upper arm takes one too). R is L mirrored.
 Run with a Python that has Pillow (here: /usr/bin/python3).
 """
 import os
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(OUT, "amp"), exist_ok=True)
     tab_amputation().save(os.path.join(OUT, "tab_amputation.png"))
     n = 0
-    for state in ("none", "Hand", "ForeArm", "UpperArm", "Hand_prost", "ForeArm_prost"):
+    for state in ("none", "Hand", "ForeArm", "UpperArm", "Hand_prost", "ForeArm_prost", "UpperArm_prost"):
         left = arm(state)
         left.save(os.path.join(OUT, "amp", "arm_L_%s.png" % state))
         ImageOps.mirror(left).save(os.path.join(OUT, "amp", "arm_R_%s.png" % state))

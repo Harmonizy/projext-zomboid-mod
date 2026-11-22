@@ -336,7 +336,11 @@ function TWAGemSocketUI:onKeyRelease(key) if key == Keyboard.KEY_ESCAPE then sel
 -- What the confirm button would do now: "insert", "remove" or nil.
 function TWAGemSocketUI:pendingOp()
     if not self:weaponOk() or not self.selKey then return nil end
-    if self.pick then return "insert" end
+    if self.pick then
+        -- one of each gem type per weapon (2026-11-22)
+        if G.dupeKey(self.weapon, self.selKey, self.pick.type) then return nil end
+        return "insert"
+    end
     if self.selKey == "sp" and G.gemIn(self.weapon, "sp") then return "remove" end
     return nil
 end
@@ -404,6 +408,8 @@ function TWAGemSocketUI:prerender()
         self.confirmBtn:setTooltip(getText("IGUI_TWA_Socket_ReplaceWarn"))
     elseif op == "insert" and self.selKey ~= "sp" then
         self.confirmBtn:setTooltip(getText("IGUI_TWA_Socket_PermanentWarn"))
+    elseif self.pick and self.selKey and self:weaponOk() and G.dupeKey(self.weapon, self.selKey, self.pick.type) then
+        self.confirmBtn:setTooltip(getText("IGUI_TWA_Socket_SameType"))
     else
         self.confirmBtn:setTooltip(nil)
     end
@@ -621,7 +627,8 @@ function TWAGemSocketUI:drawCentre(i)
     end
     for n, g in ipairs(vis) do
         local gx, gy = self:pickCellPos(n)
-        local have = g.count > 0
+        local dupe = self.weapon ~= nil and G.dupeKey(self.weapon, self.selKey or "", g.type) ~= nil
+        local have = g.count > 0 and not dupe
         local sel = self.pick ~= nil and self.pick.type == g.type and self.pick.state == g.state
         local mx, my = self:getMouseX(), self:getMouseY()
         local hover = mx >= gx and mx <= gx + CELL and my >= gy and my <= gy + CELL
@@ -636,6 +643,7 @@ function TWAGemSocketUI:drawCentre(i)
         self:stateDot(gx + 5, gy + CELL - 9, g.state)
         if hover then
             self.hoverName = gemName(g.type) .. " (" .. getText("IGUI_TWA_GemState_" .. g.state) .. "): " .. G.describe(G.ability(g.type, g.state))
+            if dupe then self.hoverName = self.hoverName .. " -- " .. getText("IGUI_TWA_Socket_SameType") end
         end
     end
 end

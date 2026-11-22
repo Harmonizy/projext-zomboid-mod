@@ -290,12 +290,16 @@ function Win:renderCook(x, y, w, h)
     -- the dish buff on this character now
     local buff = K.myBuffNow and K.myBuffNow(self.player)
     local helpKey = "IGUI_GTPP_Help_" .. page
-    infoMark(self, x + w - 22, y + 2, lineH(sf) + 2, T(helpKey))
+    infoMark(self, x + w - 22, y + 2, lineH(sf) + 2, T(helpKey) .. (K.buffListText and ("\n\n" .. K.buffListText()) or ""))
     y, h = y + used + 4, h - used - 4
     if buff then
         local line = T("IGUI_GTPP_BuffNow", T("IGUI_GTPC_Buff_" .. tostring(buff.kind)), tostring(buff.tier or 1), string.format("%.1f", buff.hoursLeft))
         shadowText(self, fit(line, w, sf), x, y, C.good, 1, sf)
-        y, h = y + lineH(sf) + 4, h - lineH(sf) - 4
+        y, h = y + lineH(sf) + 2, h - lineH(sf) - 2
+        if K.buffEffectLine then
+            shadowText(self, fit(K.buffEffectLine(buff.kind, buff.tier or 1), w, sf), x, y, C.text, 1, sf)
+            y, h = y + lineH(sf) + 4, h - lineH(sf) - 4
+        end
     end
     if page == "prep" then return self:renderCookPrep(x, y, w, h) end
     if page == "evo" then return self:renderCookEvo(x, y, w, h) end

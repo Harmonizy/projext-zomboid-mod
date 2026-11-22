@@ -167,6 +167,18 @@ function G.list(weapon)
     return out
 end
 
+-- 2026-11-22 (owner: "อัญมณีห้ามใส่อันเดียวกันซ้ำ"): one weapon holds
+-- each gem TYPE once, whatever its state. Returns the OTHER socket key that
+-- already holds `gemType` (the socket being filled itself does not count, so
+-- a better gem of the same type may still replace it there), else nil.
+function G.dupeKey(weapon, key, gemType)
+    key = tostring(key)
+    for _, g in ipairs(G.list(weapon)) do
+        if g.key ~= key and g.type == gemType then return g.key end
+    end
+    return nil
+end
+
 -- Sum of the socketed gems' abilities: { Field = amount }. `swap` (optional)
 -- = { key, type, state } pretends that gem sits in that socket (the preview).
 function G.totalBonus(weapon, swap)
@@ -313,10 +325,15 @@ function G.doInsert(player, weapon, key, gemId)
     end
     local gem = findGem(player, gemId)
     if not gem then TWALog("Socket", "insert REFUSED: gem id %s not found on %s", tostring(gemId), TWALogName(player)); return false end
+    local gemType = gem:getFullType()
+    local dk = G.dupeKey(weapon, key, gemType)
+    if dk then
+        TWALog("Socket", "insert REFUSED: %s already holds %s in socket %s (one of each gem type)", TWALogType(weapon), tostring(gemType), tostring(dk))
+        return false
+    end
     local md = weapon:getModData()
     md.TWA_Gems = md.TWA_Gems or {}
     local oldType, oldState = G.gemIn(weapon, key)
-    local gemType = gem:getFullType()
     local gemState = TWACraftState.gemState(gem) or "Raw"
     TWASources.remove(gem, player:getInventory())
     md.TWA_Gems[key] = G.pack(gemType, gemState)

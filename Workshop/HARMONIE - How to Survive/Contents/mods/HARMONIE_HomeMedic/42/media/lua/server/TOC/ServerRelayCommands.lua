@@ -116,7 +116,14 @@ end
 function ServerRelayCommands.RelayApplyTraitAmputation(playerObj, args)
     local DataController = require("TOC/Controllers/DataController")
     local dcInst = DataController.GetInstance(playerObj:getUsername())
-    if dcInst:getIsCut(args.limbName) then return end  -- already applied on a previous login
+    -- HM 1.2.3: a missing instance used to throw here (the ask was lost)
+    if not dcInst then
+        local ServerDataController = require("TOC/Controllers/ServerDataController")
+        dcInst = ServerDataController.GetOrCreate(playerObj:getUsername(), playerObj)
+    end
+    if HMLog then HMLog("TOCTrait", "%s asks for the trait cut of %s (%s)", tostring(playerObj:getUsername()), tostring(args and args.limbName),
+        dcInst and dcInst:getIsCut(args.limbName) and "already cut" or "cutting") end
+    if not dcInst or dcInst:getIsCut(args.limbName) then return end  -- already applied on a previous login
 
     TOC_DEBUG.print("Applying trait amputation for " .. playerObj:getUsername() .. " - " .. args.limbName)
     local AmputationHandler = require("TOC/Handlers/AmputationHandler")
