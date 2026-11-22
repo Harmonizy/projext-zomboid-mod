@@ -1939,6 +1939,14 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
         end
     end
 
+    -- HARMONIE (owner 2026-11-22: "why ??? for stage and severity when it is
+    -- diagnosed"): an illness diagnosed in the Diagnosis tab shows its name,
+    -- severity, symptoms, progress and treatment whatever the Doctor level
+    -- (EHR showed severity only from Doctor 4, progress from 6).
+    local hmDiagnosed = HM_Diagnosis and HM_Diagnosis.enabled and HM_Diagnosis.enabled() and HM_Diagnosis.gated(hmId)
+        and HM_Diagnosis.isDiagnosed(self.player, hmId, self.isRemoteExamination and self.remoteExamData or nil)
+    if hmDiagnosed then canIdentify = true end
+
     if not canIdentify then
         displayName = (unknownInfo and unknownInfo.displayName) or (getText("UI_EHR_DiseaseUnknown") or "Unknown Illness")
     else
@@ -1958,6 +1966,10 @@ function EHR_MedicalMonitorUI:renderDiseaseEntry(startY, diseaseId, diseaseData)
             showProgress = true
             showTreatmentStatus = true
         end
+    end
+
+    if hmDiagnosed and not diseaseData.isKnox then
+        showSeverity, showSymptoms, showProgress, showTreatmentStatus = true, true, true, true
     end
 
     -- Disease name first, details below it. This avoids overlap with long condition names.

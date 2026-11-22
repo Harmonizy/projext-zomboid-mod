@@ -127,12 +127,18 @@ function TWA_PerformProcedureAction:getDuration()
     return self.maxTime
 end
 
--- `procId` -- a TWAProcedures.List key; `quality` -- the minigame's word.
-function TWA_PerformProcedureAction:new(character, procId, quality)
+-- `procId` -- a TWAProcedures.List key; `quality` -- the minigame's word;
+-- `recipeId` (2026-11-22, optional) -- the recipe the step is for: its
+-- rarity decides which forge a forge step needs (TWAProcedures.ForRecipe).
+function TWA_PerformProcedureAction:new(character, procId, quality, recipeId)
     local o = ISBaseTimedAction.new(self, character)
     o.procId = procId
+    o.recipeId = recipeId
     o.quality = TWACraftState.isWord(quality) and quality or TWACraftState.FALLBACK_WORD
     o.proc = TWAProcedures.List[procId]
+    if o.proc and recipeId and TWAProcedures.ForRecipe then
+        o.proc = TWAProcedures.ForRecipe(o.proc, TWACraftState.getRecipeById(recipeId))
+    end
     -- Round 13 ("Action time ทุกอย่างเป็น 3 วินาที"): every procedure takes the
     -- sandbox "ProcedureSeconds" (default 3 s); proc.time is no longer used.
     o.maxTime = TWAConfig.secondsToTicks(TWAConfig.num("ProcedureSeconds", 0.1))

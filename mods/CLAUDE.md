@@ -300,11 +300,23 @@
   in all (SET_FULL_BONUS 0.30).
 
 ## The Way To Attack (TWA)
-- Rare ores (2026-11-12, owner swapped them, TWA 1.0.2): Oridecon (โอริเดคอน)
-  is the LOWER one -- base2 of the Epic bar and of Make_GemFine; Bradium
-  (บราเดียม) the HIGHER one -- Legendary bar and Make_GemPure; Elunium stays
-  on the Elite bar. Hand-edited in HARMONIE_TWA_RecipeData.lua (its generator
-  is not in the repo; tools/gen_new_weapons.py only inserts weapon recipes).
+- Rare ores (TWA 1.5.0, owner 2026-11-22: "epic คือ อีลู elite คือโอริ
+  legendary คือบราเดียม"): Elunium (อีลูเนียม) = EPIC (Epic bar, Make_GemFine,
+  bag tier 3 / add-ons tier 3), Oridecon (โอริเดคอน) = ELITE (Elite bar,
+  Make_GemRadiant, bag tier 4), Bradium (บราเดียม) = LEGENDARY (Legendary bar,
+  Make_GemPure, bag tier 5). Hand-edited in HARMONIE_TWA_RecipeData.lua (its
+  generator is not in the repo) + TWABagUp B.ORE.
+- Forge by rarity (TWA 1.5.0, owner): a step with forgeTier asks for the
+  forge of the RECIPE's tier, not its own -- `TWAProcedures.ForRecipe(proc,
+  recipe)` (cached copy, logged once): Junk..Rare none, Epic Primitive (1),
+  Elite Forge (2), Legendary / Prototype Advanced (3), "or better"
+  (FORGE_BY_TIER). Used by tryPerformProcedure, the step details, the guided
+  view and TWA_PerformProcedureAction (4th arg recipeId). Practice keeps the
+  step's own forgeTier. A recipe with no stats tier keeps it too.
+- One gem of each TYPE per weapon (TWA 1.5.0, owner): `TWAGemSocket.dupeKey`
+  -- doInsert refuses (server), the socket page dims those gems and the
+  button says IGUI_TWA_Socket_SameType. The same socket may still take a
+  better gem of the same type.
 - Craft button (TWA 1.0.3, owner): a base / extra item card whose item some
   recipe MAKES (`recipeMaking`: result map, keepType gem recipes excluded)
   shows "Craft" -> `TWACraftWindow:jumpToRecipe` (craft page, search cleared;
@@ -721,6 +733,11 @@
   call nil" (getHungerChange) every frame, logged even in pcall; now only for
   instanceof Food. The vitamin wrapper of ISAddItemInRecipe:complete is fully
   pcall'd (before and after) so it can never leave the action unfinished.
+- GTP 1.9.1 (owner: "no idea what each food buff does"): IGUI_GTPC_BuffDesc_<kind>
+  words, `K.buffEffectLine(kind, tier)` ("What it does: ... (strength xN)")
+  under the dish tooltip's buff line, under the Cooking tab's "Buff now" and
+  in the moodle; `K.buffListText()` (all five + family list + level
+  strengths) added to every Cooking page's "i" help.
 - Chopping game: TWICE the cuts (`CUT_MUL` 2, one click = one cut; owner
   "หั่นเพิ่มเป็น 2 เท่า"). "Half the minigame time below the dish's level" was
   tried and taken back (owner: original time).
@@ -879,6 +896,12 @@
   saline (hemodilution) path no longer lifts health either. Our own damage
   paths still clamp at the floor (EHR_Disease / Sepsis / Environmental /
   overdose cap) -- they only LOWER health, never raise it.
+- A diagnosed illness shows stage / severity / progress / treatment at any
+  Doctor level (HTS 1.2.2, owner: "why ??? after a diagnosis"): EHR showed
+  them only from Doctor 4 / 6. HM_DiagnosisPanel's getDiseaseDisplayInfo
+  wrapper (health panel rows) and EHR_MedicalMonitorUI (hmDiagnosed) turn
+  them on for a gated illness the Diagnosis tab diagnosed (Knox and rows with
+  their own detail text -- delirium, concussion -- unchanged).
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:

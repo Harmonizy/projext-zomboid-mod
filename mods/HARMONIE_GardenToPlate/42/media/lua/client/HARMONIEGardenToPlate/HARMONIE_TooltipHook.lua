@@ -155,6 +155,9 @@ local function buildPrepLines(item)
         else
             local kind = HARMONIE_GTP.Cook and HARMONIE_GTP.Cook.buffKindOf and HARMONIE_GTP.Cook.buffKindOf(item, d.fam) or "hearty"
             lines[#lines + 1] = { text = txt("IGUI_GTPP_TipBuff", txt("IGUI_GTPC_Buff_" .. kind), tostring(tier)), r = 0.45, g = 0.92, b = 0.48 }
+            if HARMONIE_GTP.Cook and HARMONIE_GTP.Cook.buffEffectLine then
+                lines[#lines + 1] = { text = HARMONIE_GTP.Cook.buffEffectLine(kind, tier), r = 0.7, g = 0.9, b = 0.72 }
+            end
             if held == "level" then
                 lines[#lines + 1] = { text = txt("IGUI_GTPP_TipTier3Level", tostring(R.tier3Level())), r = 1.0, g = 0.82, b = 0.32 }
             end
