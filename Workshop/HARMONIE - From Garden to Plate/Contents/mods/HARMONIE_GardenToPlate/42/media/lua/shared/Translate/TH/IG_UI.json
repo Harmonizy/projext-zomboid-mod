@@ -15,6 +15,7 @@
     "IGUI_HARMONIE_AdminSymptomReminderHours": "ความถี่การพูดถึงอาการ (ชั่วโมง)",
     "IGUI_HARMONIE_AdminTitle": "แอดมินระบบโภชนาการ HARMONIE",
     "IGUI_HARMONIE_AdminVitaminsHeader": "ค่าสะสมวิตามิน — %1",
+    "IGUI_HARMONIE_AssessMenu": "ตรวจโภชนาการ",
     "IGUI_HARMONIE_AssessOther": "ประเมินภาวะโภชนาการของ %1",
     "IGUI_HARMONIE_AssessOtherDesc": "ดูวิตามินของผู้เล่นคนนี้",
     "IGUI_HARMONIE_AssessmentLocked": "ต้องมีทักษะปฐมพยาบาลระดับ %1 ขึ้นไปจึงจะแปลผลได้",

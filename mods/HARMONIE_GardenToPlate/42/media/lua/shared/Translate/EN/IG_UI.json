@@ -1,6 +1,7 @@
 {
     "IGUI_HARMONIE_AssessmentTitle": "Nutritional Assessment",
     "IGUI_HARMONIE_AssessmentLocked": "Requires First Aid level %1 to interpret",
+    "IGUI_HARMONIE_AssessMenu": "Check Nutrition",
     "IGUI_HARMONIE_AssessOther": "Assess %1's Nutritional Status",
     "IGUI_HARMONIE_AssessOtherDesc": "See this player's vitamins.",
     "IGUI_HARMONIE_KeybindAssess": "Assess Nutritional Status",

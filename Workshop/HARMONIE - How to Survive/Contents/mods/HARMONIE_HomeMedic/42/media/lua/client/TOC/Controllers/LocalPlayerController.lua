@@ -50,13 +50,38 @@ end
 
 
 
+-- HM 1.2.3: every trait of the character once per login, so the console
+-- shows an amputation trait that is NOT TOC's (another mod's): those hide the
+-- arm but tell TOC nothing (no stump data, no prosthesis, nothing in HTS).
+local function logTraits(playerObj)
+    if not HMLog then return end
+    local names = {}
+    local ok = pcall(function()
+        local ct = playerObj.getCharacterTraits and playerObj:getCharacterTraits()
+        local known = ct and ct.getKnownTraits and ct:getKnownTraits()
+        if known and known.size then
+            for i = 0, known:size() - 1 do names[#names + 1] = tostring(known:get(i)) end
+        end
+    end)
+    if not ok or #names == 0 then
+        pcall(function()
+            local tr = playerObj.getTraits and playerObj:getTraits()
+            if tr and tr.size then for i = 0, tr:size() - 1 do names[#names + 1] = tostring(tr:get(i)) end end
+        end)
+    end
+    HMLog("TOCTrait", "%s traits: %s", tostring(playerObj:getUsername()), #names > 0 and table.concat(names, ", ") or "(none read)")
+end
+
 ---Handles the traits
 function LocalPlayerController.ManageTraits()
     local playerObj = getPlayer()
     local dcInst = DataController.GetInstance(playerObj:getUsername())
+    pcall(logTraits, playerObj)
 
+    if not dcInst then return end
     for k, v in pairs(StaticData.TRAITS_BP) do
         if playerObj:hasTrait(TOC_REG.traits[k]) then
+            if HMLog then HMLog("TOCTrait", "%s has trait %s (%s): %s", tostring(playerObj:getUsername()), k, v, dcInst:getIsCut(v) and "already cut" or "asking for the cut") end
             if dcInst:getIsCut(v) then return end  -- already applied on a previous login
             TOC_DEBUG.print("Player has amputation trait " .. k .. ", applying it for limb " .. v)
             sendClientCommand(CommandsData.modules.TOC_RELAY, CommandsData.server.Relay.RelayApplyTraitAmputation, {limbName = v})

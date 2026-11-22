@@ -87,9 +87,13 @@ function ProsthesisHandler.CheckIfEquippable(fullType, character)
 
     --TOC_DEBUG.print("highestAmputatedLimbs")
     --TOC_DEBUG.printTable(highestAmputatedLimbs)
+    -- HM 1.2.3 (owner 2026-11-22: "it should fit a cut wrist AND a cut
+    -- shoulder"): any stump on that side takes it -- the upper arm too (TOC
+    -- refused UpperArm). The prosthesis group (Top_L / Top_R) already covers
+    -- every arm part, so hand use and action times follow as for the others.
     if highestAmputatedLimbs then
         local hal = highestAmputatedLimbs[side]
-        if hal and not string.contains(hal, "UpperArm") then
+        if hal then
             TOC_DEBUG.print("Found acceptable limb to use prosthesis => " .. tostring(hal))
             return true
         end
@@ -141,6 +145,20 @@ function ProsthesisHandler.Validate(item, isEquippable, character)
         isEquippable = ProsthesisHandler.CheckIfEquippable(fullType, character)
         if not isEquippable then
             hmlog("%s: %s cannot be worn here (%s) -- no fitting stump on that side", tostring(character and character.getUsername and character:getUsername() or "?"), tostring(fullType), sideName())
+            -- HM 1.2.3 (owner: "any prosthesis on any arm"): the item's side
+            -- has no stump but the other side does -> say which option wears
+            -- it there (vanilla's clothing extra option swaps the side)
+            local who = character or (getPlayer and getPlayer())
+            local side = CommonMethods.GetSide(fullType)
+            local other = (side == "L") and "R" or "L"
+            local h = highestFor(who and who.getUsername and who:getUsername())
+            if h and h[other] and who and who.Say and not (isServer and isServer()) and (not who.isLocalPlayer or who:isLocalPlayer()) then
+                local now = getTimestampMs and getTimestampMs() or 0
+                if now - (ProsthesisHandler.lastSideHint or -1e9) > 3000 then
+                    ProsthesisHandler.lastSideHint = now
+                    who:Say(getText(other == "R" and "UI_Say_ProstUseRight" or "UI_Say_ProstUseLeft"))
+                end
+            end
         end
     else
         TOC_DEBUG.print("Should say cant equip")

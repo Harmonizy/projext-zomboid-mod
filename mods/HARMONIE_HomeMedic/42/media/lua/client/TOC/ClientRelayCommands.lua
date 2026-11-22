@@ -46,6 +46,9 @@ function ClientRelayCommands.ReceiveApplyFromServer(args)
 end
 
 function ClientRelayCommands.ReceiveCache(args)
+    -- HM 1.2.3: an older server's FinalizeAmputationAction has no username
+    if not args.patientUsername then args.patientUsername = getPlayer() and getPlayer():getUsername() end
+    if not args.patientUsername or type(args.cache) ~= "table" then return end
     local CachedDataHandler = require("TOC/Handlers/CachedDataHandler")
     CachedDataHandler.ApplyFromServer(args.patientUsername, args.cache)
 

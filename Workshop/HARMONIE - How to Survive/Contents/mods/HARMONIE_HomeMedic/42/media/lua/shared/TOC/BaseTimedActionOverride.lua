@@ -89,6 +89,11 @@ local function TryRandomBleed(character, limbName)
     if chance < normCicTime then
         local bleedingTime = math.max(1, math.floor(normCicTime * 2 * 20))
         TOC_DEBUG.print("Triggered bleeding from non cicatrized wound, secs: " .. tostring(bleedingTime))
+        -- HM 1.2.3: logged -- the bleed lands on the part ABOVE the stump
+        -- (Hand -> ForeArm, ForeArm -> UpperArm, UpperArm -> Torso_Upper),
+        -- which still exists, so "no wounds on a missing limb" never stops it
+        if HMLog then HMLog("Prosthesis", "%s: prosthesis on the unhealed %s stump -> bleeding %s s on %s (chance %.2f)",
+            tostring(character:getUsername()), tostring(limbName), tostring(bleedingTime), tostring(StaticData.LIMBS_ADJACENT_IND_STR[limbName]), normCicTime) end
 
         if isClient() then
             -- MP: client-side setBleedingTime does not sync to server — relay the call

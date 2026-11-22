@@ -146,7 +146,17 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
     local playerObj = getSpecificPlayer(playerIndex)
     if not playerObj then return end
 
-    for _, target in ipairs(getContextPlayerCandidates(playerObj, worldobjects)) do
+    -- GTP 1.9.2 (owner 2026-11-22: "with many people around the right-click
+    -- is huge"): ONE "Check nutrition" entry, the people nearby in its
+    -- submenu (pointing at it shows their names).
+    local targets = getContextPlayerCandidates(playerObj, worldobjects)
+    if #targets == 0 then return end
+    local parent = context:addOption(getText("IGUI_HARMONIE_AssessMenu"), nil, nil)
+    local sub = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, sub)
+    if HARMONIE_GTP.LogOnce then HARMONIE_GTP.LogOnce("assessMenuN" .. tostring(math.min(#targets, 5)), "Assess", "nutrition right-click: one entry, %d player(s) in its submenu", #targets) end
+
+    for _, target in ipairs(targets) do
         local optionText = getText("IGUI_HARMONIE_AssessOther", target:getDisplayName())
         -- ISContextMenu:addOption(name, X, onSelect, ...args) invokes
         -- onSelect(X, ...args) (confirmed in ISContextMenu.lua's
@@ -155,7 +165,7 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldobjects, 
         -- HARMONIE_NutritionUI.Open(target, assessor) needs `target` (the
         -- other player) first and `playerObj` (the local assessor)
         -- second, so that order goes here, not the other way around.
-        local option = context:addOption(optionText, target, HARMONIE_NutritionUI.Open, playerObj)
+        local option = sub:addOption(target:getDisplayName(), target, HARMONIE_NutritionUI.Open, playerObj)
 
         local tooltip = ISWorldObjectContextMenu.addToolTip()
         tooltip:setName(optionText)

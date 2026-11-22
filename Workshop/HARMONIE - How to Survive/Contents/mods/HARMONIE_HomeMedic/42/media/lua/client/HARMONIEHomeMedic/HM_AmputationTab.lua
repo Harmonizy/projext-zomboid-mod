@@ -48,7 +48,7 @@ local function armTexture(side, st)
     local state = "none"
     if st then
         state = st.part
-        if st.prost and st.part ~= "UpperArm" then state = state .. "_prost" end
+        if st.prost then state = state .. "_prost" end   -- HM 1.2.3: the upper arm too
     end
     local path = "media/textures/HARMONIE_HomeMedic/amp/arm_" .. side .. "_" .. state .. ".png"
     if texCache[path] == nil then
@@ -206,7 +206,7 @@ local function draw(panel)
             local dirt = math.floor(st.dirt * 100 + 0.5)
             row(L("Dirt", "Dirtiness"), tostring(dirt) .. "%", dirt >= 50 and c.red or (dirt > 0 and c.yellow or c.green))
             row(L("Bite", "Zombie bite"), st.infected and L("Yes", "Yes") or L("No", "No"), st.infected and c.red or c.green)
-            local canProst = st.part ~= "UpperArm"
+            local canProst = true   -- HM 1.2.3: every stump, the upper arm too
             local pv = st.prost and L("ProstOn", "Worn") or (canProst and L("ProstCan", "Not worn (can wear)") or L("ProstNo", "Cannot wear (upper arm)"))
             row(L("Prost", "Prosthesis"), pv, st.prost and c.green or (canProst and c.text or c.textDim))
             -- action time: TOC's multiplier minus 0.1 per skill level, never under 1

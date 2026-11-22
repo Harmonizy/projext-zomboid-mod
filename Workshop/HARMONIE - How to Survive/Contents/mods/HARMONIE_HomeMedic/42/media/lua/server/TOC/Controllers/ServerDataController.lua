@@ -76,9 +76,50 @@ function ServerDataController.Initialize(username, isResetForced, playerObj)
 
     if playerObj then
         dcInst:apply(playerObj)
+        -- HM 1.2.3 (owner 2026-11-22: "an amputee trait leaves the arm gone
+        -- but nothing knows it is cut -- no prosthesis, nothing in the HTS
+        -- tab"): the client asks for its trait amputation only once, when its
+        -- data arrives, and nothing tried again if that ask was lost. The
+        -- server now checks the traits itself every time it loads the data.
+        pcall(ServerDataController.ApplyTraitAmputation, playerObj, dcInst)
     end
 
     return dcInst
+end
+
+local function hmlog(fmt, ...) if HMLog then HMLog("TOCTrait", fmt, ...) end end
+
+---The amputee trait's cut, done by the server (no damage, healed stump).
+---Safe to call again: a limb already cut is left alone.
+---@param playerObj IsoPlayer
+---@param dcInst DataController?
+---@return boolean applied
+function ServerDataController.ApplyTraitAmputation(playerObj, dcInst)
+    if not playerObj or not playerObj.hasTrait then return false end
+    local reg = _TOCRegistries and _TOCRegistries.traits
+    if not reg then hmlog("no TOC trait registry -- trait amputations off"); return false end
+    dcInst = dcInst or DataController.GetInstance(playerObj:getUsername())
+    if not dcInst or not dcInst.tocData then return false end
+    local who = playerObj:getUsername()
+    for traitKey, limbName in pairs(StaticData.TRAITS_BP) do
+        local trait = reg[traitKey]
+        local okH, has = pcall(function() return trait and playerObj:hasTrait(trait) end)
+        if okH and has then
+            if dcInst:getIsCut(limbName) then
+                hmlog("%s has trait %s: %s already cut", tostring(who), traitKey, limbName)
+                return false
+            end
+            hmlog("%s has trait %s: cutting %s now (no damage, healed stump)", tostring(who), traitKey, limbName)
+            local AmputationHandler = require("TOC/Handlers/AmputationHandler")
+            local handler = AmputationHandler:new(playerObj, playerObj, limbName)
+            handler:execute(false)
+            dcInst:setCicatrizationTime(limbName, 0)
+            dcInst:setIsCicatrized(limbName, true)
+            dcInst:apply(playerObj)
+            return true
+        end
+    end
+    return false
 end
 
 ---Return the existing ready DC instance, or initialize a new one.

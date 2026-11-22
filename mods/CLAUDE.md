@@ -902,6 +902,36 @@
   wrapper (health panel rows) and EHR_MedicalMonitorUI (hmDiagnosed) turn
   them on for a gated illness the Diagnosis tab diagnosed (Knox and rows with
   their own detail text -- delirium, concussion -- unchanged).
+- Right-click with many players (HTS 1.2.3 / GTP 1.9.2, owner 2026-11-22):
+  ONE "Examine Health" (ตรวจสุขภาพ) entry with a submenu -- yourself (medical
+  monitor) then each player nearby (EHR_MPExamination;
+  `EHR.MPExamination.HealthMenu(context)` makes / finds it, Draw blood adds
+  its "Draw blood (name)" rows there), and ONE "Check Nutrition"
+  (ตรวจโภชนาการ, IGUI_HARMONIE_AssessMenu) with the names (GTP Hotkeys). The
+  hub's "HARMONIE: open a tab" stays as it was.
+- Prostheses (HTS 1.2.3, owner): names say the side (แขนเทียม (ซ้าย) / (ขวา));
+  any stump takes one, the UPPER ARM too (ProsthesisHandler.CheckIfEquippable
+  no longer refuses UpperArm; group Top_L/R covers every arm part); a
+  prosthesis of the other side is worn through vanilla's clothing extra
+  action (the item's own "Install prosthesis on right / left arm" option) --
+  the health panel's body-part menu lists both sides and uses
+  ISClothingExtraAction for the other one; wearing the wrong side says which
+  option to use (UI_Say_ProstUseRight / Left). Amputation tab art has
+  UpperArm_prost (tools/gen_amputation_art.py). A prosthesis on an unhealed
+  stump CAN bleed (TOC TryRandomBleed after each action, chance from the
+  cicatrization time left): the bleed lands on the part ABOVE the stump
+  (Hand -> ForeArm, ForeArm -> UpperArm, UpperArm -> Torso_Upper), which is
+  not a missing limb, so HealArea never clears it -- now logged
+  ("[Prosthesis] ... bleeding").
+- TOC amputee traits (HTS 1.2.3, owner: "the trait takes the arm but nothing
+  knows it is cut"): the client asked for the trait cut ONCE when its data
+  arrived. Now ServerDataController.Initialize also applies it
+  (ApplyTraitAmputation: hasTrait on the server, no damage, healed stump,
+  skipped when already cut); RelayApplyTraitAmputation no longer throws on a
+  missing instance; FinalizeAmputationAction carries patientUsername (the
+  client wrote its cache under a nil key); [TOCTrait] logs the steps and every
+  trait of the character once per login (an amputation trait of ANOTHER mod
+  hides the arm but tells TOC nothing -- find it there).
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:
