@@ -41,7 +41,7 @@ end
 -- Add TOC's options for `bodyPart` to `context`, acting through `panel`
 -- (anything with .character / .otherPlayer and ISHealthPanel's item helpers).
 -- Returns true when at least one option was added.
-function T.addOptions(panel, bodyPart, context)
+function T.addOptions(panel, bodyPart, context, skipClean)
     if not T.available() or not panel or not bodyPart or not context then return false end
     local before = context.numOptions or 0
     local Cut = require("TOC/UI/Interactions/CutLimbInteractionHandler")
@@ -51,7 +51,7 @@ function T.addOptions(panel, bodyPart, context)
         panel:checkItems({ cut })
         cut:addToMenu(context)
     end
-    if Clean and panel.character then
+    if Clean and panel.character and not skipClean then
         local clean = Clean:new(panel, bodyPart, panel.character:getUsername())
         panel:checkItems({ clean })
         clean:addToMenu(context)
@@ -341,6 +341,139 @@ function T.prosthesisOptions(context, player, bodyPart)
     return true
 end
 
+-- HTS 1.2.6 (owner 2026-11-24): right-click the blacked-out (amputated)
+-- part in the medical window -- yours or a patient's -- for ONE menu built
+-- here: clean the stump (HM_CleanStumpAction, which writes the PATIENT's
+-- data where it lives), fit a prosthesis (yours: as before; a patient's:
+-- HM_StumpCare.requestFit), plus TOC's cut-higher option. The EHR window
+-- used to hand a stump to vanilla's menu code (yours) or show nothing for
+-- an uninjured part (a patient's), so players went to the vanilla window.
+local function limbOf(StaticData, bodyPart, bodyPartType)
+    local typeStr
+    pcall(function() typeStr = BodyPartType.ToString(bodyPartType or bodyPart:getType()) end)
+    return typeStr and StaticData.LIMBS_IND_STR and StaticData.LIMBS_IND_STR[typeStr] or nil
+end
+-- the visible stump on that side (a click on the missing hand of a cut
+-- forearm means the forearm)
+local function stumpOf(dc, limb)
+    if dc:getIsVisible(limb) then return limb end
+    local side = limb:sub(-1)
+    for _, part in ipairs({ "UpperArm", "ForeArm", "Hand" }) do
+        local l = part .. "_" .. side
+        if dc:getIsCut(l) and dc:getIsVisible(l) then return l end
+    end
+    return limb
+end
+
+function T.stumpMenu(panel, bodyPart, x, y, bodyPartType)
+    if not T.available() or not panel or not bodyPart then return false end
+    local StaticData, DataController = tocModules()
+    if not StaticData then return false end
+    local limb = limbOf(StaticData, bodyPart, bodyPartType)
+    if not limb then return false end
+    local remote = panel.isRemoteHealthPanel == true
+    local doctor = remote and panel.remoteDoctor or panel.player
+    local patient = remote and (panel.remotePatient or panel.player) or panel.player
+    if not doctor or not patient then return false end
+    local username = patient:getUsername()
+    local dc = DataController.GetInstance(username)
+    if not dc then
+        if not T.requested[username] then
+            T.requested[username] = true
+            pcall(function() require("TOC/Controllers/ClientDataController").Request(username, false) end)
+        end
+        return false
+    end
+    if not dc:getIsCut(limb) then return false end
+    limb = stumpOf(dc, limb)
+    local side = limb:sub(-1)
+    local S = HM_StumpCare
+    local playerNum = doctor:getPlayerNum()
+    local context = ISContextMenu.get(playerNum, x + panel:getAbsoluteX(), y + panel:getAbsoluteY())
+    context.origin = panel.bodyPartPanel or panel
+
+    -- clean the stump
+    if not dc:getIsCicatrized(limb) and S then
+        local dirt = tonumber(dc:getWoundDirtyness(limb)) or 0
+        local items = S.carriedByType(doctor, S.isCleaner)
+        local title = getText("ContextMenu_CleanWound") .. " (" .. math.floor(dirt * 100 + 0.5) .. "%)"
+        if dirt <= 0 then
+            local o = context:addOption(text("UI_HomeMedic_Stump_Clean", "Stump is clean"), nil, nil)
+            o.notAvailable = true
+        elseif #items == 0 then
+            local o = context:addOption(title, nil, nil)
+            o.notAvailable = true
+            local tip = ISToolTip:new(); tip:initialise()
+            tip.description = text("UI_HomeMedic_Stump_NeedCleaner", "Needs a disinfected bandage or rag (carried).")
+            o.toolTip = tip
+        else
+            local parent = context:addOption(title, nil, nil)
+            local sub = context:getNew(context)
+            context:addSubMenu(parent, sub)
+            for _, e in ipairs(items) do
+                local label = e.name .. (e.count > 1 and (" (x" .. e.count .. ")") or "")
+                local o = sub:addOption(label, nil, function() S.queueClean(doctor, patient, e.item, limb) end)
+                o.itemForTexture = e.item
+            end
+        end
+    elseif dc:getIsCicatrized(limb) then
+        local o = context:addOption(text("UI_HomeMedic_Stump_Healed", "Stump healed: nothing to clean"), nil, nil)
+        o.notAvailable = true
+    end
+
+    -- the prosthesis
+    if not remote then
+        pcall(T.prosthesisOptions, context, doctor, patient:getBodyDamage():getBodyPart(BodyPartType.FromString(limb)))
+    elseif S then
+        local Prost = select(4, tocModules())
+        local group = StaticData.AMP_GROUPS_IND_STR and StaticData.AMP_GROUPS_IND_STR["Top_" .. side]
+        local worn = group and dc:getIsProstEquipped(group)
+        if worn then
+            local o = context:addOption(text("UI_HomeMedic_Stump_HasProst", "Prosthesis already fitted"), nil, nil)
+            o.notAvailable = true
+        else
+            local list = S.carriedByType(doctor, function(it) return Prost and Prost.CheckIfProst(it) end)
+            if #list == 0 then
+                local o = context:addOption(text("UI_HomeMedic_Stump_FitNone", "Fit prosthesis (you carry none)"), nil, nil)
+                o.notAvailable = true
+            else
+                local far = S.dist(doctor, patient) > S.RANGE + 0.5
+                for _, e in ipairs(list) do
+                    local o = context:addOption(text("UI_HomeMedic_Stump_FitOther", "Fit prosthesis on them") .. ": " .. e.name, nil,
+                        function() S.requestFit(doctor, patient, e.item, side) end)
+                    o.itemForTexture = e.item
+                    if far then
+                        o.notAvailable = true
+                        local tip = ISToolTip:new(); tip:initialise()
+                        tip.description = text("UI_HomeMedic_Stump_No_far", "Too far away")
+                        o.toolTip = tip
+                    end
+                end
+            end
+        end
+    end
+
+    -- TOC's own: amputate higher (cleaning is ours above)
+    pcall(T.addOptions, panel:getVanillaHealthAdapter(), bodyPart, context, true)
+
+    if context:isEmpty() then context:setVisible(false) else context:setVisible(true); context:bringToTop() end
+    if HMLogOnce then HMLogOnce("stumpMenu" .. (remote and "R" or "L"), "Stump", "stump menu opened (%s) for %s", remote and "patient" or "self", limb) end
+    return true
+end
+
+function T.installStumpMenu()
+    if T.stumpInstalled or not EHR_HealthPanelUI or not EHR_HealthPanelUI.openBodyPartContextMenu or not T.available() then return end
+    T.stumpInstalled = true
+    local original = EHR_HealthPanelUI.openBodyPartContextMenu
+    function EHR_HealthPanelUI:openBodyPartContextMenu(bodyPart, x, y, bodyPartType)
+        local ok, done = pcall(T.stumpMenu, self, bodyPart, x, y, bodyPartType)
+        if not ok then HMLogOnce("stumpErr" .. tostring(done), "Stump", "stump menu error: %s", tostring(done)) end
+        if ok and done then return end
+        return original(self, bodyPart, x, y, bodyPartType)
+    end
+    HMLog("Stump", "stump right-click menu installed in the medical window")
+end
+
 function T.installProsthesis()
     if T.prostInstalled or not T.available() or not ISHealthPanel or not ISHealthPanel.doBodyPartContextMenu then return end
     T.prostInstalled = true
@@ -393,4 +526,5 @@ if Events and Events.OnGameStart then
     Events.OnGameStart.Add(T.installStatuses)
     Events.OnGameStart.Add(T.installBody)
     Events.OnGameStart.Add(T.installProsthesis)
+    Events.OnGameStart.Add(T.installStumpMenu)
 end

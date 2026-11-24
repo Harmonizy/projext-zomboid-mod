@@ -3604,7 +3604,22 @@ function EHR_HealthPanelUI:collectDoctorInventoryItems(predicate)
     if HM_Reach and HM_Reach.containers then
         for _, e in ipairs(HM_Reach.containers(doctor)) do scanContainer(e.c, seen) end
     end
-    return items
+    -- HTS 1.2.6 (owner 2026-11-24: "the bandage / disinfectant choices list
+    -- every single item nearby -- the same kind many times, I have to scroll"):
+    -- one per item TYPE (the first found: carried before boxes)
+    local seenType, unique = {}, {}
+    for _, it in ipairs(items) do
+        local okT, ft = pcall(function() return it:getFullType() end)
+        local key = okT and ft or tostring(it)
+        if not seenType[key] then
+            seenType[key] = true
+            unique[#unique + 1] = it
+        end
+    end
+    if #unique < #items and HMLogOnce then
+        HMLogOnce("medDedupe" .. tostring(math.min(#items, 50)), "Menu", "medical item list: %d items -> %d kinds", #items, #unique)
+    end
+    return unique
 end
 
 function EHR_HealthPanelUI:firstItemOfType(items, itemType)
