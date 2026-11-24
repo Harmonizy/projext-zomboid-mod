@@ -987,95 +987,94 @@ end
     Add "Examine Health" option to player context menu
     Called when right-clicking on another player
 ]]--
--- HARMONIE (owner 2026-11-22: "with many people around the right-click is
--- huge -- make health check / nutrition check one entry each, the names of
--- the people nearby show when you point at it"): ONE "Examine Health" entry
--- with a submenu -- yourself (medical monitor) first, then each player
--- nearby. Draw blood (HM_DrawBloodFrom) adds its rows to the same submenu
--- through EHR.MPExamination.HealthMenu.
-local healthMenuNow = nil   -- { opt, sub } of the menu being built
-function EHR.MPExamination.HealthMenu(context)
-    local h = healthMenuNow
-    if h and h.context == context and context.options then
-        for _, o in ipairs(context.options) do
-            if o == h.opt then return h.sub end
+-- HARMONIE (owner 2026-11-22): ONE "Examine Health" entry with a submenu.
+-- HTS 1.2.5 (owner, same day: "it does not show up as reliably as the
+-- nutrition check -- it should ALWAYS be there, with an entry to check your
+-- own health; draw blood is its own entry, shown when you carry an empty
+-- blood bag"): the entry is on EVERY right-click (single player too), its
+-- first row is your own health, then every player within LIST_RANGE tiles
+-- (out of the examine range = shown greyed with the reason, so you see who
+-- is there). It no longer depends on the click landing on a player's square.
+EHR.MPExamination.LIST_RANGE = 8
+function EHR.MPExamination.NearbyPlayers(localPlayer, worldObjects)
+    local list, seen = {}, {}
+    local function add(p)
+        if p and p ~= localPlayer and not seen[p] then
+            local okD, dead = pcall(function() return p:isDead() end)
+            if not (okD and dead) then
+                seen[p] = true
+                list[#list + 1] = p
+            end
         end
     end
-    local title = getText("UI_EHR_Context_ExamineHealth") or "Examine Health"
-    local opt = context:addOption(title, nil, nil)
-    local icon = getExaminePlayerIcon()
-    if icon then opt.iconTexture = icon end
-    local sub = ISContextMenu:getNew(context)
-    context:addSubMenu(opt, sub)
-    healthMenuNow = { context = context, opt = opt, sub = sub }
-    return sub
+    -- whoever the click landed on (any distance the game offers)
+    local okC, clicked = pcall(EHR.MPExamination.GetContextPlayerCandidates, localPlayer, worldObjects)
+    if okC and type(clicked) == "table" then for _, p in ipairs(clicked) do add(p) end end
+    local online = nil
+    if getOnlinePlayers then pcall(function() online = getOnlinePlayers() end) end
+    if online then
+        for i = 0, online:size() - 1 do
+            local p = online:get(i)
+            local d = EHR.MPExamination.GetDistance(localPlayer, p)
+            if p and d >= 0 and d <= EHR.MPExamination.LIST_RANGE then add(p) end
+        end
+    end
+    table.sort(list, function(a, b)
+        return EHR.MPExamination.GetDistance(localPlayer, a) < EHR.MPExamination.GetDistance(localPlayer, b)
+    end)
+    return list
 end
 
 function EHR.MPExamination.OnFillWorldObjectContextMenu(playerNum, context, worldObjects, test)
-    -- Only show in MP (getNumActivePlayers is split-screen count in B42)
-    if not isClient() then return end
-
     local localPlayer = getSpecificPlayer(playerNum)
     if not localPlayer then return end
+    if test then return end   -- always there: never the reason a menu opens
 
-    local candidates = EHR.MPExamination.GetContextPlayerCandidates(localPlayer, worldObjects)
-    if test and #candidates > 0 then
-        ISWorldObjectContextMenu.setTest()
-        return
-    end
-    if #candidates == 0 then return end
+    local others = isClient() and EHR.MPExamination.NearbyPlayers(localPlayer, worldObjects) or {}
 
-    local sub = EHR.MPExamination.HealthMenu(context)
-    -- yourself first
-    for _, targetPlayer in ipairs(candidates) do
-        if targetPlayer == localPlayer then
-            local optionText = getText("UI_EHR_Context_OpenMonitor") or "Open Medical Monitor"
-            local option = sub:addOption(optionText, localPlayer, function(player)
-                if EHR.UI and EHR.UI.ToggleHealthPanel then
-                    EHR.UI.ToggleHealthPanel(player)
-                elseif EHR.UI and EHR.UI.ToggleMonitor then
-                    EHR.UI.ToggleMonitor(player)
-                end
-            end)
-            local tooltip = ISWorldObjectContextMenu.addToolTip()
-            tooltip:setName(optionText)
-            tooltip.description = getText("UI_EHR_ExamineButton_tt") or "Examine your current health condition"
-            option.toolTip = tooltip
+    local title = getText("UI_EHR_Context_ExamineHealth") or "Examine Health"
+    local parent = context:addOption(title, nil, nil)
+    local icon = getExaminePlayerIcon()
+    if icon then parent.iconTexture = icon end
+    local sub = ISContextMenu:getNew(context)
+    context:addSubMenu(parent, sub)
+
+    -- yourself, always first
+    local selfText = getText("UI_EHR_Context_ExamineSelf") or "Check my own health"
+    local selfOpt = sub:addOption(selfText, localPlayer, function(player)
+        if EHR.UI and EHR.UI.ToggleHealthPanel then
+            EHR.UI.ToggleHealthPanel(player)
+        elseif EHR.UI and EHR.UI.ToggleMonitor then
+            EHR.UI.ToggleMonitor(player)
         end
-    end
-    local n = 0
-    for _, targetPlayer in ipairs(candidates) do
-        if targetPlayer ~= localPlayer then
-            n = n + 1
-            local targetName = getPlayerDisplayName(targetPlayer) or getPlayerUsername(targetPlayer) or getExamRequestKey(targetPlayer) or "Unknown"
-            local canRequest = EHR.MPExamination.CanRequestMedicalCheck(localPlayer, targetPlayer)
+    end)
+    local selfTip = ISWorldObjectContextMenu.addToolTip()
+    selfTip:setName(selfText)
+    selfTip.description = getText("UI_EHR_ExamineButton_tt") or "Examine your current health condition"
+    selfOpt.toolTip = selfTip
 
-            local option = sub:addOption(targetName, localPlayer, EHR.MPExamination.OnExamineClick, targetPlayer)
-            local icon = getExaminePlayerIcon()
-            if icon then
-                option.iconTexture = icon
-            end
-
-            -- Gray out if the vanilla consent flow cannot be started from here.
-            if not canRequest then
-                option.notAvailable = true
-                local tooltip = ISWorldObjectContextMenu.addToolTip()
-                tooltip:setName(getText("UI_EHR_Context_TooFar") or "Too Far Away")
-                tooltip.description = EHR.Locale.Format(
-                    "UI_EHR_Context_TooFarDesc",
-                    "You need to be within %1 tiles to examine this player.",
-                    EHR.MPExamination.EXAMINE_RANGE
-                )
-                option.toolTip = tooltip
-            else
-                local tooltip = ISWorldObjectContextMenu.addToolTip()
-                tooltip:setName((getText("UI_EHR_Context_ExamineHealth") or "Examine Health") .. " (" .. targetName .. ")")
-                tooltip.description = getText("UI_EHR_Context_ExamineHealthDesc") or "View this player's health status, diseases, and medications."
-                option.toolTip = tooltip
-            end
+    for _, targetPlayer in ipairs(others) do
+        local targetName = getPlayerDisplayName(targetPlayer) or getPlayerUsername(targetPlayer) or getExamRequestKey(targetPlayer) or "Unknown"
+        local inRange = EHR.MPExamination.IsInRange(localPlayer, targetPlayer)
+        local canRequest = inRange and EHR.MPExamination.CanRequestMedicalCheck(localPlayer, targetPlayer)
+        local option = sub:addOption(targetName, localPlayer, EHR.MPExamination.OnExamineClick, targetPlayer)
+        if icon then option.iconTexture = icon end
+        local tooltip = ISWorldObjectContextMenu.addToolTip()
+        if not canRequest then
+            option.notAvailable = true
+            tooltip:setName(getText("UI_EHR_Context_TooFar") or "Too Far Away")
+            tooltip.description = EHR.Locale.Format(
+                "UI_EHR_Context_TooFarDesc",
+                "You need to be within %1 tiles to examine this player.",
+                EHR.MPExamination.EXAMINE_RANGE
+            )
+        else
+            tooltip:setName(title .. " (" .. targetName .. ")")
+            tooltip.description = getText("UI_EHR_Context_ExamineHealthDesc") or "View this player's health status, diseases, and medications."
         end
+        option.toolTip = tooltip
     end
-    if HMLogOnce then HMLogOnce("examMenuN" .. tostring(math.min(n, 5)), "Menu", "health check right-click: one entry, %d player(s) in its submenu (logged once per count up to 5)", n) end
+    if HMLogOnce then HMLogOnce("examMenuN" .. tostring(math.min(#others, 5)), "Menu", "health check right-click: yourself + %d player(s) nearby (logged once per count up to 5)", #others) end
 end
 
 --[[
