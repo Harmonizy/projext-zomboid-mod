@@ -8,7 +8,10 @@
               can: every click (or Space) is one cut; stop and the food
               slowly closes up again (1.0.4, owner: "เปลี่ยนมินิเกมการหั่นเป็น
               หั่นรัวๆ"); the quicker it is done the better
-      ring    knead / pound / crack / toss -- click when the ring closes
+      spot    knead / pound / crack / toss -- hit the marked spot, as close
+              to its middle as you can; no beat to keep (GTP 1.9.4, owner:
+              "take out the one where you press as the ring meets the
+              frame, put another one in" -- the ring game is gone)
       scrub   wash / scale / peel / spread -- rub over the spots (peel in
               order around the food; spread covers the toast)
       lane    grate / zest / roll -- full strokes up and down the lane
@@ -142,7 +145,8 @@ local CUT_GRACE_MS, CUT_DECAY_MS = 600, 350   -- no cut for 0.6 s: one cut lost 
 -- Space = one cut (the time limit grows with the cuts, as before)
 local CUT_PER_CLICK = 1
 local CUT_MUL = 2
-local RING = { knead = { 6, 1100 }, pound = { 5, 850 }, crack = { 2, 1000 }, toss = { 4, 950 } }
+-- spot game: how many hits, and how far from the middle a spot may land
+local SPOT = { knead = { 6, 80 }, pound = { 5, 80 }, crack = { 2, 34 }, toss = { 4, 70 } }
 local LANE = { grate = 9, zest = 6, roll = 6 }
 local CIRCLE = { stir = { 2.2, 6.0, 5200, 128 }, whisk = { 8.5, 17, 4200, 112 }, fold = { 1.2, 3.4, 4600, 112 }, grind = { 4.5, 10, 4200, 78 } }
 
@@ -155,13 +159,14 @@ function P:setup()
         self.need = math.max(6, math.floor(base * (0.8 + 0.5 * self.d) * CUT_MUL + 0.5))
         self.cuts, self.best, self.lastCut, self.decayAt, self.chopAnim = 0, 0, now(), 0, 0
         self.limit = 5000 + self.need * 170
-    elseif self.kind == "ring" then
-        local def = RING[v] or RING.knead
-        self.beats, self.beat, self.ring = def[1], 0, 0
-        self.period = def[2] - 280 * self.d
-        self.limit = self.beats * self.period + 3000
-        self.scores = {}
-        self.hop = 0
+    elseif self.kind == "spot" then
+        local def = SPOT[v] or SPOT.knead
+        self.need, self.hits, self.scores, self.hop = def[1], 0, {}, 0
+        self.spread = def[2]
+        -- smaller when harder, bigger with a helping tool
+        self.spotR = math.max(14, (v == "crack" and 22 or 30) * self:tol() * (1 - 0.3 * self.d))
+        self:newSpot()
+        self.limit = 6000 + self.need * 1800
     elseif self.kind == "scrub" then
         self.spots = {}
         local n = ({ wash = 7, scale = 10, peel = 9, spread = 9 })[v] or 7
@@ -222,8 +227,22 @@ function P:setup()
         self:newWatch()
         self.limit = 16000
     end
-    -- the ring keeps its beat; everything else gets the level's extra time
-    if self.kind ~= "ring" then self.limit = math.floor(self.limit * (self.timeMul or 1)) end
+    -- every game gets the level's extra time
+    self.limit = math.floor(self.limit * (self.timeMul or 1))
+end
+
+-- the next spot to hit: somewhere on the food (above the pan for a toss),
+-- never right on top of the last one
+function P:newSpot()
+    local cx, cy = PX + PW / 2, PY + PH / 2 + 16
+    if self.variant == "toss" then cy = cy - 50 end
+    local x, y
+    for _ = 1, 8 do
+        local a, r = ZombRand(0, 628) / 100, ZombRand(0, math.floor(self.spread))
+        x, y = cx + math.cos(a) * r, cy + math.sin(a) * r * 0.75
+        if not self.spot or dist(x, y, self.spot.x, self.spot.y) > self.spotR * 2 then break end
+    end
+    self.spot = { x = x, y = y, born = now() }
 end
 
 function P:newBand()
@@ -326,16 +345,8 @@ function P:tick()
             self.cuts = self.cuts - 1
             self.decayAt = t + CUT_DECAY_MS
         end
-    elseif k == "ring" then
-        self.ring = ((t - self.started) % self.period) / self.period
+    elseif k == "spot" then
         self.hop = math.max(0, self.hop - dt / 300)
-        local b = math.floor((t - self.started) / self.period)
-        if b > self.beat then
-            if not self.clickedThisBeat and self.beat > 0 then self.scores[#self.scores + 1] = 0; self:spend(0.08, "Late") end
-            self.beat = b
-            self.clickedThisBeat = false
-            if self.beat > self.beats then return self:complete() end
-        end
     elseif k == "lane" then
         if held and self.variant == "roll" and self.lastLaneY and math.abs(my - self.lastLaneY) > 1 then FX.keep(self, "Roll") end
         self.lastLaneY = my
@@ -431,10 +442,13 @@ function P:complete()
         local used = clamp((now() - self.started) / self.limit, 0, 1)
         q = q * (1 - 0.5 * clamp((used - 0.4) / 0.6, 0, 1))
         log("minigame %s: %d cuts in %.1f s (%.0f%% of the time)", self.pid, self.need, (now() - self.started) / 1000, used * 100)
-    elseif k == "ring" then
+    elseif k == "spot" then
+        -- how close to the middle the hits were, a little less when slow
         local sum, n = 0, 0
-        for _, t in ipairs(self.scores) do sum = sum + (type(t) == "table" and t.score or t); n = n + 1 end
-        q = q * (n > 0 and sum / n or 0)
+        for _, sc in ipairs(self.scores) do sum = sum + sc; n = n + 1 end
+        local used = clamp((now() - self.started) / self.limit, 0, 1)
+        q = q * (n > 0 and sum / n or 0) * (1 - 0.3 * clamp((used - 0.5) / 0.5, 0, 1))
+        log("minigame %s: %d hits, accuracy %.2f, %.0f%% of the time", self.pid, n, n > 0 and sum / n or 0, used * 100)
     elseif k == "scrub" or k == "circle" or k == "lane" or k == "press" then
         local used = (now() - self.started) / self.limit
         q = q * (1 - 0.45 * clamp(used, 0, 1))
@@ -458,16 +472,23 @@ function P:onMouseDown(x, y)
     if self.done then return true end
     self.held = true
     local k = self.kind
-    if k == "ring" then
-        if self.clickedThisBeat or self.beat < 1 then return true end
-        self.clickedThisBeat = true
-        -- best at the end of the beat, when the ring meets the target
-        local off = math.min(math.abs(1 - self.ring), self.ring)
-        local s = clamp(1 - off / (0.22 * self:tol()), 0, 1)
-        self.scores[#self.scores + 1] = s
+    if k == "spot" then
+        local sp = self.spot
+        local d = sp and dist(x, y, sp.x, sp.y) or 1e9
+        if d > self.spotR then
+            -- off the spot: a slip, the spot stays
+            self:spend(0.08, "Splash", false)
+            return true
+        end
+        -- the middle = full marks, the rim = 0.4
+        local sc = clamp(1 - 0.6 * d / self.spotR, 0, 1)
+        self.scores[#self.scores + 1] = sc
+        self.hits = self.hits + 1
         self.hop = 1
-        self:flash((s > 0.7 and "Nice" or (s > 0.2 and "Ok" or "Late")), s > 0.7 and C.good or (s > 0.2 and C.warn or C.bad))
+        self:flash(sc > 0.8 and "Nice" or "Ok", sc > 0.8 and C.good or C.warn)
         FX.play(({ knead = "Thump", pound = "Thump", crack = "Crack", toss = "Toss" })[self.variant] or "Thump")
+        if self.hits >= self.need then return self:complete() end
+        self:newSpot()
     elseif k == "timing" then
         self:chopOnce()
     elseif k == "press" then
@@ -798,7 +819,7 @@ function P:renderGame()
         self:drawRectBorder(bx, by, bw, 12, 1, C.border[1], C.border[2], C.border[3])
         self:text(T("IGUI_GTPC_Game_Cuts", self.cuts, self.need), cx, PY + 10, C.text, UIFont.Small, true)
         self:text(T("IGUI_GTPC_Game_ChopFast"), cx, by - 22, C.warn, UIFont.Small, true)
-    elseif k == "ring" then
+    elseif k == "spot" then
         local tx, ty = cx, cy + 16
         if v == "knead" then
             self:pic("dough", tx, ty, 0.9 + 0.08 * self.hop)
@@ -816,13 +837,16 @@ function P:renderGame()
             end
             self:pic("pan", cx, ty, 0.82)
         end
-        local r0 = v == "crack" and 40 or 74
-        -- the ring closes from the edge of the counter onto the target
-        local r = r0 + (1 - self.ring) * (PH / 2 - 14 - r0)
-        -- dark colours: they sit on the light worktop
-        self:circle(tx, ty, r0, 0.95, { 0.85, 0.45, 0.05 }, 64, 4)
-        self:circle(tx, ty, r, 1, { 0.08, 0.45, 0.16 }, 80, 4)
-        self:text(T("IGUI_GTPC_Game_Beat", math.min(self.beat, self.beats), self.beats), cx, PY + 10, C.text, UIFont.Small, true)
+        -- the spot to hit: a dark target with a bright middle (dark colours
+        -- sit on the light worktop); it stays until it is hit
+        local sp = self.spot
+        if sp then
+            local pulse = 1 + 0.06 * math.sin(now() / 160)
+            self:disc(sp.x, sp.y, self.spotR * pulse, 0.35, { 0.85, 0.45, 0.05 })
+            self:circle(sp.x, sp.y, self.spotR * pulse, 1, { 0.55, 0.20, 0.02 }, 48, 3)
+            self:disc(sp.x, sp.y, math.max(4, self.spotR * 0.3), 1, { 0.08, 0.45, 0.16 })
+        end
+        self:text(T("IGUI_GTPC_Game_Hits", self.hits, self.need), cx, PY + 10, C.text, UIFont.Small, true)
         self:drawHeld(mx, my, 46)
     elseif k == "scrub" then
         if v == "wash" then
