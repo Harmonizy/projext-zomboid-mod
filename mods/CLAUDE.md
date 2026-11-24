@@ -978,6 +978,12 @@
   moves the item (side's own type) to the patient, sends "Wear" -> the
   patient's game queues its own ISWearClothing once the item arrives.
   Refusals "Refused" {why} -> UI_HomeMedic_Stump_No_<why>.
+- HTS 1.2.7 (owner: "clean by right-clicking the row that shows the scar
+  %"): the selected part's detail box remembers its rows (hmPartRows); a
+  right-click on the stump's healing (toc_healing) or dirtiness (toc_dirt)
+  row -> EHR_HealthPanelUI:onRightMouseUp -> T.stumpMenu(..., cleanOnly =
+  true). The dirt row says " - right-click to clean". The body-part menu
+  keeps its clean option too.
 - Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
   item per type (carried first) since HTS 1.2.6 (owner: the same bandage
   listed once per item nearby).

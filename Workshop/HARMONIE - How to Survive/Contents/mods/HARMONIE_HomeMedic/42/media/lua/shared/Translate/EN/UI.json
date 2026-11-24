@@ -2519,6 +2519,7 @@
     "UI_HomeMedic_Surg_Tab_Pick": "Pick an operation on the left. Every one can be looked at; Start works only when the patient needs it.",
     "UI_HomeMedic_Prost_NoUpper": "Prosthesis: not possible above the elbow",
     "UI_HomeMedic_Prost_Remove": "Remove prosthesis",
+    "UI_HomeMedic_Stump_RowHint": " - right-click to clean",
     "UI_HomeMedic_Stump_Clean": "Stump is clean",
     "UI_HomeMedic_Stump_NeedCleaner": "Needs a disinfected bandage or rag, carried (bandage or rag + disinfectant).",
     "UI_HomeMedic_Stump_Healed": "Stump healed: nothing to clean",

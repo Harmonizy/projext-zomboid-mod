@@ -2519,6 +2519,7 @@
     "UI_HomeMedic_Surg_Tab_Pick": "เลือกการผ่าตัดทางซ้าย กดดูได้ทุกอัน แต่กดเริ่มได้เฉพาะเมื่อผู้ป่วยต้องการการผ่าตัดนั้น",
     "UI_HomeMedic_Prost_NoUpper": "แขนเทียม: ใส่ไม่ได้ถ้าตัดเหนือข้อศอก",
     "UI_HomeMedic_Prost_Remove": "ถอดแขนเทียม",
+    "UI_HomeMedic_Stump_RowHint": " - คลิกขวาเพื่อทำความสะอาด",
     "UI_HomeMedic_Stump_Clean": "ตอแขนสะอาดแล้ว",
     "UI_HomeMedic_Stump_NeedCleaner": "ต้องมีผ้าพันแผลหรือผ้าขี้ริ้วที่ฆ่าเชื้อแล้วติดตัว (ผ้าพันแผล/ผ้าขี้ริ้ว + น้ำยาฆ่าเชื้อ)",
     "UI_HomeMedic_Stump_Healed": "ตอแขนหายแล้ว ไม่ต้องทำความสะอาด",

@@ -112,7 +112,8 @@ function T.limbStatuses(patient, bodyPart, colors)
         end
         local dirt = tonumber(dc:getWoundDirtyness(limb)) or -1
         if dirt >= 0 then
-            add("toc_dirt", text("IGUI_HealthPanel_WoundDirtyness", "Wound dirtiness") .. " " .. math.floor(dirt * 100) .. "%",
+            add("toc_dirt", text("IGUI_HealthPanel_WoundDirtyness", "Wound dirtiness") .. " " .. math.floor(dirt * 100) .. "%"
+                .. (dirt > 0 and text("UI_HomeMedic_Stump_RowHint", " - right-click to clean") or ""),
                 dirt >= 0.5 and c.red or c.yellow, 0.60, 127)
         end
     end
@@ -365,7 +366,7 @@ local function stumpOf(dc, limb)
     return limb
 end
 
-function T.stumpMenu(panel, bodyPart, x, y, bodyPartType)
+function T.stumpMenu(panel, bodyPart, x, y, bodyPartType, cleanOnly)
     if not T.available() or not panel or not bodyPart then return false end
     local StaticData, DataController = tocModules()
     if not StaticData then return false end
@@ -422,7 +423,9 @@ function T.stumpMenu(panel, bodyPart, x, y, bodyPartType)
     end
 
     -- the prosthesis
-    if not remote then
+    if cleanOnly then
+        -- from the healing / dirtiness row: the cleaning part only
+    elseif not remote then
         pcall(T.prosthesisOptions, context, doctor, patient:getBodyDamage():getBodyPart(BodyPartType.FromString(limb)))
     elseif S then
         local Prost = select(4, tocModules())
@@ -454,7 +457,7 @@ function T.stumpMenu(panel, bodyPart, x, y, bodyPartType)
     end
 
     -- TOC's own: amputate higher (cleaning is ours above)
-    pcall(T.addOptions, panel:getVanillaHealthAdapter(), bodyPart, context, true)
+    if not cleanOnly then pcall(T.addOptions, panel:getVanillaHealthAdapter(), bodyPart, context, true) end
 
     if context:isEmpty() then context:setVisible(false) else context:setVisible(true); context:bringToTop() end
     if HMLogOnce then HMLogOnce("stumpMenu" .. (remote and "R" or "L"), "Stump", "stump menu opened (%s) for %s", remote and "patient" or "self", limb) end
