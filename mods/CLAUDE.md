@@ -566,6 +566,13 @@
   logged once per item ("treated as free"). An upgraded bag is still the
   SAME vanilla item type (finishTier AddItem(snap.type)) -- only modData,
   the stats B.apply sets and the tooltip lines under vanilla's are ours.
+- TWA 1.5.4 (owner: "Inventory Tetris shows no grid in a tier-upgraded
+  bag"): finishTier copied EVERY modData key of the old bag onto the new
+  one, other mods' data about that bag included (Inventory Tetris keeps its
+  grid data on the item). Now only "TWA_" keys are copied (the rest logged
+  as "not copied") and the new bag gets md.TWA_BagFresh. B.apply takes the
+  non-TWA_ keys off a tiered bag without TWA_BagFresh ONCE, both sides
+  (logged with the key names -- tells which key Tetris uses).
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
