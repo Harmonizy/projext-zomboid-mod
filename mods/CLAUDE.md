@@ -604,6 +604,21 @@
   chooser (openBagChooser, craft page + guided row) is a click that looks
   again: TWASources.forget + bagCandCache cleared + TWACraftUI.lookAgain
   ("bag chooser opened"). The 1.5.3 stale-hotbar-slot check stays.
+- TWA 1.5.7 (owner's console 2026-11-27: Inventory Tetris "Expected a
+  table" at ItemGrid:_validateStackList line `pairs(stack.itemIDs)`, every
+  time a bag was shown): CraftState copyPlain stopped 4 tables deep, and
+  Tetris keeps md.gridContainers[type].stacks[i].itemIDs 5 deep -- every
+  snapshot / give-back / TWA_OrigBase copy kept the stacks but lost their
+  itemIDs. Now copyPlain goes 12 deep and BOOKMARK_KEYS also skips
+  gridContainers / tetrisLockTime / TetrisUUID (per-item data of another
+  mod). `TWABagUp.repairTetrisGrid(item)` removes a Tetris grid that has a
+  stack without an itemIDs table (malformed data only, logged): run on every
+  container in a player's inventory (B.maintain walk, server + client, 5 s)
+  and on bags in the inventory window (OnRefreshInventoryWindowContainers
+  begin + end); a client repair sends "tetrisFix" {id} so the server cleans
+  its copy too (else Tetris' server sends the broken grid back as a
+  "correction"). Tetris mod source: owner's zips (Workshop 3775513231),
+  NOT in the repo.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
