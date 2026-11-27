@@ -996,6 +996,32 @@
   A cut limb can only become fresh by being uncut first, so this never hides
   a real change. (3) UpdateDataControllerFromClient loads the instance
   (GetOrCreate, no apply) instead of throwing. Log tag [TOCSync].
+- HTS 1.2.9 (owner 2026-11-27):
+  * Saline to another player: EHR's "Administer Medication" window listed
+    blood bags only. `isBloodBagFullType` (EHR_MPAdministerMedication) and the
+    server's validateRemoteTreatment now count ExtensiveHealth.SalineBag as
+    treatmentKind "blood_transfusion" (IV kit + patient consent);
+    applyRemoteBloodTransfusion calls applyServerSalineBag for it (no XP,
+    like self-use). Logged [Transfusion].
+  * Our moodles `client/HARMONIEHomeMedic/HM_Moodles.lua` (owner: blood
+    moodle like GTP's, then "any other moodle we should have -- all of
+    them"). MoodleFramework, SOFT (HTS does not require it -- nothing
+    without it). M.DEFS = { name, fn(player) -> level, title, desc, sig };
+    title / description per level via setTitle / setDescription
+    (UI_HomeMedic_Moodle_*): the reading, what this level does, the next
+    level ("Next" = below, "NextUp" = from), the fix. Texts follow the
+    sandbox (blackouts, LethalConditions, regen numbers).
+    - HM_BloodLoss: EHR stages, 1 healthy > b >= mild, 2 >= moderate,
+      3 >= 20 percent, 4 below (BloodImpact stamina ceiling + thirst,
+      BloodVision, EHR blackout / lethal).
+    - HM_Saline: transfusedSaline / currentVolume, 1 >= 20, 2 >= 30,
+      3 >= EHR HEMODILUTION_WARNING (40: fatigue up, stamina <= 30),
+      4 >= HEMODILUTION_THRESHOLD (60: exhausted, health falls / death).
+    - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
+      2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
+    Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.
+    EHR's own moodles stay off (EHR_Moodles ENABLED false, owner 2026-10-02).
+    If an effect changes, change these texts too.
 - Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
   item per type (carried first) since HTS 1.2.6 (owner: the same bandage
   listed once per item nearby).
