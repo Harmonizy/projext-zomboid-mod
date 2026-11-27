@@ -2498,6 +2498,8 @@ EHR.Medication.SideEffects = {
                     if bodyDamage.DamageUpdate then
                         pcall(function() bodyDamage:DamageUpdate() end)
                     end
+                    -- HTS 1.2.11: reported to the health log
+                    if HMHealthLog then HMHealthLog.note(player, "medication overdose", currentHealth, "health cap " .. tostring(math.floor(healthCap + 0.5))) end
                 end
             end
         end,

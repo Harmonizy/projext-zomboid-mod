@@ -1069,6 +1069,21 @@
     Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.
     EHR's own moodles stay off (EHR_Moodles ENABLED false, owner 2026-10-02).
     If an effect changes, change these texts too.
+- Health log (HTS 1.2.11, owner 2026-11-27: "does EHR log what lowered
+  health and why? log it when health drops 10"):
+  `shared/HARMONIEHomeMedic/HM_HealthLog.lua` (server in MP, the game in
+  SP; never on an MP client). Health read every second; a line each time
+  health is 10 below the reference (health at the last line; healing above
+  it moves the reference up): "[HealthLog] Bob: health 100 -> 89 (-11 in
+  2 s) | EHR -6: illness Trichinosis -6 | not EHR (vanilla / other mods)
+  -5: wounds ... ; hunger ... | blood %, saline %, illnesses st N, sepsis".
+  EHR reports every health change it makes through HMHealthLog.note(p, src,
+  before, detail): EHR_Disease / Sepsis / Environmental
+  ApplyBodyHealthDamage + ClampBodyHealth (renamed *_hmInner, a wrapper of
+  the old name right after), the medication overdose cap (inline) and
+  EHR.Blood.ApplyHemodilutionDeath (wrapped at game start). What EHR did not
+  report is "not EHR", listed with the vanilla conditions on the character
+  then. A new EHR health change: call HMHealthLog.note too.
 - Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
   item per type (carried first) since HTS 1.2.6 (owner: the same bandage
   listed once per item nearby).

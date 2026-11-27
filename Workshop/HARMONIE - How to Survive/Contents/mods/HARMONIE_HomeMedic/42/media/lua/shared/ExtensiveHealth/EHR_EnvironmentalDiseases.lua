@@ -2339,7 +2339,7 @@ local function EHR_EnvironmentalKillPlayer(player, cause)
     end
 end
 
-local function EHR_EnvironmentalApplyBodyHealthDamage(player, amount, cause)
+local function EHR_EnvironmentalApplyBodyHealthDamage_hmInner(player, amount, cause)
     if not player or not amount or amount <= 0 then return nil end
 
     local bodyDamage = nil
@@ -2399,7 +2399,15 @@ local function EHR_EnvironmentalApplyBodyHealthDamage(player, amount, cause)
     return newHealth
 end
 
-local function EHR_EnvironmentalClampBodyHealth(player, maxHealth)
+-- HTS 1.2.11: every health change EHR makes is reported to the health log
+local function EHR_EnvironmentalApplyBodyHealthDamage(player, amount, cause)
+    local hmBefore = HMHealthLog and HMHealthLog.hp(player)
+    local r = EHR_EnvironmentalApplyBodyHealthDamage_hmInner(player, amount, cause)
+    if hmBefore then HMHealthLog.note(player, "environment", hmBefore, tostring(cause or "")) end
+    return r
+end
+
+local function EHR_EnvironmentalClampBodyHealth_hmInner(player, maxHealth)
     if not player or maxHealth == nil then return nil end
 
     local bodyDamage = nil
@@ -2436,6 +2444,14 @@ local function EHR_EnvironmentalClampBodyHealth(player, maxHealth)
     end)
 
     return healthCap
+end
+
+-- HTS 1.2.11: every health change EHR makes is reported to the health log
+local function EHR_EnvironmentalClampBodyHealth(player, maxHealth)
+    local hmBefore = HMHealthLog and HMHealthLog.hp(player)
+    local r = EHR_EnvironmentalClampBodyHealth_hmInner(player, maxHealth)
+    if hmBefore then HMHealthLog.note(player, "environment health cap", hmBefore, "to " .. tostring(math.floor((tonumber(maxHealth) or 0) + 0.5))) end
+    return r
 end
 
 local function EHR_EnvironmentalApplyHeatStrokeHealthDrain(player, disease, effects)
