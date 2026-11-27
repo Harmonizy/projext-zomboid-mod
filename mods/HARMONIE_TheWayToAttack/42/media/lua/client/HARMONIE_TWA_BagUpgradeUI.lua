@@ -672,7 +672,8 @@ if Events then
                 local it = inv and inv.getContainingItem and inv:getContainingItem()
                 if it then
                     pcall(B.repairTetrisGrid, it)
-                    if state == "end" then pcall(B.apply, it) end
+                    -- 1.5.8: capacity + Tetris grid key set before Tetris builds it
+                    pcall(B.apply, it)
                 end
             end
         end)

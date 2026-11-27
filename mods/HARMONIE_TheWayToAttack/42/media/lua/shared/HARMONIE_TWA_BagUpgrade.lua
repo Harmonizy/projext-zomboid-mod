@@ -411,6 +411,11 @@ function B.apply(item)
     end
     local v = B.compute(item)
     if not v then return 0 end
+    -- 1.5.8: an Inventory Tetris grid for the raised capacity (client only)
+    if TWATetris and TWATetris.ensureBagGrid and not (isServer and isServer()) then
+        local base = B.base(item)
+        if base then pcall(TWATetris.ensureBagGrid, item, base.cap, v.cap) end
+    end
     local n = 0
     if item.setCapacity and not near(call(item, "getCapacity"), v.cap) then call(item, "setCapacity", math.floor(v.cap)); n = n + 1 end
     if item.setWeightReduction and not near(call(item, "getWeightReduction"), v.wr) then call(item, "setWeightReduction", math.floor(v.wr)); n = n + 1 end

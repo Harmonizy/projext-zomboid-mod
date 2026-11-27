@@ -619,6 +619,22 @@
   its copy too (else Tetris' server sends the broken grid back as a
   "correction"). Tetris mod source: owner's zips (Workshop 3775513231),
   NOT in the repo.
+- TWA 1.5.8 (owner: "make the bag add-ons fit Inventory Tetris" -- "some
+  kinds"): Tetris' grid = definition "<type>_<capacity>". 70 of our 86 bags
+  have none (Tetris calculates 2 cells per capacity + a weight-reduction
+  bonus up to 4, cached per key for the session) -> the capacity add-on
+  already grows them. 16 have a hand-made shape (fanny packs, rifle /
+  shotgun cloth cases 7x2, golf bags 18, fishing basket 6, shoulder holster,
+  ammo straps): a capacity add-on changed the key and lost the shape.
+  `TWATetris.ensureBagGrid(item, baseCap, newCap)` (TetrisCompat, client
+  only, called from B.apply) registers "<type>_<newCap>" = the hand-made
+  shape + rows on its widest grid (2 cells per point; grids below move down)
+  through TetrisContainerData.registerContainerDefinitions, once per key,
+  logged ("bag grid ..."). B.apply also runs at the inventory window's
+  refresh "begin" so the key exists before Tetris builds the grid. In MP
+  Tetris keeps vanilla carry weight (capacity) -- the cap add-on still
+  matters there. Weight reduction / speed / weight / hotbar add-ons do not
+  touch the grid (WR changes a calculated grid only by its cached bonus).
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
