@@ -294,10 +294,35 @@ function B.isEmpty(bag)
     return not items or items:size() == 0
 end
 -- worn, in a hand or on the hotbar: not to be taken by a recipe
+-- 1.5.3 (owner 2026-11-27: "can't pick the bag although it is off the
+-- hotbar"): an item can keep its old attached slot number after it left the
+-- hotbar (moved into a box / another bag). Only an item lying directly in a
+-- character's own inventory can hang on the hotbar, so a slot number on
+-- anything else is stale and ignored.
+local staleLogged = {}
 function B.inUse(item)
     if call(item, "isEquipped") then return true end
     local slot = tonumber(call(item, "getAttachedSlot")) or -1
-    return slot > -1
+    if slot < 0 then return false end
+    local c = call(item, "getContainer")
+    local holder = c and call(c, "getParent")
+    local onBody = c ~= nil and call(c, "getContainingItem") == nil
+        and holder ~= nil and instanceof(holder, "IsoGameCharacter")
+    if not onBody then
+        local id = tostring(call(item, "getID"))
+        if not staleLogged[id] then
+            staleLogged[id] = true
+            log("%s (id %s) has hotbar slot %d but is not on a character -- treated as free", TWALogType and TWALogType(item) or "?", id, slot)
+        end
+        return false
+    end
+    -- on the body: ask the character's own attached-items list when it has one
+    local ai = call(holder, "getAttachedItems")
+    if ai and ai.contains then
+        local has = call(ai, "contains", item)
+        if has == false then return false end
+    end
+    return true
 end
 function B.returnChance(player)
     local lvl = 0

@@ -557,6 +557,15 @@
   provides SmallBeltLeft;SmallBeltRight;WebbingRight;WebbingLeft; Torch /
   HandTorch have NO AttachmentType (no slot holds them). The console line
   "hotbar: ... small slot takes: ..." lists the kinds.
+- TWA 1.5.3 (owner 2026-11-27: "can't pick the bag although it is off the
+  hotbar"): an item can keep its attached slot number after leaving the
+  hotbar (moved into a box / bag). `TWABagUp.inUse` counts a hotbar slot only
+  for an item lying directly in a character's own inventory (container with
+  no containing item, parent IsoGameCharacter) and, when the character has
+  getAttachedItems():contains, only if that list has it; a stale slot is
+  logged once per item ("treated as free"). An upgraded bag is still the
+  SAME vanilla item type (finishTier AddItem(snap.type)) -- only modData,
+  the stats B.apply sets and the tooltip lines under vanilla's are ours.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
