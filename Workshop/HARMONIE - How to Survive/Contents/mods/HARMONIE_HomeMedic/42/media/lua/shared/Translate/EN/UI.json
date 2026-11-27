@@ -3205,5 +3205,15 @@
     "UI_HomeMedic_Moodle_Stump_L4": "- Every action can make the part above the stump bleed (the more healing left, the more likely)\n- Take the prosthesis off until the stump has healed",
     "UI_HomeMedic_Moodle_Stump_Next": "Dirt goes up every hour if you leave it.",
     "UI_HomeMedic_Moodle_Stump_Fix": "Fix: clean it with a disinfected bandage or rag -- right-click the stump's healing row in the medical window (yours or a patient's). Keep that arm clean.",
-    "UI_HomeMedic_Moodle_NextUp": "From %1 percent:"
+    "UI_HomeMedic_Moodle_NextUp": "From %1 percent:",
+    "UI_HomeMedic_Moodle_Decline_Title1": "Body declining",
+    "UI_HomeMedic_Moodle_Decline_Title2": "Body declining",
+    "UI_HomeMedic_Moodle_Decline_Title3": "Body declining badly",
+    "UI_HomeMedic_Moodle_Decline_Title4": "Body declining badly",
+    "UI_HomeMedic_Moodle_Decline_Now": "An illness is lowering your health. Health now: %1",
+    "UI_HomeMedic_Moodle_Decline_Row": "- %1 (stage %2): lowers health until %3",
+    "UI_HomeMedic_Moodle_Decline_Cap": "   health cannot heal above %1 until this stage ends",
+    "UI_HomeMedic_Moodle_Decline_Unknown": "An illness not diagnosed yet",
+    "UI_HomeMedic_Moodle_Decline_Floor": "Illnesses never take health under %1 on this server.",
+    "UI_HomeMedic_Moodle_Decline_Fix": "Fix: diagnose it in the medical window, then the right medicine stops the loss; the ceiling lifts when the illness ends."
 }

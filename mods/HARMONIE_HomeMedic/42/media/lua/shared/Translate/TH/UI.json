@@ -3205,5 +3205,15 @@
     "UI_HomeMedic_Moodle_Stump_L4": "- ทุก action มีโอกาสเลือดออกที่ส่วนเหนือตอแขน (เหลือเวลาหายมาก โอกาสยิ่งสูง)\n- ถอดแขนเทียมไว้ก่อนจนแผลหาย",
     "UI_HomeMedic_Moodle_Stump_Next": "ถ้าปล่อยไว้ ความสกปรกจะเพิ่มทุกชั่วโมง",
     "UI_HomeMedic_Moodle_Stump_Fix": "วิธีแก้: ทำความสะอาดด้วยผ้าพันแผลหรือผ้าที่ฆ่าเชื้อแล้ว คลิกขวาที่แถวเปอร์เซ็นต์การหายของตอแขนในหน้าต่างการแพทย์ (ของเราเองหรือของคนไข้) และรักษาแขนข้างนั้นให้สะอาด",
-    "UI_HomeMedic_Moodle_NextUp": "ถ้าถึง %1 เปอร์เซ็นต์:"
+    "UI_HomeMedic_Moodle_NextUp": "ถ้าถึง %1 เปอร์เซ็นต์:",
+    "UI_HomeMedic_Moodle_Decline_Title1": "ร่างกายทรุดโทรม",
+    "UI_HomeMedic_Moodle_Decline_Title2": "ร่างกายทรุดโทรม",
+    "UI_HomeMedic_Moodle_Decline_Title3": "ร่างกายทรุดโทรมหนัก",
+    "UI_HomeMedic_Moodle_Decline_Title4": "ร่างกายทรุดโทรมหนัก",
+    "UI_HomeMedic_Moodle_Decline_Now": "โรคกำลังลดพลังชีวิต (HP) ตอนนี้ HP: %1",
+    "UI_HomeMedic_Moodle_Decline_Row": "- %1 (ขั้น %2): ลด HP ลงจนกว่าจะเหลือ %3",
+    "UI_HomeMedic_Moodle_Decline_Cap": "   HP ฟื้นได้ไม่เกิน %1 จนกว่าขั้นนี้จะจบ",
+    "UI_HomeMedic_Moodle_Decline_Unknown": "โรคที่ยังไม่ได้วินิจฉัย",
+    "UI_HomeMedic_Moodle_Decline_Floor": "เซิร์ฟเวอร์นี้ โรคลด HP ได้ต่ำสุดที่ %1",
+    "UI_HomeMedic_Moodle_Decline_Fix": "วิธีแก้: วินิจฉัยโรคในหน้าต่างการแพทย์ แล้วใช้ยาที่ถูกโรคเพื่อหยุดการลด เพดาน HP จะหายเมื่อโรคหาย"
 }

@@ -1064,6 +1064,16 @@
     - HM_Saline: transfusedSaline / currentVolume, 1 >= 20, 2 >= 30,
       3 >= EHR HEMODILUTION_WARNING (40: fatigue up, stamina <= 30),
       4 >= HEMODILUTION_THRESHOLD (60: exhausted, health falls / death).
+    - HM_Decline (HTS 1.2.13, owner: "an illness that lowers HP shows
+      'body declining' and says it lowers HP until n"): M.DECLINE[id](stage,
+      disease) -> the illness's own floor at that stage (trichinosis /
+      mushroom toxin / aspergillosis st3 0, tetanus st2 30 st3 0, AHTR st2
+      50 st3 0, concussion 90/75/50, scabies st2 60 st3 30, pneumonia st3
+      30; sepsis 85/65/30/0) raised to EHR.Lethal.floor(); the ceiling it
+      holds now = the lowest of its *HealthCap fields (M.DECLINE_CAP; sepsis
+      healthCap). Name only when HM_Diagnosis.isDiagnosed, else "not
+      diagnosed yet". Level 1 n >= 75, 2 >= 50, 3 above the floor, 4 at it.
+      A new HP-lowering illness / stage: add it to M.DECLINE.
     - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
       2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
     Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.

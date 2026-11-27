@@ -14,6 +14,10 @@
     HM_Saline     saline share of the blood (EHR hemodilution):
         1 >= 20 %, 2 >= 30 %, 3 >= 40 % (EHR warning effects),
         4 >= 60 % (EHR "death" effects)
+    HM_Decline    "body declining": an illness lowering HP now (M.DECLINE),
+        each row = name (only when diagnosed) + stage + "lowers HP until n"
+        + the ceiling it holds now; level by the lowest n (1 >= 75,
+        2 >= 50, 3 above the sandbox floor, 4 down to the floor)
     HM_Stump      an amputation stump not healed yet (TOC, own data):
         1 healing, 2 dirt >= 30 %, 3 dirt >= 60 %,
         4 a prosthesis worn on it (it can bleed)
@@ -193,11 +197,113 @@ function M.stump(player)
     return level, T("Stump_Title" .. level), table.concat(L, "\n"), key
 end
 
+-- ------------------------------------------------------------ decline
+-- Owner 2026-11-27: "an illness that lowers HP shows a moodle 'body
+-- declining' and says it lowers HP until n". Per illness and stage: the
+-- lowest HP it pushes to (its own floor, never under the sandbox floor of
+-- EHR.Lethal) and the health ceiling it keeps now (HP cannot heal above it
+-- until that stage ends). Values from EHR_Disease / Sepsis / Environmental.
+-- An illness the Diagnosis tab has not diagnosed shows no name.
+local function lethalFloor()
+    local ok, f = pcall(function() return EHR.Lethal.floor() end)
+    return (ok and tonumber(f)) or 0
+end
+
+-- id -> function(stage, disease) -> its own floor (nil = it does not lower HP now)
+M.DECLINE = {
+    trichinosis = function(st) return st == 3 and 0 or nil end,
+    toxin_poisoning = function(st, d) return (st == 3 and d.toxinType == "mushroom") and 0 or nil end,
+    cadaveric_aspergillosis = function(st) return st == 3 and 0 or nil end,
+    tetanus = function(st) if st == 2 then return 30 elseif st == 3 then return 0 end return nil end,
+    ahtr = function(st) if st == 2 then return 50 elseif st == 3 then return 0 end return nil end,
+    concussion = function(st) if st == 1 then return 90 elseif st == 2 then return 75 elseif st == 3 then return 50 end return nil end,
+    hyperkeratotic_scabies = function(st) if st == 2 then return 60 elseif st == 3 then return 30 end return nil end,
+    pneumonia = function(st) return st == 3 and 30 or nil end,
+}
+M.DECLINE_CAP = {
+    trichinosis = { "trichinosisHealthCap" }, toxin_poisoning = { "toxinHealthCap" },
+    cadaveric_aspergillosis = { "aspergillosisHealthCap" }, tetanus = { "tetanusHealthCap", "tetanusSevereHealthCap" },
+    ahtr = { "ahtrHealthCap", "ahtrSevereHealthCap" }, concussion = { "concussionHealthCap" },
+    hyperkeratotic_scabies = { "scabiesHealthCap" }, pneumonia = { "pneumoniaHealthCap" },
+}
+M.SEPSIS_FLOOR = { [1] = 85, [2] = 65, [3] = 30, [4] = 0 }
+
+local function diseaseName(player, id)
+    local known = true
+    if HM_Diagnosis and HM_Diagnosis.isDiagnosed then
+        local ok, d = pcall(HM_Diagnosis.isDiagnosed, player, id)
+        known = not ok or d == true
+    end
+    if not known then return T("Decline_Unknown") end
+    local key = "UI_EHR_Disease_" .. tostring(id)
+    local ok, n = pcall(getText, key)
+    return (ok and n and n ~= key) and n or tostring(id)
+end
+
+function M.declineList(player)
+    local out = {}
+    local L = lethalFloor()
+    local dd
+    pcall(function() dd = EHR.Disease.GetDiseaseData(player) end)
+    local act = type(dd) == "table" and dd.active or nil
+    if type(act) == "table" then
+        for id, d in pairs(act) do
+            local rule = M.DECLINE[id]
+            if rule and type(d) == "table" then
+                local st = tonumber(d.stage) or 1
+                local okR, f = pcall(rule, st, d)
+                if okR and f then
+                    local cap
+                    for _, k in ipairs(M.DECLINE_CAP[id] or {}) do
+                        local v = tonumber(d[k])
+                        if v and (not cap or v < cap) then cap = v end
+                    end
+                    out[#out + 1] = { id = id, stage = st, floor = math.max(f, L), cap = cap and math.max(cap, L) or nil }
+                end
+            end
+        end
+    end
+    pcall(function()
+        local sd = EHR.Sepsis.GetData(player)
+        if sd and sd.active and tonumber(sd.stage) and sd.stage > 0 then
+            local st = math.floor(tonumber(sd.stage))
+            local cap = tonumber(sd.healthCap)
+            out[#out + 1] = { id = "sepsis", stage = st, floor = math.max(M.SEPSIS_FLOOR[st] or 0, L), cap = cap and math.max(cap, L) or nil }
+        end
+    end)
+    table.sort(out, function(a, b) return a.floor < b.floor end)
+    return out, L
+end
+
+function M.decline(player)
+    local list, L = M.declineList(player)
+    if #list == 0 then return 0 end
+    local low = list[1].floor
+    local level = 1
+    if low <= L then level = 4 elseif low < 50 then level = 3 elseif low < 75 then level = 2 end
+    local hp = 0
+    pcall(function() hp = player:getBodyDamage():getOverallBodyHealth() end)
+    local lines = { T("Decline_Now", tostring(math.floor(hp + 0.5))), "" }
+    local sig = ""
+    for _, e in ipairs(list) do
+        lines[#lines + 1] = T("Decline_Row", diseaseName(player, e.id), tostring(e.stage), tostring(math.floor(e.floor + 0.5)))
+        if e.cap and e.cap < 99.5 then
+            lines[#lines + 1] = T("Decline_Cap", tostring(math.floor(e.cap + 0.5)))
+        end
+        sig = sig .. e.id .. e.stage .. ":" .. math.floor(e.floor) .. ":" .. math.floor(e.cap or 100) .. ";"
+    end
+    lines[#lines + 1] = ""
+    if L > 0 then lines[#lines + 1] = T("Decline_Floor", tostring(math.floor(L + 0.5))) end
+    lines[#lines + 1] = T("Decline_Fix")
+    return level, T("Decline_Title" .. level), table.concat(lines, "\n"), sig .. math.floor(hp)
+end
+
 -- ------------------------------------------------------------ framework
 M.DEFS = {
     { name = "HM_BloodLoss", fn = M.blood },
     { name = "HM_Saline", fn = M.saline },
     { name = "HM_Stump", fn = M.stump },
+    { name = "HM_Decline", fn = M.decline },
 }
 
 local state = setmetatable({}, { __mode = "k" })
