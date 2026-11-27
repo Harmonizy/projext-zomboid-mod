@@ -1084,6 +1084,18 @@
   EHR.Blood.ApplyHemodilutionDeath (wrapped at game start). What EHR did not
   report is "not EHR", listed with the vanilla conditions on the character
   then. A new EHR health change: call HMHealthLog.note too.
+  BLOOD (HTS 1.2.12, owner: "is blood volume logged?" -- no, EHR.Log is
+  quiet unless verbose): same file, [BloodLog] line each time blood is 10
+  percent of full away from the last line (down or up): "Bob: blood 4500 ->
+  3950 mL (90 -> 79 percent, -550 in 2 min) | bleeding -300: Hand_L |
+  amputation -250 | health 100". EHR.Blood.ModifyBloodVolume /
+  SetBloodVolume / ApplyBloodRegeneration / ProcessTransfusionDecay are
+  wrapped at game start (measured before / after); a Modify call takes the
+  label HMHealthLog.bloodWhy(p, label) set just before it (amputation,
+  doctor's draw, dysentery, environment illness), else a guess by amount
+  (+500 transfusion, +250 saline, -500 drawn, -150 reaction). The rest of a
+  drop is EHR's per-update bleeding, listed with the bleeding parts. A new
+  blood change: set bloodWhy before ModifyBloodVolume.
 - Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
   item per type (carried first) since HTS 1.2.6 (owner: the same bandage
   listed once per item nearby).

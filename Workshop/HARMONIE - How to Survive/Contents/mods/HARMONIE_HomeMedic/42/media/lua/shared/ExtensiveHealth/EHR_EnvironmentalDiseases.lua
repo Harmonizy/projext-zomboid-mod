@@ -2761,6 +2761,7 @@ local function EHR_EnvironmentalApplyBloodLossFloor(player, bloodLoss, bloodFloo
     end
 
     if bloodLoss > 0 then
+        if HMHealthLog and HMHealthLog.bloodWhy then HMHealthLog.bloodWhy(player, "illness (environment)") end
         EHR.Blood.ModifyBloodVolume(player, -bloodLoss)
     end
 end
@@ -3365,6 +3366,7 @@ function EHR.Environmental.ApplyDiseaseEffects(player, diseaseId, disease, def)
     if diseaseId == "dysentery" and not dysenteryHandled and effects.bloodLoss then
         if EHR.Blood and EHR.Blood.ModifyBloodVolume then
             -- Apply blood loss using v2.7.0+ API (small amount per tick)
+            if HMHealthLog and HMHealthLog.bloodWhy then HMHealthLog.bloodWhy(player, "dysentery") end
             EHR.Blood.ModifyBloodVolume(player, -effects.bloodLoss)
         end
     end

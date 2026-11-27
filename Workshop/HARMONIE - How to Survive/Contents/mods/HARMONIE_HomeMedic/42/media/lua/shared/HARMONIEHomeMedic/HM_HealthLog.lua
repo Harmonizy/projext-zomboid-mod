@@ -23,6 +23,19 @@
       conditions on the character at that moment (wounds, hunger, thirst,
       sickness, poison, temperature, zombie infection) as the likely cause.
     Read only: never changes health.
+
+    BLOOD (owner: "is blood volume logged?" -- it was not: EHR.Log is quiet
+    unless verbose). The same reader writes a [BloodLog] line each time the
+    blood volume is 10 percent of full lower (or higher) than at the last
+    line:
+      Bob: blood 4100 -> 3600 mL (82 -> 72 percent, -500 in 3 min)
+          | bleeding -380: Hand_L, Neck | amputation -120 | regen +0
+    Named changes: every EHR.Blood.ModifyBloodVolume / SetBloodVolume call
+    (labelled by HMHealthLog.bloodWhy(label) just before it, else by its
+    amount: +500 transfusion, +250 saline, -500 blood drawn, -150 reaction),
+    regeneration (ApplyBloodRegeneration) and transfusion processing; what is
+    left is the bleeding EHR takes every update, listed with the parts that
+    bleed.
 ]]--
 
 HMHealthLog = HMHealthLog or {}
@@ -194,6 +207,134 @@ function HL.check(p)
     end
 end
 
+-- ------------------------------------------------------------- blood
+HL.BLOOD_STEP = 0.10      -- a line every 10 percent of full blood
+HL.bstate = HL.bstate or setmetatable({}, { __mode = "k" })
+
+local function bloodOf(p)
+    local ok, cur, max = pcall(function()
+        local data = EHR and EHR.GetPlayerData and EHR.GetPlayerData(p)
+        local b = data and data.EHR_Blood
+        return tonumber(b and b.currentVolume), tonumber(b and b.maxVolume)
+    end)
+    if ok and cur and max and max > 0 then return cur, max end
+    return nil
+end
+
+local function bst(p)
+    local s = HL.bstate[p]
+    if not s then s = { ref = nil, at = nil, parts = {}, order = {} }; HL.bstate[p] = s end
+    return s
+end
+
+-- the next ModifyBloodVolume / SetBloodVolume of this player is "label"
+HL.pendingWhy = HL.pendingWhy or setmetatable({}, { __mode = "k" })
+function HL.bloodWhy(p, label) if p then HL.pendingWhy[p] = label end end
+
+function HL.bloodNote(p, label, delta)
+    delta = tonumber(delta) or 0
+    if math.abs(delta) < 0.01 then return end
+    local s = bst(p)
+    if not s.parts[label] then s.order[#s.order + 1] = label end
+    s.parts[label] = (s.parts[label] or 0) + delta
+end
+
+local function guessLabel(delta)
+    local d = math.floor(delta + 0.5)
+    if d == 500 then return "transfusion (blood bag)" end
+    if d == 250 then return "saline" end
+    if d == -500 then return "blood drawn" end
+    if d == -150 then return "transfusion reaction" end
+    return d > 0 and "added" or "taken"
+end
+
+local function bleedingParts(p)
+    local list = {}
+    pcall(function()
+        local parts = p:getBodyDamage():getBodyParts()
+        for i = 0, parts:size() - 1 do
+            local bp = parts:get(i)
+            local ok, b = pcall(function() return bp:bleeding() end)
+            if ok and b then
+                local okT, t = pcall(function() return BodyPartType.ToString(bp:getType()) end)
+                list[#list + 1] = okT and t or "?"
+            end
+        end
+    end)
+    return list
+end
+
+local function blog(fmt, ...)
+    if HMLog then HMLog("BloodLog", fmt, ...) else print(string.format("[HARMONIE_HM][BloodLog] " .. fmt, ...)) end
+end
+
+local function bloodFlush(p, s, cur, max)
+    local delta = cur - s.ref
+    local secs = math.max(1, math.floor((now() - s.at) / 1000 + 0.5))
+    local parts, named = {}, 0
+    for _, k in ipairs(s.order) do
+        named = named + s.parts[k]
+        parts[#parts + 1] = string.format("%s %+.0f", k, s.parts[k])
+    end
+    local rest = delta - named
+    if rest < -1 then
+        local bl = bleedingParts(p)
+        table.insert(parts, 1, string.format("bleeding %+.0f: %s", rest, #bl > 0 and table.concat(bl, ", ") or "none bleeding now (stopped)"))
+    elseif rest > 1 then
+        parts[#parts + 1] = string.format("other %+.0f", rest)
+    end
+    local ctx = {}
+    pcall(function()
+        local data = EHR.GetPlayerData(p)
+        local sal = tonumber(data.EHR_Blood.transfusedSaline) or 0
+        if sal > 0 and cur > 0 then ctx[#ctx + 1] = string.format("saline %.0f percent", sal / cur * 100) end
+    end)
+    local hp = HL.hp(p)
+    if hp then ctx[#ctx + 1] = string.format("health %.0f", hp) end
+    blog("%s: blood %.0f -> %.0f mL (%.0f -> %.0f percent, %+.0f in %s) | %s%s", nameOf(p), s.ref, cur,
+        s.ref / max * 100, cur / max * 100, delta, secs >= 120 and (math.floor(secs / 60) .. " min") or (secs .. " s"),
+        #parts > 0 and table.concat(parts, " | ") or "no named change", #ctx > 0 and (" | " .. table.concat(ctx, ", ")) or "")
+end
+
+function HL.checkBlood(p)
+    if not p or (p.isDead and p:isDead()) then return end
+    local cur, max = bloodOf(p)
+    if not cur then return end
+    local s = bst(p)
+    if not s.ref then s.ref, s.at = cur, now(); return end
+    if math.abs(cur - s.ref) >= max * HL.BLOOD_STEP then
+        bloodFlush(p, s, cur, max)
+        s.ref, s.at, s.parts, s.order = cur, now(), {}, {}
+    end
+end
+
+local function wrapBloodChanges()
+    local B = EHR and EHR.Blood
+    if HL.bloodChangesWrapped or not B then return end
+    HL.bloodChangesWrapped = true
+    local function around(name, label)
+        local orig = B[name]
+        if type(orig) ~= "function" then return end
+        B[name] = function(player, ...)
+            local before = bloodOf(player)
+            local r = orig(player, ...)
+            local after = before and bloodOf(player)
+            if before and after then
+                local d = after - before
+                local why = label or HL.pendingWhy[player] or guessLabel(d)
+                if not label then HL.pendingWhy[player] = nil end
+                HL.bloodNote(player, why, d)
+            end
+            return r
+        end
+    end
+    around("ModifyBloodVolume", nil)
+    around("SetBloodVolume", nil)
+    around("ApplyBloodRegeneration", "regeneration")
+    around("ProcessTransfusionDecay", "transfusion processed")
+    log("blood log on: a line every %d percent of full blood lost or gained", math.floor(HL.BLOOD_STEP * 100))
+end
+
 local nextRead = 0
 local function tick()
     local t = now()
@@ -202,11 +343,11 @@ local function tick()
     if isClient and isClient() then return end -- health is decided on the server in MP
     if isServer and isServer() then
         local list = getOnlinePlayers and getOnlinePlayers()
-        for i = 0, (list and list:size() or 0) - 1 do pcall(HL.check, list:get(i)) end
+        for i = 0, (list and list:size() or 0) - 1 do pcall(HL.check, list:get(i)); pcall(HL.checkBlood, list:get(i)) end
     else
         for i = 0, (getNumActivePlayers and getNumActivePlayers() or 1) - 1 do
             local p = getSpecificPlayer and getSpecificPlayer(i)
-            if p then pcall(HL.check, p) end
+            if p then pcall(HL.check, p); pcall(HL.checkBlood, p) end
         end
     end
 end
@@ -227,8 +368,8 @@ end
 if not HL.ticking and Events and Events.OnTick then
     HL.ticking = true
     Events.OnTick.Add(tick)
-    if Events.OnGameStart then Events.OnGameStart.Add(wrapBlood) end
-    if Events.OnServerStarted then Events.OnServerStarted.Add(wrapBlood) end
+    if Events.OnGameStart then Events.OnGameStart.Add(wrapBlood); Events.OnGameStart.Add(wrapBloodChanges) end
+    if Events.OnServerStarted then Events.OnServerStarted.Add(wrapBlood); Events.OnServerStarted.Add(wrapBloodChanges) end
     log("health log on: a line every 10 health lost, with EHR's share and the vanilla causes")
 end
 

@@ -61,6 +61,7 @@ function M.afterCut(handler, damagePlayer)
             tostring(handler.limbName), curV / maxV * 100, was, loss, math.floor(M.MIN_LEFT * 100 + 0.5))
         if loss <= 0 then return false end
     end
+    if HMHealthLog and HMHealthLog.bloodWhy then HMHealthLog.bloodWhy(patient, "amputation") end
     pcall(B.ModifyBloodVolume, patient, -loss)
     local nowV = tonumber(bd.currentVolume) or (curV - loss)
     log("%s: %s amputated without surgery -- blood %.0f%% -> %.0f%% (-%d mL, %d%% of full)", nameOf(patient),
