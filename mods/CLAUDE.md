@@ -587,6 +587,18 @@
   as "not copied") and the new bag gets md.TWA_BagFresh. B.apply takes the
   non-TWA_ keys off a tiered bag without TWA_BagFresh ONCE, both sides
   (logged with the key names -- tells which key Tetris uses).
+  CONFIRMED from Inventory Tetris 42.20 source (owner's zip, Workshop
+  3775513231, NOT in the repo): a bag's grid lives in
+  item:getModData().gridContainers[<inventory type>] = { stacks }, plus
+  lastServerTime and TetrisUUID (= the item's ID); the server takes a
+  client grid sync only when its lastServerTime equals the stored one
+  (else it sends a "correction" back). Tetris grid size = container
+  definition keyed "<container type>_<capacity>", cached for the session
+  and calculated from capacity + weight reduction for an unknown key (so a
+  capacity add-on gets a computed grid; an unfinished bag at capacity 0
+  gets an empty one). TetrisItemData.registerItemDefinitions(pack) is real
+  (client file; pack = { [fullType] = { width, height, maxStackSize } }),
+  as TWA's TetrisCompat assumed.
 - TWA 1.5.5 (owner: "the bag could not be picked because I had not
   pressed Refresh -- people will think it is a bug"): opening the bag
   chooser (openBagChooser, craft page + guided row) is a click that looks
