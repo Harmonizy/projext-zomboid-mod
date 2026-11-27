@@ -2224,7 +2224,8 @@ local function validateRemoteTreatment(doctor, patient, itemID, expectedFullType
         return nil, nil, nil, nil, nil, "Treatment item changed"
     end
 
-    local treatmentKind = getServerBloodBagType(fullType)
+    -- HTS 1.2.9: saline is an IV procedure like a blood bag
+    local treatmentKind = (getServerBloodBagType(fullType) or fullType == "ExtensiveHealth.SalineBag")
         and REMOTE_TREATMENT_KIND_BLOOD or REMOTE_TREATMENT_KIND_MEDICATION
     if expectedTreatmentKind and treatmentKind ~= expectedTreatmentKind then
         return nil, nil, nil, nil, nil, "Treatment type changed"
@@ -2493,7 +2494,15 @@ local function applyRemoteBloodTransfusion(doctor, patient, bag, ivKit, spoilage
         return false, "Patient blood data is unavailable"
     end
 
-    local okApply, applied = pcall(applyServerBloodBag, patient, bag, spoilageState)
+    local isSaline = bag.getFullType and bag:getFullType() == "ExtensiveHealth.SalineBag"
+    local okApply, applied
+    if isSaline then
+        okApply, applied = pcall(applyServerSalineBag, patient, bag, spoilageState)
+    else
+        okApply, applied = pcall(applyServerBloodBag, patient, bag, spoilageState)
+    end
+    if HMLog then HMLog("Transfusion", "%s gives %s to %s: %s", HMLogName(doctor), isSaline and "saline" or "blood",
+        HMLogName(patient), okApply and tostring(applied) or ("error " .. tostring(applied))) end
     if not okApply or applied ~= true then
         local detail = okApply and "blood bag could not be applied" or tostring(applied)
         return false, "Blood transfusion failed: " .. detail
@@ -2510,7 +2519,7 @@ local function applyRemoteBloodTransfusion(doctor, patient, bag, ivKit, spoilage
         return false, "Blood transfusion applied, but supply removal failed"
     end
 
-    if EHR.SkillXP and EHR.SkillXP.OnTransfusion then
+    if not isSaline and EHR.SkillXP and EHR.SkillXP.OnTransfusion then
         local okXP, xpError = pcall(EHR.SkillXP.OnTransfusion, doctor, true)
         if not okXP then
             log("[EHR Server] Blood transfusion XP failed: " .. tostring(xpError))

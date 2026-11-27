@@ -160,7 +160,12 @@ local function getItemDisplayName(item, fallback)
     return tostring(displayName or fallback or "Unknown item")
 end
 
+-- HTS 1.2.9 (owner 2026-11-27: "can't give saline to someone else from the
+-- EHR tab"): a saline bag goes the same IV way as a blood bag (IV kit,
+-- patient's consent, the server applies it to the patient).
+local SALINE_TYPE = "ExtensiveHealth.SalineBag"
 local function isBloodBagFullType(fullType)
+    if fullType == SALINE_TYPE then return true end
     return fullType ~= nil
         and EHR.Blood ~= nil
         and EHR.Blood.BloodBagTypes ~= nil
