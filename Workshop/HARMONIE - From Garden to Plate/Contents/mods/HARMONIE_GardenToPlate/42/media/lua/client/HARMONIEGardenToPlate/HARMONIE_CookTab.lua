@@ -276,14 +276,16 @@ function Win:renderCook(x, y, w, h)
     local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or T("IGUI_HUB_Refresh")
     local rbw = tw(sfB, rLabel) + 24
     local rbx = x + w - 30 - rbw
-    self:cookButton(rbx, y - 3, rLabel, true, function(win)
+    local _, rbh = self:cookButton(rbx, y - 3, rLabel, true, function(win)
         log("Refresh pressed (page %s)", tostring(win.cookPage))
         H.lookAgain("Refresh button")
     end, rbw)
+    -- Hub 5.4: glows while the lists are out of date
+    if HARMONIE_Refresh and HARMONIE_Refresh.glow then HARMONIE_Refresh.glow(self, rbx, y - 3, rbw, rbh, "GTP") end
     do
         local mx, my = self:getMouseX(), self:getMouseY()
         if HARMONIE_Refresh and mx >= rbx and mx < rbx + rbw and my >= y - 3 and my < y + lineH(sfB) + 9 then
-            self.hoverTip = { text = HARMONIE_Refresh.tip(), x = rbx, y = y + lineH(sfB) + 12 }
+            self.hoverTip = { text = HARMONIE_Refresh.tip("GTP"), x = rbx, y = y + lineH(sfB) + 12 }
         end
     end
     local used = self:cookChips(items, x, y, w - 40 - rbw)

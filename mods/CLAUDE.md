@@ -288,6 +288,20 @@
   left of Start; Start checks again) and medicine picker (no 2 s). Left as
   they are: state that is not a search of items (HTS diagnosis findings,
   surgery-tab indications, vitamin panel layout, LWS -- server data).
+- Stale lists glow (Hub 5.4, owner 2026-11-27: "the bag could not be picked
+  because I had not pressed Refresh -- people will think it is a bug";
+  choice: glow the button, still no auto rescan). `HARMONIE_Refresh`:
+  R.serial goes up on a change of player 0's own items (signature: item
+  count + weight, worn, attached, hand items; checked every 750 ms ONLY
+  while AB.anyOpen()) or OnClothingUpdated -- NOT OnContainerUpdate (fires
+  for every world container, would always glow). R.stale(scope) = serial
+  newer than the scope's last bump; R.glow(ui, x, y, w, h, scope) draws a
+  pulsing gold frame inside the button; R.tip(scope) puts
+  IGUI_HUB_Refresh_Stale first. Wired: TWA (TWANeatButton.refreshScope),
+  GTP cook tab, HTS medicine picker + surgery checklist (ISButton render
+  wrap), MIL parts tab (both copies), SVU header. GTP 1.9.6, TWA 1.5.6,
+  HTS 1.2.10, SVU 1.1.3, MIL 1.1.3, LWS 1.1.8. A new Refresh button: call
+  R.glow after drawing it and use R.tip(scope).
 - RULE for any wrapper of a Java-exposed global (sendServerCommand,
   sendClientCommand, ...): forward with varargs `function(...) return
   orig(...) end`, NEVER a fixed list like (a1, a2, a3, a4). Java picks the
@@ -557,6 +571,39 @@
   provides SmallBeltLeft;SmallBeltRight;WebbingRight;WebbingLeft; Torch /
   HandTorch have NO AttachmentType (no slot holds them). The console line
   "hotbar: ... small slot takes: ..." lists the kinds.
+- TWA 1.5.3 (owner 2026-11-27: "can't pick the bag although it is off the
+  hotbar"): an item can keep its attached slot number after leaving the
+  hotbar (moved into a box / bag). `TWABagUp.inUse` counts a hotbar slot only
+  for an item lying directly in a character's own inventory (container with
+  no containing item, parent IsoGameCharacter) and, when the character has
+  getAttachedItems():contains, only if that list has it; a stale slot is
+  logged once per item ("treated as free"). An upgraded bag is still the
+  SAME vanilla item type (finishTier AddItem(snap.type)) -- only modData,
+  the stats B.apply sets and the tooltip lines under vanilla's are ours.
+- TWA 1.5.4 (owner: "Inventory Tetris shows no grid in a tier-upgraded
+  bag"): finishTier copied EVERY modData key of the old bag onto the new
+  one, other mods' data about that bag included (Inventory Tetris keeps its
+  grid data on the item). Now only "TWA_" keys are copied (the rest logged
+  as "not copied") and the new bag gets md.TWA_BagFresh. B.apply takes the
+  non-TWA_ keys off a tiered bag without TWA_BagFresh ONCE, both sides
+  (logged with the key names -- tells which key Tetris uses).
+  CONFIRMED from Inventory Tetris 42.20 source (owner's zip, Workshop
+  3775513231, NOT in the repo): a bag's grid lives in
+  item:getModData().gridContainers[<inventory type>] = { stacks }, plus
+  lastServerTime and TetrisUUID (= the item's ID); the server takes a
+  client grid sync only when its lastServerTime equals the stored one
+  (else it sends a "correction" back). Tetris grid size = container
+  definition keyed "<container type>_<capacity>", cached for the session
+  and calculated from capacity + weight reduction for an unknown key (so a
+  capacity add-on gets a computed grid; an unfinished bag at capacity 0
+  gets an empty one). TetrisItemData.registerItemDefinitions(pack) is real
+  (client file; pack = { [fullType] = { width, height, maxStackSize } }),
+  as TWA's TetrisCompat assumed.
+- TWA 1.5.5 (owner: "the bag could not be picked because I had not
+  pressed Refresh -- people will think it is a bug"): opening the bag
+  chooser (openBagChooser, craft page + guided row) is a click that looks
+  again: TWASources.forget + bagCandCache cleared + TWACraftUI.lookAgain
+  ("bag chooser opened"). The 1.5.3 stale-hotbar-slot check stays.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
@@ -1017,11 +1064,58 @@
     - HM_Saline: transfusedSaline / currentVolume, 1 >= 20, 2 >= 30,
       3 >= EHR HEMODILUTION_WARNING (40: fatigue up, stamina <= 30),
       4 >= HEMODILUTION_THRESHOLD (60: exhausted, health falls / death).
+    - HM_Decline (HTS 1.2.13, owner: "an illness that lowers HP shows
+      'body declining' and says it lowers HP until n"): M.DECLINE[id](stage,
+      disease) -> the illness's own floor at that stage (trichinosis /
+      mushroom toxin / aspergillosis st3 0, tetanus st2 30 st3 0, AHTR st2
+      50 st3 0, concussion 90/75/50, scabies st2 60 st3 30, pneumonia st3
+      30; sepsis 85/65/30/0) raised to EHR.Lethal.floor(); the ceiling it
+      holds now = the lowest of its *HealthCap fields (M.DECLINE_CAP; sepsis
+      healthCap). Name only when HM_Diagnosis.isDiagnosed, else "not
+      diagnosed yet". Level 1 n >= 75, 2 >= 50, 3 above the floor, 4 at it.
+      A new HP-lowering illness / stage: add it to M.DECLINE.
+      HTS 1.2.14 (owner: a delirium patient sat at HP 40 with nothing else
+      in the tab): the moodle also lists too much saline (transfusedSaline /
+      currentVolume >= HEMODILUTION_THRESHOLD -> "lowers HP until" the floor)
+      and an active medication_overdose side effect (its stored healthCap,
+      else 70 - 7 x intensity, min 45; raised to the floor), each with its
+      own fix line. And HM_NonLethal's safety net stands aside for vanilla
+      cold / heat (BodyDamage temperature < N.COLD_BELOW 35 or >
+      N.HOT_ABOVE 39), like it does for vanilla wounds / hunger / thirst:
+      any active EHR illness (delirium too) used to make it hold HP at the
+      floor whatever drained it.
     - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
       2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
     Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.
     EHR's own moodles stay off (EHR_Moodles ENABLED false, owner 2026-10-02).
     If an effect changes, change these texts too.
+- Health log (HTS 1.2.11, owner 2026-11-27: "does EHR log what lowered
+  health and why? log it when health drops 10"):
+  `shared/HARMONIEHomeMedic/HM_HealthLog.lua` (server in MP, the game in
+  SP; never on an MP client). Health read every second; a line each time
+  health is 10 below the reference (health at the last line; healing above
+  it moves the reference up): "[HealthLog] Bob: health 100 -> 89 (-11 in
+  2 s) | EHR -6: illness Trichinosis -6 | not EHR (vanilla / other mods)
+  -5: wounds ... ; hunger ... | blood %, saline %, illnesses st N, sepsis".
+  EHR reports every health change it makes through HMHealthLog.note(p, src,
+  before, detail): EHR_Disease / Sepsis / Environmental
+  ApplyBodyHealthDamage + ClampBodyHealth (renamed *_hmInner, a wrapper of
+  the old name right after), the medication overdose cap (inline) and
+  EHR.Blood.ApplyHemodilutionDeath (wrapped at game start). What EHR did not
+  report is "not EHR", listed with the vanilla conditions on the character
+  then. A new EHR health change: call HMHealthLog.note too.
+  BLOOD (HTS 1.2.12, owner: "is blood volume logged?" -- no, EHR.Log is
+  quiet unless verbose): same file, [BloodLog] line each time blood is 10
+  percent of full away from the last line (down or up): "Bob: blood 4500 ->
+  3950 mL (90 -> 79 percent, -550 in 2 min) | bleeding -300: Hand_L |
+  amputation -250 | health 100". EHR.Blood.ModifyBloodVolume /
+  SetBloodVolume / ApplyBloodRegeneration / ProcessTransfusionDecay are
+  wrapped at game start (measured before / after); a Modify call takes the
+  label HMHealthLog.bloodWhy(p, label) set just before it (amputation,
+  doctor's draw, dysentery, environment illness), else a guess by amount
+  (+500 transfusion, +250 saline, -500 drawn, -150 reaction). The rest of a
+  drop is EHR's per-update bleeding, listed with the bleeding parts. A new
+  blood change: set bloodWhy before ModifyBloodVolume.
 - Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
   item per type (carried first) since HTS 1.2.6 (owner: the same bandage
   listed once per item nearby).

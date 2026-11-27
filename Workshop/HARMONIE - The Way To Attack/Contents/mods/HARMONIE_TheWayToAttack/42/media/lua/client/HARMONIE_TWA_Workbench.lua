@@ -199,6 +199,7 @@ function TWACraftWindow:createWorkbenchChildren(contentTop, panelBottom)
         TWACraftUI.lookAgain("Refresh button")
     end)
     if HARMONIE_Refresh then self.refreshBtn:setTooltip(HARMONIE_Refresh.tip()) end
+    self.refreshBtn.refreshScope = "TWA"
     self.refreshBtn:initialise()
     self:addChild(self.refreshBtn)
     self:refreshHeaderButtons()

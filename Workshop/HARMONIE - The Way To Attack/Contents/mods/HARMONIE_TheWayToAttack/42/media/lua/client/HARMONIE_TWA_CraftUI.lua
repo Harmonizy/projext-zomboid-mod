@@ -188,6 +188,14 @@ function TWANeatButton:render()
     end
     local p = self:pulseLevel()
     if p then self:drawTick(p) end
+    -- Hub 5.4: a Refresh button glows while its list is out of date
+    if self.refreshScope and HARMONIE_Refresh and HARMONIE_Refresh.glow then
+        local stale = HARMONIE_Refresh.glow(self, 0, 0, self.width, self.height, self.refreshScope)
+        if stale ~= self.wasStale then
+            self.wasStale = stale
+            self:setTooltip(HARMONIE_Refresh.tip(self.refreshScope))
+        end
+    end
 end
 
 -- Flat, guaranteed-readable filter tab: NOT texture-based (that's what broke
@@ -1839,6 +1847,12 @@ function TWACraftWindow:pickedBag(recipe)
     return nil
 end
 function TWACraftWindow:openBagChooser(recipe)
+    -- 1.5.5 (owner 2026-11-27: "the bag could not be picked because I had not
+    -- pressed Refresh -- people will think it is a bug"): opening the chooser
+    -- is the player asking to look, so it looks again (a click, not a timer)
+    if TWASources and TWASources.forget then TWASources.forget(self.player) end
+    self.bagCandCache = nil
+    TWACraftUI.lookAgain("bag chooser opened")
     local list = self:bagCandidates(recipe)
     local picked = self:pickedBag(recipe)
     local rows = { { text = getText("IGUI_TWA_BagTier_PickRule", tostring(recipe.bagTier - 1)), info = true } }
