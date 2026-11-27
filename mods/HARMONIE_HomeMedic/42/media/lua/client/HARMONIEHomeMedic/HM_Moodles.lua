@@ -271,6 +271,32 @@ function M.declineList(player)
             out[#out + 1] = { id = "sepsis", stage = st, floor = math.max(M.SEPSIS_FLOOR[st] or 0, L), cap = cap and math.max(cap, L) or nil }
         end
     end)
+    -- HTS 1.2.14 (owner): too much saline and a medication overdose lower HP
+    -- too, without being an illness
+    pcall(function()
+        local data = EHR.GetPlayerData(player)
+        local b = data and data.EHR_Blood
+        local cur, sal = tonumber(b and b.currentVolume) or 0, tonumber(b and b.transfusedSaline) or 0
+        local death = tonumber(EHR.Blood.HEMODILUTION_THRESHOLD) or 0.60
+        if cur > 0 and sal / cur >= death then
+            out[#out + 1] = { kind = "saline", pct = math.floor(sal / cur * 100 + 0.5), floor = L }
+        end
+    end)
+    pcall(function()
+        local active = false
+        for _, e in ipairs(EHR.Medication.GetActiveSideEffects(player) or {}) do
+            if e.effectId == "medication_overdose" then active = true end
+        end
+        if not active then return end
+        local mt = EHR.Medication.GetMedicationData(player)
+        local od = mt and mt.activeSideEffects and mt.activeSideEffects.medication_overdose
+        local cap = tonumber(od and od.healthCap)
+        if not cap then
+            local i = tonumber(od and od.intensity) or 1
+            cap = math.max(45, 70 - 7 * i)
+        end
+        out[#out + 1] = { kind = "overdose", med = od and od.medicationName, floor = math.max(cap, L), cap = math.max(cap, L) }
+    end)
     table.sort(out, function(a, b) return a.floor < b.floor end)
     return out, L
 end
@@ -286,15 +312,30 @@ function M.decline(player)
     local lines = { T("Decline_Now", tostring(math.floor(hp + 0.5))), "" }
     local sig = ""
     for _, e in ipairs(list) do
-        lines[#lines + 1] = T("Decline_Row", diseaseName(player, e.id), tostring(e.stage), tostring(math.floor(e.floor + 0.5)))
-        if e.cap and e.cap < 99.5 then
-            lines[#lines + 1] = T("Decline_Cap", tostring(math.floor(e.cap + 0.5)))
+        local n = tostring(math.floor(e.floor + 0.5))
+        if e.kind == "saline" then
+            lines[#lines + 1] = T("Decline_Saline", tostring(e.pct), n)
+            sig = sig .. "sal" .. e.pct .. ";"
+        elseif e.kind == "overdose" then
+            lines[#lines + 1] = T("Decline_Overdose", tostring(e.med or "?"), n)
+            sig = sig .. "od" .. n .. ";"
+        else
+            lines[#lines + 1] = T("Decline_Row", diseaseName(player, e.id), tostring(e.stage), n)
+            if e.cap and e.cap < 99.5 then
+                lines[#lines + 1] = T("Decline_Cap", tostring(math.floor(e.cap + 0.5)))
+            end
+            sig = sig .. e.id .. e.stage .. ":" .. math.floor(e.floor) .. ":" .. math.floor(e.cap or 100) .. ";"
         end
-        sig = sig .. e.id .. e.stage .. ":" .. math.floor(e.floor) .. ":" .. math.floor(e.cap or 100) .. ";"
     end
     lines[#lines + 1] = ""
     if L > 0 then lines[#lines + 1] = T("Decline_Floor", tostring(math.floor(L + 0.5))) end
-    lines[#lines + 1] = T("Decline_Fix")
+    local anyIllness = false
+    for _, e in ipairs(list) do if not e.kind then anyIllness = true end end
+    if anyIllness then lines[#lines + 1] = T("Decline_Fix") end
+    for _, e in ipairs(list) do
+        if e.kind == "saline" then lines[#lines + 1] = T("Decline_FixSaline") end
+        if e.kind == "overdose" then lines[#lines + 1] = T("Decline_FixOverdose") end
+    end
     return level, T("Decline_Title" .. level), table.concat(lines, "\n"), sig .. math.floor(hp)
 end
 

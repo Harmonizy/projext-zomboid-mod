@@ -190,6 +190,15 @@ local function vanillaHurting(player)
             if ok and (tonumber(v) or 0) > 0 then return "wound (burn)" end
         end
     end
+    -- HTS 1.2.14 (owner 2026-11-27): cold / heat of the base game takes
+    -- health on its own -- never hold it up (a delirium patient was kept at
+    -- the floor while something else drained him)
+    if bd and bd.getTemperature then
+        local okT, t = pcall(bd.getTemperature, bd)
+        t = okT and tonumber(t) or nil
+        if t and t < N.COLD_BELOW then return string.format("cold (body %.1f C)", t) end
+        if t and t > N.HOT_ABOVE then return string.format("heat (body %.1f C)", t) end
+    end
     if CharacterStat then
         local ok, why = pcall(function()
             local st = player:getStats()
@@ -205,6 +214,8 @@ local function vanillaHurting(player)
     return nil
 end
 
+N.COLD_BELOW = 35.0
+N.HOT_ABOVE = 39.0
 N.seen = N.seen or {}
 function N.guard(player)
     if not player or N.allowed() then return end

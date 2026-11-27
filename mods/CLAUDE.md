@@ -1074,6 +1074,16 @@
       healthCap). Name only when HM_Diagnosis.isDiagnosed, else "not
       diagnosed yet". Level 1 n >= 75, 2 >= 50, 3 above the floor, 4 at it.
       A new HP-lowering illness / stage: add it to M.DECLINE.
+      HTS 1.2.14 (owner: a delirium patient sat at HP 40 with nothing else
+      in the tab): the moodle also lists too much saline (transfusedSaline /
+      currentVolume >= HEMODILUTION_THRESHOLD -> "lowers HP until" the floor)
+      and an active medication_overdose side effect (its stored healthCap,
+      else 70 - 7 x intensity, min 45; raised to the floor), each with its
+      own fix line. And HM_NonLethal's safety net stands aside for vanilla
+      cold / heat (BodyDamage temperature < N.COLD_BELOW 35 or >
+      N.HOT_ABOVE 39), like it does for vanilla wounds / hunger / thirst:
+      any active EHR illness (delirium too) used to make it hold HP at the
+      floor whatever drained it.
     - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
       2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
     Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.

@@ -3210,10 +3210,14 @@
     "UI_HomeMedic_Moodle_Decline_Title2": "ร่างกายทรุดโทรม",
     "UI_HomeMedic_Moodle_Decline_Title3": "ร่างกายทรุดโทรมหนัก",
     "UI_HomeMedic_Moodle_Decline_Title4": "ร่างกายทรุดโทรมหนัก",
-    "UI_HomeMedic_Moodle_Decline_Now": "โรคกำลังลดพลังชีวิต (HP) ตอนนี้ HP: %1",
+    "UI_HomeMedic_Moodle_Decline_Now": "มีบางอย่างกำลังลดพลังชีวิต (HP) ตอนนี้ HP: %1",
     "UI_HomeMedic_Moodle_Decline_Row": "- %1 (ขั้น %2): ลด HP ลงจนกว่าจะเหลือ %3",
     "UI_HomeMedic_Moodle_Decline_Cap": "   HP ฟื้นได้ไม่เกิน %1 จนกว่าขั้นนี้จะจบ",
     "UI_HomeMedic_Moodle_Decline_Unknown": "โรคที่ยังไม่ได้วินิจฉัย",
     "UI_HomeMedic_Moodle_Decline_Floor": "เซิร์ฟเวอร์นี้ โรคลด HP ได้ต่ำสุดที่ %1",
-    "UI_HomeMedic_Moodle_Decline_Fix": "วิธีแก้: วินิจฉัยโรคในหน้าต่างการแพทย์ แล้วใช้ยาที่ถูกโรคเพื่อหยุดการลด เพดาน HP จะหายเมื่อโรคหาย"
+    "UI_HomeMedic_Moodle_Decline_Fix": "วิธีแก้: วินิจฉัยโรคในหน้าต่างการแพทย์ แล้วใช้ยาที่ถูกโรคเพื่อหยุดการลด เพดาน HP จะหายเมื่อโรคหาย",
+    "UI_HomeMedic_Moodle_Decline_Saline": "- น้ำเกลือเกิน (%1 เปอร์เซ็นต์ของเลือด): ลด HP ลงจนกว่าจะเหลือ %2",
+    "UI_HomeMedic_Moodle_Decline_Overdose": "- ยาเกินขนาด (%1): กด HP ไว้ไม่เกิน %2 ระหว่างที่ฤทธิ์ยังอยู่",
+    "UI_HomeMedic_Moodle_Decline_FixSaline": "น้ำเกลือ: หยุดให้ ให้ถุงเลือดกรุ๊ปที่เข้ากันเพื่อลดสัดส่วน และน้ำเกลือจะค่อยๆ หมดไปเอง",
+    "UI_HomeMedic_Moodle_Decline_FixOverdose": "ยาเกินขนาด: อย่ากินยานั้นก่อนเวลาอีก ฤทธิ์จะหมดไปเองในไม่กี่ชั่วโมง"
 }
