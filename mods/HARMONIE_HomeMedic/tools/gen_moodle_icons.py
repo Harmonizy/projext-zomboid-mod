@@ -1,6 +1,6 @@
 """How to Survive moodle icons (HTS 1.2.9), our own drawings.
 HM_BloodLoss: red drop. HM_Saline: pale blue drop with a red core.
-HM_Stump: a bandaged arm stump.
+HM_Stump: a bandaged arm stump. HM_Decline: a cracked heart + down arrow.
 Writes 42/media/ui/<name>.png (30x30) and 42/media/ui/Moodles/128/<name>.png.
 Run with /usr/bin/python3 (Pillow) from mods/HARMONIE_HomeMedic."""
 from PIL import Image, ImageDraw
@@ -38,6 +38,25 @@ def stump(S, d):
         d.line([x0 + S*0.02, yy, x1 - S*0.02, yy + S*0.04], fill=(205, 205, 195, 255), width=max(1, int(S*0.02)))
     d.ellipse([S*0.45, S*0.70, S*0.58, S*0.80], fill=line)
 
+def decline(S, d):
+    # a dark red heart with a crack and a down arrow
+    import math as m
+    pts = []
+    for i in range(0, 360, 2):
+        t = m.radians(i)
+        x = 16 * m.sin(t) ** 3
+        y = 13 * m.cos(t) - 5 * m.cos(2 * t) - 2 * m.cos(3 * t) - m.cos(4 * t)
+        pts.append((S / 2 + x * S / 40, S * 0.45 - y * S / 40))
+    d.polygon(pts, fill=(120, 20, 30, 255))
+    inner = [((x - S / 2) * 0.85 + S / 2, (y - S * 0.45) * 0.85 + S * 0.45) for x, y in pts]
+    d.polygon(inner, fill=(190, 45, 55, 255))
+    w = max(2, int(S * 0.04))
+    d.line([S*0.50, S*0.22, S*0.44, S*0.38, S*0.55, S*0.50, S*0.47, S*0.66], fill=(60, 10, 15, 255), width=w)
+    # arrow
+    ax = S * 0.80
+    d.rectangle([ax - S*0.04, S*0.52, ax + S*0.04, S*0.80], fill=(255, 210, 90, 255))
+    d.polygon([(ax - S*0.11, S*0.78), (ax + S*0.11, S*0.78), (ax, S*0.95)], fill=(255, 210, 90, 255))
+
 def make(fn, size):
     S = size * 4
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -46,7 +65,7 @@ def make(fn, size):
 
 base = os.path.join("42", "media", "ui")
 os.makedirs(os.path.join(base, "Moodles", "128"), exist_ok=True)
-for name, fn in (("HM_BloodLoss", blood), ("HM_Saline", saline), ("HM_Stump", stump)):
+for name, fn in (("HM_BloodLoss", blood), ("HM_Saline", saline), ("HM_Stump", stump), ("HM_Decline", decline)):
     make(fn, 30).save(os.path.join(base, name + ".png"))
     make(fn, 128).save(os.path.join(base, "Moodles", "128", name + ".png"))
 print("written")

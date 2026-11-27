@@ -220,6 +220,8 @@ function UI:prerender()
     local rLabel = HARMONIE_Refresh and HARMONIE_Refresh.label() or getText("IGUI_HUB_Refresh")
     local rw = math.max(90, tw(rLabel) + 30)
     button(self, "refresh", rLabel, 14, by, rw, bh, true)
+    -- Hub 5.4: glows while the list is out of date
+    if HARMONIE_Refresh and HARMONIE_Refresh.glow then HARMONIE_Refresh.glow(self, 14, by, rw, bh, "HM") end
     button(self, "close", L("Close", "Close"), w - 14 - cw, by, cw, bh, true)
 end
 

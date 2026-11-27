@@ -294,10 +294,35 @@ function B.isEmpty(bag)
     return not items or items:size() == 0
 end
 -- worn, in a hand or on the hotbar: not to be taken by a recipe
+-- 1.5.3 (owner 2026-11-27: "can't pick the bag although it is off the
+-- hotbar"): an item can keep its old attached slot number after it left the
+-- hotbar (moved into a box / another bag). Only an item lying directly in a
+-- character's own inventory can hang on the hotbar, so a slot number on
+-- anything else is stale and ignored.
+local staleLogged = {}
 function B.inUse(item)
     if call(item, "isEquipped") then return true end
     local slot = tonumber(call(item, "getAttachedSlot")) or -1
-    return slot > -1
+    if slot < 0 then return false end
+    local c = call(item, "getContainer")
+    local holder = c and call(c, "getParent")
+    local onBody = c ~= nil and call(c, "getContainingItem") == nil
+        and holder ~= nil and instanceof(holder, "IsoGameCharacter")
+    if not onBody then
+        local id = tostring(call(item, "getID"))
+        if not staleLogged[id] then
+            staleLogged[id] = true
+            log("%s (id %s) has hotbar slot %d but is not on a character -- treated as free", TWALogType and TWALogType(item) or "?", id, slot)
+        end
+        return false
+    end
+    -- on the body: ask the character's own attached-items list when it has one
+    local ai = call(holder, "getAttachedItems")
+    if ai and ai.contains then
+        local has = call(ai, "contains", item)
+        if has == false then return false end
+    end
+    return true
 end
 function B.returnChance(player)
     local lvl = 0
@@ -368,6 +393,21 @@ function B.apply(item)
         probed = true
         local have, miss = B.probe(item)
         log("setters here: %s%s", table.concat(have, ", "), #miss > 0 and (" -- MISSING: " .. table.concat(miss, ", ") .. " (those upgrades do nothing)") or "")
+    end
+    -- 1.5.4: a bag upgraded before 1.5.4 still carries the old bag's
+    -- other-mod data (copied by finishTier) -- take it off once, both sides
+    if md.TWA_BagTier and not md.TWA_BagFresh then
+        local gone = {}
+        for k in pairs(md) do
+            if not (type(k) == "string" and k:sub(1, 4) == "TWA_") then gone[#gone + 1] = k end
+        end
+        for _, k in ipairs(gone) do md[k] = nil end
+        md.TWA_BagFresh = true
+        if #gone > 0 then
+            local names = {}
+            for i, k in ipairs(gone) do names[i] = tostring(k) end
+            log("%s (id %s): removed the old bag's copied data: %s", TWALogType and TWALogType(item) or "?", tostring(call(item, "getID")), table.concat(names, ", "))
+        end
     end
     local v = B.compute(item)
     if not v then return 0 end
@@ -477,7 +517,16 @@ function B.finishTier(character, recipe, snap, token)
     if not bag then log("tier %d: could NOT make %s again", recipe.bagTier, tostring(snap.type)); return nil end
     if snap.cond and bag.setCondition then call(bag, "setCondition", snap.cond) end
     local md = bag:getModData()
-    for k, v in pairs(snap.md or {}) do md[k] = v end
+    -- 1.5.4 (owner: "Inventory Tetris shows no grid in a tier-upgraded bag"):
+    -- copy ONLY our own keys. The old bag's modData also held other mods'
+    -- data about THAT bag (Inventory Tetris keeps its grid there), which
+    -- does not fit the new item. The new bag is the plain vanilla bag + ours.
+    local skipped = {}
+    for k, v in pairs(snap.md or {}) do
+        if type(k) == "string" and k:sub(1, 4) == "TWA_" then md[k] = v else skipped[#skipped + 1] = tostring(k) end
+    end
+    if #skipped > 0 then log("tier %d: not copied from the old bag (other mods' data): %s", recipe.bagTier, table.concat(skipped, ", ")) end
+    md.TWA_BagFresh = true
     md.TWA_Incomplete = nil
     md.TWA_BagTier = recipe.bagTier
     md.TWA_BagBy = B.crafterName(character) -- 1.3.0: shown in the tooltip

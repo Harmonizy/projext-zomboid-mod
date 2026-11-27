@@ -180,7 +180,7 @@ function EHR.Sepsis.IsTreatmentActive(player)
     return EHR_SepsisGetActiveCurativeTreatment(player) ~= nil
 end
 
-local function EHR_SepsisClampBodyHealth(player, maxHealth)
+local function EHR_SepsisClampBodyHealth_hmInner(player, maxHealth)
     if not player or not maxHealth then return nil end
 
     local bodyDamage = nil
@@ -221,7 +221,15 @@ local function EHR_SepsisClampBodyHealth(player, maxHealth)
     return healthCap
 end
 
-local function EHR_SepsisApplyBodyHealthDamage(player, amount, cause)
+-- HTS 1.2.11: every health change EHR makes is reported to the health log
+local function EHR_SepsisClampBodyHealth(player, maxHealth)
+    local hmBefore = HMHealthLog and HMHealthLog.hp(player)
+    local r = EHR_SepsisClampBodyHealth_hmInner(player, maxHealth)
+    if hmBefore then HMHealthLog.note(player, "sepsis health cap", hmBefore, "to " .. tostring(math.floor((tonumber(maxHealth) or 0) + 0.5))) end
+    return r
+end
+
+local function EHR_SepsisApplyBodyHealthDamage_hmInner(player, amount, cause)
     if not player or not amount or amount <= 0 then return nil end
 
     local bodyDamage = nil
@@ -271,6 +279,14 @@ local function EHR_SepsisApplyBodyHealthDamage(player, amount, cause)
     end
 
     return newHealth
+end
+
+-- HTS 1.2.11: every health change EHR makes is reported to the health log
+local function EHR_SepsisApplyBodyHealthDamage(player, amount, cause)
+    local hmBefore = HMHealthLog and HMHealthLog.hp(player)
+    local r = EHR_SepsisApplyBodyHealthDamage_hmInner(player, amount, cause)
+    if hmBefore then HMHealthLog.note(player, "sepsis", hmBefore, tostring(cause or "")) end
+    return r
 end
 
 local function EHR_SepsisApplyHealthDamage(player, data, effects, currentHour)

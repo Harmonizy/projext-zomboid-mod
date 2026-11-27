@@ -211,6 +211,7 @@ function DB.serverPerform(doctor, args)
     if sendAddItemToContainer then pcall(sendAddItemToContainer, doctor:getInventory(), filled) end
     local before = bloodShare(patient) or 0
     if EHR and EHR.Blood and EHR.Blood.ModifyBloodVolume then
+        if HMHealthLog and HMHealthLog.bloodWhy then HMHealthLog.bloodWhy(patient, "blood drawn by a doctor") end
         pcall(EHR.Blood.ModifyBloodVolume, patient, -DB.AMOUNT)
     else
         local b = patient:getModData().EHR_Blood

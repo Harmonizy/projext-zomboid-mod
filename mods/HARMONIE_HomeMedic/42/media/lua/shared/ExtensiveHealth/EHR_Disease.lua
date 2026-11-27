@@ -2045,7 +2045,7 @@ local function EHR_DiseaseKillPlayer(player, cause)
     end
 end
 
-local function EHR_DiseaseApplyBodyHealthDamage(player, amount, cause)
+local function EHR_DiseaseApplyBodyHealthDamage_hmInner(player, amount, cause)
     if not player or not amount or amount <= 0 then return nil end
 
     local bodyDamage = nil
@@ -2107,7 +2107,15 @@ local function EHR_DiseaseApplyBodyHealthDamage(player, amount, cause)
     return newHealth
 end
 
-local function EHR_DiseaseClampBodyHealth(player, maxHealth)
+-- HTS 1.2.11: every health change EHR makes is reported to the health log
+local function EHR_DiseaseApplyBodyHealthDamage(player, amount, cause)
+    local hmBefore = HMHealthLog and HMHealthLog.hp(player)
+    local r = EHR_DiseaseApplyBodyHealthDamage_hmInner(player, amount, cause)
+    if hmBefore then HMHealthLog.note(player, "illness", hmBefore, tostring(cause or "?")) end
+    return r
+end
+
+local function EHR_DiseaseClampBodyHealth_hmInner(player, maxHealth)
     if not player or not maxHealth then return nil end
 
     local bodyDamage = nil
@@ -2146,6 +2154,14 @@ local function EHR_DiseaseClampBodyHealth(player, maxHealth)
     end
 
     return math.min(currentHealth, healthCap)
+end
+
+-- HTS 1.2.11: every health change EHR makes is reported to the health log
+local function EHR_DiseaseClampBodyHealth(player, maxHealth)
+    local hmBefore = HMHealthLog and HMHealthLog.hp(player)
+    local r = EHR_DiseaseClampBodyHealth_hmInner(player, maxHealth)
+    if hmBefore then HMHealthLog.note(player, "illness health cap", hmBefore, "to " .. tostring(math.floor((tonumber(maxHealth) or 0) + 0.5))) end
+    return r
 end
 
 local function EHR_DiseaseGetBodyHealth(player)
