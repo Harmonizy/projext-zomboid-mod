@@ -187,5 +187,6 @@
     "IGUI_HUB_Act_CutLimbAction": "ตัดแขน",
     "IGUI_HUB_Act_CauterizeAction": "จี้แผล",
     "IGUI_HUB_Act_ISReadABook": "อ่าน",
-    "IGUI_HUB_Act_ISEHRReadFlyerAction": "อ่าน"
+    "IGUI_HUB_Act_ISEHRReadFlyerAction": "อ่าน",
+    "IGUI_HUB_Refresh_Stale": "ของที่มีเปลี่ยนไปแล้วหลังจากรายการนี้ค้นครั้งล่าสุด กดเพื่ออัปเดต"
 }

@@ -129,5 +129,6 @@
     "IGUI_HUB_Act_CutLimbAction": "Amputate",
     "IGUI_HUB_Act_CauterizeAction": "Cauterize",
     "IGUI_HUB_Act_ISReadABook": "Read",
-    "IGUI_HUB_Act_ISEHRReadFlyerAction": "Read"
+    "IGUI_HUB_Act_ISEHRReadFlyerAction": "Read",
+    "IGUI_HUB_Refresh_Stale": "Your items changed since this list last looked -- press to update it."
 }

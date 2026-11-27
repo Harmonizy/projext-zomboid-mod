@@ -288,6 +288,20 @@
   left of Start; Start checks again) and medicine picker (no 2 s). Left as
   they are: state that is not a search of items (HTS diagnosis findings,
   surgery-tab indications, vitamin panel layout, LWS -- server data).
+- Stale lists glow (Hub 5.4, owner 2026-11-27: "the bag could not be picked
+  because I had not pressed Refresh -- people will think it is a bug";
+  choice: glow the button, still no auto rescan). `HARMONIE_Refresh`:
+  R.serial goes up on a change of player 0's own items (signature: item
+  count + weight, worn, attached, hand items; checked every 750 ms ONLY
+  while AB.anyOpen()) or OnClothingUpdated -- NOT OnContainerUpdate (fires
+  for every world container, would always glow). R.stale(scope) = serial
+  newer than the scope's last bump; R.glow(ui, x, y, w, h, scope) draws a
+  pulsing gold frame inside the button; R.tip(scope) puts
+  IGUI_HUB_Refresh_Stale first. Wired: TWA (TWANeatButton.refreshScope),
+  GTP cook tab, HTS medicine picker + surgery checklist (ISButton render
+  wrap), MIL parts tab (both copies), SVU header. GTP 1.9.6, TWA 1.5.6,
+  HTS 1.2.10, SVU 1.1.3, MIL 1.1.3, LWS 1.1.8. A new Refresh button: call
+  R.glow after drawing it and use R.tip(scope).
 - RULE for any wrapper of a Java-exposed global (sendServerCommand,
   sendClientCommand, ...): forward with varargs `function(...) return
   orig(...) end`, NEVER a fixed list like (a1, a2, a3, a4). Java picks the

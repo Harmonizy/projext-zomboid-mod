@@ -188,6 +188,14 @@ function TWANeatButton:render()
     end
     local p = self:pulseLevel()
     if p then self:drawTick(p) end
+    -- Hub 5.4: a Refresh button glows while its list is out of date
+    if self.refreshScope and HARMONIE_Refresh and HARMONIE_Refresh.glow then
+        local stale = HARMONIE_Refresh.glow(self, 0, 0, self.width, self.height, self.refreshScope)
+        if stale ~= self.wasStale then
+            self.wasStale = stale
+            self:setTooltip(HARMONIE_Refresh.tip(self.refreshScope))
+        end
+    end
 end
 
 -- Flat, guaranteed-readable filter tab: NOT texture-based (that's what broke

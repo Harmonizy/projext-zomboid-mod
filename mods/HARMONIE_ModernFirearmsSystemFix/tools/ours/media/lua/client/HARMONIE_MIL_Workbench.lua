@@ -875,6 +875,14 @@ function W:renderParts(x, y, w, h)
         log("Refresh pressed (parts tab)")
         W.lookAgain("Refresh button")
     end)
+    -- Hub 5.4: glows while the parts list is out of date
+    if HARMONIE_Refresh and HARMONIE_Refresh.glow then
+        HARMONIE_Refresh.glow(self, x + w - rbw - 8, top + 4, rbw, 24, "MIL")
+        local mx, my = self:getMouseX(), self:getMouseY()
+        if HARMONIE_Refresh.stale("MIL") and mx >= x + w - rbw - 8 and mx <= x + w - 8 and my >= top + 4 and my <= top + 28 then
+            self.hoverTip = { text = HARMONIE_Refresh.tip("MIL"), x = x + w - rbw - 48, y = top + 30 }
+        end
+    end
     local nx, ny = self:drawCard(x, top, w, W.CARD_T + 16 + #note * lineH(sf), T("IGUI_MIL_PartsHowTitle"))
     for _, l in ipairs(note) do shadowText(self, l, nx, ny, C.textDim, 1, sf); ny = ny + lineH(sf) end
     top = top + W.CARD_T + 26 + #note * lineH(sf)

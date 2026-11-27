@@ -533,8 +533,10 @@ function Win:prerender()
         if icon then
             self:drawTextureScaled(icon, b.x + 3, b.y + 3, b.w - 6, b.h - 6, disabled and 0.35 or 1, 1, 1, 1)
         end
+        -- Hub 5.4: Refresh glows while the rows are out of date
+        if b.id == "refresh" and HARMONIE_Refresh and HARMONIE_Refresh.glow then HARMONIE_Refresh.glow(self, b.x, b.y, b.w, b.h, "SVU") end
         if over and b.id == "refresh" then
-            self.hoverTip = { text = HARMONIE_Refresh and HARMONIE_Refresh.tip() or "", x = b.x - 40, y = b.y + b.h + 4 }
+            self.hoverTip = { text = HARMONIE_Refresh and HARMONIE_Refresh.tip("SVU") or "", x = b.x - 40, y = b.y + b.h + 4 }
         elseif over then
             local key = ({ close = "IGUI_HSVU_Close", pin = H.pinned and "IGUI_HSVU_Unpin" or "IGUI_HSVU_Pin",
                 plus = "IGUI_HSVU_TextBigger", minus = "IGUI_HSVU_TextSmaller", settings = "IGUI_HSVU_Settings" })[b.id]

@@ -151,6 +151,18 @@ function Prep:createChildren()
     self.refreshBtn = ISButton:new(0, 0, getTextManager():MeasureStringX(UIFont.Small, rLabel) + 24, bh, rLabel, self, Prep.onRefresh)
     if HARMONIE_Refresh then self.refreshBtn.tooltip = HARMONIE_Refresh.tip() end
     self.refreshBtn:initialise(); self:addChild(self.refreshBtn)
+    -- Hub 5.4: glows while the checklist is out of date
+    do
+        local btn = self.refreshBtn
+        local origRender = btn.render
+        btn.render = function(b)
+            origRender(b)
+            if HARMONIE_Refresh and HARMONIE_Refresh.glow then
+                local stale = HARMONIE_Refresh.glow(b, 0, 0, b.width, b.height, "HM")
+                if stale ~= b.wasStale then b.wasStale = stale; b.tooltip = HARMONIE_Refresh.tip("HM") end
+            end
+        end
+    end
     if self.embedded then self.closeBtn:setVisible(false) end
 end
 
