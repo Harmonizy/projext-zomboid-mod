@@ -984,6 +984,18 @@
   row -> EHR_HealthPanelUI:onRightMouseUp -> T.stumpMenu(..., cleanOnly =
   true). The dirt row says " - right-click to clean". The body-part menu
   keeps its clean option too.
+- HTS 1.2.8 (owner: "a fully healed stump came back fresh after the other
+  hand was cut"): TOC heals stumps on the CLIENT (EveryHours) and only sends
+  UpdateDataControllerFromClient; every new cut makes the server `apply`, and
+  the client then REPLACES its tocData with the server's ModData copy. Guards:
+  (1) server `DataController:apply` re-links ModData[key] to the live
+  `self.tocData` when they differ (ServerDataHandler.AddTable can swap it);
+  (2) `ClientDataController.KeepLocalHealing` (own player only): a limb cut
+  in both copies that is healed here but fresh in the server copy stays
+  healed, and a lower time-to-heal here wins; those limbs are sent again.
+  A cut limb can only become fresh by being uncut first, so this never hides
+  a real change. (3) UpdateDataControllerFromClient loads the instance
+  (GetOrCreate, no apply) instead of throwing. Log tag [TOCSync].
 - Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
   item per type (carried first) since HTS 1.2.6 (owner: the same bandage
   listed once per item nearby).

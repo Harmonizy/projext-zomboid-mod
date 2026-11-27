@@ -354,6 +354,17 @@ function DataController:apply(player)
     if isClient() then return end
 
     if isServer() then
+        -- HM 1.2.8: the client asks for ModData[key]; make sure that is the very
+        -- table this instance writes to (a client transmit -- ServerDataHandler.
+        -- AddTable -- can swap the ModData table and leave this one orphaned, so
+        -- the client got an old copy and a healed stump turned fresh again)
+        if self.tocData and self.tocData.limbs then
+            local key = CommandsData.GetKey(self.username)
+            if ModData.get(key) ~= self.tocData then
+                if HMLog then HMLog("TOCSync", "server: ModData of %s was not the live table -- re-linked before sending", tostring(self.username)) end
+                ModData.add(key, self.tocData)
+            end
+        end
         sendServerCommand(player, CommandsData.modules.TOC_RELAY, CommandsData.client.Relay.ReceiveApplyFromServer,
             {patientUsername = self.username})
     end

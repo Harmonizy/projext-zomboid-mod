@@ -20,6 +20,14 @@ end
 function ServerRelayCommands.UpdateDataControllerFromClient(playerObj, args)
     local DataController = require("TOC/Controllers/DataController")
     local h = DataController.GetInstance(playerObj:getUsername())
+    -- HM 1.2.8: a missing instance threw here and the client's healing was lost
+    if not h or not h.tocData then
+        local ServerDataController = require("TOC/Controllers/ServerDataController")
+        h = ServerDataController.GetOrCreate(playerObj:getUsername())  -- no apply: the update below goes first
+        if HMLog then HMLog("TOCSync", "server: no live data for %s when its healing arrived -- loaded it", tostring(playerObj:getUsername())) end
+        if not h or not h.tocData then return end
+    end
+    if args.limbName and not h.tocData.limbs[args.limbName] then return end
 
     -- limbName is absent on the updateIsIgnoredPartInfectedFromClient path, and
     -- Lua evaluates this concatenation before the call, so a bare `.. args.limbName`
