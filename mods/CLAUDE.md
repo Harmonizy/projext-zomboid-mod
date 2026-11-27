@@ -255,6 +255,15 @@
   gold H, a missing picture falls back to it. The option-pool hook clears
   any of our H pictures (`B.isOurIcon`) from a reused option. A new mod tag:
   add it to B.TAG_CARD.
+- Action bar (Hub 5.3, owner 2026-11-24: "our windows cover the vanilla
+  progress bar -- show doing / started / done"): `client/HARMONIE_ActionBar.lua`
+  -- while any of our windows is open (AB.anyOpen: GTPGuide.window,
+  TWACraftUI.window, EHR.UI.HealthPanelInstance, HSVU.window,
+  HMLWorkbench.instance, LWSWindow.isOpen) and player 0 runs a timed action,
+  a bar at the top centre shows "Doing: <name>" + % (getJobDelta), then
+  "Done" (green, reached >= 95 %) or "Stopped before the end" (orange) for
+  2 s. Names IGUI_HUB_Act_<class> (hub translate), else the class name made
+  readable. Mouse handlers return false. A new window: add it to anyOpen.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
@@ -951,6 +960,76 @@
   client wrote its cache under a nil key); [TOCTrait] logs the steps and every
   trait of the character once per login (an amputation trait of ANOTHER mod
   hides the arm but tells TOC nothing -- find it there).
+- Stump care in the medical window (HTS 1.2.6, owner 2026-11-24):
+  right-click the blacked-out (amputated) part -- yours or a patient's --
+  opens ONE menu built by TOCBridge `T.stumpMenu` (wraps
+  EHR_HealthPanelUI.openBodyPartContextMenu; a click on a missing hand under
+  a cut forearm means the forearm, `stumpOf`): "Clean wound (dirt %)" with
+  the carried disinfected bandages / rags ONE row per type (xN), or greyed
+  with why (none carried / clean / healed); fit a prosthesis (yours:
+  T.prosthesisOptions; a patient's: "Fit prosthesis on them" ->
+  HM_StumpCare.requestFit); TOC's cut-higher option (T.addOptions skipClean).
+  `shared/HARMONIEHomeMedic/HM_StumpCare.lua`: HM_CleanStumpAction does the
+  cleaning in complete() (server in MP) on the PATIENT's TOC data + dc:apply
+  -- TOC's CleanWoundAction sent UpdateDataControllerFromClient, which the
+  server files under the SENDER, so cleaning a patient changed the doctor's
+  data. Fit on another (MP): "HARMONIE_HM_Stump"/"Fit" {patient, item, side}
+  -> server checks range 3, CheckIfEquippable, no prosthesis on that group,
+  moves the item (side's own type) to the patient, sends "Wear" -> the
+  patient's game queues its own ISWearClothing once the item arrives.
+  Refusals "Refused" {why} -> UI_HomeMedic_Stump_No_<why>.
+- HTS 1.2.7 (owner: "clean by right-clicking the row that shows the scar
+  %"): the selected part's detail box remembers its rows (hmPartRows); a
+  right-click on the stump's healing (toc_healing) or dirtiness (toc_dirt)
+  row -> EHR_HealthPanelUI:onRightMouseUp -> T.stumpMenu(..., cleanOnly =
+  true). The dirt row says " - right-click to clean". The body-part menu
+  keeps its clean option too.
+- HTS 1.2.8 (owner: "a fully healed stump came back fresh after the other
+  hand was cut"): TOC heals stumps on the CLIENT (EveryHours) and only sends
+  UpdateDataControllerFromClient; every new cut makes the server `apply`, and
+  the client then REPLACES its tocData with the server's ModData copy. Guards:
+  (1) server `DataController:apply` re-links ModData[key] to the live
+  `self.tocData` when they differ (ServerDataHandler.AddTable can swap it);
+  (2) `ClientDataController.KeepLocalHealing` (own player only): a limb cut
+  in both copies that is healed here but fresh in the server copy stays
+  healed, and a lower time-to-heal here wins; those limbs are sent again.
+  A cut limb can only become fresh by being uncut first, so this never hides
+  a real change. (3) UpdateDataControllerFromClient loads the instance
+  (GetOrCreate, no apply) instead of throwing. Log tag [TOCSync].
+- HTS 1.2.9 (owner 2026-11-27):
+  * Saline to another player: EHR's "Administer Medication" window listed
+    blood bags only. `isBloodBagFullType` (EHR_MPAdministerMedication) and the
+    server's validateRemoteTreatment now count ExtensiveHealth.SalineBag as
+    treatmentKind "blood_transfusion" (IV kit + patient consent);
+    applyRemoteBloodTransfusion calls applyServerSalineBag for it (no XP,
+    like self-use). Logged [Transfusion].
+  * Our moodles `client/HARMONIEHomeMedic/HM_Moodles.lua` (owner: blood
+    moodle like GTP's, then "any other moodle we should have -- all of
+    them"). MoodleFramework, SOFT (HTS does not require it -- nothing
+    without it). M.DEFS = { name, fn(player) -> level, title, desc, sig };
+    title / description per level via setTitle / setDescription
+    (UI_HomeMedic_Moodle_*): the reading, what this level does, the next
+    level ("Next" = below, "NextUp" = from), the fix. Texts follow the
+    sandbox (blackouts, LethalConditions, regen numbers).
+    - HM_BloodLoss: EHR stages, 1 healthy > b >= mild, 2 >= moderate,
+      3 >= 20 percent, 4 below (BloodImpact stamina ceiling + thirst,
+      BloodVision, EHR blackout / lethal).
+    - HM_Saline: transfusedSaline / currentVolume, 1 >= 20, 2 >= 30,
+      3 >= EHR HEMODILUTION_WARNING (40: fatigue up, stamina <= 30),
+      4 >= HEMODILUTION_THRESHOLD (60: exhausted, health falls / death).
+    - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
+      2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
+    Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.
+    EHR's own moodles stay off (EHR_Moodles ENABLED false, owner 2026-10-02).
+    If an effect changes, change these texts too.
+- Medical item pickers (remote panel, `collectDoctorInventoryItems`) list ONE
+  item per type (carried first) since HTS 1.2.6 (owner: the same bandage
+  listed once per item nearby).
+- Amputation tab time left (HTS 1.2.6, owner: "days shown do not match the
+  game"): TOC adds the arm's VISIBLE dirt + blood to the stored dirtiness
+  every in-game hour, so hoursToHeal(cicTime, dirt, vis) counts it; the tab
+  shows % healed, time left in game and in real time (getMinutesPerDay), and
+  a "dirty: clean it" hint.
 - Pills (0.33.10, `shared/HARMONIEHomeMedic/HM_MedLog.lua`): EHR's own log
   prints only errors by default, so nothing said a pill was taken. Tab 1's
   ACTIVE MEDICATIONS = `EHR_Medication.activeDoses` (shown while in effect:

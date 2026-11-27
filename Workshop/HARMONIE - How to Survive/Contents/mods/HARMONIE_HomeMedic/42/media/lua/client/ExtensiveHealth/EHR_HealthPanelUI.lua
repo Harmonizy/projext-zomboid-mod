@@ -3604,7 +3604,22 @@ function EHR_HealthPanelUI:collectDoctorInventoryItems(predicate)
     if HM_Reach and HM_Reach.containers then
         for _, e in ipairs(HM_Reach.containers(doctor)) do scanContainer(e.c, seen) end
     end
-    return items
+    -- HTS 1.2.6 (owner 2026-11-24: "the bandage / disinfectant choices list
+    -- every single item nearby -- the same kind many times, I have to scroll"):
+    -- one per item TYPE (the first found: carried before boxes)
+    local seenType, unique = {}, {}
+    for _, it in ipairs(items) do
+        local okT, ft = pcall(function() return it:getFullType() end)
+        local key = okT and ft or tostring(it)
+        if not seenType[key] then
+            seenType[key] = true
+            unique[#unique + 1] = it
+        end
+    end
+    if #unique < #items and HMLogOnce then
+        HMLogOnce("medDedupe" .. tostring(math.min(#items, 50)), "Menu", "medical item list: %d items -> %d kinds", #items, #unique)
+    end
+    return unique
 end
 
 function EHR_HealthPanelUI:firstItemOfType(items, itemType)
@@ -4915,7 +4930,10 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
 
     self:setStencilRect(x + 1, top, w - 2, viewH)
     local rowY = top - self.hmPartScroll
+    -- HTS 1.2.7: where each row is, for a right-click on it (stump rows)
+    self.hmPartRows = {}
     for _, status in ipairs(statuses) do
+        self.hmPartRows[#self.hmPartRows + 1] = { y1 = rowY, y2 = rowY + rowH, key = status.key }
         if rowY + rowH >= top and rowY <= top + viewH then
             local color = status.color or c.textDim
             local mid = rowY + math.floor(rowH / 2)
@@ -4934,6 +4952,30 @@ function EHR_HealthPanelUI:drawSelectedBodyPartDetails(x, y, w, h, partName, sta
         local barY = top + (viewH - barH) * (self.hmPartScroll / maxScroll)
         self:drawRect(x + w - 5, barY, 3, barH, 0.85, c.accent.r, c.accent.g, c.accent.b)
     end
+end
+
+-- HTS 1.2.7 (owner 2026-11-24: "clean the stump by right-clicking the row
+-- that says how far the scar has healed"): a right-click on the stump's
+-- healing / dirtiness row of the selected part opens the cleaning menu
+-- (HARMONIE_HomeMedic_TOCBridge.stumpMenu, clean part only).
+EHR_HealthPanelUI.HM_CLEAN_ROWS = { toc_healing = true, toc_dirt = true }
+function EHR_HealthPanelUI:onRightMouseUp(x, y)
+    local d = self.hmPartDetails
+    if d and self.hmPartRows and x >= d.x and x <= d.x + d.w and y >= d.y and y <= d.y + d.h then
+        for _, r in ipairs(self.hmPartRows) do
+            if y >= r.y1 and y < r.y2 and EHR_HealthPanelUI.HM_CLEAN_ROWS[r.key] then
+                local sel = self.bodyPartPanel and self.bodyPartPanel.selectedBp
+                local T = HARMONIE_HomeMedic_TOCBridge
+                if sel and sel.bodyPart and T and T.stumpMenu then
+                    local ok, done = pcall(T.stumpMenu, self, sel.bodyPart, x, y, sel.bodyPartType, true)
+                    if HMLog then HMLog("Stump", "clean menu from the %s row: %s", tostring(r.key), ok and tostring(done) or ("error " .. tostring(done))) end
+                    if ok and done then return true end
+                end
+            end
+        end
+    end
+    if ISPanel and ISPanel.onRightMouseUp then return ISPanel.onRightMouseUp(self, x, y) end
+    return false
 end
 
 function EHR_HealthPanelUI:drawVanillaBodyPanelFrame(x, y, w, h)

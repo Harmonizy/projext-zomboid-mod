@@ -62,13 +62,20 @@ end
 -- .UpdateAmputations, every in-game hour): dirtiness += 0.01 x
 -- WoundDirtynessMultiplier, time -= max(0.1, CicatrizationSpeed - dirtiness).
 -- Assumes no new dirt or blood on that arm, so it is the best case.
-local function hoursToHeal(cicTime, dirt)
+-- HTS 1.2.6 (owner 2026-11-24: "the days shown do not match the game"):
+-- TOC adds the arm's VISIBLE dirt + blood to the stored dirtiness EVERY hour
+-- (dirt = visual + stored + 0.01 x multiplier, max 1), so any dirt or blood
+-- left on that arm drives it to 1 in a few hours -- and at dirtiness 1 with
+-- CicatrizationSpeed 1 the stump heals by only 0.1 an hour. The estimate
+-- now counts that visible dirt (`vis`) the same way.
+local function hoursToHeal(cicTime, dirt, vis)
     local sv = SandboxVars and SandboxVars.TOC or {}
     local speed = tonumber(sv.CicatrizationSpeed) or 1
     local grow = 0.01 * (tonumber(sv.WoundDirtynessMultiplier) or 1)
+    vis = math.max(0, tonumber(vis) or 0)
     local t, d, h = tonumber(cicTime) or 0, math.min(1, tonumber(dirt) or 0), 0
-    while t > 0 and h < 5000 do
-        d = math.min(1, d + grow)
+    while t > 0 and h < 20000 do
+        d = math.min(1, d + vis + grow)
         local dec = speed - d
         if dec <= 0 then dec = 0.1 end
         t = t - dec
@@ -80,6 +87,28 @@ end
 local function gameTime(h)
     if h >= 24 then return L("DaysHours", "%1 d %2 h", math.floor(h / 24), h % 24) end
     return L("Hours", "%1 h", h)
+end
+
+-- the arm's visible dirt + blood (what TOC adds every hour)
+local function visualDirt(patient, limb)
+    local v = 0
+    pcall(function()
+        local bb = BloodBodyPartType[limb]
+        local hv = patient:getHumanVisual()
+        v = (tonumber(hv:getDirt(bb)) or 0) + (tonumber(hv:getBlood(bb)) or 0)
+    end)
+    return v
+end
+
+-- in-game hours as real time on this server (minutes per in-game day / 24)
+local function realTime(h)
+    local perDay = nil
+    pcall(function() perDay = getGameTime():getMinutesPerDay() end)
+    perDay = tonumber(perDay)
+    if not perDay or perDay <= 0 then return nil end
+    local mins = math.floor(h * perDay / 24 + 0.5)
+    if mins >= 60 then return L("RealHM", "%1 h %2 min real time", math.floor(mins / 60), mins % 60) end
+    return L("RealM", "%1 min real time", mins)
 end
 
 local function tocData(patient)
@@ -194,12 +223,19 @@ local function draw(panel)
             else
                 local base = CIC_BASE[st.part] or 1
                 local pct = math.max(0, math.min(100, math.floor((1 - st.cicTime / base) * 100 + 0.5)))
-                local hrs = hoursToHeal(st.cicTime, st.dirt)
-                row(L("Stump", "Stump"), L("Healing", "Healing %1%% (~%2 in game)", pct, gameTime(hrs)), c.yellow)
+                local vis = visualDirt(patient, st.limb)
+                local hrs = hoursToHeal(st.cicTime, st.dirt, vis)
+                row(L("Stump", "Stump"), L("HealingPct", "Healing %1%%", pct), c.yellow)
+                row(L("TimeLeft", "Time left"), L("InGame", "~%1 in game", gameTime(hrs)), c.yellow)
+                local rt = realTime(hrs)
+                if rt then row("", "(" .. rt .. ")", c.textDim) end
+                if st.dirt >= 0.3 or vis > 0.05 then
+                    row("", L("CleanHint", "Dirty: heals slower - clean it (right-click the stump)"), c.orange)
+                end
                 panel.hmAmpHealLog = panel.hmAmpHealLog or {}
                 if panel.hmAmpHealLog[st.limb] ~= hrs then
                     panel.hmAmpHealLog[st.limb] = hrs
-                    log("%s: stump %d%%, TOC time %.1f, dirt %.2f -> about %d in-game hours left", st.limb, pct, st.cicTime, st.dirt, hrs)
+                    log("%s: stump %d%%, TOC time %.1f, dirt %.2f, visible dirt %.2f -> about %d in-game hours left", st.limb, pct, st.cicTime, st.dirt, vis, hrs)
                 end
             end
             row(L("Cauterized", "Cauterized"), st.cauterized and L("Yes", "Yes") or L("No", "No"), st.cauterized and c.green or c.textDim)
