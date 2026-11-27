@@ -1839,6 +1839,12 @@ function TWACraftWindow:pickedBag(recipe)
     return nil
 end
 function TWACraftWindow:openBagChooser(recipe)
+    -- 1.5.5 (owner 2026-11-27: "the bag could not be picked because I had not
+    -- pressed Refresh -- people will think it is a bug"): opening the chooser
+    -- is the player asking to look, so it looks again (a click, not a timer)
+    if TWASources and TWASources.forget then TWASources.forget(self.player) end
+    self.bagCandCache = nil
+    TWACraftUI.lookAgain("bag chooser opened")
     local list = self:bagCandidates(recipe)
     local picked = self:pickedBag(recipe)
     local rows = { { text = getText("IGUI_TWA_BagTier_PickRule", tostring(recipe.bagTier - 1)), info = true } }

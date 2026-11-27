@@ -573,6 +573,11 @@
   as "not copied") and the new bag gets md.TWA_BagFresh. B.apply takes the
   non-TWA_ keys off a tiered bag without TWA_BagFresh ONCE, both sides
   (logged with the key names -- tells which key Tetris uses).
+- TWA 1.5.5 (owner: "the bag could not be picked because I had not
+  pressed Refresh -- people will think it is a bug"): opening the bag
+  chooser (openBagChooser, craft page + guided row) is a click that looks
+  again: TWASources.forget + bagCandCache cleared + TWACraftUI.lookAgain
+  ("bag chooser opened"). The 1.5.3 stale-hotbar-slot check stays.
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
