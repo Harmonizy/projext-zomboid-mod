@@ -1225,6 +1225,18 @@
   no arguments on "...: %1" (42.20.1+ checks placeholders in the call); it
   now passes them (pcall(getText, key, ...)) and strips any %n / {n} left
   over (cleanLine). Any getText of a %n key: give the arguments in the call.
+  HTS 1.2.16 (owner: "EHR flyers stack with business cards"): Inventory
+  Tetris Grand Master (TetrisGMT, Workshop 3808187767, owner's zip, NOT in
+  the repo) sizes literature by name -- "flyer" / "card" / "note" / "paper"
+  ... = loose paper, stackGroup "paper" -- and its MixedStacks lets one
+  stackGroup share a stack (ItemStack.isSameType / canAddItem read the pack
+  live). `client/HARMONIEHomeMedic/HM_TetrisFlyers.lua` replaces every
+  ExtensiveHealth.* entry of require("TetrisGMT/Definitions/
+  BookItemDefinitions") that has a stackGroup with a copy without it (the
+  def is SHARED by all loose paper -- never edit it in place), at
+  OnGameStart and ticks 30 / 600 (GMT rebuilds at OnInitGlobalModData).
+  A flyer now stacks only with the same flyer, 5 high. Only when the
+  activated mods contain "TetrisGMT".
 - TOC XP multipliers (HM 1.0.3, owner choice 2): sandbox
   MultiplierConfig.Side_L / Side_R / ProstFamiliarity are the game's own
   per-skill multipliers, read by vanilla only with GlobalToggle OFF (owner's
