@@ -1004,6 +1004,10 @@
   wrapper (health panel rows) and EHR_MedicalMonitorUI (hmDiagnosed) turn
   them on for a gated illness the Diagnosis tab diagnosed (Knox and rows with
   their own detail text -- delirium, concussion -- unchanged).
+  HTS 1.2.15 (owner 2026-11-28: "high and low body temperature need no
+  diagnosis"): `HM_Diagnosis.OBVIOUS` (hypothermia, heat_stroke; the alias
+  maps heat_exhaustion to heat_stroke) -> isDiagnosed is true from the start,
+  so every "diagnosed" path shows them in full at any Doctor level.
 - Right-click with many players (HTS 1.2.3 / GTP 1.9.2, owner 2026-11-22):
   ONE "Check Nutrition" (ตรวจโภชนาการ, IGUI_HARMONIE_AssessMenu) with the
   names (GTP Hotkeys). HTS 1.2.5 (owner: "the health check does not show as
@@ -1115,6 +1119,13 @@
       N.HOT_ABOVE 39), like it does for vanilla wounds / hunger / thirst:
       any active EHR illness (delirium too) used to make it hold HP at the
       floor whatever drained it.
+      HTS 1.2.15 (owner 2026-11-28): blood loss shows in the Body Stats
+      tab too (the watch-locked tab 3 -- the owner calls it "the watch
+      tab"): HM_Stats.bloodLossRow(f) adds a "signs" row (key
+      UI_HomeMedic_Moodle_Blood_Title<lv>, value "NN%", row.lk = the
+      moodle's effects key, shown in the row's tooltip). Same stages as the
+      moodle (HM_Stats.bloodLossLevel = EHR.Blood.GetThresholds + 20 %
+      lethal line); keep the two in step.
     - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
       2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
     Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.
@@ -1209,6 +1220,11 @@
   The refusal / learned / already-known lines use `EHR.Locale.SayAction`
   (the 1-line-a-minute limit dropped them: the flyer looked dead). Steps
   logged with HMLog "[Flyer]" (EHR.Log prints only errors).
+  HTS 1.2.15 (owner 2026-11-28: "the line over the head after reading ends
+  in odd symbols"): EHR_DiseaseFlyers' flyerText called getText(key) with
+  no arguments on "...: %1" (42.20.1+ checks placeholders in the call); it
+  now passes them (pcall(getText, key, ...)) and strips any %n / {n} left
+  over (cleanLine). Any getText of a %n key: give the arguments in the call.
 - TOC XP multipliers (HM 1.0.3, owner choice 2): sandbox
   MultiplierConfig.Side_L / Side_R / ProstFamiliarity are the game's own
   per-skill multipliers, read by vanilla only with GlobalToggle OFF (owner's

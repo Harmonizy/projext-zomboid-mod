@@ -551,10 +551,16 @@ end
 -- diagnosed again -- a diagnosis only counts for the bout it was made in
 -- (made before that bout began = an old one). The server also drops
 -- diagnoses of illnesses that are gone (D.prune).
+-- HTS 1.2.15 (owner 2026-11-28: "high and low body temperature need no
+-- diagnosis -- show them at once"): these count as diagnosed from the start,
+-- so every "diagnosed" path shows their name, stage, severity, progress and
+-- treatment at any Doctor level (they stay in the Diagnosis tab's lists).
+D.OBVIOUS = { hypothermia = true, heat_stroke = true }
 function D.isDiagnosed(patient, id, exam)
     if not D.enabled() then return true end
     id = D.normalize(id)
     if not D.DISEASES[id] then return true end
+    if D.OBVIOUS[id] then return true end
     local data
     if type(exam) == "table" then data = exam[D.KEY] else data = D.store(patient) end
     local at = type(data) == "table" and data[id] or nil

@@ -370,6 +370,34 @@ local function moodleRows(player, out)
     end
 end
 
+-- ------------------------------------------------------------- blood loss
+St.LETHAL_BLOOD = 0.20
+function St.bloodLossLevel(f)
+    if not f then return 0 end
+    local t = {}
+    if EHR and EHR.Blood and EHR.Blood.GetThresholds then
+        local ok, r = pcall(EHR.Blood.GetThresholds)
+        if ok and type(r) == "table" then t = r end
+    end
+    local healthy, mild, moderate = tonumber(t.healthy) or 0.85, tonumber(t.mild) or 0.80, tonumber(t.moderate) or 0.70
+    if f >= healthy then return 0 end
+    if f >= mild then return 1 end
+    if f >= moderate then return 2 end
+    if f >= St.LETHAL_BLOOD then return 3 end
+    return 4
+end
+function St.bloodLossRow(f)
+    local lv = St.bloodLossLevel(f)
+    if lv == 0 then return nil end
+    local lk = "UI_HomeMedic_Moodle_Blood_L" .. lv
+    if lv == 4 then
+        local lethal = EHR and EHR.Lethal and EHR.Lethal.allowed and EHR.Lethal.allowed() == true
+        lk = lethal and "UI_HomeMedic_Moodle_Blood_L4Lethal" or "UI_HomeMedic_Moodle_Blood_L4Safe"
+    end
+    return { g = "signs", k = "UI_HomeMedic_Moodle_Blood_Title" .. lv, t = "Blood loss", bad = true,
+        blood = lv, lk = lk, v = f, s = tostring(math.floor(f * 100 + 0.5)) .. "%" }
+end
+
 -- ------------------------------------------------------------- signs
 -- the illness signs that can be read off the body right now (HM_Diagnosis.SIGNS)
 -- 0.33.6 (owner, 2026-11-11: "อาการขึ้นไม่ครบในแท็บสถานะ ... มันควรขึ้นครบ"):
@@ -382,7 +410,13 @@ local function signRows(player, out)
     if not (D and D.readSigns) then return end
     local any = false
     local measured = {}
-    for _, r in ipairs(D.readSigns(St.vitals(player))) do measured[r.tag] = r.reading or "" end
+    local vit = St.vitals(player)
+    for _, r in ipairs(D.readSigns(vit)) do measured[r.tag] = r.reading or "" end
+    -- HTS 1.2.15 (owner 2026-11-28: "show blood loss in the watch tab too"):
+    -- the same stages as the HM_BloodLoss moodle (EHR sandbox thresholds,
+    -- 20 % = lethal line); label/effects by key so the viewer's language shows
+    local bl = St.bloodLossRow(vit.blood)
+    if bl then out[#out + 1] = bl; any = true end
     local E = HM_SignEffects
     local fromIll = {}
     if E and E.currentSigns then
