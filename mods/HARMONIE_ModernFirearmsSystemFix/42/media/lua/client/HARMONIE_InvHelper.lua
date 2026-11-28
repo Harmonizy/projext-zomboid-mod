@@ -18,7 +18,13 @@
               of it, while it has room). Never moved: favourites (the lock),
               worn / equipped / hotbar items, bags. Your bags' contents only
               when ticked.
-    (grid sort: needs Inventory Tetris' own code -- not here yet)
+      sort    (Inventory Tetris only) packs a container's grid: stacks of the
+              same type merged (Tetris' own gatherSameItems), then laid out
+              row by row, grouped by Tetris category, then name, big first.
+              A stack holding a favourite stays where it is. If the packed
+              layout does not fit, nothing changes. Unsearched boxes (Tetris
+              search) and the floor are left alone. Uses Tetris' own grid
+              objects and its sync (_sendModData), like a drag in its UI.
 
     Lists follow the hub's Refresh rule: a scan is kept until the Refresh
     button, the window opening or one of OUR moves (afterActions) -- scope
@@ -35,7 +41,7 @@ local IH = HARMONIE_InvHelper
 if IH.loaded then return end
 IH.loaded = true
 IH.SCOPE = "INV"
-IH.TABS = { "search", "stack" }
+IH.TABS = { "search", "stack", "sort" }
 IH.MAX_ROWS = 400
 
 -- ------------------------------------------------------------------ helpers
@@ -278,6 +284,192 @@ function IH.runStack(player, plan)
     return n
 end
 
+-- ------------------------------------------------------------------ grid sort
+-- Inventory Tetris (Workshop 3775513231, id INVENTORY_TETRIS; source read
+-- from the owner's zip, not in the repo): a container's grids live in
+-- ItemContainerGrid (GetOrCreate / FindInstance); each ItemGrid keeps
+-- persistentData.stacks = { x, y, isRotated, itemIDs, count, itemType,
+-- category } in modData and syncs with _sendModData (TetrisClient queue).
+IH.CAT_ORDER = { "FOOD", "HEALING", "AMMO", "MAGAZINE", "RANGED_WEAPON", "MELEE_WEAPON", "ATTACHMENT",
+    "CLOTHING", "CONTAINER", "BOOK", "ENTERTAINMENT", "SEED", "KEY", "MISC", "MOVEABLE", "CORPSEANIMAL" }
+local CAT_RANK = {}
+for i, c in ipairs(IH.CAT_ORDER) do CAT_RANK[c] = i end
+
+local tetrisMods
+function IH.tetris()
+    if tetrisMods ~= nil then return tetrisMods or nil end
+    tetrisMods = false
+    local mods = getActivatedMods and getActivatedMods()
+    if not (mods and mods:contains("INVENTORY_TETRIS")) then return nil end
+    local ok1, ICG = pcall(require, "InventoryTetris/Model/ItemContainerGrid")
+    local ok2, IS = pcall(require, "InventoryTetris/Model/ItemStack")
+    local ok3, TID = pcall(require, "InventoryTetris/Data/TetrisItemData")
+    local ok4, TIC = pcall(require, "InventoryTetris/Data/TetrisItemCategory")
+    if ok1 and ok2 and ok3 and type(ICG) == "table" and type(IS) == "table" and type(TID) == "table"
+        and ICG.FindInstance and IS.getFrontItem and TID.getItemSize then
+        tetrisMods = { ICG = ICG, IS = IS, TID = TID, TIC = ok4 and type(TIC) == "table" and TIC or nil }
+        log("Inventory Tetris found: grid sort on")
+    else
+        log("Inventory Tetris is on but its modules did not load -- grid sort off")
+    end
+    return tetrisMods or nil
+end
+
+local function containerGridOf(player, cont)
+    local t = IH.tetris()
+    if not t then return nil end
+    local pn = tonumber(call(player, "getPlayerNum")) or 0
+    local ok, cg = pcall(t.ICG.FindInstance, cont, pn)
+    if ok and cg then return cg end
+    if t.ICG.CreateTemp then
+        ok, cg = pcall(t.ICG.CreateTemp, cont, pn)
+        if ok and cg then return cg end
+    end
+    return nil
+end
+
+local function stackHasFav(t, grid, stack)
+    for id, _ in pairs(stack.itemIDs or {}) do
+        local it = call(grid.inventory, "getItemWithID", id)
+        if it and call(it, "isFavorite") == true then return true end
+    end
+    return false
+end
+
+-- pack one ItemGrid; returns moved stacks or nil + why
+local function sortGrid(t, grid, playerNum)
+    if grid.isFloor or grid.isProxInv then return 0 end
+    if grid.isUnsearched and grid:isUnsearched(playerNum) then return nil, "unsearched" end
+    local data = grid.persistentData
+    if not (data and type(data.stacks) == "table") then return 0 end
+    -- 1. merge same types -- only in a grid without favourites (Tetris'
+    -- merge may pull from any stack it counts as the same, Grand Master's
+    -- mixed groups too, and a favourite must not move)
+    local anyFav = false
+    for _, st in ipairs(data.stacks) do if stackHasFav(t, grid, st) then anyFav = true end end
+    if grid.gatherSameItems and not anyFav then
+        local seen = {}
+        for _, st in ipairs({ unpack(data.stacks) }) do
+            local ty = st.itemType or "?"
+            if not seen[ty] and (st.count or 0) > 0 then
+                seen[ty] = true
+                pcall(grid.gatherSameItems, grid, st)
+            end
+        end
+    end
+    -- 2. lay out
+    local fixed, movable, original = {}, {}, {}
+    for _, st in ipairs(data.stacks) do
+        original[#original + 1] = { st = st, x = st.x, y = st.y, r = st.isRotated }
+        local front = t.IS.getFrontItem(st, grid.inventory)
+        if not front or stackHasFav(t, grid, st) then
+            fixed[#fixed + 1] = st
+        else
+            local w, h = t.TID.getItemSize(front, false)
+            local cat = st.category or (t.TIC and t.TIC.getCategory(front)) or "MISC"
+            movable[#movable + 1] = { st = st, w = w or 1, h = h or 1, rank = CAT_RANK[cat] or 99,
+                name = tostring(call(front, "getDisplayName") or st.itemType or "") }
+        end
+    end
+    table.sort(movable, function(a, b)
+        if a.rank ~= b.rank then return a.rank < b.rank end
+        if a.name ~= b.name then return a.name < b.name end
+        return a.w * a.h > b.w * b.h
+    end)
+    -- occupancy from the fixed stacks
+    local W, H = grid.width or 0, grid.height or 0
+    local used = {}
+    local function mark(x, y, w, h) for xx = x, x + w - 1 do for yy = y, y + h - 1 do used[xx .. ":" .. yy] = true end end end
+    local function free(x, y, w, h)
+        if x < 0 or y < 0 or x + w > W or y + h > H then return false end
+        for xx = x, x + w - 1 do for yy = y, y + h - 1 do if used[xx .. ":" .. yy] then return false end end end
+        return true
+    end
+    for _, st in ipairs(fixed) do
+        local front = t.IS.getFrontItem(st, grid.inventory)
+        if front then
+            local w, h = t.TID.getItemSize(front, st.isRotated)
+            mark(st.x, st.y, w or 1, h or 1)
+        end
+    end
+    local placed = {}
+    for _, m in ipairs(movable) do
+        local spot = nil
+        for y = 0, H - 1 do
+            for x = 0, W - 1 do
+                if free(x, y, m.w, m.h) then spot = { x, y, false }; break end
+                if m.w ~= m.h and free(x, y, m.h, m.w) then spot = { x, y, true }; break end
+            end
+            if spot then break end
+        end
+        if not spot then return nil, "nofit" end
+        local w, h = m.w, m.h
+        if spot[3] then w, h = m.h, m.w end
+        mark(spot[1], spot[2], w, h)
+        placed[#placed + 1] = { st = m.st, x = spot[1], y = spot[2], r = spot[3] }
+    end
+    -- 3. write it (nothing was changed before this point except the merge)
+    local moved = 0
+    for _, p in ipairs(placed) do
+        if p.st.x ~= p.x or p.st.y ~= p.y or (p.st.isRotated and true or false) ~= p.r then moved = moved + 1 end
+        p.st.x, p.st.y, p.st.isRotated = p.x, p.y, p.r
+    end
+    local ok, err = pcall(function() grid:_rebuildStackMap() end)
+    if not ok then
+        for _, o in ipairs(original) do o.st.x, o.st.y, o.st.isRotated = o.x, o.y, o.r end
+        pcall(function() grid:_rebuildStackMap() end)
+        log("sort: rebuilding the grid FAILED (%s) -- put back", tostring(err))
+        return nil, "error"
+    end
+    pcall(function() grid:_sendModData() end)
+    return moved
+end
+
+-- sort every grid of one container -> moved, why
+function IH.sortContainer(player, cont, label)
+    local t = IH.tetris()
+    if not t then return nil, "notetris" end
+    local cg = containerGridOf(player, cont)
+    if not (cg and type(cg.grids) == "table") then return nil, "nogrid" end
+    local pn = tonumber(call(player, "getPlayerNum")) or 0
+    local total, why = 0, nil
+    for _, grid in ipairs(cg.grids) do
+        local ok, n, w = pcall(sortGrid, t, grid, pn)
+        if not ok then why = "error"; log("sort of %s FAILED: %s", tostring(label), tostring(n))
+        elseif n then total = total + n
+        else why = why or w end
+    end
+    log("%s: sorted %s -- %d stack(s) moved%s", nameOf(player), tostring(label), total, why and (", " .. why) or "")
+    if refresh() and refresh().bump then refresh().bump(IH.SCOPE, "sort") end
+    return total, why
+end
+
+-- containers that can be sorted: main inventory, carried bags, boxes
+function IH.sortTargets(player)
+    local out = {}
+    local inv = call(player, "getInventory")
+    if not inv then return out end
+    local function itemCount(c) local l = call(c, "getItems"); return l and l:size() or 0 end
+    out[#out + 1] = { key = "inv", cont = inv, name = T("IGUI_HUB_Inv_WhereMe"), carried = true, n = itemCount(inv), items = {} }
+    local items = call(inv, "getItems")
+    for i = 0, (items and items:size() or 0) - 1 do
+        local it = items:get(i)
+        if instanceof and instanceof(it, "InventoryContainer") then
+            local c = call(it, "getInventory")
+            if c then out[#out + 1] = { key = "bag" .. tostring(call(it, "getID")), cont = c, name = tostring(call(it, "getDisplayName") or "?"),
+                tex = call(it, "getTex"), carried = true, n = itemCount(c), items = {} } end
+        end
+    end
+    local Reach = HARMONIE_Reach
+    for _, e in ipairs(Reach and Reach.containers and Reach.containers(player) or {}) do
+        if e.where == "box" then
+            out[#out + 1] = { key = "box" .. tostring(e.c), cont = e.c, name = containerLabel(e.c, "box"), carried = false,
+                n = itemCount(e.c), items = {} }
+        end
+    end
+    return out
+end
+
 -- ------------------------------------------------------------------ window
 HARMONIE_InvHelperUI = ISPanel:derive("HARMONIE_InvHelperUI")
 local W = HARMONIE_InvHelperUI
@@ -395,7 +587,9 @@ function W:prerender()
     self:btn("refresh", rl, rx, top, rw, fontH() + 8, true, mx, my, R and R.tip and R.tip(IH.SCOPE) or nil)
     if R and R.glow then R.glow(self, rx, top, rw, fontH() + 8, IH.SCOPE) end
     self:groups()
-    if self.tab == "search" then self:drawSearch(top, rx, mx, my) else self:drawStack(top, rx, mx, my) end
+    if self.tab == "search" then self:drawSearch(top, rx, mx, my)
+    elseif self.tab == "sort" then self:drawSort(top, rx, mx, my)
+    else self:drawStack(top, rx, mx, my) end
 end
 
 function W:drawSearch(top, rx, mx, my)
@@ -529,6 +723,45 @@ function W:drawStack(top, rx, mx, my)
     self:drawRows(rows, y, mx, my, nil)
 end
 
+function W:drawSort(top, rx, mx, my)
+    local y = top + 4
+    if not IH.tetris() then
+        self:drawText(T("IGUI_HUB_Inv_SortNoTetris"), PAD, y, C.dim[1], C.dim[2], C.dim[3], 1, UIFont.Small)
+        return
+    end
+    for line in tostring(T("IGUI_HUB_Inv_SortIntro")):gmatch("[^\n]+") do
+        self:drawText(fit(line, rx - PAD - 10), PAD, y, C.dim[1], C.dim[2], C.dim[3], 1, UIFont.Small)
+        y = y + fontH() + 2
+    end
+    y = math.max(y, top + fontH() + 14) + 4
+    local allL = T("IGUI_HUB_Inv_SortAllMine")
+    local aw = textW(allL) + 30
+    self:btn("sortmine", allL, PAD, y, aw, fontH() + 10, true, mx, my)
+    if self.sortMsg and (getTimestampMs and getTimestampMs() or 0) < (self.sortMsgUntil or 0) then
+        self:drawText(fit(self.sortMsg, self.width - aw - 3 * PAD), PAD + aw + 10, y + 5, C.gold[1], C.gold[2], C.gold[3], 1, UIFont.Small)
+    end
+    y = y + fontH() + 18
+    local key = tostring(self.dataGen)
+    if not self.targets or self.targetsKey ~= key then
+        self.targets = IH.sortTargets(self.player)
+        self.targetsKey = key
+    end
+    for _, g in ipairs(self.targets) do g.label = g.carried and T("IGUI_HUB_Inv_WhereMe") or T("IGUI_HUB_Inv_Filter_near") end
+    self:drawRows(self.targets, y, mx, my, function(g, ry, rh)
+        local l = T("IGUI_HUB_Inv_SortOne")
+        local w = textW(l) + 18
+        local bx = self.width - PAD - 10 - w
+        self:btn("sort:" .. g.key, l, bx, ry + 3, w, rh - 6, true, mx, my)
+        return bx - 6
+    end)
+end
+
+function W:sortMessage(name, n, why)
+    if n and not why then self.sortMsg = T("IGUI_HUB_Inv_SortDone", name, tostring(n))
+    else self.sortMsg = T("IGUI_HUB_Inv_Sort_" .. tostring(why or "error"), name) end
+    self.sortMsgUntil = (getTimestampMs and getTimestampMs() or 0) + 6000
+end
+
 function W:render()
     ISPanel.render(self)
     if self.tipText and self.tipText ~= "" then
@@ -570,6 +803,24 @@ function W:click(id)
     if f then self.filter = f; self.scroll = 0; return end
     if id == "bags" then self.withBags = not self.withBags; self.plan = nil; return end
     if id == "stackgo" then IH.runStack(p, self.plan); self.plan = nil; return end
+    if id == "sortmine" then
+        local total, bad = 0, nil
+        for _, g in ipairs(self.targets or {}) do
+            if g.carried then
+                local n, why = IH.sortContainer(p, g.cont, g.name)
+                total = total + (n or 0); bad = bad or why
+            end
+        end
+        self:sortMessage(T("IGUI_HUB_Inv_WhereMe"), total, bad)
+        return
+    end
+    local sk = id:match("^sort:(.+)$")
+    if sk then
+        for _, g in ipairs(self.targets or {}) do
+            if g.key == sk then local n, why = IH.sortContainer(p, g.cont, g.name); self:sortMessage(g.name, n, why) end
+        end
+        return
+    end
     local k = id:match("^take:(.+)$")
     if k then local g = self.rowsByKey and self.rowsByKey[k]; if g then IH.take(p, g) end; return end
     k = id:match("^fav:(.+)$")

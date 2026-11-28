@@ -279,10 +279,32 @@
   only when ticked) goes to the box holding the most of its type while
   getEffectiveCapacity - getCapacityWeight leaves room; never moved:
   favourite, equipped / worn / attached slot, bags (counts shown as "kept").
-  Scope "INV" (Refresh rule: window open, Refresh, afterActions). Grid sort
-  NOT done: needs Inventory Tetris' own code (owner's zip 3775513231 was lost
-  with the container -- ask again). GTP 1.10.0, TWA 1.6.0, HTS 1.3.0, SVU
-  1.2.0, MIL 1.2.0, LWS 1.2.0.
+  Scope "INV" (Refresh rule: window open, Refresh, afterActions). GTP
+  1.10.0, TWA 1.6.0, HTS 1.3.0, SVU 1.2.0, MIL 1.2.0, LWS 1.2.0.
+  Grid sort (tab "sort", GTP 1.10.1 / TWA 1.6.1 / HTS 1.3.1 / SVU 1.2.1 /
+  MIL 1.2.1 / LWS 1.2.1), only with Inventory Tetris (mod id
+  INVENTORY_TETRIS; IH.tetris() requires InventoryTetris/Model/
+  ItemContainerGrid + ItemStack + Data/TetrisItemData + TetrisItemCategory).
+  Read from Tetris' source (owner's zip, NOT in the repo): Tetris has NO
+  sort of its own; ItemContainerGrid.FindInstance(cont, playerNum) (else
+  CreateTemp) -> .grids; an ItemGrid keeps persistentData.stacks (modData:
+  x, y, isRotated, itemIDs, count, itemType, category; persistentData also
+  holds searchLog -- change only .stacks), width / height include
+  BonusGridSize, _rebuildStackMap() rebuilds the cell map, _sendModData()
+  queues Tetris' own sync (TetrisClient.queueModDataSync; skipped while
+  TetrisClient.suppressSync). IH sortGrid: skip floor / proximity /
+  isUnsearched(playerNum) grids; merge same types with grid:gatherSameItems
+  ONLY when no stack holds a favourite (its merge may pull from any stack it
+  counts as the same, GMT mixed groups too); stacks with a favourite stay
+  put; the rest packed first-fit row by row (rotated when that fits), order
+  IH.CAT_ORDER (food, healing, ammo, magazine, ranged, melee, attachment,
+  clothing, container, book, entertainment, seed, key, misc, moveable,
+  corpse animal) > name > bigger first. The whole layout is planned first;
+  nothing is written unless every stack fits ("nofit" -> left as it was).
+  Buttons: "sort everything on me" (main inventory + carried bags) and one
+  per container (carried bags, the room's boxes). Messages
+  IGUI_HUB_Inv_SortDone / IGUI_HUB_Inv_Sort_<why>. Mock tests: scratchpad
+  test_sort.py / test_inv.py.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 

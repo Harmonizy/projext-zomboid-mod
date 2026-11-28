@@ -152,5 +152,16 @@
     "IGUI_HUB_Inv_StackBags": "รวมของในกระเป๋าที่ถืออยู่ด้วย",
     "IGUI_HUB_Inv_StackGo": "เก็บ %1 ชิ้นเข้ากล่อง",
     "IGUI_HUB_Inv_StackNone": "ไม่มีของให้เก็บ",
-    "IGUI_HUB_Inv_StackKept": "ไม่ย้าย: ของโปรด %1, ใส่ / hotbar %2, กระเป๋า %3, กล่องเต็ม %4"
+    "IGUI_HUB_Inv_StackKept": "ไม่ย้าย: ของโปรด %1, ใส่ / hotbar %2, กระเป๋า %3, กล่องเต็ม %4",
+    "IGUI_HUB_Inv_Tab_sort": "จัดเรียง",
+    "IGUI_HUB_Inv_SortIntro": "จัดกริดของ Inventory Tetris: รวมของชนิดเดียวกัน แล้ววางเรียงตามหมวด (อาหาร ยา กระสุน อาวุธ ...) ให้ชิดกันไม่มีช่องว่าง\nกองที่มีของโปรดจะอยู่ที่เดิม",
+    "IGUI_HUB_Inv_SortAllMine": "จัดเรียงทุกอย่างในตัว",
+    "IGUI_HUB_Inv_SortOne": "จัดเรียง",
+    "IGUI_HUB_Inv_SortNoTetris": "การจัดเรียงใช้กับกริดของ Inventory Tetris แต่ตอนนี้ไม่ได้เปิด Inventory Tetris",
+    "IGUI_HUB_Inv_SortDone": "%1: จัดเรียงแล้ว ย้าย %2 กอง",
+    "IGUI_HUB_Inv_Sort_nofit": "%1: วางให้ชิดกว่านี้ไม่ได้ ของยังอยู่ที่เดิม",
+    "IGUI_HUB_Inv_Sort_unsearched": "%1: ค้นกล่องนี้ก่อน (ระบบค้นของ Inventory Tetris)",
+    "IGUI_HUB_Inv_Sort_nogrid": "%1: เปิดดูในหน้าต่างของก่อน",
+    "IGUI_HUB_Inv_Sort_notetris": "%1: ไม่ได้เปิด Inventory Tetris",
+    "IGUI_HUB_Inv_Sort_error": "%1: จัดเรียงไม่สำเร็จ (ดู console.txt)"
 }

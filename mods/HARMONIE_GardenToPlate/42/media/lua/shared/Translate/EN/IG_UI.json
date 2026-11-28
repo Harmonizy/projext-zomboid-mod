@@ -832,5 +832,16 @@
     "IGUI_HUB_Inv_StackBags": "Also what is inside my bags",
     "IGUI_HUB_Inv_StackGo": "Put away %1 item(s)",
     "IGUI_HUB_Inv_StackNone": "Nothing to put away",
-    "IGUI_HUB_Inv_StackKept": "Kept: favourite %1, worn / hotbar %2, bags %3, no room %4"
+    "IGUI_HUB_Inv_StackKept": "Kept: favourite %1, worn / hotbar %2, bags %3, no room %4",
+    "IGUI_HUB_Inv_Tab_sort": "Sort",
+    "IGUI_HUB_Inv_SortIntro": "Packs a grid (Inventory Tetris): same items merged, then laid out by kind (food, medicine, ammo, weapons...), no gaps.\nA stack with a favourite stays where it is.",
+    "IGUI_HUB_Inv_SortAllMine": "Sort everything on me",
+    "IGUI_HUB_Inv_SortOne": "Sort",
+    "IGUI_HUB_Inv_SortNoTetris": "Sorting works on Inventory Tetris grids -- Inventory Tetris is not on.",
+    "IGUI_HUB_Inv_SortDone": "%1: sorted, %2 stack(s) moved",
+    "IGUI_HUB_Inv_Sort_nofit": "%1: could not pack it tighter -- left as it was",
+    "IGUI_HUB_Inv_Sort_unsearched": "%1: search this box first (Inventory Tetris search)",
+    "IGUI_HUB_Inv_Sort_nogrid": "%1: open it in the inventory window first",
+    "IGUI_HUB_Inv_Sort_notetris": "%1: Inventory Tetris is not on",
+    "IGUI_HUB_Inv_Sort_error": "%1: could not sort (see console.txt)"
 }
