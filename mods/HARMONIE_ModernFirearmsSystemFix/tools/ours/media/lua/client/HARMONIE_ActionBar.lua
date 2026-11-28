@@ -38,6 +38,7 @@ function AB.anyOpen()
     if EHR and EHR.UI and vis(EHR.UI.HealthPanelInstance) then return true end
     if HSVU and vis(HSVU.window) then return true end
     if HMLWorkbench and vis(HMLWorkbench.instance) then return true end
+    if HARMONIE_InvHelper and vis(HARMONIE_InvHelper.window) then return true end
     if LWSWindow and LWSWindow.isOpen then
         local ok, o = pcall(LWSWindow.isOpen)
         if ok and o then return true end

@@ -603,14 +603,20 @@ function S.getActive(character)
 end
 
 local BOOKMARK_KEYS = { TWA_RecipeId = true, TWA_DoneProcedures = true, TWA_ProcQuality = true,
-    TWA_Incomplete = true, TWA_OrigBase = true, TWA_OrigBase2 = true }
+    TWA_Incomplete = true, TWA_OrigBase = true, TWA_OrigBase2 = true,
+    -- 1.5.7: data other mods keep about THIS item instance (Inventory Tetris'
+    -- grid and lock) -- never carried over to the item given back / made
+    gridContainers = true, tetrisLockTime = true, TetrisUUID = true }
 
 local function copyPlain(v, depth)
     if type(v) ~= "table" then
         local t = type(v)
         return (t == "string" or t == "number" or t == "boolean") and v or nil
     end
-    if depth > 4 then return nil end
+    -- 1.5.7: was 4 -- Inventory Tetris keeps md.gridContainers[type].stacks[i]
+    -- .itemIDs, 5 deep; the copy dropped itemIDs and Tetris then threw
+    -- "Expected a table" (_validateStackList) whenever the bag was shown
+    if depth > 12 then return nil end
     local out = {}
     for k, x in pairs(v) do out[k] = copyPlain(x, depth + 1) end
     return out

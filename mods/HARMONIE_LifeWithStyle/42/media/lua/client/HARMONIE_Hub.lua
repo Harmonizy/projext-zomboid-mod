@@ -220,6 +220,12 @@ Hub.CARDS = {
       name = "IGUI_HUB_LWS_Name", desc = "IGUI_HUB_LWS_Desc",
       present = function() return LWSWindow ~= nil and LWSWindow.open ~= nil end,
       open = function(p) LWSWindow.open(p, "dress") end },
+    -- 2026-11-28: the hub's own Inventory Helper (search, quick stack,
+    -- favourite lock) -- in every HARMONIE mod, so always present
+    { id = "inv", want = "IGUI_HUB_Inv_Want", accent = { 0.36, 0.86, 0.74 }, -- teal
+      name = "IGUI_HUB_Inv_Name", desc = "IGUI_HUB_Inv_Desc",
+      present = function() return HARMONIE_InvHelper ~= nil and HARMONIE_InvHelper.open ~= nil end,
+      open = function(p) HARMONIE_InvHelper.open(p, "search") end },
 }
 
 -- ------------------------------------------------------------------ 4. open a tab
@@ -257,6 +263,13 @@ Hub.TABS = {
     svu = function() return tabList(HSVU and HSVU.TABS or { "vehicle", "upgrades", "tiers", "guide" }, "IGUI_HSVU_Tab_", "media/textures/HSVU_UI/") end,
     mfs = function() return fromTabs(HMLWorkbench and HMLWorkbench.TABS, "media/textures/MIL_UI/") end,
     lws = function() return tabList({ "dress", "collection", "gacha", "trade", "guide" }, "IGUI_LWS_Tab_", "media/textures/HARMONIE_LWS/") end,
+    inv = function()
+        local out = {}
+        for _, id in ipairs(HARMONIE_InvHelper and HARMONIE_InvHelper.TABS or { "search", "stack" }) do
+            out[#out + 1] = { id = id, key = "IGUI_HUB_Inv_Tab_" .. id, icon = "media/ui/HARMONIE_inv_tab_" .. id .. ".png" }
+        end
+        return out
+    end,
 }
 Hub.OPEN_TAB = {
     gtp = function(p, id) GTPGuide.open(p, nil, id) end,
@@ -281,6 +294,7 @@ Hub.OPEN_TAB = {
         if w and w.setTab then w:setTab(id) end
     end,
     lws = function(p, id) LWSWindow.open(p, id) end,
+    inv = function(p, id) HARMONIE_InvHelper.open(p, id) end,
 }
 
 local texCache = {}

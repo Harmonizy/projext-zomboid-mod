@@ -207,12 +207,26 @@ function EHR.DiseaseFlyers.HasKnoxHeraldKnowledge(player)
         or modData.EHR_KnoxKnowledgeSource == EHR.DiseaseFlyers.KNOX_UNLOCK_SOURCE
 end
 
+-- HTS 1.2.15 (owner 2026-11-28: "after reading, the line over the head ends
+-- in odd symbols"): a key with %1 must get its arguments IN the getText call
+-- (42.20.1+ checks placeholders at once; without them the line came back
+-- broken at the end, where the disease name goes). Clean the result too.
+local function cleanLine(t)
+    t = tostring(t or "")
+    t = t:gsub("%%%d+%$?%a?", ""):gsub("{%d+}", ""):gsub("%s+$", "")
+    return t
+end
 local function flyerText(key, fallback, ...)
     local text = nil
     if getText then
-        text = getText(key)
+        local ok, r = pcall(getText, key, ...)
+        if ok and type(r) == "string" and r ~= key and r ~= "" then
+            -- what getText filled is final; strip any placeholder left over
+            if select("#", ...) > 0 and not r:find("%%%d") and not r:find("{%d}") then return cleanLine(r) end
+            text = r
+        end
     end
-    if not text or text == key then
+    if not text then
         text = fallback
     end
 
@@ -226,7 +240,7 @@ local function flyerText(key, fallback, ...)
         end
     end
 
-    return text
+    return cleanLine(text)
 end
 
 function EHR.DiseaseFlyers.GetKnownDiseases(player)

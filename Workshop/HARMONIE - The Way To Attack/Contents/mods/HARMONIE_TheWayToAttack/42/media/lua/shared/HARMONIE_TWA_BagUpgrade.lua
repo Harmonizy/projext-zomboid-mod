@@ -411,6 +411,11 @@ function B.apply(item)
     end
     local v = B.compute(item)
     if not v then return 0 end
+    -- 1.5.8: an Inventory Tetris grid for the raised capacity (client only)
+    if TWATetris and TWATetris.ensureBagGrid and not (isServer and isServer()) then
+        local base = B.base(item)
+        if base then pcall(TWATetris.ensureBagGrid, item, base.cap, v.cap) end
+    end
     local n = 0
     if item.setCapacity and not near(call(item, "getCapacity"), v.cap) then call(item, "setCapacity", math.floor(v.cap)); n = n + 1 end
     if item.setWeightReduction and not near(call(item, "getWeightReduction"), v.wr) then call(item, "setWeightReduction", math.floor(v.wr)); n = n + 1 end
@@ -424,12 +429,48 @@ function B.apply(item)
     return n
 end
 
+-- 1.5.7 (owner's console 2026-11-27, Inventory Tetris "Expected a table"
+-- in ItemGrid:_validateStackList): bags made / given back before 1.5.4-1.5.7
+-- carry an Inventory Tetris grid whose stacks lost their itemIDs table (our
+-- snapshot copy stopped 4 tables deep). Such grid data is unusable -- Tetris
+-- throws on it every time the bag is shown -- so it is removed (Tetris makes
+-- a fresh grid). Only malformed data is touched; both sides, logged.
+function B.repairTetrisGrid(item)
+    local md = item and item.hasModData and item:hasModData() and item:getModData() or nil
+    local gc = md and md.gridContainers
+    if type(gc) ~= "table" then return false end
+    local bad = false
+    for k, grid in pairs(gc) do
+        if type(grid) == "table" and k ~= "lastServerTime" and k ~= "TetrisUUID" then
+            local stacks = grid.stacks
+            if stacks ~= nil and type(stacks) ~= "table" then bad = true end
+            if type(stacks) == "table" then
+                for _, st in pairs(stacks) do
+                    if type(st) ~= "table" or type(st.itemIDs) ~= "table" then bad = true; break end
+                end
+            end
+        end
+        if bad then break end
+    end
+    if not bad then return false end
+    md.gridContainers = nil
+    -- the server keeps its own copy (and would send the broken grid back as
+    -- a Tetris "correction"): ask it to clean it too
+    if isClient and isClient() and sendClientCommand then
+        pcall(sendClientCommand, MODULE, "tetrisFix", { id = call(item, "getID") })
+    end
+    log("%s (id %s): Inventory Tetris grid data was broken (a stack without item ids) -- removed, Tetris rebuilds it",
+        TWALogType and TWALogType(item) or "?", tostring(call(item, "getID")))
+    return true
+end
+
 local function walk(inv, depth)
     if not inv or depth > 4 then return 0 end
     local items, n = call(inv, "getItems"), 0
     for i = 0, (items and items:size() or 0) - 1 do
         local it = items:get(i)
         if it and instanceof(it, "InventoryContainer") then
+            pcall(B.repairTetrisGrid, it)
             n = n + B.apply(it)
             n = n + walk(call(it, "getInventory"), depth + 1)
         end
@@ -614,6 +655,16 @@ end
 
 if Events and Events.OnClientCommand then
     Events.OnClientCommand.Add(function(module, command, player, args)
+        if module == MODULE and command == "tetrisFix" and player and args then
+            local it = find(player, args.id)
+            if it then
+                local done = B.repairTetrisGrid(it)
+                log("tetrisFix from %s for id %s: %s", TWALogName and TWALogName(player) or "?", tostring(args.id), done and "cleaned" or "already clean")
+            else
+                log("tetrisFix from %s for id %s: not within reach", TWALogName and TWALogName(player) or "?", tostring(args.id))
+            end
+            return
+        end
         if module ~= MODULE or command ~= "bagUp" or not player or not args then return end
         local ok, a, b, c
         if args.op == "install" then ok, a = B.doInstall(player, args.bag, args.up)

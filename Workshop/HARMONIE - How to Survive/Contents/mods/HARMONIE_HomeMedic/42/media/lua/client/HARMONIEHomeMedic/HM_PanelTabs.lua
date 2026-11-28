@@ -370,7 +370,9 @@ function EHR_HealthPanelUI:hmDrawStats()
                     end
                     if inside(mx, my, col.x, y, colW, rowH) and my >= top and my <= top + viewH then
                         st.tip = rowLabel(row) .. (value ~= "" and (": " .. value) or "")
-                        if row.g == "signs" and row.tag then
+                        if row.g == "signs" and row.lk then
+                            st.tip = st.tip .. "\n" .. HM_Text(row.lk, "")
+                        elseif row.g == "signs" and row.tag then
                             st.tip = st.tip .. "\n" .. HM_Text("UI_HomeMedic_SignWhere_" .. row.tag, "")
                         elseif row.g == "moodles" then
                             st.tip = st.tip .. "\n" .. L("MoodleLevel", "Level %1 of 4", tostring(row.lv or 0))

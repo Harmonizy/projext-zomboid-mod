@@ -11,6 +11,7 @@ SRC = os.path.join(HERE, "..", "media", "ui", "HARMONIE_H.png")
 ACCENT = {
     "gtp": (0.50, 0.90, 0.52), "twa": (1.0, 0.78, 0.2), "hm": (0.3, 0.84, 1.0),
     "svu": (0.45, 0.68, 1.0), "mfs": (0.92, 0.24, 0.20), "lws": (0.70, 0.49, 0.28),
+    "inv": (0.36, 0.86, 0.74),
 }
 src = Image.open(SRC).convert("RGBA")
 GOLD = (240, 196, 84)

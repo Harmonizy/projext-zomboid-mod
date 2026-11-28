@@ -663,11 +663,18 @@ if Events then
     -- a bag in the loot window gets its values (tooltip, what fits)
     if Events.OnRefreshInventoryWindowContainers then
         Events.OnRefreshInventoryWindowContainers.Add(function(page, state)
-            if state ~= "end" or not page or not page.backpacks then return end
+            if not page or not page.backpacks then return end
+            -- 1.5.7: broken Inventory Tetris grids off bags in the window
+            -- (begin: before Tetris builds them, end: the new list)
+            if state ~= "begin" and state ~= "end" then return end
             for _, bp in ipairs(page.backpacks) do
                 local inv = bp.inventory
                 local it = inv and inv.getContainingItem and inv:getContainingItem()
-                if it then pcall(B.apply, it) end
+                if it then
+                    pcall(B.repairTetrisGrid, it)
+                    -- 1.5.8: capacity + Tetris grid key set before Tetris builds it
+                    pcall(B.apply, it)
+                end
             end
         end)
     end

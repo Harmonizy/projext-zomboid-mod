@@ -264,6 +264,47 @@
   "Done" (green, reached >= 95 %) or "Stopped before the end" (orange) for
   2 s. Names IGUI_HUB_Act_<class> (hub translate), else the class name made
   readable. Mouse handlers return false. A new window: add it to anyOpen.
+- Inventory Helper (hub, 2026-11-28, owner: "buttons to manage my items and
+  the boxes, a search, anything easier" -- chose search + quick stack + grid
+  sort + favourite lock, a separate window, first as a new mod, then "put it
+  in the HARMONIE Hub"): `client/HARMONIE_InvHelper.lua` (HARMONIE_InvHelper,
+  window HARMONIE_InvHelperUI), card "inv" (teal, HARMONIE_H_inv.png), tabs
+  search / stack (media/ui/HARMONIE_inv_tab_*.png, scratchpad
+  gen_inv_tabs.py), texts IGUI_HUB_Inv_*, in AB.anyOpen. Search: one
+  HARMONIE_Reach.each walk (inventory + bags + the room's boxes) grouped by
+  type + container, filter all / on me / boxes; "Take" = vanilla
+  ISInventoryTransferAction to the main inventory (Reach.walkTo a far box
+  first); the star = vanilla item:setFavorite on carried items. Quick stack
+  (IH.planStack / runStack): a carried item (main inventory; bags' contents
+  only when ticked) goes to the box holding the most of its type while
+  getEffectiveCapacity - getCapacityWeight leaves room; never moved:
+  favourite, equipped / worn / attached slot, bags (counts shown as "kept").
+  Scope "INV" (Refresh rule: window open, Refresh, afterActions). GTP
+  1.10.0, TWA 1.6.0, HTS 1.3.0, SVU 1.2.0, MIL 1.2.0, LWS 1.2.0.
+  Grid sort (tab "sort", GTP 1.10.1 / TWA 1.6.1 / HTS 1.3.1 / SVU 1.2.1 /
+  MIL 1.2.1 / LWS 1.2.1), only with Inventory Tetris (mod id
+  INVENTORY_TETRIS; IH.tetris() requires InventoryTetris/Model/
+  ItemContainerGrid + ItemStack + Data/TetrisItemData + TetrisItemCategory).
+  Read from Tetris' source (owner's zip, NOT in the repo): Tetris has NO
+  sort of its own; ItemContainerGrid.FindInstance(cont, playerNum) (else
+  CreateTemp) -> .grids; an ItemGrid keeps persistentData.stacks (modData:
+  x, y, isRotated, itemIDs, count, itemType, category; persistentData also
+  holds searchLog -- change only .stacks), width / height include
+  BonusGridSize, _rebuildStackMap() rebuilds the cell map, _sendModData()
+  queues Tetris' own sync (TetrisClient.queueModDataSync; skipped while
+  TetrisClient.suppressSync). IH sortGrid: skip floor / proximity /
+  isUnsearched(playerNum) grids; merge same types with grid:gatherSameItems
+  ONLY when no stack holds a favourite (its merge may pull from any stack it
+  counts as the same, GMT mixed groups too); stacks with a favourite stay
+  put; the rest packed first-fit row by row (rotated when that fits), order
+  IH.CAT_ORDER (food, healing, ammo, magazine, ranged, melee, attachment,
+  clothing, container, book, entertainment, seed, key, misc, moveable,
+  corpse animal) > name > bigger first. The whole layout is planned first;
+  nothing is written unless every stack fits ("nofit" -> left as it was).
+  Buttons: "sort everything on me" (main inventory + carried bags) and one
+  per container (carried bags, the room's boxes). Messages
+  IGUI_HUB_Inv_SortDone / IGUI_HUB_Inv_Sort_<why>. Mock tests: scratchpad
+  test_sort.py / test_inv.py.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
@@ -604,6 +645,37 @@
   chooser (openBagChooser, craft page + guided row) is a click that looks
   again: TWASources.forget + bagCandCache cleared + TWACraftUI.lookAgain
   ("bag chooser opened"). The 1.5.3 stale-hotbar-slot check stays.
+- TWA 1.5.7 (owner's console 2026-11-27: Inventory Tetris "Expected a
+  table" at ItemGrid:_validateStackList line `pairs(stack.itemIDs)`, every
+  time a bag was shown): CraftState copyPlain stopped 4 tables deep, and
+  Tetris keeps md.gridContainers[type].stacks[i].itemIDs 5 deep -- every
+  snapshot / give-back / TWA_OrigBase copy kept the stacks but lost their
+  itemIDs. Now copyPlain goes 12 deep and BOOKMARK_KEYS also skips
+  gridContainers / tetrisLockTime / TetrisUUID (per-item data of another
+  mod). `TWABagUp.repairTetrisGrid(item)` removes a Tetris grid that has a
+  stack without an itemIDs table (malformed data only, logged): run on every
+  container in a player's inventory (B.maintain walk, server + client, 5 s)
+  and on bags in the inventory window (OnRefreshInventoryWindowContainers
+  begin + end); a client repair sends "tetrisFix" {id} so the server cleans
+  its copy too (else Tetris' server sends the broken grid back as a
+  "correction"). Tetris mod source: owner's zips (Workshop 3775513231),
+  NOT in the repo.
+- TWA 1.5.8 (owner: "make the bag add-ons fit Inventory Tetris" -- "some
+  kinds"): Tetris' grid = definition "<type>_<capacity>". 70 of our 86 bags
+  have none (Tetris calculates 2 cells per capacity + a weight-reduction
+  bonus up to 4, cached per key for the session) -> the capacity add-on
+  already grows them. 16 have a hand-made shape (fanny packs, rifle /
+  shotgun cloth cases 7x2, golf bags 18, fishing basket 6, shoulder holster,
+  ammo straps): a capacity add-on changed the key and lost the shape.
+  `TWATetris.ensureBagGrid(item, baseCap, newCap)` (TetrisCompat, client
+  only, called from B.apply) registers "<type>_<newCap>" = the hand-made
+  shape + rows on its widest grid (2 cells per point; grids below move down)
+  through TetrisContainerData.registerContainerDefinitions, once per key,
+  logged ("bag grid ..."). B.apply also runs at the inventory window's
+  refresh "begin" so the key exists before Tetris builds the grid. In MP
+  Tetris keeps vanilla carry weight (capacity) -- the cap add-on still
+  matters there. Weight reduction / speed / weight / hotbar add-ons do not
+  touch the grid (WR changes a calculated grid only by its cached bonus).
 - TWA 1.1.0 (removed in 1.2.0): Tomb bag recipes. Recipe tabs are scopes
   weapons / materials / bags via `TWACraftUI.scopeOf(category)`; W.TABS
   entries may have `when` (W.visibleTabs; the hub's fromTabs honours it).
@@ -973,6 +1045,10 @@
   wrapper (health panel rows) and EHR_MedicalMonitorUI (hmDiagnosed) turn
   them on for a gated illness the Diagnosis tab diagnosed (Knox and rows with
   their own detail text -- delirium, concussion -- unchanged).
+  HTS 1.2.15 (owner 2026-11-28: "high and low body temperature need no
+  diagnosis"): `HM_Diagnosis.OBVIOUS` (hypothermia, heat_stroke; the alias
+  maps heat_exhaustion to heat_stroke) -> isDiagnosed is true from the start,
+  so every "diagnosed" path shows them in full at any Doctor level.
 - Right-click with many players (HTS 1.2.3 / GTP 1.9.2, owner 2026-11-22):
   ONE "Check Nutrition" (ตรวจโภชนาการ, IGUI_HARMONIE_AssessMenu) with the
   names (GTP Hotkeys). HTS 1.2.5 (owner: "the health check does not show as
@@ -1084,6 +1160,13 @@
       N.HOT_ABOVE 39), like it does for vanilla wounds / hunger / thirst:
       any active EHR illness (delirium too) used to make it hold HP at the
       floor whatever drained it.
+      HTS 1.2.15 (owner 2026-11-28): blood loss shows in the Body Stats
+      tab too (the watch-locked tab 3 -- the owner calls it "the watch
+      tab"): HM_Stats.bloodLossRow(f) adds a "signs" row (key
+      UI_HomeMedic_Moodle_Blood_Title<lv>, value "NN%", row.lk = the
+      moodle's effects key, shown in the row's tooltip). Same stages as the
+      moodle (HM_Stats.bloodLossLevel = EHR.Blood.GetThresholds + 20 %
+      lethal line); keep the two in step.
     - HM_Stump: own TOC data, a visible cut limb not cicatrized; 1 healing,
       2 dirt >= 30, 3 dirt >= 60, 4 prosthesis worn on it; rows per stump.
     Icons tools/gen_moodle_icons.py -> media/ui/<name>.png + Moodles/128.
@@ -1178,6 +1261,23 @@
   The refusal / learned / already-known lines use `EHR.Locale.SayAction`
   (the 1-line-a-minute limit dropped them: the flyer looked dead). Steps
   logged with HMLog "[Flyer]" (EHR.Log prints only errors).
+  HTS 1.2.15 (owner 2026-11-28: "the line over the head after reading ends
+  in odd symbols"): EHR_DiseaseFlyers' flyerText called getText(key) with
+  no arguments on "...: %1" (42.20.1+ checks placeholders in the call); it
+  now passes them (pcall(getText, key, ...)) and strips any %n / {n} left
+  over (cleanLine). Any getText of a %n key: give the arguments in the call.
+  HTS 1.2.16 (owner: "EHR flyers stack with business cards"): Inventory
+  Tetris Grand Master (TetrisGMT, Workshop 3808187767, owner's zip, NOT in
+  the repo) sizes literature by name -- "flyer" / "card" / "note" / "paper"
+  ... = loose paper, stackGroup "paper" -- and its MixedStacks lets one
+  stackGroup share a stack (ItemStack.isSameType / canAddItem read the pack
+  live). `client/HARMONIEHomeMedic/HM_TetrisFlyers.lua` replaces every
+  ExtensiveHealth.* entry of require("TetrisGMT/Definitions/
+  BookItemDefinitions") that has a stackGroup with a copy without it (the
+  def is SHARED by all loose paper -- never edit it in place), at
+  OnGameStart and ticks 30 / 600 (GMT rebuilds at OnInitGlobalModData).
+  A flyer now stacks only with the same flyer, 5 high. Only when the
+  activated mods contain "TetrisGMT".
 - TOC XP multipliers (HM 1.0.3, owner choice 2): sandbox
   MultiplierConfig.Side_L / Side_R / ProstFamiliarity are the game's own
   per-skill multipliers, read by vanilla only with GlobalToggle OFF (owner's
