@@ -264,6 +264,25 @@
   "Done" (green, reached >= 95 %) or "Stopped before the end" (orange) for
   2 s. Names IGUI_HUB_Act_<class> (hub translate), else the class name made
   readable. Mouse handlers return false. A new window: add it to anyOpen.
+- Inventory Helper (hub, 2026-11-28, owner: "buttons to manage my items and
+  the boxes, a search, anything easier" -- chose search + quick stack + grid
+  sort + favourite lock, a separate window, first as a new mod, then "put it
+  in the HARMONIE Hub"): `client/HARMONIE_InvHelper.lua` (HARMONIE_InvHelper,
+  window HARMONIE_InvHelperUI), card "inv" (teal, HARMONIE_H_inv.png), tabs
+  search / stack (media/ui/HARMONIE_inv_tab_*.png, scratchpad
+  gen_inv_tabs.py), texts IGUI_HUB_Inv_*, in AB.anyOpen. Search: one
+  HARMONIE_Reach.each walk (inventory + bags + the room's boxes) grouped by
+  type + container, filter all / on me / boxes; "Take" = vanilla
+  ISInventoryTransferAction to the main inventory (Reach.walkTo a far box
+  first); the star = vanilla item:setFavorite on carried items. Quick stack
+  (IH.planStack / runStack): a carried item (main inventory; bags' contents
+  only when ticked) goes to the box holding the most of its type while
+  getEffectiveCapacity - getCapacityWeight leaves room; never moved:
+  favourite, equipped / worn / attached slot, bags (counts shown as "kept").
+  Scope "INV" (Refresh rule: window open, Refresh, afterActions). Grid sort
+  NOT done: needs Inventory Tetris' own code (owner's zip 3775513231 was lost
+  with the container -- ask again). GTP 1.10.0, TWA 1.6.0, HTS 1.3.0, SVU
+  1.2.0, MIL 1.2.0, LWS 1.2.0.
 - Life With Style's right-click and window title are "แฟชั่นและไอเท็มกาชา" /
   "fashion and gacha items" (1.0.0, owner).
 
