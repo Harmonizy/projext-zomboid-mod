@@ -105,6 +105,9 @@ EHR.CorpseSickness.Config = {
     -- Development aid only. Production gameplay must use each corpse's real age.
     ASPERGILLOSIS_TEST_ALL_CORPSES_ROTTEN = false,
     ASPERGILLOSIS_DISPLAY_MIN_EXPOSURE = 1,
+    -- HARMONIE (HTS 1.3.2, owner 2026-11-28): no new bout for this many game
+    -- hours after one ends (cured or recovered) -- see UpdateAspergillosisExposure
+    ASPERGILLOSIS_IMMUNITY_HOURS = 24,
 
     -- Dialogue lines for smell warning
     SMELL_DIALOGUES = {
@@ -1069,8 +1072,38 @@ function EHR.CorpseSickness.UpdateAspergillosisExposure(player, context)
         end
     end
 
+    -- HARMONIE (HTS 1.3.2, owner 2026-11-28: "diagnosed, but the window says
+    -- not diagnosed; a full course and an injection did not cure it, nor did
+    -- surgery"): a bout that ended (cure, medicine, surgery, recovery) was
+    -- caught again within minutes while the player stayed by damp rotting
+    -- corpses -- a NEW bout, so the old diagnosis no longer counted and the
+    -- treatment looked useless. Corpse sickness has a short immunity after a
+    -- cure; this illness had none. Now: ASPERGILLOSIS_IMMUNITY_HOURS without a
+    -- new bout (exposure held at 0), each step logged.
+    local function hmlog(fmt, ...) if HMLog then HMLog("Aspergillosis", fmt, ...) end end
+    local function who() return HMLogName and HMLogName(player) or "?" end
     local diseaseData = EHR.Disease and EHR.Disease.GetDiseaseData and EHR.Disease.GetDiseaseData(player)
-    if diseaseData and diseaseData.active and diseaseData.active["cadaveric_aspergillosis"] then
+    local isActive = diseaseData and diseaseData.active and diseaseData.active["cadaveric_aspergillosis"] ~= nil
+    if data.hmFungalWasActive and not isActive then
+        local hours = tonumber(config.ASPERGILLOSIS_IMMUNITY_HOURS) or 24
+        data.hmFungalImmuneUntil = currentHour + hours
+        data.hmFungalEndedAt = currentHour
+        hmlog("%s: the bout ended (cured or recovered) -- no new bout for %d game h (until hour %.1f)", who(), hours, data.hmFungalImmuneUntil)
+    end
+    data.hmFungalWasActive = isActive and true or nil
+    if not isActive and (data.hmFungalImmuneUntil or 0) > currentHour then
+        if (data.fungalExposure or 0) > 0 or not data.hmFungalImmuneLogged then
+            data.hmFungalImmuneLogged = true
+            hmlog("%s: by damp corpses but immune after the last bout (%.1f game h left) -- exposure held at 0", who(), data.hmFungalImmuneUntil - currentHour)
+        end
+        data.fungalExposure = 0
+        data.fungalMaxExposure = 0
+        data.fungalTimeInArea = 0
+        data.lastFungalCheckHour = currentHour
+        return
+    end
+    data.hmFungalImmuneLogged = nil
+    if isActive then
         data.fungalExposure = 0
         data.fungalMaxExposure = 0
         data.fungalTimeInArea = 0
@@ -1200,6 +1233,12 @@ function EHR.CorpseSickness.UpdateAspergillosisExposure(player, context)
             EHR.Locale.Say(player, "*coughs* My chest feels wrong after breathing that air...")
         end
         EHR.Log("Player contracted cadaveric aspergillosis from damp corpse exposure")
+        data.hmFungalWasActive = true
+        if HMLog then
+            local since = data.hmFungalEndedAt and string.format(" (%.1f game h after the last bout ended)", currentHour - data.hmFungalEndedAt) or ""
+            HMLog("Aspergillosis", "%s: caught cadaveric aspergillosis from damp corpses (%d nearby)%s -- a new bout must be diagnosed again",
+                HMLogName and HMLogName(player) or "?", tonumber(corpseInfo and corpseInfo.count) or 0, since)
+        end
     end
 end
 

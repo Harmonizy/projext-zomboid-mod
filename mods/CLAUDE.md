@@ -1278,6 +1278,21 @@
   OnGameStart and ticks 30 / 600 (GMT rebuilds at OnInitGlobalModData).
   A flyer now stacks only with the same flyer, 5 high. Only when the
   activated mods contain "TetrisGMT".
+- Cadaveric aspergillosis immunity (HTS 1.3.2, owner 2026-11-28: "diagnosed,
+  but the window says not diagnosed; full course, injection and surgery did
+  not cure it"): the bout WAS ended by the treatment, but a player still by
+  damp rotting corpses caught it again within minutes (exposure gain ~ rotten
+  corpses x 2 x 1.8 x weather per game hour, threshold 120) -> a new bout,
+  so HM_Diagnosis (a diagnosis counts only for the bout it was made in)
+  showed it undiagnosed and the medicine looked useless. Corpse sickness had
+  an immunity after a cure (IMMUNITY_DURATION 2 h, ResetAfterCure);
+  aspergillosis had none. EHR_CorpseSickness.UpdateAspergillosisExposure
+  (server / SP) now notices the bout ending (data.hmFungalWasActive ->
+  inactive) and holds exposure at 0 for Config.ASPERGILLOSIS_IMMUNITY_HOURS
+  (24, owner's choice) -- data.hmFungalImmuneUntil / hmFungalEndedAt. Logs
+  [Aspergillosis]: bout ended + immune until, immune while by corpses (once),
+  caught again (corpses nearby, hours since the last bout). Mock test:
+  scratchpad test_asperg.py.
 - TOC XP multipliers (HM 1.0.3, owner choice 2): sandbox
   MultiplierConfig.Side_L / Side_R / ProstFamiliarity are the game's own
   per-skill multipliers, read by vanilla only with GlobalToggle OFF (owner's
